@@ -225,7 +225,7 @@ def test_pedir_decision_riesgo_alto_ordena_nube_primero(monkeypatch):
     monkeypatch.setattr(capataz, "LLM", _FakeLLM)
     capataz.pedir_decision(ESTADO_RIESGOSO)
     assert _FakeLLM.ultimo_order == capataz.ORDEN_NUBE_PRIMERO
-    assert _FakeLLM.ultimo_order[0] == "cerebras"
+    assert _FakeLLM.ultimo_order[0] == "groq"
 
 
 def test_pedir_decision_riesgo_bajo_local_responde_no_escala(monkeypatch):

@@ -33,8 +33,11 @@ DEFAULT_AREAS = (
     "adobe_rescue",
     "opportunity_radar",
 )
-DEFAULT_PREMIUM_PROVIDERS = ("watsonx", "aws")
-DEFAULT_FREE_PROVIDERS = ("cerebras", "groq", "ollama")
+DEFAULT_REMOTE_PROVIDERS = ("groq", "gemini")
+# Cerebras remains explicitly selectable if credit is restored, but is not in
+# the automatic route after the measured HTTP 402.
+OPTIONAL_REMOTE_PROVIDERS = ("cerebras",)
+DEFAULT_LOCAL_PROVIDERS = ("ollama",)
 LOG_ROOT = Path("_logs") / "cauce_director" / "20260805" / "autonomia"
 MAK_SSH_TARGET = "mak@192.168.50.2"
 MAK_REPO = "~/flujo"
@@ -43,7 +46,7 @@ MAK_REPO = "~/flujo"
 @dataclass(frozen=True)
 class RunOptions:
     areas: tuple[str, ...] = DEFAULT_AREAS
-    providers: tuple[str, ...] = DEFAULT_PREMIUM_PROVIDERS
+    providers: tuple[str, ...] = DEFAULT_REMOTE_PROVIDERS + DEFAULT_LOCAL_PROVIDERS
     round_id: str = ""
     out_dir: str = ""
     common_ledger_path: str = tandas.COMMON_LEDGER
@@ -202,19 +205,11 @@ def _open_prs() -> list[dict]:
 def _provider_state() -> dict:
     external_providers.load_env()
     state = {
-        "watsonx": bool(os.environ.get("WATSONX_API_KEY")
-                        and os.environ.get("WATSONX_PROJECT_ID")),
-        "aws": bool(
-            (os.environ.get("AWS_ACCESS_KEY_ID")
-             and os.environ.get("AWS_SECRET_ACCESS_KEY"))
-            or os.environ.get("AWS_PROFILE")
-            or os.environ.get("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI")
-            or os.environ.get("AWS_WEB_IDENTITY_TOKEN_FILE")
-        ),
         "ollama": _ollama_available(),
         "free_cloud": {
             "cerebras": bool(os.environ.get("CEREBRAS_API_KEY")),
             "groq": bool(os.environ.get("GROQ_API_KEY")),
+            "gemini": bool(os.environ.get("GEMINI_API_KEY")),
         },
     }
     return state
@@ -394,8 +389,8 @@ def autonomy_status(common_path: str = tandas.COMMON_LEDGER,
         "next_actions": next_actions,
         "batch_contract": {
             "areas": list(DEFAULT_AREAS),
-            "premium_providers": list(DEFAULT_PREMIUM_PROVIDERS),
-            "survival_providers": list(DEFAULT_FREE_PROVIDERS),
+            "remote_providers": list(DEFAULT_REMOTE_PROVIDERS),
+            "local_providers": list(DEFAULT_LOCAL_PROVIDERS),
         },
         "ready": not blockers,
         "blockers": blockers,
@@ -404,11 +399,14 @@ def autonomy_status(common_path: str = tandas.COMMON_LEDGER,
 
 def build_run_options(areas=None, providers=None, **kwargs) -> RunOptions:
     selected_areas = _csv(areas, DEFAULT_AREAS)
-    selected_providers = _csv(providers, DEFAULT_PREMIUM_PROVIDERS)
+    selected_providers = _csv(
+        providers, DEFAULT_REMOTE_PROVIDERS + DEFAULT_LOCAL_PROVIDERS)
     unknown_areas = [area for area in selected_areas if area not in tandas.AREAS]
     if unknown_areas:
         raise ValueError("unknown_area:" + ",".join(unknown_areas))
-    supported_providers = DEFAULT_PREMIUM_PROVIDERS + DEFAULT_FREE_PROVIDERS
+    supported_providers = (DEFAULT_REMOTE_PROVIDERS +
+                           OPTIONAL_REMOTE_PROVIDERS +
+                           DEFAULT_LOCAL_PROVIDERS)
     unknown_providers = [provider for provider in selected_providers
                          if provider not in supported_providers]
     if unknown_providers:

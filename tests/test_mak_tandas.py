@@ -7,36 +7,43 @@ from cultura.mak_plataforma import tandas
 from cultura.mak_plataforma import providers
 
 
-def test_provider_plan_burns_premium_before_free_and_local():
+def test_provider_plan_ignores_retired_and_keeps_free_local_order():
     plan = tandas.provider_plan(["ollama", "groq", "watsonx", "aws", "cerebras"])
-    assert plan == ["watsonx", "aws", "cerebras", "groq", "ollama"]
+    assert plan == ["groq", "cerebras", "ollama"]
 
 
 def test_provider_plan_survives_without_temporary_credits():
     plan = tandas.provider_plan(["ollama", "groq", "cerebras"],
                                 allow_premium=False)
-    assert plan == ["cerebras", "groq", "ollama"]
+    assert plan == ["groq", "cerebras", "ollama"]
 
 
-def test_typed_provider_route_prefers_vision_capability_and_keeps_fallback():
+def test_typed_provider_route_does_not_fake_external_vision_capability():
     route = providers.route_task("visual", available=["ollama", "aws"])
     assert route["schema"] == "faro-provider-route-v1"
-    assert route["provider"] == "aws"
+    assert route["provider"] == "local_deterministic"
     assert route["fallback_chain"] == ["local_deterministic"]
     assert providers.route_task("judge", available=["watsonx", "ollama"])["provider"] == "ollama"
     assert providers.route_task("judge", available=["ollama"])["requires_external"] is False
     assert providers.route_task("judge", available=["ollama"])["fallback_chain"] == ["local_deterministic"]
 
 
-def test_provider_registry_does_not_claim_runtime_health_from_env_only():
+def test_research_route_uses_declared_hypothesis_capability():
+    route = providers.route_task(
+        "research", available=["groq", "gemini", "ollama"], allow_premium=False)
+    assert route["capability"] == "hypothesis"
+    assert route["provider"] == "groq"
+    assert route["fallback_chain"] == ["gemini", "ollama"]
+    assert route["requires_external"] is True
+
+
+def test_provider_registry_excludes_retired_providers():
     registry = providers.provider_registry({
         "WATSONX_API_KEY": "configured",
         "WATSONX_PROJECT_ID": "configured",
     })
-    watson = next(row for row in registry["providers"] if row["id"] == "watsonx")
-    assert watson["configured"] is True
-    assert watson["status"] == "configured"
-    assert watson["runtime"] == "unverified"
+    assert {row["id"] for row in registry["providers"]} == {
+        "cerebras", "gemini", "groq", "ollama"}
 
 
 def test_provider_registry_respects_explicit_empty_environment():
@@ -62,9 +69,9 @@ def test_survival_provider_call_routes_to_ollama(monkeypatch):
 
 def test_build_brief_is_provider_agnostic_but_structured():
     brief = tandas.build_brief(
-        "mak_quality", "b001", providers=["watsonx", "ollama"])
+        "mak_quality", "b001", providers=["cerebras", "ollama"])
     assert brief["schema"] == tandas.SCHEMA_VERSION
-    assert brief["provider_plan"] == ["watsonx", "ollama"]
+    assert brief["provider_plan"] == ["cerebras", "ollama"]
     assert brief["result_required"] == list(tandas.RESULT_REQUIRED) + ["product"]
     assert "Cada item debe poder sobrevivir" in brief["prompt"]
     assert "PAQUETE DE EVIDENCIA LOCAL: no incluido" in brief["prompt"]
@@ -74,7 +81,7 @@ def test_build_brief_is_provider_agnostic_but_structured():
 
 def test_build_brief_declares_identity_envelope():
     brief = tandas.build_brief("rd_evidence", "identity01",
-                               providers=["watsonx"])
+                               providers=["cerebras"])
     identity = brief["work"]["identity"]
     assert identity["schema"] == "mak-identity-v1"
     assert identity["kind"] == "report"
@@ -86,7 +93,7 @@ def test_build_brief_declares_identity_envelope():
 
 def test_build_brief_can_include_bounded_evidence():
     brief = tandas.build_brief(
-        "adobe_rescue", "b001", providers=["aws"], include_evidence=True,
+        "adobe_rescue", "b001", providers=["cerebras"], include_evidence=True,
         max_evidence_chars=5000)
     assert "PAQUETE DE EVIDENCIA LOCAL" in brief["prompt"]
     assert "tools/adobe_panel/README.md" in brief["prompt"]
@@ -95,7 +102,7 @@ def test_build_brief_can_include_bounded_evidence():
 
 def test_profile_prompt_requires_exact_evidence_kind():
     brief = tandas.build_brief("iskvw_curation", "iskvw01",
-                               providers=["watsonx"])
+                               providers=["cerebras"])
     assert "evidence_kind DEBE ser exactamente: artwork_context" in brief["prompt"]
 
 
@@ -108,9 +115,9 @@ def test_story_record_profile_does_not_use_artwork_contract():
 
 
 def test_area_prompts_name_the_failure_conditions_for_quality_and_opportunities():
-    quality = tandas.build_brief("mak_quality", "quality01", providers=["watsonx"])
+    quality = tandas.build_brief("mak_quality", "quality01", providers=["cerebras"])
     opportunity = tandas.build_brief("opportunity_radar", "opportunity01",
-                                     providers=["watsonx"])
+                                     providers=["cerebras"])
     assert "format=revision" in quality["prompt"]
     assert "evidence_kind=local_corpus" in quality["prompt"]
     assert "elegibilidad concreta" in opportunity["prompt"]
@@ -119,7 +126,7 @@ def test_area_prompts_name_the_failure_conditions_for_quality_and_opportunities(
 
 def test_build_brief_accepts_round_instruction():
     brief = tandas.build_brief(
-        "mak_quality", "r002", providers=["watsonx"],
+        "mak_quality", "r002", providers=["cerebras"],
         instruction="Refute the previous batch; do not repeat claims.")
     assert "INSTRUCCION DE ESTA RONDA" in brief["prompt"]
     assert "Refute the previous batch" in brief["prompt"]
@@ -361,14 +368,14 @@ def test_append_ledger_does_not_persist_secrets(tmp_path):
 
 def test_write_brief_persists_provider_agnostic_contract(tmp_path):
     brief = tandas.build_brief("svg_pipeline", "svg01",
-                               providers=["aws", "groq", "ollama"])
+                               providers=["cerebras", "groq", "ollama"])
     path = tandas.write_brief(brief, out_dir=str(tmp_path))
     data = json.loads((tmp_path / "svg_pipeline-svg01.json").read_text(
         encoding="utf-8"))
     assert path == str(tmp_path / "svg_pipeline-svg01.json")
     assert data["schema"] == tandas.SCHEMA_VERSION
     assert data["area"] == "svg_pipeline"
-    assert data["provider_plan"] == ["aws", "groq", "ollama"]
+    assert data["provider_plan"] == ["groq", "cerebras", "ollama"]
     assert "prompt" in data
 
 
@@ -390,12 +397,12 @@ def test_summarize_ledger_is_deterministic(tmp_path):
 def test_cli_brief_outputs_portable_json():
     result = subprocess.run(
         [sys.executable, "-m", "cultura.mak_plataforma.tandas", "brief",
-         "tool_archaeology", "tools01", "--providers", "aws,ollama"],
+         "tool_archaeology", "tools01", "--providers", "cerebras,ollama"],
         capture_output=True, text=True, timeout=20)
     assert result.returncode == 0
     data = json.loads(result.stdout)
     assert data["area"] == "tool_archaeology"
-    assert data["provider_plan"] == ["aws", "ollama"]
+    assert data["provider_plan"] == ["cerebras", "ollama"]
 
 
 def test_cli_brief_can_include_evidence():
@@ -417,7 +424,7 @@ def test_cli_validate_rejects_bad_json():
     assert json.loads(result.stdout)["errors"] == ["not_json"]
 
 
-def test_provider_env_aliases_normalize_ibm_names(monkeypatch, tmp_path):
+def test_provider_env_aliases_ignore_retired_names(monkeypatch, tmp_path):
     env = tmp_path / ".env"
     env.write_text(
         "IBM_CLOUD_APIKEY=ibm-key\n"
@@ -430,10 +437,10 @@ def test_provider_env_aliases_normalize_ibm_names(monkeypatch, tmp_path):
                 "AWS_DEFAULT_REGION"):
         monkeypatch.delenv(key, raising=False)
     providers.load_env(str(env))
-    assert providers.os.environ["WATSONX_API_KEY"] == "ibm-key"
-    assert providers.os.environ["WATSONX_PROJECT_ID"] == "ibm-project"
-    assert providers.os.environ["WATSONX_URL"] == "https://example.ibm"
-    assert providers.os.environ["AWS_DEFAULT_REGION"] == "us-west-2"
+    assert "WATSONX_API_KEY" not in providers.os.environ
+    assert "WATSONX_PROJECT_ID" not in providers.os.environ
+    assert "WATSONX_URL" not in providers.os.environ
+    assert "AWS_DEFAULT_REGION" not in providers.os.environ
 
 
 def test_provider_env_candidates_include_mak_research_directory():
@@ -702,7 +709,7 @@ def test_cli_run_reports_provider_error_without_traceback():
     env["PYTHONPATH"] = providers.os.getcwd()
     result = subprocess.run(
         [sys.executable, "-m", "cultura.mak_plataforma.tandas", "run",
-         "rd_evidence", "r001", "--provider", "watsonx", "--model", "nope",
+         "rd_evidence", "r001", "--provider", "cerebras", "--model", "nope",
          "--common-ledger", "NUL", "--no-ollama"],
         capture_output=True, text=True, timeout=20, cwd=str(providers.os.path.dirname(__file__) or "."),
         env=env)

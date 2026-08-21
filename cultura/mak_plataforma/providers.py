@@ -11,9 +11,6 @@ import json
 import hashlib
 import os
 import time
-import base64
-from pathlib import Path
-import urllib.parse
 import urllib.request
 import sys
 
@@ -49,44 +46,32 @@ def _shared_local_gpu(job_id, estimated_vram_mb):
     return shared_gpu_lease(job_id=job_id, estimated_vram_mb=estimated_vram_mb)
 
 
-ENV_ALIASES = {
-    "WATSONX_API_KEY": ("IBM_CLOUD_APIKEY",),
-    "WATSONX_PROJECT_ID": ("IBM_PROJECT_ID",),
-    "WATSONX_URL": ("IBM_CLOUD_URL",),
-    "AWS_DEFAULT_REGION": ("AWS_REGION",),
-}
+ENV_ALIASES = {}
 
 PROVIDER_CAPABILITIES = {
-    "watsonx": {"research", "text_review", "hypothesis"},
-    "aws": {"vision", "text_review", "hypothesis"},
     "cerebras": {"text_review", "hypothesis"},
     "groq": {"text_review", "hypothesis"},
+    "gemini": {"text_review", "hypothesis"},
     "ollama": {"local_judge", "text_review", "hypothesis"},
 }
 PROVIDER_TIERS = {
-    "watsonx": "premium_burst", "aws": "premium_burst",
-    "cerebras": "free_cloud", "groq": "free_cloud",
+    "cerebras": "free_cloud", "groq": "free_cloud", "gemini": "free_cloud",
     "ollama": "local_floor",
 }
-PROVIDER_ORDER = ("watsonx", "aws", "cerebras", "groq", "ollama")
+PROVIDER_ORDER = ("groq", "gemini", "cerebras", "ollama")
 TASK_CAPABILITIES = {
-    "visual": "vision", "vision": "vision", "research": "research",
+    "visual": "vision", "vision": "vision", "research": "hypothesis",
     "curation": "hypothesis", "review": "text_review", "judge": "local_judge",
 }
 
 
 def _provider_configured(provider, environment):
-    if provider == "watsonx":
-        return bool(environment.get("WATSONX_API_KEY") and
-                    environment.get("WATSONX_PROJECT_ID"))
-    if provider == "aws":
-        return bool(environment.get("AWS_ACCESS_KEY_ID") or
-                    environment.get("AWS_PROFILE") or
-                    environment.get("AWS_ROLE_ARN"))
     if provider == "groq":
         return bool(environment.get("GROQ_API_KEY"))
     if provider == "cerebras":
         return bool(environment.get("CEREBRAS_API_KEY"))
+    if provider == "gemini":
+        return bool(environment.get("GEMINI_API_KEY"))
     if provider == "ollama":
         return bool(environment.get("OLLAMA_BASE_URL") or
                     environment.get("OLLAMA_HOST"))
@@ -134,8 +119,6 @@ def provider_plan(available=None, allow_premium=True, capability=None):
     for provider in PROVIDER_ORDER:
         if provider not in configured:
             continue
-        if not allow_premium and PROVIDER_TIERS[provider] == "premium_burst":
-            continue
         if required and required not in PROVIDER_CAPABILITIES[provider]:
             continue
         result.append(provider)
@@ -171,6 +154,7 @@ def load_env(path=None):
         candidates = [
             os.environ.get("RESEARCH_ENV", ""),
             os.path.join(os.getcwd(), ".env"),
+            "/home/mak/flujo/.env",
             os.path.expanduser("~/research/research.env"),
             os.path.expanduser("~/research.env"),
         ]
@@ -201,110 +185,6 @@ def load_env(path=None):
             if os.environ.get(alias):
                 os.environ[canonical] = os.environ[alias]
                 break
-
-
-_WX_TOKEN = {"value": None, "expires": 0.0}
-
-
-def _watsonx_token():
-    if _WX_TOKEN["value"] and time.time() < _WX_TOKEN["expires"] - 60:
-        return _WX_TOKEN["value"]
-    api_key = os.environ.get("WATSONX_API_KEY", "")
-    if not api_key:
-        raise RuntimeError("missing WATSONX_API_KEY")
-    body = urllib.parse.urlencode({
-        "grant_type": "urn:ibm:params:oauth:grant-type:apikey",
-        "apikey": api_key,
-    }).encode("utf-8")
-    request = urllib.request.Request(
-        "https://iam.cloud.ibm.com/identity/token",
-        data=body,
-        headers={
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Accept": "application/json",
-            "User-Agent": "flujo-mak-batches/1.0",
-        },
-    )
-    with urllib.request.urlopen(request, timeout=30) as response:
-        payload = json.loads(response.read().decode("utf-8", "replace"))
-    _WX_TOKEN["value"] = payload["access_token"]
-    _WX_TOKEN["expires"] = time.time() + float(payload.get("expires_in", 3600))
-    return _WX_TOKEN["value"]
-
-
-def watsonx_chat(prompt, model=None, max_tokens=2500, temperature=0.1):
-    load_env()
-    project_id = os.environ.get("WATSONX_PROJECT_ID", "")
-    if not project_id:
-        raise RuntimeError("missing WATSONX_PROJECT_ID")
-    base = os.environ.get("WATSONX_URL", "https://us-south.ml.cloud.ibm.com")
-    request = urllib.request.Request(
-        base.rstrip("/") + "/ml/v1/text/chat?version=2024-10-08",
-        data=json.dumps({
-            "model_id": model or os.environ.get(
-                "WATSONX_BATCH_MODEL",
-                os.environ.get("WATSONX_MODEL", "meta-llama/llama-3-3-70b-instruct"),
-            ),
-            "project_id": project_id,
-            "messages": [
-                {"role": "system", "content": "Return only valid JSON. No prose."},
-                {"role": "user", "content": prompt},
-            ],
-            "max_tokens": max_tokens,
-            "temperature": temperature,
-        }).encode("utf-8"),
-        headers={
-            "Authorization": "Bearer " + _watsonx_token(),
-            "Content-Type": "application/json",
-            "User-Agent": "flujo-mak-batches/1.0",
-        },
-    )
-    with urllib.request.urlopen(request, timeout=180) as response:
-        payload = json.loads(response.read().decode("utf-8", "replace"))
-    return (payload["choices"][0]["message"]["content"] or "").strip()
-
-
-def aws_bedrock_chat(prompt, model=None, max_tokens=2500, temperature=0.1,
-                     image_paths=None):
-    load_env()
-    try:
-        import boto3
-    except Exception as exc:  # noqa: BLE001 - optional provider dependency
-        raise RuntimeError("boto3_unavailable") from exc
-    region = os.environ.get("AWS_REGION") or os.environ.get("AWS_DEFAULT_REGION", "us-east-1")
-    client = boto3.client("bedrock-runtime", region_name=region)
-    model_id = model or os.environ.get("AWS_BEDROCK_BATCH_MODEL", "amazon.nova-pro-v1:0")
-    content = [{"text": "Return only valid JSON. No prose.\n\n" + prompt}]
-    for image_path in image_paths or []:
-        path = Path(image_path)
-        if path.suffix.lower() not in {".jpg", ".jpeg", ".png", ".webp"}:
-            continue
-        if not path.is_file() or path.stat().st_size > 5 * 1024 * 1024:
-            continue
-        content.append({"image": {
-            "format": "jpeg" if path.suffix.lower() in {".jpg", ".jpeg"}
-            else path.suffix.lower().lstrip("."),
-            "source": {"bytes": base64.b64encode(path.read_bytes()).decode("ascii")},
-        }})
-    body = {
-        "messages": [{
-            "role": "user",
-            "content": content,
-        }],
-        "inferenceConfig": {
-            "maxTokens": max_tokens,
-            "temperature": temperature,
-        },
-    }
-    response = client.invoke_model(
-        modelId=model_id,
-        body=json.dumps(body).encode("utf-8"),
-        contentType="application/json",
-        accept="application/json",
-    )
-    payload = json.loads(response["body"].read().decode("utf-8", "replace"))
-    output = payload.get("output", {}).get("message", {}).get("content", [])
-    return "".join(part.get("text", "") for part in output).strip()
 
 
 def _openai_compatible_chat(provider, prompt, model=None, max_tokens=2500,
@@ -341,19 +221,46 @@ def _openai_compatible_chat(provider, prompt, model=None, max_tokens=2500,
     return (payload["choices"][0]["message"]["content"] or "").strip()
 
 
+def _gemini_chat(prompt, model=None, max_tokens=2500, response_format=None):
+    load_env()
+    api_key = os.environ.get("GEMINI_API_KEY", "")
+    if not api_key:
+        raise RuntimeError("missing_GEMINI_API_KEY")
+    payload = {
+        "contents": [{"role": "user", "parts": [{"text": str(prompt)}]}],
+        "generationConfig": {"temperature": 0.1,
+                              # Structured output needs headroom for the
+                              # complete JSON object, even when the caller
+                              # asks for a tiny smoke-test budget.
+                              "maxOutputTokens": max(
+                                  512 if response_format else 128,
+                                  int(max_tokens),
+                              )},
+    }
+    if response_format:
+        payload["generationConfig"]["responseMimeType"] = "application/json"
+    request = urllib.request.Request(
+        "https://generativelanguage.googleapis.com/v1beta/models/"
+        + (model or os.environ.get("GEMINI_MODEL", "gemini-3.6-flash"))
+        + ":generateContent?key=" + api_key,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json",
+                 "User-Agent": "flujo-mak-batches/1.0"},
+    )
+    with urllib.request.urlopen(request, timeout=120) as response:
+        payload = json.loads(response.read().decode("utf-8", "replace"))
+    candidates = payload.get("candidates") or []
+    content = (candidates[0].get("content") if candidates else {}) or {}
+    parts = content.get("parts") or []
+    return ((parts[0].get("text") if parts else "") or "").strip()
+
+
 def _call_unobserved(provider, prompt, model=None, max_tokens=2500,
                      temperature=0.1, response_format=None, image_paths=None,
                      parent_job_id=None):
     provider = str(provider or "").lower()
-    if provider in ("watsonx", "aws", "cerebras", "groq") and not _reserve_bounded_external(provider):
+    if provider in ("cerebras", "groq", "gemini") and not _reserve_bounded_external(provider):
         raise RuntimeError("external_budget_exceeded:%s" % provider)
-    if provider == "watsonx":
-        return watsonx_chat(prompt, model=model, max_tokens=max_tokens,
-                            temperature=temperature)
-    if provider == "aws":
-        return aws_bedrock_chat(prompt, model=model, max_tokens=max_tokens,
-                                temperature=temperature,
-                                image_paths=image_paths)
     if provider == "ollama":
         load_env()
         try:
@@ -375,6 +282,9 @@ def _call_unobserved(provider, prompt, model=None, max_tokens=2500,
         return _openai_compatible_chat(provider, prompt, model=model,
                                        max_tokens=max_tokens,
                                        temperature=temperature)
+    if provider == "gemini":
+        return _gemini_chat(prompt, model=model, max_tokens=max_tokens,
+                            response_format=response_format)
     raise ValueError("unknown_provider:%s" % provider)
 
 

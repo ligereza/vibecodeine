@@ -37,11 +37,9 @@ def test_every_declared_provider_is_actually_callable():
     assert set(research_lib.PROVIDER_ENV_KEY) == set(research_lib.PROVIDERS)
 
 
-def test_watsonx_is_in_the_roster():
-    """The regression itself: the provider that pays the bill was the one the
-    hand-written list did not know about."""
-    assert "watsonx" in research_lib.PROVIDERS
-    assert research_lib.PROVIDER_ENV_KEY["watsonx"] == "WATSONX_API_KEY"
+def test_retired_providers_are_not_in_the_roster():
+    assert "watsonx" not in research_lib.PROVIDERS
+    assert "aws" not in research_lib.PROVIDERS
 
 
 def test_refutar_no_longer_carries_its_own_provider_list():
@@ -95,12 +93,12 @@ def test_a_single_requested_provider_fills_all_three_roles():
     """Asking for one provider must not hand the judge's seat to another one
     that has no key -- that is how the last slot used to become `azure`."""
     refutar = pytest.importorskip("refutar")
-    orden = ["watsonx"]
+    orden = ["cerebras"]
     # the same padding the tool applies before assigning the three roles
     if len(orden) < 3:
         orden = [orden[i % len(orden)] for i in range(3)]
-    assert orden == ["watsonx", "watsonx", "watsonx"]
+    assert orden == ["cerebras", "cerebras", "cerebras"]
     proponente, jueza = orden[0], orden[-1]
     refutadores = orden[1:-1]
-    assert (proponente, refutadores, jueza) == ("watsonx", ["watsonx"], "watsonx")
+    assert (proponente, refutadores, jueza) == ("cerebras", ["cerebras"], "cerebras")
     assert hasattr(refutar, "refutar")

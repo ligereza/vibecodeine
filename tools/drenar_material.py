@@ -73,7 +73,7 @@ def correr_tarea(tarea: dict, raiz: Path, salida: Path, timeout: int) -> dict:
     cmd = [sys.executable, str(base / guion), tarea["texto"]]
     if guion == "research.py":
         cmd += ["--iteraciones", "1", "--densidad", "corto",
-                "--out", str(salida), "--providers", "watsonx"]
+                "--out", str(salida), "--providers", "cerebras,groq,ollama"]
     else:
         cmd += ["--densidad", "corto"]
     try:

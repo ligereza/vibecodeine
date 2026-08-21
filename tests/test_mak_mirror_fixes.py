@@ -39,21 +39,17 @@ class TestRetiredWinRejected:
 
     def test_chain_arg_filter_rejects_win(self):
         orden = [p.strip() for p in "groq,win,ollama".split(",")
-                if p.strip() in ("groq", "cerebras", "azure", "ollama")]
+                if p.strip() in ("groq", "gemini", "cerebras", "ollama")]
         assert orden == ["groq", "ollama"]
 
     def test_research_lib_llm_order_rechaza_win(self):
         llm = research_lib.LLM(order="groq,win,ollama")
         assert llm.order == ["groq", "ollama"]
 
-    def test_azure_requires_explicit_spend_opt_in(self, monkeypatch):
-        monkeypatch.delenv("RESEARCH_AZURE_ENABLED", raising=False)
-        llm = research_lib.LLM(order="azure,cerebras")
-        assert llm.order == ["cerebras"]
-
+    def test_azure_is_retired_even_if_old_flag_exists(self, monkeypatch):
         monkeypatch.setenv("RESEARCH_AZURE_ENABLED", "1")
-        llm = research_lib.LLM(order="azure,cerebras")
-        assert llm.order == ["azure", "cerebras"]
+        llm = research_lib.LLM(order="azure,cerebras,gemini")
+        assert llm.order == ["cerebras", "gemini"]
 
 
 # ── fix 5: fallback intra-paso de cadena.py ──
@@ -85,12 +81,12 @@ class FakeLLM:
 class TestCadenaFallbackIntraPaso:
     def test_primer_proveedor_falla_segundo_responde(self):
         llm = FakeLLM(fallan={"groq"})
-        orden = ["groq", "cerebras", "azure"]
+        orden = ["groq", "cerebras", "gemini"]
         out, real = cadena._paso_con_fallback(llm, orden, "groq", "rol", "prompt", 500)
         assert real == "cerebras"
         assert out == "ok desde cerebras"
         assert llm.llamadas[0] == ["groq"]
-        assert llm.llamadas[1] == ["cerebras", "azure"]
+        assert llm.llamadas[1] == ["cerebras", "gemini"]
 
     def test_primer_proveedor_exitoso_sin_retry(self):
         """Camino feliz identico al comportamiento viejo: una sola llamada."""
@@ -101,17 +97,17 @@ class TestCadenaFallbackIntraPaso:
         assert len(llm.llamadas) == 1
 
     def test_todos_fallan_propaga_error(self):
-        llm = FakeLLM(fallan={"groq", "cerebras", "azure"})
-        orden = ["groq", "cerebras", "azure"]
+        llm = FakeLLM(fallan={"groq", "cerebras", "gemini"})
+        orden = ["groq", "cerebras", "gemini"]
         with pytest.raises(RuntimeError):
             cadena._paso_con_fallback(llm, orden, "groq", "rol", "prompt", 500)
 
     def test_proveedor_fallido_ultimo_de_la_cadena_no_reintenta(self):
-        llm = FakeLLM(fallan={"azure"})
-        orden = ["groq", "cerebras", "azure"]
+        llm = FakeLLM(fallan={"gemini"})
+        orden = ["groq", "cerebras", "gemini"]
         with pytest.raises(RuntimeError):
-            cadena._paso_con_fallback(llm, orden, "azure", "rol", "prompt", 500)
-        assert len(llm.llamadas) == 1  # no hay proveedores despues de azure
+            cadena._paso_con_fallback(llm, orden, "gemini", "rol", "prompt", 500)
+        assert len(llm.llamadas) == 1  # no hay proveedores despues de gemini
 
     def test_encadenar_job_no_muere_si_un_solo_paso_recupera(self, monkeypatch):
         """Espejo del job f69f: groq 429 en el paso 1 ya no mata el job
@@ -203,10 +199,10 @@ class TestCoderChainEnvOverride:
         local Ollama fallback; retired remote providers are unavailable."""
         monkeypatch.delenv("CODER_CHAIN", raising=False)
         codex_lib = _import_codex_lib()
-        assert codex_lib.CODER_CHAIN[0] == ("watsonx",
-                                            "meta-llama/llama-3-3-70b-instruct")
+        assert codex_lib.CODER_CHAIN[0] == ("nim",
+                                            "deepseek-ai/deepseek-v4-pro")
         assert "win" not in codex_lib._CODER_CHAIN_MAP
-        assert all(provider in ("watsonx", "nim", "ollama")
+        assert all(provider in ("nim", "ollama")
                    for provider, _model in codex_lib.CODER_CHAIN)
         assert codex_lib.CODER_CHAIN[-1] == ("ollama", "deepseek-coder:6.7b")
 

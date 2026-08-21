@@ -27,11 +27,8 @@ REFUTAR = (RAIZ / "cultura" / "mak_research" / "refutar.py").read_text(
     encoding="utf-8")
 
 
-def test_the_three_roles_get_three_different_models():
-    m = research_lib.modelos_por_papel("watsonx")
-    assert set(m) == {"proponente", "refutador", "juez"}
-    assert len(set(m.values())) == 3, (
-        "tres papeles con el mismo modelo son un monologo con tres titulos")
+def test_active_providers_do_not_fabricate_per_role_models():
+    assert research_lib.modelos_por_papel("cerebras") == {}
 
 
 def test_they_come_from_different_families():
@@ -39,9 +36,7 @@ def test_they_come_from_different_families():
     families are mistral / llama / granite, and all three were PROBED against
     the real account on 2026-08-01 -- `mistral-large-2512` answers 404 and was
     left out for that reason, not by taste."""
-    familias = {v.split("/")[0] for v in
-                research_lib.modelos_por_papel("watsonx").values()}
-    assert len(familias) == 3, familias
+    assert research_lib.modelos_por_papel("watsonx") == {}
 
 
 def test_a_provider_that_cannot_pick_a_model_gets_nothing():
@@ -52,25 +47,22 @@ def test_a_provider_that_cannot_pick_a_model_gets_nothing():
 
 
 def test_what_was_asked_by_hand_always_wins():
-    m = research_lib.modelos_por_papel("watsonx", {"juez": "mio/modelo"})
-    assert m["juez"] == "mio/modelo"
-    assert m["proponente"] != "mio/modelo"
+    m = research_lib.modelos_por_papel("cerebras", {"juez": "mio/modelo"})
+    assert m == {"juez": "mio/modelo"}
 
 
 def test_an_empty_request_does_not_erase_the_default():
     """`--modelos ,,` produces empty strings; treating them as a choice would
     silently drop the roster."""
-    m = research_lib.modelos_por_papel("watsonx", {"juez": "", "refutador": None})
-    assert m["juez"] and m["refutador"]
+    m = research_lib.modelos_por_papel("cerebras", {"juez": "", "refutador": None})
+    assert m == {}
 
 
 def test_the_roster_is_probed_not_guessed():
     fuente = (RAIZ / "cultura" / "mak_research" / "research_lib.py").read_text(
         encoding="utf-8")
     assert "MODELOS_POR_PAPEL" in fuente
-    assert "404" in fuente, (
-        "la razon por la que un modelo quedo fuera se escribe, o el proximo "
-        "que lo lea lo vuelve a poner")
+    assert "watsonx" not in fuente.lower()
 
 
 # ------------------------------------------------- what the report declares

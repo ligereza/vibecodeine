@@ -3,7 +3,7 @@
 """Two perception passes, compared over the SAME files, per field.
 
 Why this exists as a tool and not as a one-off: on 2026-07-31 the perception
-pipeline changed engine (ollama/gemma3:4b -> watsonx/mistral-small) and the only
+pipeline changed engine (one local model to another) and the only
 honest way to say it improved was to count what each pass actually filled. A
 sentence like "now it sees better" is not measurable; "descripcion went from 0%
 to 100% over the same 902 files" is.
@@ -13,16 +13,16 @@ Three rules baked in, each of them a defect this repo already paid for:
 1. **The same files, or nothing.** Coverage over different sets is not a
    comparison. Only ids present in BOTH passes are counted, and the tool prints
    how many it dropped for that reason.
-2. **Attribution filter.** `--motor watsonx` keeps only the rows the new engine
-   actually measured. A run with a fallback in it would otherwise credit
-   watsonx for what ollama answered.
+2. **Attribution filter.** `--motor <label>` keeps only the rows that the
+   selected engine actually measured. A run with a fallback in it would
+   otherwise credit one engine for what another answered.
 3. **Empty is not missing.** A key present with "" is a different fact from a
    key that never arrived, and they are counted separately -- collapsing them is
    how a silent discard looks like a success.
 
 Usage:
     py tools/comparar_cobertura_fichas.py ANTES.jsonl DESPUES.jsonl
-    py tools/comparar_cobertura_fichas.py a.jsonl b.jsonl --motor watsonx
+    py tools/comparar_cobertura_fichas.py a.jsonl b.jsonl --motor ollama
     py tools/comparar_cobertura_fichas.py a.jsonl b.jsonl --json
 """
 from __future__ import annotations
@@ -132,7 +132,7 @@ def main() -> int:
     p.add_argument("despues", type=Path)
     p.add_argument("--motor", default="",
                    help="quedarse solo con las fichas que ESE motor midio en "
-                        "la pasada nueva (p.ej. watsonx)")
+                        "la pasada nueva (p.ej. ollama)")
     p.add_argument("--json", action="store_true", dest="como_json")
     a = p.parse_args()
 

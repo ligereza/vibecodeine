@@ -32,6 +32,10 @@ DEPENDENCIES = {
     "blend_scene_audit": ("python3", "blender_optional"),
     "knowledge_reconciliation": ("python3", "sqlite3"),
     "research_opportunity_gate": ("python3", "tools.interpretive_garden_workflow"),
+    "tennis_shot_event_consumer": ("python3", "flujo.tennis.shot_events"),
+    "research_source_capture": ("python3", "cultura.mak_research.source_pipeline"),
+    "deep_learning_gate": ("python3", "flujo.knowledge.deep_learning_gate"),
+    "research_simulation_consumer": ("python3", "flujo.knowledge.research_simulation"),
 }
 
 

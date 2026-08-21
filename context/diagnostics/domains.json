@@ -38,7 +38,7 @@
       "branch_prefix": "research",
       "keywords": ["research", "investigacion", "scraping", "scraper", "fuente", "fuentes", "manual", "manuales", "web", "url", "crawl", "crawl4ai", "firecrawl", "fondart", "postulacion", "catalogo", "triangulacion", "busqueda", "documentacion", "extraccion", "corpus"],
       "contract": "context/diagnostics/contracts/research.md",
-      "read_paths": ["cultura/mak_research", "src/flujo/research", "tools", "context/diagnostics", "web/src/components/CulturaPanel.tsx"],
+      "read_paths": ["cultura/mak_research", "tools", "context/diagnostics", "web/src/components/CulturaPanel.tsx"],
       "checks": ["python3 -m pytest -q tests/test_mak_research_router.py", "python3 -m flujo diagnose --area research"],
       "do_not_read": ["WIN raw archive", "private source exports", "provider secrets"]
     }

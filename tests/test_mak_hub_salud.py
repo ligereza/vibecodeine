@@ -27,16 +27,16 @@ class TestSaludProveedores:
         ahora = time.time()
         _write_json(ruta, {"desde": ahora, "proveedores": {
             "groq": {"successes": 8, "timeouts": 2, "api_errors": 0, "errors": 0},
-            "azure": {"successes": 10, "timeouts": 0, "api_errors": 0, "errors": 0},
+            "gemini": {"successes": 10, "timeouts": 0, "api_errors": 0, "errors": 0},
             "ollama": {"successes": 3, "timeouts": 3, "api_errors": 0, "errors": 0},
         }})
         monkeypatch.setattr(hub, "SALUD_PROVEEDORES", ruta)
         out = hub._salud_proveedores()
         nombres = [p["nombre"] for p in out["proveedores"]]
-        assert nombres == ["azure", "groq", "ollama"]
-        azure = out["proveedores"][0]
-        assert azure["score"] == 1.0
-        assert azure["intentos"] == 10
+        assert nombres == ["gemini", "groq", "ollama"]
+        gemini = out["proveedores"][0]
+        assert gemini["score"] == 1.0
+        assert gemini["intentos"] == 10
         assert out["desde"] == ahora
 
     def test_degradado_marcado(self, tmp_path, monkeypatch):

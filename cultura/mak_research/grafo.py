@@ -6,7 +6,7 @@ orden topologico de los nodos-modelo, cada uno recibe como contexto la
 salida concatenada de sus predecesores; los nodos trigger inyectan el
 tema y los nodos output recopilan. Valida flujos extremos antes de correr.
 
-Tipos de nodo: trigger (entrada, lleva el tema), groq/cerebras/azure/
+Tipos de nodo: trigger (entrada, lleva el tema), groq/gemini/cerebras/
 ollama (accion = una llamada LLM), output (recopila), nota (ignorado).
 Se permiten MULTIPLES triggers y outputs.
 
@@ -27,7 +27,7 @@ from research_lib import (LLM, correlacionar, escala_tok, load_env, marco,
 
 OUT_DIR = os.path.expanduser("~/research/grafos")
 WORKFLOW_FILE = os.path.expanduser("~/research/workflow.json")
-PROVEEDORES = ("groq", "cerebras", "azure", "ollama")
+PROVEEDORES = ("groq", "gemini", "cerebras", "ollama")
 
 # Limites anti-flujo-extremo (el usuario pidio anticiparse a casos que
 # confunden al modelo). Se validan antes de ejecutar.
@@ -60,7 +60,7 @@ def _tipo(nd):
     t = nd.get("tipo")
     if t:
         return t
-    return "modelo"  # groq/cerebras/azure/ollama sin tipo explicito
+    return "modelo"  # groq/gemini/cerebras/ollama sin tipo explicito
 
 
 def validar_grafo(nodes, conns):

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """roles.py -- matriz de trabajo autonomo del organismo MAK. EDITABLE.
 
-Postura: THROUGHPUT-FIRST. Los modelos rapidos (cerebras/groq/local) hacen el
+Postura: THROUGHPUT-FIRST. Los modelos rapidos (groq/gemini/local) hacen el
 grueso; el capaz (Cerebras gpt-oss-120b) y el coder fuerte (NIM DeepSeek) se
 reservan para roles de decision -- y eso YA vive en los modos:
   - research 'cadena'  : etapas rapidas + sintesis con el capaz
   - research 'refutar' : tesis/antitesis rapidas + JUEZ capaz
-  - codex 'generar'    : planner=azure (spec) + coder=NIM-pro (draft)
+  - codex 'generar'    : planner=gemini (spec) + coder=NIM-pro (draft)
   - codex 'revisar'    : 3 lentes DeepSeek + veredicto capaz (limpiar/dogfood)
 Por eso el orquestador aplica la politica ELIGIENDO EL MODO por verbo.
 

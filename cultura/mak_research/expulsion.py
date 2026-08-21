@@ -39,9 +39,9 @@ try:
 except ImportError:
     # Replica de research_lib._SLOTS si el import fallara (no debe pasar).
     _SLOTS = {
-        "razonar": "azure,cerebras,groq,ollama",
-        "bulk": "cerebras,groq,azure,ollama",
-        "barato": "ollama,cerebras,groq",
+        "razonar": "groq,gemini,ollama",
+        "bulk": "groq,gemini,ollama",
+        "barato": "ollama,groq,gemini",
     }
 
 INTENTOS_MIN = 10

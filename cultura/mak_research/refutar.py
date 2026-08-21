@@ -10,7 +10,7 @@ primero propone, el ultimo juzga, los del medio refutan.
 Salida: ~/research/refutaciones/STAMP-slug.{md,json}.
 
 Uso:
-    python3 refutar.py "tema" [--orden groq,cerebras,azure,ollama]
+    python3 refutar.py "tema" [--orden groq,gemini,ollama]
                        [--densidad corto|medio|largo] [--sin-marco] [--ntfy]
 """
 import argparse
@@ -70,9 +70,7 @@ def refutar(tema, orden, densidad="medio", marco_activo=True, modelos=None):
     llm = LLM()
     modelos = modelos or {}
     # Hacen falta tres papeles (propone / refuta / juzga). Si pidieron menos, se
-    # repite lo PEDIDO en vez de completar con la cadena entera: pedir un solo
-    # proveedor y recibir de juez a otro que no tiene llave es como moria esto
-    # antes -- el ultimo puesto se llenaba con `azure` y el juicio no ocurria.
+    # repite lo PEDIDO en vez de completar con la cadena entera.
     if len(orden) < 3:
         orden = [orden[i % len(orden)] for i in range(3)] if orden else \
             list(PROVIDERS)[:4]
@@ -137,10 +135,8 @@ def refutar(tema, orden, densidad="medio", marco_activo=True, modelos=None):
               flush=True)
 
     # Un debate donde el mismo modelo hace los tres papeles es un monologo con
-    # tres titulos: medido el 2026-07-31, `llm={'watsonx': 3}` -- el refutador
-    # discutio matices de su propia tesis en vez de si el hecho era cierto, y el
-    # juez le dio la razon. Si el proveedor deja elegir modelo, cada papel toca
-    # una familia distinta. Lo que venga por --modelos manda.
+    # tres titulos. Si el proveedor deja elegir modelo, cada papel toca una
+    # familia distinta. Lo que venga por --modelos manda.
     modelos = modelos_por_papel(proponente, modelos)
 
     print("STATUS: Proponente (%s / %s) escribe la tesis..."
@@ -235,23 +231,21 @@ def refutar(tema, orden, densidad="medio", marco_activo=True, modelos=None):
 def main():
     ap = argparse.ArgumentParser(description="Flujo adversarial proponer/refutar (MAK)")
     ap.add_argument("tema")
-    ap.add_argument("--orden", default="groq,cerebras,azure,ollama",
+    ap.add_argument("--orden", default="groq,gemini,ollama",
                     help="CSV: primero propone, ultimo juzga, resto refuta")
     ap.add_argument("--densidad", choices=("corto", "medio", "largo"), default="medio")
     ap.add_argument("--sin-marco", action="store_true")
     ap.add_argument("--modelos", default="",
                     help="CSV de hasta 3: modelo del proponente, del refutador "
-                         "y del juez. Solo lo respetan los proveedores que "
-                         "eligen modelo (hoy watsonx). Un mismo modelo en dos "
-                         "papeles no es un adversario.")
+                         "y del juez. Un mismo modelo en dos papeles no es un "
+                         "adversario.")
     ap.add_argument("--ntfy", action="store_true")
     ap.add_argument("--out", default=OUT_DIR)
     args = ap.parse_args()
 
     load_env()
-    # El filtro sale de `research_lib.PROVIDERS`, no de una lista escrita aca:
-    # la copia a mano se quedo sin `watsonx` ni `win` y los descartaba en
-    # silencio. Un nombre que no existe SI se descarta -- pero avisando, porque
+    # El filtro sale de `research_lib.PROVIDERS`, no de una lista escrita aca.
+    # Un nombre que no existe SI se descarta -- pero avisando, porque
     # un dedazo que deja la lista vacia terminaba en "Ultimo: None", un error
     # que no nombra a nadie porque nunca se intento nada.
     pedidos = [p.strip() for p in args.orden.split(",") if p.strip()]

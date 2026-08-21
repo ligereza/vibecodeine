@@ -91,7 +91,7 @@ Medido sobre el CLI real: **98 comandos** (25 sueltos + 73 dentro de 17 grupos).
 
 | Comando | Que hace | Que necesita antes |
 |---|---|---|
-| `py -m flujo autonomia status` | Mide si el circuito Watsonx/AWS -> juez local -> ledger esta listo. | nada |
+| `py -m flujo autonomia status` | Mide si el circuito remoto/local -> juez local -> ledger esta listo. | nada |
 | `py -m flujo autonomia run` | Ejecuta tandas controladas; por defecto corre providers/Ollama en MAK. | La ejecucion remota esta fuera de este entorno; `--executor local` solo para pruebas/dry-run con autoridad explicita |
 
 ### Grupo `brief` -- Operaciones sobre briefs.
@@ -258,9 +258,9 @@ repositorio. Las credenciales y tokens se mantienen fuera de Git.
 | `FLYER_BASE` | Raíz alternativa del material de flyers. |
 | `BLENDER_EXE` | Ruta explícita opcional del binario Blender; si falta, MAK busca el binario local instalado junto a `/home/mak/flujo`. |
 | `NODE_EXE` | Ruta explícita opcional de Node para auditorías/builds; el estado solo comprueba su presencia y no instala paquetes. |
-| `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_PROFILE`, `AWS_CONTAINER_CREDENTIALS_RELATIVE_URI`, `AWS_WEB_IDENTITY_TOKEN_FILE` | Variables estándar detectadas por proveedores AWS; no son necesarias para el modo local. |
-| `CANVA_API_TOKEN`, `CEREBRAS_API_KEY`, `GROQ_API_KEY` | Credenciales opcionales de proveedores externos. |
-| `WATSONX_API_KEY`, `WATSONX_PROJECT_ID` | Credenciales y proyecto opcionales de IBM watsonx. |
+| `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_PROFILE`, `AWS_CONTAINER_CREDENTIALS_RELATIVE_URI`, `AWS_WEB_IDENTITY_TOKEN_FILE` | Retiradas del runtime MAK; no se cargan ni se requieren. |
+| `CANVA_API_TOKEN`, `CEREBRAS_API_KEY`, `GROQ_API_KEY`, `GEMINI_API_KEY` | Credenciales opcionales de proveedores externos; la ruta por defecto usa Groq -> Gemini -> Ollama. |
+| `WATSONX_API_KEY`, `WATSONX_PROJECT_ID` | Retiradas; no se cargan desde ningún env operativo. |
 | `TAVILY_API_KEY` | Clave opcional para el respaldo de busqueda de Research; no requerida por el modo offline. |
 | `FIRECRAWL_API_KEY` | Clave opcional para captura estructurada de Research; el pipeline conserva fallback urllib si no existe. |
 | `MAK_RESEARCH_REGISTRY` | Ruta opcional del registro SQLite de jobs de Research; por defecto usa `/home/mak/research/jardines_interpretativos/jardines_interpretativos.sqlite`. |

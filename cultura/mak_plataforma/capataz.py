@@ -4,7 +4,7 @@
 Un ciclo por corrida (cron repite el ciclo). Junta metricas deterministicas
 (reusa junta.metricas()) -> evalua riesgo del estado (0 LLM, ver
 evaluar_riesgo) -> pide UNA decision al modelo capaz gratis (cadena
-cerebras/groq/azure/ollama via research_lib.LLM, orden segun riesgo) con un
+groq/gemini/ollama via research_lib.LLM, orden segun riesgo) con un
 MENU ACOTADO de acciones -> valida la respuesta contra el menu -> ejecuta el
 organo real correspondiente (subprocess o HTTP) -> loguea en
 bitacora_capataz.jsonl + eventos.jsonl. Nunca crasha: si el modelo esta
@@ -18,7 +18,7 @@ riesgo. Con estado sano (sin errores, salud de proveedores OK, backlog de
 PRs capataz/ bajo umbral) el capataz intenta decidir con el modelo LOCAL
 (ollama, gratis, sin cuota) ANTES que la nube. Si el estado deterministico
 muestra senales de riesgo, la cadena arranca directo por la nube
-(cerebras/groq/azure) y ollama queda de ultimo fallback -- igual que antes
+(groq/gemini) y ollama queda de ultimo fallback -- igual que antes
 de F1a. Sigue siendo UNA sola llamada LLM.call() por ciclo (el orden de la
 cadena decide quien contesta primero, no dos llamadas separadas);
 LLM.call() ya recorre el resto de la cadena si el primero de la lista
@@ -108,9 +108,9 @@ ACCIONES = ("investigar", "codificar", "entregar", "vetear",
 
 # F1a: cadena completa siempre disponible como red de seguridad; el orden
 # (quien contesta primero) es lo que cambia segun riesgo.
-CADENA_COMPLETA = "cerebras,groq,ollama"
-ORDEN_LOCAL_PRIMERO = ["ollama", "cerebras", "groq"]
-ORDEN_NUBE_PRIMERO = ["cerebras", "groq", "ollama"]
+CADENA_COMPLETA = "groq,gemini,ollama"
+ORDEN_LOCAL_PRIMERO = ["ollama", "groq", "gemini"]
+ORDEN_NUBE_PRIMERO = ["groq", "gemini", "ollama"]
 
 # Umbrales de primera pasada (F1a), sin dato historico de ollama-primero
 # todavia -- ajustar con METRICAS_CAPATAZ.md una vez haya bitacora bajo
@@ -220,7 +220,7 @@ def _extraer_json(texto):
 def evaluar_riesgo(estado):
     """Riesgo deterministico del estado (0 LLM), F1a. Devuelve (alto: bool,
     razones: list[str]). alto=True -> la cadena arranca por la nube
-    (cerebras/groq/azure); alto=False -> arranca por ollama (LOCAL).
+    (groq/gemini); alto=False -> arranca por ollama (LOCAL).
 
     Senales de riesgo alto (cualquiera activa escalada, cada una
     documentada en razones para que quede auditable en la bitacora):
@@ -275,7 +275,7 @@ def pedir_decision(estado):
     Sigue siendo una unica llamada llm.call(); si el primero de la lista
     falla o devuelve vacio, LLM.call() sigue con el resto de la cadena.
     decisor_nivel = "local" si contesto ollama, "cloud" si contesto
-    cerebras/groq/azure. escalado = True si tuvo que salir de la via
+    groq/gemini. escalado = True si tuvo que salir de la via
     preferida por riesgo (riesgo alto) O porque el LOCAL fallo/vacio y
     tuvo que caer a la nube dentro de la misma llamada. razones_riesgo
     queda separado de decision para no ensuciar el dict que ejecutar()
@@ -552,7 +552,7 @@ def ciclo():
         "razon": razon,
         "fallback_usado": fallback_usado,
         "resultado_resumen": _resumen_resultado(resultado),
-        # F1a: nivel del decisor (local=ollama, cloud=cerebras/groq/azure,
+        # F1a: nivel del decisor (local=ollama, cloud=groq/gemini,
         # None si la cadena entera fallo antes de responder) + si hubo
         # escalada respecto a la via preferida por riesgo, y por que
         # evaluar_riesgo() la marco -- auditable con metricas_capataz.py.

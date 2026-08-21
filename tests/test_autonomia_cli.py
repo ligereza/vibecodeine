@@ -198,7 +198,7 @@ def test_cli_autonomia_run_dry_run(tmp_path):
         "autonomia", "run",
         "--executor", "local",
         "--areas", "svg_pipeline",
-        "--providers", "watsonx",
+        "--providers", "cerebras",
         "--round-id", "cli",
         "--out-dir", str(tmp_path),
         "--common-ledger", str(tmp_path / "common.jsonl"),
@@ -212,7 +212,7 @@ def test_cli_autonomia_run_dry_run(tmp_path):
     payload = json.loads(result.stdout)
     assert payload["status"] == "briefed"
     assert payload["runs"][0]["area"] == "svg_pipeline"
-    assert (tmp_path / "svg_pipeline-cli-watsonx.json").is_file()
+    assert (tmp_path / "svg_pipeline-cli-cerebras.json").is_file()
 
 
 def test_mak_executor_delegates_run_over_ssh(monkeypatch):

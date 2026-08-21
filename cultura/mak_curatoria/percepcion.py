@@ -833,49 +833,9 @@ def vision_imagen(path: str, timeout: int = 120, fuente: str = "rd",
                            started_at=shadow_started, owner_pid=os.getpid())
         return {"error": "no_se_pudo_leer_imagen"}
 
-    vision_fallback = ""
-
-    # Which engine reads the image. `ollama` by default: without the variable
-    # the behaviour is byte for byte today's, so a corpus run cannot be changed
-    # by accident. `watsonx` is the paid one that actually sees -- probed
-    # 2026-07-31 before this line existed (tools/watsonx_vision_smoke.py).
-    #
-    # The resize, the prompt and the tolerant parse are REUSED, not rewritten:
-    # only the transport changes. If watsonx fails for any reason it falls back
-    # to ollama, and the ficha's `medicion.vision` says who answered -- a
-    # corpus run must not die because the cloud did.
-    if os.environ.get("PERCEPCION_VISION", "ollama").lower() == "watsonx":
-        try:
-            # Se busca por el sys.path normal PRIMERO. La version anterior
-            # insertaba `~/research` en la posicion 0, o sea una ruta absoluta
-            # del home ganandole a todo: imposible correr una copia parchada
-            # para probar, e imposible fuera de la caja. El home queda como
-            # ULTIMO recurso, que es lo que de verdad es.
-            try:
-                from research_lib import watsonx_vision
-            except ImportError:
-                sys.path.append(os.path.expanduser("~/research"))
-                from research_lib import watsonx_vision
-            texto = watsonx_vision(prompt_de(fuente, texto_autor, fecha),
-                                   imagen_b64,
-                                   timeout=timeout)
-            d = _parsear_json_vision(texto, fuente)
-            if not d.get("error"):
-                d["_motor"] = "watsonx"
-                if observe_shadow is not None:
-                    observe_shadow(shadow_job,
-                                   producer="curatoria.percepcion.vision_imagen",
-                                   result_status="READY", validated=True,
-                                   payload={"engine": "watsonx", "path": path},
-                                   started_at=shadow_started,
-                                   owner_pid=os.getpid())
-                return d
-            vision_fallback = "watsonx:%s" % d.get("error")
-        except Exception as exc:                 # noqa: BLE001 - cae a ollama
-            vision_fallback = "watsonx:%s" % str(exc)[:120]
-            print("aviso: watsonx no pudo, caigo a ollama (%s)" % str(exc)[:120],
-                  flush=True)
-
+    # Vision is local-only after retiring cloud vision providers. The prompt,
+    # resize and tolerant parser remain unchanged; Ollama is the only engine
+    # used here and failures stay explicit in the returned record.
     payload = json.dumps({
         "model": OLLAMA_MODEL,
         "prompt": prompt_de(fuente, texto_autor, fecha),
@@ -915,7 +875,7 @@ def vision_imagen(path: str, timeout: int = 120, fuente: str = "rd",
 
     texto_modelo = sobre.get("response", "") if isinstance(sobre, dict) else ""
     d = _parsear_json_vision(texto_modelo, fuente)
-    # Ollama tambien se firma. Si solo firmara watsonx, la AUSENCIA de firma
+    # Ollama tambien se firma. La ausencia de firma
     # significaria dos cosas a la vez -- "respondio ollama" y "nadie atribuyo"
     # -- y el campo dejaria de servir para lo unico que existe.
     d["_motor"] = "ollama"
@@ -1115,7 +1075,7 @@ def construir_ficha(entry: dict, dir_tmp: Path, timeout_archivo: int,
     # QUIEN respondio la vision. Va en `medicion` y no dentro de `vision`
     # porque `vision_final` se filtra a CLAVES_VISION y cualquier clave extra
     # se cae en silencio -- medido el 2026-07-31: una corrida entera con
-    # watsonx reporto `_motor: 0` en las 119 fichas y parecia que la ruta nueva
+    # una ruta anterior reporto `_motor: 0` en las 119 fichas y parecia que la ruta nueva
     # nunca se habia tomado. El transporte estaba bien; el instrumento miraba
     # un campo que el propio constructor descartaba.
     # SIN default. `or "ollama"` rellenaba la ausencia con un valor plausible,

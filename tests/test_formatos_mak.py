@@ -152,7 +152,7 @@ sin_codex = pytest.mark.skipif(
 
 
 def _meta():
-    return {"codigo_por": "watsonx", "plan_por": "watsonx", "reparado": False,
+    return {"codigo_por": "nim", "plan_por": "nim", "reparado": False,
             "ms": 1200}
 
 
@@ -189,46 +189,28 @@ def test_the_manifest_carries_the_request_that_produced_it():
     m = codex_lib.manifiesto_de("listar funciones publicas de un modulo",
                                 "x\n", {"ok": True, "rc": 0}, _meta())
     assert m["pedido"] == "listar funciones publicas de un modulo"
-    assert m["codigo_por"] == "watsonx"
+    assert m["codigo_por"] == "nim"
     assert m["formato"] == "pieza/1"
 
 
 # ------------------------------------------------- el selector de vision
 
-def test_without_the_env_var_perception_still_uses_ollama():
-    """The safety property, pinned. A corpus run must not change engine by
-    accident: without PERCEPCION_VISION the behaviour is byte for byte the one
-    that produced the 3.138 fichas. This is the guarantee that the watsonx path
-    can exist without anybody having to be around to watch it."""
+def test_perception_uses_local_ollama_vision_transport():
     fuente = (RAIZ / "cultura" / "mak_curatoria" / "percepcion.py").read_text(
         encoding="utf-8")
-    assert 'os.environ.get("PERCEPCION_VISION", "ollama")' in fuente, (
-        "el default tiene que ser ollama en el propio getenv, no en un if suelto")
-    # y la rama de watsonx solo se toma con la variable puesta en watsonx
-    assert '.lower() == "watsonx"' in fuente
+    assert "OLLAMA_URL" in fuente
+    assert "watsonx" not in fuente.lower()
 
 
-def test_the_watsonx_vision_path_falls_back_instead_of_dying():
-    """The cloud failing must not kill a corpus run: percepcion catches and
-    continues to ollama. A run that dies halfway through 3.138 images because
-    a token expired is a run nobody can leave unattended."""
+def test_no_retired_cloud_vision_branch_remains():
     fuente = (RAIZ / "cultura" / "mak_curatoria" / "percepcion.py").read_text(
         encoding="utf-8")
-    i = fuente.index('PERCEPCION_VISION')
-    fin = fuente.index("\n    payload =", i)
-    bloque = fuente[i:fin]
-    assert "except Exception" in bloque, "sin captura, la nube tumba la corrida"
-    assert "caigo a ollama" in bloque, "y tiene que DECIR que cayo"
+    assert "WATSONX" not in fuente
+    assert "PERCEPCION_VISION" not in fuente
 
 
-def test_the_watsonx_endpoint_lives_in_exactly_one_place():
-    """Two copies of the same URL is how `refutar.py` cost an afternoon. This
-    counts them, and it already caught the author of this very change adding a
-    second one while writing the vision transport."""
+def test_retired_watson_endpoint_is_absent():
     lib = (RAIZ / "cultura" / "mak_research" / "research_lib.py").read_text(
         encoding="utf-8")
-    assert lib.count("ml/v1/text/chat") == 1, (
-        "el endpoint de watsonx aparece mas de una vez: chat y vision tienen "
-        "que compartir _watsonx_llamar")
-    for fn in ("def watsonx_chat(", "def watsonx_vision(", "def _watsonx_llamar("):
-        assert fn in lib
+    assert "ml/v1/text/chat" not in lib
+    assert "iam.cloud.ibm.com" not in lib

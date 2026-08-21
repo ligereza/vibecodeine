@@ -32,6 +32,13 @@ def test_route_idea_explicit_area_wins():
     assert route["suggested_branch"].startswith("portfolio/")
 
 
+def test_research_packet_contains_only_existing_read_paths():
+    route = route_idea("fallo de scraping", area="research", root=ROOT)
+    assert route["missing_read_paths"] == []
+    assert "cultura/mak_research" in route["existing_read_paths"]
+    assert "src/flujo/research" not in route["read_paths"]
+
+
 def test_redact_text_hides_secrets_email_and_home():
     text = "token=abc123 password=secret user@example.com /home/mak/flujo"
     safe = redact_text(text)

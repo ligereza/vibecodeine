@@ -4,12 +4,12 @@
 A diferencia de panel.py (4 modelos en paralelo, sin depender uno del
 otro), aqui la salida de cada modelo alimenta al siguiente: relay
 secuencial que termina en una sintesis. El orden lo define el canvas
-(prioridad de nodos) via --orden, o el default groq->cerebras->azure->
-ollama si no se especifica.
+(prioridad de nodos) via --orden, o el default groq->gemini->ollama
+si no se especifica.
 Salida: ~/research/cadenas/STAMP-slug.{md,json}.
 
 Uso:
-    python3 cadena.py "tema" [--orden groq,cerebras,azure,ollama]
+    python3 cadena.py "tema" [--orden groq,gemini,ollama]
                       [--densidad corto|medio|largo] [--sin-marco] [--ntfy]
 """
 import argparse
@@ -100,7 +100,7 @@ def encadenar(tema, orden, densidad="medio"):
 def main():
     ap = argparse.ArgumentParser(description="Cadena encadenada multi-modelo (MAK)")
     ap.add_argument("tema")
-    ap.add_argument("--orden", default="groq,cerebras,azure,ollama",
+    ap.add_argument("--orden", default="groq,gemini,ollama",
                     help="CSV de proveedores, orden de la posta")
     ap.add_argument("--densidad", choices=("corto", "medio", "largo"), default="medio")
     ap.add_argument("--sin-marco", action="store_true")
@@ -110,9 +110,9 @@ def main():
 
     load_env()
     orden = [p.strip() for p in args.orden.split(",")
-            if p.strip() in ("groq", "cerebras", "azure", "ollama")]
+            if p.strip() in ("groq", "gemini", "cerebras", "ollama")]
     if not orden:
-        orden = ["groq", "cerebras", "azure", "ollama"]
+        orden = ["groq", "gemini", "ollama"]
     tema = marco(args.tema, activo=not args.sin_marco)
     result = encadenar(tema, orden, args.densidad)
 

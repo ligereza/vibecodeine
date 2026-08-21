@@ -1624,8 +1624,7 @@ def provider_status(environment):
         "ollama": bool(environment.get("OLLAMA_HOST") or environment.get("OLLAMA_BASE_URL")),
         "groq": bool(environment.get("GROQ_API_KEY")),
         "cerebras": bool(environment.get("CEREBRAS_API_KEY")),
-        "watsonx": bool(environment.get("WATSONX_API_KEY") or environment.get("IBM_CLOUD_APIKEY")),
-        "aws": bool(environment.get("AWS_ACCESS_KEY_ID")),
+        "gemini": bool(environment.get("GEMINI_API_KEY")),
     }
 
 

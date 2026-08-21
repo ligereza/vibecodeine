@@ -36,16 +36,17 @@ class TestInterfazConfig(unittest.TestCase):
                 interfaz._guardar_config({
                     "GROQ_MODEL": ["nuevo-modelo"],
                     "CEREBRAS_MODEL": ["cerebras-x"],
-                    "AZURE_DEPLOYMENT": ["az-deployment"],
+                    "GEMINI_MODEL": ["gemini-x"],
                     "OLLAMA_MODEL": ["ollama-llama"],
-                    "PROVIDERS_ORDER": ["groq,cerebras,azure,ollama"],
+                    "PROVIDERS_ORDER": ["groq,gemini,ollama"],
                 })
                 with open(path, encoding="utf-8") as f:
                     content = f.read()
                 self.assertIn("GROQ_MODEL=nuevo-modelo", content)
                 self.assertIn("CEREBRAS_MODEL=cerebras-x", content)
+                self.assertIn("GEMINI_MODEL=gemini-x", content)
                 self.assertEqual(os.environ["GROQ_MODEL"], "nuevo-modelo")
-                self.assertEqual(os.environ["PROVIDERS_ORDER"], "groq,cerebras,azure,ollama")
+                self.assertEqual(os.environ["PROVIDERS_ORDER"], "groq,gemini,ollama")
             finally:
                 interfaz.ENV_FILE = old_env_file
 

@@ -21,7 +21,6 @@ from contextlib import contextmanager, nullcontext
 import unicodedata
 import urllib.error
 import urllib.request
-import urllib.parse
 
 try:
     from fallback_util import score_provider_health, parse_provider_error
@@ -70,9 +69,7 @@ ENV_FILE = os.environ.get(
 DEFAULTS = {
     "GROQ_MODEL": "openai/gpt-oss-20b",
     "CEREBRAS_MODEL": "gpt-oss-120b",
-    "AZURE_ENDPOINT": "https://ligereza.services.ai.azure.com",
-    "AZURE_DEPLOYMENT": "gpt-5-mini",
-    "RESEARCH_AZURE_ENABLED": "0",
+    "GEMINI_MODEL": "gemini-3.6-flash",
     "OLLAMA_BASE_URL": "http://127.0.0.1:11434",
     "OLLAMA_MODEL": "gemma3:4b",
     # SearXNG propio (LAN, Docker): busqueda sin API key ni tope de
@@ -90,9 +87,9 @@ def escala_tok(base, densidad="medio"):
     return min(int(base * DENSIDAD_TOK.get(densidad, 1.0)), TOPE_TOK)
 
 
-# Modelo capaz gratuito: Cerebras gpt-oss-120b. Azure/gpt-5-mini queda fuera
-# de MAK mientras el usuario trabaja con ese cupo en la sesion principal.
-MODELO_CAPAZ = "cerebras"
+# Modelo capaz gratuito: Gemini Flash. Cerebras queda disponible solo por
+# opt-in mientras su cuenta responda HTTP 402 por falta de credito.
+MODELO_CAPAZ = "gemini"
 
 # Salud de proveedores: registro persistente de exitos/fallos por proveedor
 # en una ventana de tiempo, para no reintentar de entrada un proveedor que
@@ -319,19 +316,15 @@ def orden_por_salud(orden, stats):
 # "mitigar la degradacion de groq" y nadie lo ejecuto; esto lo ejecuta.
 # groq no se elimina: baja a ultimo recurso remoto. Si mejora, vuelve a subir
 # por el mismo criterio: medicion, no costumbre.
-# 2026-07-30: `watsonx` encabeza `razonar` por la misma regla -- 32/32 llamadas
-# exitosas medidas ese dia (ver LLM.__init__). `bulk` y `barato` NO cambian:
-# barato existe para ahorrar cupo con el modelo local, y meter ahi un proveedor
-# de credito con fecha de vencimiento seria gastarlo en resumenes y clasificacion
-# en vez de en la base cientifica. Retiro: el del credito IBM (2026-08-18).
+# `razonar`, `bulk` y `barato` usan solo la cadena activa declarada abajo.
 # Nota honesta para quien venga: `orden_rol`/`_SLOTS` HOY no tienen llamador en
 # el repo (research.py toma su cadena de `--providers`, y el resto usa `LLM()`
 # directo). Cambiar esta tabla declara la intencion; lo que de verdad rutea es el
 # `order` por defecto de LLM y el default de research.py.
 _SLOTS = {
-    "razonar": "watsonx,cerebras,groq,ollama",
-    "bulk": "cerebras,groq,ollama",
-    "barato": "ollama,cerebras,groq",
+    "razonar": "groq,gemini,ollama",
+    "bulk": "groq,gemini,ollama",
+    "barato": "ollama,groq,gemini",
 }
 
 
@@ -435,7 +428,7 @@ def diagnosticar_error(llm, contexto, error, densidad="medio"):
     return llm.call(
         "Eres un ingeniero senior depurando un sistema de research "
         "multi-modelo en Python (research.py/panel.py/cadena.py/refutar.py "
-        "sobre APIs Groq/Cerebras/Azure/Ollama + Tavily). Respondes conciso "
+        "sobre APIs Groq/Gemini/Cerebras/Ollama + Firecrawl/Tavily). Respondes conciso "
         "y accionable, en espanol, formato Markdown.",
         "CONTEXTO DEL JOB:\n%s\n\nERROR / SALIDA REAL:\n%s\n\n"
         "Diagnostica: 1. QUE FALLO (una linea), 2. CAUSA PROBABLE, "
@@ -496,35 +489,27 @@ def load_env(path=ENV_FILE):
         pass
     for k, v in env.items():
         os.environ.setdefault(k, v)
+    # The repo-level provider file is the existing source for Gemini keys.
+    # Read only the Gemini fields from it; do not merge unrelated credentials
+    # into the research runtime.
+    secondary = os.environ.get("MAK_PROVIDER_ENV", "/home/mak/flujo/.env")
+    if os.path.abspath(os.path.expanduser(secondary)) != os.path.abspath(
+            os.path.expanduser(path)):
+        try:
+            with open(os.path.expanduser(secondary), encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith("#") or "=" not in line:
+                        continue
+                    key, value = line.split("=", 1)
+                    key = key.strip()
+                    if key in ("GEMINI_API_KEY", "GEMINI_MODEL"):
+                        os.environ.setdefault(key, value.strip().strip('"').strip("'"))
+        except OSError:
+            pass
     for k, v in DEFAULTS.items():
         os.environ.setdefault(k, v)
     return env
-
-
-# ------------------------------------------------------------------ watsonx
-# El token IAM de IBM vence a la hora, asi que se cambia la API key por un
-# bearer y se cachea. Sin cache, cada llamada pagaria 460 ms de ida y vuelta a
-# iam.cloud.ibm.com antes de empezar a trabajar.
-_WX_TOK = {"t": None, "exp": 0.0}
-
-
-def _wx_token():
-    if _WX_TOK["t"] and time.time() < _WX_TOK["exp"] - 60:
-        return _WX_TOK["t"]
-    cuerpo = urllib.parse.urlencode({
-        "grant_type": "urn:ibm:params:oauth:grant-type:apikey",
-        "apikey": os.environ.get("WATSONX_API_KEY", ""),
-    }).encode()
-    req = urllib.request.Request(
-        "https://iam.cloud.ibm.com/identity/token", data=cuerpo,
-        headers={"Content-Type": "application/x-www-form-urlencoded",
-                 "Accept": "application/json",
-                 "User-Agent": "flujo-mak-research/1.0"})
-    with urllib.request.urlopen(req, timeout=30) as r:
-        d = json.loads(r.read().decode("utf-8", "replace"))
-    _WX_TOK["t"] = d["access_token"]
-    _WX_TOK["exp"] = time.time() + float(d.get("expires_in", 3600))
-    return _WX_TOK["t"]
 
 
 def _http_json(url, body=None, headers=None, timeout=60, method=None):
@@ -566,22 +551,13 @@ def limpiar_salida(text):
                   flags=re.IGNORECASE | re.DOTALL).strip()
 
 
-# The provider roster, in ONE place. It used to be written out by hand in every
-# tool that accepted a provider list, and those copies went stale silently:
-# refutar.py filtered its --orden against a literal
-# ("groq", "cerebras", "azure", "ollama") that predates watsonx, so
-# `--orden watsonx` was dropped without a word, the list came out empty, the
-# default chain took over and every one of its providers was skipped for having
-# no key. The tool died with "Todos los proveedores fallaron. Ultimo: None" --
-# a message that names nothing because nothing was ever attempted. Measured
-# 2026-07-31 on the box, where `research.env` carries ONLY the WATSONX_* keys:
-# that is why the adversarial pass the quality gate depends on had run exactly
-# once since 2026-07-16. A roster that can go stale is worse than no roster.
+# The provider roster is the only active external-provider list. Retired
+# providers are intentionally absent; historical outputs remain outside this
+# dispatch surface.
 PROVIDER_ENV_KEY = {
-    "watsonx": "WATSONX_API_KEY",
     "groq": "GROQ_API_KEY",
     "cerebras": "CEREBRAS_API_KEY",
-    "azure": "AZURE_API_KEY",
+    "gemini": "GEMINI_API_KEY",
     "ollama": "OLLAMA_BASE_URL",
 }
 PROVIDERS = tuple(PROVIDER_ENV_KEY)
@@ -590,26 +566,13 @@ PROVIDERS = tuple(PROVIDER_ENV_KEY)
 # ignora el pedido y usa el suyo: pedirle un modelo a quien no puede elegirlo
 # no es un error, es que ahi no habia nada que elegir. Sumar uno es agregarlo
 # aca y darle el parametro `model` a su metodo.
-PROVIDERS_CON_MODELO = ("watsonx",)
+PROVIDERS_CON_MODELO = ()
 
 # Modelos por PAPEL para el flujo adversarial, de familias distintas.
 #
-# Medido el 2026-07-31: una corrida de `refutar` reporto `llm={'watsonx': 3}`
-# -- el mismo modelo hizo de proponente, de refutador y de juez. Eso no es un
-# debate, es un monologo con tres titulos: el refutador discutio matices de su
-# propia tesis en vez de si el hecho era cierto, y el juez le dio la razon.
-#
-# Las tres familias se PROBARON contra la cuenta real el 2026-08-01, no se
-# eligieron de una lista: `mistral-large-2512` responde 404 y quedo fuera por
-# eso, no por criterio. Las que contestan: mistral-medium, mistral-small,
-# llama-3-3-70b, llama-4-maverick, granite-4-h-small, granite-3-8b.
-MODELOS_POR_PAPEL = {
-    "watsonx": {
-        "proponente": "mistralai/mistral-medium-2505",
-        "refutador": "meta-llama/llama-3-3-70b-instruct",
-        "juez": "ibm/granite-4-h-small",
-    },
-}
+# No se fijan modelos por papel para los proveedores activos; cada proveedor
+# usa su modelo configurado y el resultado queda atribuido en los ledgers.
+MODELOS_POR_PAPEL = {}
 
 
 # Marcas de que el modelo entrego la FORMA de un informe en vez de un informe.
@@ -651,131 +614,22 @@ def modelos_por_papel(proveedor, pedidos=None):
     return base
 
 
-def _watsonx_llamar(mensajes, model, max_tok, temperatura, timeout):
-    """El UNICO lugar que conoce el endpoint de watsonx.
-
-    Existe porque `tests/test_codex_cadena.py` lo exige contando las
-    apariciones de la ruta en este archivo, y esa cuenta atrapo el defecto en
-    el acto: al escribir `watsonx_vision` quedaron DOS copias de la misma URL.
-    Es exactamente lo que costo una tarde en `refutar.py` -- un padron de
-    proveedores escrito a mano en dos archivos, uno se quedo viejo en silencio.
-    Un guardian sirve cuando acusa a quien lo escribio.
-
-    Lo unico que cambia entre un chat y una lectura de imagen es el CONTENIDO
-    de los mensajes; el transporte es el mismo y vive aca una sola vez.
-    """
-    base = os.environ.get("WATSONX_URL", "https://us-south.ml.cloud.ibm.com")
-    r = _http_json(
-        base.rstrip("/") + "/ml/v1/text/chat?version=2024-10-08",
-        {"model_id": model,
-         "project_id": os.environ.get("WATSONX_PROJECT_ID", ""),
-         "messages": mensajes,
-         "max_tokens": max_tok,
-         "temperature": temperatura},
-        {"Authorization": "Bearer " + _wx_token()},
-        timeout=timeout,
-    )
-    return (r["choices"][0]["message"]["content"] or "").strip()
-
-
-def watsonx_vision(prompt, imagen_b64, model=None, max_tok=700, temperatura=0.1,
-                   timeout=240):
-    """Una llamada que lleva una IMAGEN. Mismo endpoint, un solo lugar.
-
-    El departamento de percepcion lee el archivo con `gemma3:4b` en una placa
-    de 4 GB, y por eso el 76% de las 3.138 fichas no trae texto. Este es el
-    transporte que le permite preguntarle a un modelo que ve de verdad.
-
-    Se probo ANTES de escribirlo (`tools/watsonx_vision_smoke.py`, 2026-07-31):
-    los tres candidatos de la cuenta aceptaron la imagen y sacaron venue, fecha
-    y cuatro headliners de un flyer cuya ficha no tenia nada de eso. La
-    capacidad se habia inferido de los NOMBRES -- `task_ids` no declara tarea de
-    vision -- asi que primero se midio, la misma regla que dejo a `_watsonx`
-    fuera de la cadena hasta que `watsonx_smoke.py` dio 4/4.
-
-    El modelo por defecto lo eligio el BANCO, no su nombre
-    (`tools/watsonx_vision_bench.py`, 8 imagenes reales, mitad de las que hoy
-    vuelven vacias). El nombre volvio a mentir, igual que esta manana con
-    `granite-8b-CODE-instruct`:
-
-        llama-3-2-11b-VISION   solape 0.414   3 inventados   40.175 tok
-        mistral-small-3-1-24b  solape 0.807   0 inventados    7.710 tok
-        llama-4-maverick-17b   solape 0.807   1 inventado    12.019 tok
-
-    El unico que se llama "vision" recupera la mitad del texto, inventa tres
-    veces y cuesta cinco veces mas. Manda mistral-small: mismo solape que el
-    mejor y CERO invencion, que en la base de RD es lo que decide -- una
-    productora inventada es un cliente equivocado.
-
-    Temperatura baja por lo mismo: un modelo tibio rellena `productora` con algo
-    plausible. Un campo vacio es una respuesta correcta; uno inventado no.
-    """
-    if (reserve_external_call is not None and
-            not reserve_external_call(
-                "watsonx", limit_count=external_budget_limit("watsonx"))):
-        raise RuntimeError("external_budget_exceeded:watsonx")
-    return _watsonx_llamar(
-        [{"role": "user", "content": [
-            {"type": "text", "text": prompt},
-            {"type": "image_url",
-             "image_url": {"url": "data:image/jpeg;base64," + imagen_b64}}]}],
-        model or os.environ.get("WATSONX_VISION_MODEL",
-                                "mistralai/mistral-small-3-1-24b-instruct-2503"),
-        max_tok, temperatura, timeout)
-
-
-def watsonx_chat(system, user, max_tok, model=None, temperatura=0.3):
-    """Una llamada de chat a watsonx.ai. Funcion de modulo y no metodo porque
-    el departamento codex tambien necesita este proveedor y NO deberia tener
-    una segunda copia del endpoint: el mismo `refutar.py` acaba de costar una
-    tarde por una lista de proveedores duplicada a mano.
-
-    `temperatura` la elige quien llama: research redacta (0.3) y codex escribe
-    codigo, donde una temperatura alta inventa APIs que no existen (0.1).
-    """
-    return _watsonx_llamar(
-        _msgs(system, user),
-        model or os.environ.get("WATSONX_MODEL",
-                                "meta-llama/llama-3-3-70b-instruct"),
-        max_tok, temperatura, 90)
-
-
 class LLM:
     """Cadena de proveedores con fallback y stats (mismo diseno que el
-    Code node probado 2026-07-15: cerebras/azure son razonadores, llevan
-    margen extra de max_completion_tokens; azure NO acepta temperature)."""
+    Code node probado 2026-07-15: Gemini/Groq son proveedores remotos;
+    Ollama es el fallback local sin cuota."""
 
-    # La cadena activa usa solo proveedores disponibles en MAK.
-    # `watsonx` ENTRO al orden por defecto y va PRIMERO (2026-07-30). Entro por
-    # donde entra todo proveedor nuevo aca: salud medida, no confianza. Lote real
-    # de 8 informes cortos con `--providers watsonx` sobre temas cientificos de
-    # reduccion de dano, corrido en la caja MAK: 8/8 informes, 32/32 llamadas LLM
-    # exitosas, 0 errores, 0 timeouts, 33.7-48.9 s por informe (media 42.1 s,
-    # incluye busqueda y fetch). Queda registrado en salud_proveedores.json como
-    # watsonx 32 successes / 0 fallos. Va primero porque el credito IBM ($200)
-    # VENCE el 2026-08-18: gastarlo en la base cientifica es el uso, y groq
-    # (40% medido el 2026-07-26) y cerebras siguen detras como respaldo real.
-    # Retiro: cuando el credito se agote o venza -- ahi baja y cerebras vuelve a
-    # encabezar --, o si su salud medida cae bajo la de cerebras.
-    def __init__(self, order="watsonx,groq,cerebras,azure,ollama"):
+    def __init__(self, order="groq,gemini,ollama"):
         load_env()
         self.stats = {}
         self.errors = []
         # La lista blanca dice QUIENES pueden participar; el `order` de la firma
         # dice en que posicion arrancan y la salud medida decide el resto.
         base = [p.strip() for p in order.split(",")
-                if p.strip() in ("groq", "cerebras", "azure", "ollama",
-                                 "watsonx")]
-        if not self._azure_enabled():
-            base = [provider for provider in base if provider != "azure"]
+                if p.strip() in ("groq", "cerebras", "gemini", "ollama")]
         # Misma regla que orden_rol: la lista escrita dice QUIENES participan,
         # la salud medida decide el orden. Con muestra insuficiente no se toca.
         self.order = ordenar_por_salud(base)
-
-    @staticmethod
-    def _azure_enabled():
-        """Azure LLM calls require an explicit opt-in to spend credits."""
-        return os.environ.get("RESEARCH_AZURE_ENABLED") == "1"
 
     # -- proveedores ----------------------------------------------------
     def _groq(self, system, user, max_tok):
@@ -807,29 +661,27 @@ class LLM:
         )
         return r["choices"][0]["message"]["content"].strip()
 
-    def _watsonx(self, system, user, max_tok, model=None):
-        """IBM watsonx.ai. Verificado 4/4 por `tools/watsonx_smoke.py` contra la
-        cuenta real el 2026-07-30: bearer en 460 ms, 24 modelos visibles, chat
-        en 681 ms, 58 tokens = $0.000044.
-
-        Salud medida el 2026-07-30 en la caja MAK con el organo completo (no un
-        smoke): 8 informes de research.py, 32/32 llamadas LLM exitosas, 0
-        errores. Desde esa medicion encabeza el orden por defecto; ver el
-        comentario de LLM.__init__ para la causa y la condicion de retiro.
-        """
-        return watsonx_chat(system, user, max_tok, model, temperatura=0.3)
-
-    def _azure(self, system, user, max_tok):
-        base = os.environ["AZURE_ENDPOINT"].rstrip("/")
+    def _gemini(self, system, user, max_tok):
+        parts = [{"text": user}]
+        payload = {
+            "contents": [{"role": "user", "parts": parts}],
+            "generationConfig": {"temperature": 0.3,
+                                  # Gemini may return a candidate without
+                                  # visible parts when the budget is too low.
+                                  "maxOutputTokens": max(128, max_tok)},
+        }
+        if system:
+            payload["systemInstruction"] = {"parts": [{"text": system}]}
         r = _http_json(
-            base + "/openai/deployments/" + os.environ["AZURE_DEPLOYMENT"]
-            + "/chat/completions?api-version=2024-10-21",
-            {"messages": _msgs(system, user),
-             "max_completion_tokens": max_tok + 2048},
-            {"api-key": os.environ["AZURE_API_KEY"]},
-            timeout=90,
+            "https://generativelanguage.googleapis.com/v1beta/models/"
+            + os.environ["GEMINI_MODEL"] + ":generateContent?key="
+            + os.environ["GEMINI_API_KEY"],
+            payload, {}, timeout=90,
         )
-        return r["choices"][0]["message"]["content"].strip()
+        candidates = r.get("candidates") or []
+        content = (candidates[0].get("content") if candidates else {}) or {}
+        parts = content.get("parts") or []
+        return ((parts[0].get("text") if parts else "") or "").strip()
 
     def _ollama_like(self, base_url, model, system, user, max_tok):
         base = base_url.rstrip("/")
@@ -868,8 +720,7 @@ class LLM:
         """Devuelve (texto, proveedor). Recorre la cadena hasta respuesta
         no vacia; acumula errores no fatales en self.errors.
 
-        `model` pide un modelo CONCRETO al proveedor que lo soporte (hoy solo
-        watsonx, que expone 24). Existe para que un flujo adversarial pueda
+        `model` pide un modelo CONCRETO al proveedor que lo soporte. Existe para que un flujo adversarial pueda
         poner modelos DISTINTOS en cada papel: medido el 2026-07-31, un
         proponente y un refutador que son el mismo modelo no son adversarios --
         el refutador discutio matices de la tesis en vez de si el hecho era
@@ -881,8 +732,6 @@ class LLM:
         # metodo `_<nombre>`, y si falta, falta ruidosamente al llamarlo.
         fns = {name: getattr(self, "_" + name) for name in PROVIDERS}
         orden = list(order or self.order)
-        if not self._azure_enabled():
-            orden = [provider for provider in orden if provider != "azure"]
         # sin internet: ollama local primero; no esperar timeouts de nubes.
         if not red_ok():
             frente = [p for p in ("ollama",) if p in orden]
@@ -904,7 +753,7 @@ class LLM:
                              provider=name, model=selected_model,
                              resource="ollama" if name == "ollama" else "cloud")
             try:
-                if (name in ("watsonx", "groq", "cerebras", "azure") and
+                if (name in ("groq", "cerebras", "gemini") and
                         reserve_external_call is not None and
                         not active_enabled() and
                         not reserve_external_call(
@@ -915,7 +764,7 @@ class LLM:
                 fn = fns[name]
                 if dispatch_sync is not None and active_enabled():
                     def handle(job, _fn=fn, _provider=name):
-                        if (_provider in ("watsonx", "groq", "cerebras", "azure")
+                        if (_provider in ("groq", "cerebras", "gemini")
                                 and reserve_external_call is not None
                                 and not reserve_external_call(
                                     _provider,

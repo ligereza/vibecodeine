@@ -913,7 +913,7 @@
         <div id="inbox-copiloto-lista">Selecciona una pieza y pide sugerencias.</div>
         <div id="inbox-copiloto-externos-lista">Sin candidatos externos para esta pieza.</div>
         <div class="inbox-acciones-bandeja">
-          <select id="inbox-copiloto-proveedor"><option value="watsonx">Watsonx</option><option value="aws">AWS</option><option value="ollama">Ollama</option><option value="groq">Groq</option><option value="cerebras">Cerebras</option></select>
+          <select id="inbox-copiloto-proveedor"><option value="ollama">Ollama local</option><option value="groq">Groq</option><option value="cerebras">Cerebras</option></select>
           <button id="inbox-copiloto-externo" type="button">pedir segunda lectura</button>
         </div>
         <pre id="inbox-copiloto-externo-salida" hidden></pre>
@@ -921,7 +921,7 @@
     </details>
     <details id="inbox-triangulacion" class="inbox-module">
       <summary><span class="module-number">03</span><span class="module-title"><strong>Triangulacion global</strong><small>consulta amplia del archivo</small></span><span class="module-state">candidatos</span></summary>
-      <div class="module-body"><span class="inbox-asociacion-ayuda">Watsonx agrupó por artista; no confirma obras ni eventos.</span><div id="inbox-triangulacion-lista">Cargando grupos…</div></div>
+      <div class="module-body"><span class="inbox-asociacion-ayuda">La triangulación propone grupos por artista; no confirma obras ni eventos.</span><div id="inbox-triangulacion-lista">Cargando grupos…</div></div>
     </details>
     <details id="inbox-rescate" class="inbox-module">
       <summary><span class="module-number">04</span><span class="module-title"><strong>Rescatar</strong><small>informes legados sin publicar</small></span><span class="module-state">archivo</span></summary>
@@ -1447,12 +1447,12 @@ async function estudioAction(action){
   if(action==='classify'){panel.innerHTML='<div class="estudio-action-title">Clasificación por capas</div><div>El panel derecho separa propiedad, propósito, naturaleza y formato. Elige cada capa allí; no se mezclan con la búsqueda ni con los tableros.</div>';return;}
   if(action==='review')return estudioLoadReview(item.id);
   if(action==='vision'){
-    panel.innerHTML='<div class="estudio-action-title">Lectura visual AWS</div><div>Enviando solo un still existente; no se identifican artistas, venues o eventos y el resultado queda como candidato.</div>';
+    panel.innerHTML='<div class="estudio-action-title">Lectura visual local</div><div>Procesando solo un still existente con Ollama local; no se identifican artistas, venues o eventos y el resultado queda como candidato.</div>';
     try{
-      const response=await fetch('/api/portfolio/copilot/vision',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:item.id,provider:'aws'})});
+      const response=await fetch('/api/portfolio/copilot/vision',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:item.id,provider:'ollama'})});
       if(!response.ok)throw new Error(`HTTP ${response.status}`);
       const data=await response.json();
-      if(!data.ok){panel.innerHTML=`<div class="estudio-action-title">Lectura visual no disponible</div><div>${esc(data.detail||data.error||'AWS no respondió')}</div>`;return;}
+      if(!data.ok){panel.innerHTML=`<div class="estudio-action-title">Lectura visual no disponible</div><div>${esc(data.detail||data.error||'Ollama no respondió')}</div>`;return;}
       item.vision_features=data.features||{};
       const groups=[['observaciones',data.features?.visual_terms],['paleta',data.features?.dominant_colors],['composición',data.features?.composition],['medio/movimiento',data.features?.motion_or_media]];
       const chips=groups.flatMap(([label,values])=>(values||[]).map(value=>`<span class="estudio-vision-chip">${esc(label)} · ${esc(value)}</span>`)).join('');
@@ -1624,7 +1624,7 @@ async function cargarRescate(){
     if(!d.items||!d.items.length){box.textContent='No hay rescates candidatos disponibles.';return;}
     const c=d.counts||{};
     const cab=`<div class="rescate-meta">${esc(c.total||0)} candidatos · rescatar: ${esc(c.rescue_candidate||0)} · revisar: ${esc(c.review||0)} · retirar sin borrar: ${esc(c.retire_candidate||0)}</div>`;
-    box.innerHTML=cab+d.items.slice(0,24).map(x=>`<div class="rescate-item"><b>${esc(x.work_id)}</b> · ${esc(x.canonical_decision)}<div class="rescate-meta">${esc(x.watsonx?.lane||'lane desconocido')} · ${esc(x.watsonx?.purpose||'sin propósito')} · próxima: ${esc(x.next_action||'revisar manual')}</div></div>`).join('');
+    box.innerHTML=cab+d.items.slice(0,24).map(x=>`<div class="rescate-item"><b>${esc(x.work_id)}</b> · ${esc(x.canonical_decision)}<div class="rescate-meta">${esc((x.lane||x.legacy_provider?.lane)||'lane desconocido')} · ${esc((x.purpose||x.legacy_provider?.purpose)||'sin propósito')} · próxima: ${esc(x.next_action||'revisar manual')}</div></div>`).join('');
   }catch(e){box.textContent='No se pudo cargar el rescate legado.';}
 }
 
