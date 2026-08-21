@@ -75,7 +75,7 @@ export default function EventsPanel() {
                 { step: '1', title: 'Descarga IG', desc: 'parth-dl baja la imagen del post (via primaria desde 2026-07-22)' },
                 { step: '2', title: 'Paleta', desc: 'Extrae colores dominantes automaticamente' },
                 { step: '3', title: 'Blender', desc: 'Render por nodos, sin Photoshop (opcional)' },
-                { step: '4', title: 'Entrega', desc: 'PNG a drive/ y cierre del issue' },
+                { step: '4', title: 'Entrega', desc: 'PNG a OneDrive y cierre del issue' },
               ].map(item => (
                 <div key={item.step} className="rounded-lg bg-black/30 border border-zinc-800/40 p-3">
                   <div className="flex items-center gap-2 mb-1">

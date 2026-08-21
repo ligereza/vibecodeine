@@ -85,17 +85,14 @@ CLI real (`py -m flujo --help`, v0.56.1), comandos principales:
 | Tool | Proposito |
 |---|---|
 | `becas_calendario.py` | Informes research FOSIS -> calendario de postulaciones (fechas/montos, "no-especificado" si falta). |
-| `bridge_issue_render.py` | LEGACY/MANUAL-ONLY: antiguo puente Windows issue -> `flyer-auto`; no es la ruta Linux activa. |
 | `compete_engine.py` | Pipeline monolitico del ecosistema Tapiz<->Psicosis<->Fungi. |
 | `context_pack.py` | Empaqueta contexto minimo (archivos+fence) para pasar a Aider/Qwen/Claude, bajo consumo. |
 | `comparar_cobertura_fichas.py` | Dos pasadas de percepcion comparadas campo a campo sobre los MISMOS archivos, filtrando por motor. |
 | `consolidar_fichas.py` | Trae una pasada nueva al archivo vivo fusionando CAMPO A CAMPO (lo que la nueva no lleno lo hereda de la vieja); ensayo por defecto. |
 | `ig_metadatos.py` | Saca del export de Instagram la FECHA exacta y el TEXTO que el artista escribio sobre cada obra, reparando el encoding. |
 | `drenar_material.py` | Vacia la cola de trabajo de MAK en paralelo y cuenta lo que salio; se detiene solo si el buscador queda ciego. |
-| `enviar_a_mak.py` | Puente WIN->MAK: envia carpeta a `~/curatoria_inbox/` via tar\|ssh, verifica conteo/bytes. |
 | `gen_vinculos_iskvw.py` | Vinculos entre obras desde los conceptos de las fichas, con los conceptos compartidos como motivo. |
 | `gen_mapa_comandos.py` | Genera la tabla de comandos de `MAPA.md` desde el `--help` real del CLI (`--check` falla si quedo desfasado). |
-| `instalar_enviar_a_mak.py` | Instala integracion "Enviar a" -> MAK curatoria en el explorador de Windows. |
 | `render_video_rd.py` | LEGACY/MANUAL-ONLY: ruta H264 sobre `RD.paravideo.blend`; no es el renderer productivo de MAK. |
 | `render_flyer_mak.py` | ACTIVO: imagen/poster -> grafo Blender Linux de `RD.blend`, con validación y salida PNG. |
 | `render_video_sequence_mak.py` | ACTIVO: reel -> secuencia PNG en MAK; calcula frames reales, usa `RD.blend`, Cycles 128 samples, GPU verificada y deja `render_manifest.json`. |
@@ -113,9 +110,15 @@ CLI real (`py -m flujo --help`, v0.56.1), comandos principales:
 | `profile_blender_animation.py` | Perfil read-only de animacion Blender para el consumidor de secuencia/render. |
 | `project_gate.py` | Gate CLI de Project IR: route/probe read-only y registro explicito de episodios; consumidor Hub/Research. |
 | `project_learning.py` | Compila episodios con resultado verificado, separa holdout por proyecto y prepara una politica candidata con abstencion; `--record-result` recibe paquetes de validadores; no convierte desconocidos en etiquetas ni entrena pesos de deep learning. |
-| `mak_status.py` | Estado operacional unificado y read-only de MAK: ledger, consumidores físicos, listeners, procesos, Blender/RD, portafolio, runtimes y configuración de proveedores; mismo contrato que `GET /api/status`. |
+| `mak_status.py` | Estado operacional unificado y read-only de MAK: ledger, consumidores físicos, listeners, procesos, Blender/RD, portafolio, runtimes, configuración de proveedores y registro transversal de lanes; mismo contrato que `GET /api/status`. |
 | `source_learning_bridge.py` | Une memoria historica y paquetes de investigacion por referencias y hashes; conserva clases epistemicas, valida limites de afirmacion y solo registra aprendizaje cuando pasan fuentes, mensajes, contrato y ruta. |
 | `math_kernel.py` | Scheduler matematico metadata-only sobre el Project IR comun: target capsules, requests acotados y ResultCards sellados; no promueve teoremas sin fidelidad semantica y verificador confiable. |
+| `project_lanes.py` | Registro read-only de 19 lineas de MAK bajo la primera capa cultural-investigativa: P=NP, tenis, scraping, deep learning, simulacion, eventos, transpilacion, geometria y propuestas; cada lane conserva dialectos, evidencia, consumidor, guardrails y siguiente gate. |
+| `tennis_mcp_ingest.py` | Proyecta un CSV local del Match Charting Project a JSONL hash-linked, preservando fila cruda, tokens desconocidos y estado `ANNOTATED`; no adquiere fuentes ni entrena modelos. |
+| `tennis_shot_events.py` | Convierte el JSONL anotado de tenis a eventos `shot_event` con transform chain, incertidumbres explícitas y referencia opcional a Project IR; consumidor read-only. |
+| `research_source_capture.py` | Planifica o registra una sola captura pública con backend explícito, hash, licencia/procedencia y almacén local; el modo por defecto no hace red. |
+| `deep_learning_gate.py` | Verifica objetivo, labels, holdout independiente, agrupación anti-leakage y validador antes de cualquier modelo; nunca entrena ni promueve embeddings. |
+| `research_simulation.py` | Ejecuta una gramática simbólica declarada con límites de iteración/símbolos y procedencia; marca el resultado como `simulated` y `model_not_reality`. |
 | `reconcile_garden_knowledge.py` | Reconcilia conocimiento de jardines con el Research/Funding Lab, preservando desconocidos y fuentes. |
 | `token_budget.py` | Estima tokens de un set de archivos antes de mandarlos a un modelo. |
 | `venue.py` | Base abierta de venues para VJ/tecnica: `sembrar` (una linea por sala) -> JSON validado contra `schemas/venue.schema.json` con tier de `confianza` por dato, `validar`/`listar`/`sitio` (HTML autocontenido consultable desde telefono) y `geometria` (reporte numerico del bloque de polilineas: aristas por tier y por capa, bounding box, cierres, segmentos de largo cero, cota declarada vs dibujada). `tests/test_venue.py`. |
@@ -191,29 +194,35 @@ sus valores nunca se imprimen ni se registran aqui.
 
 Conteo verificado el 2026-08-17:
 
+Nota de retiro: cualquier mención restante de `watsonx`, AWS o Azure en esta
+matriz describe una corrida histórica o un campo de evidencia; no representa
+un proveedor disponible. La ruta LLM activa es Groq -> Gemini -> Ollama.
+Cerebras queda como adaptador opt-in, pero su cuenta respondió HTTP 402 por
+falta de crédito. La visión local usa Ollama.
+
 | Grupo | Cantidad | Integraciones reconocidas | Estado resumido |
 |---|---:|---|---|
-| Proveedores LLM | 5 | `watsonx`, `groq`, `cerebras`, `azure`, `ollama` | Adaptadores en `cultura/mak_research/research_lib.py` |
+| Proveedores LLM cableados | 4 | `groq`, `gemini`, `cerebras`, `ollama` | Ruta por defecto Groq -> Gemini -> Ollama; Cerebras opt-in observado con HTTP 402 |
 | Busqueda/captura | 3 | `tavily`, `searxng`, `firecrawl` | `tavily` y SearXNG pasaron sonda; Firecrawl requiere clave |
 | Notificacion | 1 | `ntfy` | Adaptador en `research_lib.py`; requiere topic para publicar |
 | Produccion/operacion | 4 | `canva`, `github`, `instagram`, `google_drive` | Canva/GitHub/Instagram estan cableados; Drive opera por `rclone` |
-| **Total de integraciones API/servicio cableadas** | **13** | | |
+| **Total de integraciones API/servicio cableadas** | **12** | | |
 
 Hay ademas **1 backend opcional de captura**, `crawl4ai`: esta instalado en el
 extra reproducible `.[research]` y paso captura real con Chromium local. El
-total es **14 backends** contando esa capacidad opcional.
+total es **13 backends** contando esa capacidad opcional.
 
 La aplicacion expone **1 superficie HTTP interna activa** verificada en primer
 plano: hub MAK en `127.0.0.1:8900` con `GET /health` HTTP 200. Los puertos
 8890 y 8891 no se usan como interfaz publica. SearXNG queda como backend local
 en `127.0.0.1:8888`, con contenedor `searxng` y politica `unless-stopped`.
-El catalogo suma **15 superficies** contando las 14 integraciones/backends y
+El catalogo suma **14 superficies** contando las 13 integraciones/backends y
 el hub; la matriz de verificacion de cada una esta abajo.
 
 No entran en el conteo: Anthropic/Claude Code y Arena (herramientas externas al
 runtime del repo), `DASHSCOPE_API_KEY`, `QWEN_API_KEY`, `NVIDIA_*` y
 `OPENROUTER_API_KEY` (declarados, pero sin adaptador activo en el roster),
-Gemini (retirado), los sitios web monitoreados por Vigia y XIO (superficie
+los sitios web monitoreados por Vigia y XIO (superficie
 historica fuera de la operacion actual).
 
 ### 2.2 Estado de credenciales medido sin exponer valores
@@ -224,7 +233,7 @@ modelos, permisos o limites de cuenta esten disponibles.
 
 | Variable | Resultado | Fuente/alcance |
 |---|---|---|
-| `WATSONX_API_KEY` | `valid` | Token IAM HTTP 200; solo aparece en `n8n-local/research.env`, que no es runtime activo |
+| `WATSONX_API_KEY` | `retired` | Eliminada de los env activos; copia protegida solo en `_archive/watsonx-retired-20260820/` |
 | `NVIDIA_API_KEY` | `valid` | `GET /v1/models` HTTP 200 desde `.env` de flujo |
 | `NVIDIA_NIM_API_KEY` | `valid` | `GET /v1/models` HTTP 200 desde `.env` de flujo |
 | `TAVILY_API_KEY` | `valid` | Busqueda basica HTTP 200; solo aparece en `n8n-local/research.env`, que no es runtime activo |
@@ -238,19 +247,20 @@ la consulta; la segunda uso el contrato exacto del adaptador y devolvio 200.
 
 `/home/mak/research/research.env` fue revisado sin imprimir valores: modo 600,
 propietario `mak`, formato `KEY=VALUE`, sin claves duplicadas ni lineas
-malformadas. El conjunto seleccionado contiene Groq, Cerebras, Firecrawl y
+malformadas. El conjunto seleccionado contiene Groq, Gemini, Cerebras, Firecrawl y
 Ollama.
 
 | Integracion | Sonda foreground | Resultado |
 |---|---|---|
 | Groq | `LLM._groq(..., max_tok=8)` | OK; respuesta de 2 caracteres |
+| Gemini | `LLM._gemini(..., max_tok=8)` | OK; `gemini-3.6-flash`, respuesta no vacía |
 | Cerebras | `LLM._cerebras(..., max_tok=8)` con `gpt-oss-120b` y `gemma-4-31b` | Ambos HTTP 402 `Payment Required`; cuenta sin credito disponible, no es un nombre de modelo invalido |
 | Firecrawl | `capture_url(example.com, backend=firecrawl)` | Captura HTTP 200; 167 caracteres |
 | Ollama | `LLM._ollama(..., max_tok=8)` | OK; respuesta de 3 caracteres |
 
 El 402 de Cerebras es un limite de cuenta, no un fallo de instalacion o
-formato. Azure, Canva y ntfy no estan en el entorno seleccionado y no se
-consideran activos.
+formato. Azure no participa del runtime y no tiene adaptador activo. Canva y
+ntfy no estan en el entorno seleccionado y no se consideran activos.
 
 `GITHUB_TOKEN` no es necesario en el runtime local: `gh auth status` devolvio
 exit 0 y la sesion local de `gh` esta autenticada. El puente
@@ -264,14 +274,14 @@ Solo existencia + donde se configura. Nunca el valor de una llave.
 |---|---|---|
 | Claude / Anthropic | Director (Fable/Opus) + subagentes Sonnet/Haiku; tiers en tabla de `CLAUDE.md` | `ANTHROPIC_API_KEY` en `.env` (ver `.env.example`); ejecutado via Claude Code CLI, no en runtime del repo |
 | ollama LOCAL en MAK | Modelos chicos, throughput-first, capa "barato" | Adaptador en `research_lib.py`; `127.0.0.1:11434` no estaba escuchando durante la medicion 2026-08-15, por lo que queda como capacidad cableada pero no disponible en ese instante |
-| IBM watsonx | Proveedor LLM y vision que encabeza la cadena medida de research | `WATSONX_API_KEY`, `WATSONX_PROJECT_ID`, `WATSONX_MODEL` y `WATSONX_URL`; adaptador unico en `research_lib.py` |
+| IBM watsonx | Retirado; evidencia histórica preservada fuera del runtime | Sin claves activas; herramientas exclusivas archivadas en `_archive/watsonx-retired-20260820/` |
 | Groq | Proveedor rapido para roles `razonar`/`bulk` | `GROQ_API_KEY`, `GROQ_MODEL` en `cultura/mak_research/research_lib.py` (defaults linea 32) y `.env` |
+| Gemini | Reemplazo cloud probado para sintesis y razonamiento cuando Cerebras no tiene crédito | `GEMINI_API_KEY`, `GEMINI_MODEL` en `research_lib.py`; usa `gemini-3.6-flash` |
 | Cerebras | Proveedor rapido, `CEREBRAS_MODEL=gpt-oss-120b` | `CEREBRAS_API_KEY`, `CEREBRAS_MODEL` en `research_lib.py` (linea 33) y `.env` |
-| Azure AI (gpt-5-mini) | Slot "capaz" para razonar/juzgar/sintesis en MAK research | `AZURE_ENDPOINT`, `AZURE_DEPLOYMENT`, `AZURE_API_KEY` en `research_lib.py` (lineas 34-35) y `.env` |
+| Azure AI | Retirado por decisión del usuario; no se carga ni se ofrece como fallback | Solo referencias históricas preservadas fuera de la ruta activa |
 | DashScope / Qwen | Coder barato de volumen (gate, nunca directo a Claude) | `DASHSCOPE_API_KEY` / `QWEN_API_KEY` en `.env.example` |
 | NVIDIA NIM | Alternativa barata (Qwen/DeepSeek/Nemotron) | `NVIDIA_API_KEY` / `NVIDIA_NIM_API_KEY` en `.env.example` |
 | OpenRouter | Router/fallback de modelos | `OPENROUTER_API_KEY` en `.env.example` |
-| Gemini | Retired 2026-08-11. No active runtime integration; historical references are preserved as evidence only. | No active configuration |
 | SearXNG (LAN, en la caja) | La busqueda de research. Sin llave, sin tope de creditos | `SEARXNG_BASE_URL` (default `http://127.0.0.1:8888`) y `SEARXNG_ENGINES`; contenedor local activo, `GET /search?format=json` HTTP 200 el 2026-08-17 |
 | Tavily | Respaldo de busqueda cuando SearXNG no devuelve nada | `TAVILY_API_KEY`; sonda basica HTTP 200 el 2026-08-17 cuando se carga el archivo protegido de Research |
 | Firecrawl | Captura web estructurada para Research-to-Project | `FIRECRAWL_API_KEY`; adaptador `cultura/mak_research/source_pipeline.py`; opcional y no habilitado sin clave |
@@ -284,7 +294,7 @@ Solo existencia + donde se configura. Nunca el valor de una llave.
 | Blender 4.5 | Render headless (flyer video, Chataigne prep) | MAK: `~/blender/` tarball portable 4.5.3 LTS (CUDA, GTX 1650); la ruta WIN queda como referencia historica |
 | Chataigne builder | Genera `.noisette` para Resolume/Chataigne | `src/flujo/resolume/automator.py::build_chataigne_noisette_experimental`; schema validado contra fixtures reales (`tests/fixtures/chataigne_1103_real*.noisette`, `tests/test_noisette_real_fixture.py`) -- nunca especular, la fixture manda |
 | rclone / OneDrive en MAK | Entrega de renders (Drive de Google via `gdrive:` remote) | systemd `onedrive-rclone.service` en MAK; detalle en `context/LAST_HANDOFF.md` y `src/flujo/version.py` (changelog) |
-| GitHub (gh CLI + runner self-hosted + workflows) | CI, gate de PRs, ordenes de curatoria, publicacion catalogo/portfolio | `gh` CLI local; runner self-hosted `mak` (online, labels `self-hosted,Linux,X64,mak,eventos`); workflows activos de MAK en `.github/workflows/`; `build-xio-apk.yml` queda fuera de la ruta operacional actual |
+| GitHub (gh CLI + runner self-hosted + workflows) | CI, gate de PRs, ordenes de curatoria, publicacion catalogo/portfolio y build diferido de XIO | `gh` CLI local; runner self-hosted `mak` (online, labels `self-hosted,Linux,X64,mak,eventos`); workflows activos de MAK en `.github/workflows/`; `build-xio-apk.yml` es manual y queda diferido para Chataigne/OSC/VJ |
 
 Vtracer / curl_cffi / imageio_ffmpeg: usados puntualmente en pipelines de
 render/vectorizacion cuando hace falta, instalados ad-hoc (`pip install
@@ -339,7 +349,6 @@ tabla; archivo sin entrada = ratchet rojo.
 | `becas_calendario.py` | VIVO | RD becas, area operativa | 2026-07 |
 | (las 33 utilidades del buzon `mak`) | LEIDAS 2026-08-01, NO ENTRAN | Llevaban dias en la rama `mak` sin que nadie las abriera, porque el muro que las describia decia que main ya las habia rechazado y era falso (ver `context/LAST_HANDOFF.md`). Leidas una por una: **9 invocan `subprocess`** para ejecutar `backlog_codex`, tocar `/etc` o instalar cron jobs -- son ORDENES OPERATIVAS disfrazadas de utilidad, justo lo que el clasificador de rutas de #406 salio a frenar. **~10 son de sandbox** por debajo de 1 KB ("Script de ejemplo para el sandbox", 406 bytes). **3 traen surrogates invalidos** (\udc81, \udc8f): no son UTF-8 y revientan al leerlas, pero PASARON el gate de MAK porque `revisor.gate_compila` compila el texto ya decodificado en la caja -- ese gate es ciego al encoding, y ese es el hallazgo que deja la lectura. Y **4 sirven** (OSC 1.0 con `struct`, verificador de puertos TCP, estadistica de columna CSV, validador JSON), probadas corriendo. Se trajeron al repo y se devolvieron el mismo dia: renombrarlas rompio `test_capataz_enrutamiento`, que usa los NOMBRES de esa carpeta como fixture de los pedidos reales que causaron el defecto, y sus comentarios en castellano encienden el ratchet de idioma. Sin consumidor no compensaban ninguna de las dos cosas. Lo que valia era saber que hay adentro, y eso queda escrito aca | 2026-08-01 |
 | `idioma.py` | VIVO | measures the language of comments/docstrings in every tracked `*.py` (es/en/mixed/none, transparent stdlib heuristic, `git ls-files` only, archive and vendorized zones excluded); measured consumer: `tests/test_idioma_ratchet.py`, the ratchet that pins `tests/fixtures/idioma_baseline.txt` so no NEW file adds Spanish comments while renames are never demanded; real run 2026-07-31: 581 files = 388 es + 96 en + 38 mixed + 59 none; also prints a soft FYI of widespread Spanish identifiers missing from `docs/GLOSSARY.md` | 2026-07-31 |
-| `bridge_issue_render.py` | LEGACY/MANUAL-ONLY | puente Windows histórico; no lo llama el workflow Linux activo | 2026-08-18 |
 | `render_flyer_mak.py` | VIVO | workflow MAK image/poster -> `RD.blend` -> PNG | 2026-08-18 |
 | `render_video_sequence_mak.py` | VIVO | workflow MAK video -> `RD.blend` -> PNG sequence + manifest | 2026-08-18 |
 | `compete_engine.py` | VIVO | proyecto tapiz (cultura) | 2026-07 |
@@ -347,13 +356,13 @@ tabla; archivo sin entrada = ratchet rojo.
 | `comparar_cobertura_fichas.py` | VIVO | compara dos pasadas de `percepcion.py` campo a campo SOBRE LOS MISMOS ids (lo que no esta en ambas no se cuenta) y filtra por `medicion.vision.motor`, para que una pasada con fallback no le acredite a watsonx lo que respondio ollama; corrida real 2026-08-01 sobre 923 fichas ig, v1 gemma3 vs v4 watsonx: `tipo_obra` 51.9%->100%, `materiales` 68.7%->99.6%, `colores` 95%->100%, y la unica caida real `oportunidad_codigo` 99.1%->75.9% (watsonx omite la clave en 225 imagenes; ninguna de las dos pasadas era plantilla: 1258 y 640 valores distintos) | 2026-08-01 |
 | `consolidar_fichas.py` | VIVO | mete una pasada nueva de `percepcion.py` en el `fichas.jsonl` vivo sin perder lo que la vieja sabia: la fusion es CAMPO A CAMPO porque el reemplazo por fila destruye datos medidos -- la pasada de watsonx llena `tipo_obra` del 67% al 100% pero deja `oportunidad_codigo` vacio en 225 imagenes donde el modelo chico habia escrito una. La mezcla se DECLARA en `medicion.vision.heredado` + `motor_heredado`: una ficha con campos de dos motores y sin registro de cual vino de cual es peor que cualquiera de las dos pasadas sola. Ensayo por defecto; `--aplicar` respalda con sello de tiempo, escribe a un temporal y lo valida ANTES de pisar el vivo. Ensayo real 2026-08-01 sobre 3.138 fichas: 1.354 fichas reemplazadas, 1.482 campos mejorados, 397 heredados, **9.348 pisados (4.595 de ellos quedando MAS CHICOS)** y 0 que queden vacios habiendo tenido valor. Ese cuarto numero es el que faltaba: la primera version contaba tres casos sobre un test de PRESENCIA y cubria 1.879 de 17.602 decisiones, imprimiendo `campos perdidos: 0` como compuerta -- un cero que solo podia dar cero. Lo encontro una revision adversarial midiendo el archivo real, no un fixture. La atribucion es POR CAMPO (`heredado: {campo: motor}`) porque un motor por ficha pierde el rastro en la segunda fusion, y `comparar_cobertura_fichas.py` ya no cuenta como llenos los campos heredados: sin eso, medir el archivo fusionado le acreditaba a watsonx el 100% de `oportunidad_codigo` cuando lo real es 77,9%. Escribir exige que NO haya percepcion corriendo (`pgrep`) y toma `flock`: una ficha apendeada en la ventana desaparece del vivo y queda marcada en `procesados.txt`, que es lo unico irreversible de la operacion | 2026-08-01 |
 | `ig_metadatos.py` | VIVO | consumidor medido: `percepcion.py correr --meta-ig`, que mete el texto del artista en el prompt de vision. Saca del export de Instagram el mapa archivo -> {fecha, texto}. Medido sobre el export real 2026-08-01: 1.125 archivos mapeados, 1.014 con texto propio (90%), 1.125 con fecha exacta, rango 2018-11-29 a 2026-06-16; casan 1.124 de las 1.401 fichas ig (80%). Repara el mojibake del export (Instagram escribe UTF-8 y el export lo decodifica como latin-1: `coleccion` llega como `colecciA3n`) quedandose con la version de MENOS marcas, y lo que no pudo recuperar lo marca en vez de entregarlo como si estuviera bien. Lee SOLO `your_instagram_activity/media/`: al lado viven mensajes privados, likes e interacciones de historias, y toda ruta que pase por ahi se rechaza por nombre; `tests/test_ig_metadatos.py` | 2026-08-01 |
-| `conversacion.py` | VIVO | tercer hermano de `arqueologia.py` (historial de git) y `esfuerzo.py` (costo de un informe): lee las transcripciones de `~/.claude/projects/` como corpus. Nadie las escribio para eso, y contienen lo unico que el repo no tiene -- lo que el usuario decidio, ordeno y tuvo que repetir. Consumidor medido: `clasificar` manda los lotes a watsonx y `citar` recupera la cita TEXTUAL por indice, porque una decision parafraseada deja de ser la decision. Corrida real 2026-08-01 sobre 126 sesiones: 17.629 turnos con texto, de los cuales **3.094 escritos por un humano** (0,7 MB) contra 12.197 del asistente (5,6 MB); 39,2 MB del corpus son `tool_result` y no entran. Dos defectos propios encontrados MIDIENDO, no leyendo: (1) la primera version decidia por una lista de prefijos escrita a mano quien era humano, la lista dejo de coincidir con la realidad y los resumenes de compactacion se comieron los 30 primeros puestos -- ahora lo dice `origin.kind`, que el registro ya trae; (2) los lotes se dimensionaban por la ventana de ENTRADA (95k) y los 3 primeros lotes agotaron los 8.000 tokens de SALIDA devolviendo JSON cortado, asi que el tope real es la salida. Un lote sin JSON legible se cuenta como FALLO y nunca como lista vacia. El hallazgo que no cuesta un token es la repeticion entre sesiones DISTINTAS: `users issvk downloads` en 13, `claude teleport session` en 9, `compileall src flujo`/`pytest tests`/`flujo verify` en 6, `api key nvidia` en 6 -- constantes que hay que re-pegar cada sesion porque no estan escritas | 2026-08-01 |
+| `conversacion.py` | VIVO | tercer hermano de `arqueologia.py` (historial de git) y `esfuerzo.py` (costo de un informe): lee las transcripciones de `~/.claude/projects/` como corpus. Nadie las escribio para eso, y contienen lo unico que el repo no tiene -- lo que el usuario decidio, ordeno y tuvo que repetir. Consumidor medido: `clasificar` usa la cadena activa Cerebras/Groq/Ollama y `citar` recupera la cita TEXTUAL por indice, porque una decision parafraseada deja de ser la decision. Corrida real 2026-08-01 sobre 126 sesiones: 17.629 turnos con texto, de los cuales **3.094 escritos por un humano** (0,7 MB) contra 12.197 del asistente (5,6 MB); 39,2 MB del corpus son `tool_result` y no entran. Dos defectos propios encontrados MIDIENDO, no leyendo: (1) la primera version decidia por una lista de prefijos escrita a mano quien era humano, la lista dejo de coincidir con la realidad y los resumenes de compactacion se comieron los 30 primeros puestos -- ahora lo dice `origin.kind`, que el registro ya trae; (2) los lotes se dimensionaban por la ventana de ENTRADA (95k) y los 3 primeros lotes agotaron los 8.000 tokens de SALIDA devolviendo JSON cortado, asi que el tope real es la salida. Un lote sin JSON legible se cuenta como FALLO y nunca como lista vacia. El hallazgo que no cuesta un token es la repeticion entre sesiones DISTINTAS: `users issvk downloads` en 13, `claude teleport session` en 9, `compileall src flujo`/`pytest tests`/`flujo verify` en 6, `api key nvidia` en 6 -- constantes que hay que re-pegar cada sesion porque no estan escritas | 2026-08-01 |
 | `inferential_archaeology.py` | VIVO | read-only cross-source index for authorship, proposals, direct mutation evidence, Git path history, hotspots, and possibility lanes; consumed by the archaeology focused tests and ignored evidence packet under `out/archaeology/` | 2026-08-13 |
 | `drenar_material.py` | VIVO | vacia `~/plataforma/material.jsonl` en paralelo mientras dure la ventana pagada -- `trabajo.py` saca UNA tarea por invocacion y corre por cron, o sea meses para 2.730 tareas. Escribe a su propio directorio y NO a la base de RD: una productora identificada por un modelo es un candidato, no un cliente. Lo pausado o fallido VUELVE a pendiente (una cola que se vacia sin haber trabajado es la peor forma de decir que termino) y aborta el lote entero si se acumulan pausas por ceguera. Informa la DISTRIBUCION, no un total: "412 hechas" no dice nada, "412 hechas, 180 con productora y fuente, 190 NO SE ENCONTRO, 42 pausadas ciegas" si. Corrida real 2026-08-01: 8 tareas, 7,6 s cada una con 4 hilos | 2026-08-01 |
 | `gen_archivo_iskvw.py` | VIVO | genera `iskvw/datos/archivo.json`, el contrato piezas+vinculos; consumidor confirmado via `.github/workflows/publicar_iskvw.yml`. Desde 2026-08-05 `--fuente todo` es el sustrato publico limpio: 446 piezas y 237 vinculos en medicion local, sin mezclar los ensayos de research; `--fuente ensayos` o `--fuente todo --incluir-ensayos` trae deliberadamente la vista de research ilustrado (33 piezas y 32 vinculos adicionales: informe, conceptos e iconos). La conversion micelio->contrato vive en `cultura/mak_plataforma/contrato_archivo.py` desde 2026-07-29, compartida con `GET /api/archivo` del hub de MAK. Ese workflow corre en `ubuntu-latest` y nunca alcanza la caja (LAN privada), asi que los vinculos de micelio llegan solo por snapshot `iskvw/datos/micelio.json`, empujado por `cultura/mak_plataforma/entregar_micelio.py` corriendo EN la caja; hard-falla (exit 1, nada escrito, ningun PR) si el micelio no responde o devuelve 0 vinculos -- una ausencia nunca se vuelve un cero plausible. `tests/test_contrato_archivo.py`, `tests/test_gen_archivo_iskvw.py`, `tests/test_entregar_micelio.py` | 2026-08-05 |
 | `gen_propuestas_rd.py` | VIVO | el ultimo salto a la base RD: alimenta el escritor de borradores de `mineria_rd.py` desde `docs/rd/candidatos_curatoria/candidatos_db.jsonl` (ya digerido por `extraccion_db`), sin OCR ni GPU; re-matchea contra los catalogos ACTUALES, reporta dudosos sin proponerlos y exige evidencia >= 2; los borradores salen a una carpeta aparte y entran solo por PR humano; `tests/test_gen_propuestas_rd.py` | 2026-07-29 |
 | `gen_rd_standalone.py` | VIVO | hornea la base RD en `herramientas_rd.html` (bundle sin servidor), `npm run build:rd` | 2026-07-27 |
-| `enviar_a_mak.py` | VIVO | SendTo WIN -> MAK, probado e2e 2026-07-23 | 2026-07-23 |
+| `repo_audit.py` | VIVO | gate read-only de grafo web, referencias activas obsoletas y contratos de las SQLite locales; consumidor `.github/workflows/ci.yml`, `Makefile audit` y `tests/test_repo_audit.py` | 2026-08-21 |
 | `gen_dashboard_productoras.py` | VIVO | genera `db_productoras.html`; documentado en `docs/rd/DB_PRODUCTORAS_ESTADO.md`; consume la salida de `triangular_fichas.py` | 2026-07-25 (llega a main con la promocion de `rd`, PR #303) |
 | `gen_presentacion_db.py` | VIVO | genera `docs/rd/presentacion_db.html`, la pieza formal para la directiva RD; documentado en `docs/rd/DB_PRODUCTORAS_ESTADO.md` | 2026-07-25 (llega a main con la promocion de `rd`, PR #303) |
 | `gen_propuesta_directiva.py` | VIVO | genera `docs/rd/propuesta_directiva.html`, la propuesta a la directiva (que ofrece RD, con que cuenta, como protege los datos y que necesita aprobar); lee `data/rd.db`, asi que ninguna cifra se escribe a mano | 2026-07-26 |
@@ -372,14 +381,9 @@ tabla; archivo sin entrada = ratchet rojo.
 | `triangular_fichas.py` | VIVO | triangula `fichas.jsonl` de MAK en eventos + productoras candidatas; consumido por `gen_dashboard_productoras.py` y `gen_presentacion_db.py` | 2026-07-25 (llega a main con la promocion de `rd`, PR #303) |
 | `gen_mapa_comandos.py` | VIVO | genera el bloque de comandos de `MAPA.md`; `tests/test_mapa_completo.py` exige que el mapa cubra todo el CLI | 2026-07-25 |
 | `construir_mapa_visual.py` | VIVO | builds a bounded visual contact sheet from declared portfolio media; used by the MAK visual review workflow and kept separate from public promotion | 2026-08-08 |
-| `watsonx_smoke.py` | VIVO | verificador de solo lectura de IBM watsonx: cambia la API key por bearer IAM, lista modelos, hace UNA llamada de chat real y calcula el costo. Consumidor medido: `cultura/mak_research/research_lib.py` `_watsonx` -- el metodo se pego DESPUES de que esto diera 4/4 contra la cuenta real (2026-07-30: bearer 460 ms, 24 modelos, chat 681 ms, 58 tokens = $0.000044), y esa es la regla: no se agrega un proveedor que no se probo. Sin `WATSONX_API_KEY` en el entorno no hace nada y lo dice | 2026-07-30 |
-| `watsonx_coder_bench.py` | VIVO | decide QUE modelo de watsonx encabeza la cadena de coder, ejecutando la respuesta de cada candidato contra seis casos en vez de leer su ficha. Consumidor medido: `cultura/mak_codex/codex_lib.py` `_CODER_CHAIN_DEFAULT`, cuyo orden sale de esta corrida y lo dice en su comentario. Hallazgo de la primera corrida real (2026-07-31, cuenta del usuario): de cinco candidatos el UNICO etiquetado `code` (`granite-8b-code-instruct`) fue el UNICO que fallo un caso -- no descarta el tramo invalido. Elegir por el nombre habria puesto el peor primero. Sin `WATSONX_API_KEY` no hace nada y lo dice | 2026-07-31 |
-| `watsonx_vision_smoke.py` | VIVO | sonda de solo lectura: manda UNA imagen real del corpus con el prompt real de percepcion y muestra la respuesta CRUDA. Existe porque la capacidad de vision de los modelos de la cuenta se habia inferido del NOMBRE -- `task_ids` no declara tarea de vision -- y aca no se cablea un proveedor que no se probo (misma regla que `watsonx_smoke.py`). Corrida real 2026-07-31 sobre un flyer de Club Hipico: los TRES candidatos aceptaron la imagen (36-44 s) y sacaron venue, fecha y 4 headliners del propio flyer. Consumidor medido: decide si `watsonx_vision()` se escribe o si el plan de re-percepcion cambia entero | 2026-07-31 |
-| `watsonx_vision_bench.py` | VIVO | decide QUE modelo de vision lee el archivo, con dos verdades de referencia que ya estaban en disco y nadie usaba: el OCR de tesseract (no vacio en el 24% de las fichas) y la ficha que hizo `gemma3:4b`. Muestra ESTRATIFICADA -- mitad con OCR, mitad de las que hoy vuelven vacias, que son el 76% y el motivo entero. La invencion cuenta EN CONTRA: un campo lleno solo puntua si su valor aparece en el OCR o en la ficha de hoy. Consumidor medido: el default de `WATSONX_VISION_MODEL` en `research_lib.watsonx_vision`. Corrida real 2026-07-31: el unico modelo llamado `vision` fue el PEOR (solape 0.414, 3 inventados, 40k tokens) contra mistral-small (0.807, 0 inventados, 7.7k) -- ese numero salio con `--muestras 8` y con el banco reescalando a 1024, que NO era lo que corre produccion. Corrida 2026-08-01 con `--lado`, misma muestra determinista de 12 y mismo modelo: 1024 -> solape 0.642 / 12.2k tokens; 1280 -> solape **0.761** / 16.4k tokens; misma latencia (2.2 s) y 0 inventados en ambos. Los 256 px extra compran +18.5% de lectura por +34% de tokens: produccion se queda en 1280 | 2026-08-01 |
 | `verificar_piel_honesta.mjs` | VIVO | sonda de navegador real (headless, nunca una ventana) para las cuatro afirmaciones de la piel campo que el 2026-07-30 se vendieron mas fuertes que su evidencia: el gesto de quedarse quieto nunca se ejercito de verdad, las letras doublecup nunca se VIERON, el regimen industrial nunca se manejo desde el ARCHIVO, y los fps nunca se tomaron en el estandar declarado (viewport de telefono, CPU x4). Consumidor: el operador antes de afirmar cualquiera de las cuatro; no es test de CI porque necesita el sitio servido. `playwright-core` NO es dependencia del repo -- se resuelve por `PLAYWRIGHT_CORE` o instalacion normal, y sin el la herramienta dice como instalarlo en vez de morir | 2026-07-31 |
 | `iconos_conjunto.py` | VIVO | valida y construye la galeria de un CONJUNTO de iconos (`--raiz`, sirve a cualquiera, no solo al del ensayo rave); consumidor medido: `docs/cultura/ensayos/rave/` (16 iconos, 0 errores) y el anexo iconografico que exige `docs/cultura/FORMATO_ENSAYO.md`; `tests/test_iconos_conjunto.py` | 2026-07-30 |
 | `gen_vocabulario_motor.py` | VIVO | exporta el vocabulario del motor semantico (22 figuras/12 gestos/9 tonos) a `docs/cultura/lib/vocabulario.json` para que el MISMO spec compile en el navegador sin re-portar la geometria a mano; consumidor: `docs/cultura/lib/compilador.js` + el taller de la galeria; `--verificar` falla si quedo viejo respecto de `vocabulario.py`; `tests/test_compilador_navegador.py` | 2026-07-30 |
-| `instalar_enviar_a_mak.py` | VIVO | instalador del SendTo de `enviar_a_mak.py` | 2026-07-23 |
 | `render_video_rd.py` | LEGACY/MANUAL-ONLY | pipeline histórico H264 sobre `RD.paravideo.blend`; no es la ruta productiva MAK | 2026-08-18 |
 | `system_map.py` | VIVO | mapa mecanico del repo (soporte de `contexto_repo.py`) | 2026-07 |
 | `tapiz_live_loop.py` | REVISAR | cultura, decision de uso pendiente del usuario | sin fecha medida |

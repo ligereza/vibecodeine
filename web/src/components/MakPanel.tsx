@@ -393,7 +393,7 @@ export default function MakPanel() {
           </div>
         ) : (
           <p className="text-xs text-neutral-500">
-            Todavía no hay ledger de tandas externas visible. Cuando Watsonx/AWS produzcan
+            Todavía no hay ledger de tandas externas visible. Cuando Groq/Gemini produzcan
             hallazgos, entran acá solo después del juicio local.
           </p>
         )}

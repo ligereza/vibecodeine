@@ -93,7 +93,11 @@ def main() -> int:
     args.salida.write_text(json.dumps(datos, ensure_ascii=False, indent=1),
                            encoding="utf-8")
     kb = args.salida.stat().st_size / 1024
-    print(f"{args.salida.relative_to(RAIZ)}: "
+    try:
+        display_path = args.salida.relative_to(RAIZ)
+    except ValueError:
+        display_path = args.salida
+    print(f"{display_path}: "
           f"{len(datos['productoras'])} productoras, {len(datos['venues'])} venues, "
           f"{horneados} logos ({kb:.1f} KB)")
     return 0

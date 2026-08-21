@@ -24,12 +24,12 @@ def test_activity_inventory_groups_execution_path(tmp_path, monkeypatch):
 
     activity.record("model", "started", trigger="cron:MAK-TRABAJO",
                     caller="mak-research.LLM", queue="research.llm",
-                    department="research", provider="watsonx",
-                    model="mistral-medium")
+                    department="research", provider="groq",
+                    model="openai/gpt-oss-20b")
     activity.record("model", "finished", trigger="cron:MAK-TRABAJO",
                     caller="mak-research.LLM", queue="research.llm",
-                    department="research", provider="watsonx",
-                    model="mistral-medium")
+                    department="research", provider="groq",
+                    model="openai/gpt-oss-20b")
 
     payload = activity.inventory()
     assert payload["schema"] == "mak-activity-inventory-v1"
@@ -39,7 +39,7 @@ def test_activity_inventory_groups_execution_path(tmp_path, monkeypatch):
     assert payload["groups"][0]["finished"] == 1
 
 
-def test_gpu_guard_is_importable_on_director_windows(tmp_path, monkeypatch):
+def test_gpu_guard_is_importable_on_linux_without_active_state(tmp_path, monkeypatch):
     activity = _load("mak_test_actividad_gpu", PLATFORM / "actividad.py")
     monkeypatch.setattr(activity, "ACTIVITY_FILE", str(tmp_path / "activity.jsonl"))
     monkeypatch.setattr(activity, "LOCK_FILE", str(tmp_path / "activity.lock"))
@@ -50,7 +50,7 @@ def test_gpu_guard_is_importable_on_director_windows(tmp_path, monkeypatch):
 
     with gpu.slot(caller="test", queue="test.queue", model="test-model",
                   department="test", trigger="test"):
-        # Windows has no fcntl; the MAK Linux lock is intentionally a no-op here.
+        # The test uses an isolated lock/state path and must not leave active state.
         assert not Path(gpu.STATE_FILE).exists() or Path(gpu.STATE_FILE).is_file()
 
 

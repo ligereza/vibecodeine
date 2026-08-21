@@ -53,9 +53,10 @@ gmail
 instagram
 ```
 
-(verificado en vivo contra issues reales 2026-07-20: la label `action/descargar-ig`
-que este doc listaba antes NUNCA aparece; el label real que marca "tiene link IG"
-es `instagram`. tools/bridge_issue_render.py filtra por ese.)
+(verificado en vivo contra issues reales 2026-07-20: la label `instagram` marca
+que el issue contiene un enlace. La ejecución actual la realiza el workflow
+`.github/workflows/issue_descarga_ig.yml` en el runner Linux de MAK; no existe
+un puente Windows dentro del repo activo.)
 
 ### Trabajo local
 
