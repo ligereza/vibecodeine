@@ -472,7 +472,8 @@ declared current consumers are green.
 
 ## Last verified
 
-2026-08-21 America/Santiago — web/DB cleanup gate and bounded intake verified:
+2026-08-21 America/Santiago — web/DB cleanup gate and bounded intake verified;
+published in commit `69e7fba` and pushed to `origin/main`:
 the active web graph has 36 modules, 35 reachable and 0 dead; stale active
 references are 0; `rd.db`, `rd_datos.db`, `mak_knowledge.db` and `flujo.db`
 pass read-only integrity checks with all declared consumers present. RD live
@@ -480,7 +481,8 @@ and standalone projections are equal by SHA-256. The source-index intake used
 the physical SSD index, emitted three bounded Fondart packages in `/tmp`, and
 left the source and learning DB untouched. The only runtime defect found was
 the standalone generator's absolute-output display path; it was fixed and
-focused tests passed. No commit or push was made.
+focused tests passed. The remaining worktree changes are intentionally outside
+that commit and must be handled by the next bounded slice.
 
 2026-08-20 America/Santiago — Python structure index and dual debugging slice
 verified: `flujo code-index` generated the source-free 781-module index,
