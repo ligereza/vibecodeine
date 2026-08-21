@@ -57,6 +57,15 @@ dejan de competir como postulaciones y el paquete derivado conserva la
 decision y su provenance. La reconstruccion no afirma que un proyecto sea
 postulable: solo mejora la unidad material que llega a Curatoria/Postulacion.
 
+El puente `src/flujo/knowledge/reconstruction_adapter.py` y
+`tools/import_project_reconstruction.py` convierte cada unidad reconstruida en
+`mak-project-ir-v1` con `source.kind=portable_ssd_index`, artefactos
+referenciados, relaciones y unknowns. El enrutador comun produce abstencion
+para esos registros mientras la fuente fisica no este montada/verificada;
+`--db` es opt-in y guarda solo en el LearningStore existente. La politica de
+Portfolio es no publicar automaticamente y la de Postulacion es no crear un
+paquete desde este puente.
+
 Con el estado verificado el 2026-08-20, la salida correcta es `status=abstain`
 con `eligible_examples=8`, `holdout_count=0` y razón
 `no_independent_holdout`: hay ocho ejemplos elegibles distribuidos en cuatro
