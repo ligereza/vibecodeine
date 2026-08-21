@@ -1,5 +1,22 @@
 # flujo index — Indexador real de C:\rd para agentes/IA
 
+## Índice estructural Python
+
+`flujo code-index` genera un mapa AST del repositorio para que un agente pueda
+ubicar módulos, símbolos, consumidores, imports, entradas y efectos sin leer
+todos los archivos fuente. El JSON no contiene texto Python ni secretos y no
+modifica el árbol escaneado.
+
+```text
+flujo code-index --output context/code_structure_index.json
+flujo code-index --query "research provider route" --format markdown
+```
+
+El esquema estable es `mak-code-structure-v1`; para consultas compactas usa
+`mak-code-brief-v1`. Las rutas se calculan desde la raíz indicada y `WIN`,
+`.agents`, `.codex`, `.claude`, entornos virtuales, caches y artefactos de
+build se excluyen por defecto.
+
 Herramienta de **optimización + búsqueda + índice** del repo. Escanea `C:\rd`
 (o un inventario `.txt`) y produce `index_rd.json`: un mapa REAL de qué archivos
 hay, dónde, cuánto pesan, qué versiones y duplicados existen, y qué se puede

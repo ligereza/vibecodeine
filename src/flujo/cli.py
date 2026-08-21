@@ -14,6 +14,7 @@ Comandos disponibles (ejecutar `flujo --help`):
     export                      Exportar ZIP listo para PS/AI
   index / db
     index                       Reconstruir/consultar índice SQLite de flyers
+    code-index                 Indexar estructura AST de Python sin guardar código fuente
     flyer-list                  Listar flyers
   jobs
     job-new                     Crear job desde texto/correo
@@ -1565,6 +1566,39 @@ def index(
                 str(r.get("media_type", "")),
             )
         console.print(table)
+
+
+@app.command("code-index")
+def code_index(
+    root: Optional[Path] = typer.Option(None, "--root", help="raíz del árbol Python"),
+    output: Optional[Path] = typer.Option(None, "--output", "-o", help="JSON del índice"),
+    query: str = typer.Option("", "--query", "-q", help="consulta estructural"),
+    output_format: str = typer.Option("json", "--format", help="json | markdown"),
+):
+    """Crear un índice AST consultable sin incluir texto fuente."""
+    import json as _json
+
+    from .index.code_index import (
+        DEFAULT_OUTPUT,
+        build_index,
+        make_brief,
+        render_brief,
+        save_index,
+    )
+
+    if output_format not in {"json", "markdown"}:
+        raise typer.BadParameter("debe ser json o markdown", param_hint="--format")
+    base = (root or Path(__file__).resolve().parents[2]).expanduser().resolve()
+    structure = build_index(base)
+    target = (output or (base / DEFAULT_OUTPUT)).expanduser()
+    saved = save_index(structure, target)
+    brief = make_brief(structure, query)
+    brief["output"] = str(saved)
+    brief["index_schema"] = structure["schema"]
+    if output_format == "markdown":
+        typer.echo(render_brief(brief), nl=False)
+    else:
+        typer.echo(_json.dumps(brief, ensure_ascii=True, indent=2))
 
 
 @app.command("flyer-list")

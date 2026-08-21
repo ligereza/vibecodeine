@@ -1,6 +1,6 @@
 {
  "formato": "comandos/1",
- "total": 97,
+ "total": 98,
  "grupos": [
   "airdrop",
   "autonomia",
@@ -155,6 +155,15 @@
    "requiere": "`FLUJO_RD_ROOT` apuntando al arbol de material",
    "estado": "falta: `FLUJO_RD_ROOT` apuntando al arbol de material",
    "destructivo": true
+  },
+  {
+   "cmd": "code-index",
+   "invocacion": "py -m flujo code-index",
+   "grupo": "",
+   "desc": "Crear un índice AST consultable sin incluir texto fuente.",
+   "requiere": "",
+   "estado": "listo",
+   "destructivo": null
   },
   {
    "cmd": "flyer-list",
