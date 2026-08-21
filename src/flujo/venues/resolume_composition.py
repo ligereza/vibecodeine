@@ -8,11 +8,11 @@ looks the same whether it is a tour that ran or a dump nobody opened. That
 distinction is the one ``MEMORIA_DIRECCION.md`` §2.12 turns into a report: "the
 tool reads the project files to know which assets are really used".
 
-A Resolume composition (``.avc``) is that project file. Measured on the four in
-the index: ``DREFGIRA/IMPORT CLAUDIO/SHOWCAUPOLICAN FINAL ANTES DE CAUPO.avc``
-carries 37 clip references and 19 of them resolve to exactly one SSD asset each,
-landing in ``DREFGIRA/BLOQUE 01 LSDR/`` and ``DREFGIRA/BLOQUE 02 CLASICOS/`` --
-the setlist blocks of the tour.
+A Resolume composition (``.avc``) is that project file. Measured on
+``DREFGIRA/IMPORT CLAUDIO/SHOWCAUPOLICAN FINAL ANTES DE CAUPO.avc``: 52 clip
+references, 28 resolving to exactly one SSD asset and 6 more to several copies of
+the same file, landing in ``DREFGIRA/BLOQUE 01 LSDR/`` and
+``DREFGIRA/BLOQUE 02 CLASICOS/`` -- the setlist blocks of the tour, in order.
 
 What is being computed
 ----------------------
@@ -21,11 +21,11 @@ The only join key the data offers is the file's basename, because the compositio
 stores absolute paths from a machine that is not this one. A basename that maps
 to several SSD assets is not a match; it is an ambiguity, and it stays one.
 
-The resolution rate is a MEASUREMENT, never an assumption. The same four files
-give 19/37 for the Caupolican show and 0/72 unambiguous for ``LYON/sampier.avc``,
-whose paths point at another machine's Desktop and OneDrive. A tool that reported
-one number for "how well this works" would be lying about the second case, so the
-rate is reported per composition.
+The resolution rate is a MEASUREMENT, never an assumption. The four compositions
+in the index give 1/1, 28/52, 0/81 and 0/1 unambiguous: ``LYON/sampier.avc``
+resolves nothing because its paths point at another machine's Desktop and
+OneDrive. A tool reporting one number for "how well this works" would be lying
+about three of those four, so the rate is per composition.
 
 What a resolution does not prove
 --------------------------------
@@ -57,8 +57,20 @@ RESOLVER_VERSION = "basename-linkage-abstain-1"
 MEDIA_TAGS = ("VideoFile", "AudioFile")
 
 RESOLVED_UNIQUE = "resolved_unique"
+# Measured on the Caupolican show: all 6 of its ambiguous references had exactly
+# two candidates, and in every case the two agreed on byte size AND on
+# sample_sha256 -- the same clip stored twice, once loose in DREFGIRA and once
+# inside a setlist block. Abstaining there threw away a usable answer: WHICH clip
+# played is decided, only WHERE it lives is not. The two cases are different
+# questions and now carry different labels.
+RESOLVED_MULTI_LOCATION = "resolved_multi_location"
 AMBIGUOUS = "ambiguous"
 NOT_FOUND = "not_found"
+
+# What "the same file" is allowed to mean here. full_sha256 is absent for
+# 45424 of 45536 assets, so byte size plus the sample hash is the strongest
+# available agreement -- strong, and still not proof of identical content.
+USED_STATUSES = frozenset({RESOLVED_UNIQUE, RESOLVED_MULTI_LOCATION})
 
 _WIN_USER = re.compile(r"(?i)(users[\\/])[^\\/]+")
 _DRIVE = re.compile(r"^[A-Za-z]:[\\/]|^\\\\")
@@ -114,6 +126,11 @@ class Resolution:
             **({"nota": "un basename que coincide no prueba los mismos bytes: "
                         "full_sha256 solo existe para 112 de 45536 assets"}
                if self.status == RESOLVED_UNIQUE else {}),
+            **({"nota": "varios assets llevan este nombre y coinciden en bytes y "
+                        "sample_sha256, asi que el clip usado esta decidido y lo "
+                        "indeciso es en cual de las copias; sin full_sha256 la "
+                        "coincidencia es fuerte pero no una prueba de contenido"}
+               if self.status == RESOLVED_MULTI_LOCATION else {}),
         }
 
 
@@ -257,8 +274,21 @@ def index_basenames(index_path: str | Path) -> dict[str, list[str]]:
         con.close()
 
 
+def index_asset_metadata(index_path: str | Path) -> dict[str, tuple[int, str]]:
+    """Byte size and sample hash per asset path, for deciding duplicate copies."""
+    path = Path(index_path).expanduser()
+    con = sqlite3.connect("file:" + str(path) + "?mode=ro", uri=True)
+    try:
+        return {str(rel): (int(size or 0), str(sample or ""))
+                for rel, size, sample in con.execute(
+                    "SELECT relative_path, bytes, sample_sha256 FROM assets")}
+    finally:
+        con.close()
+
+
 def resolve_references(record: CompositionRecord,
-                       basenames: Mapping[str, Sequence[str]]
+                       basenames: Mapping[str, Sequence[str]],
+                       metadata: Mapping[str, tuple[int, str]] | None = None
                        ) -> list[Resolution]:
     """Link each reference to the SSD, abstaining whenever the name is shared.
 
@@ -274,10 +304,28 @@ def resolve_references(record: CompositionRecord,
             status = NOT_FOUND
         elif len(candidates) == 1:
             status = RESOLVED_UNIQUE
+        elif metadata and _same_file_everywhere(candidates, metadata):
+            status = RESOLVED_MULTI_LOCATION
         else:
             status = AMBIGUOUS
         out.append(Resolution(reference, status, candidates))
     return out
+
+
+def _same_file_everywhere(candidates: Sequence[str],
+                          metadata: Mapping[str, tuple[int, str]]) -> bool:
+    """True when every candidate agrees on byte size and sample hash.
+
+    Refuses to decide when a candidate has no metadata or an empty sample hash:
+    an unknown is not an agreement.
+    """
+    seen: set[tuple[int, str]] = set()
+    for candidate in candidates:
+        entry = metadata.get(candidate)
+        if entry is None or not entry[1]:
+            return False
+        seen.add(entry)
+    return len(seen) == 1
 
 
 def usage_report(record: CompositionRecord,
@@ -287,10 +335,14 @@ def usage_report(record: CompositionRecord,
     for resolution in resolutions:
         by_status.setdefault(resolution.status, []).append(resolution)
     unique = by_status.get(RESOLVED_UNIQUE, [])
+    multi = by_status.get(RESOLVED_MULTI_LOCATION, [])
     ambiguous = by_status.get(AMBIGUOUS, [])
     missing = by_status.get(NOT_FOUND, [])
     total = len(resolutions)
-    used_assets = sorted({r.candidates[0] for r in unique})
+    # A multi-location clip counts as used once; every copy is recorded so the
+    # duplication is visible instead of silently collapsed.
+    used_assets = sorted({r.candidates[0] for r in unique}
+                         | {c for r in multi for c in r.candidates})
     containers = sorted({a.split("/", 1)[0] for a in used_assets})
     rate = (len(unique) / total) if total else 0.0
     report = {
@@ -298,12 +350,18 @@ def usage_report(record: CompositionRecord,
         "resolver_version": RESOLVER_VERSION,
         "composicion": record.summary(),
         "tasa_resolucion_inequivoca": round(rate, 4),
+        "tasa_clip_decidido": round(((len(unique) + len(multi)) / total)
+                                    if total else 0.0, 4),
         "conteos": {
             "referencias": total,
             RESOLVED_UNIQUE: len(unique),
+            RESOLVED_MULTI_LOCATION: len(multi),
             AMBIGUOUS: len(ambiguous),
             NOT_FOUND: len(missing),
         },
+        "copias_duplicadas": [
+            {"basename": r.reference.basename,
+             "copias": list(r.candidates)} for r in multi],
         "assets_usados": used_assets,
         "contenedores_tocados": containers,
         "referencias": [r.as_dict() for r in resolutions],
@@ -320,6 +378,12 @@ def usage_report(record: CompositionRecord,
             "medida sobre los cuatro .avc del indice va de 0 a 19 de 37.",
         ],
     }
+    if multi:
+        report["limites"].append(
+            f"{len(multi)} referencia(s) resolvieron a varias copias del mismo "
+            "archivo (mismo tamano y mismo sample_sha256): el clip usado esta "
+            "decidido, la copia concreta no, y la duplicacion queda listada en "
+            "copias_duplicadas.")
     if ambiguous:
         report["limites"].append(
             f"{len(ambiguous)} referencia(s) quedan sin decidir porque su nombre "

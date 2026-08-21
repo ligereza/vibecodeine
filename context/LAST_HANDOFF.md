@@ -275,6 +275,29 @@ lectura. Y el reporte de huerfanos solo sera confiable cuando existan mas
 composiciones leidas: hoy mide "no referenciado por las cuatro que hay", que es
 una afirmacion mucho mas debil que "sin usar".
 
+REFINAMIENTO MEDIDO EN EL MISMO BLOQUE: las 6 referencias ambiguas del show de
+Caupolican no eran indecidibles. Al mirar los metadatos, las dos candidatas de
+cada una coinciden en tamano en bytes Y en `sample_sha256`: es el MISMO clip
+guardado dos veces, una suelto en `DREFGIRA` y otra dentro de un bloque del
+setlist. Abstenerse ahi tiraba una respuesta usable, porque QUE clip sono estaba
+decidido desde el principio; lo indeciso era en cual de las copias. Son dos
+preguntas distintas y ahora llevan etiquetas distintas:
+`resolved_multi_location` frente a `ambiguous`.
+
+Efecto: Caupolican pasa de 28/52 a 34/52 con clip decidido (65 %) y 0 ambiguas,
+y aparecen 6 duplicados explicitos en `copias_duplicadas`. El mecanismo
+discrimina en vez de resolver en bloque: en `sampier.avc` recupero 3 y dejo 1
+genuinamente ambigua. La tasa sin ambiguedad se mantiene aparte
+(`tasa_resolucion_inequivoca`) porque la ubicacion sigue sin decidirse, y el
+limite dice que sin `full_sha256` la coincidencia de tamano y sample es fuerte
+pero no prueba de contenido. Un `sample_sha256` vacio o un candidato sin
+metadatos NO cuenta como acuerdo.
+
+Esto tambien alimenta la pregunta de `MEMORIA_DIRECCION.md` §2.12 que "se vende
+sola" (que puedo borrar): una copia duplicada es candidata a borrado de una
+manera en que un archivo unico no lo es. Los duplicados quedan listados, no
+colapsados en silencio.
+
 
 ## Next concrete action
 
