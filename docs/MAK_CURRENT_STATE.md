@@ -66,6 +66,20 @@ para esos registros mientras la fuente fisica no este montada/verificada;
 Portfolio es no publicar automaticamente y la de Postulacion es no crear un
 paquete desde este puente.
 
+El contexto DREFGIRA ya tiene una capa persistente y consultable en la misma
+base `data/mak_knowledge.db`: `src/flujo/knowledge/project_context.py` y
+`tools/triangulate_project_context.py` reutilizan el catalogo `entities` y
+agregan `context_sources`, `context_relations` y `project_contexts`. El paquete
+versionado es `knowledge/project_context/drefgira_2025.json`. La triangulacion
+real registro 10 entidades, 9 fuentes y 12 relaciones: 3 verificadas con dos
+grupos independientes, 4 atestiguadas por el operador y 5 candidatas. El show
+del 2025-11-02 en Movistar Arena queda verificado; Antofagasta/Club Montecarlo
+del 2025-11-28 queda candidato por tener una sola fuente. Los cinco registros
+DREFGIRA fueron enlazados a artista, album y alcance de gira, conservaron
+`review_required`, siguen absteniendose en Curatoria/Postulacion y no generaron
+ninguna postulacion. El JSONL y las rutas derivadas fueron regenerados para no
+dejar una proyeccion anterior del proyecto.
+
 Con el estado verificado el 2026-08-20, la salida correcta es `status=abstain`
 con `eligible_examples=8`, `holdout_count=0` y razón
 `no_independent_holdout`: hay ocho ejemplos elegibles distribuidos en cuatro
