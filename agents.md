@@ -41,6 +41,13 @@ configuration keys, tests, technical logs and operational metadata in English
 ASCII. Human-facing RD and Portfolio material may use correct Spanish,
 accents and diacritics.
 
+## User analogy convention
+
+When a user message starts with `XANAX:`, treat the remainder as an analogy,
+not as a literal request to install, test or research the named app or tool.
+Infer the capability being compared, answer at the conceptual level, and act
+on the named app only if the user separately makes that literal request.
+
 ## Permission and responsibility
 
 The user authorizes editing of the MAK operational files, source components,
@@ -94,6 +101,23 @@ loop:
    do not wait for the user to send `continue`.
 7. Update the handoff with evidence and immediately execute the next concrete
    action if work remains.
+
+## Reflection gate
+
+Pause after at most 10 tool/command actions or 10 inspected files, whichever
+comes first. Pause immediately after the first failed validation, conflicting
+evidence, a proposed schema/database change, or an action that could broaden
+scope. Use a short gate before continuing:
+
+1. What is the real user outcome?
+2. What was observed versus inferred?
+3. What is the smallest reversible next action?
+4. Can the dependency be removed or the route changed instead?
+5. What result would make this path a dead end?
+
+This gate is a decision budget, not a requirement to write another report. If
+the answer is only more reading without a new validation signal, change the
+route or stop the slice.
 
 A phase label is only navigation. Never repeat an old phase because a chat
 summary mentions it. Derive the current work from the open items in the
