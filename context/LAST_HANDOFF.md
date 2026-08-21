@@ -352,6 +352,7 @@ esta en `Next concrete action`.
 | Web/DB audit gate | `tools/repo_audit.py`, `tests/test_repo_audit.py`, `.github/workflows/ci.yml`, `Makefile` | verified locally; 36 web modules, 35 reachable, 0 dead, 0 stale active references; four DBs have resolved consumer paths and integrity `ok`; published in `69e7fba` |
 | RD live/standalone projection | `src/flujo/rd/panel.py`, `tools/gen_rd_standalone.py`, `web/src/data/rdDbEmbebida.json` | verified locally; generated and tracked JSON are equal (6 records, identical SHA-256); generator now accepts absolute output paths |
 | SSD application intake | `tools/build_application_intake.py`, `/home/mak/labs/portable-ssd-index-20260813/archivo_index.sqlite` | verified in `/tmp`; 917 projects scanned, 3 bounded Fondart packages emitted, derived SQLite integrity `ok`; status remains `draft_with_evidence_gaps` |
+| Latent project reconstruction | `src/flujo/knowledge/project_reconstruction.py`, `tools/project_reconstruction.py`, `tests/test_project_reconstruction.py`, `tools/build_application_intake.py` | verified on real DREFGIRA and FELINA/LOGO; durable outputs in `/home/mak/curatoria_inbox/project_reconstruction/2026-08-21/`; publication pending this commit |
 | DB -> Research -> Curatoria -> Postulacion | temporary foreground pipeline using existing Research corpus, Curatoria diagnostic and `tools/build_application_intake.py` | exit 0; Research 5,179 applications/14 captures; Curatoria 917 projects/13,121 families/45,536 members; Postulacion emitted `drefgira-fondart` with explicit evidence gaps; source trees untouched |
 | RD event fixture | read-only query over `operational_records` and `operational_curation_links` | exit 0; 7 events retain producer, raw date, venue and flyer/source evidence; 0 false ISO dates; 0 orphan curation links |
 | Contract audit refresh | `PYTHONPATH=src ./.venv/bin/python -m flujo.knowledge.contract_registry --db data/mak_knowledge.db audit --root . --record --run-id simulation_consumer_20260820` | exit 0; 59/59 verified; Blender, source-learning bridge, math kernel, tennis, scraping, deep-learning and simulation consumers resolved |
@@ -745,10 +746,65 @@ proyecto, no sobre episodios, asi que esa via no la toca esta reparacion. Antes
 de tratarla hay que decidir que evidencia autoriza una transicion de proyecto;
 no cambiarla sin ese contrato.
 
+## Latent project reconstruction and quota recovery — 2026-08-21
+
+La sesion de Claude Code `3428381a-02ad-4101-9da5-8176cf72c147` termino por
+cuota despues de escribir el nucleo no publicado
+`src/flujo/knowledge/project_reconstruction.py`. Se recupero la transcripcion
+linea por linea y no se repitio su investigacion. Claude habia medido que el
+indice real contiene 917 filas de proyecto y que 758 (82,7 %) tienen la firma
+de biblioteca descargada `assets/<kind>/<name>_<uuid4>`. Tambien confirmo que
+`DREFGIRA`, `DREFMOVISTAR`, `DREF CHOCOLATE` y `DrefQuila` no deben fusionarse
+por compartir el prefijo `DREF`.
+
+El nucleo quedo completado y validado como `mak-project-reconstruction-v1`:
+usa una cascada lexicografica falsificable, no un score universal; conserva
+RAW INPUT, OBSERVATION, DERIVED FEATURE, RELATION, INTERPRETATION e UNKNOWN;
+no hashea el SSD de 940 GB y abre el indice en modo read-only. La salida incluye
+decisiones, features, relaciones, asignacion de cada asset, fingerprint,
+resumen por unidad y una proyeccion HTML inspeccionable.
+
+El consumidor `tools/build_application_intake.py` acepta ahora
+`--reconstruction`. Filtra bibliotecas y recursos compartidos para que no
+compitan como postulaciones y conserva la decision de reconstruccion dentro de
+la evidencia del paquete `mak-application-package-v1`.
+
+Resultados reales persistidos fuera del repo:
+
+- DREFGIRA: baseline 8 filas, 3 bibliotecas; reconstruccion 1 unidad, 4
+  subproyectos, 3 dependencias; 467/467 assets reconciliados; 2 relaciones
+  cross-root UNKNOWN. El intake produjo `drefgira-fondart` con gaps humanos
+  explicitos y SQLite derivada integra.
+- FELINA/LOGO: baseline 21 filas, 20 bibliotecas; reconstruccion 1 unidad,
+  15 dependencias y 5 recursos compartidos; 2219/2219 assets reconciliados.
+- Los dos runs conservan el fingerprint del indice
+  `d3afb072fe1633125ac20da82aa1d3c7514f763cb8cac28655f19216ac53d8df`.
+
+Rutas durables:
+`/home/mak/curatoria_inbox/project_reconstruction/2026-08-21/`.
+La fuente SSD y `data/mak_knowledge.db` no fueron modificadas.
+
+Validacion de esta tanda: tests focalizados 14 passed; suite completa
+`./.venv/bin/python -m pytest -q --disable-warnings` exit 0; `repo_audit.py`
+exit 0 (36 modulos, 35 alcanzables, 0 muertos); `py_compile`, `pip check` y
+`git diff --check` exit 0; las dos SQLite derivadas verificaron
+`PRAGMA integrity_check = ok`.
+
+Archivos del write set: `src/flujo/knowledge/project_reconstruction.py`,
+`tools/project_reconstruction.py`, `tests/test_project_reconstruction.py`,
+`tools/build_application_intake.py`, `CAPACIDADES.md`,
+`docs/MAK_CURRENT_STATE.md` y este handoff.
+
 ## Next concrete action
 
-Continuar desde el commit publicado por esta fase y no repetir ningun slice
-cerrado. Los slices de proveedores, contratos de hub, rutas de registro,
+Publicar y verificar este write set sin mezclar cambios ajenos. Despues de la
+publicacion, ejecutar la misma reconstruccion sobre un tercer scope real del
+SSD — preferentemente `BAHPARTY/bah`, que tiene evidencia de biblioteca y se
+relaciona con el contexto real de Drefquila/BAH Party— y comprobar que el
+intake mantiene separados proyecto, marca/encargo y recurso compartido. No
+repetir los dos runs ya cerrados ni volver a leer la sesion de Claude.
+
+Los slices de proveedores, contratos de hub, rutas de registro,
 proyecciones fisicas, portabilidad de entrypoints, pipeline
 DB -> Research -> Curatoria -> Postulacion y requisito de Node estan medidos y
 cerrados; releerlos no aporta evidencia nueva.

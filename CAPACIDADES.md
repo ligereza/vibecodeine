@@ -103,6 +103,7 @@ CLI real (`py -m flujo --help`, v0.56.1), comandos principales:
 | `audit_blend_scene.py` | Auditoria AST/read-only de escenas Blender para el consumidor de render; si falta Blender queda `needs_evidence`. |
 | `bake_static_materials.py` | Preparacion acotada de bakes de materiales estaticos para el render RD; requiere Blender y no se ejecuta sin autoridad de mutacion. |
 | `build_application_intake.py` | Convierte un paquete de proyecto en entrada Project IR; consumidor `tools/project_gate.py` y los Hubs. |
+| `project_reconstruction.py` | Reconstruye unidades de proyecto desde un indice SSD real mediante reglas lexicograficas falsificables, separa bibliotecas/dependencias y conserva relaciones/unknowns; su salida `mak-project-reconstruction-v1` alimenta `build_application_intake.py`. |
 | `build_effort_consumer_crosswalk.py` | Cruza esfuerzo, consumidor y procedencia para priorizar slices de MAK Research y Curatoria. |
 | `build_mak_knowledge_db.py` | Inicializa o migra el ledger SQLite de conocimiento MAK; conserva contratos y evidencia sin copiar arboles. |
 | `compute_effort_residuals.py` | Calcula residuales de esfuerzo para el backlog y la trazabilidad de entregas. |

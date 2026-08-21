@@ -443,10 +443,20 @@ def add_known_mak_links(con_out: sqlite3.Connection, run_id: str, project_id: st
 
 
 def select_candidates(con: sqlite3.Connection, run_id: str, project_path: str | None,
-                      limit: int) -> list[dict[str, Any]]:
+                      limit: int,
+                      reconstruction: dict[str, Any] | None = None) -> list[dict[str, Any]]:
     rows = [dict(row) for row in con.execute(
         "SELECT * FROM intake_projects WHERE run_id=?", (run_id,)
     )]
+    reconstruction_decisions = {}
+    if reconstruction is not None:
+        reconstruction_decisions = reconstruction.get("decisions") or {}
+        allowed_roles = {"project_unit", "subproject", "exported_product"}
+        rows = [
+            row for row in rows
+            if (decision := reconstruction_decisions.get(row["relative_path"]))
+            and decision.get("role") in allowed_roles
+        ]
     scored: list[dict[str, Any]] = []
     for row in rows:
         media = {r[0]: r[1] for r in con.execute(
@@ -458,6 +468,9 @@ def select_candidates(con: sqlite3.Connection, run_id: str, project_path: str | 
             (run_id, row["project_id"]),
         ).fetchone()[0]
         score, reason = project_score(row, media, int(mak_count))
+        if reconstruction is not None:
+            decision = reconstruction_decisions[row["relative_path"]]
+            reason += "; reconstruction:%s" % decision["role"]
         if project_path and row["relative_path"].casefold() == project_path.casefold():
             score += 100
             reason += "; explicit_project"
@@ -503,7 +516,8 @@ def fund_spec(name: str) -> tuple[str, dict[str, Any], str]:
 
 
 def build_application(con: sqlite3.Connection, run_id: str, project: dict[str, Any],
-                      fund_name: str, output_dir: Path) -> dict[str, Any]:
+                      fund_name: str, output_dir: Path,
+                      reconstruction: dict[str, Any] | None = None) -> dict[str, Any]:
     fund_id, requirements, evidence_text = fund_spec(fund_name)
     con.execute(
         "INSERT OR REPLACE INTO fund_targets VALUES (?,?,?,?,?,?)",
@@ -564,6 +578,23 @@ def build_application(con: sqlite3.Connection, run_id: str, project: dict[str, A
         "json": str(output_dir / "applications" / f"{application_id}.json"),
         "html": str(output_dir / "applications" / f"{application_id}.html"),
     }
+    reconstruction_ref = None
+    reconstruction_decision = None
+    if reconstruction is not None:
+        reconstruction_ref = str(reconstruction.get("source_path") or "")
+        reconstruction_decision = (reconstruction.get("decisions") or {}).get(
+            project["path"]
+        )
+        if reconstruction_decision is None:
+            raise ValueError(
+                f"project {project['path']!r} is absent from reconstruction decisions"
+            )
+        project["reconstruction"] = {
+            "role": reconstruction_decision["role"],
+            "epistemic_status": reconstruction_decision["epistemic_status"],
+            "rule": reconstruction_decision["rule"],
+        }
+        outputs["reconstruction"] = reconstruction_ref
     payload = {
         "schema": "mak-application-package-v1",
         "application_id": application_id,
@@ -576,6 +607,16 @@ def build_application(con: sqlite3.Connection, run_id: str, project: dict[str, A
         "gaps": gaps,
         "next_action": "Completar gaps en orden: convocatoria oficial, contexto, metodo, presupuesto, cronograma y equipo.",
     }
+    if reconstruction is not None:
+        payload["evidence"]["reconstruction"] = {
+            "schema": reconstruction.get("schema"),
+            "algorithm_version": reconstruction.get("algorithm_version"),
+            "scope": reconstruction.get("scope"),
+            "index_fingerprint": reconstruction.get("index_fingerprint"),
+            "source_path": reconstruction_ref,
+            "decision": reconstruction_decision,
+            "summary": reconstruction.get("summary"),
+        }
     con.execute(
         "INSERT OR REPLACE INTO application_packages VALUES (?,?,?,?,?,?,?,?,?,?,?)",
         (run_id, application_id, project_id, fund_id, payload["status"], readiness,
@@ -604,12 +645,16 @@ def render_application_html(payload: dict[str, Any], path: Path) -> None:
 
 def write_outputs(con: sqlite3.Connection, run_id: str, output_dir: Path,
                   source_ref: str, source_root: str, source_summary: dict[str, Any],
-                  packages: list[dict[str, Any]], selected: list[dict[str, Any]]) -> None:
+                  packages: list[dict[str, Any]], selected: list[dict[str, Any]],
+                  reconstruction: dict[str, Any] | None = None) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     (output_dir / "applications").mkdir(exist_ok=True)
     reference = {"schema": SCHEMA, "source_ref": source_ref, "source_root": source_root,
                  "source_summary": source_summary, "source_preserved": True,
                  "copied_source_tree": False}
+    if reconstruction is not None:
+        reference["reconstruction_ref"] = reconstruction.get("source_path")
+        reference["reconstruction_schema"] = reconstruction.get("schema")
     (output_dir / "source_index_reference.json").write_text(stable_json(reference) + "\n", encoding="utf-8")
     for package in packages:
         json_path = output_dir / "applications" / f"{package['application_id']}.json"
@@ -630,6 +675,13 @@ def write_outputs(con: sqlite3.Connection, run_id: str, output_dir: Path,
                 "outputs": {"database": str(output_dir / "intake.sqlite"), "manifest": str(output_dir / "intake.json"),
                             "candidates_csv": str(output_dir / "project_candidates.csv")},
                 "status": "draft_with_evidence_gaps", "next_action": "review application JSON/HTML and fill gaps before any submission"}
+    if reconstruction is not None:
+        manifest["reconstruction"] = {
+            "schema": reconstruction.get("schema"),
+            "algorithm_version": reconstruction.get("algorithm_version"),
+            "scope": reconstruction.get("scope"),
+            "source_path": reconstruction.get("source_path"),
+        }
     (output_dir / "intake.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
@@ -637,10 +689,19 @@ def build_intake(index_path: Path, output_dir: Path, project_path: str | None,
                  fund_names: list[str], candidate_limit: int,
                  mak_db: Path = DEFAULT_MAK_DB,
                  source_kind: str = "portable_ssd_index",
-                 learning_db: Path | None = None) -> dict[str, Any]:
+                 learning_db: Path | None = None,
+                 reconstruction_path: Path | None = None) -> dict[str, Any]:
     source_root, source_summary = read_source_summary(index_path)
     fingerprint = source_fingerprint(index_path, source_root, source_summary)
     run_id = fingerprint[:20]
+    reconstruction = None
+    if reconstruction_path is not None:
+        reconstruction = json.loads(reconstruction_path.read_text(encoding="utf-8"))
+        if reconstruction.get("schema") != "mak-project-reconstruction-v1":
+            raise ValueError("unsupported reconstruction schema")
+        if Path(str(reconstruction.get("index_path"))).resolve() != index_path.resolve():
+            raise ValueError("reconstruction index does not match intake index")
+        reconstruction["source_path"] = str(reconstruction_path.resolve())
     output_db = output_dir / "intake.sqlite"
     con = connect(output_db)
     create_schema(con)
@@ -656,14 +717,16 @@ def build_intake(index_path: Path, output_dir: Path, project_path: str | None,
     explicit = next((r for r in project_rows if project_path and r["relative_path"].casefold() == project_path.casefold()), None)
     if explicit:
         add_known_mak_links(con, run_id, explicit["project_id"])
-    selected = select_candidates(con, run_id, project_path, candidate_limit)
+    selected = select_candidates(con, run_id, project_path, candidate_limit, reconstruction)
     if explicit:
         selected.sort(key=lambda x: (0 if x["project_id"] == explicit["project_id"] else 1, -x["score"]))
     packages: list[dict[str, Any]] = []
     target_projects = selected[:1] if project_path else selected[:min(3, len(selected))]
     for project in target_projects:
         for fund_name in fund_names:
-            packages.append(build_application(con, run_id, project, fund_name, output_dir))
+            packages.append(build_application(
+                con, run_id, project, fund_name, output_dir, reconstruction
+            ))
     con.execute("UPDATE intake_runs SET status=?, artifact_count=?, project_count=?, relation_count=?, mak_link_count=?, application_count=?, next_action=? WHERE run_id=?",
                 ("draft_with_evidence_gaps", con.execute("select count(*) from intake_assets where run_id=?", (run_id,)).fetchone()[0],
                  con.execute("select count(*) from intake_projects where run_id=?", (run_id,)).fetchone()[0],
@@ -673,7 +736,10 @@ def build_intake(index_path: Path, output_dir: Path, project_path: str | None,
     con.execute("INSERT INTO workflow_events(run_id,stage,status,detail,created_at) VALUES (?,?,?,?,?)",
                 (run_id, "application", "pass", f"Generated {len(packages)} structured draft package(s) with explicit gaps", now_iso()))
     con.commit()
-    write_outputs(con, run_id, output_dir, str(index_path), source_root, source_summary, packages, selected)
+    write_outputs(
+        con, run_id, output_dir, str(index_path), source_root, source_summary,
+        packages, selected, reconstruction
+    )
     con.commit()
     con.close()
     learning_materialized: list[dict[str, Any]] = []
@@ -709,6 +775,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--mak-db", type=Path, default=DEFAULT_MAK_DB)
     parser.add_argument("--learning-db", type=Path, default=None,
                         help="Explicit Project IR SQLite target; omitted means no learning DB write")
+    parser.add_argument(
+        "--reconstruction", type=Path, default=None,
+        help="Persisted mak-project-reconstruction-v1 JSON to drive candidate selection",
+    )
     args = parser.parse_args(argv)
     output_dir = args.out_dir.resolve()
     if args.source_root is not None:
@@ -720,14 +790,16 @@ def main(argv: list[str] | None = None) -> int:
         result = build_intake(source_index, output_dir, effective_project,
                               list(dict.fromkeys(args.funds)), args.candidate_limit,
                               args.mak_db.resolve(), "project_folder",
-                              args.learning_db.resolve() if args.learning_db else None)
+                              args.learning_db.resolve() if args.learning_db else None,
+                              args.reconstruction.resolve() if args.reconstruction else None)
     else:
         if not args.source_index.is_file():
             parser.error(f"source index not found: {args.source_index}")
         result = build_intake(args.source_index.resolve(), output_dir, args.project_path,
                               list(dict.fromkeys(args.funds)), args.candidate_limit,
                               args.mak_db.resolve(), "portable_ssd_index",
-                              args.learning_db.resolve() if args.learning_db else None)
+                              args.learning_db.resolve() if args.learning_db else None,
+                              args.reconstruction.resolve() if args.reconstruction else None)
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0
 
