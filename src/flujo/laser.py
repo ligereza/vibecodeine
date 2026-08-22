@@ -50,7 +50,18 @@ EXTENSIONES = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
 
 
 def _vpype() -> str | None:
-    return shutil.which("vpype")
+    """The vpype executable, including the one pip put in this venv's bin.
+
+    `shutil.which` alone missed it: vpype is a declared dev dependency and
+    `.venv/bin/vpype` exists, but that directory is not on PATH when the suite
+    runs as `./.venv/bin/python -m pytest`, so `verificar()` reported the chain
+    as absent and `test_estado_reporta_la_cadena_real` skipped with "vpype not
+    installed" on a machine where it IS installed.
+    """
+    from .knowledge.runtime_tools import resolve_console_script
+
+    found = resolve_console_script("vpype", env_var="VPYPE_EXE")
+    return str(found) if found else None
 
 
 def verificar() -> dict:

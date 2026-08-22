@@ -257,6 +257,8 @@ repositorio. Las credenciales y tokens se mantienen fuera de Git.
 | `FLUJO_WORKSPACE_ROOT` | Raíz explícita del workspace. |
 | `FLYER_BASE` | Raíz alternativa del material de flyers. |
 | `BLENDER_EXE` | Ruta explícita opcional del binario Blender; si falta, MAK busca el binario local instalado junto a `/home/mak/flujo`. |
+| `MAK_BLENDER` | Alias histórico de `BLENDER_EXE`, reconocido para no romper instalaciones existentes. Solo lo leía el diagnóstico de curatoría, así que quien seguía esta tabla resolvía Blender en un lado y no en el otro; ahora ambos nombres funcionan en los dos y gana `BLENDER_EXE`. |
+| `VPYPE_EXE` | Ruta explícita opcional del ejecutable vpype. Si falta, MAK lo busca en `PATH` y además en el `bin` del intérprete activo, porque pip instala los console scripts ahí y ese directorio no está en `PATH` salvo que se active el venv. |
 | `NODE_EXE` | Ruta explícita opcional de Node para auditorías/builds; el estado solo comprueba su presencia y no instala paquetes. |
 | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_PROFILE`, `AWS_CONTAINER_CREDENTIALS_RELATIVE_URI`, `AWS_WEB_IDENTITY_TOKEN_FILE` | Retiradas del runtime MAK; no se cargan ni se requieren. |
 | `CANVA_API_TOKEN`, `CEREBRAS_API_KEY`, `GROQ_API_KEY`, `GEMINI_API_KEY` | Credenciales opcionales de proveedores externos; la ruta por defecto usa Groq -> Gemini -> Ollama. |

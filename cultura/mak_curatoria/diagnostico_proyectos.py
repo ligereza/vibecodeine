@@ -268,7 +268,13 @@ def structure_adapter_for_path(path: str, media_kind: str = "") -> str:
     if kind == "image" or suffix in TWO_D_EXTENSIONS - {".pdf"}:
         return "Pillow" if importlib.util.find_spec("PIL") else ""
     if suffix in {".blend", ".blend1"}:
-        blender = os.environ.get("MAK_BLENDER", "")
+        # BLENDER_EXE is the name MAPA.md documents; MAK_BLENDER was read only
+        # here, so anyone following the documentation resolved Blender in
+        # runtime_tools and NOT in this diagnostic. Both are accepted and the
+        # documented one wins. flujo is deliberately not imported: this file also
+        # runs projected from /home/mak/curatoria under another interpreter.
+        blender = (os.environ.get("BLENDER_EXE", "")
+                   or os.environ.get("MAK_BLENDER", ""))
         if (shutil.which("blender") or
                 (blender and Path(blender).is_file()) or
                 Path("/home/mak/blender/blender").is_file()):
