@@ -682,6 +682,70 @@ respaldo" necesita saber quien es el artista, que es justo lo que la maquina no
 puede leer del disco. Quedan 543 grupos listados para lectura humana, no 543
 decisiones.
 
+## LYON LA F catalogado — 2026-08-21
+
+El operador atestiguo que LYON LA F es un CLIENTE ACTIVO de su trabajo de VJ y
+pidio catalogarlo. Era el contenedor mas grande del disco y el unico grande sin
+tocar: 15.055 assets, 250,9 GB, 387 filas del escaneo por carpetas.
+
+MATERIAL. Se reconstruyo con la herramienta que ya se uso para DREFGIRA,
+FELINA/LOGO y BAHPARTY/bah, sin inventar formato: 387 filas -> 1 unidad de
+proyecto, 24 subproyectos, 314 dependencias de biblioteca y 48 recursos
+compartidos, con los 15.055 assets reconciliados, cero sin asignar y cero
+decisiones UNKNOWN. Las obras nombradas mas grandes: Pajsaera (84,4 GB),
+MERECEDORA (28,5), COMANDO (24,6), DEJA (15,5), NEBULA (14,0), CIUDAD (12,0),
+la ferrari (6,6), LOGO ENTREGA (5,9), CORAZON (4,0).
+
+ACTIVIDAD MEDIDA, no afirmada: 14.039 assets con mtime de 2025 y 899 de 2026,
+contra 60 de 2016 y menos de 40 por ano entre 2020 y 2024. El cuerpo de obra es
+reciente, lo que concuerda con "cliente activo" sin depender de esa palabra.
+
+PROJECT IR. El puente existente (`tools/import_project_reconstruction.py`)
+escribio 25 registros derivados en `data/mak_knowledge.db`, TODOS en
+`review_required`, y sus 25 rutas quedaron en `abstain`. La maquina cataloga el
+material y no afirma nada sobre el hasta que un humano lo revise.
+`PRAGMA integrity_check` = ok; se tomo copia previa de la base.
+
+FICHA DE CLIENTE: `data/productoras/lyon-la-f.json`. Vive ahi porque ese
+directorio YA cataloga artistas -- `frvr.json` tiene `tipo: artist_dj` con una
+nota que aclara que es el artista y no la productora --, no porque LYON organice
+eventos. La ficha declara esa consecuencia en vez de dejarla implicita: al estar
+ahi, el fuzzy-match de `extraccion_db.py` puede resolver un "LYON" leido por OCR
+en un flyer contra esta ficha. Se verifico que no altera la cola de leads: sigue
+dando 1 propuesta y las mismas canonicas.
+
+Lo que la ficha NO afirma: `instagram` queda VACIO. El handle `@LyonLaF` aparece
+dentro de un nombre de archivo (`COMO TU - @LyonLaF (AUDIO OFICIAL) [PROD.NACHO
+G FLOW].wav`), lo que es evidencia de nombre y no una cuenta verificada.
+Tampoco se inventaron venues, fechas ni eventos.
+
+HALLAZGO QUE NO SE CODIFICO, a proposito: al menos 8 de los 24 "subproyectos" no
+son obras sino artefactos de herramienta que el escaneo por carpetas no
+distingue -- `Adobe After Effects Auto-Save`, `LYIONGIF.aep_AME`,
+`(Material de archivo)`, `blenderkit/blendfiles` y modelos descargados como
+`uploads_files_2475145_la+ferrari` y `nissan-skyline-gt-r-r34-1999`. Se midio
+sobre TODO el indice: solo 8 filas de 917 caen en ese patron, ~0,08 GB. Seis
+regex para ocho filas es sobreajuste y seria una lista escrita a mano, que es
+justo el patron que la memoria de direccion advierte. Quedan anotadas en la
+ficha para que una persona las confirme, no convertidas en regla.
+
+Tambien medido: LYON comparte 48 items de biblioteca con BAHPARTY, bah, SCD y
+"descargas hasta RDFLYER 2050". Son assets comprados o descargados reutilizados
+entre trabajos, y NO son las 543 copias entre contenedores documentadas antes:
+esas son la misma obra en dos cuerpos de trabajo, estas son insumos comunes.
+
+Comandos y codigos de salida: `tools/project_reconstruction.py --scope LYON`
+exit 0; `tools/import_project_reconstruction.py --db data/mak_knowledge.db`
+exit 0; `pytest -q tests/` exit 0; `repo_audit`, `git diff --check` exit 0; la
+cola de leads reejecutada sin cambios.
+
+Salida persistida: `/home/mak/curatoria_inbox/project_reconstruction/2026-08-21/lyon/`
+con `reconstruction.json`, `reconstruction.html` y `project_ir/`.
+
+RESIDUO: cuales de los 24 subproyectos son obras entregadas y cuales material de
+trabajo no se decide desde el disco, y no deberia. Los 25 registros siguen en
+`review_required` esperando esa lectura humana.
+
 ## Next concrete action
 
 Publicar este write set en `main` solo cuando exista autorizacion explicita de
