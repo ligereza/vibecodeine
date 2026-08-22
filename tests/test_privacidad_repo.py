@@ -26,6 +26,8 @@ from __future__ import annotations
 
 import re
 import subprocess
+
+from repo_scan import versionable_files
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
@@ -45,31 +47,8 @@ _SALTA = (".min.js", ".lock", ".svg", ".png", ".jpg", ".webp", ".pdf",
           "package-lock.json")
 
 
-def _versionable_names():
-    """Archivos rastreados MAS los nuevos que no estan ignorados.
-
-    Antes esto era solo `git ls-files`, o sea solo lo rastreado, y ahi habia un
-    hueco medido el 2026-08-21: un archivo NUEVO con un usuario de Windows real
-    pasaba el ratchet local sin ser visto y solo fallaba despues de commitearlo,
-    cuando ya estaba en la historia. El ratchet existe justamente para que ese
-    dato no entre, asi que tiene que mirar lo que esta por entrar.
-
-    `--others --exclude-standard` respeta `.gitignore`, de modo que `.venv`,
-    `data/*.db` y los artefactos generados siguen fuera.
-    """
-    vistos = []
-    for args in (["git", "ls-files"],
-                 ["git", "ls-files", "--others", "--exclude-standard"]):
-        r = subprocess.run(args, cwd=REPO, capture_output=True,
-                           encoding="utf-8", errors="replace")
-        if r.returncode != 0:
-            continue
-        vistos.extend(r.stdout.split())
-    return list(dict.fromkeys(vistos))
-
-
 def _archivos():
-    nombres = _versionable_names()
+    nombres = versionable_files()
     if not nombres:
         return []
     for nombre in nombres:
@@ -140,7 +119,7 @@ def test_the_ratchet_sees_new_untracked_files(tmp_path):
     ser visto, y recien fallaba cuando ya estaba commiteado. Un ratchet que
     protege contra la entrada de un dato tiene que mirar lo que esta entrando.
     """
-    nombres = set(_versionable_names())
+    nombres = set(versionable_files())
     assert nombres, "el enumerador no devolvio nada"
     # Lo rastreado sigue estando.
     assert "tests/test_privacidad_repo.py" in nombres
@@ -148,7 +127,7 @@ def test_the_ratchet_sees_new_untracked_files(tmp_path):
     nuevo = REPO / "_ratchet_probe_tmp.md"
     try:
         nuevo.write_text("sonda\n", encoding="utf-8")
-        assert "_ratchet_probe_tmp.md" in set(_versionable_names())
+        assert "_ratchet_probe_tmp.md" in set(versionable_files())
     finally:
         nuevo.unlink(missing_ok=True)
     # Lo ignorado NO aparece: el patron de .gitignore se respeta.

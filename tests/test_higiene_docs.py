@@ -23,6 +23,8 @@ from __future__ import annotations
 
 import re
 import subprocess
+
+from repo_scan import versionable_files
 from pathlib import Path
 
 import pytest
@@ -69,26 +71,23 @@ VERSION_PYPROJECT = re.compile(r'^version\s*=\s*"([^"]+)"', re.M)
 
 
 def _docs_vivos() -> list[Path]:
-    """Todos los .md versionados fuera de zona muerta y de zona ajena.
+    """Todos los .md que pueden entrar al repo, fuera de zona muerta y ajena.
 
-    OJO, medido el 2026-07-30: esto lee `git ls-files`, asi que un .md NUEVO y
-    todavia sin commitear es INVISIBLE para este ratchet. Una corrida local
-    verde antes del commit no dice nada sobre los archivos que el commit va a
-    agregar -- fue asi como cuatro README vendorizados pasaron el pytest local y
-    tumbaron el CI. Si agregas docs, `git add` primero y despues corre esto.
+    Antes esto leia `git ls-files` a secas, o sea SOLO lo rastreado, y su propio
+    docstring documentaba el precio: "cuatro README vendorizados pasaron el
+    pytest local y tumbaron el CI", con el workaround manual de hacer `git add`
+    antes de correr los tests. Un workaround que vive en la memoria de una
+    persona vuelve a fallar. Ahora la enumeracion la hace `versionable_files()`,
+    que suma los archivos nuevos no ignorados: el ratchet mira lo que esta por
+    entrar, que es contra lo que protege.
     """
-    r = subprocess.run(
-        ["git", "ls-files", "*.md"],
-        cwd=RAIZ,
-        capture_output=True,
-        text=True,
-    )
-    if r.returncode != 0:
+    nombres = versionable_files(("*.md",))
+    if not nombres:
         pytest.skip("no es un checkout git usable")
     return [
         RAIZ / f
-        for f in r.stdout.split("\n")
-        if f and not f.startswith(ZONA_MUERTA) and not f.startswith(ZONA_AJENA)
+        for f in nombres
+        if not f.startswith(ZONA_MUERTA) and not f.startswith(ZONA_AJENA)
     ]
 
 

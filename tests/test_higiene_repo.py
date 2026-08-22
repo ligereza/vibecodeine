@@ -10,6 +10,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CAPACIDADES = REPO_ROOT / "CAPACIDADES.md"
 TOOLS_DIR = REPO_ROOT / "tools"
@@ -60,6 +62,12 @@ def test_utilidades_inertes_no_aumentan():
 def test_tools_en_registro():
     capacidades = CAPACIDADES.read_text(encoding="utf-8")
     archivos = sorted(p for p in TOOLS_DIR.glob("*.py") if p.is_file())
+    # El cero silencioso (memoria de direccion 2.3): si tools/ se mueve o se
+    # vacia, la lista queda vacia y el ratchet informa "nada falta" para
+    # siempre. Cero medido es un ERROR, no un silencio.
+    assert archivos, (
+        "no se encontro ninguna herramienta en %s: el ratchet no midio nada, "
+        "que no es lo mismo que estar limpio" % TOOLS_DIR)
     faltantes = [
         p.name for p in archivos if p.name not in capacidades
     ]
@@ -89,6 +97,11 @@ def test_registro_sin_herramientas_fantasma():
     declaradas = set(re.findall(r"^\|\s*`([a-z0-9_]+\.py)`\s*\|", capacidades,
                                 re.MULTILINE))
     existentes = {p.name for p in TOOLS_DIR.glob("*.py") if p.is_file()}
+    assert declaradas, (
+        "el registro de CAPACIDADES.md no declaro ninguna fila `x.py`: si la "
+        "tabla cambia de formato el regex deja de matchear y este ratchet pasa "
+        "sin medir nada")
+    assert existentes, "no hay herramientas en tools/: nada que contrastar"
     fantasmas = sorted(declaradas - existentes)
     assert not fantasmas, (
         "el registro de CAPACIDADES.md declara herramientas que no existen en "
@@ -123,8 +136,10 @@ def test_config_del_usuario_versionada():
         ["git", "ls-files", "--", *CONFIG_DEL_USUARIO],
         cwd=REPO_ROOT, capture_output=True, encoding="utf-8", errors="replace",
     )
-    if salida.returncode != 0:  # sin git disponible no hay nada que medir
-        return
+    if salida.returncode != 0:
+        # Sin git no hay nada que medir, y "no medi" no es "esta bien": se
+        # salta explicitamente en vez de devolver verde.
+        pytest.skip("no es un checkout git usable: el ratchet no puede medir")
     versionados = set(salida.stdout.split())
     faltantes = [p for p in CONFIG_DEL_USUARIO if p not in versionados]
     assert not faltantes, (
