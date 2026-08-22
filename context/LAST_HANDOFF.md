@@ -394,6 +394,71 @@ RECORDS) ya son canonicas. Partir ese campo recuperaria entidades conocidas,
 pero es un cambio en la extraccion y no en la calificacion; queda anotado, no
 hecho.
 
+## Puertas de entrada: cerrar la clase, no la instancia — 2026-08-21
+
+Reclamo del operador, correcto: yo mismo violé cuatro veces la regla de idioma
+que `agents.md` declara y que lei al empezar (`NOTACION_LINEUP`,
+`cargar_no_organizadores`, `tiene_notacion_lineup`, nombres de test en
+espanol), dejando que el ratchet me corrigiera en vez de acertar. Y peor: habia
+arreglado el hueco de enumeracion SOLO en el ratchet de privacidad, que es
+exactamente el parche parcial que se me senalo. Este bloque cubre la clase.
+
+CLASE 1 -- una puerta que protege contra la ENTRADA de algo tiene que mirar lo
+que esta entrando. Enumerar con `git ls-files` a secas ve solo lo rastreado, asi
+que un archivo NUEVO pasa la puerta local sin ser visto y falla recien
+commiteado, con la cosa ya en la historia. Miembros medidos:
+
+- `tests/test_higiene_docs.py`: lo tenia en su PROPIO docstring -- "cuatro
+  README vendorizados pasaron el pytest local y tumbaron el CI" -- resuelto con
+  un workaround manual (`git add` primero). Un workaround que vive en la memoria
+  de una persona vuelve a fallar. CERRADO.
+- `tests/test_privacidad_repo.py`: ya cerrado antes, ahora comparte la
+  implementacion en vez de tener su propia copia.
+- `tools/idioma.py`: ya lo hacia bien, y por eso fue el unico que me caz
+  al instante. Sin cambios.
+- `tests/test_higiene_repo.py::test_config_del_usuario_versionada`: NO es
+  miembro. Afirma que la config ESTA versionada, asi que incluir untracked
+  destruiria su proposito. Se deja como esta, con la razon escrita.
+
+La regla queda dicha una vez, en `tests/repo_scan.py`: una puerta que pregunta
+"esto ya esta commiteado?" usa `git ls-files`; una que pregunta "puede entrar
+esto?" usa `versionable_files()`. Verificado ejecutando, no leyendo: una sonda
+`.md` sin rastrear con una cifra de suite en prosa AHORA falla antes del commit,
+y al borrarla vuelve a verde.
+
+CLASE 2 -- el cero silencioso, que la memoria de direccion §2.3 ya nombra ("0
+resultados por primera vez es ERROR, no silencio"). Un barrido AST sobre los
+tests marco 69 candidatos, pero eran ruido: casi todos son unitarios con
+fixtures literales donde "vacio" es imposible. Acotado a puertas que escanean el
+repo quedaron 18, y de esas las reales son tres, todas en
+`test_higiene_repo.py`:
+
+- `test_tools_en_registro`: si `tools/` se mueve o se vacia, la lista queda
+  vacia y el ratchet informa "nada falta" para siempre. Ahora exige haber medido
+  algo. Verificado apuntandolo a un directorio vacio: antes pasaba, ahora falla.
+- `test_registro_sin_herramientas_fantasma`: si la tabla de `CAPACIDADES.md`
+  cambia de formato, el regex deja de matchear y el ratchet pasa sin medir. Ahora
+  exige filas declaradas Y herramientas existentes.
+- `test_config_del_usuario_versionada`: hacia `return` cuando git no estaba
+  disponible, o sea verde sin medir. Ahora hace `pytest.skip` explicito.
+  Verificado ejecutando esa rama contra un directorio sin git: devuelve
+  `Skipped`, no verde.
+
+Defecto propio encontrado al hacerlo: la primera version de ese cambio usaba
+`pytest.skip` sin `import pytest` en el archivo -- un `NameError` esperando la
+rama sin git. Detectado ejecutando la rama, no leyendola.
+
+Comandos y codigos de salida: `pytest -q tests/` exit 0; `repo_audit`,
+`compileall`, `pip check`, `git diff --check` exit 0; `npm run typecheck` exit 0.
+
+RESIDUO: el barrido de cero silencioso se limito a puertas que escanean el repo.
+Las 15 restantes de la lista de 18 son tests de atomicidad sobre `tmp_path` que
+acaban de poblar el directorio; no pueden pasar en vacio de forma significativa,
+pero no las verifique una por una. Y la regla de idioma sigue dependiendo de que
+el ratchet la haga cumplir en tiempo de test: no existe una verificacion mas
+temprana, y para codigo que no es Python (TS de `web/`) no hay ratchet
+equivalente.
+
 ## Next concrete action
 
 Publicar este write set en `main` solo cuando exista autorizacion explicita de
