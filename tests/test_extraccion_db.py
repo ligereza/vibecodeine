@@ -724,3 +724,86 @@ def test_candidatos_jsonl_incluye_fuente_e_identidad_propia(tmp_path):
     assert registro["fuente"] == "rd"
     assert "identidad_propia" in registro
     assert registro["identidad_propia"] is True
+
+
+# ---------------------------------------------------------------------------
+# Calificacion de un candidato NUEVO: preguntarle al catalogo antes de catalogar
+# ---------------------------------------------------------------------------
+#
+# Medido el 2026-08-21 sobre el corpus real (1742 fichas rd -> 984 obras): de 3
+# propuestas escritas, dos no eran clientes. Una era "CARTERELA TEstEAMDO", la
+# cartelera de testeo de RD corrompida por OCR, que la auto-exclusion existente
+# no atrapaba. La otra era "Banco de Chile", un patrocinador que el OCR levanta
+# del flyer. Y en la cola aparecian TEATRO CAUPOLICAN y TEATRO ROMA como
+# productoras candidatas siendo venues.
+#
+# El conteo de obras no es calificacion.
+
+
+def test_a_known_venue_is_not_a_productora_candidate():
+    """La pregunta se le hace al CATALOGO, no a una heuristica de palabras."""
+    catalogo = [{"canonico": "Teatro Caupolican",
+                 "variantes": ["Teatro Caupolican"]}]
+    motivo = extraccion_db.descalificar_candidato("TEATRO CAUPOLICAN", catalogo)
+    assert motivo == extraccion_db.DESCALIFICA_VENUE_CONOCIDO
+
+
+def test_a_real_productora_survives_the_venue_catalog_check():
+    """Guarda de falsificacion: la regla tiene que poder NO disparar."""
+    catalogo = [{"canonico": "Teatro Caupolican",
+                 "variantes": ["Teatro Caupolican"]}]
+    assert extraccion_db.descalificar_candidato("TECHMOTION CHILE", catalogo) is None
+
+
+def test_rd_own_cartelera_is_not_a_client():
+    for variante in ("CARTERELA TEstEAMDO", "CARTELERA TESTEMO 2025",
+                     "cartelera testeando rd"):
+        assert extraccion_db.es_cartelera_propia(variante), variante
+    # Y una productora real que empiece con "Cartel" NO cae.
+    assert not extraccion_db.es_cartelera_propia("Cartel Norte")
+    assert not extraccion_db.es_cartelera_propia("Banco de Chile")
+
+
+def test_a_dj_lineup_is_not_an_organizer():
+    assert extraccion_db.has_lineup_notation("DAVID SCHAFFER B2B CARO ZULUETA")
+    assert extraccion_db.has_lineup_notation("ALGUIEN VS OTRO")
+    assert not extraccion_db.has_lineup_notation("Sundeck")
+
+
+def test_what_cannot_be_deduced_is_declared_in_a_file(tmp_path):
+    """Definir una vez es mas barato que perseguir una regla perfecta."""
+    ruta = tmp_path / "no_organizadores.txt"
+    ruta.write_text("# comentario\nBanco de Chile\n\nFunktion-One  # marca\n",
+                    encoding="utf-8")
+    declarados = extraccion_db.load_non_organizers(ruta)
+    assert extraccion_db.normalizar_texto("Banco de Chile") in declarados
+    motivo = extraccion_db.descalificar_candidato(
+        "Banco de Chile", [], declarados)
+    assert motivo == extraccion_db.DESCALIFICA_NO_ORGANIZADOR
+    # Sin archivo no hay descalificacion por esta via.
+    assert extraccion_db.load_non_organizers(tmp_path / "ausente.txt") == set()
+    assert extraccion_db.descalificar_candidato("Banco de Chile", []) is None
+
+
+def test_a_candidate_matching_no_rule_stays_a_candidate():
+    """Abstencion: lo que ninguna via decide NO se descalifica."""
+    assert extraccion_db.descalificar_candidato("OLO Presents", []) is None
+
+
+def test_a_disqualified_cluster_writes_no_proposal_and_keeps_its_reason(tmp_path):
+    clusters = [
+        {"variantes": ["TEATRO ROMA"], "obras": [
+            {"obra_id": "o1", "ruta_rel": "a.png", "handles": [], "fecha_cruda": ""},
+            {"obra_id": "o2", "ruta_rel": "b.png", "handles": [], "fecha_cruda": ""}]},
+        {"variantes": ["TECHMOTION CHILE"], "obras": [
+            {"obra_id": "o3", "ruta_rel": "c.png", "handles": [], "fecha_cruda": ""},
+            {"obra_id": "o4", "ruta_rel": "d.png", "handles": [], "fecha_cruda": ""}]},
+    ]
+    escritos, descalificados = extraccion_db.escribir_propuestas(
+        tmp_path / "propuestas", clusters,
+        [{"canonico": "Teatro Roma", "variantes": ["Teatro Roma"]}])
+    assert [p.name for p in escritos] == ["techmotion_chile.md"]
+    assert len(descalificados) == 1
+    assert descalificados[0]["nombre"] == "TEATRO ROMA"
+    assert descalificados[0]["motivo"] == extraccion_db.DESCALIFICA_VENUE_CONOCIDO
+    assert descalificados[0]["obras"] == 2
