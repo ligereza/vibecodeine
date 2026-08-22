@@ -559,6 +559,75 @@ porque volvio a pasar dos veces en este bloque: escribi comentarios nuevos en
 espanol y el ratchet de idioma me corrigio. La regla la hace cumplir la puerta,
 no yo.
 
+## Un VIVO que no se sostiene al invocarlo — 2026-08-21
+
+CLASE 5 -- el registro dice "toda herramienta declara consumidor o no entra",
+pero `test_tools_en_registro` solo comprueba que el NOMBRE aparezca en
+`CAPACIDADES.md`. No comprueba que la herramienta siga corriendo, asi que una
+fila puede seguir afirmando VIVO sobre un script que revienta al importar.
+
+Medido antes de tocar nada. Las 61 rutas que las filas del registro reclaman
+existen todas: 0 faltantes, resultado negativo que no habia que arreglar. De las
+40 herramientas VIVO, 21 no nombran un test en su fila y 4 no tienen NINGUN test
+en `tests/` que las mencione (`execute_research_job.py`,
+`gen_iskvw_prototipo.py`, `gen_propuesta_directiva.py`,
+`interpretive_garden_workflow.py`). No se escribieron 4 tests arbitrarios: eso es
+volumen. La pregunta falsificable que cubre las 40 es mas barata -- una
+herramienta declarada viva tiene que sostenerse cuando se le pregunta que hace.
+
+Resultado: 40/40 compilan. 39/40 responden `--help`; la que no
+(`system_map.py`) tiene subcomandos propios (`validate`/`show`), imprime su
+usage y sale 2, que es error de uso y no rotura -- mi supuesto de contrato era
+demasiado estrecho y se corrigio, no el codigo. Una sola largaba traceback sin
+manejar: `gen_campo_iskvw.py` con `ModuleNotFoundError: sklearn`.
+
+Ese fallo era DELIBERADO y su docstring lo dice: "Sin el, no se inventa una
+proyeccion peor y se falla: un campo con posiciones falsas es peor que no tener
+campo", y el comentario de `main()` aclara que sklearn vive en la caja que
+proyecta, no en MAK. Lo que NO era deliberado es entregarlo como stack trace.
+Ahora falla igual -- exit 1, sin inventar posiciones -- pero diciendo por que y
+que hacer. La puerta nueva pide exactamente eso: un fallo puede ser correcto,
+pero tiene que decir su razon en vez de dejar un traceback.
+
+DANO QUE ME HICE Y REPARE, porque la primera version de esa puerta invocaba cada
+herramienta con `--help` Y SIN ARGUMENTOS: eso MUTO el repositorio.
+`update_readme_svg.py` regenero la capa de texto de `arte-ascii-readme.svg`, que
+`agents.md` declara activo protegido; `gen_propuestas_rd.py` escribio
+`docs/rd/propuestas_mineria/`; y la peor, invisible para `git status` porque esta
+gitignoreada: `iskvw/datos/archivo.json` quedo en 11 KB cuando debe tener ~1,79
+MB, regenerada sin el micelio privado, lo que tumbo
+`test_iskvw_piel_smoke.py` y `test_readme_svg.py`.
+
+Reparacion completa y verificada: el SVG protegido restaurado desde HEAD (0
+cambios), el directorio generado apartado a la carpeta temporal del job en vez de
+borrado, y `archivo.json` regenerado con el comando de CI
+(`tools/gen_archivo_iskvw.py --fuente todo`, 2034 piezas, 5812 vinculos, 1790.8
+KB). Los cuatro tests que habia roto vuelven a pasar. `campo.json` esta rastreado
+y su contenido no cambio.
+
+La puerta ahora pregunta SOLO `--help`, y
+`test_the_tool_ratchet_never_writes_to_the_repo` fija esa regla leyendo el cuerpo
+del test: si alguien vuelve a iterar formas de invocacion, falla. Descubrir que
+una herramienta muta con invocacion pelada no puede costar la mutacion.
+
+Hallazgo que queda anotado y NO se toca en esta pasada: dos herramientas VIVAS
+escriben cuando se las invoca sin argumentos (`update_readme_svg.py`,
+`gen_propuestas_rd.py`). Para `update_readme_svg.py` puede ser su diseño -- su
+fila declara un `--check` para deteccion sin escribir --, pero un generador que
+muta por invocacion pelada es un riesgo real para cualquiera que lo pruebe. Es
+una decision de contrato de esas herramientas, no de esta puerta.
+
+Comandos y codigos de salida: `pytest -q tests/` exit 0 y el repo queda sin
+cambios despues de correr la suite completa; `repo_audit`, `compileall`,
+`git diff --check` exit 0.
+
+RESIDUO: las 4 herramientas VIVAS sin test siguen sin test propio. La puerta
+nueva prueba que se sostienen al preguntarles que hacen, que es mucho menos que
+probar que hacen bien su trabajo. Y por sexta vez en la sesion escribi
+identificadores nuevos en espanol y el ratchet de idioma me corrigio; esta vez
+liste los flagueados antes de renombrar, lo que deberia haber hecho desde el
+principio.
+
 ## Next concrete action
 
 Publicar este write set en `main` solo cuando exista autorizacion explicita de

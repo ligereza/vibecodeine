@@ -218,3 +218,119 @@ def test_toda_excepcion_de_glifo_apunta_a_un_archivo_real_y_con_razon():
         assert len(razon) > 40, "%s: la razon tiene que decir por que" % nombre
         assert _fuera_de_cp1252(ruta.read_text(encoding="utf-8")), (
             "%s ya no tiene glifos no imprimibles: saca la excepcion" % nombre)
+
+
+# ---------------------------------------------------------------------------
+# A VIVO claim has to survive being invoked
+# ---------------------------------------------------------------------------
+#
+# test_tools_en_registro checks that a tool's NAME appears in CAPACIDADES.md. It
+# does not check that the tool still runs, so a row can keep claiming VIVO for a
+# script that crashes on import. Measured on 2026-08-21 across the 40 VIVO rows:
+# all 40 compile, 39 answer --help, and the one that does not (system_map.py)
+# has hand-rolled subcommands and prints its usage with exit 2, which is a usage
+# error and not a break. One tool did raise an unhandled traceback --
+# gen_campo_iskvw.py with ModuleNotFoundError: sklearn -- and that failure was
+# DESIGNED (its docstring says a field with invented positions is worse than no
+# field, and sklearn lives on the box that projects) but delivered as a stack
+# trace. It now fails with the reason.
+#
+# So the line this gate draws is not "every tool must succeed": it is "a tool
+# declared alive must not fall over with an unhandled traceback when someone
+# asks it what it does". Usage errors, explicit SystemExit and non-zero exits
+# with a message all pass.
+
+def _live_tools() -> list[str]:
+    import re
+
+    text = CAPACIDADES.read_text(encoding="utf-8")
+    start = text.find("## 5. Registro VIVO/MUERTO")
+    registry = text[start:] if start >= 0 else text
+    return [
+        name for name, state in re.findall(
+            r"^\|\s*`([a-z0-9_]+\.py)`\s*\|\s*(VIVO|REVISAR)\s*\|",
+            registry, re.MULTILINE)
+        if state == "VIVO"
+    ]
+
+
+def test_the_registry_declares_live_tools():
+    """Silent zero: an empty VIVO list would make the gate below vacuous."""
+    live = _live_tools()
+    assert len(live) >= 20, (
+        f"solo {len(live)} herramientas VIVO parseadas del registry: si la "
+        "tabla cambia de formato este ratchet deja de medir")
+
+
+def test_every_live_tool_compiles():
+    import subprocess
+    import sys
+
+    live = _live_tools()
+    broken = []
+    for name in live:
+        path = TOOLS_DIR / name
+        if not path.is_file():
+            broken.append(f"{name}: declarada VIVO y el archivo no existe")
+            continue
+        r = subprocess.run([sys.executable, "-m", "py_compile", str(path)],
+                           capture_output=True, text=True)
+        if r.returncode != 0:
+            broken.append(f"{name}: {r.stderr.strip().splitlines()[-1][:80]}")
+    assert not broken, (
+        "herramientas declaradas VIVO que no compilan: " + "; ".join(broken))
+
+
+def test_no_live_tool_crashes_when_asked_what_it_does():
+    """Solo se le pregunta `--help`: ver el comentario dentro del bucle."""
+    import subprocess
+    import sys
+
+    live = _live_tools()
+    crashers = []
+    for name in live:
+        path = TOOLS_DIR / name
+        if not path.is_file():
+            continue
+        # SOLO --help, nunca sin argumentos. La primera version invocaba las dos
+        # formas y eso MUTO el repo: `update_readme_svg.py` regenero la capa de
+        # text de `arte-ascii-readme.svg`, que agents.md declara activo
+        # protegido, y `gen_propuestas_rd.py` escribio
+        # `docs/rd/propuestas_mineria/`. Un test no puede escribir en el repo, y
+        # descubrir que una herramienta muta con invocacion pelada no puede
+        # costar la mutacion. `--help` es la pregunta segura: "que haces".
+        try:
+            r = subprocess.run([sys.executable, str(path), "--help"],
+                               capture_output=True, text=True, timeout=180)
+        except subprocess.TimeoutExpired:
+            crashers.append(f"{name} --help: timeout")
+            continue
+        output = (r.stderr or "") + (r.stdout or "")
+        if "Traceback (most recent call last)" in output:
+            last_line = (output.strip().splitlines() or [""])[-1]
+            crashers.append(f"{name} --help: {last_line[:90]}")
+    assert not crashers, (
+        "herramientas declaradas VIVO que largan un traceback sin manejar. Un "
+        "fallo puede ser correcto (falta una dependencia a proposito), pero "
+        "tiene que decir por que en vez de dejar un stack trace: "
+        + "; ".join(crashers))
+
+
+def test_the_tool_ratchet_never_writes_to_the_repo():
+    """Regresion medida el 2026-08-21: la primera version de la puerta de
+    arriba invocaba cada herramienta VIVA con `--help` Y sin argumentos, y eso
+    MUTO el repositorio -- `update_readme_svg.py` regenero la capa de text de
+    `arte-ascii-readme.svg`, que es activo protegido, y `gen_propuestas_rd.py`
+    escribio `docs/rd/propuestas_mineria/`. Descubrir que una herramienta muta
+    con invocacion pelada no puede costar la mutacion."""
+    source = (REPO_ROOT / "tests" / "test_higiene_repo.py").read_text(
+        encoding="utf-8")
+    body = source[source.find(
+        "def test_no_live_tool_crashes_when_asked_what_it_does"):]
+    body = body[:body.find("\ndef ", 1)]
+    assert 'for argv in' not in body, (
+        "la puerta volvio a iterar formas de invocacion: sin argumentos algunas "
+        "herramientas ESCRIBEN")
+    assert '"--help"' in body, "la puerta dejo de preguntar --help"
+    assert body.count("subprocess.run") == 1, (
+        "la puerta invoca la herramienta mas de una vez: una sola pregunta segura prueba lo mismo")

@@ -168,7 +168,24 @@ def proyectar(m, k=3, perplejidad=30):
     falla: un campo con posiciones falsas es peor que no tener campo.
     """
     import numpy as np
-    from sklearn.manifold import TSNE
+
+    try:
+        from sklearn.manifold import TSNE
+    except ImportError as exc:
+        # Failing here is the designed behaviour, stated in the docstring above:
+        # a field with invented positions is worse than no field. What was NOT
+        # designed is failing as a raw ModuleNotFoundError traceback. sklearn is
+        # deliberately absent on MAK -- the comment in main() says the vectors
+        # are exported and projected on the box that has the tooling -- so the
+        # message has to name that, not leave a stack trace behind.
+        raise SystemExit(
+            "scikit-learn no esta instalado en esta caja, y es a proposito: los "
+            "vectores viven en MAK y la proyeccion corre donde estan las "
+            "herramientas. Exporta con --vectores/--meta y proyecta alla, o "
+            "instala scikit-learn aca si de verdad quieres proyectar en esta "
+            "maquina. No se inventa una proyeccion peor: un campo con "
+            "posiciones falsas es peor que no tener campo. "
+            f"({exc})") from exc
 
     n = len(m)
     if n < 5:
