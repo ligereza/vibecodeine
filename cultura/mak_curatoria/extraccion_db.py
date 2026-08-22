@@ -93,6 +93,36 @@ IDENTIDAD_PROPIA = (
 
 UMBRAL_PATRON_CORTO_IDENTIDAD = 3
 
+# La cartelera de testeo es un PRODUCTO de RD, no una productora ajena. El OCR
+# la parte en variantes ("CARTERELA TEstEAMDO", "CARTELERA TESTEMO 2025",
+# "CARTERERA") y cada una llegaba a la cola de propuestas como si fuera un
+# cliente potencial. Se cubren por raiz porque el OCR corrompe la cola de la
+# palabra, no su comienzo.
+# Lo que no se puede deducir se DEFINE una vez, en un archivo, y deja de
+# costar sesiones de debugging: patrocinadores, marcas de equipo y otras
+# entidades que aparecen en un flyer sin organizarlo. Un nombre aca no vuelve
+# a proponerse como cliente. El archivo es opcional: si no existe, no hay
+# descalificacion por esta via.
+NO_ORGANIZADORES = "data/productoras/no_organizadores.txt"
+
+IDENTIDAD_PROPIA_RAICES = ("carter", "cartel")
+IDENTIDAD_PROPIA_RAIZ_ACOMPANA = ("test", "rd", "reduciendo")
+
+# Un nombre de organizador no lleva notacion de set. "B2B" (back to back) y
+# "VS" son formato de lineup: el string es una alineacion de DJs, no quien
+# produce. Marcador especifico y falsificable, no una lista de nombres.
+LINEUP_NOTATION = (" b2b ", " vs ", " v/s ")
+
+# Razones por las que un candidato NUEVO no se convierte en propuesta. El
+# conteo de obras NO es calificacion: medido el 2026-08-21, de 3 propuestas
+# escritas 2 eran basura -- "Banco de Chile" (un patrocinador, 3 obras) y
+# "carterela testeamdo" (la cartelera propia de RD, 3 obras). Solo TECHMOTION
+# era un lead real.
+DESCALIFICA_VENUE_CONOCIDO = "es_un_venue_del_catalogo"
+DESCALIFICA_NO_ORGANIZADOR = "declarado_no_organizador"
+DESCALIFICA_IDENTIDAD_PROPIA = "identidad_propia_rd"
+DESCALIFICA_LINEUP = "notacion_de_lineup"
+
 CAMPOS_CANDIDATO_JSONL = (
     "obra_id", "fuente", "ruta_rel", "miembros_n", "productora_cruda",
     "productora_canonica", "match_ratio", "venue_crudo", "venue_canonico",
@@ -149,6 +179,67 @@ def valor_limpio(valor) -> str:
     """Valor crudo tal cual si no es basura; "" si lo es o esta vacio."""
     valor = a_texto(valor)
     return "" if es_basura(valor) else valor
+
+
+def es_cartelera_propia(crudo: str) -> bool:
+    """La cartelera de testeo de RD, incluidas sus corrupciones de OCR.
+
+    Exige raiz + acompanante para no descartar una productora real que se
+    llame "Cartel" algo: "CARTELERA TESTEMO 2025" entra, "Cartel Norte" no.
+    """
+    normal = normalizar_texto(crudo)
+    if not any(normal.startswith(r) or (" " + r) in normal
+               for r in IDENTIDAD_PROPIA_RAICES):
+        return False
+    return any(a in normal for a in IDENTIDAD_PROPIA_RAIZ_ACOMPANA)
+
+
+def has_lineup_notation(crudo: str) -> bool:
+    """True cuando el string es una alineacion de artistas, no un organizador."""
+    normal = " " + normalizar_texto(crudo) + " "
+    return any(marca in normal for marca in LINEUP_NOTATION)
+
+
+def load_non_organizers(ruta=None) -> set:
+    """Nombres declarados como no-organizadores. Una linea por nombre, `#` comenta."""
+    ruta = Path(ruta or (_repo_root() / NO_ORGANIZADORES))
+    if not ruta.is_file():
+        return set()
+    declared = set()
+    for line in ruta.read_text(encoding="utf-8", errors="replace").splitlines():
+        line = line.split("#", 1)[0].strip()
+        if line:
+            declared.add(normalizar_texto(line))
+    return declared
+
+
+def descalificar_candidato(crudo: str, catalogo_venues: list,
+                           no_organizadores=frozenset()) -> str | None:
+    """Por que este candidato NUEVO no debe volverse propuesta, o None.
+
+    Un VENUE no es una productora. La pregunta se le hace al CATALOGO -- la
+    misma base y el mismo fuzzy-match que ya usa el resto del modulo -- en vez
+    de adivinar el rol y corregirlo despues. Si el string ya es un venue
+    conocido, esta en el campo equivocado y no es un cliente nuevo.
+
+    Lo que ningun dato puede decidir (un banco que patrocina, una marca de
+    sonido) se DEFINE en `no_organizadores.txt` y queda resuelto para siempre,
+    que es mas barato que perseguir una regla perfecta.
+
+    Lo que no cae en ninguna via NO se descalifica: sigue siendo candidato y el
+    borrador lleva su evidencia para que una persona decida.
+    """
+    if es_cartelera_propia(crudo):
+        return DESCALIFICA_IDENTIDAD_PROPIA
+    if has_lineup_notation(crudo):
+        return DESCALIFICA_LINEUP
+    if normalizar_texto(crudo) in no_organizadores:
+        return DESCALIFICA_NO_ORGANIZADOR
+    if catalogo_venues:
+        _canonico, ratio = mejor_match(crudo, catalogo_venues)
+        if clasificar_ratio(ratio) == "match":
+            return DESCALIFICA_VENUE_CONOCIDO
+    return None
 
 
 def es_identidad_propia(crudo: str) -> bool:
@@ -616,7 +707,8 @@ def _tabla_conteo(titulo: str, conteo: Counter) -> list[str]:
 
 def generar_informe(fuente: str, total_leidas: int, fichas_procesadas: list[dict],
                      sin_error: list[dict], con_error: list[dict], obras: list[dict],
-                     candidatos: list[dict], clusters_nuevos: list[dict]) -> str:
+                     candidatos: list[dict], clusters_nuevos: list[dict],
+                     descalificados: list[dict] | None = None) -> str:
     total_fichas = len(fichas_procesadas)
     total_sin_error = len(sin_error)
     total_obras = len(obras)
@@ -695,6 +787,14 @@ def generar_informe(fuente: str, total_leidas: int, fichas_procesadas: list[dict
         lineas.append("(sin dudosos)")
     lineas.append("")
 
+    if descalificados:
+        lineas.append("## DESCALIFICADOS (tenian obras suficientes, no son leads)")
+        lineas.append("")
+        for d in sorted(descalificados, key=lambda x: (-x["obras"], x["nombre"])):
+            lineas.append("- %s (obras: %d) -- motivo: %s" % (
+                _md(d["nombre"]), d["obras"], d["motivo"]))
+        lineas.append("")
+
     lineas.append("## NUEVO? (productoras candidatas, agrupadas por similitud)")
     lineas.append("")
     if clusters_nuevos:
@@ -740,16 +840,40 @@ def _slug(texto: str) -> str:
     return norm or "sin_nombre"
 
 
-def escribir_propuestas(dir_propuestas, clusters_nuevos: list[dict]) -> list[Path]:
-    """Un .md por cluster de productora NUEVA con >=2 obras. NUNCA
-    escribe en data/ ni knowledge/ -- son borradores para PR humano.
-    `clusters_nuevos` ya viene sin obras identidad_propia (filtradas
-    antes de agrupar, ver procesar())."""
+def escribir_propuestas(dir_propuestas, clusters_nuevos: list[dict],
+                        catalogo_venues=(),
+                        no_organizadores=frozenset()) -> tuple[list[Path], list[dict]]:
+    """Un .md por cluster de productora NUEVA con >=2 obras Y sin descalificar.
+
+    NUNCA escribe en data/ ni knowledge/ -- son borradores para PR humano.
+    `clusters_nuevos` ya viene sin obras identidad_propia (filtradas antes de
+    agrupar, ver procesar()).
+
+    El conteo de obras NO alcanza como calificacion. Medido el 2026-08-21 sobre
+    el corpus real: de 3 propuestas escritas, una era la cartelera de testeo de
+    RD -- producto propio, no un cliente -- que la auto-exclusion existente no
+    atrapaba porque el OCR la corrompe ("CARTERELA TEstEAMDO"). Y en la cola de
+    candidatos aparecian TEATRO CAUPOLICAN y TEATRO ROMA como productoras
+    siendo venues: se le pregunta al catalogo antes de catalogar.
+
+    Devuelve (rutas escritas, descalificados) para que el informe diga por que
+    no se propuso algo en vez de que desaparezca en silencio.
+    """
     dir_propuestas = Path(dir_propuestas)
     escritos: list[Path] = []
+    descalificados: list[dict] = []
 
     for cluster in clusters_nuevos:
         if len(cluster["obras"]) < MIN_OBRAS_PROPUESTA:
+            continue
+        motivo = next(
+            (m for m in (descalificar_candidato(v, catalogo_venues,
+                                                no_organizadores)
+                         for v in cluster["variantes"]) if m), None)
+        if motivo:
+            descalificados.append({"nombre": cluster["variantes"][0],
+                                   "motivo": motivo,
+                                   "obras": len(cluster["obras"])})
             continue
 
         dir_propuestas.mkdir(parents=True, exist_ok=True)
@@ -781,7 +905,7 @@ def escribir_propuestas(dir_propuestas, clusters_nuevos: list[dict]) -> list[Pat
         ruta.write_text("\n".join(lineas), encoding="ascii")
         escritos.append(ruta)
 
-    return escritos
+    return escritos, descalificados
 
 
 # ---------------------------------------------------------------------------
@@ -819,13 +943,19 @@ def procesar(ruta_fichas, outdir, catalogo_productoras_ruta=None,
     ]
     clusters_nuevos = agrupar_nuevos_por_productora(nuevo_prod_candidatos)
 
+    # Las propuestas van ANTES del informe: el informe tiene que poder decir
+    # que se descalifico y por que, en vez de que desaparezca en silencio.
+    # Se le pregunta al CATALOGO de venues, no al corpus: un venue conocido en
+    # el campo productora es un campo equivocado, no un cliente nuevo.
+    propuestas_escritas, descalificados = escribir_propuestas(
+        outdir / "propuestas", clusters_nuevos, catalogo_venues,
+        load_non_organizers())
+
     informe = generar_informe(
         fuente, len(fichas_leidas), fichas, sin_error, con_error, obras,
-        candidatos, clusters_nuevos,
+        candidatos, clusters_nuevos, descalificados,
     )
     (outdir / "INFORME_CANDIDATOS.md").write_text(informe, encoding="ascii")
-
-    propuestas_escritas = escribir_propuestas(outdir / "propuestas", clusters_nuevos)
 
     return {
         "fuente": fuente,
@@ -836,6 +966,7 @@ def procesar(ruta_fichas, outdir, catalogo_productoras_ruta=None,
         "candidatos": candidatos,
         "clusters_nuevos": clusters_nuevos,
         "propuestas": propuestas_escritas,
+        "descalificados": descalificados,
     }
 
 

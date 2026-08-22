@@ -321,6 +321,79 @@ mandaria -- pero nunca su configuracion permanente, y una segunda noche puede no
 parecerse en nada.
 
 
+## Cola de leads: preguntarle al catalogo antes de catalogar — 2026-08-21
+
+ANTES: la cola de productoras candidatas de RD proponia como cliente potencial
+cualquier cluster con >=2 obras. El conteo era la unica calificacion. Medido
+sobre el corpus real (1742 fichas rd -> 984 obras tras colapso de secuencias):
+de 3 propuestas escritas, una era `CARTERELA TEstEAMDO` -- la cartelera de
+testeo de RD corrompida por OCR, producto propio y no un cliente -- y otra era
+`Banco de Chile`, un patrocinador que el OCR levanta del flyer. Ademas
+`TEATRO CAUPOLICAN` y `TEATRO ROMA` figuraban como productoras candidatas
+siendo venues.
+
+DESPUES: un candidato nuevo pasa por descalificadores nombrados antes de
+volverse propuesta, y el informe dice cual y por que en vez de que desaparezca
+en silencio. Propuestas escritas: de 3 a 1, y la que queda (`TECHMOTION CHILE Y
+DEL AVERNO`) es el lead real.
+
+CORRECCION DE METODO, indicada por el operador: la primera version escaneaba el
+corpus para deducir que strings eran venues. Eso era REPAIR sobre una
+adivinanza. Lo correcto es REMOVE NEED: **un venue no es una productora, y la
+pregunta se le hace al CATALOGO** -- `cargar_catalogo_venues()` y el mismo
+`mejor_match` que el modulo ya usa -- antes de catalogar. Se elimino la
+heuristica de corpus.
+
+Y lo que ningun dato puede decidir se DEFINE en vez de deducirse:
+`data/productoras/no_organizadores.txt`, una linea por nombre. Definir una vez
+es mas barato que perseguir una regla perfecta. Ahi entran los patrocinadores
+vistos en el corpus (Banco de Chile, Red Bull, Schweppes, CoolBet) y las marcas
+de equipamiento (Funktion-One), que aparecen en un flyer sin organizarlo. Si el
+archivo no existe, no hay descalificacion por esa via.
+
+Las cuatro vias, cada una comprobable por separado:
+`identidad_propia_rd` (la cartelera propia, incluidas sus corrupciones de OCR,
+con guarda para que "Cartel Norte" NO caiga), `notacion_de_lineup` (`B2B`,
+`VS`: una alineacion de DJs no es un organizador), `declarado_no_organizador`
+(el archivo) y `es_un_venue_del_catalogo`. Lo que no cae en ninguna via NO se
+descalifica: sigue siendo candidato y el borrador lleva su evidencia.
+
+CORRECCION DE UN JUICIO PROPIO: primero llame "basura" a esas propuestas. Fue
+duro y equivocado. El borrador ya mostraba los handles (`@RedBull, @Schweppes`
+en el de Banco de Chile) y dice "convertir via PR humano, NO escribir directo".
+La maquina propone con evidencia y la persona firma, que es la regla dura #4 del
+contrato. El defecto real era mas chico y mas concreto: la cartelera propia y
+los venues no debian llegar a la cola.
+
+CONTEXTO QUE ORDENA ESTO, aportado por el operador: no es VJ de RD. Es DISENADOR
+de RD, y aparte VJ de artistas (Drefquila, Harry Nach). Por eso los dos corpus NO
+se cruzan por nombre de artista -- medido: `nach` 0, `drefquila` 0, `bah` 0 en
+las 3385 fichas. El puente entre ambos rubros no es el artista: es que RD da el
+lenguaje y el acceso a PRODUCTORAS, que son los clientes potenciales, y lo que
+se les ofrece es rider/plano/zona de descanso con el respaldo tecnico de
+pantallas. De ahi que la calidad de esta cola importe comercialmente.
+
+Tambien confirmado por el operador y ya no candidato: `harry.xml` y `CHILLAN.xml`
+son el MISMO show, Harry Nach en Chillan. El `same_rig_candidate` que este
+trabajo dedujo por topologia era correcto, y la atestacion humana resuelve el
+desempate que el codigo dejo declarado.
+
+Comandos y codigos de salida:
+
+- `python3 cultura/mak_curatoria/extraccion_db.py ~/curatoria/fichas/fichas.jsonl --outdir <temp> --fuente rd`: exit 0; 984 obras, 20 clusters nuevos, 1 propuesta escrita, 2 descalificados con motivo.
+- `./.venv/bin/python -m pytest -q tests/test_extraccion_db.py`: exit 0.
+- `./.venv/bin/python -m pytest -q tests/`: exit 0, suite completa.
+- `tools/repo_audit.py`, `compileall`, `git diff --check`: exit 0.
+
+Fuentes intactas: no se escribio en `~/curatoria/fichas/`; las salidas fueron a
+directorios temporales y el unico archivo nuevo del repo es la lista declarada.
+
+RESIDUO: `MATUCANA #100, TECHNO YOUTH, MIDO, PANAL RECORDS, toliv` sigue siendo
+UN candidato con cinco entidades adentro, y dos de ellas (TECHNO YOUTH, PANAL
+RECORDS) ya son canonicas. Partir ese campo recuperaria entidades conocidas,
+pero es un cambio en la extraccion y no en la calificacion; queda anotado, no
+hecho.
+
 ## Next concrete action
 
 Publicar este write set en `main` solo cuando exista autorizacion explicita de
