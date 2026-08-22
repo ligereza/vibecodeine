@@ -55,11 +55,18 @@ def _composition(tmp_path: Path, name: str, refs, relative: bool = False,
 
 
 def _index(tmp_path: Path, relative_paths):
+    """A minimal index with the columns the real one has.
+
+    sample_sha256 is included because cross_container_copies reads it: a fixture
+    that omits a column the code uses tests a different database than the one
+    that ships.
+    """
     path = tmp_path / "index.sqlite"
     con = sqlite3.connect(path)
-    con.execute("CREATE TABLE assets (asset_id TEXT, relative_path TEXT, bytes INTEGER)")
-    con.executemany("INSERT INTO assets VALUES (?,?,?)",
-                    [(f"a{i}", rel, 1000 + i)
+    con.execute("CREATE TABLE assets (asset_id TEXT, relative_path TEXT, "
+                "bytes INTEGER, sample_sha256 TEXT)")
+    con.executemany("INSERT INTO assets VALUES (?,?,?,?)",
+                    [(f"a{i}", rel, 1000 + i, f"h{i}")
                      for i, rel in enumerate(relative_paths)])
     con.commit()
     con.close()
@@ -341,3 +348,85 @@ def test_the_real_caupolican_ambiguities_are_all_duplicate_copies():
     assert counts[NOT_FOUND] == 18
     assert report["tasa_clip_decidido"] == pytest.approx(34 / 52, abs=1e-4)
     assert len(report["copias_duplicadas"]) == 6
+
+
+# --- copies that span containers are not waste -----------------------------
+#
+# Measured on the real index: 543 (basename, bytes) pairs live under two or more
+# container roots, 31.3 GB counting only the extra copies. A deduplicator sees
+# one thing; the operator's reading shows three, and deleting the wrong copy is
+# a different loss in each:
+#
+#   - the same clip in two shows: HARRY CHILLAN/ESCARLATA.mp4 and
+#     HARRY/show/VINA/ESCARLATA.mp4 -- a VJ set travelling;
+#   - the same clip under two artists because the track is a collaboration:
+#     escarlata.mp4 in DREFGIRA, DrefQuila and HARRY, because it is a remix;
+#   - a tour folder and the artist's own body of work: enrolar.mp4 and
+#     misionar.mov in DREFGIRA and DrefQuila.
+
+
+def test_a_copy_in_two_containers_is_reported_and_never_ranked_for_deletion(tmp_path):
+    from flujo.venues.resolume_composition import cross_container_copies
+
+    index = _index(tmp_path, ["TOUR/clip.mov", "ARTIST/clip.mov", "TOUR/solo.mov"])
+    # give the shared pair the same size so it groups
+    import sqlite3
+    con = sqlite3.connect(index)
+    con.execute("UPDATE assets SET bytes=999, sample_sha256='abc' "
+                "WHERE relative_path LIKE '%clip.mov'")
+    con.commit(); con.close()
+    result = cross_container_copies(index)
+    assert result["grupos"] == 1
+    group = result["mayores"][0]
+    assert group["containers"] == ["ARTIST", "TOUR"]
+    assert group["same_sample_hash"] is True
+    assert result["bytes_en_copias_extra"] == 999
+    warning = result["advertencia"]
+    assert "NINGUNO" in warning and "no para liberar disco" in warning
+    # It must never present a winner.
+    assert "borrar" not in str(group).casefold()
+
+
+def test_a_file_alone_in_one_container_is_not_a_cross_container_copy(tmp_path):
+    from flujo.venues.resolume_composition import cross_container_copies
+
+    index = _index(tmp_path, ["TOUR/a.mov", "TOUR/b.mov"])
+    assert cross_container_copies(index)["grupos"] == 0
+
+
+def test_same_name_different_bytes_does_not_group(tmp_path):
+    """Two different edits sharing a filename are not copies of one thing."""
+    from flujo.venues.resolume_composition import cross_container_copies
+
+    index = _index(tmp_path, ["TOUR/clip.mov", "ARTIST/clip.mov"])
+    assert cross_container_copies(index)["grupos"] == 0  # _index gives distinct sizes
+
+
+def test_the_orphan_warning_names_the_measured_reason(tmp_path):
+    index = _index(tmp_path, ["TOUR/a.mov"])
+    warning = orphan_candidates("TOUR", set(), index)["advertencia"]
+    assert "543" in warning, "the orphan warning lost the measurement"
+    assert "colaboracion" in warning and "cuerpo de obra" in warning
+
+
+def test_the_real_index_reproduces_the_measured_cross_container_shape():
+    from flujo.venues.resolume_composition import cross_container_copies
+
+    if not REAL_INDEX.is_file():
+        pytest.skip("SSD index absent")
+    result = cross_container_copies(REAL_INDEX)
+    assert result["grupos"] == 543
+
+    # escarlata.mp4 appears as TWO distinct groups of different sizes, and that
+    # is the whole point of grouping on (basename, bytes): they are different
+    # relationships, not one duplicate.
+    escarlatas = [item for item in result["mayores"]
+                  if item["basename"] == "escarlata.mp4"]
+    assert len(escarlatas) == 2, [item["bytes"] for item in escarlatas]
+    by_size = {item["bytes"]: item["containers"] for item in escarlatas}
+    biggest = max(by_size)
+    # The collaboration: the remix sits under three artists at once.
+    assert by_size[biggest] == ["DREFGIRA", "DrefQuila", "HARRY"]
+    # The travelling set: the same smaller clip played at two shows.
+    smaller = min(by_size)
+    assert by_size[smaller] == ["HARRY", "HARRY CHILLAN"]
