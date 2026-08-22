@@ -451,13 +451,42 @@ rama sin git. Detectado ejecutando la rama, no leyendola.
 Comandos y codigos de salida: `pytest -q tests/` exit 0; `repo_audit`,
 `compileall`, `pip check`, `git diff --check` exit 0; `npm run typecheck` exit 0.
 
-RESIDUO: el barrido de cero silencioso se limito a puertas que escanean el repo.
-Las 15 restantes de la lista de 18 son tests de atomicidad sobre `tmp_path` que
-acaban de poblar el directorio; no pueden pasar en vacio de forma significativa,
-pero no las verifique una por una. Y la regla de idioma sigue dependiendo de que
-el ratchet la haga cumplir en tiempo de test: no existe una verificacion mas
-temprana, y para codigo que no es Python (TS de `web/`) no hay ratchet
-equivalente.
+RESIDUOS CERRADOS (no quedan declarados sin resolver):
+
+1. Las 15 restantes de la lista de 18 SI se verificaron una por una. Catorce son
+   `tmp_path`/`TemporaryDirectory` y su `assert not list(...)` recorre un
+   directorio que el propio test acaba de poblar: vacio ahi ES la afirmacion
+   ("no quedaron temporales"), no una falta de medicion, asi que un pase en
+   vacio es imposible por construccion. La numero 15 era real y quedo cerrada:
+   `test_campo_filtro.py::test_ningun_trazo_publicado_es_de_una_obra_excluida`
+   comparaba `campo.json` contra `glob(iskvw/piel/trazos/*.svg)`, y si ese
+   directorio se mueve el glob devuelve vacio, `huerfanos` queda vacio y el
+   ratchet informa "todo limpio" para siempre mientras los trazos reales viven
+   sin vigilancia. Su propio docstring registra que el incidente ya paso ("441
+   trazos de obras que el filtro dejaba fuera"). Medido hoy: 219 piezas en
+   campo.json, 208 svg en disco, 208 en el indice. Ahora exige haber medido algo,
+   y su gate hermano (`test_el_indice_de_trazos_dice_la_verdad`) tambien, porque
+   comparar dos conjuntos vacios no prueba que el indice diga la verdad.
+   Verificado apuntandolo a un directorio vacio: antes pasaba, ahora falla.
+
+2. El ratchet de idioma para codigo no-Python se MIDIO y se DECLINA con razon,
+   no por omision. En `web/src` hay 36 archivos ts/tsx y 17 declaraciones con
+   raiz espanola en 9 de ellos. Pero estan mezcladas: `ProductoraRef`,
+   `productoras.ts` y `ArchivoReg` usan terminos de DOMINIO sin equivalente
+   ingles que no pierda significado -- "productora" es vocabulario de la
+   industria de eventos chilena, igual que se conserva "venue" --, mientras
+   `carpetaDe`, `estadoLegible`, `salidas` y `archivo` si son deriva de estilo
+   con equivalente directo. Un ratchet duro sobre esa poblacion forzaria
+   renombres malos y necesitaria una lista curada a mano de terminos de dominio,
+   que es exactamente el patron que la memoria de direccion advierte ("una lista
+   escrita a mano es lo que este repo hitio tres veces"). Resultado negativo
+   registrado: 17 casos, mezcla de dominio legitimo y deriva, no justifica un
+   gate. Si la poblacion crece, la decision se revisa con el numero a la vista.
+
+RESIDUO QUE SI QUEDA: la regla de idioma en Python sigue dependiendo de que el
+ratchet la haga cumplir en tiempo de test; no hay verificacion mas temprana. En
+esta sesion me caz cuatro veces, lo que significa que funciona, y tambien que yo
+no la aplique antes de escribir.
 
 ## Next concrete action
 
