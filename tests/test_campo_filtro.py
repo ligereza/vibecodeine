@@ -127,6 +127,14 @@ def test_ningun_trazo_publicado_es_de_una_obra_excluida():
     en_campo = {p["id"].split("-")[0] for p in campo["piezas"]}
     en_disco = {Path(p).stem for p in
                 glob.glob(str(_REPO / "iskvw" / "piel" / "trazos" / "*.svg"))}
+    # El cero silencioso (memoria de direccion 2.3): si el directorio de trazos
+    # se mueve o se renombra, el glob devuelve vacio, `huerfanos` queda vacio y
+    # este ratchet informa "todo limpio" para siempre mientras los trazos reales
+    # viven sin vigilancia en otra parte. Cero medido es un ERROR, no silencio.
+    assert en_campo, "campo.json no declaro ninguna pieza: nada que contrastar"
+    assert en_disco, (
+        "no se encontro ningun .svg en iskvw/piel/trazos/: el ratchet no midio "
+        "nada, que no es lo mismo que estar limpio")
     huerfanos = sorted(en_disco - en_campo)
     assert not huerfanos, (
         "hay trazos publicados de obras que el filtro excluye: "
@@ -139,6 +147,9 @@ def test_el_indice_de_trazos_dice_la_verdad():
                      .read_text(encoding="utf-8"))
     en_disco = {Path(p).stem for p in
                 glob.glob(str(_REPO / "iskvw" / "piel" / "trazos" / "*.svg"))}
+    assert en_disco, (
+        "no se encontro ningun .svg en iskvw/piel/trazos/: comparar dos "
+        "conjuntos vacios no prueba que el indice diga la verdad")
     assert set(idx["trazos"]) == en_disco, (
         "el indice y el disco no coinciden: correr "
         "py tools/gen_campo_iskvw.py --indice-trazos iskvw/piel/trazos")
