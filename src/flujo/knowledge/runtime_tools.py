@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import sys
 from pathlib import Path
 
 
@@ -21,7 +22,12 @@ def resolve_blender(repo_root: str | Path | None = None) -> Path | None:
     remains the highest-priority override and is never printed by this helper.
     """
     candidates: list[Path] = []
-    configured = os.environ.get("BLENDER_EXE", "").strip()
+    # BLENDER_EXE is the name MAPA.md documents. MAK_BLENDER was used by
+    # cultura/mak_curatoria/diagnostico_proyectos.py and by nothing else, so
+    # anyone who set the documented variable got Blender resolved here and NOT
+    # there. Both are honoured in both places; the documented one wins.
+    configured = (os.environ.get("BLENDER_EXE", "").strip()
+                  or os.environ.get("MAK_BLENDER", "").strip())
     if configured:
         candidates.append(Path(configured).expanduser())
     found = shutil.which("blender")
@@ -116,3 +122,55 @@ def resolve_node(repo_root: str | Path | None = None) -> Path | None:
     """Return the first reachable Node binary, or ``None``."""
     found = node_candidates(repo_root)
     return found[0] if found else None
+
+
+def resolve_console_script(name: str, *, env_var: str | None = None) -> Path | None:
+    """Find a console script that a declared Python dependency installs.
+
+    ``shutil.which`` alone is not enough here. pip puts console scripts next to
+    the interpreter that installed them -- ``.venv/bin/<name>`` -- and that
+    directory is NOT on ``PATH`` unless the venv is activated. Running the suite
+    as ``./.venv/bin/python -m pytest`` therefore reported a declared dependency
+    as missing.
+
+    Measured on 2026-08-21: ``vpype`` is declared in ``pyproject.toml`` under the
+    ``dev`` extra, ``.venv/bin/vpype`` exists and ``import vpype`` works, yet
+    ``laser.verificar()`` returned ``{"vpype": False}`` and
+    ``test_estado_reporta_la_cadena_real`` skipped with "vpype not installed".
+    A gate that never fires where the dependency IS installed is not a gate.
+
+    Order: explicit env override, then PATH, then the running interpreter's own
+    bin directory. Paths only -- nothing is executed here.
+
+    One trap measured while writing this: ``Path(sys.executable).resolve()``
+    walks OUT of the venv, because ``.venv/bin/python`` is a symlink to
+    ``/usr/bin/python3``. The unresolved dirname is the one that holds the
+    console scripts.
+    """
+    candidates: list[Path] = []
+    if env_var:
+        configured = os.environ.get(env_var, "").strip()
+        if configured:
+            candidates.append(Path(configured).expanduser())
+    found = shutil.which(name)
+    if found:
+        candidates.append(Path(found))
+    # NOT resolve(): .venv/bin/python is a symlink to /usr/bin/python3, so
+    # resolving it walks out of the venv and the console script is missed. The
+    # unresolved dirname is the venv bin; sys.prefix covers the case where the
+    # interpreter was invoked through another link.
+    for base in (Path(sys.executable).parent, Path(sys.prefix) / "bin",
+                 Path(sys.prefix) / "Scripts"):
+        candidates.append(base / name)
+    seen: set[str] = set()
+    for candidate in candidates:
+        key = str(candidate)
+        if key in seen:
+            continue
+        seen.add(key)
+        try:
+            if candidate.is_file() and os.access(candidate, os.X_OK):
+                return candidate.resolve()
+        except OSError:
+            continue
+    return None

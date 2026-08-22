@@ -488,6 +488,77 @@ ratchet la haga cumplir en tiempo de test; no hay verificacion mas temprana. En
 esta sesion me caz cuatro veces, lo que significa que funciona, y tambien que yo
 no la aplique antes de escribir.
 
+## Puertas que no disparan y puertas mas angostas que su regla — 2026-08-21
+
+Dos clases mas, medidas y cerradas.
+
+CLASE 3 -- una herramienta declarada como dependencia, reportada como ausente.
+`src/flujo/laser.py` resolvia vpype con `shutil.which("vpype")`, que solo mira
+`PATH`. Pero vpype esta declarado en `pyproject.toml` (extra `dev`),
+`.venv/bin/vpype` existe y `import vpype` funciona: pip pone los console scripts
+al lado del interprete, y ese directorio NO esta en `PATH` cuando la suite corre
+como `./.venv/bin/python -m pytest`. Resultado: `laser.verificar()` devolvia
+`{"vpype": False}` y `test_estado_reporta_la_cadena_real` se saltaba con "vpype
+not installed" en una maquina donde SI esta instalado. Una puerta que no dispara
+donde la dependencia existe no es una puerta.
+
+Es la misma clase que ya arregle para Blender y Node en esta sesion, asi que la
+resolucion vive en el mismo lugar: `runtime_tools.resolve_console_script()`
+mira override explicito, `PATH`, y el `bin` del interprete. `laser.py` lo usa y
+ahora `verificar()` devuelve `vpype: True`; el test dispara y pasa, y ese archivo
+quedo con cero skips. Los skips de la suite bajaron de 6 a 5.
+
+Trampa propia encontrada al escribirlo: la primera version usaba
+`Path(sys.executable).resolve().parent`, y como `.venv/bin/python` es un SYMLINK
+a `/usr/bin/python3`, resolverlo sale del venv y el script nunca se encuentra. Se
+usa el dirname sin resolver, mas `sys.prefix`. Detectado midiendo el valor real,
+no leyendo el codigo.
+
+Verificado tambien que los otros `shutil.which` del repo NO son miembros:
+`rasterizador.py` ya usa lista de candidatos antes de `PATH`, y `gh`, `npm`,
+`ffprobe`, `pdfinfo` y `7z` son herramientas de sistema donde `PATH` es correcto.
+
+DIVERGENCIA DE UNA MISMA VERDAD: Blender se resolvia con `BLENDER_EXE` en
+`runtime_tools` y con `MAK_BLENDER` en
+`cultura/mak_curatoria/diagnostico_proyectos.py`, y con nada mas en ninguna otra
+parte. `MAPA.md` documenta `BLENDER_EXE`, asi que quien seguia la documentacion
+resolvia Blender en un lado y NO en el otro, en silencio. Ahora los dos nombres
+funcionan en los dos lugares y gana el documentado; el alias quedo documentado
+como alias. No se unifico por import a proposito: ese archivo tambien corre
+proyectado desde `/home/mak/curatoria` con otro interprete, y un import fragil
+seria peor que la duplicacion.
+
+CLASE 4 -- una puerta mas angosta que la regla que dice hacer cumplir.
+`test_toda_variable_de_entorno_esta_documentada` exige que toda variable de
+entorno este en `MAPA.md` seccion 4, pero escaneaba SOLO `src/flujo`. Todo
+`cultura/` y `tools/` -- donde viven el Hub, Research y Codex -- escapaba a la
+regla. Se descubrio de rebote: al agregar el alias `MAK_BLENDER` en `src/` la
+puerta angosta por fin lo vio y fallo.
+
+Medido al ensanchar: 82 variables leidas fuera de `src/flujo` sin documentar.
+Documentar 82 en un commit no es verificar, y una puerta que no puede pasar se
+desactiva en vez de obedecerse, asi que las zonas anchas quedan con un pin que
+SOLO puede bajar -- el mismo patron que el ratchet de idioma ya usa:
+`tests/fixtures/env_documentado_baseline.txt` mas `tools/env_baseline.py`
+(`--write` lo reescribe a proposito). El ratchet nuevo falla ante una variable
+NUEVA, exige que el pin no conserve variables ya documentadas, y comprueba que el
+escaneo ancho siga viendo `cultura/` para que no se angoste en silencio.
+
+Verificado ejecutando, no leyendo: se agrego un archivo temporal en `cultura/`
+leyendo `MAK_PROBE_UNDOCUMENTED_VAR`, la puerta fallo nombrandola, y al borrarlo
+volvio a verde.
+
+Comandos y codigos de salida: `pytest -q tests/` exit 0 (5 skips, todos por
+cairosvg/navegador ausentes en esta maquina, presentes en CI via el extra
+`render`); `tools/env_baseline.py` exit 0 con 82 pineadas y 0 nuevas;
+`repo_audit`, `compileall`, `pip check`, `git diff --check` exit 0.
+
+RESIDUO: las 82 variables siguen sin documentar y el pin mide esa deuda; bajarlo
+es trabajo de documentacion, no de codigo. Y vuelvo a anotar lo mismo de antes,
+porque volvio a pasar dos veces en este bloque: escribi comentarios nuevos en
+espanol y el ratchet de idioma me corrigio. La regla la hace cumplir la puerta,
+no yo.
+
 ## Next concrete action
 
 Publicar este write set en `main` solo cuando exista autorizacion explicita de

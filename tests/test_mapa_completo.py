@@ -119,3 +119,65 @@ def test_el_mapa_conserva_los_marcadores_del_generador():
             "tools/gen_mapa_comandos.py no puede regenerar la tabla y el mapa "
             "vuelve a ser prosa escrita a mano que envejece sola."
         )
+
+
+# ---------------------------------------------------------------------------
+# The documentation rule reached only src/flujo
+# ---------------------------------------------------------------------------
+#
+# test_toda_variable_de_entorno_esta_documentada scans _env_leidas(), which
+# walks ONLY src/flujo. Every variable read in cultura/ or tools/ escaped the
+# rule entirely -- and cultura/ is where the Hub, Research and Codex live.
+# Measured on 2026-08-21: 82 undocumented variables outside src/flujo, found the
+# moment MAK_BLENDER was added to src/ and the narrower gate finally noticed it.
+#
+# Documenting 82 entries in one commit is not verification, and a gate that
+# cannot pass gets disabled instead of obeyed. So the wider zones are held by a
+# pin that may only shrink, the same shape the language ratchet already uses.
+
+
+def _env_tool():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "env_baseline", RAIZ / "tools" / "env_baseline.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_ninguna_variable_nueva_fuera_de_src_queda_sin_documentar():
+    """The ratchet: the pin may shrink, never grow."""
+    tool = _env_tool()
+    pinned = tool.read_pin()
+    assert pinned, (
+        "el pin de variables sin documentar quedo vacio: o se documentaron las "
+        "82 (celebremos y borremos este test) o el archivo se perdio y el "
+        "ratchet dejo de medir")
+    nuevas = sorted(set(tool.undocumented()) - pinned)
+    assert not nuevas, (
+        "variables de entorno nuevas leidas fuera de src/flujo y sin documentar "
+        "en MAPA.md seccion 4: " + ", ".join(nuevas)
+        + ". Documentalas, o si de verdad no son configurables agregalas a "
+        "NOT_CONFIGURABLE en tools/env_baseline.py")
+
+
+def test_el_pin_no_conserva_variables_ya_documentadas():
+    """A pin that keeps solved entries stops measuring the real debt."""
+    tool = _env_tool()
+    resueltas = sorted(tool.read_pin() - set(tool.undocumented()))
+    assert not resueltas, (
+        "estas variables ya estan documentadas en MAPA.md pero siguen en el "
+        "pin: bajalo con `python3 tools/env_baseline.py --write`. "
+        + ", ".join(resueltas))
+
+
+def test_el_escaneo_ancho_cubre_de_verdad_cultura_y_tools():
+    """Guard against the scan silently narrowing back to nothing."""
+    tool = _env_tool()
+    encontradas = tool.scan()
+    assert len(encontradas) > 50, (
+        f"el escaneo ancho solo vio {len(encontradas)} variables: si cultura/ o "
+        "tools/ se mueven, este ratchet pasa sin medir nada")
+    assert "OLLAMA_BASE_URL" in encontradas, (
+        "una variable conocida de cultura/ dejo de verse: el escaneo se angosto")
