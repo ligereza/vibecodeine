@@ -391,6 +391,68 @@ def usage_report(record: CompositionRecord,
     return report
 
 
+def cross_container_copies(index_path: str | Path) -> dict[str, Any]:
+    """Assets that exist, byte-for-byte alike, under more than one container.
+
+    Measured on the real index: 543 (basename, bytes) pairs live in two or more
+    container roots. The operator's own reading of them shows they are not one
+    thing:
+
+    - the same clip reused in two shows -- ``HARRY CHILLAN/ESCARLATA.mp4`` and
+      ``HARRY/show/VINA/ESCARLATA.mp4`` -- which is a VJ set travelling;
+    - the same clip under two artists because of a collaboration -- Escarlata
+      sits in DREFGIRA, DrefQuila and HARRY because the track is a remix;
+    - a tour folder and the artist's own body of work holding the same piece,
+      like ``enrolar.mp4`` and ``misionar.mov`` in DREFGIRA and DrefQuila.
+
+    All three look identical to a deduplicator, and deleting either copy is a
+    different kind of loss in each case: a set that no longer plays, a
+    collaboration that loses one side, or a client's body of work with a hole in
+    it. So this function names them and refuses to rank them.
+    """
+    path = Path(index_path).expanduser()
+    con = sqlite3.connect("file:" + str(path) + "?mode=ro", uri=True)
+    try:
+        rows = con.execute(
+            "SELECT relative_path, bytes, sample_sha256 FROM assets").fetchall()
+    finally:
+        con.close()
+    groups: dict[tuple[str, int], dict[str, Any]] = {}
+    for relative, size, sample in rows:
+        relative = str(relative)
+        if "/" not in relative:
+            continue
+        key = (relative.rsplit("/", 1)[-1].casefold(), int(size or 0))
+        entry = groups.setdefault(key, {"containers": set(), "paths": [],
+                                        "samples": set()})
+        entry["containers"].add(relative.split("/", 1)[0])
+        entry["paths"].append(relative)
+        entry["samples"].add(str(sample or ""))
+    shared = {k: v for k, v in groups.items() if len(v["containers"]) > 1}
+    items = [
+        {"basename": basename, "bytes": size,
+         "containers": sorted(entry["containers"]),
+         "paths": sorted(entry["paths"]),
+         "same_sample_hash": len(entry["samples"]) == 1 and "" not in entry["samples"]}
+        for (basename, size), entry in shared.items()
+    ]
+    items.sort(key=lambda item: -item["bytes"])
+    return {
+        "schema": "mak-cross-container-copies-v1",
+        "grupos": len(items),
+        "bytes_en_copias_extra": sum(
+            item["bytes"] * (len(item["paths"]) - 1) for item in items),
+        "advertencia": (
+            "NINGUNO de estos grupos es un candidato a borrado. Una copia en dos "
+            "contenedores puede ser el mismo clip en dos shows, una colaboracion "
+            "entre artistas, o la obra de un cliente guardada junto a la gira "
+            "donde se uso. Borrar la copia equivocada rompe un set, una "
+            "colaboracion o el cuerpo de obra de otra persona. Esta lista existe "
+            "para que una persona las lea, no para liberar disco."),
+        "mayores": items[:25],
+    }
+
+
 def orphan_candidates(container: str, used_assets: Iterable[str],
                       index_path: str | Path) -> dict[str, Any]:
     """Assets in a container that no analysed composition references.
@@ -422,8 +484,13 @@ def orphan_candidates(container: str, used_assets: Iterable[str],
             "sin_referencia_conocida NO significa inutilizado. Solo se leyeron "
             "las composiciones presentes en el indice; un asset puede usarse en "
             "un show cuya composicion no esta aca, o como material fuente de "
-            "otro archivo. Esta lista es un punto de partida para una persona, "
-            "no una lista de borrado."),
+            "otro archivo. Y medido sobre el indice real: 543 pares "
+            "(basename, bytes) viven en mas de un contenedor porque el mismo "
+            "clip se reusa entre shows, entre artistas que colaboran, y entre "
+            "la carpeta de una gira y la obra propia del artista -- borrar una "
+            "de esas copias rompe un set, una colaboracion o el cuerpo de obra "
+            "de otra persona. Esta lista es un punto de partida para una "
+            "persona, no una lista de borrado."),
         "mayores_sin_referencia": [
             {"asset": rel, "bytes": size}
             for rel, size in sorted(unreferenced, key=lambda x: -x[1])[:20]],

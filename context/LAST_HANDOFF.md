@@ -628,6 +628,60 @@ identificadores nuevos en espanol y el ratchet de idioma me corrigio; esta vez
 liste los flagueados antes de renombrar, lo que deberia haber hecho desde el
 principio.
 
+## Copias entre contenedores: 543 grupos que NO son basura — 2026-08-21
+
+Contexto que solo el operador podia dar, y que cambia una herramienta: LYON es
+un cliente (`@LyonLaF`); `ESCARLATA` y `CDR` son canciones de Drefquila, y
+Escarlata es un REMIX en el que participa Harry Nach.
+
+Con eso, una medicion que ya estaba ahi se vuelve legible: 543 pares
+(basename, bytes) identicos viven bajo mas de un contenedor, 31,3 GB contando
+solo las copias extra. Un deduplicador ve una sola cosa; son al menos tres, y
+borrar la copia equivocada es una perdida distinta en cada caso:
+
+- el mismo clip en dos shows: `HARRY CHILLAN/ESCARLATA.mp4` y
+  `HARRY/show/VINA/ESCARLATA.mp4`, que es el set del VJ viajando;
+- el mismo clip bajo tres artistas porque el tema es una colaboracion:
+  `escarlata.mp4` en DREFGIRA, DrefQuila y HARRY;
+- la carpeta de una gira y la obra propia del artista con la misma pieza:
+  `enrolar.mp4` (3,37 GB) y `misionar.mov` (2,56 GB) en DREFGIRA y DrefQuila.
+
+`cross_container_copies()` los nombra y se NIEGA a rankearlos. La advertencia es
+explicita: ninguno es candidato a borrado, porque borrar la copia equivocada
+rompe un set, una colaboracion o el cuerpo de obra de OTRA persona. La lista
+existe para que una persona la lea, no para liberar disco. El aviso del reporte
+de huerfanos ahora lleva esa medicion adentro en vez de una prudencia generica.
+
+Detalle que valida el diseño: `escarlata.mp4` aparece como DOS grupos de tamaños
+distintos -- 2,11 GB con tres artistas y 251 MB entre HARRY y HARRY CHILLAN --
+y agrupar por (basename, bytes) los mantiene separados. Son relaciones
+diferentes, no un duplicado. El test lo fija asi, distinguiendo la colaboracion
+del set que viaja.
+
+DOS DEFECTOS PROPIOS EN LAS PRUEBAS, no en el codigo: la primera version del test
+indexaba por basename y se comia uno de los dos grupos de escarlata; y la fixture
+de indice sintetico no tenia la columna `sample_sha256` que la funcion lee, o
+sea probaba una base distinta de la que existe. Las dos corregidas.
+
+LA LEY CUESTIONADA, Y SE SOSTIENE. El operador señalo que la regla de idioma es
+por ASCII ("si hay N con virgulilla se rompe el codigo") e invito a cuestionar la
+ley. Medido: el ratchet SI atrapa un identificador no-ASCII -- una sonda con
+`tamaño` fue marcada -- y hoy hay CERO identificadores no-ASCII en todo el arbol.
+La misma puerta cubre la restriccion dura (ASCII) y la convencion documentada
+(ingles, con su medicion en `docs/GLOSSARY.md`: 236 archivos con comentarios en
+espanol contra 36 en ingles). Mi hipotesis de que la puerta vigilaba la
+convencion y no el peligro queda FALSIFICADA. Las seis violaciones de esta sesion
+fueron mias, no de la regla.
+
+Comandos y codigos de salida: `pytest -q tests/` exit 0; `repo_audit`,
+`compileall`, `git diff --check` exit 0.
+
+RESIDUO: no se clasifica automaticamente cual de las tres relaciones es cada
+grupo, y no deberia sin evidencia: distinguir "colaboracion" de "copia de
+respaldo" necesita saber quien es el artista, que es justo lo que la maquina no
+puede leer del disco. Quedan 543 grupos listados para lectura humana, no 543
+decisiones.
+
 ## Next concrete action
 
 Publicar este write set en `main` solo cuando exista autorizacion explicita de
