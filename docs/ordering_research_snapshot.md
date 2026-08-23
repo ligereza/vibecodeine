@@ -58,6 +58,40 @@ container found: 54 assets, about 2.14 GB, 2D-only with Illustrator anchors and
 no `.blend`. A literal `RDFLYER` search returned 1,499 assets inside a mixed
 download container, so that hit is not evidence of an RD cartelera project.
 
+## Recovered probes from the quota cutoff
+
+Two probes had already written their intermediate outputs before their agents
+lost the final response. They were recovered from the read-only workflow
+workspace and checked without rerunning the scan.
+
+### SSD-to-IG/media reconciliation
+
+The source state contains 2,034 indexed IG records: 1,818 records carry a
+numeric media ID (1,599 distinct IDs) and 216 do not. The media join found:
+
+- 1,591 IDs with one unambiguous file on one media surface;
+- 8 IDs present on two different surfaces;
+- 0 orphan IDs;
+- 0 duplicate matches within the same surface.
+
+The eight collisions are not eight duplicate works: each pairs a real `posts` or
+`reels` file with its generated `_contact_sheets` derivative. They must remain
+one record with a derivative relation, not be merged by deleting either file.
+This gives the ordering system a safe join key, while the 216 records without a
+numeric ID still need a different relation and remain unresolved.
+
+### The `other` surface
+
+The `other` surface contains 330 files: 300 JPG, 29 MP4 and one SRT. Geometry
+alone gives 265 square or near-square files, 50 portrait files and 15 landscape
+files. The videos include square, 9:16 portrait and 16:9 landscape material,
+so `other` is a mixed media surface, not a semantic class.
+
+All 330 filesystem mtimes fall between `2026-07-22T14:20:15` and
+`2026-07-22T14:21:10`. That concentration is evidence of an export or copy
+operation, not original creation dates. The ordering system must not use these
+mtimes as artwork chronology.
+
 ## Incomplete work and safe continuation
 
 The following subagents did not return because the Claude session quota ended:
@@ -68,10 +102,9 @@ The following subagents did not return because the Claude session quota ended:
 - track key
 - synthesis
 
-Therefore this snapshot does **not** claim a complete SSD-to-Instagram join,
-complete track mapping, or a final catalogue. The next safe action is to run
-those probes independently and append their evidence here or in a dedicated
-versioned dataset. No row should be promoted to authorship, publication,
+The reconciliation and `other` measurements above are therefore complete as
+bounded probes, but the history join, remaining track key and final synthesis
+are still incomplete. No row should be promoted to authorship, publication,
 consumer or postulation from this snapshot alone.
 
 ## Policy connection

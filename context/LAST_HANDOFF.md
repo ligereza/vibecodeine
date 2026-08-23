@@ -73,6 +73,114 @@ the five failed probes must not be inferred from the nine successful agents.
 The policy is now enforced at the automatic classification proposal boundary,
 but it does not yet train a model or promote authorship/publication.
 
+## Continuidad tras el corte de cuota — 2026-08-23
+
+CONTEXTO. La orquesta de descubrimiento (`wmff24999`, 14 agentes sonnet en
+esfuerzo high) se corto por cuota: 9 agentes terminaron, 5 no
+(reconciliacion, historias, other, llave-del-track, sintesis). Otro agente
+continuo, publico `35c88ad` con la politica de evidencia y dejo tres archivos
+sin commit. Este slice cierra eso, verifica sus cifras y rescata lo que la
+orquesta habia averiguado y nadie habia guardado.
+
+VERIFICADO, no asumido. `35c88ad` esta en origin/main y contiene
+`data/ordering_features.json`, `docs/ordering_chaos.md`,
+`src/flujo/knowledge/feature_policy.py` y `tests/test_feature_policy.py`.
+Sin commit quedaban `tools/reconcile_iskvw_media.py`,
+`tests/test_reconcile_iskvw_media.py` y una ampliacion de
+`docs/ordering_research_snapshot.md`.
+
+EL TOOL DE RECONCILIACION reproduce exactamente las cifras reportadas, comando y
+salida:
+
+    ./.venv/bin/python tools/reconcile_iskvw_media.py \
+      --archive iskvw/datos/archivo.json \
+      --media-root /home/mak/portfolio_media/media --output <tmp>/rec.json
+    exit 0
+    archive_numeric_ids            1599
+    archive_records_with_numeric_id 1818
+    archive_records_without_numeric_id 216
+    ids_with_one_surface           1591
+    ids_with_cross_surface_collision   8
+    ids_with_same_surface_multiple_files 0
+    orphan_ids                        0
+    matched_files                  1607
+    superficies: posts 775, other 329, stories 240, archived_posts 154,
+                 reels 88, igtv 5
+
+Las 8 colisiones se revisaron UNA POR UNA: las 8 son el archivo original
+(`posts` o `reels`) junto a su derivado en `_contact_sheets`. Ninguna es obra
+duplicada.
+
+UNA CIFRA QUE NADIE HABIA NOMBRADO: 1818 registros con ID dan solo 1599 IDs
+distintos, o sea **219 registros del archivo comparten ID con otro registro**.
+Es duplicacion en el INDICE, no en el disco (0 duplicados dentro de una misma
+superficie). Esto explica la diferencia con la medicion previa por registros
+(posts 998) frente a esta por IDs (posts 775): son unidades distintas, no una
+contradiccion.
+
+DEFECTO DE TEST QUE SI ARREGLE. El otro agente pidio verificar que la
+correccion de precedencia (`medio.src` antes que `piezas[].id`) permanezca, y el
+test la cubria POR ACCIDENTE: en su fixture el ID compuesto falla por numero de
+digitos (9, y el patron exige 10), no por precedencia. Se agregaron cuatro tests
+donde las dos fuentes DISCREPAN a proposito, mas el caso real de los 1807
+registros sin `medio.src`, mas el de los 216 sin ID que deben abstenerse, mas
+que `--output` no toque ninguna de las dos fuentes. Verificado invirtiendo la
+precedencia en el codigo: 3 tests caen, incluido el nuevo con el mensaje
+"the composite record id was preferred over medio.src". Restaurado despues.
+
+RATCHET QUE HIZO SU TRABAJO: `test_tools_en_registro` cayo porque
+`reconcile_iskvw_media.py` no tenia entrada en `CAPACIDADES.md`. Registrado con
+las cifras medidas.
+
+RESCATE. La orquesta habia investigado 7 identidades con URLs y **55 tracks con
+fecha de estreno**, y eso no estaba guardado en ninguna parte del repo: vivia en
+`/tmp` y en el journal del workflow. `data/ordering_features.json` declara la
+autoridad `artist_discography` como el unico modo de que un nombre de carpeta
+decida un track -- una autoridad que nadie puede abrir no es exigible. Ahora
+existe `data/artist_discographies.json`:
+
+    LYON          music_artist  confirmed  24 tracks
+    DREFGIRA      music_artist  confirmed  17 tracks
+    HARRY         music_artist  confirmed  10 tracks
+    MARLONLOLLA   music_artist  confirmed   4 tracks
+    DREFMOVISTAR  event         confirmed   0 tracks (evento, no discografia)
+    SCD           venue         probable    0 tracks
+    FELINA        unknown       unknown     0 tracks
+
+Cada track trae `source_url`; 0 descartados por falta de fuente. El archivo
+declara explicitamente que la AUSENCIA de un nombre no es evidencia de que no
+sea un track: significa que la busqueda no se hizo. Cuatro tests nuevos fijan
+que ningun track entre sin URL, que un contenedor sin tracks explique por que, y
+que los matches que establecieron la llave (La Merecedora 2025-12, NEBULA
+2025-10, Comando Estelar, Pasajero) sigan presentes.
+
+DOS DUDAS MIAS QUE ESTAS SONDAS CERRARON:
+
+1. `other` NO es una clase semantica. 330 archivos, geometria mezclada (265
+   cuadrados o casi, 50 verticales, 15 horizontales) y video en los tres
+   formatos. Y lo decisivo: **los 330 mtime caen entre 2026-07-22T14:20:15 y
+   14:21:10** -- 55 segundos. Eso es una operacion de export o copia, no fechas
+   de creacion. Esas mtime no pueden usarse como cronologia de obra. Las 329
+   piezas que el archivo etiqueta `obra` ahi NO se resuelven por superficie.
+2. La regla de ancla del operador quedo medida sobre los 917 proyectos:
+   774 solo `.blend` = 85,29 GB; 43 solo `.aep/.psd/.ai/.svg` = 159,63 GB;
+   25 con AMBOS = 502,18 GB; 75 sin ancla = 193,61 GB. La correccion que
+   importa: **la obra de VJ terminada y grande vive en la clase MIXTA**,
+   mientras la mayoria de los `.blend` chicos son assets descargados. La columna
+   `projects.dimensionality` coincide exactamente con la clase de 774, o sea
+   estaba midiendo assets y no obras.
+
+Comandos y codigos de salida: `pytest -q tests/test_reconcile_iskvw_media.py
+tests/test_classification_queue.py tests/test_feature_policy.py` exit 0;
+`pytest tests/` COMPLETA exit 0; `repo_audit.py` exit 0; `compileall` exit 0;
+`git diff --check` exit 0; el tool real exit 0.
+
+LO QUE SIGUE ABIERTO, sin adornos: la sonda de las 5659 historias no indexadas
+no se corrio, y la llave-del-track sistematica (cruzar TODOS los nombres de
+carpeta contra las 55 canciones) tampoco -- hoy solo estan verificados a mano
+los de LYON y DREFGIRA. Ningun registro se promovio a autoria, publicacion,
+consumidor ni postulacion, y los 216 sin ID siguen absteniendose.
+
 ## Next concrete action
 
 The final staged diff was reviewed and committed locally as `02eeea0`. Do not

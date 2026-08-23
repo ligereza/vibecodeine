@@ -294,3 +294,68 @@ def test_the_registry_is_valid_json_with_no_unreachable_authority():
     assert used <= declared
     unused = declared - used
     assert not unused, f"authority declared but never used: {sorted(unused)}"
+
+
+# ------------------------------------ the authority cache the policy points at
+
+DISCOGRAPHIES = REPO / "data" / "artist_discographies.json"
+
+
+def _discographies() -> dict:
+    return json.loads(DISCOGRAPHIES.read_text(encoding="utf-8"))
+
+
+def test_the_declared_discography_authority_has_a_durable_local_cache():
+    """A policy that names an authority nobody can open is not enforceable.
+
+    ``filename`` may only decide a track identity once ``artist_discography``
+    has been consulted. That authority now has a versioned cache with the URL of
+    every datum, so a later run can audit the lookup instead of repeating it.
+    """
+    assert DISCOGRAPHIES.is_file(), (
+        "data/ordering_features.json declares artist_discography; "
+        "data/artist_discographies.json is where it lives")
+    payload = _discographies()
+    assert payload["schema"] == "mak-artist-discographies-v1"
+    assert payload["containers"], "the cache is empty"
+    assert "absence" in payload["purpose"].casefold(), (
+        "the cache must state that absence is not evidence")
+
+
+def test_every_cached_track_carries_the_url_that_proves_it():
+    """A release date with no source is the datum this authority exists to refuse."""
+    for container, entry in _discographies()["containers"].items():
+        for track in entry["tracks"]:
+            assert track.get("source_url"), (
+                f"{container}: track {track.get('title')!r} has no source_url")
+            assert track.get("title"), f"{container}: a track has no title"
+        assert entry.get("kind"), f"{container} has no declared kind"
+        assert entry.get("confidence") in ("confirmed", "probable", "unknown")
+
+
+def test_a_container_with_no_tracks_is_allowed_and_says_why():
+    """FELINA resolved to nothing and SCD to a venue. Both are real answers.
+
+    An identity probe that returns no discography has not failed: a container can
+    be a venue, an event or a logo project. What is not allowed is an empty
+    result with no reason attached.
+    """
+    containers = _discographies()["containers"]
+    empty = {name: entry for name, entry in containers.items()
+             if not entry["tracks"]}
+    assert empty, "the fixture no longer covers the no-tracks case"
+    for name, entry in empty.items():
+        assert entry.get("why") or entry.get("notes"), (
+            f"{name} has no tracks and no explanation")
+
+
+def test_the_confirmed_matches_that_validated_the_key_are_still_present():
+    """If these disappear, the track key lost the evidence that established it."""
+    lyon = _discographies()["containers"]["LYON"]
+    titles = {track["title"].casefold() for track in lyon["tracks"]}
+    for expected in ("la merecedora", "nebula", "comando estelar", "pasajero"):
+        assert expected in titles, f"LYON lost the confirmed track {expected!r}"
+    dated = {track["title"].casefold(): track["release_date"]
+             for track in lyon["tracks"]}
+    assert dated["la merecedora"].startswith("2025-12")
+    assert dated["nebula"].startswith("2025-10")

@@ -73,6 +73,7 @@ data/*.json
 !data/iskvw_capas.json
 !data/motor_librerias.json
 !data/ordering_features.json
+!data/artist_discographies.json
 context/DAILY.md
 context/PIPELINE_RESULT.md
 context/dashboard.html
