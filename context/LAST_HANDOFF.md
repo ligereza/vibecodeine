@@ -1,5 +1,86 @@
 # Operational Handoff
 
+## Active checkpoint — recovery after Claude quota — 2026-08-23
+
+### Current objective
+
+Recuperar y cerrar el slice de ordenamiento epistemico que Claude dejo a medias,
+sin repetir el workflow de investigacion ni convertir sus resultados en verdad
+automatica. La politica de features debe ser ejecutable por la cola de
+clasificacion, no solo un documento de razonamiento.
+
+### Recovered Claude work
+
+Claude Code session `3428381a-02ad-4101-9da5-8176cf72c147` launched the
+read-only workflow `wmff24999` with 14 agents. Nine returned and five stopped
+at the session quota: `reconciliation`, `histories`, `other`, `track key` and
+`synthesis`. The durable result is seven identity records and two measurement
+probes. The result was not a complete SSD-to-Instagram join or a final
+catalogue. It is summarized in `docs/ordering_research_snapshot.md` so the
+temporary `/tmp/claude-1000/` output is not the only record.
+
+Claude also created the ordering policy artifacts, which were present in the
+worktree and had not yet been committed:
+
+- `docs/ordering_chaos.md`
+- `data/ordering_features.json`
+- `src/flujo/knowledge/feature_policy.py`
+- `tests/test_feature_policy.py`
+
+The `.gitignore` exception for `data/ordering_features.json` was already
+present in the worktree when recovery began. The language ratchet also passed;
+the new Python files did not add an offender.
+
+### Integration completed in this recovery
+
+`src/flujo/knowledge/classification_queue.py` now calls
+`feature_policy.may_decide()` before emitting either automatic proposal:
+
+- `declared_marker` plus the PEP 405 authority for virtual environments;
+- `content_hash` plus the full-hash authority for canonical copies.
+
+Each proposal carries the serialized policy permission in its evidence. If the
+registry is missing, malformed or denies the question, the queue raises
+`ClassificationQueueError` with `ordering_policy_refused` and emits no
+proposal. `tests/test_classification_queue.py` covers both the evidence link
+and fail-closed behavior.
+
+### Validation evidence
+
+- Focused policy, queue, language and repository tests: exit 0, 58 passed.
+- Full `./.venv/bin/python -m pytest -q`: exit 0, 100 percent passed; only
+  existing Pillow deprecation warnings were emitted.
+- `compileall` for the touched Python files: exit 0.
+- `python3 -m json.tool data/ordering_features.json`: exit 0.
+- `git diff --check`: exit 0.
+
+### Files modified in this checkpoint
+
+`.gitignore`, `data/ordering_features.json`, `docs/ordering_chaos.md`,
+`docs/ordering_research_snapshot.md`,
+`src/flujo/knowledge/feature_policy.py`,
+`src/flujo/knowledge/classification_queue.py`,
+`tests/test_feature_policy.py` and `tests/test_classification_queue.py`.
+
+No source database, SSD file, service or runtime process was modified. The
+checkpoint is committed locally as `02eeea0`; it has not been pushed.
+
+### Risks and boundaries
+
+The seven identities and the two probes are evidence-backed candidates, not
+operator attestation. `FELINA` remains unknown, `SCD` remains probable, and
+the five failed probes must not be inferred from the nine successful agents.
+The policy is now enforced at the automatic classification proposal boundary,
+but it does not yet train a model or promote authorship/publication.
+
+## Next concrete action
+
+The final staged diff was reviewed and committed locally as `02eeea0`. Do not
+push it without publication authority. After publication, resume only the five
+missing research probes as a separate read-only slice;
+do not rerun the completed identity probes and do not mark any SSD project as
+authored, published, client-owned or postulation-ready from filenames alone.
+
 ## Active checkpoint — 2026-08-21
 
 ### Current objective

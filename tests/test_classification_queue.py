@@ -20,6 +20,7 @@ from pathlib import Path
 
 import pytest
 
+from flujo.knowledge import classification_queue as queue_module
 from flujo.knowledge.classification_queue import (
     COVERS_BOTH,
     COVERS_COARSE_ONLY,
@@ -133,6 +134,8 @@ def test_installed_and_copied_rows_are_proposals_with_their_check(
     copy = by_rule[RULE_CANONICAL_COPY][0]
     assert "runner/tools/render.py" in copy.path
     assert any("sha256 identical to" in item["detail"] for item in copy.evidence)
+    assert all(any(item["kind"] == "ordering_policy" for item in proposal.evidence)
+               for proposal in proposals)
     # The drifted copy is NOT byte-identical, so it stays a real question.
     assert not any("drifted" in p.path for p in proposals)
 
@@ -144,6 +147,19 @@ def test_a_canonical_file_is_never_proposed_as_a_copy_of_itself(
         canonical=canonical_index(queue_db, canonical_root),
         canonical_root=canonical_root)
     assert not any(p.path.startswith(canonical_root) for p in proposals)
+
+
+def test_machine_proposals_fail_closed_when_policy_cannot_be_loaded(
+        queue_db: Path, canonical_root: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    def denied(*_args, **_kwargs):
+        raise queue_module.FeaturePolicyError("registry unavailable")
+
+    monkeypatch.setattr(queue_module, "may_decide", denied)
+    with pytest.raises(ClassificationQueueError, match="ordering_policy_refused"):
+        machine_proposals(
+            load_candidates(queue_db),
+            canonical=canonical_index(queue_db, canonical_root),
+            canonical_root=canonical_root)
 
 
 def test_the_virtualenv_rule_wins_over_content_identity(tmp_path: Path) -> None:
