@@ -181,6 +181,95 @@ carpeta contra las 55 canciones) tampoco -- hoy solo estan verificados a mano
 los de LYON y DREFGIRA. Ningun registro se promovio a autoria, publicacion,
 consumidor ni postulacion, y los 216 sin ID siguen absteniendose.
 
+## El motor de consulta certificada — 2026-08-23
+
+Se construyo dentro del repo, como UN sistema y no una secuencia de scripts:
+`src/flujo/certified/` con `summary.py`, `contracts.py`, `certify.py`, `tree.py`,
+`metrics.py`, `oracle.py`, mas `data/certified_queries.json` y
+`tools/certified_query.py`.
+
+LA REGLA QUE LO GOBIERNA, y esta implementada en un solo lugar: un negativo por
+ausencia se vuelve UNKNOWN si la autoridad no cubrio a TODOS los miembros del
+grupo. El veto vive en `certify()`, no en las reglas, asi que ninguna regla
+puede olvidarlo. Cada resumen carga `n_members` y `covered[autoridad]`, y
+`complete_for()` es la unica puerta entre "no observe X" y "no hay X".
+
+DOS DECISIONES DE DISENO QUE CARGAN PESO. Los universales se CUENTAN en vez de
+marcarse (`counts[X] == n_members`), porque un booleano `all_X` necesita un AND
+en cada join y tiene un elemento identidad peligroso: un grupo vacio afirmaria
+todo universal de forma vacua. Y los rangos cargan su FUENTE: un casco de fechas
+sobre estrenos es sano y el mismo casco sobre mtimes no significa nada, con la
+prueba medida de que los 330 archivos de `other` comparten una ventana de 55
+segundos escrita por un export.
+
+MEDIDO SOBRE EL CORPUS REAL, sin datos de juguete:
+
+    SSD  917 proyectos, arbol de 1001 nodos, profundidad 7, G=0,17s
+    IG   7321 archivos, arbol de 7515 nodos, profundidad 4, G=0,24s
+
+    q2_dimension   poda 100,0%  160 certs  170 nodos visitados de 1001
+    q4_obra        poda  95,2%    5 certs
+    q7_cuando      poda  90,3%  167 certs  -- con la RAIZ en UNKNOWN
+    q5_publica     poda  82,7%    2 certs
+    q3_track       poda   1,0%    9 certs  (discografia cubre 46,1%)
+    q11, q12, q13, q8, q9, q10, q14  poda 0%
+
+**FALSE_CERTIFIED_CLAIMS = 0**, con 21.090 verificaciones miembro-por-miembro.
+`audit_soundness` hace a proposito lo caro: toma cada certificado sobre un nodo
+interno y abre TODOS sus descendientes para comprobar que ninguno lo contradice.
+Es la unica medicion cuyo valor aceptable es cero, y por eso existe el camino
+caro: para que el barato se pueda creer.
+
+q7 es la mejor demostracion del diseno: la raiz dice UNKNOWN con razon precisa
+-- "710 de 7321 miembros no traen fecha de la fuente declarada" -- y aun asi
+**6611 miembros quedaron podados por debajo**. Abstenerse arriba no impide
+certificar abajo.
+
+q11 poda 0% A PROPOSITO. Su negativo murio en el endurecimiento adversarial
+(ausencia de `pyvenv.cfg` no es "es mio": blenderkit aporta 138 assets y las
+descargas 173, ninguna en un virtualenv) y el motor lo respeta en vez de
+recordarlo. La auditoria ahora es codigo.
+
+EL RATCHET ENCONTRO UN HUECO EN SU PRIMERA CORRIDA. `test_the_declared_3d_format_set_still_covers_the_corpus`
+fallo por `.3dm` sin declarar. Medido: 1 archivo, en `descargas hasta RDFLYER
+2050`, y **0 proyectos donde sea el unico formato 3D** -- o sea ningun
+certificado fue falso, pero el conjunto SI estaba incompleto. Se arreglo con una
+declaracion en dos capas en vez de agregar lo que el test nombro:
+`SCENE_FORMATS` (lo que una aplicacion 3D autora y reabre) y
+`PIPELINE_3D_FORMATS` (`.vdb`, `.mtl`, `.spp`: datos que solo un pipeline 3D
+produce). Y `EXCLUDED_FROM_3D` deja escrito por que `.exr` (6835 assets) y
+`.hdr` NO entran: son imagenes que un pipeline 2D tambien emite, y agregarlas
+romperia el certificado POSITIVO en vez del negativo.
+
+ESTADOS EPISTEMICOS, exigidos por codigo. `validate_fold()` rechaza cuatro
+cosas, cada una un defecto que este proyecto vivio: un `≈` que se presenta como
+`≡`; un pliegue sin residuo; un pliegue que no nombra la autoridad que le falta
+(sin el nombre, ninguna herramienta que llegue puede despertarlo); y un monitor
+construido sobre el rasgo que al pliegue le falta -- circular, y falla en
+silencio. `assert_may_act()` niega borrar, publicar, deduplicar, enviar o
+sobrescribir sobre cualquier estado que no sea `≡`.
+
+EL ORACULO pregunta solo donde ninguna autoridad alcanza, de lo mas somero a lo
+mas profundo (una respuesta arriba resuelve su subarbol entero), con piso de
+miembros, y `record_answer()` rechaza una respuesta sin actor, sin razon, sin
+claim o sin scope. Nunca se pregunta para vaciar una cola.
+
+CUDA: no se toco. La Fase 1 del experimento anterior ya establecio que no hay
+backend usable (modulos del driver compilados solo para el kernel 6.1.0-50
+mientras corre 6.12.95) y que el TU117 no tiene RT cores. El motor no lo
+necesita: su medicion decisiva son conteos, no wall-time.
+
+Comandos y codigos de salida: `pytest -q tests/test_certified_engine.py` exit 0
+(30 tests); `certified_query.py contracts/ask/queue/audit/provenance/heterogeneity`
+exit 0; invocacion en seco exit 2; `--help` exit 0.
+
+LO QUE NO HACE, y es deliberado: 0 certificados sobre el MUNDO en ambos corpus.
+Los 169 certificados del SSD son CORPUS_CLAIM y los 7 de IG son POLICY_CLAIM.
+El unico contrato con negativo sano sobre el mundo es `q12` y necesita hashes
+completos, que en el SSD existen para 112 de 45.536 assets (0,25%). Eso no es un
+defecto del motor: es el estado real de la evidencia, y ahora esta medido en vez
+de supuesto.
+
 ## Next concrete action
 
 The final staged diff was reviewed and committed locally as `02eeea0`. Do not
