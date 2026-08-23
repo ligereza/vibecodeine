@@ -569,6 +569,25 @@ class LearningStore:
                 return fingerprint
             version = int(previous["version"]) + 1 if previous else 1
             created = previous["created_at"] if previous else now
+            # A re-derivation refreshes the evidence, never the verdict.
+            #
+            # The producers here always emit ``review_required``, so re-running
+            # an import over a project a person had already moved to ``active``
+            # would silently drag it back into the queue and delete the only
+            # thing in this database that a machine cannot regenerate. It is
+            # harmless today only because nothing had ever been decided.
+            #
+            # A recorded transition is the evidence that someone decided. When
+            # one exists, the stored state wins and the incoming one is dropped.
+            state = str(record["state"])
+            if previous:
+                decided = con.execute(
+                    "SELECT to_state FROM project_transitions WHERE project_id=? "
+                    "ORDER BY created_at DESC, rowid DESC LIMIT 1",
+                    (project_id,),
+                ).fetchone()
+                if decided:
+                    state = str(decided["to_state"])
             con.execute(
                 """INSERT INTO project_records
                    (project_id,schema_name,title,state,source_root_ref,fingerprint,ir_json,version,created_at,updated_at)
@@ -577,7 +596,7 @@ class LearningStore:
                    schema_name=excluded.schema_name,title=excluded.title,state=excluded.state,
                    source_root_ref=excluded.source_root_ref,fingerprint=excluded.fingerprint,
                    ir_json=excluded.ir_json,version=excluded.version,updated_at=excluded.updated_at""",
-                (project_id, SCHEMA, record["title"], record["state"],
+                (project_id, SCHEMA, record["title"], state,
                  record["source"]["root_ref"], fingerprint, encoded, version, created, now),
             )
             current_paths = {str(artifact["relative_path"]) for artifact in record["artifacts"]}

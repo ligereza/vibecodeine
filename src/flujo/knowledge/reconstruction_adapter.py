@@ -4,6 +4,12 @@ The reconstruction is an index observation, not a mounted source tree. This
 adapter therefore keeps every artifact as an indexed reference and marks the
 result ``review_required``. It is a bridge for Curatoria and Portfolio routing;
 it is not an application generator and never publishes a private SSD path.
+
+Each record carries its own incident edges with itself as the subject, which
+means an edge whose other endpoint is this record has to be stated from the
+other side -- with the inverse predicate. Keeping the predicate while swapping
+the endpoints is a silent inversion, and it happened: see
+``project_reconstruction.RELATION_INVERSES``.
 """
 
 from __future__ import annotations
@@ -14,6 +20,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from .project_ir import build_project_ir, format_family, media_type
+from .project_reconstruction import inverse_relation
 
 
 ADAPTER_SCHEMA = "mak-reconstruction-project-ir-v1"
@@ -146,10 +153,20 @@ def _relations_for(
         right = str(relation.get("right") or "")
         if project_path not in {left, right}:
             continue
-        object_path = right if left == project_path else left
+        predicate = str(relation.get("relation") or "related_to")
+        # Every record keeps its own edges with itself as the subject, so the
+        # edge has to be re-anchored whenever this record is the object side.
+        # Re-anchoring without inverting the predicate is what turned 24
+        # ``contains`` edges into 56, half of them backwards, and would have
+        # said a purchased texture contains the work that uses it.
+        if left == project_path:
+            object_path = right
+        else:
+            object_path = left
+            predicate = inverse_relation(predicate)
         output.append({
             "subject": project_id,
-            "predicate": str(relation.get("relation") or "related_to"),
+            "predicate": predicate,
             "object": f"reconstruction://{scope}/{object_path}",
             "confidence": str(relation.get("epistemic_status") or "UNKNOWN"),
             "plane": "portable_ssd_index",
