@@ -208,3 +208,81 @@ class ProjectIRTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class VerdictProtectionTests(unittest.TestCase):
+    """A re-derivation refreshes the evidence and never the verdict.
+
+    Every adapter that writes into this store emits ``review_required``, because
+    a machine is not allowed to assert. That means a second import over a project
+    a person had already moved to ``active`` would drag it back into the queue
+    and destroy the one thing here a machine cannot regenerate. It was harmless
+    only while nothing had ever been decided, which was true until now: measured
+    on the live database, ``project_transitions`` held zero rows.
+    """
+
+    def setUp(self) -> None:
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name) / "incoming"
+        self.root.mkdir(parents=True)
+        (self.root / "notes.md").write_text("project seed\n", encoding="utf-8")
+        self.db = Path(self.temp.name) / "learning.db"
+
+    def _record(self, state: str = "review_required") -> dict:
+        return build_project_ir(
+            project_id="verdict", title="Verdict", source_root=self.root,
+            artifacts=inventory_source(self.root), state=state,
+        )
+
+    def test_a_decided_project_keeps_its_state_through_a_re_import(self) -> None:
+        store = LearningStore(self.db)
+        store.save_project(self._record())
+        store.transition_project(
+            "verdict", "active", reason="the operator recognised the work",
+            evidence=[{"kind": "human_attestation",
+                       "detail": "the operator named it as delivered work"}],
+            actor="operator")
+
+        refreshed = self._record()
+        refreshed["unknowns"] = list(refreshed.get("unknowns", ())) + ["re_derived"]
+        store.save_project(refreshed)
+
+        with sqlite3.connect(self.db) as con:
+            con.row_factory = sqlite3.Row
+            row = con.execute(
+                "SELECT state, ir_json, version FROM project_records "
+                "WHERE project_id='verdict'").fetchone()
+        self.assertEqual(row["state"], "active",
+                         "the re-import reset a project a person had decided")
+        self.assertIn("re_derived", json.loads(row["ir_json"])["unknowns"],
+                      "the refreshed evidence was not stored")
+        self.assertGreater(row["version"], 1)
+
+    def test_an_undecided_project_still_follows_its_producer(self) -> None:
+        """The protection must not freeze a project nobody has looked at."""
+        store = LearningStore(self.db)
+        store.save_project(self._record(state="candidate"))
+        store.save_project(self._record(state="review_required"))
+        with sqlite3.connect(self.db) as con:
+            state = con.execute(
+                "SELECT state FROM project_records WHERE project_id='verdict'"
+            ).fetchone()[0]
+        self.assertEqual(state, "review_required")
+
+    def test_the_stored_state_follows_the_most_recent_transition(self) -> None:
+        store = LearningStore(self.db)
+        store.save_project(self._record())
+        store.transition_project("verdict", "active", reason="looked like a work",
+                                 evidence=[{"kind": "human_attestation",
+                                            "detail": "recognised on first pass"}],
+                                 actor="operator")
+        store.transition_project("verdict", "review_required",
+                                 reason="the operator changed their mind",
+                                 actor="operator")
+        store.save_project(self._record(state="candidate"))
+        with sqlite3.connect(self.db) as con:
+            state = con.execute(
+                "SELECT state FROM project_records WHERE project_id='verdict'"
+            ).fetchone()[0]
+        self.assertEqual(state, "review_required")

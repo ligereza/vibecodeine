@@ -746,6 +746,121 @@ RESIDUO: cuales de los 24 subproyectos son obras entregadas y cuales material de
 trabajo no se decide desde el disco, y no deberia. Los 25 registros siguen en
 `review_required` esperando esa lectura humana.
 
+## La cola de revision tenia productores y no tenia puerta — 2026-08-23
+
+MEDIDO antes de tocar nada, y es el hallazgo que ordena todo lo demas:
+
+    project_records        34 review_required | 4 active | 1 candidate
+    project_transitions    0 filas
+    transition_project()   1 llamada en todo el repo, dentro de su propio test
+    classification_queue   8273 pending
+
+Cero transiciones en toda la historia de la base. Se construyeron cuatro
+productores que escriben registros que una persona tiene que leer, la maquina de
+estados que registra la respuesta de esa persona estaba escrita y validada, y
+nunca se construyo una superficie para llegar a ella. Lo unico que ha movido el
+estado de un proyecto en este repo es un unit test sobre una base temporal.
+
+Al intentar construir esa puerta aparecieron tres defectos, en orden de gravedad
+creciente. Ninguno se habia visto por la razon mas simple posible: el vocabulario
+de relaciones tenia UN productor, CERO consumidores y CERO tests, asi que ningun
+codigo habia leido nunca una arista.
+
+DEFECTO 1 — direccion invertida en la mitad de las aristas. `_relations_for` en
+`reconstruction_adapter.py` re-ancla cada arista en el registro actual como
+sujeto y conserva el predicado. Cuando el registro es el lado derecho, eso emite
+lo contrario de lo que la fuente dijo. Medido: las 24 aristas `contains` de LYON
+se volvieron 56 en el grafo persistido, la mitad al reves. En `depends_on` es
+peor que cosmetico: decia que una textura comprada depende de la obra que la usa,
+que es exactamente como un item de biblioteca se disfraza de proyecto.
+Corregido declarando `RELATION_INVERSES` en el productor y emitiendo el predicado
+INVERSO al re-anclar. Ahora: 28 `contains` y 28 `contained_by`, balanceadas.
+`inverse_relation()` se NIEGA ante un predicado sin inverso declarado en vez de
+adivinar, porque una adivinanza silenciosa es como sobrevivio la primera
+inversion.
+
+DEFECTO 2 — un nombre con dos significados. `shared_resource` se usaba para la
+relacion SIMETRICA entre dos contenedores ("estos dos cuerpos de obra reutilizan
+compras") y para la DIRIGIDA entre un dueno y su carpeta de recursos. Con un solo
+nombre la direccion no era recuperable. Se definio en vez de inferirla: la
+simetrica ahora es `shares_library_with`. Verificado que ningun
+`reconstruction.json` persistido contenia la simetrica, asi que el renombre no
+deja datos ambiguos atras.
+
+DEFECTO 3, el que importa mas — una re-derivacion podia BORRAR una decision
+humana. `save_project` hace upsert con `state=excluded.state`, y todos los
+adaptadores emiten `review_required` porque una maquina no tiene permitido
+afirmar. Es decir: reimportar sobre un proyecto que una persona ya habia movido a
+`active` lo arrastraba de vuelta a la cola y destruia lo unico de esta base que
+una maquina no puede regenerar. Era inofensivo solo porque nunca se habia
+decidido nada. Ahora una re-derivacion refresca la EVIDENCIA y nunca el
+VEREDICTO: si existe una transicion registrada, el estado guardado gana.
+Verificado sobre datos reales -- reimport completo de LYON con 4 decisiones
+tomadas, las 4 sobrevivieron.
+
+LA PUERTA. `src/flujo/knowledge/review_queue.py` + `tools/project_review.py`.
+El problema debajo no es mostrar una lista: la atencion del operador es el
+recurso mas escaso del sistema y la cola solo crece. La pregunta real es cual
+pregunta, hecha primero, resuelve mas registros -- y eso se contesta sin inventar
+un puntaje, porque las aristas de contencion forman un bosque y un tipo de
+respuesta se propaga por el. Es un CONTEO, no un juicio.
+
+Asimetria, y es falsable: el RECHAZO se hereda hacia abajo (una carpeta que es un
+Auto-Save de After Effects no puede contener una obra entregada; la afirmacion es
+sobre lo que el contenedor ES). La ACEPTACION no se hereda (una obra real
+contiene material de trabajo). Si el operador alguna vez anula un rechazo
+heredado, eso es un contraejemplo y lo que hay que registrar es la anulacion.
+Nada se propaga solo: `--cascade` nombra la herencia.
+
+La palanca se llama `rejection_leverage` a proposito. Llamarla "leverage" a secas
+prometia un ahorro que solo una de las dos respuestas paga.
+
+Dos pasos, porque son dos y quieren ordenes opuestos:
+
+    --pass prune       encabeza por rejection_leverage: LYON 25, DREFGIRA 5,
+                       LYON/Pajsaera 4, LYON/1 4, LYON/3 3, LYON/golden 3
+    --pass recognize   encabeza por material: LYON 250,9 GB, DREFGIRA 102,6,
+                       LYON/Pajsaera 85,7, FELINA/LOGO 41,2, MERECEDORA 28,8
+
+LO QUE ESTO CAMBIA EN LA CUENTA: la cola no son 36 preguntas, son **8**. Ocho
+raices cubren los 36 registros por contencion. Y `LYON/golden` con
+`rejection_leverage 3` propone exactamente las dos carpetas
+`(Material de archivo)/...` que el 2026-08-21 se decidio NO codificar como regla
+(seis regex para ocho filas de 917 era sobreajuste). Ya no hace falta la regla:
+el operador rechaza el contenedor una vez y se hereda.
+
+VALIDACION CRUZADA que vale la pena anotar: el subarbol de LYON en el grafo de
+Project IR suma 250,9 GB, identico a la medicion independiente del indice del
+SSD. Dos caminos distintos dan el mismo total.
+
+DOS CORRECCIONES A LO QUE YO MISMO REPORTE ANTES:
+
+1. Dije que cuatro cuerpos de obra estaban puenteados a Project IR. Falso:
+   `FELINA/LOGO` y `BAHPARTY/bah` tenian su `reconstruction.json` en disco pero
+   nunca se habian importado a la base. Ahora si -- 41 registros, ninguno perdido,
+   35 actualizados en sitio.
+2. Dije que LYON comparte 48 items de biblioteca con BAHPARTY, bah, SCD y
+   descargas. Incompleto: son NUEVE raices --
+   `descargas hasta RDFLYER 2050` (32), SCD (13), BAHPARTY (4), bah (4),
+   KISZ (4), FELINA (3), OBER (2), `3D JJJ` (1), interplanetary (1).
+
+Comandos y codigos de salida: `pytest tests/` exit 0 (13 nuevos en
+`test_review_queue.py`, 4 en `test_reconstruction_adapter.py`, 3 en
+`test_project_ir.py`); `repo_audit.py` exit 0, `integrity=ok` en las 4 bases;
+ratchets de idioma, docs, privacidad, higiene y mapa exit 0. Se verifico que los
+tests nuevos FALLAN sobre el codigo viejo (`assert 2 == 0`), no que solo pasan.
+`tools/project_review.py list/summary/show` deja el sha256 de la base intacto.
+`data/mak_knowledge.db` sigue ignorada por `.gitignore:179`, asi que la
+re-derivacion es local y regenerable.
+
+LO QUE NO HICE, y es deliberado: no decidi ni una sola de las 36. Las obras las
+reconoce el operador; la maquina propone con evidencia y el humano firma. Las
+pruebas de escritura se hicieron sobre una COPIA de la base.
+
+RESIDUO: los 8273 `classification_queue` pendientes son otra cola, con otra
+forma, y todavia sin puerta. Y la asimetria rechazo/aceptacion es una hipotesis
+con una prediccion clara: si el operador anula un rechazo heredado, esta mal.
+
 ## Next concrete action
 
 Publicar este write set en `main` solo cuando exista autorizacion explicita de

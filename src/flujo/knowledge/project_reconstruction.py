@@ -68,6 +68,65 @@ ROLE_SHARED_RESOURCE = "shared_resource"
 ROLE_EXPORTED_PRODUCT = "exported_product"
 ROLE_UNDECIDED = "undecided"
 
+# The relation vocabulary, and the inverse of each one.
+#
+# Direction carries meaning here: "the work depends on this purchased texture"
+# and "this purchased texture depends on the work" are opposite claims, and the
+# second one would make a library item look like a project. A projector that
+# re-anchors an edge at its other endpoint therefore has to say the inverse
+# predicate, not the same one.
+#
+# Measured on the real LYON reconstruction: 24 ``contains`` edges at the source
+# became 56 in the persisted graph, half of them pointing backwards, because
+# ``reconstruction_adapter`` kept the predicate while swapping the endpoints.
+# Nothing caught it for the plainest possible reason -- the vocabulary had one
+# producer, zero consumers and zero tests, so no code had ever read an edge.
+#
+# A symmetric relation is its own inverse and says so explicitly. Anything not
+# listed here has no declared direction, and ``inverse_relation`` refuses rather
+# than guessing: a silent guess is how the first inversion survived.
+REL_CONTAINS = "contains"
+REL_CONTAINED_BY = "contained_by"
+REL_DEPENDS_ON = "depends_on"
+REL_DEPENDED_ON_BY = "depended_on_by"
+REL_SHARED_RESOURCE = "shared_resource"
+REL_SHARED_RESOURCE_OF = "shared_resource_of"
+REL_SHARES_LIBRARY_WITH = "shares_library_with"
+REL_UNRELATED = "unrelated"
+REL_IDENTITY_UNDECIDED = "identity_undecided"
+
+RELATION_INVERSES: dict[str, str] = {
+    REL_CONTAINS: REL_CONTAINED_BY,
+    REL_CONTAINED_BY: REL_CONTAINS,
+    REL_DEPENDS_ON: REL_DEPENDED_ON_BY,
+    REL_DEPENDED_ON_BY: REL_DEPENDS_ON,
+    # Directed: one owner uses this resource folder.
+    REL_SHARED_RESOURCE: REL_SHARED_RESOURCE_OF,
+    REL_SHARED_RESOURCE_OF: REL_SHARED_RESOURCE,
+    # Symmetric: a statement about a pair of container roots, not about an owner.
+    # This one used to be spelled ``shared_resource`` as well, which made the
+    # predicate mean two different things in one vocabulary and left direction
+    # unrecoverable from the name.
+    REL_SHARES_LIBRARY_WITH: REL_SHARES_LIBRARY_WITH,
+    REL_UNRELATED: REL_UNRELATED,
+    REL_IDENTITY_UNDECIDED: REL_IDENTITY_UNDECIDED,
+}
+
+SYMMETRIC_RELATIONS = frozenset(
+    name for name, inverse in RELATION_INVERSES.items() if name == inverse)
+
+
+class UnknownRelationError(ValueError):
+    """A relation was projected without a declared inverse."""
+
+
+def inverse_relation(predicate: str) -> str:
+    """The predicate that states the same fact from the other endpoint."""
+    try:
+        return RELATION_INVERSES[predicate]
+    except KeyError:
+        raise UnknownRelationError(f"relation_without_inverse: {predicate}") from None
+
 # A uuid4 tail is how the asset browsers that MAK actually uses name a
 # downloaded item's folder. Measured: 758 rows carry one, and every single one
 # of them also sits under an ``assets/<kind>/`` segment -- the two predicates
@@ -480,7 +539,8 @@ def cross_root_relations(con: sqlite3.Connection, scope: str,
     """Decide nothing across container roots on name similarity alone.
 
     Two roots are compared only through measured identity. A shared library uuid
-    yields ``shared_resource``. A shared ``sample_sha256`` without a full hash
+    yields ``shares_library_with``, which is symmetric and says nothing about
+    ownership. A shared ``sample_sha256`` without a full hash
     yields an explicit tie, because a sample is not an identity. Name similarity
     on its own yields ``unrelated``.
     """
@@ -518,7 +578,7 @@ def cross_root_relations(con: sqlite3.Connection, scope: str,
         pair_key = f"{scope_root}|{other}"
         if pair_key in attested or f"{other}|{scope_root}" in attested:
             relations.append(UnitRelation(
-                scope_root, "unrelated", other, EMPIRICAL,
+                scope_root, REL_UNRELATED, other, EMPIRICAL,
                 evidence_for=[lexical, Evidence(
                     "operator_attestation", "human_attestation",
                     "the operator declared these to be different commissions")],
@@ -530,7 +590,7 @@ def cross_root_relations(con: sqlite3.Connection, scope: str,
             continue
         if shared_uuid:
             relations.append(UnitRelation(
-                scope_root, "shared_resource", other, EMPIRICAL,
+                scope_root, REL_SHARES_LIBRARY_WITH, other, EMPIRICAL,
                 evidence_for=[Evidence(
                     "shared_library_uuid", "derived_feature",
                     f"{shared_uuid} library uuid tokens are indexed under both "
@@ -543,7 +603,7 @@ def cross_root_relations(con: sqlite3.Connection, scope: str,
             continue
         if sample_shared and not full_shared:
             relations.append(UnitRelation(
-                scope_root, "identity_undecided", other, UNKNOWN,
+                scope_root, REL_IDENTITY_UNDECIDED, other, UNKNOWN,
                 evidence_for=[Evidence(
                     "shared_sample_hash", "observation",
                     f"{sample_shared} asset pairs share a sample_sha256")],
@@ -560,7 +620,7 @@ def cross_root_relations(con: sqlite3.Connection, scope: str,
             ))
             continue
         relations.append(UnitRelation(
-            scope_root, "unrelated", other, EMPIRICAL,
+            scope_root, REL_UNRELATED, other, EMPIRICAL,
             evidence_for=[lexical, Evidence(
                 "no_measured_identity", "derived_feature",
                 "no shared library uuid and no shared asset hash was measured")],
@@ -587,7 +647,7 @@ def reconstruct(index_path: str | Path, scope: str, *,
             decision = decisions[path_key]
             if decision.role == ROLE_SUBPROJECT and feature.parent_path:
                 relations.append(UnitRelation(
-                    feature.parent_path, "contains", path_key, EMPIRICAL,
+                    feature.parent_path, REL_CONTAINS, path_key, EMPIRICAL,
                     evidence_for=decision.evidence_for,
                     evidence_against=decision.evidence_against))
             elif decision.role in {ROLE_LIBRARY_DEPENDENCY, ROLE_SHARED_RESOURCE}:
@@ -596,8 +656,8 @@ def reconstruct(index_path: str | Path, scope: str, *,
                 if owner:
                     relations.append(UnitRelation(
                         owner,
-                        "depends_on" if decision.role == ROLE_LIBRARY_DEPENDENCY
-                        else "shared_resource",
+                        REL_DEPENDS_ON if decision.role == ROLE_LIBRARY_DEPENDENCY
+                        else REL_SHARED_RESOURCE,
                         path_key, decision.epistemic_status,
                         evidence_for=decision.evidence_for,
                         evidence_against=decision.evidence_against))
