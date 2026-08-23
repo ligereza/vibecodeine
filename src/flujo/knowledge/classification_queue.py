@@ -64,6 +64,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 
+from .feature_policy import FeaturePolicyError, may_decide
+
 CONTRACT = "mak-classification-queue-v1"
 
 STATUS_PENDING = "pending"
@@ -125,6 +127,20 @@ CREATE INDEX IF NOT EXISTS idx_class_resolutions_queue
 
 class ClassificationQueueError(ValueError):
     """The queue was asked for something it cannot answer honestly."""
+
+
+def _require_ordering_permission(feature_name: str, question: str) -> dict[str, Any]:
+    """Require the epistemic gate before emitting a machine proposal."""
+    try:
+        permission = may_decide(
+            feature_name, question, authority_consulted=True)
+    except FeaturePolicyError as exc:
+        raise ClassificationQueueError(
+            f"ordering_policy_refused: {exc}") from exc
+    if not permission.allowed:
+        raise ClassificationQueueError(
+            f"ordering_policy_refused: {permission.reason}")
+    return permission.as_dict()
 
 
 def _now() -> str:
@@ -274,25 +290,31 @@ def machine_proposals(candidates: Sequence[Candidate], *,
     for item in candidates:
         env_root = virtual_environment_root(item.path)
         if env_root:
+            policy = _require_ordering_permission(
+                "declared_marker", "provenance class (installed vs authored)")
             out.append(Proposal(
                 item.queue_id, item.path, STATUS_INSTALLED_DEPENDENCY,
                 RULE_VIRTUALENV,
                 ({"kind": "filesystem_check",
                   "detail": f"{env_root}/pyvenv.cfg exists, so this tree was "
-                            "installed by a package manager, not authored"},),
+                             "installed by a package manager, not authored"},
+                  {"kind": "ordering_policy", "detail": policy},),
             ))
             continue
         if item.path.startswith(root):
             continue
         if item.sha256 and item.sha256 in canonical:
+            policy = _require_ordering_permission(
+                "content_hash", "that two rows are the same content")
             out.append(Proposal(
                 item.queue_id, item.path, STATUS_COPY_OF_CANONICAL,
                 RULE_CANONICAL_COPY,
                 ({"kind": "content_identity",
                   "detail": f"sha256 identical to {canonical[item.sha256]}"},
                  {"kind": "scope_note",
-                  "detail": "the canonical file carries the classification; this "
-                            "copy inherits the coarse half and nothing else"}),
+                   "detail": "the canonical file carries the classification; this "
+                              "copy inherits the coarse half and nothing else"},
+                 {"kind": "ordering_policy", "detail": policy}),
             ))
     return out
 
