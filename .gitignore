@@ -74,6 +74,7 @@ data/*.json
 !data/motor_librerias.json
 !data/ordering_features.json
 !data/artist_discographies.json
+!data/certified_queries.json
 context/DAILY.md
 context/PIPELINE_RESULT.md
 context/dashboard.html
