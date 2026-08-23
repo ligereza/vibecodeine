@@ -250,8 +250,33 @@ def dates_in(text, limit=5):
     return found
 
 
+def is_virtual_environment(path):
+    """A directory Python itself marks as a virtual environment.
+
+    The name lists below are names, and a name list only catches the names
+    someone thought of. Measured: 1463 of the 8273 rows in
+    ``classification_queue`` -- 17.7% of the whole queue -- came from ONE
+    directory, ``/home/mak/curatoria_inbox/3d/NEW/env``, a Windows virtualenv
+    copied onto this box. ``ACTIVE_SKIP`` holds ``venvs``, ``.venvs`` and
+    ``venv-providers`` and misses both ``env`` and the Windows layout
+    ``env/Lib/site-packages``.
+
+    ``pyvenv.cfg`` is not a naming convention: PEP 405 requires the interpreter
+    to write it at the environment root, and ``sys.prefix`` is derived from it.
+    Testing for the file is a definition instead of a guess, and it holds for a
+    directory called anything at all.
+    """
+    return (path / "pyvenv.cfg").is_file()
+
+
 def should_skip_dir(path, root_kind):
     if path.name.startswith("."):
+        return True
+    if is_virtual_environment(path):
+        return True
+    if path.name in {"site-packages", "dist-packages"}:
+        # Reached when the environment root is above the scan root, so the
+        # pyvenv.cfg test never sees it.
         return True
     return path.name in (ACTIVE_SKIP if root_kind == "active" else HISTORY_SKIP)
 

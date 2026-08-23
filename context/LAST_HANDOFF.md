@@ -861,6 +861,98 @@ RESIDUO: los 8273 `classification_queue` pendientes son otra cola, con otra
 forma, y todavia sin puerta. Y la asimetria rechazo/aceptacion es una hipotesis
 con una prediccion clara: si el operador anula un rechazo heredado, esta mal.
 
+## La segunda cola: 8273 filas que no eran 8273 preguntas — 2026-08-23
+
+`classification_queue` tenia la misma enfermedad que la cola de proyectos, en un
+segundo lugar: 8273 filas TODAS `pending`, cuatro plantillas de pregunta, y
+ningun codigo en todo el repo que escriba `status`. Un productor, cero
+consumidores. Pero la FORMA del problema es distinta y copiar la puerta anterior
+habria estado mal.
+
+8273 ES UN NUMERO DE FILAS, NO DE PREGUNTAS. Descompuesto por evidencia
+verificable:
+
+    1463  dentro de un virtualenv        pyvenv.cfg probado en disco
+    2566  byte-identica a un archivo     sha256 igual + ruta canonica nombrada
+          del repo vivo
+    1035  en el repo vivo                necesita una persona
+    3209  en cualquier otra parte        necesita una persona
+
+4029 filas -- el 48,7% -- no son preguntas para un humano, y no en el sentido de
+"probablemente no": cada una carga un chequeo que cualquiera puede repetir.
+
+CAUSA RAIZ de 1463 de ellas, y es una sola: TODAS vienen de UN directorio,
+`/home/mak/curatoria_inbox/3d/NEW/env`, un virtualenv de Windows copiado a esta
+maquina (tiene `pyvenv.cfg`, `Include`, `Lib`, `Scripts`). `should_skip_dir`
+probaba NOMBRES -- `ACTIVE_SKIP` tiene `venvs`, `.venvs`, `venv-providers` -- y no
+tenia ni `env` ni el layout Windows `env/Lib/site-packages`. Una lista de nombres
+solo atrapa los nombres que alguien penso. Arreglado con una DEFINICION:
+`pyvenv.cfg` no es una convencion de nombre, PEP 405 obliga al interprete a
+escribirlo en la raiz del entorno y `sys.prefix` se deriva de ahi. La regla ahora
+vale para un directorio llamado como sea. `build_mak_knowledge_db.py` no tenia
+NINGUN test, que es como una lista de nombres se queda siendo la regla completa;
+ahora tiene `tests/test_knowledge_scanner_skips.py`, incluido uno que falla si
+alguien vuelve a la lista.
+
+LA PREGUNTA ESTABA MAL FORMADA, y por eso nunca avanzo. "python implementation
+requires purpose and consumer classification" junta dos preguntas cuyas unidades
+naturales son distintas, y ninguna decision unica puede contestar las dos. El
+contraejemplo esta en los datos: 44 de las filas son `__init__.py` de CERO bytes.
+Contenido byte-identico, o sea PROPOSITO identico (marcador de paquete), y viven
+en 5 arboles distintos, o sea CONSUMIDORES distintos.
+
+    purpose / project    funcion del contenido  -> una respuesta por clase
+    consumer / route     funcion de la posicion -> una respuesta por archivo
+
+Juntas, la mitad barata queda de rehen de la mitad cara, 8273 veces.
+`QUESTION_PARTS` declara el corte en vez de dejarlo implicito.
+
+LO QUE UNA PERSONA REALMENTE TIENE QUE CONTESTAR: las 4244 filas restantes se
+doblan por `(candidate_kind, directorio)`, porque la mitad gruesa de cada
+pregunta es una propiedad del directorio. Resultado medido:
+
+    576 grupos | 3 respuestas cubren la MITAD de las filas | 64 cubren el 80%
+
+Los tres grandes: `/home/mak/research/corpus` (1599 filas, archivos .md con
+nombre de hash y sufijo epoch -- corpus generado, no propuestas),
+`/home/mak/research/informes/archive` (520) y `/home/mak/flujo/tests` (255).
+
+LA MISMA ASIMETRIA que en la cola de proyectos, y no es coincidencia: una
+respuesta gruesa NEGATIVA subsume la fina (si la carpeta es corpus generado,
+preguntar a que propuesta pertenece cada archivo es moot); una POSITIVA no.
+`--covers coarse_only` deja registrada la mitad abierta y
+`fine_questions_still_open` la cuenta, en vez de que desaparezca del conteo de
+pendientes como si la pregunta entera estuviera cerrada.
+
+Verificado extremo a extremo sobre una COPIA de la base: `apply-rules --rule
+inside_virtual_environment` resolvio 1463 y reaplicarlo resolvio 0 sin pisar nada;
+una sola respuesta a `/home/mak/research/corpus` resolvio 1599 filas dejando
+`fine_questions_still_open: 1599`. Cada resolucion queda en
+`classification_resolutions` con actor, razon, regla y evidencia (tabla
+append-only creada al primer uso; leer la cola no la necesita).
+
+Comandos y codigos: `pytest tests/` exit 0 (15 nuevos en
+`test_classification_queue.py`, 5 en `test_knowledge_scanner_skips.py`);
+`repo_audit.py` exit 0; `git diff --check` exit 0; `classification_review.py
+list/propose/summary` deja el sha256 de la base intacto; bare exit 2, `--help`
+exit 0.
+
+NO APLIQUE LAS REGLAS SOBRE LA BASE VIVA. Son chequeos probables, no juicios,
+pero el acto lleva la firma de alguien y esa firma es del operador. El comando
+exacto, cuando quiera:
+
+    ./.venv/bin/python tools/classification_review.py apply-rules \
+      --actor mak --reason "installed dependencies and byte-identical copies are \
+      not authored material" --dry-run
+
+(sin `--dry-run` para escribir; se puede acotar con `--rule`.)
+
+RESIDUO: los 3209 de "cualquier otra parte" incluyen 308 filas en
+`/home/mak/WIN/flujo` que NO son byte-identicas al repo vivo -- copias
+divergentes, que es informacion y no ruido. Y para `candidate_kind = consumer` la
+unidad declarada es el import, mientras `classify` responde por directorio: mas
+grueso que la unidad real, y por eso ese caso deberia usar `coarse_only`.
+
 ## Next concrete action
 
 Publicar este write set en `main` solo cuando exista autorizacion explicita de
