@@ -378,6 +378,13 @@ def decide(database: str | Path, project_id: str, to_state: str, *,
     cascade_children: list[tuple[str, str]] = []
     if cascade_names:
         items = load_queue(database)
+        target = next((item for item in items if item.project_id == project_id), None)
+        if target is not None:
+            target_resolution = resolve_title(items, target.title)
+            if isinstance(target_resolution, Many):
+                raise ReviewQueueError(
+                    f"cascade_ambiguous: parent {target.title}:"
+                    f"{target_resolution.k}_candidates")
         resolutions = {title: resolve_title(items, title) for title in cascade_names}
         ambiguous = {title: res for title, res in resolutions.items()
                     if isinstance(res, Many)}
