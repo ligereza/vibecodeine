@@ -55,15 +55,26 @@ permitidas y las transiciones inválidas. La suite completa del repositorio
 terminó en `EXIT 0` después de este slice, con 7 warnings de deprecación
 preexistentes de Pillow.
 
-**Integración abierta.** Todavía falta construir el replay set de casos reales,
-añadir evaluación de políticas versionadas y una reanudación automática desde
-el último checkpoint. No usar todavía GPU, fine-tuning, bandits ni promoción
-automática.
+**Replay set implementado.** `context/learning/replay_suite_v1.json` declara
+cuatro casos reales y trazables: resolución de títulos y probe Blender en
+`replay`; lector `.aep` y testigo PNG en `holdout`. Cada caso conserva
+`source_refs`, un target de pytest y un estado esperado. El fingerprint del
+dataset es `bbecea1dc18d45068103072e279999bfa7a0af42b2a399d4ad3e517f21052fd0`;
+hay 2 casos por split y 4 grupos sin cruce entre splits.
+`src/flujo/knowledge/replay.py` valida schema, referencias, fingerprint y
+aislamiento por grupo, y calcula métricas sin promover políticas.
+`tests/test_replay.py` verifica el caso real, el rechazo de leakage y la
+diferencia entre `passed`, `failed` y `abstained`.
 
-**Siguiente acción concreta.** Construir el replay set versionado a partir de
-los casos reales ya validados (resolver de títulos, `.aep`, Blender y PNG), con
-un validador por caso y fingerprint de dataset; después conectar esas pruebas
-al director sin habilitar promoción automática.
+**Integración abierta.** Todavía falta construir el replay set de casos reales,
+añadir evaluación persistida de políticas versionadas y una reanudación
+automática desde el último checkpoint. No usar todavía GPU, fine-tuning,
+bandits ni promoción automática.
+
+**Siguiente acción concreta.** Ejecutar los cuatro validadores declarados,
+persistir el resultado por split en `learning_evaluations` y conectar ese
+reporte al director como gate informativo; después implementar la reanudación
+desde checkpoints sin permitir promoción automática.
 
 **Última verificación.** 2026-08-24; worktree validado con `git diff --check`,
 tests del ledger en `EXIT 0` y conteos históricos sin cambios.
