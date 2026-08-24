@@ -258,12 +258,11 @@ class Unknown:
 # The vocabulary a walker declares for a format. Kept as data so a gap is
 # visible rather than implicit in code, which is what hid the .mov failure.
 #
-# Every entry below is graded ASSERTED, never YES, because none of them has had
-# the adversarial check (b) run -- a whole-file scan of real files of that
-# format confirming no packet lives outside the listed containers, recorded as
-# a Witness with the file count it covered. Citing the spec is clause (a) only.
-# "upgrade_check" names exactly what would need to be run, and recorded as a
-# Witness, to move an entry to YES, so the path off ASSERTED is data too.
+# An entry may be YES only when the adversarial check (b) was actually run and
+# recorded as a Witness. ASSERTED means the containers are named and justified
+# but the check is still absent or ineligible. "upgrade_check" names exactly
+# what would need to be run to move an entry to YES, so the path off ASSERTED
+# is data too.
 KNOWN_CONTAINERS: dict[str, dict[str, Any]] = {
     "png": {
         "containers": [
@@ -273,12 +272,14 @@ KNOWN_CONTAINERS: dict[str, dict[str, Any]] = {
         "vocabulary_complete": ASSERTED,
         "why": "The PNG specification registers XML:com.adobe.xmp for iTXt; "
                "real Adobe exports in this corpus also use the older tEXt "
-               "chunk with that keyword. Clause (b) still needs a whole-file "
-               "adversarial scan against both observed containers.",
-        "upgrade_check": "whole-file adversarial scan of the 14345 extension "
-                          "candidates, separating invalid files and checking "
-                          "valid PNGs for a packet outside iTXt and tEXt, "
-                          "recorded as a Witness",
+               "chunk with that keyword. The first complete scan found zero "
+               "markers outside both containers in 14327 readable PNGs, but "
+               "17 extension-named sidecars were not PNGs and one PNG lacked "
+               "IEND; the full 14345-candidate witness therefore remains "
+               "ineligible.",
+        "upgrade_check": "rerun against a declared valid-PNG corpus, or "
+                          "resolve the 18 invalid extension candidates, then "
+                          "record the no-outside-marker result as a Witness",
     },
     "jpeg": {
         "containers": ["APP1 with the Adobe XAP header",

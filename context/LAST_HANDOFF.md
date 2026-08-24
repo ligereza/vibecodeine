@@ -3,9 +3,58 @@
 ## Current objective — 2026-08-24
 
 Conservar una única ruta de autoría MAK/WIN y una política determinista para
-imágenes y videos. Este checkpoint quedó publicado en `origin/main` como
-`ed9c6e2` después de la validación completa; el siguiente agente debe trabajar
-solo sobre los items abiertos que siguen abajo.
+imágenes y videos. El último commit funcional publicado antes de este registro
+es `81fd57a`; el siguiente agente debe trabajar solo sobre los items abiertos
+que siguen abajo.
+
+## Slice validated - PNG XMP adversarial witness - 2026-08-24
+
+**Objetivo.** Comprobar si la lectura exhaustiva de XMP en PNG podía elevar su
+vocabulario de `ASSERTED` a `YES`, buscando marcadores XMP fuera de los chunks
+declarados y fijando exactamente el corpus leído.
+
+**Corrección previa.** La primera pasada encontró 6 archivos con XMP real en un
+chunk `tEXt` con la clave `XML:com.adobe.xmp`; el lector conocía solo `iTXt`.
+`src/flujo/substrate/xmp.py` ahora lee ambos tipos y conserva el método exacto
+(`png_itxt_chunk`, `png_text_chunk` o `png_xmp_chunks`). El testigo también
+excluye ambos contenedores antes de buscar marcadores crudos. La corrección
+está publicada en `81fd57a` (`fix(substrate): cover legacy PNG XMP chunks`).
+
+**Herramienta y contrato.** `tools/png_xmp_witness.py` es read-only sobre el
+corpus: valida firma PNG, tabla de chunks, CRC, `IEND` y todos los bytes hasta
+EOF; hashea cada archivo con SHA-256 y busca `<?xpacket`/`<x:xmpmeta` fuera de
+`iTXt` o `tEXt` con la clave XMP. Su alcance es lexical y explícito: no afirma
+detectar bytes comprimidos o cifrados dentro de una estructura desconocida.
+`tests/test_png_xmp_witness.py` cubre XMP dentro de ambos contenedores, hit
+fuera y CRC inválido.
+
+**Comando y evidencia física.**
+
+    .venv/bin/python tools/png_xmp_witness.py \
+        --root /media/mak/PortableSSD \
+        --out /tmp/mak-png-xmp-witness-v2.json
+
+La corrida fue sobre el árbol limpio `81fd57a` y terminó `EXIT 1` porque el
+testigo no es elegible. Resultó: `candidate_count=14345`,
+`files_checked=14327`, `errors=18`, `outside_marker_files=0`,
+`xmp_container_files=973`, `xmp_container_count=973`,
+`eligible_for_witness=false`, `output_sha256=
+b84fc93b3bb390c4c621d333ec9f807a50eb9a029d18eac4fe6e69156e3f33f6`.
+
+Las 18 excepciones están identificadas, no ocultas: 17 son nombres `._*` o
+sidecars de macOS sin firma PNG (`bad_signature`), y 1 es
+`LYON/Pajsaera/PNG/2/3/EXR/todo/SIN/FONDO/fhmo/slowmo/blur/2/New Folder/humo edi/HUMOULTIMO/2/PNG BLUR/blur Comp. 1-4x-RIFE-RIFE4.0-60fps/00000237.png`,
+que tiene firma pero termina sin `IEND` (`missing_IEND`). El primer resultado
+de 6 hits fuera del vocabulario quedó reemplazado por esta segunda medición:
+0 hits, confirmado en todos los 14.327 archivos legibles.
+
+**Decisión.** No se promueve `KNOWN_CONTAINERS["png"]` a `YES`: los 18
+candidatos no forman una cobertura limpia del conjunto reclamado. Un PNG válido
+sin XMP todavía no puede producir un negativo respaldado por `XmpResult`; los
+archivos inválidos permanecen `UNSUPPORTED`/desconocidos. El siguiente paso
+acotado es definir explícitamente si el corpus canónico excluye esos 18 por
+ser sidecars/corrupción y repetir entonces sobre ese conjunto, o reparar la
+fuente; no se debe borrar ni alterar el SSD para conseguirlo.
 
 ## Slice validated - carousel index into the flyer source - 2026-08-24
 
@@ -267,9 +316,9 @@ siendo project -> directory, nunca project -> one chosen file.
         tests/test_render_output_edges.py src/flujo/substrate/schema.py -> EXIT 0
     git diff --check -> EXIT 0
 
-**Siguiente acción.** Witness PNG. Los 55 archivos no legibles y los 25
-directorios suspect siguen siendo UNKNOWN/report-only; no se rellenan con
-suposiciones.
+**Siguiente acción.** El witness PNG quedó validado arriba. Los 55 archivos no
+legibles y los 25 directorios suspect siguen siendo UNKNOWN/report-only; no se
+rellenan con suposiciones.
 
 ## Physical authority and migration status
 

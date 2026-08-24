@@ -157,6 +157,8 @@ Consequences that are now knowable in advance rather than after measuring:
 - PNG witness work must cover both observed containers: iTXt and legacy tEXt
   keyed `XML:com.adobe.xmp`. Extension-named sidecars that are not PNG data and
   malformed PNGs remain outside the valid-file count; neither is silently
-  treated as a clean negative.
+  treated as a clean negative. The 2026-08-24 full pass found 0 markers outside
+  those containers in 14.327 readable files, but 17 sidecars and 1 truncated
+  PNG kept the full 14.345-candidate witness ineligible.
 - Whether the class-level use of basename evidence should carry its k on the
   record the way an edge now does. It is sound, but its strength is unrecorded.
