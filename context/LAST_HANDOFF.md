@@ -26,6 +26,10 @@ solo sobre los items abiertos que siguen abajo.
    links o wrappers de compatibilidad. Las copias históricas, datos, bases,
    logs y media se preservaron. Los duplicados no consumidos fueron enviados a
    la Papelera del sistema, no borrados de forma irreversible.
+   Durante la validación completa también se corrigió físicamente
+   `/home/mak/plataforma/entregar.py`: ahora expone el módulo canónico sin
+   copiar funciones con globals divergentes. Esa proyección está fuera de
+   este repositorio y debe verificarse en el filesystem, no asumirse desde Git.
 2. Reparación visual en
    `src/flujo/eventos/blender_nodes.py` y
    `src/flujo/eventos/blender_nodes_video.py`: imágenes y videos usan una sola
