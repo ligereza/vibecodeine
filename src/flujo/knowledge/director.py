@@ -136,6 +136,7 @@ class MakDirector:
                 "decision": str(decision.get("decision") or ""),
                 "reason": str(decision.get("reason") or ""),
                 "tool_id": tool_id,
+                "router_decision": dict(decision),
             },
         )
         return self._advance(run, event_id, "proposed")
@@ -167,7 +168,10 @@ class MakDirector:
         )
         return self._advance(run, event_id, "observed", probe=dict(probe))
 
-    def validate(self, run: Mapping[str, Any]) -> dict[str, Any]:
+    def validate(
+        self, run: Mapping[str, Any], *,
+        replay_evaluation: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
         self._require_state(run, "observed")
         probe = run.get("probe")
         if not isinstance(probe, Mapping):
@@ -176,11 +180,28 @@ class MakDirector:
         validation = dict(validation) if isinstance(validation, Mapping) else {}
         validation_status = str(validation.get("status") or "").casefold()
         passed = validation_status in VALIDATION_STATUSES
+        replay_gate = "not_provided"
+        if replay_evaluation is not None:
+            if not isinstance(replay_evaluation, Mapping):
+                raise DirectorError("director_replay_evaluation_not_mapping")
+            replay_gate = str(replay_evaluation.get("status") or "").casefold()
+            if replay_gate not in {"passed", "failed", "abstained"}:
+                raise DirectorError("director_replay_evaluation_bad_status")
+            passed = passed and replay_gate == "passed"
         event_id = self._event(
             run, event_type="director.validate", state="validated",
-            payload={"validation": validation, "passed": passed},
+            payload={
+                "validation": validation,
+                "passed": passed,
+                "replay_gate": replay_gate,
+                "replay_evaluation": dict(replay_evaluation or {}),
+            },
         )
-        return self._advance(run, event_id, "validated", validation_passed=passed)
+        return self._advance(
+            run, event_id, "validated", validation_passed=passed,
+            replay_gate=replay_gate,
+            replay_evaluation=dict(replay_evaluation or {}),
+        )
 
     def record(
         self, run: Mapping[str, Any], project: Mapping[str, Any],
@@ -201,6 +222,7 @@ class MakDirector:
                 "episode_id": episode_id,
                 "probe_status": str(probe.get("status") or ""),
                 "validation_passed": bool(run.get("validation_passed")),
+                "replay_gate": str(run.get("replay_gate") or "not_provided"),
             },
         )
         return self._advance(run, event_id, "recorded", episode_id=episode_id)
@@ -208,13 +230,14 @@ class MakDirector:
     def run_read_only_probe(
         self, project: Mapping[str, Any], decision: Mapping[str, Any], *,
         run_id: str | None = None, episode_id: str | None = None,
+        replay_evaluation: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Run the safe orchestration path; the probe itself never spawns a process."""
         run = self.propose(project, decision, run_id=run_id, episode_id=episode_id)
         run = self.start(run)
         probe = probe_declared_consumer(project, decision, repo_root=self.repo_root)
         run = self.observe(run, probe)
-        run = self.validate(run)
+        run = self.validate(run, replay_evaluation=replay_evaluation)
         run = self.record(run, project)
         return {"schema": DIRECTOR_SCHEMA, "run": run, "events": self.checkpoint(run["run_id"])}
 
@@ -229,5 +252,40 @@ class MakDirector:
             "state": latest["state"],
             "event_id": latest["event_id"],
             "event_count": len(events),
+            "resumable": latest["state"] not in {"recorded", "rejected"},
             "events": events,
         }
+
+    def resume(self, run_id: str) -> dict[str, Any]:
+        """Reconstruct the latest in-memory run view from durable checkpoints."""
+        checkpoint = self.checkpoint(run_id)
+        events = checkpoint["events"]
+        first = events[0]
+        proposal = first.get("payload") if isinstance(first.get("payload"), Mapping) else {}
+        decision = proposal.get("router_decision")
+        if not isinstance(decision, Mapping):
+            raise DirectorError("director_checkpoint_missing_decision")
+        latest = events[-1]
+        run: dict[str, Any] = {
+            "schema": DIRECTOR_SCHEMA,
+            "run_id": run_id,
+            "project_id": first["project_id"],
+            "episode_id": latest.get("episode_id"),
+            "tool_id": str(proposal.get("tool_id") or ""),
+            "decision": dict(decision),
+            "state": latest["state"],
+            "event_id": latest["event_id"],
+        }
+        for event in events:
+            payload = event.get("payload")
+            if not isinstance(payload, Mapping):
+                continue
+            if event["state"] == "observed":
+                run["probe"] = dict(payload.get("probe") or {})
+            if event["state"] == "validated":
+                run["validation_passed"] = bool(payload.get("passed"))
+                run["replay_gate"] = str(payload.get("replay_gate") or "not_provided")
+                run["replay_evaluation"] = dict(payload.get("replay_evaluation") or {})
+            if event["state"] == "recorded":
+                run["episode_id"] = payload.get("episode_id")
+        return {"schema": DIRECTOR_SCHEMA, "checkpoint": checkpoint, "run": run}

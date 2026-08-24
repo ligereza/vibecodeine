@@ -50,6 +50,23 @@ def test_director_persists_full_checkpoint_chain_and_episode(tmp_path):
     assert store.summary("director-demo")["episodes"] == {"needs_evidence": 1}
 
 
+def test_director_attaches_replay_gate_and_reconstructs_checkpoint(tmp_path):
+    store, project, decision, director = _fixture(tmp_path)
+    evaluation = {
+        "status": "passed",
+        "dataset_fingerprint": "sha256:replay",
+        "suite_id": "fixture-suite",
+    }
+    result = director.run_read_only_probe(
+        project, decision, run_id="run-gated", replay_evaluation=evaluation,
+    )
+    assert result["run"]["replay_gate"] == "passed"
+    resumed = director.resume("run-gated")
+    assert resumed["checkpoint"]["resumable"] is False
+    assert resumed["run"]["state"] == "recorded"
+    assert resumed["run"]["replay_evaluation"]["suite_id"] == "fixture-suite"
+
+
 def test_director_rejects_unknown_or_mutating_tools_before_persisting(tmp_path):
     store, project, decision, director = _fixture(tmp_path)
     bad = {**decision, "selected": {"tool_id": "shell", "mode": "read_only"}}
