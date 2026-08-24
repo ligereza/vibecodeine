@@ -27,6 +27,19 @@ So completeness is five separate questions and NONE implies the next:
 
 The .mov failure lived entirely in the gap between the first and the second, and
 there was no field able to express it. That is why this module exists.
+
+**ASSERTED vs PROVEN.** The vocabulary verdict above still came from a hand
+typed table, ``KNOWN_CONTAINERS``, and treating a dict entry as a measurement is
+exactly the closed-world assumption that produced the .mov failure in the first
+place: vocabulary_complete was YES for isobmff, nobody had run an adversarial
+check against real QuickTime files, and a scan then flagged 1372 of them as
+vocabulary complete and found 0 XMP packets, while a crude window scan of the
+same files found 180. So a fourth verdict, ASSERTED, separates "someone declared
+this" from YES, which now means "a witness backs this". A witness is defined as
+data in the ``Witness`` dataclass below: a cited spec clause for the container
+set, plus an adversarial whole-file scan of real data that found nothing outside
+the declared containers, recorded with the file count it covered. Only a
+``Completeness`` carrying a real ``Witness`` may license ``negative_is_evidence``.
 """
 
 from __future__ import annotations
@@ -89,16 +102,45 @@ LEVEL_MEANING = {
     SEMANTIC: "absence of this evidence implies absence of the fact",
 }
 
-# A level may be asserted, denied, or simply not assessed. The third is the
-# honest default and the one the old boolean could not express.
+# A level may be asserted, denied, backed by a witness, or simply not assessed.
+# UNASSESSED is the honest default the old boolean could not express; ASSERTED
+# is the one this module did not have until the isobmff entry below proved it
+# was needed: "declared true" and "shown true" are different claims, and only
+# YES here means the second one.
 YES = "yes"
 NO = "no"
 UNASSESSED = "unassessed"
-VERDICTS = (YES, NO, UNASSESSED)
+ASSERTED = "asserted"
+VERDICTS = (YES, NO, UNASSESSED, ASSERTED)
 
 
 class EpistemicError(ValueError):
     """A completeness claim or an UNKNOWN cause was stated outside the vocabulary."""
+
+
+@dataclass(frozen=True)
+class Witness:
+    """What promotes a vocabulary claim from ASSERTED to PROVEN (YES).
+
+    Both fields below must be substantively present, not merely typed: a
+    citation gives clause (a), the container set is normative; the adversarial
+    check plus its file count gives clause (b), the set was tested against real
+    data and nothing was found outside it. Either half missing is exactly the
+    isobmff gap -- a citation with no check behind it -- so the constructor
+    rejects a Witness that cannot back both halves.
+    """
+
+    spec_citation: str
+    adversarial_check: str
+    files_checked: int
+
+    def __post_init__(self) -> None:
+        if not self.spec_citation.strip():
+            raise EpistemicError("witness_missing_spec_citation")
+        if not self.adversarial_check.strip():
+            raise EpistemicError("witness_missing_adversarial_check")
+        if self.files_checked <= 0:
+            raise EpistemicError("witness_checked_zero_files")
 
 
 @dataclass(frozen=True)
@@ -111,6 +153,7 @@ class Completeness:
     corpus: str = UNASSESSED
     semantic: str = NO           # default NO: tools strip metadata, so absence of
                                  # evidence never implies absence of the fact.
+    witness: Witness | None = None
     note: str = ""
 
     def __post_init__(self) -> None:
@@ -121,20 +164,34 @@ class Completeness:
 
     @property
     def negative_is_evidence(self) -> bool:
-        """A miss means something only when traversal AND vocabulary both hold.
+        """A miss means something only when traversal AND vocabulary both hold
+        AND the vocabulary claim is backed by a witness, not merely declared.
 
-        Semantic completeness would be needed to go further, and it is never
-        available for embedded metadata, so this stops at the decoder's claim:
-        "no packet exists in this file under a complete vocabulary" -- which is
-        NOT "this file has no provenance".
+        The witness clause exists because the first two conditions alone were
+        already met, and false, once: vocabulary_complete was YES (now ASSERTED)
+        for isobmff with no witness ever run, and a scan flagged 1372 QuickTime
+        files as vocabulary complete on that assertion alone, finding 0 XMP
+        packets where a crude window scan of the same files found 180. Semantic
+        completeness would be needed to go further still, and it is never
+        available for embedded metadata, so even a witnessed negative stops at
+        the decoder's claim: "no packet exists in this file under a PROVEN
+        complete vocabulary" -- which is NOT "this file has no provenance".
         """
-        return self.traversal == YES and self.vocabulary == YES
+        return (self.traversal == YES and self.vocabulary == YES
+                and self.witness is not None)
 
     @property
     def strongest_negative_claim(self) -> str:
         """The exact sentence a negative from this search is allowed to be."""
         if self.traversal != YES:
             return "nothing: the structure was not fully traversed"
+        if self.vocabulary == ASSERTED:
+            return ("nothing: the vocabulary is ASSERTED, not PROVEN -- a "
+                    "declaration with no witness behind it. An assertion alone "
+                    "produced exactly this false completeness once: 1372 "
+                    "QuickTime files were flagged vocabulary complete, the scan "
+                    "found 0 XMP packets in them, and a crude window scan of "
+                    "the same files found 180")
         if self.vocabulary != YES:
             return ("nothing: the walker's container vocabulary is not known to be "
                     "complete for this format, which is exactly the .mov failure")
@@ -151,6 +208,14 @@ class Completeness:
             "authority": self.authority,
             "corpus": self.corpus,
             "semantic": self.semantic,
+            "witness": (
+                {
+                    "spec_citation": self.witness.spec_citation,
+                    "adversarial_check": self.witness.adversarial_check,
+                    "files_checked": self.witness.files_checked,
+                }
+                if self.witness is not None else None
+            ),
             "negative_is_evidence": self.negative_is_evidence,
             "strongest_negative_claim": self.strongest_negative_claim,
             "note": self.note,
@@ -192,26 +257,54 @@ class Unknown:
 
 # The vocabulary a walker declares for a format. Kept as data so a gap is
 # visible rather than implicit in code, which is what hid the .mov failure.
+#
+# Every entry below is graded ASSERTED, never YES, because none of them has had
+# the adversarial check (b) run -- a whole-file scan of real files of that
+# format confirming no packet lives outside the listed containers, recorded as
+# a Witness with the file count it covered. Citing the spec is clause (a) only.
+# "upgrade_check" names exactly what would need to be run, and recorded as a
+# Witness, to move an entry to YES, so the path off ASSERTED is data too.
 KNOWN_CONTAINERS: dict[str, dict[str, Any]] = {
     "png": {
         "containers": ["iTXt chunk keyed XML:com.adobe.xmp, deflated or plain"],
-        "vocabulary_complete": YES,
-        "why": "The PNG specification defines exactly one place for XMP.",
+        "vocabulary_complete": ASSERTED,
+        "why": "The PNG specification defines exactly one place for XMP, so "
+               "clause (a) holds. Clause (b) does not: nobody has whole-file "
+               "scanned the 14345 PNGs in this corpus to confirm no packet "
+               "lives outside the iTXt chunk, so this is asserted, not proven.",
+        "upgrade_check": "whole-file adversarial scan of all 14345 corpus PNGs "
+                          "for an XMP packet outside the iTXt chunk, recorded "
+                          "as a Witness with files_checked=14345",
     },
     "jpeg": {
         "containers": ["APP1 with the Adobe XAP header",
                        "APP1 with the Extended XMP header"],
-        "vocabulary_complete": YES,
-        "why": "XMP part 3 defines these two for JPEG.",
+        "vocabulary_complete": ASSERTED,
+        "why": "XMP part 3 defines these two for JPEG, so clause (a) holds. "
+               "Clause (b) does not: no whole-file adversarial scan of the "
+               "corpus JPEGs has been run to confirm no packet lives "
+               "elsewhere, so this is asserted, not proven.",
+        "upgrade_check": "whole-file adversarial scan of the corpus JPEGs for "
+                          "an XMP packet outside both APP1 headers, recorded "
+                          "as a Witness with the file count it covered",
     },
     "isobmff": {
         "containers": ["uuid box with Adobe's registered UUID (MP4)",
                        "XMP_ atom inside moov/udta (QuickTime)"],
-        "vocabulary_complete": YES,
-        "why": "Both were required in practice. The QuickTime atom was MISSING "
-               "in the first version and produced 0 hits in 1372 real .mov files "
-               "while a crude window scan found 180. It is listed here so the "
-               "next gap of this kind is visible as data rather than as silence.",
+        "vocabulary_complete": ASSERTED,
+        "why": "This is the entry that DEMONSTRABLY failed clause (b) once: "
+               "the QuickTime XMP_ atom was MISSING from this list in the "
+               "first version, and a scan asserted vocabulary_complete=YES on "
+               "citation (a) alone. It flagged 1372 QuickTime files as "
+               "vocabulary complete and found 0 XMP packets in them, while a "
+               "crude window scan of the same 1372 files found 180. Both "
+               "containers are listed now, but no adversarial whole-file scan "
+               "has been run against this corrected list, so it stays "
+               "asserted, not proven -- the same shortcut must not repeat.",
+        "upgrade_check": "a second adversarial whole-file scan of a real "
+                          "QuickTime/MP4 sample against BOTH containers "
+                          "listed here, finding 0 packets outside them, "
+                          "recorded as a Witness with the file count covered",
     },
     "generic": {
         "containers": ["a raw <?xpacket ... ?> or <x:xmpmeta> region"],
@@ -219,5 +312,18 @@ KNOWN_CONTAINERS: dict[str, dict[str, Any]] = {
         "why": "A packet may be stored in a format-specific structure this "
                "fallback cannot name. TIFF tag 700 and PDF metadata streams are "
                "two known cases that are found only by luck here.",
+        "upgrade_check": "none upgrades this entry itself: it is a fallback "
+                          "for formats with no dedicated locator, so the fix "
+                          "is a real locator per format (TIFF, PDF, ...) with "
+                          "its own graded vocabulary, not a Witness for this one",
     },
 }
+
+# CONSEQUENCE FOR tools/substrate_scan.py, which this module may not edit:
+# it counts a "vocabulary_yes" column by comparing levels.vocabulary == YES.
+# Every entry above is now ASSERTED or NO, never YES, so that column goes to
+# zero. That is the correct outcome, not a regression: the previously reported
+# figure of 23367 of 24478 files (95.5%) "vocabulary complete" was read off
+# this table as an assertion, and was never a measurement -- the isobmff row
+# above is the proof. Do not re-grade any entry back to YES to restore that
+# number; the only legitimate way back to YES is a real Witness.

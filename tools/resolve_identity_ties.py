@@ -15,28 +15,72 @@ There are 1348 such ties over 4104 assets. They are not missing metadata. They
 are 1348 decisions the system declines to take, by design, for want of one fact.
 This tool supplies the fact.
 
-WHY IT DOES NOT COST 100 GiB
-
-Reading all 4104 files whole costs 100.4 GiB. The escalation below costs a
-fraction of that, and is sound in exactly one direction:
+THE ESCALATION HAS TWO STAGES, NOT THREE
 
     stage 0   byte size          free, already indexed
-    stage 1   last 64 KiB        256 MiB for all 4104
-    stage 2   whole file         only for what survives stage 1
+    stage 1   whole file         the only paid stage
 
-A cheap DISAGREEMENT certifies difference: two files whose last 64 KiB differ
-are different files, and no further reading can change that. A cheap AGREEMENT
-certifies nothing; it stays indistinction and must escalate. This is the same
-rejection/acceptance asymmetry that governs a containment test and a
-conservative summary -- a bound may reject, it may never accept.
+A cheap DISAGREEMENT certifies difference: two files of different size are
+different files, and no further reading can change that. Past size there is no
+cheaper-than-whole-file test worth running on this corpus -- a middle stage was
+tried, measured, and removed. What follows is why, kept rather than deleted
+silently, because the reason generalizes past this one tool.
 
-Two consequences are recorded rather than assumed:
+A THIRD STAGE WAS HERE. IT WAS DELETED. THIS IS THE MEASUREMENT THAT KILLED IT.
 
-  * On this corpus stage 0 resolved ZERO assets: every tie group has members of
-    identical size. Recorded because on another corpus it is the cheapest win
-    available, and its absence here is a fact about this disk.
-  * A file no larger than the tail window is read whole by stage 1, so its tail
-    digest IS its full digest. Those are certified at stage 1 with no stage 2.
+An earlier version inserted a stage 1 between these two: hash the last 64 KiB
+of each file before paying for the whole thing. Measured on the 4104 disputed
+assets of this corpus:
+
+    assets in dispute            4104
+    stage 0 distinctions            0
+    stage 1 DISTINCTIONS            0        <- the whole justification, and it is zero
+    bytes read by stage 1   197522805  (197 MB, spent for nothing)
+    bytes read by stage 2 107815334311
+    read amplification avoided    1.0x
+
+Zero distinctions for 197 MB is not a rounding error to tune away.
+
+SPECIFIC reason: the objects in dispute here are video containers and numbered
+simulation caches, and both families write near-identical trailing bytes
+(container trailers and footer atoms; fixed-layout cache blocks). Even the 7
+assets that genuinely differ -- consecutive frames of a fluid cache under
+``LYON/3/123_flip_fluid_cache/bakefiles/`` -- have matching tails, and still
+had to escalate to a full read to be told apart.
+
+GENERAL reason, worth keeping even though the specific one would have been
+enough to delete this probe: a cheap test can only accelerate the side of a
+decision that has a finite witness. "These two objects differ" has a witness --
+the differing byte -- and a sublinear read can land on one and stop. "These two
+objects are identical" has no witness over unbounded content: no partial read
+can rule out a difference still unread, so no sublinear test can ever CERTIFY
+agreement, only ever REJECT it. Stage 1 was built to accelerate the agreement
+side, the side with no witness, so it was doomed by construction, independent
+of which 64 KiB it happened to read. Any test that reads o(n) bits can only
+reject objects that are far apart; near-duplicates are provably invisible to
+it, and near-duplicates are exactly what a shared sample hash selects for.
+
+THE CORRECT SHAPE, SO THE DELETION DOES NOT READ AS GIVING UP
+
+With m objects and up to m*m pairs to compare, the right ladder amortizes PER
+OBJECT, not per pair: size, then a strong fingerprint computed and cached once
+per object, then a byte comparison only where fingerprints already agree. A
+per-pair cheap probe -- re-reading some fixed slice of a file for every pair it
+is compared against -- is the wrong shape regardless of which bytes it reads;
+the tail was just the version that got measured and killed here. This tool
+does not need the per-object cache today, because at this scale the whole-file
+stage already dominates the budget, but a future increase in scale should reach
+for that shape before reaching for a new cheap probe.
+
+WHAT SURVIVED THE DELETION WITHOUT ANY CODE
+
+The deleted stage also carried a shortcut: a file no larger than its 64 KiB
+window was read whole, so its tail digest WAS its full digest, and it was
+certified without a further read. Deleting the stage does not lose that
+capability and does not cost anything extra: such a file now simply gets a
+full digest at stage 1, for exactly the same number of bytes, because the old
+window already covered the whole file. Nobody should "restore" a small-file
+fast path later; it was never a separate cost to begin with.
 
 WHAT IT WRITES
 
@@ -68,7 +112,6 @@ CONTRACT = "mak-identity-ties-v1"
 DEFAULT_INDEX = Path("/home/mak/labs/portable-ssd-index-20260813/archivo_index.sqlite")
 DEFAULT_ROOT = Path("/media/mak/PortableSSD")
 
-TAIL_BYTES = 1 << 16
 READ_BLOCK = 1 << 20
 
 CERTIFIED_SAME = "CERTIFIED_SAME"
@@ -82,7 +125,7 @@ CREATE TABLE IF NOT EXISTS identity_asset (
   asset_id TEXT PRIMARY KEY,
   relative_path TEXT NOT NULL, extension TEXT, container_root TEXT,
   bytes INTEGER, sample_sha256 TEXT,
-  tail_sha256 TEXT, full_sha256 TEXT,
+  full_sha256 TEXT,
   content_id TEXT, verdict TEXT NOT NULL,
   resolved_at_stage INTEGER, unknown_cause TEXT,
   is_appledouble INTEGER NOT NULL DEFAULT 0,
@@ -110,23 +153,6 @@ def is_appledouble(relative_path: str) -> bool:
     cannot be checked against the index it read from.
     """
     return relative_path.rsplit("/", 1)[-1].startswith("._")
-
-
-def digest_tail(path: Path) -> tuple[str, int, bool]:
-    """Return (hexdigest, bytes_read, covers_whole_file)."""
-    size = path.stat().st_size
-    offset = max(0, size - TAIL_BYTES)
-    digest = hashlib.sha256()
-    read = 0
-    with path.open("rb") as handle:
-        handle.seek(offset)
-        while True:
-            block = handle.read(READ_BLOCK)
-            if not block:
-                break
-            digest.update(block)
-            read += len(block)
-    return digest.hexdigest(), read, offset == 0
 
 
 def digest_whole(path: Path) -> tuple[str, int]:
@@ -171,8 +197,8 @@ def resolve(groups: dict[str, list[dict[str, Any]]], root: Path, *,
     stats = {
         "groups": len(groups),
         "assets": sum(len(v) for v in groups.values()),
-        "stage0_resolved": 0, "stage1_resolved": 0, "stage2_resolved": 0,
-        "bytes_read_stage1": 0, "bytes_read_stage2": 0,
+        "stage0_resolved": 0, "stage1_resolved": 0,
+        "bytes_read_stage1": 0,
         "bytes_if_naive": sum(m["bytes"] for v in groups.values() for m in v),
         "unresolved_over_budget": 0, "unreadable": 0,
     }
@@ -180,7 +206,10 @@ def resolve(groups: dict[str, list[dict[str, Any]]], root: Path, *,
 
     # ---------------------------------------------------------------- stage 0
     # Subgroup by size. A size difference is a certified distinction that costs
-    # nothing. Measured here: it decides nothing, and that is the finding.
+    # nothing. Measured on this corpus: 0 of 4104 disputed assets resolved here
+    # -- every tie group has members of identical size -- kept anyway because
+    # on another corpus it is the cheapest win available, and its yield of 0
+    # is a fact about this disk, not a reason to drop the free check.
     size_groups: list[tuple[str, int, list[dict[str, Any]]]] = []
     for sample, members in groups.items():
         by_size: dict[int, list[dict[str, Any]]] = defaultdict(list)
@@ -196,53 +225,21 @@ def resolve(groups: dict[str, list[dict[str, Any]]], root: Path, *,
                 size_groups.append((sample, size, subset))
 
     # ---------------------------------------------------------------- stage 1
-    survivors: list[tuple[str, int, list[dict[str, Any]]]] = []
-    for sample, size, subset in size_groups:
-        by_tail: dict[str, list[dict[str, Any]]] = defaultdict(list)
-        whole = False
-        for member in subset:
-            path = root / member["relative_path"]
-            try:
-                tail, read, covers = digest_tail(path)
-            except OSError as error:
-                member.update(verdict=UNRESOLVED, resolved_at_stage=1,
-                              unknown_cause=epistemics.MISSING_EVIDENCE,
-                              content_id=None, note=str(error)[:120])
-                decided.append(member)
-                stats["unreadable"] += 1
-                continue
-            member["tail_sha256"] = tail
-            stats["bytes_read_stage1"] += read
-            whole = whole or covers
-            by_tail[tail].append(member)
-        for tail, group in by_tail.items():
-            if len(group) == 1:
-                member = dict(group[0], verdict=CERTIFIED_DISTINCT,
-                              resolved_at_stage=1, content_id=None)
-                decided.append(member)
-                stats["stage1_resolved"] += 1
-            elif whole and all(m["bytes"] <= TAIL_BYTES for m in group):
-                # The window covered the entire file, so this tail digest IS the
-                # full digest. Certified without a stage 2 read.
-                for member in group:
-                    member.update(verdict=CERTIFIED_SAME, resolved_at_stage=1,
-                                  full_sha256=tail, content_id=f"sha256:{tail}")
-                    decided.append(member)
-                    stats["stage1_resolved"] += 1
-            else:
-                survivors.append((sample, size, group))
-
-    # ---------------------------------------------------------------- stage 2
-    # Cross-root groups first: those are the ones that change a project verdict,
-    # so an interrupted run still leaves the valuable half decided.
-    survivors.sort(key=lambda item: (
+    # Whole-file digest: the only paid stage. A 64 KiB tail probe used to sit
+    # here; measured on these same 4104 assets it resolved 0 distinctions for
+    # 197522805 bytes read, and was deleted -- see the module docstring for
+    # why a sublinear read can never certify agreement, only reject it.
+    #
+    # Cross-root groups first: those are the ones that can change a project
+    # verdict, so an interrupted run still leaves the valuable half decided.
+    size_groups.sort(key=lambda item: (
         -len({m["container_root"] for m in item[2]}), item[1]))
     spent = 0
-    for sample, size, group in survivors:
+    for sample, size, group in size_groups:
         need = size * len(group)
         if full_budget is not None and spent + need > full_budget:
             for member in group:
-                member.update(verdict=UNRESOLVED, resolved_at_stage=2,
+                member.update(verdict=UNRESOLVED, resolved_at_stage=1,
                               unknown_cause=epistemics.MISSING_EVIDENCE,
                               content_id=None, note="full_hash_budget_exhausted")
                 decided.append(member)
@@ -254,23 +251,23 @@ def resolve(groups: dict[str, list[dict[str, Any]]], root: Path, *,
             try:
                 full, read = digest_whole(path)
             except OSError as error:
-                member.update(verdict=UNRESOLVED, resolved_at_stage=2,
+                member.update(verdict=UNRESOLVED, resolved_at_stage=1,
                               unknown_cause=epistemics.MISSING_EVIDENCE,
                               content_id=None, note=str(error)[:120])
                 decided.append(member)
                 stats["unreadable"] += 1
                 continue
             member["full_sha256"] = full
-            stats["bytes_read_stage2"] += read
+            stats["bytes_read_stage1"] += read
             spent += read
             by_full[full].append(member)
         for full, klass in by_full.items():
             verdict = CERTIFIED_SAME if len(klass) > 1 else CERTIFIED_DISTINCT
             for member in klass:
-                member.update(verdict=verdict, resolved_at_stage=2,
+                member.update(verdict=verdict, resolved_at_stage=1,
                               content_id=f"sha256:{full}" if len(klass) > 1 else None)
                 decided.append(member)
-                stats["stage2_resolved"] += 1
+                stats["stage1_resolved"] += 1
     return {"stats": stats, "assets": decided}
 
 
@@ -309,11 +306,11 @@ def persist(out_db: Path, record: dict[str, Any], decided: list[dict[str, Any]],
                 (run_id, json.dumps(record, sort_keys=True)))
     con.executemany(
         "INSERT OR REPLACE INTO identity_asset (asset_id, relative_path, "
-        "extension, container_root, bytes, sample_sha256, tail_sha256, "
+        "extension, container_root, bytes, sample_sha256, "
         "full_sha256, content_id, verdict, resolved_at_stage, unknown_cause, "
-        "is_appledouble, run_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        "is_appledouble, run_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
         [(m["asset_id"], m["relative_path"], m["extension"], m["container_root"],
-          m["bytes"], m["sample_sha256"], m.get("tail_sha256"),
+          m["bytes"], m["sample_sha256"],
           m.get("full_sha256"), m.get("content_id"), m["verdict"],
           m.get("resolved_at_stage"), m.get("unknown_cause"),
           int(m["is_appledouble"]), run_id) for m in decided])
@@ -338,7 +335,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", type=Path, required=True,
                         help="sidecar sqlite to write; the index is never written")
     parser.add_argument("--full-budget-gib", type=float, default=None,
-                        help="cap on stage 2 reads. Groups left over are "
+                        help="cap on stage 1 reads. Groups left over are "
                              "recorded UNRESOLVED, never silently dropped.")
     parser.add_argument("--report", type=Path, default=None)
     args = parser.parse_args(argv)
@@ -378,8 +375,7 @@ def main(argv: list[str] | None = None) -> int:
         "verdicts": {v: sum(1 for m in resolved["assets"] if m["verdict"] == v)
                      for v in (CERTIFIED_SAME, CERTIFIED_DISTINCT, UNRESOLVED)},
         "read_amplification_avoided": round(
-            stats["bytes_if_naive"] /
-            max(1, stats["bytes_read_stage1"] + stats["bytes_read_stage2"]), 1),
+            stats["bytes_if_naive"] / max(1, stats["bytes_read_stage1"]), 1),
         "top_classes": [c for c in same if not c["all_appledouble"]][:15],
     }
     record.update(finished_at=runrecord.now(), result=result)

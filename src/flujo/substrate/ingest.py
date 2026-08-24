@@ -27,6 +27,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable, Iterator
 
+from .resolution import candidate_count, is_present
 from .schema import (
     AUTHORITIES,
     NOT_RESOLVABLE_BY_THIS_LAYER,
@@ -159,9 +160,17 @@ def ingest_file(sub: Substrate, path: str | Path, *, root_id: str,
         # An external id is resolved against the corpus HERE, provisionally: the
         # referent may not have been read yet, which is why
         # Substrate.resolve_pending_references exists as a later pass.
+        candidates = 0
         if resolution is None:
             if object_kind == OBJ_EXTERNAL_ID:
-                resolution = (RESOLVED if sub.resolve_external_id(obj)
+                # is_present, not truthiness: a Resolution is a frozen
+                # dataclass and every instance is truthy, so `if resolve(...)`
+                # would read Absent as RESOLVED. Many counts as present here on
+                # purpose -- "this id resolves in the corpus" does not depend on
+                # WHICH state carries it, so it survives the collision.
+                found = sub.resolve_external_id(obj)
+                candidates = candidate_count(found)
+                resolution = (RESOLVED if is_present(found)
                               else UNRESOLVED_IN_CORPUS)
             elif object_kind == OBJ_BASENAME:
                 resolution = NOT_RESOLVABLE_BY_THIS_LAYER
@@ -178,7 +187,8 @@ def ingest_file(sub: Substrate, path: str | Path, *, root_id: str,
             extractor=extractor, method=method,
             search_completeness=completeness, recorded_at=now, detail=detail,
             ordinal=ordinal, object_kind=object_kind,
-            object_resolution=resolution, unknown_cause=cause))
+            object_resolution=resolution, unknown_cause=cause,
+            candidate_count=candidates))
         out["evidence"] += 1
 
     record(OBSERVED_AT, observation.observation_id, "filesystem", "os.stat",

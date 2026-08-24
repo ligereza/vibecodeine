@@ -3,13 +3,14 @@
 The whole tool rests on one asymmetry, and each test below fails if it is
 inverted or shortcut:
 
-- two files whose tails differ ARE different, and no further reading can change
-  it. Cheap rejection is final.
-- two files whose tails AGREE are not yet the same file. Cheap agreement must
-  escalate to a full read. Skipping that is exactly the error the index already
-  documents about sample hashes, reintroduced one window size larger.
-- a file no larger than the tail window is read whole, so its tail digest IS its
-  full digest and may certify. This shortcut must never leak to a bigger file.
+- a size difference IS a different file, and it costs nothing to see.
+- two files with different content ARE different, and only a full read can
+  say so with certainty on this corpus (see the module docstring for why a
+  cheaper tail probe was measured and deleted: it resolved 0 of 4104 disputed
+  assets for 197522805 bytes read).
+- two files with identical content are the same file, but only after a full
+  digest of BOTH has actually been computed -- never assumed from a cheap
+  partial agreement.
 - a run that hits its byte budget must say so per asset. A tool that quietly
   drops work reads as "covered everything" to whoever consumes its output.
 """
@@ -18,7 +19,6 @@ from __future__ import annotations
 
 import hashlib
 import importlib.util
-import json
 from pathlib import Path
 
 import pytest
@@ -51,7 +51,7 @@ def write(root: Path, name: str, body: bytes) -> None:
     path.write_bytes(body)
 
 
-BIG = ties.TAIL_BYTES * 3
+BIG = 1 << 18  # bigger than the window a deleted stage used to special-case
 
 
 def test_size_difference_certifies_distinct_for_free(tmp_path: Path) -> None:
@@ -65,38 +65,22 @@ def test_size_difference_certifies_distinct_for_free(tmp_path: Path) -> None:
     assert {m["verdict"] for m in out["assets"]} == {ties.CERTIFIED_DISTINCT}
 
 
-def test_tail_disagreement_certifies_distinct_without_full_read(tmp_path: Path) -> None:
-    head = b"same" * (BIG // 4)
-    write(tmp_path, "A/a.bin", head[:-8] + b"ENDING01")
-    write(tmp_path, "B/b.bin", head[:-8] + b"ENDING02")
-    size = len(head)
+def test_two_objects_with_different_bytes_are_certified_distinct(tmp_path: Path) -> None:
+    write(tmp_path, "A/a.bin", b"P" * BIG + b"ENDING01")
+    write(tmp_path, "B/b.bin", b"P" * BIG + b"ENDING02")
+    size = BIG + 8
     out = ties.resolve({"S": [member("A/a.bin", size, root="A"),
                              member("B/b.bin", size, root="B")]},
                        tmp_path, full_budget=None)
     stats = out["stats"]
-    assert stats["stage1_resolved"] == 2
-    # The point: it never paid for the whole file.
-    assert stats["bytes_read_stage2"] == 0
-    assert {m["verdict"] for m in out["assets"]} == {ties.CERTIFIED_DISTINCT}
-
-
-def test_tail_agreement_on_a_big_file_must_escalate(tmp_path: Path) -> None:
-    """Cheap agreement certifies nothing. This is the load-bearing test."""
-    tail = b"identical-ending" * (ties.TAIL_BYTES // 16)
-    write(tmp_path, "A/a.bin", b"P" * ties.TAIL_BYTES * 2 + tail)
-    write(tmp_path, "B/b.bin", b"Q" * ties.TAIL_BYTES * 2 + tail)
-    size = ties.TAIL_BYTES * 2 + len(tail)
-    out = ties.resolve({"S": [member("A/a.bin", size, root="A"),
-                             member("B/b.bin", size, root="B")]},
-                       tmp_path, full_budget=None)
-    stats = out["stats"]
-    assert stats["bytes_read_stage2"] > 0, "identical tails were trusted"
-    # And the full read finds them different, which the tail could not.
+    # The only paid stage is the full read; there is no cheaper stage left
+    # that could have found this, and none is claimed.
+    assert stats["bytes_read_stage1"] == size * 2
     assert {m["verdict"] for m in out["assets"]} == {ties.CERTIFIED_DISTINCT}
     assert all(m["content_id"] is None for m in out["assets"])
 
 
-def test_real_duplicate_is_certified_same_with_a_content_id(tmp_path: Path) -> None:
+def test_two_objects_with_identical_bytes_are_certified_same_once(tmp_path: Path) -> None:
     body = bytes(range(256)) * (BIG // 256)
     write(tmp_path, "A/a.bin", body)
     write(tmp_path, "B/b.bin", body)
@@ -110,29 +94,32 @@ def test_real_duplicate_is_certified_same_with_a_content_id(tmp_path: Path) -> N
     assert len(klasses) == 1
     klass = klasses[0]
     assert klass["member_count"] == 2
-    assert klass["reclaimable_bytes"] == len(body)      # one of the two
+    assert klass["reclaimable_bytes"] == len(body)      # one of the two, counted once
     assert klass["crosses_roots"] is True
     assert klass["distinct_roots"] == 2
 
 
-def test_small_file_is_certified_at_stage_one(tmp_path: Path) -> None:
-    """The tail window covers the whole file, so the shortcut is sound here."""
+def test_small_file_is_certified_with_a_true_full_digest(tmp_path: Path) -> None:
+    """Under 64 KiB used to get a tail-window shortcut; that stage is gone.
+
+    This must still pass, and the content id must still equal sha256 of the
+    real bytes, so the deleted shortcut cannot come back disguised as a
+    partial read.
+    """
     body = b"tiny-and-identical"
     write(tmp_path, "A/a.txt", body)
     write(tmp_path, "B/b.txt", body)
     out = ties.resolve({"S": [member("A/a.txt", len(body), root="A"),
                              member("B/b.txt", len(body), root="B")]},
                        tmp_path, full_budget=None)
-    assert out["stats"]["bytes_read_stage2"] == 0
     assert {m["verdict"] for m in out["assets"]} == {ties.CERTIFIED_SAME}
     assert all(m["resolved_at_stage"] == 1 for m in out["assets"])
-    # A full digest was still recorded, because the bytes really were all read.
     expect = "sha256:" + hashlib.sha256(body).hexdigest()
     assert {m["content_id"] for m in out["assets"]} == {expect}
 
 
 def test_budget_exhaustion_is_recorded_per_asset(tmp_path: Path) -> None:
-    tail = b"z" * ties.TAIL_BYTES
+    tail = b"z" * (1 << 12)
     write(tmp_path, "A/a.bin", b"1" * BIG + tail)
     write(tmp_path, "B/b.bin", b"2" * BIG + tail)
     size = BIG + len(tail)
@@ -154,6 +141,7 @@ def test_missing_file_is_unresolved_not_distinct(tmp_path: Path) -> None:
                        tmp_path, full_budget=None)
     verdicts = {m["relative_path"]: m["verdict"] for m in out["assets"]}
     assert verdicts["B/gone.bin"] == ties.UNRESOLVED
+    assert verdicts["B/gone.bin"] != ties.CERTIFIED_DISTINCT
     assert out["stats"]["unreadable"] == 1
 
 
@@ -175,6 +163,54 @@ def test_appledouble_stubs_are_labelled_not_dropped(tmp_path: Path) -> None:
     assert ties.is_appledouble("dir/IMG_0551.JPG") is False
     assert ties.container_root("LYON/COMANDO/x.jpg") == "LYON"
     assert ties.container_root("./LYON/x.jpg") == "LYON"
+
+
+def test_certified_same_never_skips_a_full_digest_of_every_member(tmp_path: Path) -> None:
+    """The invariant the deleted stage was at risk of violating.
+
+    No verdict may be CERTIFIED_SAME unless a real full-content digest was
+    computed for EVERY member of that class -- never inferred from a partial
+    read of some members and trusted for the rest. Checked across group sizes
+    2 and 3, and across two distinct sample-hash groups at once, so a code
+    path that only digests "the first of the group" cannot pass by accident.
+    """
+    bodies: dict[str, bytes] = {}
+
+    pair_body = bytes(range(256)) * (BIG // 256)
+    write(tmp_path, "A/pair1.bin", pair_body)
+    write(tmp_path, "B/pair2.bin", pair_body)
+    bodies["A/pair1.bin"] = pair_body
+    bodies["B/pair2.bin"] = pair_body
+
+    trio_body = b"trio" * (BIG // 4)
+    for slot in ("X", "Y", "Z"):
+        write(tmp_path, f"{slot}/trio.bin", trio_body)
+        bodies[f"{slot}/trio.bin"] = trio_body
+
+    groups = {
+        "PAIR": [member("A/pair1.bin", len(pair_body), root="A", sample="PAIR"),
+                 member("B/pair2.bin", len(pair_body), root="B", sample="PAIR")],
+        "TRIO": [member(f"{slot}/trio.bin", len(trio_body), root=slot, sample="TRIO")
+                 for slot in ("X", "Y", "Z")],
+    }
+
+    out = ties.resolve(groups, tmp_path, full_budget=None)
+
+    same_members = [m for m in out["assets"] if m["verdict"] == ties.CERTIFIED_SAME]
+    assert len(same_members) == 5, "test is vacuous unless both groups certify same"
+    for m in same_members:
+        body = bodies[m["relative_path"]]
+        assert m.get("full_sha256") == hashlib.sha256(body).hexdigest(), (
+            "CERTIFIED_SAME without a real full-content digest for this member")
+        assert m["content_id"] == f"sha256:{m['full_sha256']}"
+
+    # Reconstruct classes and check every member of every class was counted,
+    # not just a majority.
+    classes = ties.build_classes(out["assets"])
+    assert len(classes) == 2
+    for klass in classes:
+        members_here = [m for m in same_members if m["content_id"] == klass["content_id"]]
+        assert len(members_here) == klass["member_count"]
 
 
 def test_result_digest_ignores_wall_time() -> None:

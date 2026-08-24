@@ -11,6 +11,10 @@ once this substrate survives attack.
 """
 
 from .ingest import ingest_archive, ingest_file, state_key, walk_root
+from .resolution import (Absent, AmbiguousResolutionError, Many, Resolution,
+                        Unique, admits, candidate_count, class_strength,
+                        individuating_deficit, is_present, require_unique,
+                        resolve)
 from .schema import (
     AUTHORITIES,
     CROSS_DOCUMENT,
@@ -41,4 +45,11 @@ __all__ = [
     "REVISION_IN_LINEAGE", "USES", "PANTRY_COPY_OF", "REFERENCES", "OBSERVED_AT",
     "ingest_file", "ingest_archive", "walk_root", "state_key",
     "extract", "parse_packet", "XmpFields", "XmpResult", "EXHAUSTIVE", "BOUNDED",
+    # A resolution carries its cardinality, so an individuating claim cannot be
+    # built from an ambiguous one. Exported because the alternative is every
+    # caller reaching into a private path for the one type that gates the single
+    # unsound step in the layer.
+    "Resolution", "Unique", "Many", "Absent", "resolve", "is_present",
+    "candidate_count", "admits", "require_unique", "individuating_deficit",
+    "class_strength", "AmbiguousResolutionError",
 ]
