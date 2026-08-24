@@ -155,20 +155,26 @@ def test_png_xmp_is_found_where_a_window_scan_would_miss_it(tmp_path):
         result = extract(str(path))
         assert result.method == "png_itxt_chunk"
         assert result.completeness == EXHAUSTIVE
-        assert result.negative_is_evidence
+        # png's vocabulary_complete is ASSERTED, not YES: nobody has run the
+        # adversarial whole-file scan (a Witness) that would prove it, so a
+        # miss here is not licensed as evidence of absence. See epistemics.py.
+        assert not result.negative_is_evidence
         assert result.fields is not None, f"{path.name}: no fields"
         assert result.fields.document_id == "doc-A"
         assert result.fields.instance_id == "inst-A1"
 
 
 def test_a_png_without_xmp_reports_an_exhaustive_negative(tmp_path):
-    """This is what makes a zero mean something."""
+    """This is what makes a zero mean something -- once the vocabulary claim
+    is PROVEN rather than merely ASSERTED; today it is still only asserted."""
     result = extract(str(write_png(tmp_path / "bare.png", None)))
     assert result.packets == 0
     assert result.fields is None
     assert result.completeness == EXHAUSTIVE
-    assert result.negative_is_evidence, (
-        "a chunk walk that finds nothing IS evidence of absence")
+    assert not result.negative_is_evidence, (
+        "traversal was exhaustive, but the vocabulary claim behind it is "
+        "ASSERTED with no Witness, which is exactly what made the isobmff "
+        "case a false completeness -- an exhaustive walk is not enough")
 
 
 def test_jpeg_app1_is_walked(tmp_path):
@@ -585,12 +591,20 @@ def test_traversal_completeness_does_not_imply_vocabulary_completeness(tmp_path)
     walker was reading wrongly. One flag could not tell those apart.
     """
     from flujo.substrate.epistemics import (
-        COMPLETENESS_LEVELS, NO, UNASSESSED, YES, Completeness)
+        COMPLETENESS_LEVELS, NO, UNASSESSED, YES, Completeness, Witness)
     blind = Completeness(traversal=YES, vocabulary=NO)
     assert not blind.negative_is_evidence
     assert "vocabulary" in blind.strongest_negative_claim
 
-    sound = Completeness(traversal=YES, vocabulary=YES)
+    # vocabulary=YES alone is no longer enough: it also needs a Witness, since
+    # a bare vocabulary=YES with nothing behind it is what the isobmff entry
+    # used to be before it was re-graded to ASSERTED.
+    unwitnessed = Completeness(traversal=YES, vocabulary=YES)
+    assert not unwitnessed.negative_is_evidence
+
+    sound = Completeness(traversal=YES, vocabulary=YES, witness=Witness(
+        spec_citation="test citation", adversarial_check="test scan",
+        files_checked=1))
     assert sound.negative_is_evidence
     assert "NOT that the fact is absent" in sound.strongest_negative_claim
 
@@ -600,14 +614,19 @@ def test_traversal_completeness_does_not_imply_vocabulary_completeness(tmp_path)
     assert len(COMPLETENESS_LEVELS) == 5
     assert Completeness().traversal == UNASSESSED, "unassessed is the honest default"
 
-    # And the real locators now differ on exactly this axis.
+    # And the real locators still differ on the traversal/vocabulary axis, but
+    # neither may license a negative today: png's vocabulary is only ASSERTED,
+    # never backed by a Witness, so it is no sounder than the .mov gap was.
+    from flujo.substrate.epistemics import ASSERTED
     png = extract(str(write_png(tmp_path / "n.png", None)))
-    assert png.levels.traversal == YES and png.levels.vocabulary == YES
+    assert png.levels.traversal == YES and png.levels.vocabulary == ASSERTED
     generic = tmp_path / "n.aep"
     generic.write_bytes(b"\x00" * 40)
     other = extract(str(generic))
     assert other.levels.traversal == YES and other.levels.vocabulary == NO
-    assert png.negative_is_evidence and not other.negative_is_evidence
+    assert not png.negative_is_evidence and not other.negative_is_evidence, (
+        "an assertion with no witness must not license a negative either -- "
+        "the exact discipline the isobmff false completeness was missing")
 
 
 def test_every_unknown_carries_a_cause_and_a_remedy_and_collapses_outward():
@@ -632,9 +651,11 @@ def test_every_unknown_carries_a_cause_and_a_remedy_and_collapses_outward():
 
 def test_the_quicktime_gap_is_recorded_as_data_not_as_silence():
     """The vocabulary a walker knows is declared, so the next gap is visible."""
-    from flujo.substrate.epistemics import KNOWN_CONTAINERS, NO, YES
+    from flujo.substrate.epistemics import ASSERTED, KNOWN_CONTAINERS, NO
     iso = KNOWN_CONTAINERS["isobmff"]
-    assert iso["vocabulary_complete"] == YES
+    # ASSERTED, not YES: the containers are named, but no adversarial
+    # whole-file scan (Witness) has been run against this corrected list.
+    assert iso["vocabulary_complete"] == ASSERTED
     assert any("XMP_" in c for c in iso["containers"]), "the QuickTime atom"
     assert any("uuid" in c for c in iso["containers"]), "the MP4 box"
     assert "1372" in iso["why"], "the measurement that forced it is recorded"

@@ -51,7 +51,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
-from .epistemics import CONFLICT, UNKNOWN_CAUSES
+from .epistemics import CONFLICT, MISSING_EVIDENCE, UNKNOWN_CAUSES
+from .resolution import (Resolution, candidate_count, is_present,
+                         resolve)
 
 CONTRACT = "mak-identity-substrate-v1"
 
@@ -78,6 +80,67 @@ PREDICATES = (SAME_CONTENT, SAME_LINEAGE, DERIVED_FROM, REVISION_IN_LINEAGE,
 
 # Which predicates say "this is the same document over time" and which say
 # "this document consumed that one". Kept explicit so no caller can conflate them.
+# Symmetry, declared rather than inferred from the name. A predicate that is its
+# own inverse states a fact about a PAIR; a directed one states a fact about an
+# ordered pair, and orienting it requires an asymmetry in the evidence itself.
+SYMMETRIC_PREDICATES = frozenset({SAME_CONTENT, SAME_LINEAGE, CONFLICTS_WITH})
+DIRECTED_PREDICATES = frozenset(PREDICATES) - SYMMETRIC_PREDICATES - {OBSERVED_AT}
+
+# Which predicates each authority is allowed to assert.
+#
+# THIS PAIRING IS THE CHECK THAT WAS MISSING. Evidence validated its predicate
+# against a vocabulary and its authority against a vocabulary, and never
+# validated the PAIR -- so "which source may support which claim" was a
+# discipline somebody had to remember. It was not remembered: three measurements
+# in a row were retracted after a source was used for a claim it could not bear.
+#
+# Every pair the code writes today is already admissible, so this table breaks
+# nothing. That is the point: it codifies what is correct now so the NEXT pair
+# has to be declared instead of assumed.
+ADMISSIBLE_PREDICATES: dict[str, frozenset[str]] = {
+    "content_digest": frozenset({SAME_CONTENT}),
+    "xmp_packet": frozenset({SAME_LINEAGE, DERIVED_FROM, REVISION_IN_LINEAGE,
+                             USES, PANTRY_COPY_OF, CONFLICTS_WITH}),
+    "resolume_reference_regex": frozenset({REFERENCES}),
+    "filesystem": frozenset({OBSERVED_AT}),
+    # The operator is the audited downgrade: the one authority that may orient an
+    # edge from judgement rather than from a measurement. Every unsound step in
+    # the system is supposed to pass through here and be visible as such.
+    "operator": frozenset(PREDICATES),
+}
+
+# An authority whose measurement is SYMMETRIC cannot orient an edge. A digest
+# says two objects are equal; equality has no direction, and no amount of it
+# yields one. A graded overlap measure would be the first thing to violate this
+# -- the temptation with a partial-content score is to read it as "B came from
+# A" -- so the rule is enforced structurally rather than left as advice.
+SYMMETRIC_MEASUREMENT_AUTHORITIES = frozenset({"content_digest"})
+
+
+def _check_admissibility_table() -> None:
+    """Validate the table at import time, not at the first write.
+
+    A bad row here is a design error, and a design error should stop the module
+    from loading rather than wait for the one record that happens to hit it.
+    """
+    for authority, allowed in ADMISSIBLE_PREDICATES.items():
+        if authority not in AUTHORITIES:
+            raise SubstrateError(f"admissibility_for_undeclared_authority: {authority}")
+        undeclared = allowed - set(PREDICATES)
+        if undeclared:
+            raise SubstrateError(
+                f"admissibility_names_undeclared_predicate: {sorted(undeclared)}")
+        if authority in SYMMETRIC_MEASUREMENT_AUTHORITIES:
+            oriented = allowed & DIRECTED_PREDICATES
+            if oriented:
+                raise SubstrateError(
+                    f"symmetric_measurement_may_not_orient: {authority} was "
+                    f"granted {sorted(oriented)}")
+    missing = set(AUTHORITIES) - set(ADMISSIBLE_PREDICATES)
+    if missing:
+        raise SubstrateError(f"authority_without_admissibility: {sorted(missing)}")
+
+
 SELF_CONTINUITY = frozenset({SAME_LINEAGE, DERIVED_FROM, REVISION_IN_LINEAGE})
 CROSS_DOCUMENT = frozenset({USES, PANTRY_COPY_OF, REFERENCES})
 
@@ -259,12 +322,25 @@ class Evidence:
     object_kind: str = OBJ_EXTERNAL_ID
     object_resolution: str = NOT_RESOLVABLE_BY_THIS_LAYER
     unknown_cause: str = ""         # set when this row records a gap, not a fact
+    # How many objects the referent lookup matched. 1 means the referent was
+    # individuated; more means the row is present-but-ambiguous, and 0 means the
+    # lookup was never performed. Recorded because an edge whose object matched
+    # 8 candidates used to look identical to one that matched exactly 1, and the
+    # difference is exactly log2(8) = 3 bits of missing individuation. Measured
+    # on the real corpus: 120 DocumentIDs are carried by more than one state,
+    # group sizes 2 to 8.
+    candidate_count: int = 0
 
     def __post_init__(self) -> None:
         if self.predicate not in PREDICATES:
             raise SubstrateError(f"undeclared_predicate: {self.predicate}")
         if self.authority not in AUTHORITIES:
             raise SubstrateError(f"undeclared_authority: {self.authority}")
+        allowed = ADMISSIBLE_PREDICATES[self.authority]
+        if self.predicate not in allowed:
+            raise SubstrateError(
+                f"inadmissible_pair: authority {self.authority!r} may not assert "
+                f"{self.predicate!r}; it may assert {sorted(allowed)}")
         if self.object_kind not in OBJECT_KINDS:
             raise SubstrateError(f"undeclared_object_kind: {self.object_kind}")
         if self.object_resolution not in RESOLUTIONS:
@@ -272,6 +348,18 @@ class Evidence:
                 f"undeclared_object_resolution: {self.object_resolution}")
         if self.unknown_cause and self.unknown_cause not in UNKNOWN_CAUSES:
             raise SubstrateError(f"undeclared_unknown_cause: {self.unknown_cause}")
+        if self.candidate_count < 0:
+            raise SubstrateError(f"negative_candidate_count: {self.candidate_count}")
+        # An ambiguous referent may be RESOLVED -- "the id is here" survives the
+        # collision -- but it must never be recorded as having individuated one.
+        if self.candidate_count > 1 and self.predicate in DIRECTED_PREDICATES \
+                and self.authority not in ("operator",):
+            if self.object_kind == OBJ_STATE:
+                raise SubstrateError(
+                    f"ambiguous_referent_for_directed_edge: {self.predicate} "
+                    f"points at a state chosen from {self.candidate_count} "
+                    f"candidates, which is {self.candidate_count} times one too "
+                    f"many")
 
     @property
     def negative_would_be_evidence(self) -> bool:
@@ -282,6 +370,12 @@ class Evidence:
         if rule is False:
             return False
         return self.search_completeness == "exhaustive"
+
+    @property
+    def individuating_deficit_bits(self) -> float:
+        """Bits missing before this row could name ONE object. Zero iff k == 1."""
+        from math import log2
+        return log2(self.candidate_count) if self.candidate_count > 1 else 0.0
 
     @property
     def is_self_continuity(self) -> bool:
@@ -360,7 +454,8 @@ CREATE TABLE IF NOT EXISTS evidence (
     ordinal INTEGER,
     object_kind TEXT NOT NULL DEFAULT 'external_id',
     object_resolution TEXT NOT NULL DEFAULT 'not_resolvable_by_this_layer',
-    unknown_cause TEXT NOT NULL DEFAULT ''
+    unknown_cause TEXT NOT NULL DEFAULT '',
+    candidate_count INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_ev_subject ON evidence(subject, predicate);
 CREATE INDEX IF NOT EXISTS idx_ev_object ON evidence(object, predicate);
@@ -487,13 +582,15 @@ class Substrate:
             con.execute(
                 "INSERT OR IGNORE INTO evidence(evidence_id,subject,predicate,object,"
                 "authority,extractor,method,search_completeness,recorded_at,detail,"
-                "ordinal,object_kind,object_resolution,unknown_cause) "
-                "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                "ordinal,object_kind,object_resolution,unknown_cause,"
+                "candidate_count) "
+                "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (evidence.evidence_id, evidence.subject, evidence.predicate,
                  evidence.object, evidence.authority, evidence.extractor,
                  evidence.method, evidence.search_completeness, evidence.recorded_at,
                  evidence.detail, evidence.ordinal, evidence.object_kind,
-                 evidence.object_resolution, evidence.unknown_cause))
+                 evidence.object_resolution, evidence.unknown_cause,
+                 evidence.candidate_count))
         return evidence.evidence_id
 
     # -------------------------------------------------------------- reads
@@ -540,21 +637,36 @@ class Substrate:
                 query + " ORDER BY (ordinal IS NULL), ordinal, evidence_id",
                 params)]
 
-    def resolve_external_id(self, external: str) -> str | None:
-        """The state_id carrying this XMP id, if this corpus contains one.
+    def resolve_external_id(self, external: str) -> Resolution:
+        """EVERY state carrying this XMP id. Not one of them: every one.
 
         An id written by a tool names a document that may or may not be on this
         disk. Most History instanceIDs name states that are simply not here, and
         the substrate must be able to say that WITHOUT implying the state never
         existed.
+
+        The previous version ended in ``LIMIT 1`` and returned
+        ``row[0] if row else None`` -- over a query that matches document_id,
+        which is SHARED BY DESIGN, because a shared DocumentID is what a lineage
+        IS. Measured on this corpus: 120 DocumentIDs are carried by more than one
+        state, group sizes 2 to 8, the largest being 8 reference images exported
+        in one batch. So this lookup routinely had k > 1 and silently answered
+        with one arbitrary row.
+
+        Both callers only ever tested presence, which is a class-level use and was
+        always sound. The trap was the signature: it promised a single state_id,
+        so the first caller to actually USE the returned id would have built a
+        claim about ONE object on a lookup that could not individuate.
         """
         needle = external.split(":", 1)[-1] if external.startswith("xmp:") else external
         with self.connect() as con:
-            row = con.execute(
+            rows = con.execute(
                 "SELECT state_id FROM artifact_state WHERE instance_id=? OR "
-                "document_id=? OR original_document_id=? LIMIT 1",
-                (needle, needle, needle)).fetchone()
-        return row[0] if row else None
+                "document_id=? OR original_document_id=? ORDER BY state_id",
+                (needle, needle, needle)).fetchall()
+        return resolve([r[0] for r in rows],
+                       witness=f"the only state carrying {needle!r} in this corpus",
+                       cause=MISSING_EVIDENCE)
 
     def resolve_pending_references(self) -> dict[str, int]:
         """Re-check unresolved edges after a scan. Resolution is provisional.
@@ -569,16 +681,30 @@ class Substrate:
                 "SELECT evidence_id, object FROM evidence WHERE object_resolution=? "
                 "AND object_kind=?",
                 (UNRESOLVED_IN_CORPUS, OBJ_EXTERNAL_ID)).fetchall()
+            ambiguous = 0
             for evidence_id, obj in rows:
-                if self.resolve_external_id(obj):
+                found = self.resolve_external_id(obj)
+                if is_present(found):
+                    # Write the cardinality too. Without it an edge upgraded by
+                    # this pass would carry candidate_count 0, which means "the
+                    # lookup was never performed" -- a different and false claim
+                    # from "the lookup matched k objects".
+                    k = candidate_count(found)
                     con.execute("UPDATE evidence SET object_resolution=?, "
-                                "unknown_cause='' WHERE evidence_id=?",
-                                (RESOLVED, evidence_id))
+                                "unknown_cause='', candidate_count=? "
+                                "WHERE evidence_id=?",
+                                (RESOLVED, k, evidence_id))
                     upgraded += 1
+                    if k > 1:
+                        ambiguous += 1
             still = con.execute(
                 "SELECT count(*) FROM evidence WHERE object_resolution=?",
                 (UNRESOLVED_IN_CORPUS,)).fetchone()[0]
         return {"checked": len(rows), "upgraded_to_resolved": upgraded,
+                # Resolved and ambiguous at once is a real state, not a
+                # contradiction: the id is here, and it is carried by more than
+                # one object. Counted separately so it stops being invisible.
+                "upgraded_but_ambiguous": ambiguous,
                 "still_unresolved_in_corpus": still}
 
     def summary(self) -> dict[str, Any]:
