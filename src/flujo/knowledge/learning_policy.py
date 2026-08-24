@@ -162,16 +162,39 @@ def _group_split(examples: Sequence[Example]) -> tuple[list[Example], list[Examp
         grouped,
         key=lambda project_id: (hashlib.sha256(project_id.encode("utf-8")).hexdigest(), project_id),
     )
+    group_labels = {
+        project_id: {item.label for item in grouped[project_id]}
+        for project_id in grouped
+    }
+    label_group_counts = Counter(
+        label for labels in group_labels.values() for label in labels
+    )
     target = max(MIN_HOLDOUT, math.ceil(len(examples) / 5))
     holdout_projects: list[str] = []
     holdout_count = 0
     for project_id in ordered:
         if len(holdout_projects) >= len(ordered) - 1:
             break
+        labels = group_labels[project_id]
+        # A holdout group is useful only when every one of its labels still
+        # has another project represented in training.
+        selected_label_counts = Counter(
+            label
+            for selected in holdout_projects
+            for label in group_labels[selected]
+        )
+        if any(
+            label_group_counts[label] < 2
+            or selected_label_counts[label] + 1 >= label_group_counts[label]
+            for label in labels
+        ):
+            continue
         holdout_projects.append(project_id)
         holdout_count += len(grouped[project_id])
         if len(holdout_projects) >= MIN_HOLDOUT_GROUPS and holdout_count >= target:
             break
+    if len(holdout_projects) < MIN_HOLDOUT_GROUPS:
+        return list(examples), []
     holdout_ids = set(holdout_projects)
     return (
         [example for example in examples if example.project_id not in holdout_ids],
