@@ -6,8 +6,9 @@ This is the generated command/route map for `/home/mak/flujo`.
 and must not override either one. The installed CLI may still expose legacy
 commands for compatibility; that does not make them part of the active MAK
 workflow.
-The `MAPA.md` files under `/home/mak/vibecodeine` and `/home/mak/WIN` belong to
-other worktree/historical surfaces and are not current MAK instructions.
+The historical tree under `/home/mak/WIN` is the only preserved legacy surface
+and is not current MAK instruction. Use this tree as the sole active authoring
+and integration baseline.
 
 This repository is the reviewed projection of the MAK system.
 

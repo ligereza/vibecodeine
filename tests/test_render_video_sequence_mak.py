@@ -48,7 +48,7 @@ def test_manifest_requires_cycles_128_gpu_and_png_count(tmp_path):
         "samples": 128,
         "gpu": {"device": "GPU"},
         "layout": {
-            "policy": "cover_center",
+            "policy": "fitwidth_fade",
             "source_aspect_ratio": 0.5625,
             "window_aspect_ratio": 0.734976,
             "crop_axis": "vertical",
@@ -59,16 +59,16 @@ def test_manifest_requires_cycles_128_gpu_and_png_count(tmp_path):
     assert module._manifest_is_valid(manifest, tmp_path) == (True, str(manifest))
 
 
-def test_classify_video_flow_routes_only_9_16_to_cover():
+def test_classify_video_flow_keeps_evidence_but_shares_fitwidth_policy():
     portrait = module.classify_video_flow({"available": True, "width": 1080, "height": 1920})
     other = module.classify_video_flow({"available": True, "width": 960, "height": 718})
     assert portrait == {
         "flow": "video_portrait_9_16",
-        "layout": "cover_center",
+        "layout": "fitwidth_fade",
         "source_aspect_ratio": 0.5625,
     }
     assert other["flow"] == "video_other_aspect"
-    assert other["layout"] == "contain_bars"
+    assert other["layout"] == "fitwidth_fade"
 
 
 def test_manifest_rejects_missing_layout(tmp_path):

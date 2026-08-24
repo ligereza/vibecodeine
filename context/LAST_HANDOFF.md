@@ -1,5 +1,231 @@
 # Operational Handoff
 
+## Current objective — 2026-08-24
+
+Cerrar y publicar el conjunto de consolidación MAK/WIN más la reparación del
+workflow visual de flyers, dejando una única ruta de autoría y una política
+determinista para imágenes y videos. El commit/push solicitado por el usuario
+queda pendiente hasta terminar la validación final de este mismo checkpoint.
+
+## Physical authority and migration status
+
+- Autoría e integración: `/home/mak/flujo`.
+- Evidencia histórica protegida: `/home/mak/WIN`; no se edita ni se usa como
+  fuente operativa.
+- Estado y consumidores runtime: `/home/mak/plataforma`, `/home/mak/research`,
+  `/home/mak/codex`, `/home/mak/curatoria`, `/home/mak/RD` y otros roots de
+  MAK; no se reemplazan bases, logs, media ni outputs generados.
+- `flujo-deploy` no es una segunda fuente: queda retirado como ruta activa.
+- XIO queda fuera de este slice y no se toca. `RD` creativo queda fuera de la
+  limpieza de duplicados.
+
+## Completed work with command and result
+
+1. Consolidación física ya realizada: las familias de código canónicas viven
+   bajo `flujo/cultura/`; las rutas runtime externas que se conservaron son
+   links o wrappers de compatibilidad. Las copias históricas, datos, bases,
+   logs y media se preservaron. Los duplicados no consumidos fueron enviados a
+   la Papelera del sistema, no borrados de forma irreversible.
+2. Reparación visual en
+   `src/flujo/eventos/blender_nodes.py` y
+   `src/flujo/eventos/blender_nodes_video.py`: imágenes y videos usan una sola
+   política de producción, `fitwidth_fade`. El source no se edita; Blender
+   conserva proporción, hace coincidir los bordes laterales de la ventana y
+   entrega el sobrante o faltante vertical al grafo de fade. `cover_center` y
+   `contain_bars` quedan únicamente como helpers históricos/diagnósticos.
+3. El consumidor de imagen es `tools/render_flyer_mak.py`, que importa el
+   módulo real de nodos y llama `build_flyer_nodes`; no hay un swap artesanal de
+   textura. El consumidor de video es
+   `tools/render_video_sequence_mak.py`; ambos quedaron alineados.
+4. El reproceso por etiquetas quedó cerrado en
+   `.github/workflows/issue_descarga_ig.yml`: en eventos de issues solo pasa
+   `opened` o el agregado exacto de `action/descargar-ig`; una etiqueta
+   posterior como `gmail` no relanza el render.
+
+## Regression lock — visual and event safety
+
+No cambiar estos invariantes sin actualizar código, pruebas, documentación y
+un smoke render real aislado:
+
+- `IMAGE_LAYOUT_POLICY == "fitwidth_fade"` y el video usa el mismo valor.
+- Nunca modificar, recomprimir, recortar ni redimensionar el archivo fuente
+  recibido. La transformación vive en el mapping/nodos de Blender.
+- Los límites X de la ventana medida deben mapear a X=0 y X=1 del source; el
+  eje Y puede salir del rango para que el fade maneje el exceso vertical.
+- No reintroducir una bifurcación automática por aspect ratio entre
+  `cover_center` y `contain_bars`.
+- No relanzar un issue como prueba: validar primero con un directorio
+  aislado en `/tmp`, un `.blend` copiado/enlazado de forma segura y el flyer
+  fuente sin tocar.
+- No procesar de nuevo por eventos `labeled` ajenos a
+  `action/descargar-ig`; revisar siempre `github.event.action` y
+  `github.event.label.name`.
+
+Validación visual ya obtenida: el smoke render de Blender con la imagen no
+convencional entregada por el usuario terminó con `RENDER_OK` en
+`/tmp/mak-render-check.BquJO6/out/render_output.png`; la inspección mostró
+bordes laterales calzados, proporción preservada y fade vertical. El smoke no
+tocó issue, OneDrive, `.blend` original ni source.
+
+## ClaudeCode continuation protocol
+
+ClaudeCode debe retomar desde este bloque y desde `agents.md`, no desde una
+sesión vieja ni desde `WIN`. Para cada cambio debe dejar en el handoff: objetivo,
+path exacto, consumidor, motivo, comando foreground, exit code, resultado
+observado, archivos cambiados o prueba de no-cambio, riesgo y siguiente acción.
+La búsqueda correcta es: (1) filesystem físico bajo `/home/mak`, (2)
+`/home/mak/flujo/agents.md` y este handoff, (3) consumidor real y sus imports,
+(4) pruebas y smoke/entrypoint, (5) `WIN` solo como evidencia histórica. Usar
+`rg --files`/`rg` acotado; no escanear ni fusionar árboles completos por nombre.
+
+La consolidación requiere comparar contenido, propietario, consumidor,
+dependencias y hash; un nombre parecido, timestamp o reporte antiguo no prueba
+que sea duplicado. Integrar el mínimo componente en `flujo`, mantener wrappers
+solo cuando haya consumidor externo, preservar `WIN`, `RD`, `XIO`, bases, logs,
+media y outputs, y mover descartes recuperables a la Papelera. Nunca usar
+`git reset --hard`, copiar árboles enteros, regenerar artwork protegido ni
+editar un estado JSON para simular trabajo ejecutado. Antes de `git add`, revisar
+el diff por archivo y separar cambios no autorizados.
+
+## Open integration items
+
+- Validar el write set completo y publicar el commit solicitado en `origin/main`.
+- Después del push, confirmar checkout/runner y consumidores sin iniciar un
+  render de issue ni tocar outputs históricos.
+- XIO sigue diferido y explícitamente no es un duplicado resuelto.
+
+## Tool and dependency verification matrix
+
+| Slice | Consumer | Verification | Result |
+|---|---|---|---|
+| Image Blender | `tools/render_flyer_mak.py` -> `blender_nodes.build_flyer_nodes` | focused pytest + isolated Blender smoke | 52 focused tests passed; `RENDER_OK` |
+| Video Blender | `tools/render_video_sequence_mak.py` -> `blender_nodes_video` | focused pytest + `py_compile` | passed; `fitwidth_fade` only |
+| Issue trigger | `.github/workflows/issue_descarga_ig.yml` | static condition review | only `opened` or exact action label |
+| Consolidated departments | `cultura/mak_*` and external compatibility paths | bounded physical/hash/consumer audit | source-only runtime code paths: 0 |
+
+## Conflicts and risks
+
+- El worktree contiene cambios de ClaudeCode además de esta reparación; deben
+  publicarse solo porque el usuario autorizó explícitamente commit y push,
+  pero deben revisarse por archivo antes de stage.
+- Los reportes históricos dentro de este handoff pueden contener rutas y
+  estados viejos; este bloque superior es la continuidad vigente.
+- La prevención de reproceso evita el evento de etiqueta ajena; no convierte
+  un issue fallido en éxito y no autoriza relanzar históricos automáticamente.
+
+## Next concrete action
+
+Ejecutar la batería focalizada y `git diff --check`, revisar el conjunto staged,
+crear el commit de `main`, hacer push a `origin/main`, y actualizar este bloque
+con el resultado real del push.
+
+## Last verified
+
+2026-08-24 America/Santiago — reparación visual validada en Blender aislado;
+validación final y publicación aún pendientes.
+
+## Current filesystem consolidation — 2026-08-24
+
+`/home/mak/flujo` is the single active authoring/integration baseline. The
+historical `/home/mak/WIN` tree was left untouched. The former duplicate
+checkout, deploy projection and synchronizer were retired after physical
+comparison; none remains an active source or route.
+
+The current Claude write set in `/home/mak/flujo` was not overwritten, reset,
+committed or pushed. Historical phase and recovered-source material is not an
+operational owner; only this handoff, `agents.md`, the runtime source and
+focused tests define the active baseline.
+
+Department consolidation continued on 2026-08-24. The four canonical code
+families under `cultura/mak_plataforma`, `cultura/mak_research`,
+`cultura/mak_codex` and `cultura/mak_curatoria` contain every corresponding
+runtime code path found in `/home/mak/plataforma`, `/home/mak/research`,
+`/home/mak/codex` and `/home/mak/curatoria` (`source_only=0` in the bounded
+code scan). Most runtime entrypoints are compatibility projections that load
+the canonical files, not independent implementations.
+
+Thirteen exact runtime duplicates were retired from the live department paths
+and replaced by links to their canonical files in `flujo`: the ISKVW mounting
+script, five Curatoria utilities, six Research helper/unit files and two
+Platform utilities. Fifty-two additional Python runtime paths were converted
+to compatibility projections that load their canonical implementation from
+`flujo`, including the Codex `motor_semantico` package with a package-aware
+bridge. Curatoria now has no remaining independent top-level implementation:
+its entrypoints are canonical wrappers or links. Runtime state, databases,
+logs, inboxes, media and environment files were not moved or overwritten.
+Remaining non-wrapper department files are utility/test/runtime-specific
+candidates for later per-file consumer review; no whole-tree merge was
+performed.
+
+The clutter pass also retired 32 timestamp-clustered prompt-generated utility
+files from `/home/mak/plataforma/utilidades` and five orphaned Research patch/
+test artifacts. They had no active cron/process consumer and no canonical
+source counterpart; they were moved to the system Trash, not hard-deleted.
+Runtime-specific `backup.sh`, databases, logs and media remain untouched;
+service units were then audited under their own consumer contracts. `backup.sh` and
+`watchdog_mak.sh` were then verified as compatibility projections to the
+canonical Platform scripts; their external paths remain for cron compatibility.
+The active Hub, Research and Codex user units were consolidated to the single
+contracts in `flujo` while retaining the external `plataforma`, `research` and
+`codex` working directories for state. Their runtime copies are now symlinks;
+XIO was intentionally left unchanged for a later pass.
+
+Service switch evidence, 2026-08-24: `systemctl --user daemon-reload` and a
+controlled restart of `mak-research.service`, `mak-codex.service` and
+`mak-hub.service` all returned active. The live `ExecStart` paths are
+`/home/mak/flujo/cultura/mak_research/interfaz.py`,
+`/home/mak/flujo/cultura/mak_codex/interfaz_codex.py` and
+`/home/mak/flujo/cultura/mak_plataforma/hub.py`; HTTP smoke checks returned
+200 for `:8890/api/jobs`, `:8891/api/jobs` and `:8900/health`. Both research
+environment files remain loaded, with the existing `n8n-local/research.env`
+kept as an overlay. `WIN`, databases, logs, media and XIO were not touched.
+
+The remaining non-XIO code departments were also consolidated: `vigia` now
+has one canonical code family under `cultura/mak_vigia`, and `lenguaje` one
+under `cultura/mak_lenguaje`; their external code/config entrypoints are
+symlinks. `vigia/estado`, Hunspell dictionaries and `lenguaje/lexico` remain
+in place as runtime data. The old unconsumed `vigia/rollback/vigia-race-20260811`
+snapshot was moved to the system Trash because it was an older divergent code
+copy; it is recoverable there. `RD` was not classified as duplicate code: it
+is a 58G creative/media workspace and was left untouched.
+
+The active GitHub Actions runner checkout was clean and idle when reconciled.
+It was fast-forwarded from `ee9e789` to the canonical remote
+`db6659b`; its `issue_descarga_ig.yml` now has the same SHA-256 as `flujo`, and
+the extra disabled `claude.yml` was removed by that fast-forward. The runner
+service remains active; no job was running during the update.
+
+The detached Codex worktree at `/home/mak/.codex/worktrees/31af/flujo` was an
+old, dirty surface with six tracked edits and 806 untracked phase artifacts.
+Its useful Hub/tools content was already newer in `flujo`; its only material
+exclusive implementation was the experimental Blender `glass_fitwidth`
+change, explicitly awaiting visual approval. It was moved to the system Trash
+and its stale Git worktree record was pruned; the experiment was not promoted
+to production. The 143-file historical snapshot tree was also moved to Trash
+after confirming no process or cron consumer. Both remain
+recoverable there. `codex/piezas` and `plataforma/director_runs` remain because
+they are generated outputs/runtime state, not duplicate source trees.
+
+The documentation cleanup pass on 2026-08-24 removed the retired migration
+record and the detached-worktree review from the active context; both were
+moved to the system Trash and remain recoverable. `MAPA.md`, this handoff,
+`MD_CONTEXT_MASTER.md` and `PHASE_REPORTS_INDEX.md` now identify `flujo` as
+the only active source and explicitly fence archival phase/recovered material
+as evidence, not instructions. The code structure index was regenerated from
+the current tree: 849 Python files, 206,848 lines, 9,442 symbols and zero
+syntax errors. Historical phase reports may still contain absolute paths from
+their original checks; they are not current commands.
+
+The visual mapping repair on 2026-08-24 keeps the source image untouched and
+unifies still-image and video Blender composition under `fitwidth_fade`: the
+measured lateral borders match the glass, proportions are preserved, and the
+vertical excess/shortfall is handled by the fade graph. The former video-only
+`cover_center`/`contain_bars` split is retained only as historical geometry
+helpers, not as a production policy. A real Blender smoke render with the
+user-supplied non-conventional image passed with `RENDER_OK` in an isolated
+`/tmp` check directory. The change remains in the canonical uncommitted write
+set and was not pushed or used to relaunch an issue.
+
 ## Active checkpoint — recovery after Claude quota — 2026-08-23
 
 ### Current objective
@@ -1543,7 +1769,7 @@ esta en `Next concrete action`.
 - El primer push del índice expuso dos fallos de portabilidad en CI: una ruta
   histórica con el usuario Windows real y un test que exigía un artefacto
   formal guardado fuera del clon. Se anonimizó la ruta en
-  `context/fases.migracion.md` y `tests/test_math_kernel.py` ahora valida el
+  el registro histórico retirado y `tests/test_math_kernel.py` ahora valida el
   hash si el artefacto externo existe, pero hace `skip` explícito en clones
   limpios. `./.venv/bin/python -m flujo verify` y la privacidad local pasan;
   el commit `6743467` se publicó y CI #22/seguridad de ese SHA terminaron en
@@ -1713,7 +1939,7 @@ el unico hunk que falsificaba evidencia temporal, de modo que el incidente de
 claves de 2026-07-16 conserva sus proveedores reales
 (Tavily/Groq/Cerebras/Azure); `tests/test_privacidad_repo.py` volvio al estado
 publicado porque su exencion nueva no tenia sujeto
-(`context/fases.migracion.md` ya fue anonimizado en `6743467` y hoy tiene 0
+ (el registro histórico ya no forma parte del árbol activo y tiene 0
 coincidencias). Las versiones de worktree quedaron en
 `/home/mak/_archive/group4-reverted-20260821/`.
 

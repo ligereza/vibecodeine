@@ -1,11 +1,11 @@
 # Canonical MAK Linux user unit.
-# Runtime source: /home/mak/research/interfaz.py.
+# Canonical source: /home/mak/flujo/cultura/mak_research/interfaz.py.
 [Unit]
 Description=MAK Research internal service for the Hub (canvas visual)
 [Service]
 Type=simple
 WorkingDirectory=%h/research
-ExecStart=%h/research/.venv/bin/python %h/research/interfaz.py
+ExecStart=%h/research/.venv/bin/python %h/flujo/cultura/mak_research/interfaz.py
 Restart=always
 RestartSec=5
 StandardOutput=journal
@@ -16,5 +16,6 @@ KillMode=control-group
 Environment=PYTHONUNBUFFERED=1
 Environment=MAK_SERVICE_HOST=127.0.0.1
 EnvironmentFile=-%h/research/research.env
+EnvironmentFile=-%h/n8n-local/research.env
 [Install]
 WantedBy=default.target

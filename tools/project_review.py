@@ -33,8 +33,11 @@ from flujo.knowledge.review_queue import (  # noqa: E402
     decide,
     inherited_proposals,
     load_queue,
+    resolve_title,
     summary,
 )
+from flujo.substrate import Absent, Many, resolve  # noqa: E402
+from flujo.substrate.epistemics import MISSING_EVIDENCE  # noqa: E402
 
 DEFAULT_DB = ROOT / "data" / "mak_knowledge.db"
 
@@ -43,11 +46,53 @@ def _gb(value: int) -> str:
     return f"{value / 1e9:7.2f} GB"
 
 
-def _find(items, needle: str):
-    for item in items:
-        if needle in (item.title, item.project_id):
-            return item
-    raise ReviewQueueError(f"not_pending: {needle}")
+def _resolve_target(items, needle: str):
+    """Every queue item whose title or project_id equals ``needle``.
+
+    MEASURED defect this replaces: ``project_records.title`` has no UNIQUE
+    constraint (plain ``title TEXT NOT NULL``) and is written by three
+    producers, so the old ``for item in items: if needle in (...): return
+    item`` returned whichever matching row happened to be first -- silently.
+    Collecting every match and classifying the count (0 / 1 / N) is the fix;
+    the caller decides what to do with a 0 or an N, it is never picked here.
+    """
+    matches = [item for item in items if needle in (item.title, item.project_id)]
+    return resolve(matches, witness=f"target '{needle}' matched exactly one queue item",
+                    cause=MISSING_EVIDENCE)
+
+
+def _print_candidates(needle: str, candidates) -> None:
+    """The full candidate list an ambiguous target matched, and the way out.
+
+    Required by the audit: an ambiguous target must never raise a raw
+    traceback at the operator. It must see every project_id and state that
+    matched, and be told the unambiguous escape hatch (project_id is the
+    table's PRIMARY KEY, so it can never itself be ambiguous).
+    """
+    print(f"ambiguous target '{needle}': {len(candidates)} candidates matched, "
+          "not one", file=sys.stderr)
+    for candidate in candidates:
+        print(f"  project_id={candidate.project_id}  state={candidate.state:<14}"
+              f"title={candidate.title}", file=sys.stderr)
+    print("re-run with the project_id shown above instead of the title",
+          file=sys.stderr)
+
+
+def _require_target(items, needle: str):
+    """Resolve ``needle`` the way every write path here must.
+
+    Returns the ``QueueItem`` for a Unique match. Returns ``None`` for Many,
+    after already printing the full candidate list (requirement 3 of the
+    audit: no traceback, a non-zero exit, nothing written). Raises
+    ``ReviewQueueError`` for Absent, unchanged from the previous behaviour.
+    """
+    resolution = _resolve_target(items, needle)
+    if isinstance(resolution, Many):
+        _print_candidates(needle, resolution.candidates)
+        return None
+    if isinstance(resolution, Absent):
+        raise ReviewQueueError(f"not_pending: {needle}")
+    return resolution.value
 
 
 def _print_table(items, review_pass: str) -> None:
@@ -143,28 +188,69 @@ def main(argv: list[str] | None = None) -> int:
             return 0
 
         if args.command == "show":
-            item = _find(load_queue(args.db), args.target)
+            item = _require_target(load_queue(args.db), args.target)
+            if item is None:
+                return 1
             if args.json:
                 print(json.dumps(item.as_dict(), indent=2, ensure_ascii=False))
             else:
                 _show(item)
             return 0
 
-        item = _find(load_queue(args.db), args.target)
+        items = load_queue(args.db)
+        item = _require_target(items, args.target)
+        if item is None:
+            return 1
         evidence = [{"kind": "human_attestation", "detail": text}
                     for text in args.evidence]
         cascade = inherited_proposals(item, args.to) if args.cascade else []
         if args.cascade and not cascade:
             print(f"nothing to cascade: {args.to} does not propagate downward",
                   file=sys.stderr)
+
+        # Resolve every cascade title up front so a dry-run can show the
+        # ambiguity too (requirement 5): the old dry-run only echoed what the
+        # broken first-match resolver had already picked, so it could never
+        # reveal this class of problem.
+        cascade_resolutions = {title: resolve_title(items, title) for title in cascade}
+        cascade_preview = []
+        for title in cascade:
+            resolution = cascade_resolutions[title]
+            if isinstance(resolution, Many):
+                cascade_preview.append({
+                    "title": title, "ambiguous": True,
+                    "candidates": [{"project_id": c.project_id, "state": c.state}
+                                   for c in resolution.candidates],
+                })
+            elif isinstance(resolution, Absent):
+                cascade_preview.append({"title": title, "error": "not_pending"})
+            else:
+                cascade_preview.append({"title": title,
+                                        "project_id": resolution.value.project_id})
+
         if args.dry_run:
             print(json.dumps({
                 "would_decide": item.title, "project_id": item.project_id,
                 "from_state": item.state, "to_state": args.to,
                 "reason": args.reason, "actor": args.actor,
-                "evidence": evidence, "cascade": cascade,
+                "evidence": evidence, "cascade": cascade_preview,
             }, indent=2, ensure_ascii=False))
             return 0
+
+        # Requirement 4: if ANY cascade title is ambiguous, refuse the WHOLE
+        # cascade before writing anything -- a partial cascade is worse than
+        # none, because the operator believes the subtree was handled.
+        # ``decide()`` enforces this too (it re-resolves against its own
+        # read), so this is the friendly surface and that is the guarantee.
+        ambiguous_titles = [title for title, r in cascade_resolutions.items()
+                            if isinstance(r, Many)]
+        if ambiguous_titles:
+            for title in ambiguous_titles:
+                _print_candidates(title, cascade_resolutions[title].candidates)
+            print("cascade refused: nothing was written for this decision or its "
+                  "cascade", file=sys.stderr)
+            return 1
+
         result = decide(args.db, item.project_id, args.to, reason=args.reason,
                         actor=args.actor, evidence=evidence, cascade_titles=cascade)
         print(json.dumps(result, indent=2, ensure_ascii=False))

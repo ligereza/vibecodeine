@@ -26,11 +26,12 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import blender_nodes as bn  # noqa: E402 -- modulo hermano, reusa el grafo probado
 
-VIDEO_LAYOUT_PORTRAIT = bn.VIDEO_LAYOUT_POLICY
-VIDEO_LAYOUT_FRAMED = bn.VIDEO_LAYOUT_CONTAIN_BARS
-
-# Reels are portrait inputs for this workflow.  Cover the glass and keep the
-# source centered in both axes; the symmetric top/bottom crop is intentional.
+# Images and videos share the same measured fit-width/fade contract. These
+# names remain as compatibility aliases for old callers; they no longer select
+# different scale policies.
+VIDEO_LAYOUT_FITWIDTH = bn.IMAGE_LAYOUT_POLICY
+VIDEO_LAYOUT_PORTRAIT = VIDEO_LAYOUT_FITWIDTH
+VIDEO_LAYOUT_FRAMED = VIDEO_LAYOUT_FITWIDTH
 
 
 def _parse_args(argv):
@@ -65,19 +66,15 @@ def _parse_args(argv):
 
 
 def video_mapping(layout, frame_size, video_size):
-    """Return the measured mapping for one of the two event video profiles."""
-    if layout == VIDEO_LAYOUT_PORTRAIT:
-        return bn.fitcover_mapping(bn.WINDOW_UV, frame_size, video_size)
-    if layout == VIDEO_LAYOUT_FRAMED:
-        return bn.fitcontain_mapping(bn.WINDOW_UV, frame_size, video_size)
+    """Return the shared image/video mapping: fit width, fade vertically."""
+    if layout == VIDEO_LAYOUT_FITWIDTH:
+        return bn.fitwidth_mapping(bn.WINDOW_UV, frame_size, video_size)
     raise SystemExit(f"VIDEO_LAYOUT_INVALID: {layout}")
 
 
 def describe_video_layout(layout, frame_size, video_size):
-    if layout == VIDEO_LAYOUT_PORTRAIT:
-        return bn.classify_cover_layout(bn.WINDOW_UV, frame_size, video_size)
-    if layout == VIDEO_LAYOUT_FRAMED:
-        return bn.classify_contain_layout(bn.WINDOW_UV, frame_size, video_size)
+    if layout == VIDEO_LAYOUT_FITWIDTH:
+        return bn.classify_fitwidth_layout(bn.WINDOW_UV, frame_size, video_size)
     raise SystemExit(f"VIDEO_LAYOUT_INVALID: {layout}")
 
 

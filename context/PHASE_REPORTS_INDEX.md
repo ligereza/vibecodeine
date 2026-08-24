@@ -23,6 +23,11 @@ for its Markdown report; neither file is an executable instruction. The JSON
 phase artifact is also evidence. The files remain in place to preserve
 provenance and rollback context.
 
+Some archived reports retain the absolute paths that existed when their
+historical checks ran. Those paths are evidence of that past run only; they
+are not valid current commands or source locations. Current commands must use
+`/home/mak/flujo` and its `.venv`.
+
 ## Operational rule
 
 Phase reports must not be used as current instructions merely because they
@@ -38,8 +43,7 @@ The active source of truth is deliberately small:
    and next action.
 3. Runtime source, contracts and focused tests — implementation authority.
 
-The recovered monolithic migration record is preserved at
-`/home/mak/flujo/context/fases.migracion.md`. It is archival context only;
+The former monolithic migration record was retired from the active workspace;
 it must not replace `LAST_HANDOFF.md` or be loaded wholesale for routine work.
 
 `context/MD_CONTEXT_MASTER.md` is a navigation index. It links families and

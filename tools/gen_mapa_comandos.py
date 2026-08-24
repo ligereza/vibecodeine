@@ -82,9 +82,8 @@ def _help(path: list[str]) -> str:
         "NO_COLOR": "1",
         "PYTHONIOENCODING": "utf-8",
     }
-    # El checkout es portable y puede convivir con instalaciones antiguas del
-    # mismo proyecto (por ejemplo, una copia historica en /home/mak/vibecodeine).
-    # El mapa debe interrogar ESTE src/, no el paquete que casualmente gane en
+    # El checkout es portable y puede convivir con artefactos historicos del
+    # mismo proyecto. El mapa debe interrogar ESTE src/, no el paquete que casualmente gane en
     # sys.path del entorno global.
     raiz_src = str(RAIZ / "src")
     pythonpath = entorno.get("PYTHONPATH", "")

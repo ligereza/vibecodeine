@@ -10,8 +10,9 @@ place; this file is the consolidation layer.
 - `projects/cultura/` is idea/dossier material and may use human Spanish UTF-8.
 - `WIN/`, worktrees, quarantine, Trash and vendor trees are source/evidence,
   not active owners.
-- Exact duplicate content is represented once in this index; no source is
-  deleted or overwritten.
+- Exact duplicate content is represented once in the canonical source; a
+  runtime duplicate may be retired or linked only after hash and consumer
+  proof. Protected history is never overwritten.
 - Similar but non-identical sessions require a diff and provenance decision.
 
 ## Canonical operational context
@@ -20,7 +21,6 @@ place; this file is the consolidation layer.
 |---|---|---|
 | agent contract | `/home/mak/flujo/agents.md` | active authority |
 | current handoff | `/home/mak/flujo/context/LAST_HANDOFF.md` | one active continuity file |
-| migration history | `/home/mak/flujo/context/fases.migracion.md` | recovered 5,636-line historical handoff; archival only, never current instructions |
 | phase evidence | `/home/mak/flujo/context/PHASE*.md` | archival audit records; see `context/PHASE_REPORTS_INDEX.md`; never active instructions |
 | current architecture | `/home/mak/flujo/context/PHASE413_CROSS_DOMAIN_SERVICE_ARCHITECTURE.md` | service vision |
 | current culture map | `/home/mak/flujo/context/PHASE416_CULTURE_TO_CURRENT_REPO_CROSSWALK.md` | language/idea crosswalk |
@@ -29,7 +29,7 @@ place; this file is the consolidation layer.
 
 | family | source set | role and disposition |
 |---|---|---|
-| direction memory | `/home/mak/flujo/docs/recovered/claude_sessions_2026-08-12/raw/MEMORIA_DIRECCION.md` | human product direction and revenue hypotheses; source of intent, not an executable plan |
+| direction memory | `projects/cultura/MD_IDEAS_MASTER.md` and recovered inputs | human product direction and revenue hypotheses; source of intent, not an executable plan |
 | architecture and capability | `/home/mak/flujo/MAPA.md`, `/home/mak/flujo/CAPACIDADES.md`, `/home/mak/flujo/PLAN.md` | current maps, measured capability surface and strategic backlog; reconcile against runtime before treating statements as current |
 | RD editorial contract | `/home/mak/flujo/linea_editorial/v4.1.md` | active Spanish-facing RD visual/voice contract; separate from the machine-facing `projects/flujo/flujo.json` base |
 | RD data and venue bridge | `/home/mak/flujo/docs/rd/DB_PRODUCTORAS_ESTADO.md`, `/home/mak/flujo/projects/plano/README.md`, `/home/mak/flujo/docs/HERRAMIENTAS_VISUALES.md` | operational documentation for catalog, venue/plano and visual consumers; keep databases and projections separate |
@@ -61,9 +61,9 @@ provider, install a package or promote a scraped claim.
 ## Remaining Markdown boundary
 
 The full physical scan found Markdown outside the canonical tree in large
-historical/protected surfaces: `WIN`, `rollback`, `quarantine`, `research`,
-`actions-runner`, `flujo-deploy`, `vibecodeine`, local caches and recovered
-inboxes. Those files remain evidence, rollback, projection or external
+historical/protected surfaces: `WIN`, `quarantine`, `research`,
+`actions-runner`, local caches and recovered
+inboxes. Those files remain evidence, projection or external
 research, not competing active owners. The canonical families already have a
 master disposition; future work on an individual file must be driven by a
 consumer or a provenance question, not by size alone.
@@ -78,8 +78,8 @@ Seven physical copies share exactly 1,542,378 bytes. Active representative:
 
 `/home/mak/flujo/projects/cultura/corpus_olvido/corpus.md`
 
-Other copies are in `flujo-deploy`, `vibecodeine`, `actions-runner`, two
-quarantined worktrees and `WIN`. Keep them as projections/history until their
+Other copies are in `actions-runner`, two quarantined worktrees and `WIN`. Keep
+them as projections/history until their
 owners are retired; the content is already consolidated by this index.
 
 ## Related but non-identical groups

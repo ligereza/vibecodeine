@@ -65,3 +65,14 @@ def test_workflows_do_not_treat_win_as_runtime():
         assert "windows-latest" not in text
         assert "WIN" not in text
         assert "powershell" not in text.lower()
+
+
+def test_issue_render_ignores_unrelated_label_events():
+    """Adding a bookkeeping label must not launch a second Blender render."""
+    text = _workflow("issue_descarga_ig.yml")
+
+    assert (
+        "(github.event.action == 'opened' || "
+        "github.event.label.name == 'action/descargar-ig')"
+    ) in text
+    assert "contains(github.event.issue.labels.*.name, 'action/descargar-ig')" in text
