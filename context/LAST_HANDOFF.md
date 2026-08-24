@@ -53,7 +53,9 @@ comandos arbitrarios y termina registrando el episodio conservador existente.
 `tests/test_director.py` verifica la cadena, los rechazos de herramientas no
 permitidas y las transiciones inválidas. La suite completa del repositorio
 terminó en `EXIT 0` después de este slice, con 7 warnings de deprecación
-preexistentes de Pillow.
+preexistentes de Pillow. El director acepta el reporte del replay como gate
+informativo en `validated` y `resume(run_id)` reconstruye la última vista desde
+los checkpoints; ninguna de esas operaciones promueve políticas.
 
 **Replay set implementado.** `context/learning/replay_suite_v1.json` declara
 cuatro casos reales y trazables: resolución de títulos y probe Blender en
@@ -74,15 +76,15 @@ router: `semantic_rules` sigue vacío y `tools/project_learning.py` continúa
 en `status=abstain`, `holdout_count=0`, porque su learner de rutas aún exige
 un holdout independiente de episodios etiquetados.
 
-**Integración abierta.** Todavía falta conectar el reporte por split al
-director como gate informativo, añadir evaluación persistida de políticas
-versionadas y una reanudación automática desde el último checkpoint. No usar
-todavía GPU, fine-tuning, bandits ni promoción automática.
+**Integración abierta.** Todavía falta usar un replay set sobre episodios
+verificados de rutas, añadir evaluación persistida de políticas versionadas y
+decidir una política explícita de recuperación ante ejecuciones interrumpidas.
+No usar todavía GPU, fine-tuning, bandits ni promoción automática.
 
-**Siguiente acción concreta.** Conectar el reporte por split al director como
-gate informativo y preparar la reanudación desde checkpoints; después generar
-un segundo conjunto de casos de episodios verificados para que el learner de
-rutas pueda formar un holdout independiente real.
+**Siguiente acción concreta.** Generar un segundo conjunto de casos a partir de
+episodios de rutas realmente verificados, separado por `project_id`, para que
+el learner de rutas pueda formar un holdout independiente real; usar el
+replay gate ya conectado solo como evidencia, no como promoción.
 
 **Última verificación.** 2026-08-24; worktree validado con `git diff --check`,
 tests del ledger en `EXIT 0` y conteos históricos sin cambios.
