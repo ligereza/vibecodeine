@@ -52,7 +52,7 @@ EPISODE_STATES = (
     "rejected",
     "verified",
 )
-RULE_STATUSES = ("candidate", "promoted", "stale", "rejected")
+RULE_STATUSES = ("candidate", "promoted", "stale", "rejected", "retracted")
 RULE_VERDICTS = ("support", "contradict", "neutral")
 EVIDENCE_STATES = ("unverified", "observed", "verified", "contradicted")
 RUN_EVENT_STATES = ("proposed", "running", "observed", "validated", "recorded", "rejected")
@@ -511,13 +511,18 @@ class LearningStore:
                     fingerprint TEXT NOT NULL UNIQUE,
                     trigger_json TEXT NOT NULL,
                     action_json TEXT NOT NULL,
+                    scope_json TEXT NOT NULL DEFAULT '{}',
                     evidence_json TEXT NOT NULL,
                     status TEXT NOT NULL,
                     support_count INTEGER NOT NULL DEFAULT 0,
                     contradiction_count INTEGER NOT NULL DEFAULT 0,
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL,
-                    promoted_at TEXT
+                    promoted_at TEXT,
+                    expires_at TEXT,
+                    evaluation_id TEXT NOT NULL DEFAULT '',
+                    retracted_at TEXT,
+                    retraction_reason TEXT NOT NULL DEFAULT ''
                 );
                 CREATE TABLE IF NOT EXISTS project_contracts (
                     contract_id TEXT PRIMARY KEY,
@@ -599,6 +604,18 @@ class LearningStore:
                 con.execute(
                     "ALTER TABLE mak_run_events ADD COLUMN run_id TEXT NOT NULL DEFAULT ''"
                 )
+            rule_columns = {
+                str(row[1]) for row in con.execute("PRAGMA table_info(semantic_rules)")
+            }
+            for column, definition in (
+                ("scope_json", "TEXT NOT NULL DEFAULT '{}'"),
+                ("expires_at", "TEXT"),
+                ("evaluation_id", "TEXT NOT NULL DEFAULT ''"),
+                ("retracted_at", "TEXT"),
+                ("retraction_reason", "TEXT NOT NULL DEFAULT ''"),
+            ):
+                if column not in rule_columns:
+                    con.execute(f"ALTER TABLE semantic_rules ADD COLUMN {column} {definition}")
             con.execute(
                 "CREATE INDEX IF NOT EXISTS idx_mak_run_events_run ON mak_run_events(run_id, created_at)"
             )
@@ -920,11 +937,13 @@ class LearningStore:
 
     def upsert_rule(
         self, *, trigger: Mapping[str, Any], action: Mapping[str, Any],
-        evidence: Iterable[Mapping[str, Any]] = (), rule_id: str | None = None,
+        evidence: Iterable[Mapping[str, Any]] = (), scope: Mapping[str, Any] | None = None,
+        expires_at: str | None = None, rule_id: str | None = None,
     ) -> str:
         """Register a candidate semantic rule without promoting it."""
+        scope = dict(scope or {})
         fingerprint = hashlib.sha256(
-            stable_json({"trigger": dict(trigger), "action": dict(action)}).encode("utf-8")
+            stable_json({"trigger": dict(trigger), "action": dict(action), "scope": scope}).encode("utf-8")
         ).hexdigest()
         rule_id = rule_id or "rule_" + fingerprint[:24]
         now = now_iso()
@@ -932,12 +951,15 @@ class LearningStore:
             self.ensure_schema(con)
             con.execute(
                 """INSERT INTO semantic_rules
-                   (rule_id,fingerprint,trigger_json,action_json,evidence_json,status,created_at,updated_at)
-                   VALUES (?,?,?,?,?,?,?,?)
+                   (rule_id,fingerprint,trigger_json,action_json,scope_json,evidence_json,status,
+                    created_at,updated_at,expires_at)
+                   VALUES (?,?,?,?,?,?,?,?,?,?)
                    ON CONFLICT(fingerprint) DO UPDATE SET
                    trigger_json=excluded.trigger_json, action_json=excluded.action_json,
-                   evidence_json=excluded.evidence_json, updated_at=excluded.updated_at""",
-                (rule_id, fingerprint, _json(trigger), _json(action), _json(list(evidence)), "candidate", now, now),
+                   scope_json=excluded.scope_json, evidence_json=excluded.evidence_json,
+                   expires_at=excluded.expires_at, updated_at=excluded.updated_at""",
+                (rule_id, fingerprint, _json(trigger), _json(action), _json(scope),
+                 _json(list(evidence)), "candidate", now, now, _text(expires_at, 80)),
             )
             actual = con.execute("SELECT rule_id FROM semantic_rules WHERE fingerprint=?", (fingerprint,)).fetchone()
             if actual:
@@ -974,12 +996,17 @@ class LearningStore:
             con.execute(f"UPDATE semantic_rules SET {column}={column}+1,updated_at=? WHERE rule_id=?", (now_iso(), rule_id))
         return observation_id
 
-    def promote_rule(self, rule_id: str, *, min_support: int = 2) -> None:
+    def promote_rule(
+        self, rule_id: str, *, min_support: int = 2,
+        evaluation_id: str | None = None,
+    ) -> None:
         """Promote only a rule supported by independently verified episodes.
 
         Promotion is intentionally strict.  A failed/unknown episode may be
         recorded, but it cannot teach the active router.  Contradictions
         always block promotion until an explicit future review changes state.
+        A passed independent holdout evaluation for this exact rule is also
+        mandatory; a generic replay-suite pass is not sufficient.
         """
         if min_support < 1:
             raise ProjectIRError("min_support_must_be_positive")
@@ -988,6 +1015,29 @@ class LearningStore:
             rule = con.execute("SELECT * FROM semantic_rules WHERE rule_id=?", (rule_id,)).fetchone()
             if not rule:
                 raise ProjectIRError(f"unknown_rule: {rule_id}")
+            if rule["status"] != "candidate":
+                raise ProjectIRError(f"rule_not_candidate: {rule['status']}")
+            expires_at = str(rule["expires_at"] or "")
+            if expires_at and expires_at <= now_iso():
+                con.execute(
+                    "UPDATE semantic_rules SET status='stale',updated_at=? WHERE rule_id=?",
+                    (now_iso(), rule_id),
+                )
+                con.commit()
+                raise ProjectIRError("rule_expired")
+            evaluation_id = _text(evaluation_id, 240)
+            if not evaluation_id:
+                raise ProjectIRError("rule_promotion_evaluation_required")
+            evaluation = con.execute(
+                """SELECT target_kind,target_id,split_kind,status
+                   FROM learning_evaluations WHERE evaluation_id=?""", (evaluation_id,),
+            ).fetchone()
+            if not evaluation:
+                raise ProjectIRError("rule_promotion_evaluation_missing")
+            if evaluation["target_kind"] != "semantic_rule" or evaluation["target_id"] != rule_id:
+                raise ProjectIRError("rule_promotion_evaluation_target_mismatch")
+            if evaluation["split_kind"] != "holdout" or evaluation["status"] != "passed":
+                raise ProjectIRError("rule_promotion_evaluation_not_passed_holdout")
             if int(rule["support_count"]) < min_support:
                 raise ProjectIRError("rule_insufficient_support")
             if int(rule["contradiction_count"]) > 0:
@@ -1009,8 +1059,25 @@ class LearningStore:
                 if str(validation.get("status", "")).casefold() not in {"ok", "passed", "verified"}:
                     raise ProjectIRError("rule_support_validation_not_passed")
             con.execute(
-                "UPDATE semantic_rules SET status='promoted',promoted_at=?,updated_at=? WHERE rule_id=?",
-                (now_iso(), now_iso(), rule_id),
+                "UPDATE semantic_rules SET status='promoted',promoted_at=?,evaluation_id=?,updated_at=? WHERE rule_id=?",
+                (now_iso(), evaluation_id, now_iso(), rule_id),
+            )
+
+    def retract_rule(self, rule_id: str, *, reason: str) -> None:
+        """Explicitly retract a candidate or promoted lesson with a reason."""
+        reason = _text(reason, 1200)
+        if not reason:
+            raise ProjectIRError("rule_retraction_reason_required")
+        with self.connect() as con:
+            self.ensure_schema(con)
+            rule = con.execute("SELECT status FROM semantic_rules WHERE rule_id=?", (rule_id,)).fetchone()
+            if not rule:
+                raise ProjectIRError(f"unknown_rule: {rule_id}")
+            con.execute(
+                """UPDATE semantic_rules
+                   SET status='retracted',retracted_at=?,retraction_reason=?,updated_at=?
+                   WHERE rule_id=?""",
+                (now_iso(), reason, now_iso(), rule_id),
             )
 
     def rules(self, *, status: str | None = None) -> list[dict[str, Any]]:
