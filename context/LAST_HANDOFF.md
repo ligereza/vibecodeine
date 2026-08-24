@@ -48,13 +48,23 @@ que tiene firma pero termina sin `IEND` (`missing_IEND`). El primer resultado
 de 6 hits fuera del vocabulario quedó reemplazado por esta segunda medición:
 0 hits, confirmado en todos los 14.327 archivos legibles.
 
+**Auditoría posterior, solo lectura.** Los 8 sidecars reportados como
+`bad_signature` son AppleDouble (`file` los identifica con la firma
+`00 05 16 07`); los otros 9 son JPEG reales con extensión `.PNG`, incluyendo
+copias byte-idénticas de `IMG_5577.PNG`. El archivo `00000237.png` sí tiene
+firma PNG y `file` lo reconoce como 1920x1080 RGBA, pero es el último elemento
+de su secuencia: `00000234.png`, `00000235.png` y `00000236.png` son válidos y
+no existe `00000238.png`. Se conserva como salida truncada/UNKNOWN; no se
+repara, borra ni sustituye.
+
 **Decisión.** No se promueve `KNOWN_CONTAINERS["png"]` a `YES`: los 18
 candidatos no forman una cobertura limpia del conjunto reclamado. Un PNG válido
 sin XMP todavía no puede producir un negativo respaldado por `XmpResult`; los
 archivos inválidos permanecen `UNSUPPORTED`/desconocidos. El siguiente paso
-acotado es definir explícitamente si el corpus canónico excluye esos 18 por
-ser sidecars/corrupción y repetir entonces sobre ese conjunto, o reparar la
-fuente; no se debe borrar ni alterar el SSD para conseguirlo.
+acotado es hacer que el testigo distinga por firma y repetir sobre los 14.327
+PNG válidos, dejando `candidate_count=14345` y las 18 exclusiones visibles. Eso
+permitiría un resultado scoped al formato real sin convertirlo en una afirmación
+sobre los sidecars/JPEG mal nombrados ni sobre el frame truncado.
 
 ## Slice validated - carousel index into the flyer source - 2026-08-24
 
