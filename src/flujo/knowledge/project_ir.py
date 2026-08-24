@@ -29,6 +29,7 @@ from typing import Any, Iterable, Mapping, Sequence
 
 SCHEMA = "mak-project-ir-v1"
 LEARNING_SCHEMA = "mak-learning-ledger-v1"
+MAK_LEARN_V2_SCHEMA = "mak-learning-v2"
 
 PROJECT_STATES = (
     "candidate",
@@ -54,6 +55,9 @@ EPISODE_STATES = (
 RULE_STATUSES = ("candidate", "promoted", "stale", "rejected")
 RULE_VERDICTS = ("support", "contradict", "neutral")
 EVIDENCE_STATES = ("unverified", "observed", "verified", "contradicted")
+RUN_EVENT_STATES = ("proposed", "running", "observed", "validated", "recorded", "rejected")
+EVALUATION_SPLITS = ("replay", "holdout", "canary", "shadow")
+EVALUATION_STATUSES = ("pending", "passed", "failed", "abstained")
 
 FORMAT_FAMILIES = {
     ".py": "code", ".js": "code", ".ts": "code", ".html": "web",
@@ -535,6 +539,32 @@ class LearningStore:
                     created_at TEXT NOT NULL,
                     UNIQUE(rule_id, episode_id, verdict)
                 );
+                CREATE TABLE IF NOT EXISTS mak_run_events (
+                    event_id TEXT PRIMARY KEY,
+                    project_id TEXT NOT NULL REFERENCES project_records(project_id),
+                    episode_id TEXT REFERENCES project_episodes(episode_id),
+                    parent_event_id TEXT REFERENCES mak_run_events(event_id),
+                    event_type TEXT NOT NULL,
+                    state TEXT NOT NULL,
+                    payload_json TEXT NOT NULL,
+                    source_snapshot_hash TEXT NOT NULL,
+                    code_commit TEXT NOT NULL,
+                    tool_versions_json TEXT NOT NULL,
+                    created_at TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS learning_evaluations (
+                    evaluation_id TEXT PRIMARY KEY,
+                    target_kind TEXT NOT NULL,
+                    target_id TEXT NOT NULL,
+                    dataset_fingerprint TEXT NOT NULL,
+                    split_kind TEXT NOT NULL,
+                    status TEXT NOT NULL,
+                    metrics_json TEXT NOT NULL,
+                    evidence_json TEXT NOT NULL,
+                    baseline_policy_id TEXT NOT NULL DEFAULT '',
+                    candidate_policy_id TEXT NOT NULL DEFAULT '',
+                    created_at TEXT NOT NULL
+                );
                 CREATE INDEX IF NOT EXISTS idx_project_artifacts_project
                     ON project_artifacts(project_id);
                 CREATE INDEX IF NOT EXISTS idx_project_episodes_project
@@ -543,6 +573,22 @@ class LearningStore:
                     ON project_transitions(project_id, created_at);
                 CREATE INDEX IF NOT EXISTS idx_rule_observations_rule
                     ON rule_observations(rule_id, verdict);
+                CREATE INDEX IF NOT EXISTS idx_mak_run_events_project
+                    ON mak_run_events(project_id, created_at);
+                CREATE INDEX IF NOT EXISTS idx_learning_evaluations_target
+                    ON learning_evaluations(target_kind, target_id, created_at);
+                CREATE TRIGGER IF NOT EXISTS mak_run_events_no_update
+                    BEFORE UPDATE ON mak_run_events
+                    BEGIN SELECT RAISE(ABORT, 'mak_run_events_append_only'); END;
+                CREATE TRIGGER IF NOT EXISTS mak_run_events_no_delete
+                    BEFORE DELETE ON mak_run_events
+                    BEGIN SELECT RAISE(ABORT, 'mak_run_events_append_only'); END;
+                CREATE TRIGGER IF NOT EXISTS learning_evaluations_no_update
+                    BEFORE UPDATE ON learning_evaluations
+                    BEGIN SELECT RAISE(ABORT, 'learning_evaluations_append_only'); END;
+                CREATE TRIGGER IF NOT EXISTS learning_evaluations_no_delete
+                    BEFORE DELETE ON learning_evaluations
+                    BEGIN SELECT RAISE(ABORT, 'learning_evaluations_append_only'); END;
                 """
             )
             if own:
@@ -678,6 +724,121 @@ class LearningStore:
                 (episode_id, *payload, start, finished_at),
             )
         return episode_id
+
+    def append_run_event(
+        self, *, project_id: str, event_type: str, state: str,
+        payload: Mapping[str, Any], source_snapshot_hash: str, code_commit: str,
+        tool_versions: Mapping[str, Any], episode_id: str | None = None,
+        parent_event_id: str | None = None, event_id: str | None = None,
+        created_at: str | None = None,
+    ) -> str:
+        """Append one director event with mandatory execution provenance.
+
+        Events are immutable.  Repeating the same ``event_id`` is idempotent
+        only when every stored field matches; a different payload is a hard
+        conflict.  This is the durable control surface for MAK Learn v2, not
+        a second source of truth and not an automatic policy promoter.
+        """
+        if state not in RUN_EVENT_STATES:
+            raise ProjectIRError(f"run_event_bad_state: {state}")
+        event_type = _text(event_type, 160)
+        source_snapshot_hash = _text(source_snapshot_hash, 128)
+        code_commit = _text(code_commit, 128)
+        if not event_type:
+            raise ProjectIRError("run_event_missing_type")
+        if not source_snapshot_hash:
+            raise ProjectIRError("run_event_missing_source_snapshot_hash")
+        if not code_commit:
+            raise ProjectIRError("run_event_missing_code_commit")
+        if not isinstance(tool_versions, Mapping):
+            raise ProjectIRError("run_event_tool_versions_not_mapping")
+        event_id = event_id or "event_" + uuid.uuid4().hex
+        created_at = created_at or now_iso()
+        encoded_payload = _json(payload)
+        encoded_tools = _json(tool_versions)
+        values = (
+            project_id, episode_id, parent_event_id, event_type, state,
+            encoded_payload, source_snapshot_hash, code_commit, encoded_tools,
+        )
+        with self.connect() as con:
+            self.ensure_schema(con)
+            if not con.execute("SELECT 1 FROM project_records WHERE project_id=?", (project_id,)).fetchone():
+                raise ProjectIRError(f"run_event_unknown_project: {project_id}")
+            if episode_id and not con.execute("SELECT 1 FROM project_episodes WHERE episode_id=?", (episode_id,)).fetchone():
+                raise ProjectIRError(f"run_event_unknown_episode: {episode_id}")
+            if parent_event_id and not con.execute("SELECT 1 FROM mak_run_events WHERE event_id=?", (parent_event_id,)).fetchone():
+                raise ProjectIRError(f"run_event_unknown_parent: {parent_event_id}")
+            existing = con.execute(
+                """SELECT project_id,episode_id,parent_event_id,event_type,state,
+                   payload_json,source_snapshot_hash,code_commit,tool_versions_json
+                   FROM mak_run_events WHERE event_id=?""", (event_id,),
+            ).fetchone()
+            if existing:
+                if tuple(existing) == values:
+                    return event_id
+                raise ProjectIRError(f"run_event_id_conflict: {event_id}")
+            con.execute(
+                """INSERT INTO mak_run_events
+                   (event_id,project_id,episode_id,parent_event_id,event_type,state,
+                    payload_json,source_snapshot_hash,code_commit,tool_versions_json,created_at)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+                (event_id, *values, created_at),
+            )
+        return event_id
+
+    def record_learning_evaluation(
+        self, *, target_kind: str, target_id: str, dataset_fingerprint: str,
+        split_kind: str, status: str, metrics: Mapping[str, Any],
+        evidence: Iterable[Mapping[str, Any]] = (),
+        baseline_policy_id: str = "", candidate_policy_id: str = "",
+        evaluation_id: str | None = None, created_at: str | None = None,
+    ) -> str:
+        """Append an evaluation report without changing any active policy.
+
+        A passed report is evidence for a later, explicit promotion decision;
+        it is never promotion itself.  ``dataset_fingerprint`` makes the
+        replay/holdout population addressable and prevents an untracked split
+        from becoming a learning claim.
+        """
+        if split_kind not in EVALUATION_SPLITS:
+            raise ProjectIRError(f"evaluation_bad_split: {split_kind}")
+        if status not in EVALUATION_STATUSES:
+            raise ProjectIRError(f"evaluation_bad_status: {status}")
+        target_kind = _text(target_kind, 160)
+        target_id = _text(target_id, 240)
+        dataset_fingerprint = _text(dataset_fingerprint, 128)
+        if not target_kind or not target_id:
+            raise ProjectIRError("evaluation_missing_target")
+        if not dataset_fingerprint:
+            raise ProjectIRError("evaluation_missing_dataset_fingerprint")
+        if not isinstance(metrics, Mapping):
+            raise ProjectIRError("evaluation_metrics_not_mapping")
+        evaluation_id = evaluation_id or "evaluation_" + uuid.uuid4().hex
+        created_at = created_at or now_iso()
+        values = (
+            target_kind, target_id, dataset_fingerprint, split_kind, status,
+            _json(metrics), _json(list(evidence)), _text(baseline_policy_id, 240),
+            _text(candidate_policy_id, 240),
+        )
+        with self.connect() as con:
+            self.ensure_schema(con)
+            existing = con.execute(
+                """SELECT target_kind,target_id,dataset_fingerprint,split_kind,status,
+                   metrics_json,evidence_json,baseline_policy_id,candidate_policy_id
+                   FROM learning_evaluations WHERE evaluation_id=?""", (evaluation_id,),
+            ).fetchone()
+            if existing:
+                if tuple(existing) == values:
+                    return evaluation_id
+                raise ProjectIRError(f"evaluation_id_conflict: {evaluation_id}")
+            con.execute(
+                """INSERT INTO learning_evaluations
+                   (evaluation_id,target_kind,target_id,dataset_fingerprint,split_kind,
+                    status,metrics_json,evidence_json,baseline_policy_id,candidate_policy_id,created_at)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+                (evaluation_id, *values, created_at),
+            )
+        return evaluation_id
 
     def transition_project(
         self, project_id: str, to_state: str, *, reason: str,
@@ -840,7 +1001,7 @@ def inspect_learning_target(database: str | Path) -> dict[str, Any]:
     expected = {
         "project_records", "project_artifacts", "project_episodes",
         "project_transitions", "semantic_rules", "rule_observations",
-        "project_contracts",
+        "project_contracts", "mak_run_events", "learning_evaluations",
     }
     if not path.is_file():
         return {
