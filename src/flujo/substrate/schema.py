@@ -230,16 +230,20 @@ AUTHORITIES: dict[str, dict[str, Any]] = {
                 "negative_is_evidence is False.",
     },
     "aftereffects_declaration": {
-        "what": "A static parse of an .aep RIFX chunk tree.",
-        "claim": "that the composition declares it opens or writes this path",
+        "what": "A bounded lexical extraction of structured fullpath records "
+                "from an .aep RIFX/Egg container.",
+        "claim": "that the composition declares it opens or uses this path",
         "strength": "strong",
         "negative_is_evidence": False,
-        "coverage": "unmeasured. 408 .aep files exist on the disk and all 408 "
-                    "carry an XMP DocumentID, so unlike .blend they can be "
-                    "versioned; the internal chunk vocabulary is not documented "
-                    "and is declared incomplete.",
-        "note": "This is the half of the chain a .blend cannot supply: the step "
-                "from a rendered frame sequence to a delivered file.",
+        "coverage": "Measured 2026-08-24 over /home/mak/RD and "
+                    "/home/mak/curatoria_inbox: 145 files, 138 with "
+                    "references, 2304 unique-per-file declared paths, 309 "
+                    "unique path strings, and 0 DECODER_LIMIT. This is a "
+                    "bounded filesystem measurement, not a claim that the MAK "
+                    "corpus is complete; the 408-file claim was not reproduced.",
+        "note": "A declared path is evidence of a project reference, not a "
+                "delivered output. This reader emits no RENDERS_TO edge and "
+                "does not decide whether a video in a folder is the work.",
     },
     "filesystem": {
         "what": "Path, size and timestamps as reported by the operating system.",

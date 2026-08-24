@@ -37,6 +37,7 @@ from .schema import (
     SubstrateError,
 )
 from .xmp import BOUNDED, EXHAUSTIVE, XmpFields, XmpResult, extract, parse_packet
+from .aepfile import AepHeader, AepReferences, read_references
 
 __all__ = [
     "Content", "ArtifactState", "Lineage", "Observation", "Evidence", "Substrate",
@@ -45,6 +46,7 @@ __all__ = [
     "REVISION_IN_LINEAGE", "USES", "PANTRY_COPY_OF", "REFERENCES", "OBSERVED_AT",
     "ingest_file", "ingest_archive", "walk_root", "state_key",
     "extract", "parse_packet", "XmpFields", "XmpResult", "EXHAUSTIVE", "BOUNDED",
+    "AepHeader", "AepReferences", "read_references",
     # A resolution carries its cardinality, so an individuating claim cannot be
     # built from an ambiguous one. Exported because the alternative is every
     # caller reaching into a private path for the one type that gates the single
