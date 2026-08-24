@@ -541,6 +541,7 @@ class LearningStore:
                 );
                 CREATE TABLE IF NOT EXISTS mak_run_events (
                     event_id TEXT PRIMARY KEY,
+                    run_id TEXT NOT NULL,
                     project_id TEXT NOT NULL REFERENCES project_records(project_id),
                     episode_id TEXT REFERENCES project_episodes(episode_id),
                     parent_event_id TEXT REFERENCES mak_run_events(event_id),
@@ -590,6 +591,16 @@ class LearningStore:
                     BEFORE DELETE ON learning_evaluations
                     BEGIN SELECT RAISE(ABORT, 'learning_evaluations_append_only'); END;
                 """
+            )
+            event_columns = {
+                str(row[1]) for row in con.execute("PRAGMA table_info(mak_run_events)")
+            }
+            if "run_id" not in event_columns:
+                con.execute(
+                    "ALTER TABLE mak_run_events ADD COLUMN run_id TEXT NOT NULL DEFAULT ''"
+                )
+            con.execute(
+                "CREATE INDEX IF NOT EXISTS idx_mak_run_events_run ON mak_run_events(run_id, created_at)"
             )
             if own:
                 con.commit()
@@ -729,7 +740,8 @@ class LearningStore:
         self, *, project_id: str, event_type: str, state: str,
         payload: Mapping[str, Any], source_snapshot_hash: str, code_commit: str,
         tool_versions: Mapping[str, Any], episode_id: str | None = None,
-        parent_event_id: str | None = None, event_id: str | None = None,
+        parent_event_id: str | None = None, run_id: str | None = None,
+        event_id: str | None = None,
         created_at: str | None = None,
     ) -> str:
         """Append one director event with mandatory execution provenance.
@@ -753,11 +765,12 @@ class LearningStore:
         if not isinstance(tool_versions, Mapping):
             raise ProjectIRError("run_event_tool_versions_not_mapping")
         event_id = event_id or "event_" + uuid.uuid4().hex
+        run_id = _text(run_id, 160) or "run_" + event_id.removeprefix("event_")
         created_at = created_at or now_iso()
         encoded_payload = _json(payload)
         encoded_tools = _json(tool_versions)
         values = (
-            project_id, episode_id, parent_event_id, event_type, state,
+            run_id, project_id, episode_id, parent_event_id, event_type, state,
             encoded_payload, source_snapshot_hash, code_commit, encoded_tools,
         )
         with self.connect() as con:
@@ -768,8 +781,14 @@ class LearningStore:
                 raise ProjectIRError(f"run_event_unknown_episode: {episode_id}")
             if parent_event_id and not con.execute("SELECT 1 FROM mak_run_events WHERE event_id=?", (parent_event_id,)).fetchone():
                 raise ProjectIRError(f"run_event_unknown_parent: {parent_event_id}")
+            if parent_event_id:
+                parent = con.execute(
+                    "SELECT run_id FROM mak_run_events WHERE event_id=?", (parent_event_id,)
+                ).fetchone()
+                if parent and str(parent["run_id"]) != run_id:
+                    raise ProjectIRError("run_event_parent_run_mismatch")
             existing = con.execute(
-                """SELECT project_id,episode_id,parent_event_id,event_type,state,
+                """SELECT run_id,project_id,episode_id,parent_event_id,event_type,state,
                    payload_json,source_snapshot_hash,code_commit,tool_versions_json
                    FROM mak_run_events WHERE event_id=?""", (event_id,),
             ).fetchone()
@@ -779,12 +798,37 @@ class LearningStore:
                 raise ProjectIRError(f"run_event_id_conflict: {event_id}")
             con.execute(
                 """INSERT INTO mak_run_events
-                   (event_id,project_id,episode_id,parent_event_id,event_type,state,
+                   (event_id,run_id,project_id,episode_id,parent_event_id,event_type,state,
                     payload_json,source_snapshot_hash,code_commit,tool_versions_json,created_at)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (event_id, *values, created_at),
             )
         return event_id
+
+    def run_events(self, run_id: str) -> list[dict[str, Any]]:
+        """Read one persisted director checkpoint chain without changing data."""
+        run_id = _text(run_id, 160)
+        if not run_id:
+            raise ProjectIRError("run_event_missing_run_id")
+        if not self.database.is_file():
+            return []
+        uri = "file:" + str(self.database.resolve()) + "?mode=ro"
+        with sqlite3.connect(uri, uri=True) as con:
+            con.row_factory = sqlite3.Row
+            rows = con.execute(
+                "SELECT * FROM mak_run_events WHERE run_id=? ORDER BY created_at, rowid",
+                (run_id,),
+            ).fetchall()
+        output = []
+        for row in rows:
+            item = dict(row)
+            for field in ("payload_json", "tool_versions_json"):
+                try:
+                    item[field.removesuffix("_json")] = json.loads(item[field])
+                except (TypeError, json.JSONDecodeError):
+                    item[field.removesuffix("_json")] = {}
+            output.append(item)
+        return output
 
     def record_learning_evaluation(
         self, *, target_kind: str, target_id: str, dataset_fingerprint: str,

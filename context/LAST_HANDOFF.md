@@ -22,11 +22,13 @@ promover políticas automáticamente.
 
 **Implementado.** `src/flujo/knowledge/project_ir.py` agrega las tablas
 append-only `mak_run_events` y `learning_evaluations`. `LearningStore.append_run_event`
-exige `source_snapshot_hash`, `code_commit` y `tool_versions`; repeticiones del
-mismo `event_id` son idempotentes solo si el payload completo coincide y todo
-conflicto se rechaza. `LearningStore.record_learning_evaluation` exige un
-fingerprint de dataset y un split explícito (`replay`, `holdout`, `canary` o
-`shadow`); incluso `passed` queda como evidencia y no modifica ninguna regla.
+exige `source_snapshot_hash`, `code_commit` y `tool_versions`, agrupa cada
+checkpoint por `run_id`, y permite leer la cadena sin reabrir una ejecución.
+Repeticiones del mismo `event_id` son idempotentes solo si el payload completo
+coincide y todo conflicto se rechaza. `LearningStore.record_learning_evaluation`
+exige un fingerprint de dataset y un split explícito (`replay`, `holdout`,
+`canary` o `shadow`); incluso `passed` queda como evidencia y no modifica
+ninguna regla.
 
 **Evidencia y comandos.**
 
@@ -36,24 +38,32 @@ fingerprint de dataset y un split explícito (`replay`, `holdout`, `canary` o
 Ambas corridas terminaron `EXIT 0`. La materialización controlada sobre
 `data/mak_knowledge.db` creó únicamente las dos tablas nuevas: antes y después
 se conservaron `project_episodes=17`, `project_records=41`,
-`semantic_rules=0` y `rule_observations=0`.
+`semantic_rules=0` y `rule_observations=0`; la migración añadió `run_id` sin
+alterar filas existentes.
 
 **Tests nuevos.** `tests/test_learning_v2.py` cubre inmutabilidad/idempotencia
-de eventos, procedencia obligatoria, evaluación con holdout sin promoción y
-rechazo de datasets sin fingerprint. Las tablas quedaron además blindadas con
-triggers SQLite contra `UPDATE` y `DELETE`; la suite completa del repositorio
-terminó en `EXIT 0` después de ese blindaje, con 7 warnings de deprecación
+de eventos, procedencia obligatoria, evaluación con holdout sin promoción,
+rechazo de datasets sin fingerprint y lectura de checkpoints. Las tablas
+quedaron blindadas con triggers SQLite contra `UPDATE` y `DELETE`.
+
+**Director implementado.** `src/flujo/knowledge/director.py` coordina
+`proposed -> running -> observed -> validated -> recorded`, emite todos los
+checkpoints, usa únicamente contratos `read_only` de `TOOL_CATALOG`, no ejecuta
+comandos arbitrarios y termina registrando el episodio conservador existente.
+`tests/test_director.py` verifica la cadena, los rechazos de herramientas no
+permitidas y las transiciones inválidas. La suite completa del repositorio
+terminó en `EXIT 0` después de este slice, con 7 warnings de deprecación
 preexistentes de Pillow.
 
-**Integración abierta.** Todavía falta conectar un director seguro que emita
-estos eventos, construir el replay set de casos reales y añadir evaluación de
-políticas versionadas. No usar todavía GPU, fine-tuning, bandits ni promoción
+**Integración abierta.** Todavía falta construir el replay set de casos reales,
+añadir evaluación de políticas versionadas y una reanudación automática desde
+el último checkpoint. No usar todavía GPU, fine-tuning, bandits ni promoción
 automática.
 
-**Siguiente acción concreta.** Implementar el director como máquina de estados
-acotada sobre `mak_run_events`: `proposed -> running -> observed -> validated ->
-recorded`, con pausa ante `needs_evidence` y sin ejecutar acciones fuera de una
-allowlist.
+**Siguiente acción concreta.** Construir el replay set versionado a partir de
+los casos reales ya validados (resolver de títulos, `.aep`, Blender y PNG), con
+un validador por caso y fingerprint de dataset; después conectar esas pruebas
+al director sin habilitar promoción automática.
 
 **Última verificación.** 2026-08-24; worktree validado con `git diff --check`,
 tests del ledger en `EXIT 0` y conteos históricos sin cambios.
