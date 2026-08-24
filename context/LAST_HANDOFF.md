@@ -2,10 +2,61 @@
 
 ## Current objective — 2026-08-24
 
-Conservar una única ruta de autoría MAK/WIN y una política determinista para
-imágenes y videos. El último commit funcional publicado antes de este registro
-es `81fd57a`; el siguiente agente debe trabajar solo sobre los items abiertos
-que siguen abajo.
+Construir `MAK Learn v2`: un sistema de aprendizaje durable, auditable y
+dirigido para MAK. El orden obligatorio es: (1) episodios append-only y
+evidencia versionada, (2) candidate lessons con procedencia, contradicciones y
+expiración, (3) replay/holdout independientes, y (4) un director seguro con
+checkpoints y handoff. No entrenar pesos ni promover políticas
+automáticamente hasta superar gates independientes. La autoridad operativa
+sigue siendo `/home/mak/flujo`; `/home/mak/WIN` permanece histórico y protegido.
+
+La consolidación MAK/WIN y los slices anteriores quedan como continuidad
+histórica y regresiones protegidas; no se deben reabrir salvo que el replay o
+una verificación física aporte evidencia nueva.
+
+## MAK Learn v2 - durable event/evaluation substrate - 2026-08-24
+
+**Objetivo del slice.** Darle a MAK una superficie persistente para dirigir
+ejecuciones y registrar replay/holdout sin crear otra base de autoridad ni
+promover políticas automáticamente.
+
+**Implementado.** `src/flujo/knowledge/project_ir.py` agrega las tablas
+append-only `mak_run_events` y `learning_evaluations`. `LearningStore.append_run_event`
+exige `source_snapshot_hash`, `code_commit` y `tool_versions`; repeticiones del
+mismo `event_id` son idempotentes solo si el payload completo coincide y todo
+conflicto se rechaza. `LearningStore.record_learning_evaluation` exige un
+fingerprint de dataset y un split explícito (`replay`, `holdout`, `canary` o
+`shadow`); incluso `passed` queda como evidencia y no modifica ninguna regla.
+
+**Evidencia y comandos.**
+
+    .venv/bin/python -m pytest -q tests/test_learning_v2.py tests/test_project_ir.py tests/test_learning_policy.py
+    .venv/bin/python -m pytest -q tests/test_project_api.py tests/test_project_context.py tests/test_project_evidence.py tests/test_project_research.py tests/test_source_learning.py tests/test_deep_learning_gate.py
+
+Ambas corridas terminaron `EXIT 0`. La materialización controlada sobre
+`data/mak_knowledge.db` creó únicamente las dos tablas nuevas: antes y después
+se conservaron `project_episodes=17`, `project_records=41`,
+`semantic_rules=0` y `rule_observations=0`.
+
+**Tests nuevos.** `tests/test_learning_v2.py` cubre inmutabilidad/idempotencia
+de eventos, procedencia obligatoria, evaluación con holdout sin promoción y
+rechazo de datasets sin fingerprint. Las tablas quedaron además blindadas con
+triggers SQLite contra `UPDATE` y `DELETE`; la suite completa del repositorio
+terminó en `EXIT 0` después de ese blindaje, con 7 warnings de deprecación
+preexistentes de Pillow.
+
+**Integración abierta.** Todavía falta conectar un director seguro que emita
+estos eventos, construir el replay set de casos reales y añadir evaluación de
+políticas versionadas. No usar todavía GPU, fine-tuning, bandits ni promoción
+automática.
+
+**Siguiente acción concreta.** Implementar el director como máquina de estados
+acotada sobre `mak_run_events`: `proposed -> running -> observed -> validated ->
+recorded`, con pausa ante `needs_evidence` y sin ejecutar acciones fuera de una
+allowlist.
+
+**Última verificación.** 2026-08-24; worktree validado con `git diff --check`,
+tests del ledger en `EXIT 0` y conteos históricos sin cambios.
 
 ## Slice validated - PNG XMP adversarial witness - 2026-08-24
 
