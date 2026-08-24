@@ -167,7 +167,19 @@ def perturb(work: Path) -> list[tuple[Path, str, str | None]]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    work = Path(argv[0]) if argv else Path(os.environ.get("EXPERIMENT_DIR", "."))
+    # A real parser, because the previous version took argv[0] as a directory and
+    # created it. The repository's own tool ratchet invokes every live tool with
+    # --help, so that version answered "what do you do?" by making a directory
+    # called "--help". Asking a tool what it does must never write anything.
+    import argparse
+    parser = argparse.ArgumentParser(
+        description=__doc__.splitlines()[0],
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=__doc__)
+    parser.add_argument("workdir", help="where to write the substrates and the "
+                                        "experiment record")
+    args = parser.parse_args(argv)
+    work = Path(args.workdir)
     work.mkdir(parents=True, exist_ok=True)
     report: dict[str, Any] = {
         "contract": "mak-substrate-experiment-v1",
