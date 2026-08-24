@@ -266,15 +266,19 @@ class Unknown:
 # Witness, to move an entry to YES, so the path off ASSERTED is data too.
 KNOWN_CONTAINERS: dict[str, dict[str, Any]] = {
     "png": {
-        "containers": ["iTXt chunk keyed XML:com.adobe.xmp, deflated or plain"],
+        "containers": [
+            "iTXt chunk keyed XML:com.adobe.xmp, deflated or plain",
+            "legacy tEXt chunk keyed XML:com.adobe.xmp",
+        ],
         "vocabulary_complete": ASSERTED,
-        "why": "The PNG specification defines exactly one place for XMP, so "
-               "clause (a) holds. Clause (b) does not: nobody has whole-file "
-               "scanned the 14345 PNGs in this corpus to confirm no packet "
-               "lives outside the iTXt chunk, so this is asserted, not proven.",
-        "upgrade_check": "whole-file adversarial scan of all 14345 corpus PNGs "
-                          "for an XMP packet outside the iTXt chunk, recorded "
-                          "as a Witness with files_checked=14345",
+        "why": "The PNG specification registers XML:com.adobe.xmp for iTXt; "
+               "real Adobe exports in this corpus also use the older tEXt "
+               "chunk with that keyword. Clause (b) still needs a whole-file "
+               "adversarial scan against both observed containers.",
+        "upgrade_check": "whole-file adversarial scan of the 14345 extension "
+                          "candidates, separating invalid files and checking "
+                          "valid PNGs for a packet outside iTXt and tEXt, "
+                          "recorded as a Witness",
     },
     "jpeg": {
         "containers": ["APP1 with the Adobe XAP header",

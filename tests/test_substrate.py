@@ -108,16 +108,21 @@ def _chunk(kind: bytes, data: bytes) -> bytes:
 
 
 def write_png(path: Path, packet: bytes | None, *, pixel: bytes = b"\x00",
-              compress_xmp: bool = False) -> Path:
-    """A valid PNG whose XMP, if any, lives in an iTXt chunk like the real ones."""
+              compress_xmp: bool = False,
+              chunk_kind: bytes = b"iTXt") -> Path:
+    """A valid PNG whose XMP lives in an iTXt or legacy tEXt chunk."""
     ihdr = struct.pack(">IIBBBBB", 1, 1, 8, 0, 0, 0, 0)
     raw = b"\x00" + pixel
     body = _chunk(b"IHDR", ihdr)
     if packet is not None:
         text = zlib.compress(packet) if compress_xmp else packet
-        payload = (b"XML:com.adobe.xmp\x00" + bytes([1 if compress_xmp else 0])
-                   + b"\x00" + b"\x00" + b"\x00" + text)
-        body += _chunk(b"iTXt", payload)
+        if chunk_kind == b"tEXt":
+            payload = b"XML:com.adobe.xmp\x00" + packet
+        else:
+            payload = (b"XML:com.adobe.xmp\x00"
+                       + bytes([1 if compress_xmp else 0])
+                       + b"\x00" + b"\x00" + b"\x00" + text)
+        body += _chunk(chunk_kind, payload)
     body += _chunk(b"IDAT", zlib.compress(raw)) + _chunk(b"IEND", b"")
     path.write_bytes(b"\x89PNG\r\n\x1a\n" + body)
     return path
@@ -162,6 +167,16 @@ def test_png_xmp_is_found_where_a_window_scan_would_miss_it(tmp_path):
         assert result.fields is not None, f"{path.name}: no fields"
         assert result.fields.document_id == "doc-A"
         assert result.fields.instance_id == "inst-A1"
+
+
+def test_png_legacy_text_xmp_is_found(tmp_path):
+    result = extract(str(write_png(tmp_path / "legacy.png", xmp_packet(
+        document_id="doc-legacy", instance_id="inst-legacy"),
+        chunk_kind=b"tEXt")))
+    assert result.method == "png_text_chunk"
+    assert result.completeness == EXHAUSTIVE
+    assert result.fields is not None
+    assert result.fields.document_id == "doc-legacy"
 
 
 def test_a_png_without_xmp_reports_an_exhaustive_negative(tmp_path):

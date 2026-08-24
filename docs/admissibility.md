@@ -154,7 +154,9 @@ Consequences that are now knowable in advance rather than after measuring:
 
 ## Still unknown
 
-- What a witness for PNG or JPEG would cost: a whole-file scan of 14345 PNGs
-  looking for a packet outside the iTXt chunk. Until then no XMP negative counts.
+- PNG witness work must cover both observed containers: iTXt and legacy tEXt
+  keyed `XML:com.adobe.xmp`. Extension-named sidecars that are not PNG data and
+  malformed PNGs remain outside the valid-file count; neither is silently
+  treated as a clean negative.
 - Whether the class-level use of basename evidence should carry its k on the
   record the way an edge now does. It is sound, but its strength is unrecorded.
