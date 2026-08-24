@@ -10,8 +10,8 @@ does not live where a fixed window can see it.
 
 So this module locates packets the way each format actually stores them:
 
-- PNG   walks the chunk table for an ``iTXt`` chunk keyed ``XML:com.adobe.xmp``,
-        inflating it when the compression flag is set (PNG spec, 11.3.4.5)
+- PNG   walks the chunk table for ``iTXt`` or legacy ``tEXt`` chunks keyed
+        ``XML:com.adobe.xmp``, inflating iTXt when the compression flag is set
 - JPEG  walks the marker segments for ``APP1`` carrying the Adobe XAP header
         (XMP spec part 3), including the Extended XMP header
 - MP4   walks the box tree for the ``uuid`` box whose UUID is the one Adobe
@@ -266,14 +266,16 @@ def _packets_from_blob(blob: bytes) -> list[bytes]:
     return out
 
 
-def _png_packets(path: str) -> list[bytes]:
+def _png_packets(path: str) -> tuple[list[bytes], str]:
     """Walk the PNG chunk table. Exhaustive by construction.
 
-    XMP lives in an ``iTXt`` chunk whose keyword is ``XML:com.adobe.xmp``. The
+    Current writers use an ``iTXt`` chunk, but real Adobe exports in this
+    corpus also use the older ``tEXt`` chunk with the same keyword. The iTXt
     chunk may be zlib-compressed, which is why a window scan of a PNG finds an
     ``<?xpacket`` marker only when the writer happened to leave it uncompressed.
     """
     out: list[bytes] = []
+    methods: set[str] = set()
     with open(path, "rb") as handle:
         if handle.read(8) != PNG_MAGIC:
             raise XmpError("not_a_png")
@@ -284,11 +286,15 @@ def _png_packets(path: str) -> list[bytes]:
             length, kind = struct.unpack(">I4s", header)
             if length > 64 * 1024 * 1024:
                 break
-            if kind == b"iTXt":
+            if kind in (b"iTXt", b"tEXt"):
                 data = handle.read(length)
                 handle.read(4)
                 nul = data.find(b"\x00")
                 if nul == -1 or data[:nul] != PNG_XMP_KEYWORD:
+                    continue
+                if kind == b"tEXt":
+                    out.append(data[nul + 1:])
+                    methods.add("png_text_chunk")
                     continue
                 rest = data[nul + 1:]
                 if len(rest) < 2:
@@ -310,11 +316,20 @@ def _png_packets(path: str) -> list[bytes]:
                     except zlib.error:
                         continue
                 out.append(rest)
+                methods.add("png_itxt_chunk")
             elif kind == b"IEND":
                 break
             else:
                 handle.seek(length + 4, os.SEEK_CUR)
-    return out
+    if methods == {"png_itxt_chunk"}:
+        method = "png_itxt_chunk"
+    elif methods == {"png_text_chunk"}:
+        method = "png_text_chunk"
+    elif methods:
+        method = "png_xmp_chunks"
+    else:
+        method = "png_chunk_scan"
+    return out, method
 
 
 def _jpeg_packets(path: str) -> list[bytes]:
@@ -409,6 +424,9 @@ def _generic_packets(path: str, size: int) -> tuple[list[bytes], str]:
 # data now.
 LOCATOR_VOCABULARY = {
     "png_itxt_chunk": "png",
+    "png_text_chunk": "png",
+    "png_xmp_chunks": "png",
+    "png_chunk_scan": "png",
     "jpeg_app1_segment": "jpeg",
     "isobmff_uuid_box": "isobmff",
     "whole_file_packet_scan": "generic",
@@ -489,7 +507,8 @@ def extract(path: str) -> XmpResult:
     method, completeness = "generic", BOUNDED
     try:
         if ext in PNG_EXT:
-            packets, method, completeness = _png_packets(path), "png_itxt_chunk", EXHAUSTIVE
+            packets, method = _png_packets(path)
+            completeness = EXHAUSTIVE
         elif ext in JPEG_EXT:
             packets, method, completeness = _jpeg_packets(path), "jpeg_app1_segment", EXHAUSTIVE
         elif ext in ISOBMFF_EXT:
