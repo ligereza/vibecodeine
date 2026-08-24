@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sqlite3
 
 import pytest
@@ -117,6 +118,35 @@ def test_evaluation_rejects_untracked_dataset(tmp_path):
             target_kind="policy", target_id="candidate", dataset_fingerprint="",
             split_kind="replay", status="abstained", metrics={},
         )
+
+
+def test_candidate_lesson_keeps_scope_expiry_and_supports_retraction(tmp_path):
+    store = _store(tmp_path)
+    rule_id = store.upsert_rule(
+        trigger={"format_family": "3d"},
+        action={"tool": "read_only_probe"},
+        scope={"domains": ["rd"], "max_risk": "read_only"},
+        expires_at="2099-01-01T00:00:00+00:00",
+        evidence=[{"path": "tests/test_learning_v2.py", "kind": "fixture"}],
+    )
+    row = store.rules(status="candidate")[0]
+    assert row["expires_at"] == "2099-01-01T00:00:00+00:00"
+    assert json.loads(row["scope_json"]) == {"domains": ["rd"], "max_risk": "read_only"}
+    store.retract_rule(rule_id, reason="fixture contradiction requires review")
+    retracted = store.rules(status="retracted")[0]
+    assert retracted["retraction_reason"] == "fixture contradiction requires review"
+
+
+def test_expired_candidate_lesson_becomes_stale_before_promotion(tmp_path):
+    store = _store(tmp_path)
+    rule_id = store.upsert_rule(
+        trigger={"format_family": "3d"},
+        action={"tool": "read_only_probe"},
+        expires_at="2000-01-01T00:00:00+00:00",
+    )
+    with pytest.raises(ProjectIRError, match="rule_expired"):
+        store.promote_rule(rule_id, evaluation_id="evaluation-not-reached")
+    assert store.rules(status="stale")[0]["rule_id"] == rule_id
 
 
 def test_run_events_read_does_not_materialize_a_missing_database(tmp_path):

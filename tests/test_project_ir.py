@@ -116,7 +116,7 @@ class ProjectIRTests(unittest.TestCase):
             validation={"status": "passed"}, status="succeeded", episode_id="episode-a",
         )
         store.observe_rule(rule_id=rule_id, episode_id="episode-a", verdict="support")
-        with self.assertRaises(ProjectIRError):
+        with self.assertRaisesRegex(ProjectIRError, "evaluation_required"):
             store.promote_rule(rule_id)
         store.record_episode(
             project_id="rule-demo", objective="audit again", phase="gate",
@@ -124,7 +124,13 @@ class ProjectIRTests(unittest.TestCase):
             validation={"status": "verified"}, status="verified", episode_id="episode-b",
         )
         store.observe_rule(rule_id=rule_id, episode_id="episode-b", verdict="support")
-        store.promote_rule(rule_id)
+        store.record_learning_evaluation(
+            target_kind="semantic_rule", target_id=rule_id,
+            dataset_fingerprint="sha256:rule-holdout", split_kind="holdout",
+            status="passed", metrics={"accuracy": 1.0, "holdout_count": 2},
+            evaluation_id="evaluation-rule-demo",
+        )
+        store.promote_rule(rule_id, evaluation_id="evaluation-rule-demo")
         self.assertEqual(store.rules(status="promoted")[0]["rule_id"], rule_id)
 
     def test_inventory_limit_is_explicit(self) -> None:

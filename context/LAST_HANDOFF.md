@@ -30,6 +30,14 @@ exige un fingerprint de dataset y un split explícito (`replay`, `holdout`,
 `canary` o `shadow`); incluso `passed` queda como evidencia y no modifica
 ninguna regla.
 
+**Candidate lessons endurecidas.** `semantic_rules` ahora conserva
+`scope_json`, `expires_at`, `evaluation_id`, retractación y motivo de
+retractación. La huella incluye trigger, acción y scope; las contradicciones
+siguen siendo bloqueantes. `promote_rule` exige una evaluación `passed` de
+`split_kind=holdout` dirigida a ese `rule_id`; una pasada genérica del replay
+set no basta. Una lección expirada queda `stale` aunque la llamada de
+promoción falle, y `retract_rule` deja la razón durable.
+
 **Evidencia y comandos.**
 
     .venv/bin/python -m pytest -q tests/test_learning_v2.py tests/test_project_ir.py tests/test_learning_policy.py
@@ -44,7 +52,10 @@ alterar filas existentes.
 **Tests nuevos.** `tests/test_learning_v2.py` cubre inmutabilidad/idempotencia
 de eventos, procedencia obligatoria, evaluación con holdout sin promoción,
 rechazo de datasets sin fingerprint y lectura de checkpoints. Las tablas
-quedaron blindadas con triggers SQLite contra `UPDATE` y `DELETE`.
+quedaron blindadas con triggers SQLite contra `UPDATE` y `DELETE`; también
+cubre scope, expiración y retractación de candidate lessons. La migración real
+añadió las cinco columnas nuevas sin cambiar los conteos (`41` records,
+`17` episodios, `0` reglas, `2` evaluaciones).
 
 **Director implementado.** `src/flujo/knowledge/director.py` coordina
 `proposed -> running -> observed -> validated -> recorded`, emite todos los
@@ -91,7 +102,8 @@ train; usar el replay gate ya conectado solo como evidencia, no como
 promoción.
 
 **Última verificación.** 2026-08-24; worktree validado con `git diff --check`,
-tests del ledger en `EXIT 0` y conteos históricos sin cambios.
+suite completa en `EXIT 0`, tests del ledger en `EXIT 0` y conteos históricos
+sin cambios.
 
 ## Slice validated - PNG XMP adversarial witness - 2026-08-24
 
