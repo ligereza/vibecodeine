@@ -77,13 +77,14 @@ mismo texto de AVISO -- verificado leyendo ambas, no asumido.
 3. El resolvedor de títulos fue validado en el slice siguiente. La base viva
    conserva 41 filas, 0 títulos duplicados y 0 transiciones; la ambigüedad se
    probó en una base temporal construida con el escritor real.
-4. `RENDERS_TO` y las dos autoridades nuevas estan en el schema SIN CONSUMIDOR:
-   las herramientas que las usarian no llegaron a escribirse. No se declara
-   consolidado.
+4. El handoff anterior decía que RENDERS_TO estaba SIN CONSUMIDOR. Eso quedó
+   corregido: tools/render_output_edges.py lee el origen y escribe únicamente
+   el sidecar solicitado; tests/test_render_output_edges.py cubre el consumidor
+   y los directorios suspect quedan fuera de las aristas persistidas.
 
-**Siguiente accion.** Mantener abierto el lector `.aep` y las aristas
-`RENDERS_TO`; antes de escribir cualquiera de ellas, usar el contrato semántico
-documentado abajo para no confundir un paquete de trabajo con su video entregado.
+**Siguiente accion.** Mantener el contrato semántico para carpetas con video y
+pasar al witness PNG. El lector AEP y el consumidor RENDERS_TO ya tienen slices
+separados y evidencia abajo.
 
 ## Slice validated - title resolution and cascade gate - 2026-08-24
 
@@ -202,9 +203,73 @@ salida entregada o que el corpus físico esté completo. La ausencia de un
 más artefactos, con entrega solo cuando una fuente declarativa o consumidor lo
 afirma.
 
-**Siguiente acción.** Auditar el consumidor de `RENDERS_TO` y luego el witness
-PNG como slices separados. No generar aristas desde la extensión `.mp4`,
-`.mov` o desde la mera pertenencia a una carpeta.
+**Siguiente acción.** Validar el witness PNG como slice separado. No generar
+aristas desde la extensión `.mp4`, `.mov` o desde la mera pertenencia a una
+carpeta.
+
+## Slice validated - RENDERS_TO consumer and Blender fallback - 2026-08-24
+
+**Objetivo.** Verificar el consumidor real de la declaración de salida de
+Blender y tener un fallback nativo para los archivos que el parser binario no
+puede abrir, sin renderizar, guardar ni elegir un archivo dentro del directorio.
+
+**Consumidores y paths.** tools/render_output_edges.py lee SC blocks y, solo
+cuando el directorio resuelto no es suspect, escribe RENDERS_TO en el sidecar
+SQLite entregado por --out. tests/test_render_output_edges.py prueba la
+clasificación, la cardinalidad, el CLI y que un directorio lleno de documentos
+no se persista como render. tools/blender_scene_probe.py ejecuta Blender en
+background con factory-startup y disable-autoexec, consulta únicamente
+bpy.data.filepath y scene.render.filepath, y nunca emite RENDERS_TO.
+
+**Full run en el filesystem.** El comando:
+
+    .venv/bin/python tools/render_output_edges.py \
+        --root /media/mak/PortableSSD \
+        --out /tmp/mak-render-edges.db \
+        --report /tmp/mak-render-edges.json
+
+terminó EXIT 0 tras 874,9 s. find y el propio lector coinciden en 927 .blend:
+872 legibles, 55 DECODER_LIMIT, 192 declaraciones de escena, 104 defaults sin
+información, 10 foreign_machine, 32 rebased_but_missing, 26 resolved y
+2021 candidatos en esos directorios. Persistió 26 filas RENDERS_TO, 0 suspect,
+con output_sha256
+83dd3e9b12f10083e8ec3c6ee5b3fb2fe93ce200aca95377ca13f6861f0ecc23. El sidecar
+fue temporal: no se escribió la base viva ni el SSD.
+
+**Fallback nativo.** El comando:
+
+    .venv/bin/python tools/blender_scene_probe.py \
+        --blender /home/mak/blender/blender \
+        --render-report /tmp/mak-render-edges.json \
+        --output /tmp/mak-blender-probe-decoder.json \
+        --timeout 90
+
+usó Blender 4.5.4 LTS sobre los 55 DECODER_LIMIT: 54 abrieron y 1 quedó
+DECODER_LIMIT. Devolvió 67 filas de escenas; 33 resolvían a directorio, pero 25
+eran suspect y se mantuvieron solo como reporte, especialmente los assets que
+declaran // como carpeta de trabajo. Esto confirma que preguntar a Blender es
+un buen fallback de lectura, no una licencia para transformar cada
+scene.render.filepath en una arista de entrega. El único fallo nativo fue el
+asset denim-fabric-06; no se inventó una ruta para él.
+
+**Resultado semántico.** El método óptimo para este dato es híbrido: parser
+estático como primera pasada, Blender solo para DECODER_LIMIT, y la misma puerta
+de directorio/candidate_count después de ambos. GPU no participa porque no hay
+render: son IO, descompresión y lectura de RNA/escena. La evidencia sigue
+siendo project -> directory, nunca project -> one chosen file.
+
+**Pruebas foreground.**
+
+    .venv/bin/python -m pytest -q tests/test_blender_scene_probe.py \
+        tests/test_render_output_edges.py tests/test_aepfile.py -> EXIT 0
+    .venv/bin/python -m py_compile tools/blender_scene_probe.py \
+        tests/test_blender_scene_probe.py tools/render_output_edges.py \
+        tests/test_render_output_edges.py src/flujo/substrate/schema.py -> EXIT 0
+    git diff --check -> EXIT 0
+
+**Siguiente acción.** Witness PNG. Los 55 archivos no legibles y los 25
+directorios suspect siguen siendo UNKNOWN/report-only; no se rellenan con
+suposiciones.
 
 ## Physical authority and migration status
 
