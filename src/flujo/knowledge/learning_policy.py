@@ -33,6 +33,7 @@ VERIFIED_OUTCOME_STATUSES = {"succeeded", "success", "verified", "accepted"}
 VERIFIED_VALIDATION_STATUSES = {"ok", "passed", "verified"}
 MIN_EXAMPLES = 4
 MIN_HOLDOUT = 2
+MIN_HOLDOUT_GROUPS = 2
 MIN_ACCURACY = 0.60
 
 
@@ -145,13 +146,37 @@ def compile_dataset(database: str | Path) -> Dataset:
 
 
 def _group_split(examples: Sequence[Example]) -> tuple[list[Example], list[Example]]:
-    """Split by project id, never by episode, to prevent project leakage."""
-    train: list[Example] = []
-    holdout: list[Example] = []
+    """Split by project id, never by episode, with a non-empty group target.
+
+    A hash bucket can legally produce an empty holdout for a small dataset.
+    That makes the gate depend on luck rather than evidence.  We order project
+    groups by their stable hash and take enough whole groups for at least two
+    independent holdout projects, while always leaving one group for training.
+    """
+    grouped: dict[str, list[Example]] = defaultdict(list)
     for example in examples:
-        bucket = int(hashlib.sha256(example.project_id.encode("utf-8")).hexdigest()[:8], 16) % 5
-        (holdout if bucket == 0 else train).append(example)
-    return train, holdout
+        grouped[example.project_id].append(example)
+    if len(grouped) <= MIN_HOLDOUT_GROUPS:
+        return list(examples), []
+    ordered = sorted(
+        grouped,
+        key=lambda project_id: (hashlib.sha256(project_id.encode("utf-8")).hexdigest(), project_id),
+    )
+    target = max(MIN_HOLDOUT, math.ceil(len(examples) / 5))
+    holdout_projects: list[str] = []
+    holdout_count = 0
+    for project_id in ordered:
+        if len(holdout_projects) >= len(ordered) - 1:
+            break
+        holdout_projects.append(project_id)
+        holdout_count += len(grouped[project_id])
+        if len(holdout_projects) >= MIN_HOLDOUT_GROUPS and holdout_count >= target:
+            break
+    holdout_ids = set(holdout_projects)
+    return (
+        [example for example in examples if example.project_id not in holdout_ids],
+        [example for example in examples if example.project_id in holdout_ids],
+    )
 
 
 def _fit(train: Sequence[Example]) -> dict[str, Any]:
@@ -218,11 +243,29 @@ def fit_learning_policy(database: str | Path) -> dict[str, Any]:
     if len(dataset.examples) < MIN_EXAMPLES:
         return {**base, "status": "abstain", "reason": "insufficient_verified_examples"}
     train, holdout = _group_split(dataset.examples)
-    if len(holdout) < MIN_HOLDOUT:
-        return {**base, "status": "abstain", "reason": "no_independent_holdout", "train_count": len(train), "holdout_count": len(holdout)}
+    holdout_projects = sorted({item.project_id for item in holdout})
+    if len(holdout) < MIN_HOLDOUT or len(holdout_projects) < MIN_HOLDOUT_GROUPS:
+        return {
+            **base, "status": "abstain", "reason": "no_independent_holdout",
+            "train_count": len(train), "holdout_count": len(holdout),
+            "holdout_project_count": len(holdout_projects),
+        }
     model = _fit(train)
     if len(model["classes"]) < 2:
-        return {**base, "status": "abstain", "reason": "insufficient_label_classes", "train_count": len(train), "holdout_count": len(holdout)}
+        return {
+            **base, "status": "abstain", "reason": "insufficient_label_classes",
+            "train_count": len(train), "holdout_count": len(holdout),
+            "holdout_project_count": len(holdout_projects),
+        }
+    train_labels = set(model["classes"])
+    holdout_labels = {item.label for item in holdout}
+    unseen_labels = sorted(holdout_labels - train_labels)
+    if unseen_labels:
+        return {
+            **base, "status": "abstain", "reason": "holdout_label_unseen",
+            "train_count": len(train), "holdout_count": len(holdout),
+            "holdout_projects": holdout_projects, "unseen_holdout_labels": unseen_labels,
+        }
     predictions = [_predict(model, item.features)[0] for item in holdout]
     correct = sum(prediction == item.label for prediction, item in zip(predictions, holdout))
     accuracy = correct / len(holdout)
@@ -231,7 +274,7 @@ def fit_learning_policy(database: str | Path) -> dict[str, Any]:
         "train_count": len(train), "holdout_count": len(holdout),
         "holdout_accuracy": round(accuracy, 6), "holdout_baseline": round(baseline, 6),
         "correct": correct,
-        "holdout_projects": sorted({item.project_id for item in holdout}),
+        "holdout_projects": holdout_projects,
     }
     if accuracy < MIN_ACCURACY:
         return {**base, "status": "abstain", "reason": "holdout_below_gate", "evaluation": evaluation}

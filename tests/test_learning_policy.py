@@ -68,6 +68,41 @@ def test_verified_examples_split_by_project_and_can_pass_gate(tmp_path):
     assert result["evaluation"]["holdout_accuracy"] >= 0.60
 
 
+def test_group_split_does_not_accidentally_leave_holdout_empty(tmp_path):
+    database = tmp_path / "learning.sqlite"
+    store = LearningStore(database)
+    for index in range(5):
+        domain = "research" if index % 2 else "rd"
+        label = "research_job_router" if domain == "research" else "blend_scene_audit"
+        project = _project("small-project-" + str(index), domain, "text" if domain == "research" else "3d")
+        store.save_project(project)
+        _record(store, project["project_id"], label)
+    result = fit_learning_policy(database)
+    evaluation = result.get("evaluation", result)
+    assert evaluation["holdout_count"] >= 2
+    assert len(evaluation.get("holdout_projects", [])) >= 2 or result.get("holdout_project_count", 0) >= 2
+
+
+def test_holdout_label_missing_from_train_abstains_explicitly(tmp_path):
+    database = tmp_path / "learning.sqlite"
+    store = LearningStore(database)
+    cases = [
+        ("jardines-interpretativos-research", "research_job_router"),
+        ("mak-research-capture-job4-20260820", "research_job_router"),
+        ("mak-pnp-search-ecology-2026-08-19", "source_learning_bridge"),
+        ("mak-tennis-decision-lab-fixture-20260820", "tennis_shot_event_consumer"),
+        ("mak-research-simulation-candidate-20260820", "research_simulation_consumer"),
+    ]
+    for project_id, label in cases:
+        project = _project(project_id, "research", "text")
+        store.save_project(project)
+        _record(store, project["project_id"], label)
+    result = fit_learning_policy(database)
+    assert result["status"] == "abstain"
+    assert result["reason"] == "holdout_label_unseen"
+    assert result["unseen_holdout_labels"] == ["research_job_router"]
+
+
 def test_verified_result_adapter_requires_validator_and_is_idempotent(tmp_path):
     database = tmp_path / "learning.sqlite"
     store = LearningStore(database)
