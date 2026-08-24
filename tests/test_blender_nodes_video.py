@@ -45,6 +45,7 @@ def test_parse_args_video_defaults():
     assert args["frame_start"] == 1
     assert args["frame_end"] is None
     assert args["fps"] is None
+    assert args["layout"] == bnv.VIDEO_LAYOUT_FITWIDTH
 
 
 def test_parse_args_video_frame_range_son_enteros():
@@ -57,11 +58,11 @@ def test_parse_args_video_frame_range_son_enteros():
     assert args["fps"] == 30.0
 
 
-def test_parse_args_video_accepts_contain_bars():
+def test_parse_args_video_accepts_fitwidth_fade():
     args = bnv._parse_args([
-        "blender", "--", "--input", "clip.mp4", "--layout", "contain_bars",
+        "blender", "--", "--input", "clip.mp4", "--layout", "fitwidth_fade",
     ])
-    assert args["layout"] == "contain_bars"
+    assert args["layout"] == "fitwidth_fade"
 
 
 def test_parse_args_seq_requiere_input_y_out_dir():
@@ -83,9 +84,9 @@ def test_parse_args_seq_defaults():
 def test_parse_args_seq_accepts_layout_and_issue_flow():
     args = bnvs._parse_args([
         "blender", "--", "--input", "clip.mp4", "--out-dir", "frames/",
-        "--layout", "contain_bars", "--issue-flow", "video_other_aspect",
+        "--layout", "fitwidth_fade", "--issue-flow", "video_other_aspect",
     ])
-    assert args["layout"] == "contain_bars"
+    assert args["layout"] == "fitwidth_fade"
     assert args["issue_flow"] == "video_other_aspect"
 
 

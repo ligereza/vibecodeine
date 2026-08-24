@@ -44,23 +44,22 @@ that every reel is 16:9.
 | Input classified by downloader | Active renderer | Layout contract |
 | --- | --- | --- |
 | `image` | `render_flyer_mak.py` -> `blender_nodes.py` | `fitwidth_fade`: fill the opening width, preserve proportions, center vertically, and use the existing fade for vertical excess/shortfall. |
-| vertical video (`9:16`) | `render_video_sequence_mak.py` -> `blender_nodes_video_seq.py` | `video_portrait_9_16`: `cover_center`, fill the opening, preserve proportions, center X/Y and crop vertical excess. |
-| any other video ratio | `render_video_sequence_mak.py` -> `blender_nodes_video_seq.py` | `video_other_aspect`: `contain_bars`, preserve the full source, center X/Y and keep the unused opening as black bands. |
+| any video ratio | `render_video_sequence_mak.py` -> `blender_nodes_video_seq.py` | `fitwidth_fade`: fill the opening width, preserve proportions, center vertically, and use the existing fade for vertical excess/shortfall. The measured source ratio is retained in the manifest for evidence, not to select a different scale policy. |
 | `carousel` | image path using the downloaded poster | Current behavior is intentionally equivalent to the image path; it is not silently treated as a multi-video render. |
 | unknown or missing type | no renderer | Fail closed; do not guess whether the asset is an image or video. |
 
-### Video aspect decision
+### Video aspect evidence
 
 The wrapper measures the source with `ffprobe` before Blender runs and writes
 `issue_flow`, `layout.policy`, `layout.source_aspect_ratio`,
-`layout.window_aspect_ratio`, `layout.crop_axis`, `layout.bar_axis` and
+`layout.window_aspect_ratio`, `layout.crop_axis`, `layout.fade_axis` and
 `layout.black_bars` into `render_manifest.json`. It does not infer a flow
 from the filename or from the fact that the URL is an Instagram reel.
 
 | Measured source | Issue flow | Layout | Result |
 | --- | --- | --- | --- |
-| Ratio within `0.03` of portrait `9:16` | `video_portrait_9_16` | `cover_center` | Fill the glass; center X/Y; crop only top/bottom excess; no black bars. |
-| Any other ratio, including square, 4:5, 4:3, 16:9 and irregular video | `video_other_aspect` | `contain_bars` | Keep the full image; center X/Y; black bands occupy the unused axis. Wider sources therefore have upper/lower bands; unusually narrow sources have side bands. |
+| Ratio within `0.03` of portrait `9:16` | `video_portrait_9_16` | `fitwidth_fade` | Match the lateral borders; center vertically; fade the vertical excess/shortfall; preserve proportions. |
+| Any other ratio, including square, 4:5, 4:3, 16:9 and irregular video | `video_other_aspect` | `fitwidth_fade` | Same Blender mapping. The source ratio remains measured evidence; it does not silently switch to contain or cover. |
 
 Neither video flow stretches the image. A caller cannot silently select the
 wrong policy: a requested layout that disagrees with the measured flow fails
@@ -69,10 +68,10 @@ before Blender starts.
 ### Non-negotiable production choices
 
 - Preserve aspect ratio; never stretch.
-- Portrait 9:16 video uses cropping; every other video ratio uses black bands.
-- Center the source in both axes; do not carry a one-off reel offset forward.
-- Keep the still-image `fitwidth_fade`, portrait `cover_center`, and
-  non-portrait `contain_bars` paths separate.
+- Match the lateral borders for both stills and videos; use the vertical fade
+  for excess or shortfall rather than changing policy by media type.
+- Center the source vertically; do not carry a one-off reel offset forward.
+- Keep one shared `fitwidth_fade` production path for stills and videos.
 - Render video frames as PNG with Cycles 128 samples and verified GPU, as
   described above; do not silently reduce samples to solve a composition issue.
 

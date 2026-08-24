@@ -23,7 +23,7 @@ PORTRAIT_9_16_RATIO = 9 / 16
 PORTRAIT_9_16_TOLERANCE = 0.03
 VIDEO_FLOW_PORTRAIT = "video_portrait_9_16"
 VIDEO_FLOW_FRAMED = "video_other_aspect"
-VALID_LAYOUTS = {"cover_center", "contain_bars"}
+VALID_LAYOUTS = {"fitwidth_fade"}
 
 
 def probe_video(video: Path) -> dict:
@@ -84,12 +84,12 @@ def classify_video_flow(probe: dict) -> dict:
     if abs(aspect - PORTRAIT_9_16_RATIO) <= PORTRAIT_9_16_TOLERANCE:
         return {
             "flow": VIDEO_FLOW_PORTRAIT,
-            "layout": "cover_center",
+            "layout": "fitwidth_fade",
             "source_aspect_ratio": round(aspect, 6),
         }
     return {
         "flow": VIDEO_FLOW_FRAMED,
-        "layout": "contain_bars",
+        "layout": "fitwidth_fade",
         "source_aspect_ratio": round(aspect, 6),
     }
 
@@ -107,7 +107,7 @@ def build_blender_command(
     min_size: int = 20000,
     fps: float | None = None,
     persistent_data: bool = True,
-    layout: str = "cover_center",
+    layout: str = "fitwidth_fade",
     issue_flow: str = VIDEO_FLOW_PORTRAIT,
 ) -> list[str]:
     """Build the foreground Blender invocation used by MAK and CI."""

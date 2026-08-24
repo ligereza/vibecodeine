@@ -3,8 +3,10 @@ name: issue-descarga-ig
 # -> este workflow corre EN MAK (runner self-hosted) -> descarga la imagen o
 # el video real del link IG -> render Blender headless (sin Photoshop)
 # -> publicacion directa a OneDrive + comentario + cierre del issue.
-# Seguridad: dispara solo con label "instagram" (solo colaboradores
-# etiquetan); el body/titulo del issue entran SOLO via env (nunca
+# Seguridad: procesa un issue solo al abrirse con la etiqueta de accion, o
+# cuando se agrega especificamente "action/descargar-ig"; agregar cualquier
+# otra etiqueta no vuelve a renderizarlo. El body/titulo del issue entran SOLO
+# via env (nunca
 # interpolados en un comando shell).
 #
 # META-REGLA render: el gate foreground de MAK fue validado el 2026-08-15
@@ -53,7 +55,9 @@ concurrency:
 jobs:
   descarga:
     if: >
-      (github.event_name == 'issues' && contains(github.event.issue.labels.*.name, 'action/descargar-ig')) ||
+      (github.event_name == 'issues' &&
+       (github.event.action == 'opened' || github.event.label.name == 'action/descargar-ig') &&
+       contains(github.event.issue.labels.*.name, 'action/descargar-ig')) ||
       github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: [self-hosted, eventos]
     timeout-minutes: 30
@@ -183,10 +187,10 @@ jobs:
               --video "$VIDEO_PATH" --classify-only)
             case "$issue_flow" in
               video_portrait_9_16)
-                echo "media=video portrait=9:16 layout=cover_center"
+                echo "media=video portrait=9:16 layout=fitwidth_fade"
                 ;;
               video_other_aspect)
-                echo "media=video other-aspect layout=contain_bars"
+                echo "media=video other-aspect layout=fitwidth_fade"
                 ;;
               *)
                 echo "VIDEO_FLOW_UNKNOWN: $issue_flow"

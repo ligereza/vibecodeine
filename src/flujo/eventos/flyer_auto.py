@@ -271,11 +271,18 @@ def _download_via_embed(shortcode: str, temp_dir: Path, indice: int = 1) -> Path
     return out
 
 
-def _download_via_mirror(shortcode: str, temp_dir: Path) -> Path:
+def _download_via_mirror(shortcode: str, temp_dir: Path, indice: int = 1) -> Path:
     """Fallback sin login: mirror publico (IG bloquea instaloader anonimo desde 2026).
 
     Mejor esfuerzo sobre un servicio de terceros: si el mirror cambia su HTML o
     muere, volver a instaloader con sesion logueada (instaloader --login).
+
+    Respeta `indice` con el mismo criterio que _download_via_embed. Auditoria
+    encontro que esta via juntaba TODAS las slides del carrusel en
+    `candidatos` y siempre bajaba candidatos[0]: cuando parth-dl y el embed
+    fallan y esta es la que entrega, pisaba input_ig.jpg -- la fuente unica
+    del flyer -- con una slide distinta a la pedida, sin avisar. Se arreglo
+    ese mismo caso en _download_via_embed y se salto este por descuido.
     """
     import html as html_mod
     import urllib.request
@@ -303,9 +310,15 @@ def _download_via_mirror(shortcode: str, temp_dir: Path) -> Path:
                                 if "t51.2885-19" not in u and "t51.82787-19" not in u]
     if not candidatos:
         raise FileNotFoundError("El mirror no devolvio imagen del post.")
-    data = _fetch(candidatos[0], referer="https://imginn.com/")
+    # Mismo criterio que _download_via_embed: si el indice pedido no entra en
+    # candidatos se avisa y se usa la primera, nunca se sustituye en silencio.
+    elegida = candidatos[indice - 1] if 0 < indice <= len(candidatos) else candidatos[0]
+    data = _fetch(elegida, referer="https://imginn.com/")
     out = temp_dir / f"mirror_{shortcode}.jpg"
     out.write_bytes(data)
+    if indice > len(candidatos):
+        print(f"AVISO: se pidio la imagen {indice} pero el post tiene "
+              f"{len(candidatos)}. Se uso la primera.")
     return out
 
 
@@ -544,7 +557,7 @@ def run_eventos_flyer_auto(
                 downloaded = _download_via_embed(shortcode, temp_dir, indice)
             except Exception as e_embed:
                 print(f"parth-dl: {e_parth}\nembed: {e_embed}")
-                downloaded = _download_via_mirror(shortcode, temp_dir)
+                downloaded = _download_via_mirror(shortcode, temp_dir, indice)
 
         if input_img.exists():
             input_img.unlink()

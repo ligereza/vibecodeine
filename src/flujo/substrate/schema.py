@@ -71,12 +71,20 @@ REVISION_IN_LINEAGE = "revision_in_lineage"   # xmpMM:History event, a self-stat
 USES = "uses"                                 # xmpMM:Ingredients, ANOTHER document
 PANTRY_COPY_OF = "pantry_copy_of"             # xmpMM:Pantry, embedded ingredient metadata
 REFERENCES = "references"                     # a path string inside a project file
+# A project file declaring WHERE IT WRITES, which is not the same claim as
+# mentioning a path. Measured on this corpus: 27 declared render output paths
+# resolve to real directories holding 2189 files, and the declaration lives in
+# the SOURCE, so it survives any re-encode of the output. That is the only
+# reason the source-to-render chain is recoverable at all: it is read backwards
+# from the project, never forwards from the export.
+RENDERS_TO = "renders_to"                     # a project file's output path
 OBSERVED_AT = "observed_at"                   # a state seen at a location
 
 CONFLICTS_WITH = "conflicts_with"             # two claims that cannot both hold
 
 PREDICATES = (SAME_CONTENT, SAME_LINEAGE, DERIVED_FROM, REVISION_IN_LINEAGE,
-              USES, PANTRY_COPY_OF, REFERENCES, OBSERVED_AT, CONFLICTS_WITH)
+              USES, PANTRY_COPY_OF, REFERENCES, RENDERS_TO, OBSERVED_AT,
+              CONFLICTS_WITH)
 
 # Which predicates say "this is the same document over time" and which say
 # "this document consumed that one". Kept explicit so no caller can conflate them.
@@ -102,6 +110,12 @@ ADMISSIBLE_PREDICATES: dict[str, frozenset[str]] = {
     "xmp_packet": frozenset({SAME_LINEAGE, DERIVED_FROM, REVISION_IN_LINEAGE,
                              USES, PANTRY_COPY_OF, CONFLICTS_WITH}),
     "resolume_reference_regex": frozenset({REFERENCES}),
+    # A project file may say what it opens and what it writes. It may NOT say
+    # that one document derived from another: naming an output directory is not
+    # the same claim as orienting a lineage, and 482 files in one declared
+    # directory is 482 candidates for which one this save produced.
+    "blend_declaration": frozenset({REFERENCES, USES, RENDERS_TO}),
+    "aftereffects_declaration": frozenset({REFERENCES, USES, RENDERS_TO}),
     "filesystem": frozenset({OBSERVED_AT}),
     # The operator is the audited downgrade: the one authority that may orient an
     # edge from judgement rather than from a measurement. Every unsound step in
@@ -142,7 +156,7 @@ def _check_admissibility_table() -> None:
 
 
 SELF_CONTINUITY = frozenset({SAME_LINEAGE, DERIVED_FROM, REVISION_IN_LINEAGE})
-CROSS_DOCUMENT = frozenset({USES, PANTRY_COPY_OF, REFERENCES})
+CROSS_DOCUMENT = frozenset({USES, PANTRY_COPY_OF, REFERENCES, RENDERS_TO})
 
 # What the object of an edge IS, and whether this corpus contains it. These were
 # previously conflated, so "an ingredient that does not exist" and "an ingredient
@@ -198,6 +212,34 @@ AUTHORITIES: dict[str, dict[str, Any]] = {
                 "form the pattern does not match, it cannot tell an active clip "
                 "from a stale one, and a match is a mention rather than a "
                 "dependency. Marked weak on purpose.",
+    },
+    "blend_declaration": {
+        "what": "A static parse of a .blend file's block chain. Blender is never "
+                "launched, because launching an application to learn what it "
+                "references makes the answer depend on that application's "
+                "version, its addons and its ability to find the files.",
+        "claim": "that the project declares it opens or writes this path",
+        "strength": "strong",
+        "negative_is_evidence": False,
+        "coverage": "873 of 928 files parsed; 55 are DECODER_LIMIT. 63638 "
+                    "declarations, of which 193 are render output paths and 7516 "
+                    "are images. A declaration NOT found may still exist: node "
+                    "groups, library overrides and linked scenes are not modelled.",
+        "note": "A declared path is evidence with real weight because the file "
+                "states it. Its ABSENCE is not evidence, which is why "
+                "negative_is_evidence is False.",
+    },
+    "aftereffects_declaration": {
+        "what": "A static parse of an .aep RIFX chunk tree.",
+        "claim": "that the composition declares it opens or writes this path",
+        "strength": "strong",
+        "negative_is_evidence": False,
+        "coverage": "unmeasured. 408 .aep files exist on the disk and all 408 "
+                    "carry an XMP DocumentID, so unlike .blend they can be "
+                    "versioned; the internal chunk vocabulary is not documented "
+                    "and is declared incomplete.",
+        "note": "This is the half of the chain a .blend cannot supply: the step "
+                "from a rendered frame sequence to a delivered file.",
     },
     "filesystem": {
         "what": "Path, size and timestamps as reported by the operating system.",

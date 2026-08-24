@@ -23,7 +23,10 @@ reimplemented as a bounded target slice after comparison with current main.
 
 ## Verification
 
-    PYTHONPATH=src:. /home/mak/vibecodeine/.venv/bin/pytest -q tests/test_autonomia_cli.py tests/test_git_web_contract.py tests/test_readme_svg.py
+The command path below is normalized to the current canonical checkout; the
+pass count and exit code are historical evidence from this phase.
+
+    PYTHONPATH=src:. /home/mak/flujo/.venv/bin/pytest -q tests/test_autonomia_cli.py tests/test_git_web_contract.py tests/test_readme_svg.py
 
 Result: 19 passed, exit 0.
 

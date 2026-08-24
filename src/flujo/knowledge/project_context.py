@@ -17,6 +17,8 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from .project_ir import LearningStore, stable_json, now_iso
+from ..substrate import Absent, Resolution, Unique, resolve
+from ..substrate.epistemics import MISSING_EVIDENCE
 
 
 SCHEMA = "mak-project-context-v1"
@@ -253,21 +255,35 @@ def _effective_relation_status(
     return requested, {"rule": "declared_status_preserved", "groups": groups}
 
 
-def _resolve_project(con: sqlite3.Connection, item: Mapping[str, Any]) -> sqlite3.Row | None:
+def _resolve_project(con: sqlite3.Connection, item: Mapping[str, Any]) -> Resolution:
+    """Every ``project_records`` row a caller-supplied id or title matches.
+
+    MEASURED: ``project_records.title`` carries no UNIQUE constraint in the
+    DDL (plain ``title TEXT NOT NULL``) and is written by three producers --
+    ``reconstruction_adapter`` sets ``title=project_path`` (unique by
+    construction) but ``source_learning`` and ``math_kernel`` both pass an
+    arbitrary human- or JSON-authored ``case["title"]`` into the same table.
+    A title lookup can therefore return 0, 1, or N rows. ``project_id`` is the
+    table's PRIMARY KEY, so at most one row can ever match it -- that branch
+    stays the unambiguous escape hatch even when titles collide.
+    """
     project_id = _text(item.get("project_id"), 180)
     if project_id:
         row = con.execute(
             "SELECT project_id,title,state FROM project_records WHERE project_id=?", (project_id,)
         ).fetchone()
-        if row:
-            return row
+        return resolve([row] if row else [],
+                       witness=f"project_id primary key matched: {project_id}",
+                       cause=MISSING_EVIDENCE)
     title = _text(item.get("title"), 300)
     if title:
-        return con.execute(
-            "SELECT project_id,title,state FROM project_records WHERE title=? ORDER BY project_id LIMIT 1",
+        rows = con.execute(
+            "SELECT project_id,title,state FROM project_records WHERE title=? ORDER BY project_id",
             (title,),
-        ).fetchone()
-    return None
+        ).fetchall()
+        return resolve(rows, witness=f"title matched exactly one project_records row: {title}",
+                       cause=MISSING_EVIDENCE)
+    return Absent(cause=MISSING_EVIDENCE)
 
 
 def _context_summary(payload: Mapping[str, Any], project: Mapping[str, Any]) -> dict[str, Any]:
@@ -360,11 +376,24 @@ def persist_context(database: str | Path, payload: Mapping[str, Any]) -> dict[st
                 "status": effective_status, "decision": decision, "source_ids": source_ids,
             })
         for project in payload["projects"]:
-            row = _resolve_project(con, project)
-            if row is None:
-                project_rows.append({"project_id": _text(project.get("project_id"), 180),
-                                     "title": _text(project.get("title"), 300), "resolved": False})
+            resolution = _resolve_project(con, project)
+            if not isinstance(resolution, Unique):
+                # Absent or Many: writing project_contexts requires exactly one
+                # project_records row (its PRIMARY KEY is the target), so an
+                # ambiguous or missing title must not be narrowed to one by
+                # picking a candidate here -- see _resolve_project's docstring
+                # for the measured reason a title lookup can return N rows.
+                unresolved = {"project_id": _text(project.get("project_id"), 180),
+                             "title": _text(project.get("title"), 300), "resolved": False}
+                if not isinstance(resolution, Absent):
+                    unresolved["ambiguous"] = True
+                    unresolved["candidates"] = [
+                        {"project_id": str(candidate["project_id"]),
+                         "state": str(candidate["state"])}
+                        for candidate in resolution.candidates]
+                project_rows.append(unresolved)
                 continue
+            row = resolution.value
             project_id = str(row["project_id"])
             summary = _context_summary(payload, project)
             entity_ids = project.get("entity_ids", {})
@@ -418,9 +447,22 @@ def link_context_to_project_ir(database: str | Path, payload: Mapping[str, Any])
     with store.connect() as con:
         store.ensure_schema(con)
         for project in payload["projects"]:
-            row = _resolve_project(con, project)
-            if row is None:
+            resolution = _resolve_project(con, project)
+            if not isinstance(resolution, Unique):
+                # Requirement 6: an ambiguous title must produce an explicit
+                # unresolved outcome the caller can see, not a silent no-op --
+                # and it must not append/mutate this project's IR either way.
+                unresolved = {"project_id": _text(project.get("project_id"), 180),
+                             "title": _text(project.get("title"), 300), "resolved": False}
+                if not isinstance(resolution, Absent):
+                    unresolved["ambiguous"] = True
+                    unresolved["candidates"] = [
+                        {"project_id": str(candidate["project_id"]),
+                         "state": str(candidate["state"])}
+                        for candidate in resolution.candidates]
+                updates.append(unresolved)
                 continue
+            row = resolution.value
             record = json.loads(con.execute(
                 "SELECT ir_json FROM project_records WHERE project_id=?", (row["project_id"],)
             ).fetchone()[0])
@@ -462,8 +504,14 @@ def link_context_to_project_ir(database: str | Path, payload: Mapping[str, Any])
 
 
 def build_report(result: Mapping[str, Any], updates: list[Mapping[str, Any]]) -> dict[str, Any]:
+    # An unresolved entry (Absent or Many from _resolve_project) carries
+    # "resolved": False and no "state_preserved" key at all, because nothing
+    # was written for it. Counting it here via the ``False`` default would
+    # misreport an ambiguous or missing title as a state change that never
+    # happened, so it is excluded from the count rather than defaulted.
+    written = [item for item in updates if item.get("resolved", True)]
     return {**dict(result), "project_ir_updates": [dict(item) for item in updates],
-            "state_changes": sum(not item.get("state_preserved", False) for item in updates),
+            "state_changes": sum(not item.get("state_preserved", False) for item in written),
             "postulations_created": 0}
 
 

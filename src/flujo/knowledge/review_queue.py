@@ -68,6 +68,8 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 
 from .project_ir import ALLOWED_TRANSITIONS, LearningStore, ProjectIRError
+from ..substrate import Absent, Many, Resolution, resolve
+from ..substrate.epistemics import MISSING_EVIDENCE
 
 CONTRACT = "mak-review-queue-v1"
 
@@ -288,11 +290,21 @@ def load_queue(database: str | Path, *, state: str = REVIEW_STATE,
             unknowns=list(record.get("unknowns") or ()),
             updated_at=str(row["updated_at"] or ""),
         ))
-    by_title = {item.title: item for item in items}
+    # A THIRD occurrence of the audited pattern: this used to be
+    # ``by_title = {item.title: item for item in items}``, a dict literal that
+    # silently kept whichever same-titled record was built last and dropped
+    # its bytes from every subtree total above it. This is a read total, not a
+    # write, so the fix is not Unique/Many/Absent (nothing here picks "the"
+    # project to mutate) -- it is to stop discarding rows and sum bytes_total
+    # across every item that carries a given descendant title.
+    by_title: dict[str, list[QueueItem]] = {}
+    for entry in items:
+        by_title.setdefault(entry.title, []).append(entry)
     for item in items:
         item._subtree_bytes = item.bytes_total + sum(
-            by_title[title].bytes_total for title in item.pending_descendants
-            if title in by_title)
+            entry.bytes_total
+            for title in item.pending_descendants
+            for entry in by_title.get(title, ()))
     if review_pass == PASS_RECOGNIZE:
         items.sort(key=lambda item: item.material_key)
     else:
@@ -311,6 +323,25 @@ def inherited_proposals(item: QueueItem, to_state: str) -> list[str]:
     return []
 
 
+def resolve_title(items: Sequence[QueueItem], title: str) -> Resolution:
+    """Every pending item with exactly this title, as a Resolution.
+
+    MEASURED: ``project_records.title`` carries no UNIQUE constraint in the
+    DDL (plain ``title TEXT NOT NULL``) and is written by three producers
+    (``reconstruction_adapter`` sets ``title=project_path``, unique by
+    construction; ``source_learning`` and ``math_kernel`` pass an arbitrary
+    human- or JSON-authored ``case["title"]`` into the same table). A title
+    lookup can therefore already return 0, 1, or N rows even though the
+    snapshot measured at audit time (41 rows, 0 duplicate titles) had not
+    shown a collision yet. This replaces the previous
+    ``by_title = {item.title: item for item in items}`` dict literal, which
+    silently kept whichever same-titled row happened to be built last.
+    """
+    matches = [item for item in items if item.title == title]
+    return resolve(matches, witness=f"title matched exactly one pending item: {title}",
+                    cause=MISSING_EVIDENCE)
+
+
 def decide(database: str | Path, project_id: str, to_state: str, *,
            reason: str, actor: str,
            evidence: Sequence[Mapping[str, Any]] = (),
@@ -320,6 +351,12 @@ def decide(database: str | Path, project_id: str, to_state: str, *,
     ``cascade_titles`` must be named explicitly by the caller. An inherited
     rejection is a proposal until a person applies it, so nothing propagates as
     a side effect of this call.
+
+    If any name in ``cascade_titles`` resolves to more than one pending
+    record, the WHOLE call is refused before a single ``transition_project``
+    executes -- including the primary ``project_id`` decision. A partial
+    cascade is worse than none: the operator who asked for it believes the
+    whole subtree was handled, when only the unambiguous half of it was.
     """
     reason = str(reason or "").strip()
     actor = str(actor or "").strip()
@@ -337,17 +374,27 @@ def decide(database: str | Path, project_id: str, to_state: str, *,
     applied: list[dict[str, str]] = []
     refused: list[dict[str, str]] = []
 
-    targets = [(project_id, reason)]
-    if cascade_titles:
-        by_title = {item.title: item for item in load_queue(database)}
-        for title in cascade_titles:
-            child = by_title.get(str(title))
-            if child is None:
-                refused.append({"title": str(title), "error": "not_pending"})
+    cascade_names = [str(title) for title in cascade_titles]
+    cascade_children: list[tuple[str, str]] = []
+    if cascade_names:
+        items = load_queue(database)
+        resolutions = {title: resolve_title(items, title) for title in cascade_names}
+        ambiguous = {title: res for title, res in resolutions.items()
+                    if isinstance(res, Many)}
+        if ambiguous:
+            detail = ",".join(f"{title}:{res.k}_candidates"
+                              for title, res in ambiguous.items())
+            raise ReviewQueueError(f"cascade_ambiguous: {detail}")
+        for title in cascade_names:
+            resolution = resolutions[title]
+            if isinstance(resolution, Absent):
+                refused.append({"title": title, "error": "not_pending"})
                 continue
-            targets.append((child.project_id,
-                            f"inherited from the decision on this container: {reason}"))
+            child = resolution.value
+            cascade_children.append((child.project_id,
+                                     f"inherited from the decision on this container: {reason}"))
 
+    targets = [(project_id, reason)] + cascade_children
     for target_id, target_reason in targets:
         try:
             store.transition_project(target_id, to_state, reason=target_reason,

@@ -22,15 +22,18 @@ The two target files are byte-identical to their physical WIN sources:
 
 ## Foreground evidence
 
+The command paths below are normalized to the current canonical checkout;
+the pass counts and exit codes are historical evidence from this phase.
+
 1. Offline physical-source gate:
 
-   PYTHONPATH=/home/mak/WIN/flujo /home/mak/vibecodeine/.venv/bin/pytest -q /home/mak/WIN/flujo/tests/test_inferential_archaeology.py
+   PYTHONPATH=/home/mak/WIN/flujo /home/mak/flujo/.venv/bin/pytest -q /home/mak/WIN/flujo/tests/test_inferential_archaeology.py
 
    Result: 27 passed, exit 0.
 
 2. Active-tree focused regression:
 
-   PYTHONPATH=src:. /home/mak/vibecodeine/.venv/bin/pytest -q tests/test_inferential_archaeology.py tests/test_source_pipeline.py tests/test_three_plane_manifest.py tests/test_knowledge_reconciliation.py
+   PYTHONPATH=src:. /home/mak/flujo/.venv/bin/pytest -q tests/test_inferential_archaeology.py tests/test_source_pipeline.py tests/test_three_plane_manifest.py tests/test_knowledge_reconciliation.py
 
    Result: 67 passed, exit 0.
 

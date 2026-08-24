@@ -110,8 +110,8 @@ def main():
                 frame_duration, args["layout"])
             print(f"Material '{mat.name}' {modo} layout={args['layout']} por nodos VIDEO (sin Photoshop).")
     else:
-        if args["layout"] != bnv.VIDEO_LAYOUT_PORTRAIT:
-            raise SystemExit("VIDEO_LAYOUT_TEMPLATE_REQUIRED: contain_bars requiere RD.blend con grafo flyer")
+        if args["layout"] != bnv.VIDEO_LAYOUT_FITWIDTH:
+            raise SystemExit("VIDEO_LAYOUT_TEMPLATE_REQUIRED: fitwidth_fade requiere RD.blend con grafo flyer")
         swapped = bnv.swap_existing_movie_nodes(video_path, frame_duration)
         if swapped < 1:
             raise SystemExit("VIDEO_NODE_REQUIRED: no hay nodos TEX_IMAGE con source MOVIE")

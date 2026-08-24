@@ -17,7 +17,7 @@ def test_extract_instagram_shortcode_invalid():
 
 
 def test_run_eventos_flyer_auto_copies_input_and_palette(monkeypatch, tmp_path: Path):
-    def fake_download(shortcode: str, temp_dir: Path) -> Path:
+    def fake_download(shortcode: str, temp_dir: Path, index: int = 1) -> Path:
         img = temp_dir / "downloaded.jpg"
         Image.new("RGB", (20, 20), "purple").save(img)
         return img
@@ -37,7 +37,7 @@ def test_run_eventos_flyer_auto_copies_input_and_palette(monkeypatch, tmp_path: 
 
 
 def test_run_eventos_flyer_auto_blender_render_mock(monkeypatch, tmp_path: Path):
-    def fake_download(shortcode: str, temp_dir: Path) -> Path:
+    def fake_download(shortcode: str, temp_dir: Path, index: int = 1) -> Path:
         img = temp_dir / "downloaded.jpg"
         Image.new("RGB", (20, 20), "red").save(img)
         return img

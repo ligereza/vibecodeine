@@ -8,7 +8,8 @@ ventana siempre; el alto sobrante lo maneja el fade (no el mapping).
 import pytest
 
 from flujo.eventos.blender_nodes import (
-    WINDOW_UV, classify_contain_layout, classify_cover_layout, fitcontain_mapping,
+    IMAGE_LAYOUT_POLICY, WINDOW_UV, classify_contain_layout,
+    classify_cover_layout, classify_fitwidth_layout, fitcontain_mapping,
     fitcover_mapping, fitwidth_mapping,
     hue_de_rgb,
     _parse_args, _resolver_ruta,
@@ -65,6 +66,23 @@ def test_fitwidth_input_muy_vertical_recorta_alto():
     assert u1[0] == pytest.approx(1.0, abs=1e-6)
     assert 0.0 < u0[1] < u1[1] < 1.0
     assert u0[1] == pytest.approx(1.0 - u1[1], abs=1e-6)  # banda centrada
+
+
+def test_shared_fitwidth_policy_matches_lateral_borders_and_fades_vertical():
+    layout = classify_fitwidth_layout(WINDOW_UV, FRAME_REAL, (718, 536))
+    assert layout["policy"] == IMAGE_LAYOUT_POLICY == "fitwidth_fade"
+    assert layout["crop_axis"] == "none"
+    assert layout["fade_axis"] == "vertical"
+    assert layout["centered"] is True
+    assert layout["distorted"] is False
+    assert layout["black_bars"] is False
+
+    scale, loc = fitwidth_mapping(WINDOW_UV, FRAME_REAL, (718, 536))
+    u0 = _aplicar((WINDOW_UV["x0"], WINDOW_UV["y0"]), scale, loc)
+    u1 = _aplicar((WINDOW_UV["x1"], WINDOW_UV["y1"]), scale, loc)
+    assert u0[0] == pytest.approx(0.0, abs=1e-6)
+    assert u1[0] == pytest.approx(1.0, abs=1e-6)
+    assert u0[1] < 0.0 < 1.0 < u1[1]
 
 
 def test_fitwidth_dimensiones_invalidas():
