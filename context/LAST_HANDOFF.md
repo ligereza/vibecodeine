@@ -66,15 +66,23 @@ aislamiento por grupo, y calcula métricas sin promover políticas.
 `tests/test_replay.py` verifica el caso real, el rechazo de leakage y la
 diferencia entre `passed`, `failed` y `abstained`.
 
-**Integración abierta.** Todavía falta construir el replay set de casos reales,
-añadir evaluación persistida de políticas versionadas y una reanudación
-automática desde el último checkpoint. No usar todavía GPU, fine-tuning,
-bandits ni promoción automática.
+**Resultado persistido.** Los cuatro targets declarados terminaron `EXIT 0`;
+se registraron dos evaluaciones `passed` en `data/mak_knowledge.db`, una por
+split, ambas con accuracy `1.0`, commit `5004db5` y el fingerprint anterior.
+Esto es una evaluación de regresión del replay set, no una promoción del
+router: `semantic_rules` sigue vacío y `tools/project_learning.py` continúa
+en `status=abstain`, `holdout_count=0`, porque su learner de rutas aún exige
+un holdout independiente de episodios etiquetados.
 
-**Siguiente acción concreta.** Ejecutar los cuatro validadores declarados,
-persistir el resultado por split en `learning_evaluations` y conectar ese
-reporte al director como gate informativo; después implementar la reanudación
-desde checkpoints sin permitir promoción automática.
+**Integración abierta.** Todavía falta conectar el reporte por split al
+director como gate informativo, añadir evaluación persistida de políticas
+versionadas y una reanudación automática desde el último checkpoint. No usar
+todavía GPU, fine-tuning, bandits ni promoción automática.
+
+**Siguiente acción concreta.** Conectar el reporte por split al director como
+gate informativo y preparar la reanudación desde checkpoints; después generar
+un segundo conjunto de casos de episodios verificados para que el learner de
+rutas pueda formar un holdout independiente real.
 
 **Última verificación.** 2026-08-24; worktree validado con `git diff --check`,
 tests del ledger en `EXIT 0` y conteos históricos sin cambios.
