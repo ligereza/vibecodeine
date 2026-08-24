@@ -72,11 +72,12 @@ USES = "uses"                                 # xmpMM:Ingredients, ANOTHER docum
 PANTRY_COPY_OF = "pantry_copy_of"             # xmpMM:Pantry, embedded ingredient metadata
 REFERENCES = "references"                     # a path string inside a project file
 # A project file declaring WHERE IT WRITES, which is not the same claim as
-# mentioning a path. Measured on this corpus: 27 declared render output paths
-# resolve to real directories holding 2189 files, and the declaration lives in
-# the SOURCE, so it survives any re-encode of the output. That is the only
-# reason the source-to-render chain is recoverable at all: it is read backwards
-# from the project, never forwards from the export.
+# mentioning a path. Measured 2026-08-24: 26 declared render output paths
+# resolve to real directories holding 2021 files among 927 .blend files; 55
+# files remain DECODER_LIMIT. The declaration lives in the SOURCE, so it
+# survives any re-encode of the output. That is the only reason the
+# source-to-render chain is recoverable at all: it is read backwards from the
+# project, never forwards from the export.
 RENDERS_TO = "renders_to"                     # a project file's output path
 OBSERVED_AT = "observed_at"                   # a state seen at a location
 
@@ -221,10 +222,13 @@ AUTHORITIES: dict[str, dict[str, Any]] = {
         "claim": "that the project declares it opens or writes this path",
         "strength": "strong",
         "negative_is_evidence": False,
-        "coverage": "873 of 928 files parsed; 55 are DECODER_LIMIT. 63638 "
-                    "declarations, of which 193 are render output paths and 7516 "
-                    "are images. A declaration NOT found may still exist: node "
-                    "groups, library overrides and linked scenes are not modelled.",
+        "coverage": "Measured 2026-08-24 over 927 .blend files: 872 parsed and "
+                    "55 are DECODER_LIMIT. The parsed files carry 192 scene "
+                    "output declarations; 26 resolve to directories holding "
+                    "2021 candidate files, while suspect directories are not "
+                    "persisted as ordinary render edges. A declaration NOT "
+                    "found may still exist: node groups, library overrides and "
+                    "linked scenes are not modelled.",
         "note": "A declared path is evidence with real weight because the file "
                 "states it. Its ABSENCE is not evidence, which is why "
                 "negative_is_evidence is False.",

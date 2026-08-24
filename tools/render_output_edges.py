@@ -9,21 +9,27 @@ SOURCE, so it survives any re-encode or recompression of the output -- which
 is the only reason a source-to-render chain is recoverable on this corpus at
 all. It is read backwards from the project, never forwards from the export.
 
-Measured by hand before this tool existed, and reproduced or explained here:
+The reproducible full run on 2026-08-24 over the current disk found:
 
-    193  render output paths declared across 873 readable .blend files
-    116  are the Blender default (/tmp) and carry no information
+    927  .blend files
+    872  readable; 55 are DECODER_LIMIT and stay unknown
+    192  scene output declarations in the readable files
+    104  are Blender's default (/tmp) and carry no location information
      10  point at another person's machine (a Windows or POSIX "Users" home)
-     35  rebase cleanly but the directory no longer exists here
-     27  RESOLVE to a real directory on this disk
-   2189  files live inside those 27 directories
+     32  rebase cleanly but the directory no longer exists here
+     26  resolve to a real directory on this disk
+   2021  files live inside those 26 directories
+
+The earlier hand count of 928 files, 193 declarations, 27 directories and
+2189 candidate files is stale; the current run is the authority for this
+checkpoint.
 
 Triangulated directly against the real disk while building this tool
 (read_references() on the actual files, not a transcription):
 
     SUERTE/TREBOL.blend       scene 'C:\\SUERTE\\1\\'                -> 100 files (flat `find -maxdepth 1 -type f`)
     3D JJJ/GORRO.blend        scene 'C:\\3D JJJ\\CUFFED\\focus\\'    -> 300 files
-    3D JJJ/ANIMACION.blend    scenes '/tmp\\' AND 'C:\\3D JJJ\\letrap\\' -> 481 files (hand count said 482; see VERIFY note)
+    3D JJJ/ANIMACION.blend    scenes '/tmp\\' AND 'C:\\3D JJJ\\letrap\\' -> 481 files
     LYON/MERECEDORA/MERECEDORA.blend  one scene, 'C:\\LYON\\MERECEDORA\\CACHE\\2\\3\\4\\New Folder\\343\\3\\' -> 156 files
 
 Three of four direct spot checks matched the hand count exactly; ANIMACION's
@@ -74,7 +80,7 @@ It may certify project -> DIRECTORY. It may NOT certify project -> FILE.
 3. The declared directory may have been rendered into by a different, later,
    or earlier state of the project than the one on disk right now.
 
-Consequently every Evidence row this tool writes uses predicate RENDERS_TO
+Consequently every non-suspect Evidence row this tool writes uses predicate RENDERS_TO
 under authority "blend_declaration" (already registered and already
 admissible for exactly this pair in ``schema.ADMISSIBLE_PREDICATES`` -- this
 module adds no predicate and no authority), with the object being the
@@ -217,7 +223,7 @@ def _split_path_tail(tail: str) -> list[str]:
 def leading_drive_letter(declared_path: str) -> str:
     """The raw drive letter a declaration starts with, or "(none)".
 
-    Used only for the report's drive-letter histogram: a tally over ALL 193
+    Used only for the report's drive-letter histogram: a tally over ALL 192
     declarations, independent of verdict, so a foreign Windows user-home path
     and a genuine project path both count under "C" -- the histogram
     answers "which letters appear at all", not "which letters resolved".
@@ -528,12 +534,13 @@ def main(argv: list[str] | None = None) -> int:
                     "extensions": decl["extensions"],
                 }
                 resolved_edges.append(edge)
-                sub.put_evidence(build_evidence(
-                    root_id=str(root), relative_path=row["relative_path"],
-                    ordinal=decl["ordinal"], resolved_path=decl["path"],
-                    candidate_count_value=decl["candidate_count"],
-                    suspect=decl["suspect"], recorded_at=run_started_at))
-                evidence_written += 1
+                if not decl["suspect"]:
+                    sub.put_evidence(build_evidence(
+                        root_id=str(root), relative_path=row["relative_path"],
+                        ordinal=decl["ordinal"], resolved_path=decl["path"],
+                        candidate_count_value=decl["candidate_count"],
+                        suspect=False, recorded_at=run_started_at))
+                    evidence_written += 1
 
     resolved_edges.sort(
         key=lambda e: (-e["candidate_count"], e["blend"], e["declared_path"]))
