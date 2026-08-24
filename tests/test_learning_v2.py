@@ -47,6 +47,10 @@ def test_run_events_are_append_only_and_idempotent(tmp_path):
 
     with sqlite3.connect(store.database) as con:
         assert con.execute("SELECT COUNT(*) FROM mak_run_events").fetchone()[0] == 1
+    checkpoints = store.run_events("run_event-demo")
+    assert len(checkpoints) == 1
+    assert checkpoints[0]["event_id"] == "event-demo"
+    assert checkpoints[0]["payload"] == {"candidate_actions": [{"tool": "read_only_probe"}]}
 
     with pytest.raises(ProjectIRError, match="run_event_id_conflict"):
         store.append_run_event(**{**event, "payload": {"candidate_actions": []}})
@@ -113,3 +117,9 @@ def test_evaluation_rejects_untracked_dataset(tmp_path):
             target_kind="policy", target_id="candidate", dataset_fingerprint="",
             split_kind="replay", status="abstained", metrics={},
         )
+
+
+def test_run_events_read_does_not_materialize_a_missing_database(tmp_path):
+    store = LearningStore(tmp_path / "missing.sqlite")
+    assert store.run_events("run-missing") == []
+    assert not store.database.exists()
