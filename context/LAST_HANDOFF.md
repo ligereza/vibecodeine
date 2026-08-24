@@ -2,10 +2,10 @@
 
 ## Current objective — 2026-08-24
 
-Cerrar y publicar el conjunto de consolidación MAK/WIN más la reparación del
-workflow visual de flyers, dejando una única ruta de autoría y una política
-determinista para imágenes y videos. El commit/push solicitado por el usuario
-queda pendiente hasta terminar la validación final de este mismo checkpoint.
+Conservar una única ruta de autoría MAK/WIN y una política determinista para
+imágenes y videos. Este checkpoint quedó publicado en `origin/main` como
+`ed9c6e2` después de la validación completa; el siguiente agente debe trabajar
+solo sobre los items abiertos que siguen abajo.
 
 ## Physical authority and migration status
 
@@ -89,25 +89,27 @@ el diff por archivo y separar cambios no autorizados.
 
 ## Open integration items
 
-- Validar el write set completo y publicar el commit solicitado en `origin/main`.
-- Después del push, confirmar checkout/runner y consumidores sin iniciar un
-  render de issue ni tocar outputs históricos.
+- Publicación cerrada: `git ls-remote origin refs/heads/main` confirmó que el
+  commit funcional `ed9c6e2` está en `origin/main`; el checkout local quedó
+  limpio antes de este ajuste documental.
+- El runner/Actions tomará este SHA mediante su checkout normal; no se inició
+  un job ni se relanzó un issue para validar el cambio, y no se tocaron outputs
+  históricos.
 - XIO sigue diferido y explícitamente no es un duplicado resuelto.
 
 ## Tool and dependency verification matrix
 
 | Slice | Consumer | Verification | Result |
 |---|---|---|---|
-| Image Blender | `tools/render_flyer_mak.py` -> `blender_nodes.build_flyer_nodes` | focused pytest + isolated Blender smoke | 52 focused tests passed; `RENDER_OK` |
+| Image Blender | `tools/render_flyer_mak.py` -> `blender_nodes.build_flyer_nodes` | focused pytest + isolated Blender smoke | 71 focused tests passed; full suite exit 0; `RENDER_OK` |
 | Video Blender | `tools/render_video_sequence_mak.py` -> `blender_nodes_video` | focused pytest + `py_compile` | passed; `fitwidth_fade` only |
 | Issue trigger | `.github/workflows/issue_descarga_ig.yml` | static condition review | only `opened` or exact action label |
 | Consolidated departments | `cultura/mak_*` and external compatibility paths | bounded physical/hash/consumer audit | source-only runtime code paths: 0 |
 
 ## Conflicts and risks
 
-- El worktree contiene cambios de ClaudeCode además de esta reparación; deben
-  publicarse solo porque el usuario autorizó explícitamente commit y push,
-  pero deben revisarse por archivo antes de stage.
+- El write set de ClaudeCode y esta reparación fueron revisados por archivo y
+  publicados por autorización explícita del usuario en `ed9c6e2`.
 - Los reportes históricos dentro de este handoff pueden contener rutas y
   estados viejos; este bloque superior es la continuidad vigente.
 - La prevención de reproceso evita el evento de etiqueta ajena; no convierte
@@ -115,14 +117,17 @@ el diff por archivo y separar cambios no autorizados.
 
 ## Next concrete action
 
-Ejecutar la batería focalizada y `git diff --check`, revisar el conjunto staged,
-crear el commit de `main`, hacer push a `origin/main`, y actualizar este bloque
-con el resultado real del push.
+ClaudeCode debe retomar el siguiente item real de integración desde este bloque,
+registrar evidencia antes de cambiar estado y no tocar XIO, `WIN`, RD creativo,
+bases, logs, media ni outputs. Si no existe un slice autorizado fuera de XIO,
+mantenerlo como diferido explícito y no inventar trabajo.
 
 ## Last verified
 
-2026-08-24 America/Santiago — reparación visual validada en Blender aislado;
-validación final y publicación aún pendientes.
+2026-08-24 America/Santiago — full pytest exit 0; 71 focused tests exit 0;
+`py_compile` exit 0; `git diff --check` exit 0; Blender aislado `RENDER_OK`;
+commit funcional `ed9c6e2` verificado en `origin/main`; no hay proceso de
+render activo.
 
 ## Current filesystem consolidation — 2026-08-24
 
@@ -131,10 +136,10 @@ historical `/home/mak/WIN` tree was left untouched. The former duplicate
 checkout, deploy projection and synchronizer were retired after physical
 comparison; none remains an active source or route.
 
-The current Claude write set in `/home/mak/flujo` was not overwritten, reset,
-committed or pushed. Historical phase and recovered-source material is not an
-operational owner; only this handoff, `agents.md`, the runtime source and
-focused tests define the active baseline.
+The current Claude write set in `/home/mak/flujo` was preserved, reviewed and
+published as part of `ed9c6e2`. Historical phase and recovered-source material
+is not an operational owner; only this handoff, `agents.md`, the runtime source
+and focused tests define the active baseline.
 
 Department consolidation continued on 2026-08-24. The four canonical code
 families under `cultura/mak_plataforma`, `cultura/mak_research`,
@@ -223,8 +228,8 @@ vertical excess/shortfall is handled by the fade graph. The former video-only
 `cover_center`/`contain_bars` split is retained only as historical geometry
 helpers, not as a production policy. A real Blender smoke render with the
 user-supplied non-conventional image passed with `RENDER_OK` in an isolated
-`/tmp` check directory. The change remains in the canonical uncommitted write
-set and was not pushed or used to relaunch an issue.
+`/tmp` check directory. The change is published in `ed9c6e2`; it was not used
+to relaunch an issue.
 
 ## Active checkpoint — recovery after Claude quota — 2026-08-23
 
