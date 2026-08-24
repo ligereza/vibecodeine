@@ -7,6 +7,142 @@ imágenes y videos. Este checkpoint quedó publicado en `origin/main` como
 `ed9c6e2` después de la validación completa; el siguiente agente debe trabajar
 solo sobre los items abiertos que siguen abajo.
 
+## Slice validated - carousel index into the flyer source - 2026-08-24
+
+**Objetivo.** Validar como slice el arreglo que impide que el fallback de
+descarga sustituya en silencio una slide de carrusel distinta a la pedida, ya
+que esa imagen es la fuente unica del entregable.
+
+**Path exacto.** `src/flujo/eventos/flyer_auto.py`, funcion
+`_download_via_mirror` (parametro `indice`, seleccion y `AVISO`), y el call site
+que la alimenta con `_indice_pedido(url)`.
+
+**Consumidor.** `flyer_auto` escribe `input_ig.jpg`; de ahi salen
+`_extract_palette` y `_write_predominant_color`, y el render lo consume
+`tools/render_flyer_mak.py` llamando `blender_nodes.build_flyer_nodes`. Es el
+entregable, no un artefacto interno.
+
+**Motivo.** Una auditoria de esta sesion encontro que `_download_via_mirror`
+juntaba TODAS las slides en `candidatos` y bajaba `candidatos[0]` sin condicion,
+mientras sus dos hermanas en el mismo archivo (`_download_via_parth`,
+`_download_via_embed`) ya respetaban `?img_index=N`. Cuando las dos primeras
+fallan y el mirror entrega, pisaba `input_ig.jpg` con la slide equivocada sin
+avisar. El arreglo entro dentro de `ed9c6e2`, cuyo mensaje
+("consolidate media layout and retire duplicate sources") NO lo describe; por eso
+no estaba validado como slice y por eso se valida ahora.
+
+**Comandos foreground y exit code.**
+
+    .venv/bin/python -m pytest tests/test_flyer_carousel_index.py \
+        tests/test_eventos_flyer_auto.py -q          -> EXIT 0, 10 passed
+    smoke aislado en /tmp/mak_slice_smoke, red inyectada, sin tocar ningun issue
+
+**Resultado observado.**
+
+| pedido | descargado | aviso |
+| --- | --- | --- |
+| 1 | slide 1 | no |
+| 3 | slide 3 | no |
+| 4 | slide 4 | no |
+| 9 sobre 4 | slide 1 | SI, "se pidio la imagen 9 pero el post tiene 4" |
+
+`_indice_pedido` parsea `?img_index=3` y `?utm=x&img_index=2` correctamente, y
+devuelve 1 cuando no hay indice. El contrato de `_download_via_mirror` quedo
+identico al de `_download_via_embed`: misma firma, misma linea de seleccion,
+mismo texto de AVISO -- verificado leyendo ambas, no asumido.
+
+**Prueba de no-cambio en lo protegido.**
+
+- `blender_nodes.IMAGE_LAYOUT_POLICY == "fitwidth_fade"` y
+  `VIDEO_LAYOUT_POLICY = IMAGE_LAYOUT_POLICY`: sin tocar.
+- El archivo fuente no se modifica: la ruta es `shutil.copy(downloaded, input_img)`,
+  una copia de bytes. No hay recompresion, recorte ni redimension en este slice.
+- `.github/workflows/issue_descarga_ig.yml` linea 59 conserva el guard
+  `github.event.action == 'opened' || github.event.label.name == 'action/descargar-ig'`
+  junto al `contains(labels, 'action/descargar-ig')`: una etiqueta administrativa
+  como `gmail` no relanza render.
+- Arbol limpio contra `origin/main` en `a13ea15`. No hubo reset, checkout, clean
+  ni copia de arboles. El unico archivo que este agente modifica es este handoff.
+
+**Riesgo.**
+
+1. `ed9c6e2` absorbio trabajo que su mensaje no nombra: ademas del carrusel,
+   entraron `RENDERS_TO` y las autoridades `blend_declaration` /
+   `aftereffects_declaration` en `src/flujo/substrate/schema.py`, y
+   `tests/test_title_resolution.py`. Es recuperable con `git log -S`, pero un
+   lector del mensaje no lo encuentra. Registrado aqui para que la procedencia
+   exista fuera de Git.
+2. El mirror estaba 403 Cloudflare al 2026-07-22, asi que esta via se ejerce
+   poco. Eso explica por que el defecto no se noto; no lo hace menos real.
+3. El resolvedor de títulos fue validado en el slice siguiente. La base viva
+   conserva 41 filas, 0 títulos duplicados y 0 transiciones; la ambigüedad se
+   probó en una base temporal construida con el escritor real.
+4. `RENDERS_TO` y las dos autoridades nuevas estan en el schema SIN CONSUMIDOR:
+   las herramientas que las usarian no llegaron a escribirse. No se declara
+   consolidado.
+
+**Siguiente accion.** Mantener abierto el lector `.aep` y las aristas
+`RENDERS_TO`; antes de escribir cualquiera de ellas, usar el contrato semántico
+documentado abajo para no confundir un paquete de trabajo con su video entregado.
+
+## Slice validated - title resolution and cascade gate - 2026-08-24
+
+**Objetivo.** Validar que una decisión por título nunca escoja silenciosamente
+una fila y que una cascada no cruce subárboles cuando el título del contenedor
+es ambiguo.
+
+**Paths exactos.** `tools/project_review.py`,
+`src/flujo/knowledge/review_queue.py`,
+`src/flujo/knowledge/project_context.py` y
+`tests/test_title_resolution.py`.
+
+**Consumidores.** La CLI `tools/project_review.py` escribe únicamente mediante
+`LearningStore.transition_project`; `persist_context()` y
+`link_context_to_project_ir()` escriben contexto/IR. Todos exigen resolución
+`Unique` para escribir. `project_id` sigue siendo la salida inequívoca porque
+es PRIMARY KEY; un título con 0 o N coincidencias se abstiene.
+
+**Comandos foreground y resultados.**
+
+    .venv/bin/python -m pytest -q tests/test_title_resolution.py \
+        tests/test_review_queue.py tests/test_project_context.py -> EXIT 0
+    .venv/bin/python -m pytest -q -> EXIT 0
+    py_compile review_queue.py + test_title_resolution.py -> EXIT 0
+    git diff --check -> EXIT 0
+
+La lectura read-only de `data/mak_knowledge.db` devolvió 41
+`project_records`, 36 `review_required`, 4 `active`, 1 `candidate`, 0 títulos
+duplicados, 0 `project_transitions`, y confirmó que `title TEXT NOT NULL` no
+tiene `UNIQUE`. `project_review.py summary/list` leyó la base sin escribir.
+
+La validación del consumidor real se ejecutó sobre una copia temporal de esa
+base: `show DREFGIRA` resolvió el título a
+`project-6f330efb18a0c55ac588`; `decide --to quarantined` modificó solo la
+copia y creó una transición. El hash de la fuente fue
+`ac65df284ef13aa282f61099174d401e7372ed41de60f72bc63eab9010711c6f` antes y
+después; `SOURCE_UNCHANGED=true`.
+
+Además se agregó una regresión para dos contenedores con el mismo título y
+hijos distintos: una cascada por `project_id` se rechaza con
+`cascade_ambiguous: parent` antes de escribir cualquier transición. Una
+decisión directa por `project_id`, sin cascada, sigue siendo válida.
+
+**Contrato semántico para carpetas con video.** Una carpeta/proyecto representa
+el paquete de trabajo y sus artefactos; encontrar un `.mp4`, `.mov` o similar
+no permite concluir que la obra sea exclusivamente ese video. El video se
+clasifica como entregable/obra solo si una fuente declarativa, un manifest o un
+consumidor de entrega lo dice. Para `RENDERS_TO`, la arista es
+`project state -> declared output directory`; no es `project -> one chosen file`
+ni `folder -> video` por extensión. Si no existe esa declaración, conservar
+`candidate`/`unknown` y registrar el video como artefacto, sin elegirlo como
+identidad ni como salida.
+
+**Riesgo y siguiente acción.** La base viva no contiene aún una colisión real;
+la garantía de ambigüedad descansa en fixtures construidos con el writer real.
+El siguiente slice es el lector `.aep`, read-only y con formato/coverage
+declarados; no debe escribir `RENDERS_TO` hasta que su evidencia de composición
+y salida pase este contrato.
+
 ## Physical authority and migration status
 
 - Autoría e integración: `/home/mak/flujo`.

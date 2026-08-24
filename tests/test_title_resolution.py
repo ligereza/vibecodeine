@@ -250,6 +250,41 @@ def test_cascade_with_one_ambiguous_title_refuses_the_WHOLE_cascade(
     assert _states(database) == before_states, "not even the container's own state may move"
 
 
+def test_cascade_with_ambiguous_parent_title_refuses_before_crossing_subtrees(
+        tmp_path: Path) -> None:
+    """A project_id is enough for a direct decision, not for a title-built tree.
+
+    ``load_queue`` uses the declared title in ``contained_by`` to reconstruct
+    the pending tree. If two containers share that title, their children are
+    indistinguishable at this layer. A cascade must therefore abstain before
+    applying children from both subtrees to the one project_id.
+    """
+    database = tmp_path / "learning.db"
+    _seed(database, [
+        ("container-a", "Same Container", "review_required", ()),
+        ("container-b", "Same Container", "review_required", ()),
+        ("child-a", "Child A", "review_required", [{
+            "subject": "child-a", "predicate": "contained_by",
+            "object": "reconstruction://scope/Same Container",
+        }]),
+        ("child-b", "Child B", "review_required", [{
+            "subject": "child-b", "predicate": "contained_by",
+            "object": "reconstruction://scope/Same Container",
+        }]),
+    ])
+    items = load_queue(database)
+    container = next(item for item in items if item.project_id == "container-a")
+    assert set(inherited_proposals(container, "quarantined")) == {"Child A", "Child B"}
+
+    before_states = _states(database)
+    with pytest.raises(ReviewQueueError, match="cascade_ambiguous: parent"):
+        decide(database, "container-a", "quarantined", reason="audit fixture",
+               actor="tester", cascade_titles=inherited_proposals(container, "quarantined"))
+
+    assert _transition_count(database) == 0
+    assert _states(database) == before_states
+
+
 # ------------------------------------------------------------ project_context
 
 
