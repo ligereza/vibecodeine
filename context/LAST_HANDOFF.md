@@ -73,18 +73,22 @@ se registraron dos evaluaciones `passed` en `data/mak_knowledge.db`, una por
 split, ambas con accuracy `1.0`, commit `5004db5` y el fingerprint anterior.
 Esto es una evaluación de regresión del replay set, no una promoción del
 router: `semantic_rules` sigue vacío y `tools/project_learning.py` continúa
-en `status=abstain`, `holdout_count=0`, porque su learner de rutas aún exige
-un holdout independiente de episodios etiquetados.
+en `status=abstain`, ahora con `holdout_count=6`, dos proyectos y
+`reason=holdout_label_unseen`: `research_job_router` está en holdout pero no en
+train. El splitter dejó de depender de un bucket hash que podía producir cero
+holdout; exige al menos dos proyectos y la nueva prueba conserva la abstención
+cuando falta cobertura de una etiqueta.
 
 **Integración abierta.** Todavía falta usar un replay set sobre episodios
 verificados de rutas, añadir evaluación persistida de políticas versionadas y
 decidir una política explícita de recuperación ante ejecuciones interrumpidas.
 No usar todavía GPU, fine-tuning, bandits ni promoción automática.
 
-**Siguiente acción concreta.** Generar un segundo conjunto de casos a partir de
-episodios de rutas realmente verificados, separado por `project_id`, para que
-el learner de rutas pueda formar un holdout independiente real; usar el
-replay gate ya conectado solo como evidencia, no como promoción.
+**Siguiente acción concreta.** Obtener y verificar más episodios de rutas en
+proyectos independientes, especialmente una segunda familia de
+`research_job_router`, hasta que cada etiqueta del holdout también exista en
+train; usar el replay gate ya conectado solo como evidencia, no como
+promoción.
 
 **Última verificación.** 2026-08-24; worktree validado con `git diff --check`,
 tests del ledger en `EXIT 0` y conteos históricos sin cambios.
