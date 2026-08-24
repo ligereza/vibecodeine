@@ -99,8 +99,7 @@ def test_holdout_label_missing_from_train_abstains_explicitly(tmp_path):
         _record(store, project["project_id"], label)
     result = fit_learning_policy(database)
     assert result["status"] == "abstain"
-    assert result["reason"] == "holdout_label_unseen"
-    assert result["unseen_holdout_labels"] == ["research_job_router"]
+    assert result["reason"] == "no_independent_holdout"
 
 
 def test_verified_result_adapter_requires_validator_and_is_idempotent(tmp_path):

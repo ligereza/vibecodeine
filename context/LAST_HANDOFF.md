@@ -84,22 +84,25 @@ se registraron dos evaluaciones `passed` en `data/mak_knowledge.db`, una por
 split, ambas con accuracy `1.0`, commit `5004db5` y el fingerprint anterior.
 Esto es una evaluación de regresión del replay set, no una promoción del
 router: `semantic_rules` sigue vacío y `tools/project_learning.py` continúa
-en `status=abstain`, ahora con `holdout_count=6`, dos proyectos y
-`reason=holdout_label_unseen`: `research_job_router` está en holdout pero no en
-train. El splitter dejó de depender de un bucket hash que podía producir cero
-holdout; exige al menos dos proyectos y la nueva prueba conserva la abstención
-cuando falta cobertura de una etiqueta.
+en `status=abstain`, con `holdout_count=0`, `holdout_project_count=0` y
+`reason=no_independent_holdout`: solo `research_job_router` tiene dos grupos
+de proyecto con etiqueta repetida; los demás grupos elegibles no tienen una
+segunda familia etiquetada que permita un holdout independiente. El episodio
+externo de tenis está verificado, pero no declara `selected.tool_id` y por eso
+no se convierte en etiqueta de routing. El splitter dejó de depender de un
+bucket hash que podía producir cero holdout y ahora exige cobertura de etiqueta
+en train antes de seleccionar grupos.
 
 **Integración abierta.** Todavía falta usar un replay set sobre episodios
 verificados de rutas, añadir evaluación persistida de políticas versionadas y
 decidir una política explícita de recuperación ante ejecuciones interrumpidas.
 No usar todavía GPU, fine-tuning, bandits ni promoción automática.
 
-**Siguiente acción concreta.** Obtener y verificar más episodios de rutas en
-proyectos independientes, especialmente una segunda familia de
-`research_job_router`, hasta que cada etiqueta del holdout también exista en
-train; usar el replay gate ya conectado solo como evidencia, no como
-promoción.
+**Siguiente acción concreta.** Obtener y verificar episodios de routing con
+`selected.tool_id` explícito en proyectos independientes para al menos dos
+familias de etiquetas; el episodio externo de tenis requiere una nueva
+validación de routing antes de ser elegible. Usar el replay gate ya conectado
+solo como evidencia, no como promoción.
 
 **Última verificación.** 2026-08-24; worktree validado con `git diff --check`,
 suite completa en `EXIT 0`, tests del ledger en `EXIT 0` y conteos históricos
