@@ -139,9 +139,72 @@ identidad ni como salida.
 
 **Riesgo y siguiente acción.** La base viva no contiene aún una colisión real;
 la garantía de ambigüedad descansa en fixtures construidos con el writer real.
-El siguiente slice es el lector `.aep`, read-only y con formato/coverage
-declarados; no debe escribir `RENDERS_TO` hasta que su evidencia de composición
-y salida pase este contrato.
+El lector `.aep` siguiente quedó validado abajo; no debe escribir `RENDERS_TO`
+hasta que su evidencia de composición y salida pase este contrato.
+
+## Slice validated - After Effects reference reader - 2026-08-24
+
+**Objetivo.** Leer las referencias declaradas por After Effects sin abrir AE,
+sin tocar el archivo fuente y sin inferir cuál video o imagen es el entregable.
+
+**Paths exactos.** `src/flujo/substrate/aepfile.py` implementa el contrato
+`mak-aepfile-v1`; `tools/aep_reference_scan.py` hace el inventario read-only;
+`tests/test_aepfile.py` cubre el lector; `src/flujo/substrate/schema.py` y
+`CAPACIDADES.md` describen la autoridad y el consumidor.
+
+**Contrato de lectura.** Los archivos reales son `RIFX` con forma `Egg!` y
+contienen registros estructurados `fullpath`. El lector escanea todos los
+bytes dentro del límite de 512 MiB, conserva `declared_path`, metadatos
+opcionales y `byte_offset`, y cuenta los chunks top-level solo como
+diagnóstico. No reclama comprender el vocabulario privado completo de AE.
+Una diferencia entre el tamaño declarado por el encabezado y el tamaño físico
+observado se registra como `header.trailing_bytes`; no se llama truncación a
+una cola válida. `DECODER_LIMIT` queda reservado para encabezado inválido,
+archivo físicamente corto o exceder el límite.
+
+**Medición física reproducible.** Sobre `/home/mak/RD` y
+`/home/mak/curatoria_inbox` se contaron 145 archivos `.aep` (53 y 92). El
+comando:
+
+    .venv/bin/python tools/aep_reference_scan.py \
+        --root /home/mak/RD --root /home/mak/curatoria_inbox \
+        --output /tmp/mak-aep-scan-full.json
+
+produjo `file_count=145`, `files_with_references=138`,
+`reference_count=2304` (rutas únicas por archivo),
+`unique_declared_paths=309`, `decoder_limit_files=0`, y las 145 entradas con
+`completeness=exhaustive`. El encabezado dejó 1.534.167 bytes de cola en
+conjunto; la prueba dedicada confirma que no se pierden referencias ni se
+marca como truncado un archivo con esa forma. La afirmación anterior de 408
+`.aep` no se reproduce en estos roots actuales y ya no aparece como cobertura
+vigente en el schema.
+
+**Pruebas foreground.** `tests/test_aepfile.py` más los slices de revisión:
+
+    .venv/bin/python -m pytest -q tests/test_aepfile.py \
+        tests/test_title_resolution.py tests/test_review_queue.py \
+        tests/test_project_context.py       -> EXIT 0
+    .venv/bin/python -m pytest -q             -> EXIT 0
+    .venv/bin/python -m py_compile src/flujo/substrate/aepfile.py \
+        tools/aep_reference_scan.py tests/test_aepfile.py \
+        src/flujo/substrate/schema.py src/flujo/substrate/__init__.py -> EXIT 0
+    git diff --check                          -> EXIT 0
+
+También se comprobó la importación pública de `read_references()` sobre
+`/home/mak/RD/JOFF.aep`: `exhaustive`, 10 referencias, 4.674 bytes de cola,
+y ninguna clave `renders_to`.
+
+**Límites que quedan escritos.** Esta es evidencia de referencias declaradas,
+no una prueba de que la ruta exista, esté activa en una composición, sea la
+salida entregada o que el corpus físico esté completo. La ausencia de un
+`fullpath` no autoriza una conclusión negativa. El lector no escribe
+`RENDERS_TO`; la regla para carpetas con video sigue siendo paquete de trabajo
+más artefactos, con entrega solo cuando una fuente declarativa o consumidor lo
+afirma.
+
+**Siguiente acción.** Auditar el consumidor de `RENDERS_TO` y luego el witness
+PNG como slices separados. No generar aristas desde la extensión `.mp4`,
+`.mov` o desde la mera pertenencia a una carpeta.
 
 ## Physical authority and migration status
 
