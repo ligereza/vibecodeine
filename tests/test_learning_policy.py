@@ -1,6 +1,7 @@
 import json
+import sqlite3
 
-from flujo.knowledge.learning_policy import compile_dataset, fit_learning_policy, record_verified_result
+from flujo.knowledge.learning_policy import compile_dataset, fit_learning_policy, record_policy, record_verified_result
 from flujo.knowledge.project_ir import LearningStore, build_project_ir
 
 
@@ -66,6 +67,26 @@ def test_verified_examples_split_by_project_and_can_pass_gate(tmp_path):
     assert result["status"] == "candidate"
     assert result["recordable"] is True
     assert result["evaluation"]["holdout_accuracy"] >= 0.60
+
+
+def test_record_policy_persists_candidate_and_targeted_holdout_evaluation(tmp_path):
+    database = tmp_path / "learning.sqlite"
+    store = LearningStore(database)
+    for index in range(30):
+        domain = "research" if index % 2 else "rd"
+        label = "research_job_router" if domain == "research" else "blend_scene_audit"
+        project = _project("record-policy-project-" + str(index), domain, "text" if domain == "research" else "3d")
+        store.save_project(project)
+        _record(store, project["project_id"], label)
+    result = fit_learning_policy(database)
+    rule_id = record_policy(database, result)
+    assert store.rules(status="candidate")[0]["rule_id"] == rule_id
+    with sqlite3.connect(database) as con:
+        row = con.execute(
+            "SELECT target_kind,target_id,split_kind,status FROM learning_evaluations"
+        ).fetchone()
+    assert row == ("semantic_rule", rule_id, "holdout", "passed")
+    assert store.rules(status="candidate")[0]["evaluation_id"] == "evaluation-policy-" + result["policy_version"]
 
 
 def test_group_split_does_not_accidentally_leave_holdout_empty(tmp_path):
@@ -134,3 +155,20 @@ def test_verified_result_adapter_requires_validator_and_is_idempotent(tmp_path):
         assert str(exc) == "verified_result_validator_checks_required"
     else:
         raise AssertionError("invalid verification packet was accepted")
+
+
+def test_explicit_tool_path_with_route_check_becomes_a_known_label(tmp_path):
+    database = tmp_path / "learning.sqlite"
+    store = LearningStore(database)
+    project = _project("explicit-route-project", "tennis", "data")
+    store.save_project(project)
+    store.record_episode(
+        project_id=project["project_id"], objective="external projection",
+        phase="projection", action={"tool": "tools/tennis_shot_events.py"},
+        observation={}, outcome={"status": "verified"},
+        validation={"status": "passed", "checks": ["project_ir_route"]},
+        status="verified", episode_id="episode-explicit-route",
+    )
+    dataset = compile_dataset(database)
+    assert len(dataset.examples) == 1
+    assert dataset.examples[0].label == "tennis_shot_event_consumer"

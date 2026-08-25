@@ -83,30 +83,59 @@ diferencia entre `passed`, `failed` y `abstained`.
 se registraron dos evaluaciones `passed` en `data/mak_knowledge.db`, una por
 split, ambas con accuracy `1.0`, commit `5004db5` y el fingerprint anterior.
 Esto es una evaluación de regresión del replay set, no una promoción del
-router: `semantic_rules` sigue vacío y `tools/project_learning.py` continúa
-en `status=abstain`, con `holdout_count=0`, `holdout_project_count=0` y
-`reason=no_independent_holdout`: solo `research_job_router` tiene dos grupos
-de proyecto con etiqueta repetida; los demás grupos elegibles no tienen una
-segunda familia etiquetada que permita un holdout independiente. El episodio
-externo de tenis está verificado, pero no declara `selected.tool_id` y por eso
-no se convierte en etiqueta de routing. El splitter dejó de depender de un
-bucket hash que podía producir cero holdout y ahora exige cobertura de etiqueta
-en train antes de seleccionar grupos.
+router: antes de la normalización explícita del episodio externo,
+`tools/project_learning.py` daba `status=abstain`,
+`holdout_count=0`, `holdout_project_count=0` y
+`reason=no_independent_holdout`: solo `research_job_router` tenía dos grupos
+de proyecto con etiqueta repetida; los demás grupos elegibles no tenían una
+segunda familia etiquetada que permitiera un holdout independiente. El
+splitter dejó de depender de un bucket hash que podía producir cero holdout y
+ahora exige cobertura de etiqueta en train antes de seleccionar grupos.
 
-**Integración abierta.** Todavía falta usar un replay set sobre episodios
-verificados de rutas, añadir evaluación persistida de políticas versionadas y
-decidir una política explícita de recuperación ante ejecuciones interrumpidas.
+**Primer candidate lesson real.** La ruta externa de tenis tenía `tool` exacto
+`tools/tennis_shot_events.py` y el check `project_ir_route`; el learner ahora
+la acepta únicamente mediante ese mapeo explícito al contrato
+`tennis_shot_event_consumer`. La corrida real produjo `eligible_examples=12`,
+`train_count=6`, `holdout_count=6`, 2 proyectos de holdout,
+`holdout_accuracy=1.0` frente a baseline `0.833333`, y fingerprint
+`5b3c07d52eee3e87b1354176a8f306b1f762cf79fc00a3201f9ec834f3e259c3`.
+`tools/project_learning.py --record` registró
+`rule_learning_0d6971c0b5e85d7108c6` como `candidate` junto con la evaluación
+`evaluation-policy-0d6971c0b5e85d7108c6` dirigida a esa regla. No se promovió;
+el router solo consume reglas `promoted`.
+
+**Integración abierta.** Todavía falta un canary explícito de la candidate
+lesson contra casos nuevos etiquetados. La política operativa de recuperación
+ya está implementada: `MakDirector.recovery_plan(run_id)` lee el último
+checkpoint sin mutarlo, manda a re-probar una ejecución interrumpida en
+`running`, permite continuar la validación desde `observed` y solo recomienda
+registrar desde `validated` cuando la validación pasó; un fallo explícito se
+manda a cuarentena. El director conserva observaciones `needs_evidence` como
+evidencia, pero no las convierte en soporte de una regla.
+
+**Contrato canary.** `src/flujo/knowledge/canary.py` exige casos con
+`project_id`, `group_id`, `source_refs` y `expected_label` declarados, rechaza
+cualquier proyecto presente en el conjunto de entrenamiento y distingue
+`passed`, `failed` y `abstained`. `record_canary_evaluation` solo añade una
+evaluación `split_kind=canary`; no escribe reglas activas ni promueve la
+candidate. Aún no existe un paquete real de proyectos nuevos etiquetados, por
+lo que no se afirma un canary ejecutado: el siguiente input válido debe venir
+de una ejecución nueva y verificada.
+
 No usar todavía GPU, fine-tuning, bandits ni promoción automática.
 
-**Siguiente acción concreta.** Obtener y verificar episodios de routing con
-`selected.tool_id` explícito en proyectos independientes para al menos dos
-familias de etiquetas; el episodio externo de tenis requiere una nueva
-validación de routing antes de ser elegible. Usar el replay gate ya conectado
-solo como evidencia, no como promoción.
+**Siguiente acción concreta.** Obtener un paquete de casos nuevos y
+verificados, ejecutar el canary read-only con el contrato anterior, persistir
+su evaluación y mantener la regla como `candidate` si aparece cualquier
+abstención o contradicción. Solo después revisar soporte por episodio y el
+holdout dirigido; la promoción seguirá siendo manual y separada.
 
 **Última verificación.** 2026-08-24; worktree validado con `git diff --check`,
-suite completa en `EXIT 0`, tests del ledger en `EXIT 0` y conteos históricos
-sin cambios.
+ suite completa en `EXIT 0`, tests del ledger en `EXIT 0` y conteos históricos
+de records/episodios sin cambios; se añadió exactamente una regla candidate y
+una evaluación targeted de holdout. La regla conserva en `evaluation_id` el
+ID `evaluation-policy-0d6971c0b5e85d7108c6`; la base real queda en
+`41` records, `17` episodios, `1` candidate y `3` evaluaciones.
 
 ## Slice validated - PNG XMP adversarial witness - 2026-08-24
 
