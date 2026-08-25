@@ -136,9 +136,10 @@ manda a cuarentena. El director conserva observaciones `needs_evidence` como
 evidencia, pero no las convierte en soporte de una regla.
 
 **Contrato canary.** `src/flujo/knowledge/canary.py` exige casos con
-`project_id`, `group_id`, `source_refs` y `expected_label` declarados, rechaza
-cualquier proyecto presente en el conjunto de entrenamiento y distingue
-`passed`, `failed` y `abstained`. `record_canary_evaluation` solo añade una
+`project_id`, `group_id`, `source_refs`, `expected_label`, `validator` y una
+validación explícitamente `passed/verified`; rechaza cualquier proyecto o
+grupo presente en el conjunto de entrenamiento y distingue `passed`, `failed`
+y `abstained`. `record_canary_evaluation` solo añade una
 evaluación `split_kind=canary`; no escribe reglas activas ni promueve la
 candidate. Aún no existe un paquete real de proyectos nuevos etiquetados, por
 lo que no se afirma un canary ejecutado: el siguiente input válido debe venir
@@ -168,6 +169,9 @@ La suite completa posterior a esta corrección terminó nuevamente `EXIT 0`;
 los únicos avisos siguen siendo las 7 deprecaciones de Pillow ya conocidas.
 La idempotencia de `record_episode` también compara `started_at` y
 `finished_at`, y rechaza un mismo `episode_id` con timestamps distintos.
+Después del endurecimiento del canary, los tests dirigidos y la suite completa
+volvieron a terminar `EXIT 0`; el canary real sigue pendiente solo por falta
+de un caso nuevo que satisfaga el contrato independiente.
 
 ## Slice validated - PNG XMP adversarial witness - 2026-08-24
 

@@ -33,6 +33,8 @@ def _declared_cases(cases: Iterable[Mapping[str, Any]]) -> list[dict[str, Any]]:
         group_id = str(case.get("group_id") or "").strip()
         expected_label = str(case.get("expected_label") or "").strip()
         refs = case.get("source_refs")
+        validator = case.get("validator")
+        validation = case.get("validation")
         if not case_id or case_id in seen:
             raise CanaryError("canary_duplicate_or_missing_case_id")
         if not project_id:
@@ -43,12 +45,19 @@ def _declared_cases(cases: Iterable[Mapping[str, Any]]) -> list[dict[str, Any]]:
             raise CanaryError(f"canary_missing_expected_label: {case_id}")
         if not isinstance(refs, list) or not refs or not all(str(ref).strip() for ref in refs):
             raise CanaryError(f"canary_missing_source_refs: {case_id}")
+        if not isinstance(validator, Mapping) or not str(validator.get("kind") or "").strip():
+            raise CanaryError(f"canary_missing_validator: {case_id}")
+        validation_status = str(validation.get("status") or "").casefold() if isinstance(validation, Mapping) else ""
+        if validation_status not in {"ok", "passed", "verified"}:
+            raise CanaryError(f"canary_validation_not_passed: {case_id}")
         normalized.append({
             "case_id": case_id,
             "project_id": project_id,
             "group_id": group_id,
             "expected_label": expected_label,
             "source_refs": [str(ref).strip() for ref in refs],
+            "validator": dict(validator),
+            "validation": dict(validation),
         })
         seen.add(case_id)
     if not normalized:
@@ -68,6 +77,7 @@ def evaluate_canary(
     *,
     candidate_policy_id: str,
     training_project_ids: Iterable[str],
+    training_group_ids: Iterable[str],
     baseline: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Score a candidate against explicit, out-of-training cases."""
@@ -78,9 +88,15 @@ def evaluate_canary(
     training = {str(project_id).strip() for project_id in training_project_ids if str(project_id).strip()}
     if not training:
         raise CanaryError("canary_training_population_required")
+    training_groups = {str(group_id).strip() for group_id in training_group_ids if str(group_id).strip()}
+    if not training_groups:
+        raise CanaryError("canary_training_groups_required")
     leaked = sorted({case["project_id"] for case in declared} & training)
     if leaked:
         raise CanaryError("canary_project_in_training: " + ",".join(leaked))
+    leaked_groups = sorted({case["group_id"] for case in declared} & training_groups)
+    if leaked_groups:
+        raise CanaryError("canary_group_in_training: " + ",".join(leaked_groups))
 
     correct = 0
     missing: list[str] = []
@@ -120,6 +136,7 @@ def evaluate_canary(
         "errors": errors,
         "new_project_count": len({case["project_id"] for case in declared}),
         "new_project_ids": sorted({case["project_id"] for case in declared}),
+        "new_group_ids": sorted({case["group_id"] for case in declared}),
         "case_ids": [case["case_id"] for case in declared],
         "baseline_correct": baseline_correct if baseline is not None else None,
     }
