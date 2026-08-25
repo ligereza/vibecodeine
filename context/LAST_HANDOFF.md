@@ -10,10 +10,10 @@ historical body below.
 ### Current objective
 
 Continue MAK as an autonomous, reusable artistic archive operating system.
-The validated physical observer and temporal memory are the factual base. The
-active slice is now the smallest read-only bridge from archive-memory replay to
-the existing reconstruction vocabulary. Do not build Portfolio, an ARICA-only
-product, a second database or a mandatory user-review gate.
+The observer, temporal memory, reconstruction-input projection and bounded
+relation candidates are now validated. The active slice is Stage 2C: balanced
+project-unit reconstruction over those candidates. Do not build Portfolio, an
+ARICA-only product, a second database or a mandatory user-review gate.
 
 ### Physical authority and migration status
 
@@ -43,15 +43,32 @@ slice. The canonical direction is `docs/MAK_SYSTEM_DIRECTIVE.md`.
   DB creation, duplicate preservation, nullable symlink content, mtime
   idempotence, byte-change snapshots, tenant isolation and strict deterministic
   replay -> exit `0`.
+- Stage 2A `archive_reconstruction.py` projects every replayed physical
+  artifact and observer candidate exactly once, preserves null-content entries
+  and duplicate content groups, and excludes mtime/change_set from semantic
+  identity.
+- Stage 2B `archive_relation_inference.py` emits bounded candidates for physical
+  containment, duplicate identity uncertainty, sidecar description, local
+  native/output manifestation and numbered-sequence continuity. It promotes
+  zero facts and compacts limit/failure diagnostics.
+- `archive_relation_evaluator.py` is an independent falsification gate for
+  IDs, endpoints, evidence, inverse vocabulary, status, scores, bounds,
+  diagnostic leakage and tenant isolation.
+- Director validation across bootstrap, observer, memory, replay, Stage 2A,
+  Stage 2B, evaluator and Project IR: `62 passed`, exit `0`; compilation and
+  `git diff --check` exit `0`.
+- Bounded real run on `/home/mak/curatoria_inbox/ARICA/MYRA` using a temporary
+  DB: 43 artifacts, 1,484 observations, 96 candidates, 1,474 limit diagnostics
+  compacted into coverage, evaluator `valid=true/status=pass/errors=0`, source
+  bytes/mtimes unchanged.
 
 ### Open integration items
 
-- Build a read-only archive-memory projection for the existing reconstruction
-  vocabulary in `project_reconstruction.py` and `reconstruction_adapter.py`.
-- Infer ranked relation candidates from natural archive evidence without user
-  labels or automatic truth promotion.
 - Produce balanced reconstructed project units with dependencies separated from
-  works, then compare against the existing SSD-index baseline.
+  works, explicit `unassigned` artifacts and reconciliation, then compare
+  against the existing SSD-index baseline.
+- Add a Project IR projection only after unit reconstruction passes; the
+  factual authority remains archive memory.
 - Real archive execution remains bounded and read-only; no product compiler is
   connected until reconstruction passes its gate.
 
@@ -63,8 +80,11 @@ slice. The canonical direction is `docs/MAK_SYSTEM_DIRECTIVE.md`.
 | Temporal memory | `src/flujo/knowledge/archive_memory.py` | memory tests + fail-closed smoke | PASS |
 | Observer-memory pipeline | `tests/test_archive_pipeline.py` | strict E2E and replay | PASS |
 | Shared store migration | `src/flujo/knowledge/project_ir.py` | Project IR tests | PASS |
-| Existing reconstruction | `src/flujo/knowledge/project_reconstruction.py` | inspected; archive-memory bridge not implemented | OPEN |
-| Reconstruction adapter | `src/flujo/knowledge/reconstruction_adapter.py` | inspected; currently SSD-index based | OPEN |
+| Reconstruction input | `src/flujo/knowledge/archive_reconstruction.py` | 40-test slice + real MYRA run | PASS |
+| Relation inference | `src/flujo/knowledge/archive_relation_inference.py` | core tests + real bounded run | PASS; candidates only |
+| Independent evaluator | `src/flujo/knowledge/archive_relation_evaluator.py` | cross-smoke + adversarial tests | PASS |
+| Existing SSD reconstruction | `src/flujo/knowledge/project_reconstruction.py` | roles/inverses/balance reusable; SSD heuristics rejected | REUSE BOUNDARY |
+| Reconstruction adapter | `src/flujo/knowledge/reconstruction_adapter.py` | still SSD-index based; archive unit adapter not implemented | OPEN |
 
 ### Conflicts and risks
 
@@ -72,6 +92,9 @@ slice. The canonical direction is `docs/MAK_SYSTEM_DIRECTIVE.md`.
   contract `mak-observation-batch-v1`; it is obsolete and must not be reused.
 - `change_set` is diagnostic and may be misleading across different scan
   limits. It is not a transformation witness.
+- `max_files` currently records one `limit_reached` observation per omitted
+  path. Stage 2B compacts them correctly, but a later observer optimization may
+  summarize them earlier without changing semantic reconstruction.
 - The repository contains unrelated pre-existing worktree changes. Commit and
   validation for this checkpoint must remain path-limited.
 - The full repository suite has two known hygiene failures outside this slice;
@@ -79,20 +102,21 @@ slice. The canonical direction is `docs/MAK_SYSTEM_DIRECTIVE.md`.
 
 ### Next concrete action
 
-Implement the bounded pipeline:
+Implement Stage 2C over the accepted projection/candidate payloads:
 
-`replay_snapshot -> archive reconstruction features -> ranked relation
-candidates -> balanced project units -> deterministic reconstruction replay`.
+`ranked relation candidates -> balanced provisional project units +
+dependencies + explicit unassigned -> deterministic unit replay`.
 
-Reuse existing relation inverses and roles. Use temporary storage first. Do not
+Reuse existing reconstruction roles, inverse relations and reconciliation
+invariants. Do not reuse SSD-specific UUID/assets/container-root rules. Do not
 request user labels, mutate the production DB, connect Portfolio or start a
 permanent service.
 
 ### Last verified
 
-2026-08-25 America/Santiago — observer-memory slice accepted by the director;
-33 focused tests passed; compile, whitespace and independent E2E smoke exited
-`0`.
+2026-08-25 America/Santiago — observer-memory and Stage 2A/2B accepted by the
+director; 62 focused tests passed; compile, whitespace, independent E2E and
+bounded real MYRA smoke exited `0`.
 
 ## Agent bootstrap — HISTORICAL — pre-archive-memory correction
 
