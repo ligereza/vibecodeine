@@ -99,6 +99,38 @@ class ProjectIRTests(unittest.TestCase):
         with sqlite3.connect(self.db) as con:
             self.assertEqual(con.execute("SELECT COUNT(*) FROM project_artifacts WHERE availability='stale'").fetchone()[0], 2)
 
+    def test_episode_is_append_only_and_can_carry_versioned_provenance(self) -> None:
+        record = build_project_ir(
+            project_id="episode-provenance", title="Episode provenance", source_root=self.root,
+            artifacts=inventory_source(self.root), state="candidate",
+        )
+        store = LearningStore(self.db)
+        store.save_project(record)
+        episode_id = store.record_episode(
+            project_id="episode-provenance", objective="versioned probe", phase="probe",
+            action={"tool": "read_only_probe"}, observation={}, outcome={"status": "verified"},
+            validation={"status": "passed"}, status="verified", episode_id="episode-provenance-1",
+            source_snapshot_hash="sha256:source", code_commit="abc1234",
+            tool_versions={"python": "3.12"},
+        )
+        self.assertEqual(episode_id, "episode-provenance-1")
+        with sqlite3.connect(self.db) as con:
+            row = con.execute(
+                "SELECT source_snapshot_hash,code_commit,tool_versions_json FROM project_episodes"
+            ).fetchone()
+            self.assertEqual(tuple(row), ("sha256:source", "abc1234", '{"python":"3.12"}'))
+            with self.assertRaisesRegex(sqlite3.IntegrityError, "project_episodes_append_only"):
+                con.execute("UPDATE project_episodes SET status='failed' WHERE episode_id=?", (episode_id,))
+            with self.assertRaisesRegex(sqlite3.IntegrityError, "project_episodes_append_only"):
+                con.execute("DELETE FROM project_episodes WHERE episode_id=?", (episode_id,))
+
+        with self.assertRaisesRegex(ProjectIRError, "versioned_provenance_incomplete"):
+            store.record_episode(
+                project_id="episode-provenance", objective="incomplete", phase="probe",
+                action={}, observation={}, outcome={}, validation={}, status="verified",
+                source_snapshot_hash="sha256:only", episode_id="episode-provenance-2",
+            )
+
     def test_rule_requires_verified_outcomes_before_promotion(self) -> None:
         record = build_project_ir(
             project_id="rule-demo", title="Rule demo", source_root=self.root,

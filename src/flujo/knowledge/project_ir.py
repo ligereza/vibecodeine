@@ -493,6 +493,9 @@ class LearningStore:
                     model TEXT NOT NULL,
                     cost_json TEXT NOT NULL,
                     parent_episode_id TEXT,
+                    source_snapshot_hash TEXT NOT NULL DEFAULT '',
+                    code_commit TEXT NOT NULL DEFAULT '',
+                    tool_versions_json TEXT NOT NULL DEFAULT '{}',
                     started_at TEXT NOT NULL,
                     finished_at TEXT
                 );
@@ -589,6 +592,12 @@ class LearningStore:
                 CREATE TRIGGER IF NOT EXISTS mak_run_events_no_delete
                     BEFORE DELETE ON mak_run_events
                     BEGIN SELECT RAISE(ABORT, 'mak_run_events_append_only'); END;
+                CREATE TRIGGER IF NOT EXISTS project_episodes_no_update
+                    BEFORE UPDATE ON project_episodes
+                    BEGIN SELECT RAISE(ABORT, 'project_episodes_append_only'); END;
+                CREATE TRIGGER IF NOT EXISTS project_episodes_no_delete
+                    BEFORE DELETE ON project_episodes
+                    BEGIN SELECT RAISE(ABORT, 'project_episodes_append_only'); END;
                 CREATE TRIGGER IF NOT EXISTS learning_evaluations_no_update
                     BEFORE UPDATE ON learning_evaluations
                     BEGIN SELECT RAISE(ABORT, 'learning_evaluations_append_only'); END;
@@ -604,6 +613,16 @@ class LearningStore:
                 con.execute(
                     "ALTER TABLE mak_run_events ADD COLUMN run_id TEXT NOT NULL DEFAULT ''"
                 )
+            episode_columns = {
+                str(row[1]) for row in con.execute("PRAGMA table_info(project_episodes)")
+            }
+            for column, definition in (
+                ("source_snapshot_hash", "TEXT NOT NULL DEFAULT ''"),
+                ("code_commit", "TEXT NOT NULL DEFAULT ''"),
+                ("tool_versions_json", "TEXT NOT NULL DEFAULT '{}'"),
+            ):
+                if column not in episode_columns:
+                    con.execute(f"ALTER TABLE project_episodes ADD COLUMN {column} {definition}")
             rule_columns = {
                 str(row[1]) for row in con.execute("PRAGMA table_info(semantic_rules)")
             }
@@ -720,16 +739,28 @@ class LearningStore:
         episode_id: str | None = None,
         started_at: str | None = None,
         finished_at: str | None = None,
+        source_snapshot_hash: str = "",
+        code_commit: str = "",
+        tool_versions: Mapping[str, Any] | None = None,
     ) -> str:
         if status not in EPISODE_STATES:
             raise ProjectIRError(f"episode_bad_status: {status}")
         episode_id = episode_id or "episode_" + uuid.uuid4().hex
         start = started_at or now_iso()
+        source_snapshot_hash = _text(source_snapshot_hash, 128)
+        code_commit = _text(code_commit, 128)
+        if tool_versions is None:
+            tool_versions = {}
+        if not isinstance(tool_versions, Mapping):
+            raise ProjectIRError("episode_tool_versions_not_mapping")
+        if bool(source_snapshot_hash) != bool(code_commit) or bool(source_snapshot_hash) != bool(tool_versions):
+            raise ProjectIRError("episode_versioned_provenance_incomplete")
+        encoded_tools = _json(tool_versions)
         payload = (
             project_id, _text(objective, 1200), _text(phase, 120),
             _json(action), _json(observation), _json(outcome), _json(validation),
             status, _text(provider, 160) or "local", _text(model, 160), _json(cost),
-            _text(parent_episode_id, 120),
+            _text(parent_episode_id, 120), source_snapshot_hash, code_commit, encoded_tools,
         )
         with self.connect() as con:
             self.ensure_schema(con)
@@ -737,7 +768,8 @@ class LearningStore:
                 raise ProjectIRError(f"episode_unknown_project: {project_id}")
             existing = con.execute(
                 """SELECT project_id,objective,phase,action_json,observation_json,
-                   outcome_json,validation_json,status,provider,model,cost_json,parent_episode_id
+                   outcome_json,validation_json,status,provider,model,cost_json,parent_episode_id,
+                   source_snapshot_hash,code_commit,tool_versions_json
                    FROM project_episodes WHERE episode_id=?""",
                 (episode_id,),
             ).fetchone()
@@ -747,8 +779,8 @@ class LearningStore:
                 raise ProjectIRError(f"episode_id_conflict: {episode_id}")
             con.execute(
                 """INSERT INTO project_episodes
-                (episode_id,project_id,objective,phase,action_json,observation_json,outcome_json,validation_json,status,provider,model,cost_json,parent_episode_id,started_at,finished_at)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (episode_id,project_id,objective,phase,action_json,observation_json,outcome_json,validation_json,status,provider,model,cost_json,parent_episode_id,source_snapshot_hash,code_commit,tool_versions_json,started_at,finished_at)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (episode_id, *payload, start, finished_at),
             )
         return episode_id

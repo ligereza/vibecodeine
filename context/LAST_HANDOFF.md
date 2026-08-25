@@ -21,7 +21,9 @@ ejecuciones y registrar replay/holdout sin crear otra base de autoridad ni
 promover políticas automáticamente.
 
 **Implementado.** `src/flujo/knowledge/project_ir.py` agrega las tablas
-append-only `mak_run_events` y `learning_evaluations`. `LearningStore.append_run_event`
+append-only `mak_run_events` y `learning_evaluations`, y blinda
+`project_episodes` con triggers SQLite contra `UPDATE`/`DELETE`.
+`LearningStore.append_run_event`
 exige `source_snapshot_hash`, `code_commit` y `tool_versions`, agrupa cada
 checkpoint por `run_id`, y permite leer la cadena sin reabrir una ejecución.
 Repeticiones del mismo `event_id` son idempotentes solo si el payload completo
@@ -29,6 +31,13 @@ coincide y todo conflicto se rechaza. `LearningStore.record_learning_evaluation`
 exige un fingerprint de dataset y un split explícito (`replay`, `holdout`,
 `canary` o `shadow`); incluso `passed` queda como evidencia y no modifica
 ninguna regla.
+
+Los episodios creados por el camino v2 del director guardan además esa misma
+procedencia en `source_snapshot_hash`, `code_commit` y
+`tool_versions_json`. Los `17` episodios históricos existentes se conservan
+sin reescritura y sin rellenar procedencia retrospectiva no demostrable; la
+migración solo añade columnas con defaults vacíos y aplica el blindaje
+append-only hacia adelante.
 
 **Candidate lessons endurecidas.** `semantic_rules` ahora conserva
 `scope_json`, `expires_at`, `evaluation_id`, retractación y motivo de
@@ -53,9 +62,11 @@ alterar filas existentes.
 de eventos, procedencia obligatoria, evaluación con holdout sin promoción,
 rechazo de datasets sin fingerprint y lectura de checkpoints. Las tablas
 quedaron blindadas con triggers SQLite contra `UPDATE` y `DELETE`; también
-cubre scope, expiración y retractación de candidate lessons. La migración real
-añadió las cinco columnas nuevas sin cambiar los conteos (`41` records,
-`17` episodios, `0` reglas, `2` evaluaciones).
+cubre scope, expiración y retractación de candidate lessons. `tests/test_project_ir.py`
+verifica que un episodio versionado rechaza mutaciones directas y que una
+procedencia incompleta no se acepta. La migración añade las tres columnas de
+procedencia de episodios sin cambiar los conteos (`41` records, `17`
+episodios, `1` regla candidate, `3` evaluaciones).
 
 **Director implementado.** `src/flujo/knowledge/director.py` coordina
 `proposed -> running -> observed -> validated -> recorded`, emite todos los
@@ -136,6 +147,12 @@ de records/episodios sin cambios; se añadió exactamente una regla candidate y
 una evaluación targeted de holdout. La regla conserva en `evaluation_id` el
 ID `evaluation-policy-0d6971c0b5e85d7108c6`; la base real queda en
 `41` records, `17` episodios, `1` candidate y `3` evaluaciones.
+Después, la migración de procedencia de episodios se verificó en esa base en
+modo lectura: existen los tres campos nuevos y los triggers
+`project_episodes_no_update`/`project_episodes_no_delete`; el conteo de filas
+no cambió y `provenance_rows=0` para los históricos, como corresponde.
+La suite completa posterior a esta corrección terminó nuevamente `EXIT 0`;
+los únicos avisos siguen siendo las 7 deprecaciones de Pillow ya conocidas.
 
 ## Slice validated - PNG XMP adversarial witness - 2026-08-24
 

@@ -226,6 +226,9 @@ class MakDirector:
         episode_id = record_probe(
             self.store, project, decision, probe,
             episode_id=str(run.get("episode_id") or "") or None,
+            source_snapshot_hash=self.source_snapshot_hash,
+            code_commit=self.code_commit,
+            tool_versions=self.tool_versions,
         )
         event_id = self._event(
             run, event_type="director.record", state="recorded",

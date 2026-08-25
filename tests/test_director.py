@@ -48,6 +48,11 @@ def test_director_persists_full_checkpoint_chain_and_episode(tmp_path):
     ]
     assert result["events"]["state"] == "recorded"
     assert store.summary("director-demo")["episodes"] == {"needs_evidence": 1}
+    with store.connect() as con:
+        row = con.execute(
+            "SELECT source_snapshot_hash,code_commit,tool_versions_json FROM project_episodes"
+        ).fetchone()
+    assert tuple(row) == ("sha256:source", "abc1234", '{"python":"3.12"}')
 
 
 def test_director_attaches_replay_gate_and_reconstructs_checkpoint(tmp_path):
