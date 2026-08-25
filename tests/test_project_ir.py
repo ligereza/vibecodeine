@@ -130,6 +130,14 @@ class ProjectIRTests(unittest.TestCase):
                 action={}, observation={}, outcome={}, validation={}, status="verified",
                 source_snapshot_hash="sha256:only", episode_id="episode-provenance-2",
             )
+        with self.assertRaisesRegex(ProjectIRError, "episode_id_conflict"):
+            store.record_episode(
+                project_id="episode-provenance", objective="versioned probe", phase="probe",
+                action={"tool": "read_only_probe"}, observation={}, outcome={"status": "verified"},
+                validation={"status": "passed"}, status="verified", episode_id=episode_id,
+                source_snapshot_hash="sha256:source", code_commit="abc1234",
+                tool_versions={"python": "3.12"}, finished_at="2099-01-01T00:00:00+00:00",
+            )
 
     def test_rule_requires_verified_outcomes_before_promotion(self) -> None:
         record = build_project_ir(
