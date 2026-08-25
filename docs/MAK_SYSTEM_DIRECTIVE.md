@@ -113,7 +113,7 @@ autonomous path.
 
 ## Validated checkpoint
 
-Stages 1 and 2A-2C are complete:
+Stages 1 and 2A-2D are complete:
 
 - strict observer validation occurs before database creation or writes;
 - duplicate bytes at different paths remain different physical artifacts;
@@ -141,10 +141,16 @@ Stages 1 and 2A-2C are complete:
 - `archive_unit_evaluator.py` independently verifies provenance hashes, IDs,
   endpoints, membership, output-only constraints, zero truth promotion and
   exact reconciliation;
+- `archive_project_ir_adapter.py` projects each balanced unit exactly once into
+  a provisional `mak-project-ir-v1` record while preserving dependencies,
+  uncertainty and archive provenance; its independent evaluator rejects loss,
+  fabrication, truth promotion and reconciliation drift;
 - a read-only MYRA run produced 10 units from 1,517 artifacts and left 192
   artifacts explicitly unassigned under the 512-candidate bound; this is
   uncertainty, not evidence of artistic non-membership;
-- director acceptance on 2026-08-25: 78 focused tests passed; compilation,
+- director acceptance on 2026-08-25: 171 focused tests across archive stages,
+  Project IR, Copilot, departments, organs, Curatoria triangulation and
+  Conductor passed; compilation,
   path-limited `git diff --check` and the independent end-to-end cross-smoke
   exited 0; the real source remained unchanged.
 
@@ -213,14 +219,23 @@ artifacts into balanced project units. Libraries and shared resources remain
 dependencies rather than becoming fake projects. Emit a replayable unit
 reconstruction with complete assignment reconciliation.
 
-### Stage 2D: Project IR projection and autonomous evaluation (current)
+### Stage 2D: Project IR projection and autonomous evaluation (implemented)
 
 Project accepted units into additive Project IR records with archive-memory
 provenance and no fact promotion. Independently evaluate structural invariants,
 deterministic replay, assignment balance and reconciliation; then compare with
 the current lexicographic/index baseline.
 
-### Stage 3: cultural model and product compilers
+### Stage 3A: organism circulation (current)
+
+Connect provisional Project IR records to MAK's existing curatorial and
+department capabilities. `copilot.py` is the candidate-ranking, atlas and
+bounded-learning engine; `triangular.py` and its Conductor branch provide the
+reference circulation pattern from observed evidence to a sourced question and
+back. Reconcile the overlapping department/organ maps through capabilities and
+handoffs; do not create another registry.
+
+### Stage 3B: cultural model and product compilers
 
 Only after Stage 2 passes on generic fixtures and at least one bounded real
 archive snapshot should Portfolio, Application, Curatorial and Research
@@ -229,8 +244,9 @@ the shared model, never a hard-coded ARICA product.
 
 ## Immediate next action
 
-Implement and independently evaluate the smallest additive adapter from
-accepted Stage 2C units to Project IR. Archive memory remains factual authority;
+Implement and independently evaluate the smallest read-only circulation bridge
+from accepted Project IR records into the existing Copilot vocabulary and
+Curatoria/Research evidence-gap packets. No automatic dispatch or promotion;
 Portfolio and other product compilers remain disconnected.
 The gate is one real pipeline:
 
