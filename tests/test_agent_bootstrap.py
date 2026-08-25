@@ -27,8 +27,8 @@ class AgentBootstrapTests(unittest.TestCase):
     def test_current_packet_stops_before_historical_heading(self):
         handoff = (ROOT / "context/LAST_HANDOFF.md").read_text(encoding="utf-8")
         packet = current_packet(handoff)
-        self.assertIn("archive memory accepted", packet)
-        self.assertIn("62 focused tests passed", packet)
+        self.assertIn("Stage 2C accepted", packet)
+        self.assertIn("78 focused tests", packet)
         self.assertIn("docs/MAK_SYSTEM_DIRECTIVE.md", packet)
         self.assertIn("mak-archive-observation-batch-v1", packet)
         self.assertNotIn("## C02 — observación nativa real", packet)

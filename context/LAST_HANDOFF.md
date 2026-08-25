@@ -1,122 +1,75 @@
 # Operational Handoff
 
-## Agent bootstrap — CURRENT — 2026-08-25 — archive memory accepted
+## Agent bootstrap — CURRENT — 2026-08-25 — Stage 2C accepted
 
-**Operative rule.** This is the only current packet. Run
-`tools/agent_bootstrap.py`, read `agents.md`, `docs/MAK_CURRENT_STATE.md`, this
-packet and `docs/MAK_SYSTEM_DIRECTIVE.md`. Do not select a state from the
-historical body below.
+**Operative rule.** This is the only active packet. Bootstrap with
+`tools/agent_bootstrap.py`; use `docs/MAK_SYSTEM_DIRECTIVE.md` as the durable
+mission and the historical body below only as evidence.
 
-### Current objective
+### Mission and current objective
 
-Continue MAK as an autonomous, reusable artistic archive operating system.
-The observer, temporal memory, reconstruction-input projection and bounded
-relation candidates are now validated. The active slice is Stage 2C: balanced
-project-unit reconstruction over those candidates. Do not build Portfolio, an
-ARICA-only product, a second database or a mandatory user-review gate.
+MAK is an autonomous, reusable operating system for artistic archives:
+physical archive -> evidence memory -> work/project reconstruction -> cultural
+and curatorial intelligence -> portfolio/application/research compilers ->
+learning. ARICA, MYRA, RAYU and ISKVW are cases, never the architecture. Years
+of finished work are supervision; user review is optional, not a pipeline gate.
 
-### Physical authority and migration status
+Stage 2C is accepted. The active slice is Stage 2D: project the balanced units
+into additive Project IR records without promoting candidates to facts or
+changing archive memory authority. Do not connect Portfolio yet.
 
-`/home/mak/flujo` is the authoring/integration baseline. `/home/mak/WIN` is
-historical evidence. Archive roots are read-only inputs. Runtime roots,
-production databases, protected artwork and media are not changed by this
-slice. The canonical direction is `docs/MAK_SYSTEM_DIRECTIVE.md`.
+### Authority
 
-### Completed work with command and result
+`/home/mak/flujo` is the authoring baseline; `/home/mak/WIN` is historical
+evidence; archive roots are read-only inputs. Production databases, runtime
+roots, protected art and media remain outside the write set.
 
-- `archive_observer.py` emits strict, deterministic
-  `mak-archive-observation-batch-v1` batches and preserves physical identity,
-  byte identity, duplicates, symlinks, failures and candidate observations.
-- `archive_memory.py` validates the observer batch before opening SQLite and
-  materializes additive `archive_memory_v2_*` tables in `LearningStore`.
-- Physical artifacts are stable across snapshots; byte/content state is
-  versioned. Mtime-only changes are idempotent. Replay returns a strict batch
-  accepted by `archive_observer.validate_batch`.
-- Director verification:
-  `PYTHONPATH=. .venv/bin/python -m pytest -q
-  tests/test_archive_observer.py tests/test_archive_memory.py
-  tests/test_archive_pipeline.py tests/test_project_ir.py` -> `33 passed`,
-  exit `0`.
-- `py_compile` for observer, memory, Project IR and CLI -> exit `0`.
-- `git diff --check` for the slice -> exit `0`.
-- Independent temporary end-to-end smoke verified fail-closed ingestion before
-  DB creation, duplicate preservation, nullable symlink content, mtime
-  idempotence, byte-change snapshots, tenant isolation and strict deterministic
-  replay -> exit `0`.
-- Stage 2A `archive_reconstruction.py` projects every replayed physical
-  artifact and observer candidate exactly once, preserves null-content entries
-  and duplicate content groups, and excludes mtime/change_set from semantic
-  identity.
-- Stage 2B `archive_relation_inference.py` emits bounded candidates for physical
-  containment, duplicate identity uncertainty, sidecar description, local
-  native/output manifestation and numbered-sequence continuity. It promotes
-  zero facts and compacts limit/failure diagnostics.
-- `archive_relation_evaluator.py` is an independent falsification gate for
-  IDs, endpoints, evidence, inverse vocabulary, status, scores, bounds,
-  diagnostic leakage and tenant isolation.
-- Director validation across bootstrap, observer, memory, replay, Stage 2A,
-  Stage 2B, evaluator and Project IR: `62 passed`, exit `0`; compilation and
-  `git diff --check` exit `0`.
-- Bounded real run on `/home/mak/curatoria_inbox/ARICA/MYRA` using a temporary
-  DB: 43 artifacts, 1,484 observations, 96 candidates, 1,474 limit diagnostics
-  compacted into coverage, evaluator `valid=true/status=pass/errors=0`, source
-  bytes/mtimes unchanged.
+### Accepted checkpoints and evidence
 
-### Open integration items
+- `82768ca`: deterministic read-only `mak-archive-observation-batch-v1`
+  observer plus fail-closed temporal memory in additive
+  `archive_memory_v2_*` tables.
+- `708c948`: lossless Stage 2A projection plus bounded Stage 2B relation
+  candidates and an independent falsification gate.
+- `e453adc`: balanced Stage 2C provisional units plus an independent evaluator.
+  Every physical `artifact_ref` is assigned, ambiguous or unassigned exactly
+  once; dependencies stay separate; duplicate bytes never merge identities;
+  shared ancestors do not become synthetic projects; truth promotions are zero.
+- Director gate over observer, memory, replay, Stages 2A-2C, both evaluators and
+  Project IR: `78 passed`, exit `0`; Stage 2C `py_compile` and path-limited
+  `git diff --check`: exit `0`.
+- Independent Stage 2C cross-smoke: observe -> memory -> replay -> projection ->
+  relations -> units -> evaluator; `valid=true`, zero errors.
+- Read-only MYRA run with temporary SQLite: 1,517 artifacts, 23 observations,
+  512 bounded candidates, 10 units, 1,325 assigned, 0 ambiguous, 192 unassigned,
+  `balanced=true`; source unchanged.
 
-- Produce balanced reconstructed project units with dependencies separated from
-  works, explicit `unassigned` artifacts and reconciliation, then compare
-  against the existing SSD-index baseline.
-- Add a Project IR projection only after unit reconstruction passes; the
-  factual authority remains archive memory.
-- Real archive execution remains bounded and read-only; no product compiler is
-  connected until reconstruction passes its gate.
+### Boundaries and risks
 
-### Tool and dependency verification matrix
+- Candidates and provisional units are uncertainty, not facts. The 512-candidate
+  bound can increase `unassigned`; 192 MYRA unassigned does not mean artistic
+  non-membership.
+- `dependency_refs` are resolved physical references, intentionally not members
+  of the owning unit. `change_set` and limit diagnostics are non-semantic.
+- The historical packet's `mak-observation-batch-v1` contract is obsolete.
+- Unrelated worktree changes exist; keep commits and validation path-limited.
 
-| item | path | verification | result |
-|---|---|---|---|
-| Physical observer | `src/flujo/knowledge/archive_observer.py` | observer tests + CLI compile | PASS |
-| Temporal memory | `src/flujo/knowledge/archive_memory.py` | memory tests + fail-closed smoke | PASS |
-| Observer-memory pipeline | `tests/test_archive_pipeline.py` | strict E2E and replay | PASS |
-| Shared store migration | `src/flujo/knowledge/project_ir.py` | Project IR tests | PASS |
-| Reconstruction input | `src/flujo/knowledge/archive_reconstruction.py` | 40-test slice + real MYRA run | PASS |
-| Relation inference | `src/flujo/knowledge/archive_relation_inference.py` | core tests + real bounded run | PASS; candidates only |
-| Independent evaluator | `src/flujo/knowledge/archive_relation_evaluator.py` | cross-smoke + adversarial tests | PASS |
-| Existing SSD reconstruction | `src/flujo/knowledge/project_reconstruction.py` | roles/inverses/balance reusable; SSD heuristics rejected | REUSE BOUNDARY |
-| Reconstruction adapter | `src/flujo/knowledge/reconstruction_adapter.py` | still SSD-index based; archive unit adapter not implemented | OPEN |
+### Single next action
 
-### Conflicts and risks
+Implement and independently evaluate the Stage 2D adapter:
 
-- The historical packet below describes the rejected content-addressed memory
-  contract `mak-observation-batch-v1`; it is obsolete and must not be reused.
-- `change_set` is diagnostic and may be misleading across different scan
-  limits. It is not a transformation witness.
-- `max_files` currently records one `limit_reached` observation per omitted
-  path. Stage 2B compacts them correctly, but a later observer optimization may
-  summarize them earlier without changing semantic reconstruction.
-- The repository contains unrelated pre-existing worktree changes. Commit and
-  validation for this checkpoint must remain path-limited.
-- The full repository suite has two known hygiene failures outside this slice;
-  focused acceptance is green.
+`accepted Stage 2C units -> additive Project IR projections with provenance ->
+strict replay/reconciliation`.
 
-### Next concrete action
-
-Implement Stage 2C over the accepted projection/candidate payloads:
-
-`ranked relation candidates -> balanced provisional project units +
-dependencies + explicit unassigned -> deterministic unit replay`.
-
-Reuse existing reconstruction roles, inverse relations and reconciliation
-invariants. Do not reuse SSD-specific UUID/assets/container-root rules. Do not
-request user labels, mutate the production DB, connect Portfolio or start a
-permanent service.
+Archive memory remains factual authority. Reuse Project IR contracts, but not
+SSD-specific UUID, asset or container-root heuristics. No production DB writes,
+user-label gate, permanent service or Portfolio compiler.
 
 ### Last verified
 
-2026-08-25 America/Santiago — observer-memory and Stage 2A/2B accepted by the
-director; 62 focused tests passed; compile, whitespace, independent E2E and
-bounded real MYRA smoke exited `0`.
+2026-08-25 America/Santiago — Stages 1 and 2A-2C accepted by the director;
+78 focused tests, independent cross-smoke, compilation, whitespace and bounded
+real MYRA execution exited `0`.
 
 ## Agent bootstrap — HISTORICAL — pre-archive-memory correction
 
