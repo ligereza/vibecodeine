@@ -1,5 +1,440 @@
 # Operational Handoff
 
+## Agent bootstrap — CURRENT — 2026-08-25 — archive memory accepted
+
+**Operative rule.** This is the only current packet. Run
+`tools/agent_bootstrap.py`, read `agents.md`, `docs/MAK_CURRENT_STATE.md`, this
+packet and `docs/MAK_SYSTEM_DIRECTIVE.md`. Do not select a state from the
+historical body below.
+
+### Current objective
+
+Continue MAK as an autonomous, reusable artistic archive operating system.
+The validated physical observer and temporal memory are the factual base. The
+active slice is now the smallest read-only bridge from archive-memory replay to
+the existing reconstruction vocabulary. Do not build Portfolio, an ARICA-only
+product, a second database or a mandatory user-review gate.
+
+### Physical authority and migration status
+
+`/home/mak/flujo` is the authoring/integration baseline. `/home/mak/WIN` is
+historical evidence. Archive roots are read-only inputs. Runtime roots,
+production databases, protected artwork and media are not changed by this
+slice. The canonical direction is `docs/MAK_SYSTEM_DIRECTIVE.md`.
+
+### Completed work with command and result
+
+- `archive_observer.py` emits strict, deterministic
+  `mak-archive-observation-batch-v1` batches and preserves physical identity,
+  byte identity, duplicates, symlinks, failures and candidate observations.
+- `archive_memory.py` validates the observer batch before opening SQLite and
+  materializes additive `archive_memory_v2_*` tables in `LearningStore`.
+- Physical artifacts are stable across snapshots; byte/content state is
+  versioned. Mtime-only changes are idempotent. Replay returns a strict batch
+  accepted by `archive_observer.validate_batch`.
+- Director verification:
+  `PYTHONPATH=. .venv/bin/python -m pytest -q
+  tests/test_archive_observer.py tests/test_archive_memory.py
+  tests/test_archive_pipeline.py tests/test_project_ir.py` -> `33 passed`,
+  exit `0`.
+- `py_compile` for observer, memory, Project IR and CLI -> exit `0`.
+- `git diff --check` for the slice -> exit `0`.
+- Independent temporary end-to-end smoke verified fail-closed ingestion before
+  DB creation, duplicate preservation, nullable symlink content, mtime
+  idempotence, byte-change snapshots, tenant isolation and strict deterministic
+  replay -> exit `0`.
+
+### Open integration items
+
+- Build a read-only archive-memory projection for the existing reconstruction
+  vocabulary in `project_reconstruction.py` and `reconstruction_adapter.py`.
+- Infer ranked relation candidates from natural archive evidence without user
+  labels or automatic truth promotion.
+- Produce balanced reconstructed project units with dependencies separated from
+  works, then compare against the existing SSD-index baseline.
+- Real archive execution remains bounded and read-only; no product compiler is
+  connected until reconstruction passes its gate.
+
+### Tool and dependency verification matrix
+
+| item | path | verification | result |
+|---|---|---|---|
+| Physical observer | `src/flujo/knowledge/archive_observer.py` | observer tests + CLI compile | PASS |
+| Temporal memory | `src/flujo/knowledge/archive_memory.py` | memory tests + fail-closed smoke | PASS |
+| Observer-memory pipeline | `tests/test_archive_pipeline.py` | strict E2E and replay | PASS |
+| Shared store migration | `src/flujo/knowledge/project_ir.py` | Project IR tests | PASS |
+| Existing reconstruction | `src/flujo/knowledge/project_reconstruction.py` | inspected; archive-memory bridge not implemented | OPEN |
+| Reconstruction adapter | `src/flujo/knowledge/reconstruction_adapter.py` | inspected; currently SSD-index based | OPEN |
+
+### Conflicts and risks
+
+- The historical packet below describes the rejected content-addressed memory
+  contract `mak-observation-batch-v1`; it is obsolete and must not be reused.
+- `change_set` is diagnostic and may be misleading across different scan
+  limits. It is not a transformation witness.
+- The repository contains unrelated pre-existing worktree changes. Commit and
+  validation for this checkpoint must remain path-limited.
+- The full repository suite has two known hygiene failures outside this slice;
+  focused acceptance is green.
+
+### Next concrete action
+
+Implement the bounded pipeline:
+
+`replay_snapshot -> archive reconstruction features -> ranked relation
+candidates -> balanced project units -> deterministic reconstruction replay`.
+
+Reuse existing relation inverses and roles. Use temporary storage first. Do not
+request user labels, mutate the production DB, connect Portfolio or start a
+permanent service.
+
+### Last verified
+
+2026-08-25 America/Santiago — observer-memory slice accepted by the director;
+33 focused tests passed; compile, whitespace and independent E2E smoke exited
+`0`.
+
+## Agent bootstrap — HISTORICAL — pre-archive-memory correction
+
+**Operative rule.** This is the only current packet. A worker must receive it
+from the coordinator or run `tools/agent_bootstrap.py`; it must not choose a
+state by searching this file or reading the historical sections below.
+
+### Current objective
+
+Make MAK reconstruct one artist's archive as a multimodal, temporal and
+curatorial evidence graph across public manifestations, native authoring
+documents, components, sources, versions, phases, series and deliverables.
+Use relation candidates and a small portfolio planner instead of a fixed
+single-label classifier. A candidate is actionable uncertainty, not a
+terminal `unknown`. Do not train, promote router policies, infer authorship,
+or call a local artifact an output without an explicit export witness.
+
+### Physical authority and migration status
+
+`/home/mak/flujo` is the authoring/integration baseline. `/home/mak/WIN` is
+historical evidence and remains untouched. Real archive inputs are under
+`/home/mak/curatoria_inbox/ARICA`; runtime roots remain separate. Production,
+router, `active_policy`, databases, media and protected artwork are outside the
+current write set.
+
+### Completed work with command and result
+
+- C02 real native observation: Blender and AEP endpoints; gate `EXIT 0`.
+- C03 public-input normalizer and blind bridge; real social ZIP audited as
+  unavailable; gate `EXIT 0`.
+- C04 real MP4 observation plus AEP-to-media evidence evaluation; `uses` is
+  `supported`, dimensions are `observed`, output role is `unknown`; gate
+  `PYTHONPATH=. .venv/bin/python experiments/cycles/C04/verify_cycle.py` is
+  `EXIT 0` with 20 tests.
+- C05 real Blender export witness: `RAYU.blend` -> `rayu_export.py` ->
+  `rayu_resources.glb`; seven evidence checks pass, the source hash is
+  unchanged, and `witness_status=supported`. Gate
+  `PYTHONPATH=. .venv/bin/python experiments/cycles/C05/verify_cycle.py` is
+  `EXIT 0`.
+- C06 isolated graph bridge: the C05 witness materializes exactly one
+  `EXPORTS_TO` edge; three adversarial cases (missing refs, failed check,
+  `unknown` status) emit zero edges. Gate
+  `PYTHONPATH=. .venv/bin/python experiments/cycles/C06/verify_cycle.py` is
+  `EXIT 0`.
+- Current protocol repair: `tools/agent_bootstrap.py` emits this packet with
+  hashes and an explicit write-set; focused tests, compilation, packet
+  self-check and `git diff --check` pass.
+- C07 practice graph prototype: extracts deterministic artifact observations
+  (dimensions, aspect ratio, alpha, video metadata, sequence facts and XML/XMP)
+  and emits typed relation candidates with scores, evidence refs, alternatives,
+  missing evidence and next probes. Its five fixtures produce 17 candidates;
+  no candidate is emitted as terminal `unknown`. C07 tests, runner and
+  `py_compile` pass with `EXIT 0`.
+- C08 relational/curatorial evaluator: compares an empty no-relation baseline
+  against relation, phase and series candidates; its greedy portfolio planner
+  covers required phases, formats, ratios and chronology without repeating the
+  2,048-frame sequence. Tests (9 including integration), runner and
+  `py_compile` pass with `EXIT 0`.
+- C08/C07 integration: evaluates C07's graph on the same five C07 cases. The
+  fixture baseline recall is `0.000`; candidates reach recall `1.000` at top-5,
+  precision `0.400` at top-1 and `0.240` at top-5. All generated relations
+  remain `pending_relation` or `unresolved_candidate`; zero are promoted to
+  supported edges.
+
+### Context-integrator — archive memory contract — PASS — 2026-08-25
+
+- Bootstrap executed with the exact write-set for this worker; exit `0`. The
+  reserved observer files were not touched:
+  `src/flujo/knowledge/archive_observer.py`, `tools/archive_observer.py` and
+  `tests/test_archive_observer.py`.
+- `LearningStore.ensure_schema` now carries a compatible additive migration for
+  `archive_memory_archives`, `archive_memory_snapshots`,
+  `archive_memory_artifacts`, `archive_memory_artifact_states`,
+  `archive_memory_observations` and
+  `archive_memory_transformation_events`. Immutable snapshots, artifacts,
+  states, observations and transformation events have no-update/no-delete
+  triggers. Existing Project IR, episodes, rules and evaluations remain intact.
+- The production interface is
+  `flujo.knowledge.archive_memory.ingest_observation_batch(database, batch)`.
+  The observer must send `schema=mak-observation-batch-v1`, mandatory
+  `archive_id`, `source_root_ref`, a versioned `snapshot.snapshot_hash`,
+  content SHA-256 artifacts, observations with `method/evidence_refs/tool_version`
+  and transformations with `inputs/outputs/witness_refs/status`. IDs for
+  artifacts, observations and events are derived deterministically; re-ingest
+  of the same canonical batch is idempotent and conflicting payloads fail.
+- Read-only consumers are `list_archives`, `list_snapshots`, `list_artifacts`,
+  `list_observations`, `list_transformations` and `replay_snapshot`. Replay
+  returns a canonical snapshot plus `replay_hash`, preserving evidence and
+  witness references.
+- Validation commands exited successfully: `py_compile` for the changed
+  module/store/tests; focused suite
+  `tests/test_archive_memory.py tests/test_project_ir.py
+  tests/test_project_reconstruction.py tests/test_reconstruction_adapter.py`
+  passed `27`; `git diff --check` passed. The tests cover additive migration,
+  two-archive isolation, idempotent re-ingest, deterministic replay,
+  evidence/witness retention, immutable rows and snapshot conflicts.
+- The real `data/mak_knowledge.db` was inspected read-only and remains
+  untouched. It is compatible and currently reports the six archive-memory
+  tables as not materialized; the first observer ingestion will materialize
+  them through the existing store migration. No Portfolio, Research, Hub,
+  ARICA-01, lane or C09 surface was changed by this worker.
+- Risks: the observer must provide stable snapshot hashes and explicit tool
+  versions; missing those fields is rejected rather than guessed. Artifact
+  identity is content-addressed within each `archive_id`; cross-archive joins
+  are not implicit.
+
+### Gate 0 — una sola verdad operacional — PASS — 2026-08-25
+
+- Bootstrap executed with `tools/agent_bootstrap.py` using the current packet;
+  exit `0`. The write-set was limited to `src/flujo/knowledge/`,
+  `tools/mak_status.py`, the canonical Hub, tests, `experiments/cycles/ARICA-01/`
+  and this handoff.
+- Reproduction before the fix: the live listener was PID `71579` and ran
+  `/home/mak/flujo/cultura/mak_plataforma/hub.py`; `/api/status` declared the
+  physical projection `/home/mak/plataforma/hub.py`. CLI and Hub imported the
+  same status function, but the Hub source declaration was wrong and the two
+  callers passed different database path forms. `/api/mak` remained the
+  documented `404` (`ruta_api_no_encontrada`).
+- Root cause: `src/flujo/knowledge/system_status.py` selected the physical
+  `plataforma/hub.py` projection as the Hub source instead of the canonical
+  repository source, and resolved CLI/Hub ledger paths at different stages.
+  This was a source/provenance contract defect, not two independent policies.
+- Minimal correction: the shared status function now declares the canonical
+  Hub source, observes the running source from `/proc` against known candidates,
+  and resolves the ledger path once. `tools/mak_status.py` exposes the shared
+  policy schema/status/reason and review count. Focused tests and compilation
+  exited `0`; `git diff --check` exited `0`.
+- Reload used only the documented `systemctl --user restart mak-hub.service`.
+  The live process after reload was PID `1614247`, with the canonical command.
+  Normalized CLI JSON and `/api/status` matched exactly apart from timestamps:
+  schema `mak-system-status-v1`, status `attention`, counts
+  `attention=2/blocked=0/components=11/info=1`, policy
+  `candidate/holdout_gate_passed/12`, ledger
+  `/home/mak/flujo/data/mak_knowledge.db`, and observed runtime source
+  `/home/mak/flujo/cultura/mak_plataforma/hub.py`.
+
+### Gate 1 — ARICA-01 real evidence to reviewed draft — PASS — 2026-08-25
+
+- A read-only schema check found no existing `arica-01-portfolio-evidence`
+  record before the build. The explicit input set contains 14 real artifacts:
+  the RAYU Blender/export chain, `ARICA.aep`, its observed `tottem_ojo.mp4`,
+  `MYRA_final.mp4`, two frame endpoints and only the bridge/context files
+  needed to explain them. No input was copied or modified.
+- `PYTHONPATH=. .venv/bin/python tools/arica01_portfolio.py --build` exited
+  `0`: 14 artifacts, 4 candidates, snapshot
+  `19c5582438fd81f8f1d4dfeb05cbe24a57e89d83e89927897c2b3aa699b1a8d1`.
+  The queue contains the supported C05/C06 `RAYU.blend -> rayu_resources.glb`
+  export witness, the C04 supported `ARICA.aep uses tottem_ojo.mp4` claim with
+  output role still unknown, a real MYRA frame-family candidate, and
+  `MYRA_final.mp4 -> missing_source` with `source_binding=unknown`.
+- The first build attempt failed with `UnboundLocalError` in the new draft
+  projection because `path` was read before initialization. It was corrected
+  before persisting the real record; compile, focused tests and diff checks then
+  passed. This is retained as an implementation validation result, not hidden
+  as a data failure.
+- The product surface is the existing Hub plus the existing Project IR/ledger:
+  `GET /api/portfolio/evidence-queue`, `GET
+  /api/portfolio/evidence-draft`, and `POST
+  /api/portfolio/evidence-decision`. The live queue and draft returned `200`
+  after the documented Hub reload.
+- Three operator decisions were made through the live Hub route and persisted
+  as verified episodes: accept the RAYU export-event relation
+  (`episode_portfolio_94ce28da5b25a56b1b83559d`), correct the numbered frame
+  relation to `component_of MYRA_final.mp4`
+  (`episode_portfolio_38e4f2124929e946914c735c`), and request evidence for the
+  unresolved MYRA source (`episode_portfolio_c531217eab6bf3edc949c328`). The
+  derived queue is now `accept=1, correct=1, request_evidence=1, pending=1`;
+  the draft has two human-accepted effective relations and `promotion=none`.
+  The operator correction is provenance-bearing curation input, not an
+  inferred artist fact.
+- Derived experiment outputs are synchronized at
+  `experiments/cycles/ARICA-01/input_snapshot.json`, `relation_queue.json` and
+  `portfolio_draft.json`. The authority remains the single
+  `data/mak_knowledge.db:project_records.ir_json` record; no second base,
+  lane, C09 cycle or public catalog was created.
+- Final validation: `py_compile`, focused tests (`4 passed`), live queue/draft
+  reads and `git diff --check` passed. The second reload was the documented
+  `systemctl --user restart mak-hub.service`; no permanent auxiliary service
+  was opened.
+
+### Open integration items
+
+- `/media/mak/PortableSSD/descargas hasta RDFLYER 2050/instagram-iskvw-2025-04-08-jyAjQO7Z.zip`:
+  no posts/reels/stories/media; status `unavailable`, not a public catalog.
+- `/home/mak/curatoria_inbox/ARICA/ARICA.aep` plus any local artifact:
+  no explicit export witness observed; output role stays `unknown`.
+- C05 binds one concrete Blender export to `rayu_resources.glb`, but does not
+  prove final-delivery status or connect that artifact to a public post.
+- C06 proves only that a complete witness can be represented in the graph; the
+  public manifestation join remains unverified.
+- A bounded ARICA search found `MYRA_final.mp4`, PNG frames, `done ok=True`
+  markers, a sequencer log and real ffprobe metadata, but no `.uproject`,
+  `.uasset` or `.umap` under ARICA. It is observed activity/output with
+  `source_binding=unknown`, not a second supported export edge.
+- `tools/agent_bootstrap.py`: run it before every delegated edit and include
+  the resulting packet/hash acknowledgement in the worker report.
+- The C07/C08 fixtures are synthetic and do not constitute learned performance
+  on the real archive. They establish the contract and expose a
+  precision/recall tradeoff; real ARICA validation still needs a blinded
+  curator gold set.
+
+### Tool and dependency verification matrix
+
+| item | path | verification | result |
+|---|---|---|---|
+| Native evidence | `experiments/cycles/C02/` | C02 gate | PASS |
+| Public boundary | `experiments/cycles/C03/` | C03 gate | PASS; real catalog unavailable |
+| Media evidence | `experiments/cycles/C04/` | C04 gate + ffprobe | PASS; output unknown |
+| Export witness | `experiments/cycles/C05/` | C05 gate + 7 checks + source hash before/after | PASS; final/public role unknown |
+| Export graph bridge | `experiments/cycles/C06/` | C06 gate + 4 tests + 3 adversarial cases | PASS; public join open |
+| Agent bootstrap | `tools/agent_bootstrap.py` | focused unittest + compile + packet self-check + `git diff --check` | PASS |
+| Practice graph | `experiments/cycles/C07/` | 5 tests + runner + `py_compile` | PASS; 17 relation candidates, no terminal `unknown` |
+| Curatorial evaluator | `experiments/cycles/C08/` | 9 tests + runner + integration + `py_compile` | PASS; synthetic result only |
+
+### Conflicts and risks
+
+The historical body of this file contains old checkpoints and repeated
+headings. It is retained as evidence but is not operative. Never use an older
+`Current objective`, `Next concrete action`, commit claim or provider matrix
+from below this packet as current state.
+
+### Next concrete action
+
+Implement the reserved physical observer against the exact
+`mak-observation-batch-v1` interface, first against a temporary LearningStore.
+Then run two real archive batches through the existing store and verify
+archive isolation, replay and evidence references before any Portfolio or
+Research consumer is connected.
+
+### Last verified
+
+2026-08-25 America/Santiago — Gate 0 and Gate 1 `PASS`; context-integrator
+archive-memory migration/API tests `27 passed`; production database inspected
+read-only and unchanged; compilation and `git diff --check` verified.
+
+## Punto de inflexión vigente — 2026-08-24
+
+La dirección conceptual del proyecto está fijada en
+[`docs/INFLECTION_POINT_ARTISTIC_ARCHIVE_2026-08-24.md`](../docs/INFLECTION_POINT_ARTISTIC_ARCHIVE_2026-08-24.md).
+Debe leerse antes de abrir investigación histórica o diseñar otro clasificador:
+MAK reconstruye un grafo de evidencia entre publicaciones, entregables,
+documentos nativos, componentes, fuentes y obras/series candidatas. No ordena
+carpetas ni fuerza `post -> proyecto`. Un post sin fuente y un proyecto sin post
+son estados válidos; el Copilot actual ordena candidatos, pero todavía no
+construye ese grafo. Tras C02, el siguiente slice autorizado es una
+`publication_archive_bridge` aislada, read-only y evaluable, con casos
+adversariales y sin migrar producción.
+
+## C02 — observación nativa real — 2026-08-25
+
+El segundo experimento nuevo está en
+[`experiments/cycles/C02/RESULTS.md`](../experiments/cycles/C02/RESULTS.md).
+Dos LUNA trabajaron en superficies disjuntas sobre el mismo archivo artístico:
+Blender observó realmente `RAYU.blend` y el lector lexical observó realmente
+`ARICA.aep`. El gate
+`PYTHONPATH=. .venv/bin/python experiments/cycles/C02/verify_cycle.py`
+terminó `EXIT 0`: ambos hashes se conservaron, Blender 4.5.4 devolvió una
+escena con siete objetos y el AEP devolvió cinco referencias; cada endpoint
+pasó seis pruebas `unittest`, y la integración agregó seis pruebas más. El
+grafo materializado tiene nueve nodos, siete aristas `uses`, un `unknown`
+público y cinco roles de output desconocidos.
+
+La evidencia nueva confirma que el extremo nativo aporta estado, capacidades,
+recursos, settings, referencias y destinos configurados. También confirma el
+límite: la existencia y basename de `tottem_ojo.mp4` no prueban que sea output,
+y el filepath de render de Blender no prueba que el render haya ocurrido. Los
+dos endpoints conservan `candidate` y `unknown` sin promover `generated` ni
+`RENDERS_TO`. `materialize_graph.py` deja esa prohibición en un gate mecánico y
+separa capacidades de render, uso de recursos, rol de output y join público.
+
+No hay un catálogo social real local; el puente público queda
+`unavailable/unknown` y no se usan fixtures de C01 para simularlo. El próximo
+slice debe recibir un export público real o un fixture ciego que no declare el
+enlace, y medir falsos enlaces, abstenciones y cobertura. No integrar C02 en
+router, `active_policy` ni base de producción todavía.
+
+## C03 — entrada pública y puente ciego — 2026-08-25
+
+El tercer experimento está en
+[`experiments/cycles/C03/RESULTS.md`](../experiments/cycles/C03/RESULTS.md).
+La auditoría real del ZIP que parecía un export de Instagram encontró 9
+archivos reales (12 entradas contando directorios): logo, `start_here.html` y
+relaciones; cero posts, reels, stories o medios. Su SHA-256 es
+`ce12e0bb043989d4397578b705fab221793db661a818ef33e824babf5cf73d50`. El
+resultado real es `catalog_status=unavailable` y `public_join=unknown`.
+
+Dos LUNA trabajaron separadamente: el normalizador público acepta sólo
+formatos declarados, exige `archive_id`, conserva origen/evidencia y falla
+cerrado; el puente ciego recibe observaciones sin leer la verdad de evaluación.
+El gate
+`PYTHONPATH=. .venv/bin/python experiments/cycles/C03/verify_cycle.py`
+terminó `EXIT 0` con 18 pruebas. En el benchmark sintético, el baseline
+directo obtuvo TP=2, FP=2 y cobertura 0.6667; el puente mediado obtuvo TP=3,
+FP=0, tres abstenciones y una contradicción explícita. Esto es evidencia del
+contrato, no aprendizaje estadístico ni una reconciliación real de ARICA: la
+`bridge_observation_key` aún es sintética.
+
+No integrar C03 en router, `active_policy` ni producción. El siguiente paso es
+reemplazar únicamente la observación pública por un export real del artista y
+mantener la verdad fuera del resolver.
+
+## C04 — observación de medio y fuerza de evidencia — 2026-08-25
+
+El cuarto experimento está en
+[`experiments/cycles/C04/RESULTS.md`](../experiments/cycles/C04/RESULTS.md).
+LUNA A observó read-only el archivo real `tottem_ojo.mp4`, declarado por
+`ARICA.aep`: H.264/AAC, 44.627917 s, 1070 frames de video, tres streams y
+dimensiones no convencionales `256×1536`. El hash antes/después fue
+`b7253320e7a23917439dd6ad2fa084a68510469517b76b6428c54f9856ca0776`.
+
+LUNA B implementó un evaluador de fuerza de evidencia. La integración real en
+`real_evidence.json` sostiene `uses=supported` y `dimensions=observed`, pero
+mantiene `output_role=unknown` y cero aristas `generated`/`RENDERS_TO`. El
+evaluador sólo permite esas relaciones con un evento de exportación explícito
+y `evidence_refs`.
+
+El gate
+`PYTHONPATH=. .venv/bin/python experiments/cycles/C04/verify_cycle.py`
+terminó `EXIT 0` con 20 pruebas, hashes de AEP/MP4 intactos y observación
+`ffprobe` real. El benchmark sintético de 6 casos y 13 claims tuvo 0 falsos
+positivos, pero no es una tasa estadística. No se modificó producción ni se
+renderizó/transcodificó el archivo.
+
+La conclusión es que metadata/hash del producto, declaración nativa y evento
+de exportación son evidencias distintas. El siguiente slice seguro debe buscar
+un witness real de actividad —logs, metadata nativa o export declarado— sin
+mutar archivos artísticos. Si no existe, el rol de output permanece `unknown`.
+
+## C01 — provenance-mediated archive join — 2026-08-24
+
+El primer experimento nuevo está en
+[`experiments/cycles/C01/RESULTS.md`](../experiments/cycles/C01/RESULTS.md).
+Dos LUNA trabajaron en superficies disjuntas: publicación → entregable y
+documento nativo → actividad → versión/entregable. El gate común pasó (`9`
+tests públicos, `6` nativos, runner JSON, `py_compile` y `git diff --check`,
+todo `EXIT 0`). El resultado es arquitectónico: las actividades expresan
+fan-out, versiones, fuentes compartidas y export fallido que el join directo no
+representa. Los fixtures declaran parte del oráculo; todavía no es prueba de
+descubrimiento sobre archivos reales. El siguiente ciclo debe reemplazar ese
+oráculo por observaciones read-only y mantener embeddings como recuperación de
+candidatos, nunca como prueba de procedencia.
+
 ## Current objective — 2026-08-24
 
 Construir `MAK Learn v2`: un sistema de aprendizaje durable, auditable y
@@ -13,6 +448,113 @@ sigue siendo `/home/mak/flujo`; `/home/mak/WIN` permanece histórico y protegido
 La consolidación MAK/WIN y los slices anteriores quedan como continuidad
 histórica y regresiones protegidas; no se deben reabrir salvo que el replay o
 una verificación física aporte evidencia nueva.
+
+## Native Blender scene slice — 2026-08-24
+
+**Objetivo.** Probar la unidad de análisis correcta para proyectos artísticos:
+el estado nativo de la escena y sus dependencias, no el producto terminado.
+
+**Implementado.** `src/flujo/substrate/scene_snapshot.py` reutiliza el sustrato
+existente para construir un snapshot reproducible de un `.blend`, preservar la
+separación entre `Content`, `ArtifactState` y `Observation`, validar la
+integridad del snapshot y registrar el evento inmutable de transformación
+`renderizar` (`STARTED` -> `COMPLETED`/`FAILED`/`UNKNOWN`).
+`tools/blender_scene_probe.py --snapshot` lanza Blender en modo background con
+`--factory-startup --disable-autoexec` y solo consulta `bpy.data`; no renderiza
+ni guarda el archivo. `docs/BLENDER_SCENE_SNAPSHOT.md` documenta el contrato,
+los límites y el uso.
+
+**Gates implementados.** El digest excluye ruta, raíz y hora de observación,
+pero incluye hash de bytes, payload nativo y configuración del extractor; por
+eso dos observaciones del mismo estado comparten identidad y siguen teniendo
+observaciones distintas. Dependencias ausentes producen `FAIL`; dependencias
+cuya presencia no fue medida producen `UNKNOWN`. La validación declara
+explícitamente que solo prueba integridad del snapshot, no calidad visual. Un
+evento no puede reutilizar su versión de entrada como salida.
+
+**Evidencia.** Compilación estática:
+`.venv/bin/python -m py_compile src/flujo/substrate/scene_snapshot.py
+tools/blender_scene_probe.py` terminó `EXIT 0`. La prueba enfocada
+`PYTHONPATH=src .venv/bin/python -m pytest -q
+tests/test_scene_snapshot.py tests/test_blender_scene_probe.py
+tests/test_substrate.py` terminó `35 passed`, `EXIT 0`. Las pruebas incluyen
+identidad estable, modificación de bytes/escena, tampering, dependencia
+ausente/UNKNOWN, inmutabilidad del evento y el adaptador nativo sin operadores
+de render/save. La prueba de integración read-only creó un fixture `.blend`
+temporal con Blender `4.5.4 LTS` y lo leyó mediante el adaptador: `status=ok`,
+una escena, cinco objetos, validación de snapshot `PASS` y precondiciones
+técnicas `PASS`. Esto valida compatibilidad del extractor con Blender real,
+pero no sustituye todavía la lectura de un `.blend` artístico real.
+
+**Fuera de alcance.** No se modificaron router, labels, `active_policy`,
+episodios históricos, Project IR completo ni se creó un segundo almacén de
+estado. No se ejecuta todavía el render: este slice solo deja la observación,
+los precondicionantes técnicos y el contrato de transformación.
+
+**Siguiente acción.** Ejecutar el extractor una vez sobre un `.blend` artístico
+real en una ubicación scratch, revisar que escenas, colecciones, cámara,
+dependencias y settings sean suficientes y comparar el digest tras una
+modificación controlada. El fixture ya no debe reutilizarse como evidencia de
+dominio. Solo con la evidencia artística implementar un ejecutor de render que
+emita una versión de salida y su validación independiente.
+
+## Operating-world comparison — 2026-08-24
+
+**Objective.** Test, without changing production, whether MAK should learn a
+single `tool_id` decision or represent a typed operating world and derive a
+multi-step plan.
+
+**Changed files.** The isolated surface is
+`experiments/mak_operating_world/` with `model.py`, `cases.json`,
+`run_experiment.py` and its README. The focused tests are in
+`tests/test_operating_world_experiment.py`. No production API, router, learner
+or database schema was changed.
+
+**What the experiment reads.** Project IR supplies identity, state, purpose,
+source, domains, artifacts, unknowns, evidence and provenance. Verified
+episodes supply phase, action, observation, outcome, validation, provider,
+model, cost, source references and tool identity. The report explicitly lists
+missing typed goals, formal preconditions/effects, capability I/O, validated
+cost/risk, causal dependencies, failure models and independent validators for
+unseen compositions.
+
+**Experiment.** Six identical Project IR cases were passed to both the current
+router/learner and a typed breadth-first capability planner. Two cases require
+research composition; two are single-capability controls; two are adversarial
+gaps (license approval and an undeclared rendering capability). The planner
+uses explicit benchmark contracts and provenance cards from observed episode
+phases; the contracts are not claimed to be learned from the current ledger.
+
+**Evidence.**
+
+    PYTHONPATH=src .venv/bin/python -m experiments.mak_operating_world.run_experiment --db data/mak_knowledge.db --cases experiments/mak_operating_world/cases.json
+    .venv/bin/python -m pytest -q tests/test_operating_world_experiment.py
+    .venv/bin/python -m pytest -q --disable-warnings
+
+All commands exited `0`; focused tests reported `3 passed`; the full suite
+reached `100%`. The planner passed `6/6` contract cases, produced five-step
+and four-step research plans, and identified `license_approved` as an
+unreachable precondition. The current router passed `3/6` direct/safe cases and
+explained `0` gaps as a missing precondition. The current learner passed `2/6`
+and emitted `research_job_router` for the blocked-publication case. The real
+database remained unchanged: SHA-256
+`12867ae538cd38b042bb35e5dd41abfc64e65eac460dd841eaf6df625037c778`, size
+`189534208`, identical `mtime_ns` before/after.
+
+**Interpretation.** This is new architectural evidence, not statistical proof:
+the current one-label contract cannot express the two compositions or the
+license dependency, while the typed planner can. The typed preconditions and
+effects are still benchmark declarations; the next experiment must learn or
+validate them from new traces rather than promote this prototype directly.
+
+**Open integration item.** Build a blind, real-project compositional benchmark
+with independent validators and compare the planner against the current
+learner/router without changing either production path. Do not create
+`policy_candidates` or an active planner until that benchmark distinguishes
+composition from hand-authored case contracts.
+
+**Last verified.** 2026-08-24; isolated experiment, focused tests, full suite,
+`git diff --check`, and read-only database hash audit completed.
 
 ## MAK Learn v2 - durable event/evaluation substrate - 2026-08-24
 

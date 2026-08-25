@@ -82,8 +82,10 @@ variants as classified evidence.
 
 ## Execution tactic
 
-Read this file and the single current handoff before acting. Then use this
-loop:
+Read this file, run the mandatory bootstrap command below, then read
+`docs/MAK_CURRENT_STATE.md` and only the emitted `Agent bootstrap — CURRENT`
+packet before acting. Do not scan the append-only handoff to discover current
+state. Then use this loop:
 
 1. Establish the physical scope from `/home/mak` and `/home/mak/WIN`; do not use
    Git as an inventory shortcut.
@@ -101,6 +103,34 @@ loop:
    do not wait for the user to send `continue`.
 7. Update the handoff with evidence and immediately execute the next concrete
    action if work remains.
+
+## Delegated-agent bootstrap (mandatory)
+
+The subagent dispatcher does not reliably inject repository files into a new
+worker context. A coordinator must therefore make the current state explicit;
+the worker must not be expected to discover it by reading an append-only
+handoff.
+
+Before the first edit, every delegated worker must receive or execute:
+
+```text
+./.venv/bin/python tools/agent_bootstrap.py \
+  --task "<bounded task>" \
+  --write-set "<exact path or directory>"
+```
+
+The worker must read `agents.md`, `docs/MAK_CURRENT_STATE.md` and the
+`## Agent bootstrap — CURRENT` packet in `context/LAST_HANDOFF.md` in that
+order. Its first progress report must include `schema=mak-agent-bootstrap-v1`,
+the three context hashes, its exact write-set and the first validation command.
+If the worker starts without that acknowledgement, the coordinator must treat
+its result as unbootstrapped and review it before accepting any claim. The
+coordinator must include the packet output in the dispatch prompt when the
+worker uses a fork/context mode that cannot access the shared filesystem.
+
+The packet is a compact operational projection; the remainder of
+`context/LAST_HANDOFF.md` is historical evidence and is never selected by
+position, recency of a heading, or a chat summary.
 
 ## Reflection gate
 

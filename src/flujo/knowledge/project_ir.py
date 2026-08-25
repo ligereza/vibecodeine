@@ -574,6 +574,222 @@ class LearningStore:
                     candidate_policy_id TEXT NOT NULL DEFAULT '',
                     created_at TEXT NOT NULL
                 );
+                /*
+                 * Archive-memory v2 is additive.  The first archive-memory
+                 * tables were keyed by content and therefore cannot represent
+                 * two physical paths with equal bytes.  They remain untouched
+                 * as legacy data; the v2 tables are the canonical observer
+                 * materialisation and deliberately have no content UNIQUE
+                 * constraint.
+                 */
+                CREATE TABLE IF NOT EXISTS archive_memory_v2_archives (
+                    archive_id TEXT PRIMARY KEY,
+                    source_root_ref TEXT NOT NULL,
+                    first_ingested_at TEXT NOT NULL,
+                    metadata_json TEXT NOT NULL DEFAULT '{}'
+                );
+                CREATE TABLE IF NOT EXISTS archive_memory_v2_snapshots (
+                    archive_id TEXT NOT NULL,
+                    snapshot_id TEXT NOT NULL,
+                    semantic_hash TEXT NOT NULL,
+                    semantic_json TEXT NOT NULL,
+                    input_schema TEXT NOT NULL,
+                    limits_json TEXT NOT NULL DEFAULT '{}',
+                    change_set_json TEXT NOT NULL DEFAULT '{}',
+                    source_root_ref TEXT NOT NULL,
+                    first_ingested_at TEXT NOT NULL,
+                    PRIMARY KEY (archive_id, snapshot_id),
+                    FOREIGN KEY (archive_id) REFERENCES archive_memory_v2_archives(archive_id)
+                );
+                CREATE TABLE IF NOT EXISTS archive_memory_v2_artifacts (
+                    archive_id TEXT NOT NULL,
+                    artifact_id TEXT NOT NULL,
+                    physical_id TEXT NOT NULL,
+                    artifact_ref TEXT NOT NULL,
+                    first_ingested_at TEXT NOT NULL,
+                    PRIMARY KEY (archive_id, artifact_id),
+                    UNIQUE (archive_id, physical_id),
+                    UNIQUE (archive_id, artifact_ref),
+                    FOREIGN KEY (archive_id) REFERENCES archive_memory_v2_archives(archive_id)
+                );
+                CREATE TABLE IF NOT EXISTS archive_memory_v2_artifact_states (
+                    state_id TEXT PRIMARY KEY,
+                    archive_id TEXT NOT NULL,
+                    snapshot_id TEXT NOT NULL,
+                    artifact_id TEXT NOT NULL,
+                    physical_id TEXT NOT NULL,
+                    artifact_ref TEXT NOT NULL,
+                    relative_path TEXT NOT NULL,
+                    references_json TEXT NOT NULL DEFAULT '[]',
+                    kind TEXT NOT NULL,
+                    availability TEXT NOT NULL,
+                    size INTEGER,
+                    mtime_ns INTEGER,
+                    extension TEXT NOT NULL DEFAULT '',
+                    family TEXT NOT NULL DEFAULT 'unknown',
+                    media_type TEXT NOT NULL DEFAULT 'application/octet-stream',
+                    content_sha256 TEXT,
+                    content_id TEXT,
+                    symlink_target TEXT,
+                    error_code TEXT,
+                    error_operation TEXT,
+                    artifact_json TEXT NOT NULL DEFAULT '{}',
+                    first_ingested_at TEXT NOT NULL,
+                    UNIQUE (archive_id, snapshot_id, artifact_id),
+                    FOREIGN KEY (archive_id, snapshot_id)
+                        REFERENCES archive_memory_v2_snapshots(archive_id, snapshot_id),
+                    FOREIGN KEY (archive_id, artifact_id)
+                        REFERENCES archive_memory_v2_artifacts(archive_id, artifact_id)
+                );
+                CREATE TABLE IF NOT EXISTS archive_memory_v2_observations (
+                    archive_id TEXT NOT NULL,
+                    observation_id TEXT NOT NULL,
+                    snapshot_id TEXT NOT NULL,
+                    observation_type TEXT NOT NULL,
+                    status TEXT NOT NULL DEFAULT 'candidate',
+                    artifact_refs_json TEXT NOT NULL DEFAULT '[]',
+                    evidence_json TEXT NOT NULL DEFAULT '{}',
+                    method TEXT,
+                    tool_version TEXT,
+                    observed_at TEXT,
+                    first_ingested_at TEXT NOT NULL,
+                    PRIMARY KEY (archive_id, snapshot_id, observation_id),
+                    FOREIGN KEY (archive_id, snapshot_id)
+                        REFERENCES archive_memory_v2_snapshots(archive_id, snapshot_id)
+                );
+                CREATE TABLE IF NOT EXISTS archive_memory_v2_transformation_events (
+                    archive_id TEXT NOT NULL,
+                    event_id TEXT NOT NULL,
+                    snapshot_id TEXT NOT NULL,
+                    operation TEXT NOT NULL,
+                    inputs_json TEXT NOT NULL DEFAULT '[]',
+                    outputs_json TEXT NOT NULL DEFAULT '[]',
+                    witness_json TEXT NOT NULL DEFAULT '[]',
+                    status TEXT NOT NULL,
+                    tool_version TEXT NOT NULL DEFAULT '',
+                    occurred_at TEXT NOT NULL DEFAULT '',
+                    metadata_json TEXT NOT NULL DEFAULT '{}',
+                    PRIMARY KEY (archive_id, event_id),
+                    FOREIGN KEY (archive_id, snapshot_id)
+                        REFERENCES archive_memory_v2_snapshots(archive_id, snapshot_id)
+                );
+                CREATE INDEX IF NOT EXISTS idx_archive_memory_v2_snapshots_archive
+                    ON archive_memory_v2_snapshots(archive_id, snapshot_id);
+                CREATE INDEX IF NOT EXISTS idx_archive_memory_v2_states_snapshot
+                    ON archive_memory_v2_artifact_states(archive_id, snapshot_id, relative_path);
+                CREATE INDEX IF NOT EXISTS idx_archive_memory_v2_observations_snapshot
+                    ON archive_memory_v2_observations(archive_id, snapshot_id);
+                CREATE INDEX IF NOT EXISTS idx_archive_memory_v2_events_snapshot
+                    ON archive_memory_v2_transformation_events(archive_id, snapshot_id);
+                CREATE TRIGGER IF NOT EXISTS archive_memory_v2_snapshots_no_update
+                    BEFORE UPDATE ON archive_memory_v2_snapshots
+                    BEGIN SELECT RAISE(ABORT, 'archive_memory_v2_snapshots_append_only'); END;
+                CREATE TRIGGER IF NOT EXISTS archive_memory_v2_snapshots_no_delete
+                    BEFORE DELETE ON archive_memory_v2_snapshots
+                    BEGIN SELECT RAISE(ABORT, 'archive_memory_v2_snapshots_append_only'); END;
+                CREATE TRIGGER IF NOT EXISTS archive_memory_v2_artifacts_no_update
+                    BEFORE UPDATE ON archive_memory_v2_artifacts
+                    BEGIN SELECT RAISE(ABORT, 'archive_memory_v2_artifacts_append_only'); END;
+                CREATE TRIGGER IF NOT EXISTS archive_memory_v2_artifacts_no_delete
+                    BEFORE DELETE ON archive_memory_v2_artifacts
+                    BEGIN SELECT RAISE(ABORT, 'archive_memory_v2_artifacts_append_only'); END;
+                CREATE TRIGGER IF NOT EXISTS archive_memory_v2_states_no_update
+                    BEFORE UPDATE ON archive_memory_v2_artifact_states
+                    BEGIN SELECT RAISE(ABORT, 'archive_memory_v2_states_append_only'); END;
+                CREATE TRIGGER IF NOT EXISTS archive_memory_v2_states_no_delete
+                    BEFORE DELETE ON archive_memory_v2_artifact_states
+                    BEGIN SELECT RAISE(ABORT, 'archive_memory_v2_states_append_only'); END;
+                CREATE TRIGGER IF NOT EXISTS archive_memory_v2_observations_no_update
+                    BEFORE UPDATE ON archive_memory_v2_observations
+                    BEGIN SELECT RAISE(ABORT, 'archive_memory_v2_observations_append_only'); END;
+                CREATE TRIGGER IF NOT EXISTS archive_memory_v2_observations_no_delete
+                    BEFORE DELETE ON archive_memory_v2_observations
+                    BEGIN SELECT RAISE(ABORT, 'archive_memory_v2_observations_append_only'); END;
+                CREATE TRIGGER IF NOT EXISTS archive_memory_v2_events_no_update
+                    BEFORE UPDATE ON archive_memory_v2_transformation_events
+                    BEGIN SELECT RAISE(ABORT, 'archive_memory_v2_events_append_only'); END;
+                CREATE TRIGGER IF NOT EXISTS archive_memory_v2_events_no_delete
+                    BEFORE DELETE ON archive_memory_v2_transformation_events
+                    BEGIN SELECT RAISE(ABORT, 'archive_memory_v2_events_append_only'); END;
+                CREATE TABLE IF NOT EXISTS archive_memory_archives (
+                    archive_id TEXT PRIMARY KEY,
+                    person_id TEXT NOT NULL DEFAULT '',
+                    source_root_ref TEXT NOT NULL,
+                    archive_fingerprint TEXT NOT NULL DEFAULT '',
+                    metadata_json TEXT NOT NULL DEFAULT '{}',
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS archive_memory_snapshots (
+                    archive_id TEXT NOT NULL,
+                    snapshot_id TEXT NOT NULL,
+                    snapshot_hash TEXT NOT NULL,
+                    source_root_ref TEXT NOT NULL,
+                    observed_at TEXT NOT NULL,
+                    algorithm_version TEXT NOT NULL,
+                    metadata_json TEXT NOT NULL DEFAULT '{}',
+                    PRIMARY KEY (archive_id, snapshot_id),
+                    UNIQUE (archive_id, snapshot_hash),
+                    FOREIGN KEY (archive_id) REFERENCES archive_memory_archives(archive_id)
+                );
+                CREATE TABLE IF NOT EXISTS archive_memory_artifacts (
+                    archive_id TEXT NOT NULL,
+                    artifact_id TEXT NOT NULL,
+                    content_sha256 TEXT NOT NULL,
+                    format_family TEXT NOT NULL DEFAULT 'unknown',
+                    media_type TEXT NOT NULL DEFAULT 'application/octet-stream',
+                    size_bytes INTEGER NOT NULL DEFAULT 0,
+                    metadata_json TEXT NOT NULL DEFAULT '{}',
+                    first_seen_at TEXT NOT NULL,
+                    PRIMARY KEY (archive_id, artifact_id),
+                    UNIQUE (archive_id, content_sha256),
+                    FOREIGN KEY (archive_id) REFERENCES archive_memory_archives(archive_id)
+                );
+                CREATE TABLE IF NOT EXISTS archive_memory_artifact_states (
+                    state_id TEXT PRIMARY KEY,
+                    archive_id TEXT NOT NULL,
+                    snapshot_id TEXT NOT NULL,
+                    artifact_id TEXT NOT NULL,
+                    relative_path TEXT NOT NULL,
+                    state_json TEXT NOT NULL DEFAULT '{}',
+                    evidence_json TEXT NOT NULL DEFAULT '[]',
+                    observed_at TEXT NOT NULL,
+                    UNIQUE (archive_id, snapshot_id, artifact_id, relative_path),
+                    FOREIGN KEY (archive_id, snapshot_id)
+                        REFERENCES archive_memory_snapshots(archive_id, snapshot_id),
+                    FOREIGN KEY (archive_id, artifact_id)
+                        REFERENCES archive_memory_artifacts(archive_id, artifact_id)
+                );
+                CREATE TABLE IF NOT EXISTS archive_memory_observations (
+                    observation_id TEXT PRIMARY KEY,
+                    archive_id TEXT NOT NULL,
+                    snapshot_id TEXT NOT NULL,
+                    subject_type TEXT NOT NULL,
+                    subject_id TEXT NOT NULL,
+                    method TEXT NOT NULL,
+                    value_json TEXT NOT NULL DEFAULT '{}',
+                    evidence_json TEXT NOT NULL DEFAULT '[]',
+                    tool_version TEXT NOT NULL,
+                    observed_at TEXT NOT NULL,
+                    status TEXT NOT NULL DEFAULT 'observed',
+                    FOREIGN KEY (archive_id, snapshot_id)
+                        REFERENCES archive_memory_snapshots(archive_id, snapshot_id)
+                );
+                CREATE TABLE IF NOT EXISTS archive_memory_transformation_events (
+                    event_id TEXT PRIMARY KEY,
+                    archive_id TEXT NOT NULL,
+                    snapshot_id TEXT NOT NULL,
+                    operation TEXT NOT NULL,
+                    inputs_json TEXT NOT NULL DEFAULT '[]',
+                    outputs_json TEXT NOT NULL DEFAULT '[]',
+                    witness_json TEXT NOT NULL DEFAULT '[]',
+                    status TEXT NOT NULL,
+                    tool_version TEXT NOT NULL,
+                    occurred_at TEXT NOT NULL,
+                    metadata_json TEXT NOT NULL DEFAULT '{}',
+                    FOREIGN KEY (archive_id, snapshot_id)
+                        REFERENCES archive_memory_snapshots(archive_id, snapshot_id)
+                );
                 CREATE INDEX IF NOT EXISTS idx_project_artifacts_project
                     ON project_artifacts(project_id);
                 CREATE INDEX IF NOT EXISTS idx_project_episodes_project
@@ -586,6 +802,16 @@ class LearningStore:
                     ON mak_run_events(project_id, created_at);
                 CREATE INDEX IF NOT EXISTS idx_learning_evaluations_target
                     ON learning_evaluations(target_kind, target_id, created_at);
+                CREATE INDEX IF NOT EXISTS idx_archive_memory_snapshots_archive
+                    ON archive_memory_snapshots(archive_id, observed_at);
+                CREATE INDEX IF NOT EXISTS idx_archive_memory_artifacts_archive
+                    ON archive_memory_artifacts(archive_id, content_sha256);
+                CREATE INDEX IF NOT EXISTS idx_archive_memory_states_snapshot
+                    ON archive_memory_artifact_states(archive_id, snapshot_id);
+                CREATE INDEX IF NOT EXISTS idx_archive_memory_observations_subject
+                    ON archive_memory_observations(archive_id, subject_type, subject_id, observed_at);
+                CREATE INDEX IF NOT EXISTS idx_archive_memory_events_snapshot
+                    ON archive_memory_transformation_events(archive_id, snapshot_id, occurred_at);
                 CREATE TRIGGER IF NOT EXISTS mak_run_events_no_update
                     BEFORE UPDATE ON mak_run_events
                     BEGIN SELECT RAISE(ABORT, 'mak_run_events_append_only'); END;
@@ -604,8 +830,52 @@ class LearningStore:
                 CREATE TRIGGER IF NOT EXISTS learning_evaluations_no_delete
                     BEFORE DELETE ON learning_evaluations
                     BEGIN SELECT RAISE(ABORT, 'learning_evaluations_append_only'); END;
+                CREATE TRIGGER IF NOT EXISTS archive_memory_snapshots_no_update
+                    BEFORE UPDATE ON archive_memory_snapshots
+                    BEGIN SELECT RAISE(ABORT, 'archive_memory_snapshots_append_only'); END;
+                CREATE TRIGGER IF NOT EXISTS archive_memory_snapshots_no_delete
+                    BEFORE DELETE ON archive_memory_snapshots
+                    BEGIN SELECT RAISE(ABORT, 'archive_memory_snapshots_append_only'); END;
+                CREATE TRIGGER IF NOT EXISTS archive_memory_artifacts_no_update
+                    BEFORE UPDATE ON archive_memory_artifacts
+                    BEGIN SELECT RAISE(ABORT, 'archive_memory_artifacts_append_only'); END;
+                CREATE TRIGGER IF NOT EXISTS archive_memory_artifacts_no_delete
+                    BEFORE DELETE ON archive_memory_artifacts
+                    BEGIN SELECT RAISE(ABORT, 'archive_memory_artifacts_append_only'); END;
+                CREATE TRIGGER IF NOT EXISTS archive_memory_states_no_update
+                    BEFORE UPDATE ON archive_memory_artifact_states
+                    BEGIN SELECT RAISE(ABORT, 'archive_memory_states_append_only'); END;
+                CREATE TRIGGER IF NOT EXISTS archive_memory_states_no_delete
+                    BEFORE DELETE ON archive_memory_artifact_states
+                    BEGIN SELECT RAISE(ABORT, 'archive_memory_states_append_only'); END;
+                CREATE TRIGGER IF NOT EXISTS archive_memory_observations_no_update
+                    BEFORE UPDATE ON archive_memory_observations
+                    BEGIN SELECT RAISE(ABORT, 'archive_memory_observations_append_only'); END;
+                CREATE TRIGGER IF NOT EXISTS archive_memory_observations_no_delete
+                    BEFORE DELETE ON archive_memory_observations
+                    BEGIN SELECT RAISE(ABORT, 'archive_memory_observations_append_only'); END;
+                CREATE TRIGGER IF NOT EXISTS archive_memory_events_no_update
+                    BEFORE UPDATE ON archive_memory_transformation_events
+                    BEGIN SELECT RAISE(ABORT, 'archive_memory_events_append_only'); END;
+                CREATE TRIGGER IF NOT EXISTS archive_memory_events_no_delete
+                    BEFORE DELETE ON archive_memory_transformation_events
+                    BEGIN SELECT RAISE(ABORT, 'archive_memory_events_append_only'); END;
                 """
             )
+            v2_observation_columns = {
+                str(row[1]) for row in con.execute(
+                    "PRAGMA table_info(archive_memory_v2_observations)"
+                )
+            }
+            for column, definition in (
+                ("method", "TEXT"),
+                ("tool_version", "TEXT"),
+                ("observed_at", "TEXT"),
+            ):
+                if column not in v2_observation_columns:
+                    con.execute(
+                        f"ALTER TABLE archive_memory_v2_observations ADD COLUMN {column} {definition}"
+                    )
             event_columns = {
                 str(row[1]) for row in con.execute("PRAGMA table_info(mak_run_events)")
             }
@@ -1148,6 +1418,12 @@ def inspect_learning_target(database: str | Path) -> dict[str, Any]:
         "project_records", "project_artifacts", "project_episodes",
         "project_transitions", "semantic_rules", "rule_observations",
         "project_contracts", "mak_run_events", "learning_evaluations",
+        "archive_memory_v2_archives", "archive_memory_v2_snapshots",
+        "archive_memory_v2_artifacts", "archive_memory_v2_artifact_states",
+        "archive_memory_v2_observations", "archive_memory_v2_transformation_events",
+        "archive_memory_archives", "archive_memory_snapshots",
+        "archive_memory_artifacts", "archive_memory_artifact_states",
+        "archive_memory_observations", "archive_memory_transformation_events",
     }
     if not path.is_file():
         return {
