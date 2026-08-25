@@ -28,7 +28,7 @@ class AgentBootstrapTests(unittest.TestCase):
         handoff = (ROOT / "context/LAST_HANDOFF.md").read_text(encoding="utf-8")
         packet = current_packet(handoff)
         self.assertIn("archive memory accepted", packet)
-        self.assertIn("33 focused tests passed", packet)
+        self.assertIn("62 focused tests passed", packet)
         self.assertIn("docs/MAK_SYSTEM_DIRECTIVE.md", packet)
         self.assertIn("mak-archive-observation-batch-v1", packet)
         self.assertNotIn("## C02 — observación nativa real", packet)

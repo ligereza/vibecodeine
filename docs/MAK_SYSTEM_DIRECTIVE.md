@@ -128,6 +128,23 @@ The observer-to-memory vertical slice is complete:
 Director acceptance on 2026-08-25: 33 focused tests passed, compilation and
 `git diff --check` exited 0, and an independent end-to-end smoke passed.
 
+Stage 2A and Stage 2B are also implemented and independently accepted:
+
+- `archive_reconstruction.py` projects strict archive-memory replay into a
+  deterministic, lossless reconstruction-input vocabulary without rescanning
+  the source or claiming works/projects;
+- `archive_relation_inference.py` emits bounded physical and cultural relation
+  candidates with declared inverses, counterevidence, alternatives, missing
+  evidence and next probes;
+- `archive_relation_evaluator.py` independently falsifies candidate IDs,
+  endpoints, evidence refs, inverse orientation, status, score, bounds,
+  diagnostics and archive isolation;
+- the real MYRA bounded run projected 43 artifacts, summarized 1,474
+  `limit_reached` observations as coverage diagnostics, emitted 96 bounded
+  candidates and passed the independent evaluator with zero errors;
+- director acceptance after integration: 62 focused tests passed, compilation
+  and `git diff --check` exited 0, and the real source remained unchanged.
+
 ## Lessons from the three-agent integration
 
 ### Director
@@ -167,14 +184,14 @@ Director acceptance on 2026-08-25: 33 focused tests passed, compilation and
 
 ## Directed implementation plan
 
-### Stage 2A: archive-memory projection
+### Stage 2A: archive-memory projection (implemented)
 
 Build one read-only projection from a selected archive snapshot into the
 feature vocabulary required by the existing reconstruction engine. It must
 preserve every artifact reference, content state, candidate observation and
 snapshot provenance. No second database and no source rescan.
 
-### Stage 2B: autonomous relation inference
+### Stage 2B: autonomous relation inference (implemented)
 
 Produce ranked candidates for containment, version, component, dependency,
 export/manifestation and series continuity. Each candidate must contain
