@@ -1,6 +1,6 @@
 # Operational Handoff
 
-## Agent bootstrap — CURRENT — 2026-08-25 — Stage 2C accepted
+## Agent bootstrap — CURRENT — 2026-08-25 — Stage 2D accepted
 
 **Operative rule.** This is the only active packet. Bootstrap with
 `tools/agent_bootstrap.py`; use `docs/MAK_SYSTEM_DIRECTIVE.md` as the durable
@@ -14,9 +14,11 @@ and curatorial intelligence -> portfolio/application/research compilers ->
 learning. ARICA, MYRA, RAYU and ISKVW are cases, never the architecture. Years
 of finished work are supervision; user review is optional, not a pipeline gate.
 
-Stage 2C is accepted. The active slice is Stage 2D: project the balanced units
-into additive Project IR records without promoting candidates to facts or
-changing archive memory authority. Do not connect Portfolio yet.
+Stage 2D is accepted. The active slice is Stage 3A: connect provisional archive
+knowledge to MAK's existing organism. Reuse `copilot.py` as the curatorial
+candidate/learning engine and `triangular.py` plus the Conductor as the model
+for evidence -> actionable uncertainty -> competent organ -> returned evidence.
+Do not create a parallel department framework or connect Portfolio yet.
 
 ### Authority
 
@@ -35,11 +37,17 @@ roots, protected art and media remain outside the write set.
   Every physical `artifact_ref` is assigned, ambiguous or unassigned exactly
   once; dependencies stay separate; duplicate bytes never merge identities;
   shared ancestors do not become synthetic projects; truth promotions are zero.
-- Director gate over observer, memory, replay, Stages 2A-2C, both evaluators and
-  Project IR: `78 passed`, exit `0`; Stage 2C `py_compile` and path-limited
+- `3d2869c`: deterministic Stage 2D projection of every accepted unit into one
+  provisional `mak-project-ir-v1` record plus an independent evaluator. It
+  preserves members, dependencies, alternatives, missing evidence and the
+  explicit ambiguous/unassigned partition; states are only `candidate` or
+  `unknown` and source archives are never rescanned.
+- Director gate over observer, memory, Stages 2A-2D, Project IR, Copilot,
+  departments, visible organs, Curatoria triangulation and Conductor:
+  `171 passed`, exit `0`; Stage 2D `py_compile` and path-limited
   `git diff --check`: exit `0`.
-- Independent Stage 2C cross-smoke: observe -> memory -> replay -> projection ->
-  relations -> units -> evaluator; `valid=true`, zero errors.
+- Independent Stage 2D cross-smoke: observe -> memory -> replay -> relations ->
+  units -> Project IR -> evaluator; `valid=true`, zero errors.
 - Read-only MYRA run with temporary SQLite: 1,517 artifacts, 23 observations,
   512 bounded candidates, 10 units, 1,325 assigned, 0 ambiguous, 192 unassigned,
   `balanced=true`; source unchanged.
@@ -53,23 +61,27 @@ roots, protected art and media remain outside the write set.
   of the owning unit. `change_set` and limit diagnostics are non-semantic.
 - The historical packet's `mak-observation-batch-v1` contract is obsolete.
 - Unrelated worktree changes exist; keep commits and validation path-limited.
+- MAK currently exposes overlapping topologies: the three-area department
+  registry, six runtime organs and the broader owner/consumer map. Stage 3A
+  must reconcile capabilities and handoffs without declaring another registry.
 
 ### Single next action
 
-Implement and independently evaluate the Stage 2D adapter:
+Implement and independently evaluate one Stage 3A circulation bridge:
 
-`accepted Stage 2C units -> additive Project IR projections with provenance ->
-strict replay/reconciliation`.
+`accepted provisional Project IR -> existing Copilot candidate/atlas vocabulary
+-> evidence-gap packets for existing Curatoria/Research capabilities`.
 
-Archive memory remains factual authority. Reuse Project IR contracts, but not
-SSD-specific UUID, asset or container-root heuristics. No production DB writes,
-user-label gate, permanent service or Portfolio compiler.
+Treat `triangular` as the reference pattern, not as a flyer-only special case:
+observation creates a sourced question, the competent organ investigates, and
+returned evidence re-enters without automatic promotion. No production writes,
+network dispatch, user-label gate, permanent service or Portfolio compiler.
 
 ### Last verified
 
-2026-08-25 America/Santiago — Stages 1 and 2A-2C accepted by the director;
-78 focused tests, independent cross-smoke, compilation, whitespace and bounded
-real MYRA execution exited `0`.
+2026-08-25 America/Santiago — Stages 1 and 2A-2D accepted by the director;
+171 focused tests, independent cross-smoke, compilation, whitespace and bounded
+real MYRA execution exited `0`. Stage 3A organism integration is active.
 
 ## Agent bootstrap — HISTORICAL — pre-archive-memory correction
 
