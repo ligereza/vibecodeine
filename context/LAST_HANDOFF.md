@@ -79,6 +79,17 @@ preexistentes de Pillow. El director acepta el reporte del replay como gate
 informativo en `validated` y `resume(run_id)` reconstruye la última vista desde
 los checkpoints; ninguna de esas operaciones promueve políticas.
 
+**Smoke runtime sobre la base real.** El `2026-08-25` se dirigió el proyecto
+`mak-logo-clean-learning-gate-20260820` en estado `review_required` con
+`run_id=run-real-smoke-review-required-20260825`. El router respondió
+`abstain` por `project_state_requires_evidence`; el director completó los 5
+estados hasta `recorded`, creó el episodio
+`episode_d792ddff7d374ff5b92b53a6a2f75bbb` como `abstained` y dejó los cinco
+eventos enlazados por `parent_event_id`. La fila lleva snapshot
+`16410d95e5ddbdb6cc73464ce219a7c9a62623c2ed6ff67d47033efbbb3e9058`, commit
+`1aafa4b` y `{"director":"mak-director-v1","python":"3.12"}`. No se
+ejecutó ningún consumidor ni se creó una etiqueta elegible.
+
 **Replay set implementado.** `context/learning/replay_suite_v1.json` declara
 cuatro casos reales y trazables: resolución de títulos y probe Blender en
 `replay`; lector `.aep` y testigo PNG en `holdout`. Cada caso conserva
@@ -141,12 +152,14 @@ su evaluación y mantener la regla como `candidate` si aparece cualquier
 abstención o contradicción. Solo después revisar soporte por episodio y el
 holdout dirigido; la promoción seguirá siendo manual y separada.
 
-**Última verificación.** 2026-08-24; worktree validado con `git diff --check`,
- suite completa en `EXIT 0`, tests del ledger en `EXIT 0` y conteos históricos
-de records/episodios sin cambios; se añadió exactamente una regla candidate y
-una evaluación targeted de holdout. La regla conserva en `evaluation_id` el
-ID `evaluation-policy-0d6971c0b5e85d7108c6`; la base real queda en
-`41` records, `17` episodios, `1` candidate y `3` evaluaciones.
+**Última verificación.** 2026-08-25; worktree validado con `git diff --check`,
+suite completa en `EXIT 0`, tests del ledger en `EXIT 0` y sincronización con
+`origin/main`. La regla conserva en `evaluation_id` el ID
+`evaluation-policy-0d6971c0b5e85d7108c6`; la base real queda en `41` records,
+`18` episodios, `1` candidate, `3` evaluaciones y `5` eventos de director.
+La nueva abstención no cambia el learner: sigue en `12` ejemplos elegibles,
+`6/6` holdout, accuracy `1.0` frente a baseline `0.833333`, con la misma
+policy version.
 Después, la migración de procedencia de episodios se verificó en esa base en
 modo lectura: existen los tres campos nuevos y los triggers
 `project_episodes_no_update`/`project_episodes_no_delete`; el conteo de filas
