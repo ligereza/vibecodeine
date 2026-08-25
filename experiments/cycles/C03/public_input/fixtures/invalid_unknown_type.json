@@ -1,0 +1,12 @@
+{
+  "fixture_role": "synthetic_negative_benchmark_only",
+  "schema": "c03.public_input.canonical.v1",
+  "archive_id": "fixture-c03-invalid-type-001",
+  "records": [
+    {
+      "type": "carousel",
+      "id": "unknown-001",
+      "media": []
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "fixture_role": "synthetic_adversarial_input_only",
+  "schema": "mak-cycle-c04-evidence-input-v1",
+  "case_id": "technical_hash_conflict",
+  "native_aep": {
+    "source_id": "aep-arica",
+    "evidence_refs": ["aep://ARICA.aep#/declarations/0"],
+    "declarations": [
+      {
+        "declaration_id": "decl-hash-conflict",
+        "declared_path": "C:\\ARICA\\same-technical.mp4",
+        "technical_id": "tech-video-777",
+        "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "evidence_refs": ["aep://ARICA.aep#byte-offset=1400"]
+      }
+    ]
+  },
+  "local_media_observation": {
+    "observation_id": "obs-hash-conflict",
+    "evidence_refs": ["media://same-technical.mp4#stat", "media://same-technical.mp4#hash"],
+    "observations": [
+      {
+        "observation_id": "obs-hash-conflict",
+        "path": "/fixture/media/same-technical.mp4",
+        "declared_path": "C:\\ARICA\\same-technical.mp4",
+        "exists": true,
+        "is_file": true,
+        "technical_id": "tech-video-777",
+        "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "dimensions": {"width": 1920, "height": 1080},
+        "evidence_refs": ["media://same-technical.mp4#stat", "media://same-technical.mp4#hash"]
+      }
+    ]
+  },
+  "export_event": null
+}

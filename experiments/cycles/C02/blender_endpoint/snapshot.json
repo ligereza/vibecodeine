@@ -1,0 +1,393 @@
+{
+  "schema": "luna-a-c02-blender-native-observation-v1",
+  "extractor": {
+    "id": "luna-a-c02-blender-endpoint-v1",
+    "upstream_probe": "tools/blender_scene_probe.py",
+    "upstream_contract": "mak-blender-scene-snapshot-run-v1",
+    "method": "existing_probe_snapshot_api_via_cli",
+    "factory_startup": true,
+    "disable_autoexec": true,
+    "renders": false,
+    "saves": false,
+    "blender": "blender",
+    "blender_version": "Blender 4.5.4 LTS"
+  },
+  "source": {
+    "locator": "ARICA/RAYU.blend",
+    "expected_sha256": "acafc1db0088016139921b1ea2c9d7a5310247658117fa7021662e13e907ce86"
+  },
+  "integrity": {
+    "sha256_before": "acafc1db0088016139921b1ea2c9d7a5310247658117fa7021662e13e907ce86",
+    "expected_match_before": true,
+    "sha256_after": "acafc1db0088016139921b1ea2c9d7a5310247658117fa7021662e13e907ce86",
+    "unchanged": true,
+    "expected_match_after": true
+  },
+  "status": "observed",
+  "probe": {
+    "effective_blender_command": "blender --background --factory-startup --disable-autoexec ARICA/RAYU.blend --python-expr '<SNAPSHOT_EXPRESSION from tools/blender_scene_probe.py>'",
+    "wrapper_command": "python tools/blender_scene_probe.py --snapshot --input ARICA/RAYU.blend --output blender_endpoint/tmpea0dvxqb.json --timeout 120",
+    "exit_code": 0,
+    "stdout_tail": "",
+    "stderr_tail": ""
+  },
+  "snapshot": {
+    "contract": "mak-blender-scene-snapshot-v1",
+    "snapshot_id": "scene-state:596aefe3e601cd836aa3ce3ad5d633917e5f55d45b86952b42102425779aa556",
+    "snapshot_digest": "596aefe3e601cd836aa3ce3ad5d633917e5f55d45b86952b42102425779aa556",
+    "artifact_state": {
+      "state_id": "scene-state:596aefe3e601cd836aa3ce3ad5d633917e5f55d45b86952b42102425779aa556",
+      "content_id": "sha256:acafc1db0088016139921b1ea2c9d7a5310247658117fa7021662e13e907ce86",
+      "creator_tool": "Blender 4.5.4 LTS",
+      "id_source": "snapshot_digest"
+    },
+    "observation": {
+      "observation_id": "observation:6954a5121113302220692570e1fead35",
+      "state_id": "scene-state:596aefe3e601cd836aa3ce3ad5d633917e5f55d45b86952b42102425779aa556",
+      "root_id": "filesystem",
+      "relative_path": "RAYU.blend",
+      "observed_at": "2026-08-25T04:10:37+00:00",
+      "basename": "RAYU.blend",
+      "extension": ".blend",
+      "fs_size": 6374943,
+      "fs_mtime": "1783102415000000000"
+    },
+    "native": {
+      "content_id": "sha256:acafc1db0088016139921b1ea2c9d7a5310247658117fa7021662e13e907ce86",
+      "blender_version": "4.5.4 LTS",
+      "dirty": true,
+      "scenes": [
+        {
+          "camera": {
+            "lens": 50.0,
+            "location": [
+              0.0,
+              -45.859100341796875,
+              9.918008804321289
+            ],
+            "name": "Camera",
+            "present": true,
+            "rotation": [
+              1.5707963705062866,
+              0.0,
+              0.0
+            ],
+            "type": "CAMERA"
+          },
+          "collections": [
+            "Collection"
+          ],
+          "compositor": {
+            "nodes": [],
+            "use_nodes": false
+          },
+          "frame_current": 274,
+          "frame_end": 300,
+          "frame_start": 1,
+          "name": "Scene",
+          "objects": [
+            {
+              "collections": [
+                "Collection"
+              ],
+              "data": {
+                "name": "Spot",
+                "type": "SunLight"
+              },
+              "id": "object:3a0a1950052702638a49aead",
+              "location": [
+                0.0,
+                -17.056053161621094,
+                22.416553497314453
+              ],
+              "materials": [],
+              "modifiers": [],
+              "name": "Spot",
+              "rotation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ],
+              "type": "LIGHT",
+              "visible": true
+            },
+            {
+              "collections": [
+                "Ceiling Light Line"
+              ],
+              "data": {
+                "name": "Cube.001",
+                "polygons_count": 46,
+                "type": "Mesh",
+                "vertices_count": 48
+              },
+              "id": "object:6bb94beabae65baff5223051",
+              "location": [
+                0.0,
+                -5.15745384177535e-08,
+                0.07155847549438477
+              ],
+              "materials": [
+                "Light Soft",
+                "Light Strong",
+                "Plastic Black"
+              ],
+              "modifiers": [
+                {
+                  "name": "Bevel",
+                  "type": "BEVEL"
+                },
+                {
+                  "name": "Smooth by Angle",
+                  "type": "NODES"
+                }
+              ],
+              "name": "Line",
+              "rotation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ],
+              "type": "MESH",
+              "visible": true
+            },
+            {
+              "collections": [
+                "Ceiling Light Line"
+              ],
+              "data": {
+                "name": "Cylinder",
+                "polygons_count": 58,
+                "type": "Mesh",
+                "vertices_count": 64
+              },
+              "id": "object:76731e60bd5c08a6853e5375",
+              "location": [
+                0.0,
+                -1.4551915228366852e-11,
+                1.2721688337256762e-18
+              ],
+              "materials": [
+                "Plastic Black"
+              ],
+              "modifiers": [
+                {
+                  "name": "Mirror",
+                  "type": "MIRROR"
+                },
+                {
+                  "name": "Smooth by Angle",
+                  "type": "NODES"
+                },
+                {
+                  "name": "Subdivision",
+                  "type": "SUBSURF"
+                }
+              ],
+              "name": "Cylinder",
+              "rotation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ],
+              "type": "MESH",
+              "visible": true
+            },
+            {
+              "collections": [
+                "Collection"
+              ],
+              "data": {
+                "name": "Recurso 3",
+                "polygons_count": 37400,
+                "type": "Mesh",
+                "vertices_count": 18726
+              },
+              "id": "object:a5a5d33609073e25457884b9",
+              "location": [
+                0.1223645955324173,
+                0.0,
+                9.494682312011719
+              ],
+              "materials": [
+                "Gold"
+              ],
+              "modifiers": [],
+              "name": "Recurso 3",
+              "rotation": [
+                1.570796251296997,
+                -0.0,
+                0.0
+              ],
+              "scale": [
+                0.3660273849964142,
+                0.3660273849964142,
+                0.3660273849964142
+              ],
+              "type": "MESH",
+              "visible": true
+            },
+            {
+              "collections": [
+                "Collection"
+              ],
+              "data": {
+                "name": "Camera.001",
+                "type": "Camera"
+              },
+              "id": "object:d7522450a62dec43b9559149",
+              "location": [
+                0.0,
+                -45.859100341796875,
+                9.918008804321289
+              ],
+              "materials": [],
+              "modifiers": [],
+              "name": "Camera",
+              "rotation": [
+                1.5707963705062866,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ],
+              "type": "CAMERA",
+              "visible": true
+            },
+            {
+              "collections": [
+                "Ceiling Light Line"
+              ],
+              "data": {
+                "name": null,
+                "type": "NoneType"
+              },
+              "id": "object:dbf59731619d19b48f4d2112",
+              "location": [
+                0.0,
+                0.0,
+                -10.773580551147461
+              ],
+              "materials": [],
+              "modifiers": [],
+              "name": "Ceiling Light Line",
+              "rotation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                23.394207000732422,
+                23.394207000732422,
+                23.394207000732422
+              ],
+              "type": "EMPTY",
+              "visible": true
+            },
+            {
+              "collections": [
+                "Collection"
+              ],
+              "data": {
+                "name": "Recurso 2",
+                "polygons_count": 3554,
+                "type": "Mesh",
+                "vertices_count": 1777
+              },
+              "id": "object:fe29cd454fa23767bc7337f0",
+              "location": [
+                0.024041350930929184,
+                0.0,
+                9.494682312011719
+              ],
+              "materials": [
+                "Glass Cyan"
+              ],
+              "modifiers": [],
+              "name": "Recurso 2",
+              "rotation": [
+                1.570796251296997,
+                -0.0,
+                6.280311107635498
+              ],
+              "scale": [
+                0.6715795993804932,
+                0.6715795993804932,
+                0.6715795993804932
+              ],
+              "type": "MESH",
+              "visible": true
+            }
+          ],
+          "render": {
+            "color_mode": "RGBA",
+            "engine": "CYCLES",
+            "file_format": "PNG",
+            "filepath": "C:/ARICA/LOGOOO/2/",
+            "film_transparent": true,
+            "pixel_aspect_x": 1.0,
+            "pixel_aspect_y": 1.0,
+            "resolution_percentage": 100,
+            "resolution_x": 1920,
+            "resolution_y": 1080,
+            "use_file_extension": true
+          },
+          "view_layers": [
+            "ViewLayer"
+          ]
+        }
+      ],
+      "dependencies": [
+        {
+          "exists": false,
+          "kind": "image",
+          "packed": true,
+          "path": "//../Users/issvk/blenderkit_data/materials/glass-cyan_5ea2e67d-8f2c-4bab-bd98-2ec70634882d/textures_1k/metal-smudge-smoothness-3.jpg"
+        },
+        {
+          "exists": false,
+          "kind": "image",
+          "packed": true,
+          "path": "//../Users/issvk/blenderkit_data/materials/glass-imperfecti_04f951be-04b6-4e21-bd5d-36272a7d6f37/textures_1k/metal-smudge-smoothness-2.jpg"
+        }
+      ],
+      "extractor_config": {
+        "factory_startup": true,
+        "disable_autoexec": true,
+        "renders": false,
+        "saves": false
+      }
+    },
+    "provenance": {
+      "authority": "blender_python_snapshot",
+      "extractor": "tools.blender_scene_probe.snapshot_file",
+      "method": "background_factory_startup_disable_autoexec_read_only",
+      "search_completeness": "declared_native_fields_only",
+      "negative_is_evidence": false,
+      "source_locator": "ARICA/RAYU.blend",
+      "sanitisation": {
+        "absolute_paths": "removed",
+        "dependency_path_values": "retained_as_declared_by_blender",
+        "filesystem_status_fields": "retained"
+      }
+    }
+  }
+}

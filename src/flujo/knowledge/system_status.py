@@ -76,6 +76,37 @@ def _process_snapshot(tokens: Iterable[str]) -> dict[str, Any]:
     return {"running": count > 0, "count": count}
 
 
+def _runtime_source(tokens: Iterable[str], candidates: Iterable[Path]) -> dict[str, Any]:
+    """Identify the source path present in a matching live command line.
+
+    Status is read-only and must distinguish a declared source from the file
+    actually passed to the running interpreter.  We only return a path from
+    the known candidate set; command lines themselves are never exposed.
+    """
+    wanted = tuple(token.lower() for token in tokens if token)
+    paths = tuple(path.expanduser().resolve() for path in candidates)
+    try:
+        proc_root = Path("/proc")
+        for entry in proc_root.iterdir():
+            if not entry.name.isdigit():
+                continue
+            try:
+                command = (entry / "cmdline").read_bytes()[:4096].replace(
+                    b"\x00", b" "
+                ).decode("utf-8", "replace")
+            except OSError:
+                continue
+            lowered = command.lower()
+            if not command or not any(token in lowered for token in wanted):
+                continue
+            for path in paths:
+                if str(path).lower() in lowered:
+                    return {"observed": True, "path": str(path)}
+    except OSError:
+        pass
+    return {"observed": False, "path": None}
+
+
 def _executable_snapshot(names: Iterable[str]) -> dict[str, Any]:
     """Count processes by their actual executable, not by argument text."""
     wanted = {Path(name).name.lower() for name in names if name}
@@ -143,18 +174,27 @@ def _service_component(
     source: Path,
     port: int,
     process_tokens: Iterable[str],
+    source_candidates: Iterable[Path] = (),
 ) -> dict[str, Any]:
     source_evidence = _path_status(source)
     listener = _listener(port)
     process = _process_snapshot(process_tokens)
-    ok = source_evidence["exists"] and listener["reachable"] and process["running"]
+    runtime_source = _runtime_source(
+        process_tokens, (source, *tuple(source_candidates))
+    )
+    source_evidence["role"] = "declared"
     return _component(
         component_id,
         label,
-        "ready" if ok else "attention",
-        severity="none" if ok else "attention",
-        evidence={"source": source_evidence, "listener": listener, "process": process},
-        next_action=None if ok else "check the source, local listener and process before sending work to this consumer",
+        "ready" if source_evidence["exists"] and listener["reachable"] and process["running"] else "attention",
+        severity="none" if source_evidence["exists"] and listener["reachable"] and process["running"] else "attention",
+        evidence={
+            "source": source_evidence,
+            "runtime_source": runtime_source,
+            "listener": listener,
+            "process": process,
+        },
+        next_action=None if source_evidence["exists"] and listener["reachable"] and process["running"] else "check the source, local listener and process before sending work to this consumer",
     )
 
 
@@ -360,12 +400,16 @@ def system_status(
     """Return one read-only status envelope for local MAK consumers."""
     repo = Path(repo_root).expanduser().resolve()
     physical = Path(physical_root).expanduser().resolve() if physical_root else repo.parent
-    ledger = operational_status(database, repo_root=repo)
+    # Normalize the database once so CLI-relative and Hub-absolute callers
+    # expose the same provenance in the shared status contract.
+    database_path = Path(database).expanduser().resolve()
+    ledger = operational_status(database_path, repo_root=repo)
     components = {
         "repo": _repo_component(repo),
         "hub": _service_component(
-            "hub", "MAK Hub 8900", physical / "plataforma" / "hub.py", _PORTS["hub"],
+            "hub", "MAK Hub 8900", repo / "cultura" / "mak_plataforma" / "hub.py", _PORTS["hub"],
             ("plataforma/hub.py", "mak_plataforma/hub.py"),
+            source_candidates=(physical / "plataforma" / "hub.py",),
         ),
         "research": _service_component(
             "research", "Research 8890", physical / "research" / "interfaz.py", _PORTS["research"],

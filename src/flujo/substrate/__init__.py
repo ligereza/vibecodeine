@@ -38,6 +38,17 @@ from .schema import (
 )
 from .xmp import BOUNDED, EXHAUSTIVE, XmpFields, XmpResult, extract, parse_packet
 from .aepfile import AepHeader, AepReferences, read_references
+from .scene_snapshot import (
+    CONTRACT as SCENE_SNAPSHOT_CONTRACT,
+    RENDER_OPERATION,
+    TRANSFORMATION_CONTRACT,
+    SceneSnapshotError,
+    assess_render_preconditions,
+    build_scene_snapshot,
+    finish_transformation,
+    start_transformation,
+    validate_scene_snapshot,
+)
 
 __all__ = [
     "Content", "ArtifactState", "Lineage", "Observation", "Evidence", "Substrate",
@@ -47,6 +58,9 @@ __all__ = [
     "ingest_file", "ingest_archive", "walk_root", "state_key",
     "extract", "parse_packet", "XmpFields", "XmpResult", "EXHAUSTIVE", "BOUNDED",
     "AepHeader", "AepReferences", "read_references",
+    "SCENE_SNAPSHOT_CONTRACT", "TRANSFORMATION_CONTRACT", "RENDER_OPERATION",
+    "SceneSnapshotError", "build_scene_snapshot", "validate_scene_snapshot",
+    "assess_render_preconditions", "start_transformation", "finish_transformation",
     # A resolution carries its cardinality, so an individuating claim cannot be
     # built from an ambiguous one. Exported because the alternative is every
     # caller reaching into a private path for the one type that gates the single

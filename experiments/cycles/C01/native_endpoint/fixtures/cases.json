@@ -1,0 +1,202 @@
+{
+  "schema": "mak-native-fixture-v1",
+  "archive_id": "artist-001",
+  "cases": [
+    {
+      "schema": "mak-native-fixture-v1",
+      "archive_id": "artist-001",
+      "case_id": "case-6-multiple-versions",
+      "nodes": [
+        {"kind": "authoring", "id": "authoring-6", "title": "synthetic-native-document"},
+        {"kind": "source", "id": "source-6", "role": "source-image"},
+        {"kind": "component", "id": "component-6", "role": "shader-component"},
+        {"kind": "deliverable", "id": "deliverable-6:v1", "deliverable_id": "deliverable-6", "version": "v1", "declared_authoring_id": "authoring-6", "identifiable": true},
+        {"kind": "deliverable", "id": "deliverable-6:v2", "deliverable_id": "deliverable-6", "version": "v2", "declared_authoring_id": "authoring-6", "identifiable": true}
+      ],
+      "activities": [
+        {
+          "id": "activity-edit-6",
+          "activity_type": "edit",
+          "status": "completed",
+          "state_history": [
+            {"state": "started", "evidence_ref": "fixture:case-6:edit-started"},
+            {"state": "completed", "evidence_ref": "fixture:case-6:edit-completed"}
+          ],
+          "observation_refs": ["fixture:case-6:edit-observation"],
+          "uses": ["authoring-6", "source-6"],
+          "generated": []
+        },
+        {
+          "id": "activity-render-6-v1",
+          "activity_type": "render",
+          "status": "completed",
+          "state_history": [
+            {"state": "started", "evidence_ref": "fixture:case-6:render-v1-started"},
+            {"state": "completed", "evidence_ref": "fixture:case-6:render-v1-completed"}
+          ],
+          "observation_refs": ["fixture:case-6:render-v1-observation"],
+          "uses": ["activity-edit-6", "component-6"],
+          "generated": []
+        },
+        {
+          "id": "activity-export-6-v1",
+          "activity_type": "export",
+          "status": "completed",
+          "state_history": [
+            {"state": "started", "evidence_ref": "fixture:case-6:export-v1-started"},
+            {"state": "completed", "evidence_ref": "fixture:case-6:export-v1-completed"}
+          ],
+          "observation_refs": ["fixture:case-6:export-v1-observation"],
+          "uses": ["activity-render-6-v1", "source-6"],
+          "generated": ["deliverable-6:v1"]
+        },
+        {
+          "id": "activity-render-6-v2",
+          "activity_type": "render",
+          "status": "completed",
+          "state_history": [
+            {"state": "started", "evidence_ref": "fixture:case-6:render-v2-started"},
+            {"state": "completed", "evidence_ref": "fixture:case-6:render-v2-completed"}
+          ],
+          "observation_refs": ["fixture:case-6:render-v2-observation"],
+          "uses": ["activity-edit-6", "component-6"],
+          "generated": []
+        },
+        {
+          "id": "activity-export-6-v2",
+          "activity_type": "export",
+          "status": "completed",
+          "state_history": [
+            {"state": "started", "evidence_ref": "fixture:case-6:export-v2-started"},
+            {"state": "completed", "evidence_ref": "fixture:case-6:export-v2-completed"}
+          ],
+          "observation_refs": ["fixture:case-6:export-v2-observation"],
+          "uses": ["activity-render-6-v2", "source-6"],
+          "generated": ["deliverable-6:v2"]
+        }
+      ],
+      "lineage": [
+        {"source_id": "deliverable-6:v1", "target_id": "authoring-6", "relation": "derived_from", "status": "supported", "evidence_refs": ["fixture:case-6:v1-lineage"]},
+        {"source_id": "deliverable-6:v2", "target_id": "authoring-6", "relation": "derived_from", "status": "supported", "evidence_refs": ["fixture:case-6:v2-lineage"]},
+        {"source_id": "deliverable-6:v2", "target_id": "deliverable-6:v1", "relation": "specializes", "status": "supported", "evidence_refs": ["fixture:case-6:v2-specializes-v1"]}
+      ]
+    },
+    {
+      "schema": "mak-native-fixture-v1",
+      "archive_id": "artist-001",
+      "case_id": "case-7-shared-source",
+      "nodes": [
+        {"kind": "authoring", "id": "authoring-7-a", "title": "synthetic-document-a"},
+        {"kind": "authoring", "id": "authoring-7-b", "title": "synthetic-document-b"},
+        {"kind": "source", "id": "source-7-shared", "role": "shared-source"},
+        {"kind": "component", "id": "component-7", "role": "shared-component"},
+        {"kind": "deliverable", "id": "deliverable-7:a", "version": "a", "declared_authoring_id": "authoring-7-a", "identifiable": true},
+        {"kind": "deliverable", "id": "deliverable-7:b", "version": "b", "declared_authoring_id": "authoring-7-b", "identifiable": true}
+      ],
+      "activities": [
+        {
+          "id": "activity-edit-7-a",
+          "activity_type": "edit",
+          "status": "completed",
+          "state_history": [
+            {"state": "started", "evidence_ref": "fixture:case-7:edit-a-started"},
+            {"state": "completed", "evidence_ref": "fixture:case-7:edit-a-completed"}
+          ],
+          "observation_refs": ["fixture:case-7:edit-a-observation"],
+          "uses": ["authoring-7-a", "source-7-shared"],
+          "generated": []
+        },
+        {
+          "id": "activity-export-7-a",
+          "activity_type": "export",
+          "status": "completed",
+          "state_history": [
+            {"state": "started", "evidence_ref": "fixture:case-7:export-a-started"},
+            {"state": "completed", "evidence_ref": "fixture:case-7:export-a-completed"}
+          ],
+          "observation_refs": ["fixture:case-7:export-a-observation"],
+          "uses": ["activity-edit-7-a", "source-7-shared", "component-7"],
+          "generated": ["deliverable-7:a"]
+        },
+        {
+          "id": "activity-edit-7-b",
+          "activity_type": "edit",
+          "status": "completed",
+          "state_history": [
+            {"state": "started", "evidence_ref": "fixture:case-7:edit-b-started"},
+            {"state": "completed", "evidence_ref": "fixture:case-7:edit-b-completed"}
+          ],
+          "observation_refs": ["fixture:case-7:edit-b-observation"],
+          "uses": ["authoring-7-b", "source-7-shared"],
+          "generated": []
+        },
+        {
+          "id": "activity-export-7-b",
+          "activity_type": "export",
+          "status": "completed",
+          "state_history": [
+            {"state": "started", "evidence_ref": "fixture:case-7:export-b-started"},
+            {"state": "completed", "evidence_ref": "fixture:case-7:export-b-completed"}
+          ],
+          "observation_refs": ["fixture:case-7:export-b-observation"],
+          "uses": ["activity-edit-7-b", "source-7-shared", "component-7"],
+          "generated": ["deliverable-7:b"]
+        }
+      ],
+      "lineage": [
+        {"source_id": "deliverable-7:a", "target_id": "authoring-7-a", "relation": "derived_from", "status": "supported", "evidence_refs": ["fixture:case-7:a-lineage"]},
+        {"source_id": "deliverable-7:b", "target_id": "authoring-7-b", "relation": "derived_from", "status": "supported", "evidence_refs": ["fixture:case-7:b-lineage"]}
+      ]
+    },
+    {
+      "schema": "mak-native-fixture-v1",
+      "archive_id": "artist-001",
+      "case_id": "case-8-no-identifiable-output",
+      "nodes": [
+        {"kind": "authoring", "id": "authoring-8", "title": "synthetic-native-graph"},
+        {"kind": "source", "id": "source-8", "role": "native-source"},
+        {"kind": "component", "id": "component-8", "role": "native-component"},
+        {"kind": "deliverable", "id": "unidentified-output-8", "identifiable": false, "placeholder": true, "filename": "unknown-output.ext"}
+      ],
+      "activities": [
+        {
+          "id": "activity-edit-8",
+          "activity_type": "edit",
+          "status": "completed",
+          "state_history": [
+            {"state": "started", "evidence_ref": "fixture:case-8:edit-started"},
+            {"state": "completed", "evidence_ref": "fixture:case-8:edit-completed"}
+          ],
+          "observation_refs": ["fixture:case-8:edit-observation"],
+          "uses": ["authoring-8", "source-8"],
+          "generated": []
+        },
+        {
+          "id": "activity-render-8",
+          "activity_type": "render",
+          "status": "completed",
+          "state_history": [
+            {"state": "started", "evidence_ref": "fixture:case-8:render-started"},
+            {"state": "completed", "evidence_ref": "fixture:case-8:render-completed"}
+          ],
+          "observation_refs": ["fixture:case-8:render-observation"],
+          "uses": ["activity-edit-8", "component-8"],
+          "generated": []
+        },
+        {
+          "id": "activity-export-8",
+          "activity_type": "export",
+          "status": "failed",
+          "state_history": [
+            {"state": "started", "evidence_ref": "fixture:case-8:export-started"},
+            {"state": "failed", "evidence_ref": "fixture:case-8:export-failed-no-identifiable-output"}
+          ],
+          "observation_refs": ["fixture:case-8:export-failure-observation"],
+          "uses": ["activity-render-8", "source-8"],
+          "generated": ["unidentified-output-8"]
+        }
+      ],
+      "lineage": []
+    }
+  ]
+}

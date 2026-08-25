@@ -1,0 +1,32 @@
+{
+  "fixture_role": "synthetic_adversarial_input_only",
+  "schema": "mak-cycle-c04-evidence-input-v1",
+  "case_id": "exists_not_declared",
+  "native_aep": {
+    "source_id": "aep-arica",
+    "evidence_refs": ["aep://ARICA.aep#/declarations/0"],
+    "declarations": [
+      {
+        "declaration_id": "decl-other",
+        "declared_path": "C:\\ARICA\\other.mp4",
+        "evidence_refs": ["aep://ARICA.aep#byte-offset=900"]
+      }
+    ]
+  },
+  "local_media_observation": {
+    "observation_id": "obs-unlisted-001",
+    "evidence_refs": ["media://unlisted.mp4#stat", "media://unlisted.mp4#hash"],
+    "observations": [
+      {
+        "observation_id": "obs-unlisted-001",
+        "path": "/fixture/media/unlisted.mp4",
+        "exists": true,
+        "is_file": true,
+        "technical_id": "tech-unlisted",
+        "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "evidence_refs": ["media://unlisted.mp4#stat", "media://unlisted.mp4#hash"]
+      }
+    ]
+  },
+  "export_event": null
+}

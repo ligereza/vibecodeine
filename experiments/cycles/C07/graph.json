@@ -1,0 +1,1300 @@
+{
+  "cases": {
+    "export_without_project": {
+      "artifacts": [
+        {
+          "alpha": true,
+          "aspect_ratio": 1.0,
+          "bytes": 317,
+          "dimensions": {
+            "height": 100,
+            "width": 100
+          },
+          "evidence_refs": [
+            "artifact:orphan/export_only.png#path",
+            "artifact:orphan/export_only.png#extension",
+            "artifact:orphan/export_only.png#sha256",
+            "artifact:orphan/export_only.png#bytes",
+            "artifact:orphan/export_only.png#name_tokens",
+            "artifact:orphan/export_only.png#path_tokens",
+            "artifact:orphan/export_only.png#dimensions"
+          ],
+          "extension": "png",
+          "id": "artifact:orphan/export_only.png",
+          "kind": "image",
+          "name_tokens": [
+            "export",
+            "only"
+          ],
+          "path": "orphan/export_only.png",
+          "path_tokens": [
+            "tmp",
+            "tmpw23s2nw3",
+            "export",
+            "without",
+            "project",
+            "orphan"
+          ],
+          "sequence_family": null,
+          "sequence_index": null,
+          "sha256": "7171ef3341ea876cc58ddcb0028f6e4a6e5417f989492f04a8e15751ccdc66b3",
+          "video_codec": null,
+          "video_duration": null,
+          "video_fps": null,
+          "xml_xmp": {
+            "fields": {},
+            "format": null,
+            "readable": false,
+            "reason": "not_xml_like"
+          }
+        }
+      ],
+      "edges": [],
+      "policy": {
+        "blender_or_adobe_execution": false,
+        "filesystem_scope": "explicit_paths_only",
+        "pending_statuses": [
+          "pending_relation",
+          "unresolved_candidate"
+        ],
+        "terminal_statuses": [
+          "supported"
+        ]
+      },
+      "relation_candidates": [
+        {
+          "alternatives": [],
+          "evidence_refs": [
+            "artifact:orphan/export_only.png#kind",
+            "artifact:orphan/export_only.png#path"
+          ],
+          "id": "candidate:version_of:artifact:orphan/export_only.png->missing",
+          "missing_evidence": [
+            "project_artifact"
+          ],
+          "next_probe": "locate the authoring project or export witness",
+          "relation": "version_of",
+          "score": 0.12,
+          "score_breakdown": {
+            "base": 0.12,
+            "explanation": "no positive signal",
+            "signals": []
+          },
+          "source_id": "artifact:orphan/export_only.png",
+          "status": "unresolved_candidate",
+          "target_id": null
+        }
+      ],
+      "schema": "mak-cycle-c07-practice-art-graph-v1",
+      "summary": {
+        "artifact_count": 1,
+        "candidate_count": 1,
+        "pending_relation_count": 0,
+        "supported_count": 0,
+        "unresolved_candidate_count": 1
+      }
+    },
+    "frames_plus_export": {
+      "artifacts": [
+        {
+          "alpha": true,
+          "aspect_ratio": 2.0,
+          "bytes": 174,
+          "dimensions": {
+            "height": 40,
+            "width": 80
+          },
+          "evidence_refs": [
+            "artifact:aurora/aurora_frame_0001.png#path",
+            "artifact:aurora/aurora_frame_0001.png#extension",
+            "artifact:aurora/aurora_frame_0001.png#sha256",
+            "artifact:aurora/aurora_frame_0001.png#bytes",
+            "artifact:aurora/aurora_frame_0001.png#name_tokens",
+            "artifact:aurora/aurora_frame_0001.png#path_tokens",
+            "artifact:aurora/aurora_frame_0001.png#dimensions"
+          ],
+          "extension": "png",
+          "id": "artifact:aurora/aurora_frame_0001.png",
+          "kind": "image",
+          "name_tokens": [
+            "aurora",
+            "frame",
+            "0001"
+          ],
+          "path": "aurora/aurora_frame_0001.png",
+          "path_tokens": [
+            "tmp",
+            "tmpw23s2nw3",
+            "frames",
+            "plus",
+            "export",
+            "aurora"
+          ],
+          "sequence_family": "aurora",
+          "sequence_index": 1,
+          "sha256": "bbe3628d2e49ba29b7d55a47ccb5ce10ac8b975e5111c8493025c4c581f72fc6",
+          "video_codec": null,
+          "video_duration": null,
+          "video_fps": null,
+          "xml_xmp": {
+            "fields": {},
+            "format": null,
+            "readable": false,
+            "reason": "not_xml_like"
+          }
+        },
+        {
+          "alpha": true,
+          "aspect_ratio": 2.0,
+          "bytes": 174,
+          "dimensions": {
+            "height": 40,
+            "width": 80
+          },
+          "evidence_refs": [
+            "artifact:aurora/aurora_frame_0002.png#path",
+            "artifact:aurora/aurora_frame_0002.png#extension",
+            "artifact:aurora/aurora_frame_0002.png#sha256",
+            "artifact:aurora/aurora_frame_0002.png#bytes",
+            "artifact:aurora/aurora_frame_0002.png#name_tokens",
+            "artifact:aurora/aurora_frame_0002.png#path_tokens",
+            "artifact:aurora/aurora_frame_0002.png#dimensions"
+          ],
+          "extension": "png",
+          "id": "artifact:aurora/aurora_frame_0002.png",
+          "kind": "image",
+          "name_tokens": [
+            "aurora",
+            "frame",
+            "0002"
+          ],
+          "path": "aurora/aurora_frame_0002.png",
+          "path_tokens": [
+            "tmp",
+            "tmpw23s2nw3",
+            "frames",
+            "plus",
+            "export",
+            "aurora"
+          ],
+          "sequence_family": "aurora",
+          "sequence_index": 2,
+          "sha256": "d81d4993b08bef33dbf39642944575a907329b7fc1fcab07f82f2aa742aedf5f",
+          "video_codec": null,
+          "video_duration": null,
+          "video_fps": null,
+          "xml_xmp": {
+            "fields": {},
+            "format": null,
+            "readable": false,
+            "reason": "not_xml_like"
+          }
+        },
+        {
+          "alpha": true,
+          "aspect_ratio": 2.0,
+          "bytes": 290,
+          "dimensions": {
+            "height": 80,
+            "width": 160
+          },
+          "evidence_refs": [
+            "artifact:aurora/aurora_export.png#path",
+            "artifact:aurora/aurora_export.png#extension",
+            "artifact:aurora/aurora_export.png#sha256",
+            "artifact:aurora/aurora_export.png#bytes",
+            "artifact:aurora/aurora_export.png#name_tokens",
+            "artifact:aurora/aurora_export.png#path_tokens",
+            "artifact:aurora/aurora_export.png#dimensions"
+          ],
+          "extension": "png",
+          "id": "artifact:aurora/aurora_export.png",
+          "kind": "image",
+          "name_tokens": [
+            "aurora",
+            "export"
+          ],
+          "path": "aurora/aurora_export.png",
+          "path_tokens": [
+            "tmp",
+            "tmpw23s2nw3",
+            "frames",
+            "plus",
+            "export",
+            "aurora"
+          ],
+          "sequence_family": null,
+          "sequence_index": null,
+          "sha256": "c2c7c523a0db90f6730fbd967853acf4c71eb006e4b1fddaa70c872d4fde2de1",
+          "video_codec": null,
+          "video_duration": null,
+          "video_fps": null,
+          "xml_xmp": {
+            "fields": {},
+            "format": null,
+            "readable": false,
+            "reason": "not_xml_like"
+          }
+        },
+        {
+          "alpha": null,
+          "aspect_ratio": null,
+          "bytes": 41,
+          "dimensions": null,
+          "evidence_refs": [
+            "artifact:aurora/aurora_project.blend#path",
+            "artifact:aurora/aurora_project.blend#extension",
+            "artifact:aurora/aurora_project.blend#sha256",
+            "artifact:aurora/aurora_project.blend#bytes",
+            "artifact:aurora/aurora_project.blend#name_tokens",
+            "artifact:aurora/aurora_project.blend#path_tokens"
+          ],
+          "extension": "blend",
+          "id": "artifact:aurora/aurora_project.blend",
+          "kind": "project",
+          "name_tokens": [
+            "aurora",
+            "project"
+          ],
+          "path": "aurora/aurora_project.blend",
+          "path_tokens": [
+            "tmp",
+            "tmpw23s2nw3",
+            "frames",
+            "plus",
+            "export",
+            "aurora"
+          ],
+          "sequence_family": null,
+          "sequence_index": null,
+          "sha256": "e6622b43e27a358585ea62b9d2579adc4a0acf997c89b77bcf038276c7e462e8",
+          "video_codec": null,
+          "video_duration": null,
+          "video_fps": null,
+          "xml_xmp": {
+            "fields": {},
+            "format": null,
+            "readable": false,
+            "reason": "not_xml_like"
+          }
+        },
+        {
+          "alpha": null,
+          "aspect_ratio": null,
+          "bytes": 141,
+          "dimensions": null,
+          "evidence_refs": [
+            "artifact:aurora/aurora_export.xmp#path",
+            "artifact:aurora/aurora_export.xmp#extension",
+            "artifact:aurora/aurora_export.xmp#sha256",
+            "artifact:aurora/aurora_export.xmp#bytes",
+            "artifact:aurora/aurora_export.xmp#name_tokens",
+            "artifact:aurora/aurora_export.xmp#path_tokens",
+            "artifact:aurora/aurora_export.xmp#xml_xmp"
+          ],
+          "extension": "xmp",
+          "id": "artifact:aurora/aurora_export.xmp",
+          "kind": "document",
+          "name_tokens": [
+            "aurora",
+            "export"
+          ],
+          "path": "aurora/aurora_export.xmp",
+          "path_tokens": [
+            "tmp",
+            "tmpw23s2nw3",
+            "frames",
+            "plus",
+            "export",
+            "aurora"
+          ],
+          "sequence_family": null,
+          "sequence_index": null,
+          "sha256": "e443447b717bce9806e130efdcdcae548743e2f03b063f71d72c6da2f40c92ca",
+          "video_codec": null,
+          "video_duration": null,
+          "video_fps": null,
+          "xml_xmp": {
+            "fields": {
+              "Description@identifier": "aurora-01"
+            },
+            "format": "xmp",
+            "readable": true,
+            "reason": "parsed"
+          }
+        },
+        {
+          "alpha": false,
+          "aspect_ratio": 2.0,
+          "bytes": 829,
+          "dimensions": {
+            "height": 80,
+            "width": 160
+          },
+          "evidence_refs": [
+            "artifact:published/aurora_public_post.jpg#path",
+            "artifact:published/aurora_public_post.jpg#extension",
+            "artifact:published/aurora_public_post.jpg#sha256",
+            "artifact:published/aurora_public_post.jpg#bytes",
+            "artifact:published/aurora_public_post.jpg#name_tokens",
+            "artifact:published/aurora_public_post.jpg#path_tokens",
+            "artifact:published/aurora_public_post.jpg#dimensions"
+          ],
+          "extension": "jpg",
+          "id": "artifact:published/aurora_public_post.jpg",
+          "kind": "image",
+          "name_tokens": [
+            "aurora",
+            "public",
+            "post"
+          ],
+          "path": "published/aurora_public_post.jpg",
+          "path_tokens": [
+            "tmp",
+            "tmpw23s2nw3",
+            "frames",
+            "plus",
+            "export",
+            "published"
+          ],
+          "sequence_family": null,
+          "sequence_index": null,
+          "sha256": "e8a6bbd5d8c6e582d9b7dc7b858597250b12a70b29b553c518184e46061c6eab",
+          "video_codec": null,
+          "video_duration": null,
+          "video_fps": null,
+          "xml_xmp": {
+            "fields": {},
+            "format": null,
+            "readable": false,
+            "reason": "not_xml_like"
+          }
+        }
+      ],
+      "edges": [],
+      "policy": {
+        "blender_or_adobe_execution": false,
+        "filesystem_scope": "explicit_paths_only",
+        "pending_statuses": [
+          "pending_relation",
+          "unresolved_candidate"
+        ],
+        "terminal_statuses": [
+          "supported"
+        ]
+      },
+      "relation_candidates": [
+        {
+          "alternatives": [
+            {
+              "reason": "shared tokens=['aurora']",
+              "relation": "manifestation_of",
+              "score": 0.34,
+              "status": "unresolved_candidate"
+            }
+          ],
+          "evidence_refs": [
+            "artifact:aurora/aurora_frame_0001.png#sequence_family",
+            "artifact:aurora/aurora_frame_0001.png#sequence_index",
+            "artifact:aurora/aurora_frame_0002.png#sequence_family",
+            "artifact:aurora/aurora_frame_0002.png#sequence_index"
+          ],
+          "id": "candidate:same_series_candidate:artifact:aurora/aurora_frame_0001.png->artifact:aurora/aurora_frame_0002.png",
+          "missing_evidence": [
+            "series_manifest_or_curatorial_id"
+          ],
+          "next_probe": "inspect sequence manifest or curator declaration",
+          "relation": "same_series_candidate",
+          "score": 0.72,
+          "score_breakdown": {
+            "base": 0.12,
+            "explanation": "same sequence family=aurora",
+            "signals": [
+              {
+                "contribution": 0.6,
+                "explanation": "same sequence family=aurora",
+                "name": "sequence_family",
+                "value": "aurora"
+              }
+            ]
+          },
+          "source_id": "artifact:aurora/aurora_frame_0001.png",
+          "status": "pending_relation",
+          "target_id": "artifact:aurora/aurora_frame_0002.png"
+        },
+        {
+          "alternatives": [
+            {
+              "reason": "same sequence family=aurora",
+              "relation": "same_series_candidate",
+              "score": 0.72,
+              "status": "pending_relation"
+            }
+          ],
+          "evidence_refs": [
+            "artifact:aurora/aurora_frame_0001.png#name_tokens",
+            "artifact:aurora/aurora_frame_0001.png#path_tokens",
+            "artifact:aurora/aurora_frame_0002.png#name_tokens",
+            "artifact:aurora/aurora_frame_0002.png#path_tokens"
+          ],
+          "id": "candidate:manifestation_of:artifact:aurora/aurora_frame_0001.png->artifact:aurora/aurora_frame_0002.png",
+          "missing_evidence": [
+            "curatorial_lineage",
+            "declared_work_id"
+          ],
+          "next_probe": "inspect declared work ID, source record, or curatorial note",
+          "relation": "manifestation_of",
+          "score": 0.34,
+          "score_breakdown": {
+            "base": 0.12,
+            "explanation": "shared tokens=['aurora']",
+            "signals": [
+              {
+                "contribution": 0.22,
+                "explanation": "shared tokens=['aurora']",
+                "name": "shared_name_tokens",
+                "value": [
+                  "aurora"
+                ]
+              }
+            ]
+          },
+          "source_id": "artifact:aurora/aurora_frame_0001.png",
+          "status": "unresolved_candidate",
+          "target_id": "artifact:aurora/aurora_frame_0002.png"
+        },
+        {
+          "alternatives": [
+            {
+              "reason": "shared tokens=['aurora']",
+              "relation": "manifestation_of",
+              "score": 0.34,
+              "status": "unresolved_candidate"
+            }
+          ],
+          "evidence_refs": [
+            "artifact:aurora/aurora_export.png#name_tokens",
+            "artifact:aurora/aurora_export.png#path_tokens",
+            "artifact:aurora/aurora_frame_0001.png#name_tokens",
+            "artifact:aurora/aurora_frame_0001.png#path_tokens",
+            "artifact:aurora/aurora_frame_0001.png#sequence_index",
+            "artifact:aurora/aurora_frame_0001.png#sha256"
+          ],
+          "id": "candidate:component_of:artifact:aurora/aurora_frame_0001.png->artifact:aurora/aurora_export.png",
+          "missing_evidence": [
+            "explicit_composition_or_export_manifest"
+          ],
+          "next_probe": "inspect export manifest or project timeline",
+          "relation": "component_of",
+          "score": 0.62,
+          "score_breakdown": {
+            "base": 0.12,
+            "explanation": "shared tokens=['aurora'] + numbered frame paired with export-like artifact",
+            "signals": [
+              {
+                "contribution": 0.22,
+                "explanation": "shared tokens=['aurora']",
+                "name": "shared_name_tokens",
+                "value": [
+                  "aurora"
+                ]
+              },
+              {
+                "contribution": 0.28,
+                "explanation": "numbered frame paired with export-like artifact",
+                "name": "frame_to_export_shape",
+                "value": true
+              }
+            ]
+          },
+          "source_id": "artifact:aurora/aurora_frame_0001.png",
+          "status": "pending_relation",
+          "target_id": "artifact:aurora/aurora_export.png"
+        },
+        {
+          "alternatives": [
+            {
+              "reason": "shared tokens=['aurora'] + numbered frame paired with export-like artifact",
+              "relation": "component_of",
+              "score": 0.62,
+              "status": "pending_relation"
+            }
+          ],
+          "evidence_refs": [
+            "artifact:aurora/aurora_export.png#name_tokens",
+            "artifact:aurora/aurora_export.png#path_tokens",
+            "artifact:aurora/aurora_frame_0001.png#name_tokens",
+            "artifact:aurora/aurora_frame_0001.png#path_tokens"
+          ],
+          "id": "candidate:manifestation_of:artifact:aurora/aurora_frame_0001.png->artifact:aurora/aurora_export.png",
+          "missing_evidence": [
+            "curatorial_lineage",
+            "declared_work_id"
+          ],
+          "next_probe": "inspect declared work ID, source record, or curatorial note",
+          "relation": "manifestation_of",
+          "score": 0.34,
+          "score_breakdown": {
+            "base": 0.12,
+            "explanation": "shared tokens=['aurora']",
+            "signals": [
+              {
+                "contribution": 0.22,
+                "explanation": "shared tokens=['aurora']",
+                "name": "shared_name_tokens",
+                "value": [
+                  "aurora"
+                ]
+              }
+            ]
+          },
+          "source_id": "artifact:aurora/aurora_frame_0001.png",
+          "status": "unresolved_candidate",
+          "target_id": "artifact:aurora/aurora_export.png"
+        },
+        {
+          "alternatives": [],
+          "evidence_refs": [
+            "artifact:aurora/aurora_frame_0001.png#name_tokens",
+            "artifact:aurora/aurora_frame_0001.png#path_tokens",
+            "artifact:published/aurora_public_post.jpg#name_tokens",
+            "artifact:published/aurora_public_post.jpg#path_tokens"
+          ],
+          "id": "candidate:manifestation_of:artifact:aurora/aurora_frame_0001.png->artifact:published/aurora_public_post.jpg",
+          "missing_evidence": [
+            "curatorial_lineage",
+            "declared_work_id"
+          ],
+          "next_probe": "inspect declared work ID, source record, or curatorial note",
+          "relation": "manifestation_of",
+          "score": 0.34,
+          "score_breakdown": {
+            "base": 0.12,
+            "explanation": "shared tokens=['aurora']",
+            "signals": [
+              {
+                "contribution": 0.22,
+                "explanation": "shared tokens=['aurora']",
+                "name": "shared_name_tokens",
+                "value": [
+                  "aurora"
+                ]
+              }
+            ]
+          },
+          "source_id": "artifact:aurora/aurora_frame_0001.png",
+          "status": "unresolved_candidate",
+          "target_id": "artifact:published/aurora_public_post.jpg"
+        },
+        {
+          "alternatives": [
+            {
+              "reason": "shared tokens=['aurora']",
+              "relation": "manifestation_of",
+              "score": 0.34,
+              "status": "unresolved_candidate"
+            }
+          ],
+          "evidence_refs": [
+            "artifact:aurora/aurora_export.png#name_tokens",
+            "artifact:aurora/aurora_export.png#path_tokens",
+            "artifact:aurora/aurora_frame_0002.png#name_tokens",
+            "artifact:aurora/aurora_frame_0002.png#path_tokens",
+            "artifact:aurora/aurora_frame_0002.png#sequence_index",
+            "artifact:aurora/aurora_frame_0002.png#sha256"
+          ],
+          "id": "candidate:component_of:artifact:aurora/aurora_frame_0002.png->artifact:aurora/aurora_export.png",
+          "missing_evidence": [
+            "explicit_composition_or_export_manifest"
+          ],
+          "next_probe": "inspect export manifest or project timeline",
+          "relation": "component_of",
+          "score": 0.62,
+          "score_breakdown": {
+            "base": 0.12,
+            "explanation": "shared tokens=['aurora'] + numbered frame paired with export-like artifact",
+            "signals": [
+              {
+                "contribution": 0.22,
+                "explanation": "shared tokens=['aurora']",
+                "name": "shared_name_tokens",
+                "value": [
+                  "aurora"
+                ]
+              },
+              {
+                "contribution": 0.28,
+                "explanation": "numbered frame paired with export-like artifact",
+                "name": "frame_to_export_shape",
+                "value": true
+              }
+            ]
+          },
+          "source_id": "artifact:aurora/aurora_frame_0002.png",
+          "status": "pending_relation",
+          "target_id": "artifact:aurora/aurora_export.png"
+        },
+        {
+          "alternatives": [
+            {
+              "reason": "shared tokens=['aurora'] + numbered frame paired with export-like artifact",
+              "relation": "component_of",
+              "score": 0.62,
+              "status": "pending_relation"
+            }
+          ],
+          "evidence_refs": [
+            "artifact:aurora/aurora_export.png#name_tokens",
+            "artifact:aurora/aurora_export.png#path_tokens",
+            "artifact:aurora/aurora_frame_0002.png#name_tokens",
+            "artifact:aurora/aurora_frame_0002.png#path_tokens"
+          ],
+          "id": "candidate:manifestation_of:artifact:aurora/aurora_frame_0002.png->artifact:aurora/aurora_export.png",
+          "missing_evidence": [
+            "curatorial_lineage",
+            "declared_work_id"
+          ],
+          "next_probe": "inspect declared work ID, source record, or curatorial note",
+          "relation": "manifestation_of",
+          "score": 0.34,
+          "score_breakdown": {
+            "base": 0.12,
+            "explanation": "shared tokens=['aurora']",
+            "signals": [
+              {
+                "contribution": 0.22,
+                "explanation": "shared tokens=['aurora']",
+                "name": "shared_name_tokens",
+                "value": [
+                  "aurora"
+                ]
+              }
+            ]
+          },
+          "source_id": "artifact:aurora/aurora_frame_0002.png",
+          "status": "unresolved_candidate",
+          "target_id": "artifact:aurora/aurora_export.png"
+        },
+        {
+          "alternatives": [],
+          "evidence_refs": [
+            "artifact:aurora/aurora_frame_0002.png#name_tokens",
+            "artifact:aurora/aurora_frame_0002.png#path_tokens",
+            "artifact:published/aurora_public_post.jpg#name_tokens",
+            "artifact:published/aurora_public_post.jpg#path_tokens"
+          ],
+          "id": "candidate:manifestation_of:artifact:aurora/aurora_frame_0002.png->artifact:published/aurora_public_post.jpg",
+          "missing_evidence": [
+            "curatorial_lineage",
+            "declared_work_id"
+          ],
+          "next_probe": "inspect declared work ID, source record, or curatorial note",
+          "relation": "manifestation_of",
+          "score": 0.34,
+          "score_breakdown": {
+            "base": 0.12,
+            "explanation": "shared tokens=['aurora']",
+            "signals": [
+              {
+                "contribution": 0.22,
+                "explanation": "shared tokens=['aurora']",
+                "name": "shared_name_tokens",
+                "value": [
+                  "aurora"
+                ]
+              }
+            ]
+          },
+          "source_id": "artifact:aurora/aurora_frame_0002.png",
+          "status": "unresolved_candidate",
+          "target_id": "artifact:published/aurora_public_post.jpg"
+        },
+        {
+          "alternatives": [],
+          "evidence_refs": [
+            "artifact:aurora/aurora_export.png#name_tokens",
+            "artifact:aurora/aurora_export.png#path_tokens",
+            "artifact:aurora/aurora_project.blend#extension",
+            "artifact:aurora/aurora_project.blend#name_tokens",
+            "artifact:aurora/aurora_project.blend#path_tokens"
+          ],
+          "id": "candidate:version_of:artifact:aurora/aurora_export.png->artifact:aurora/aurora_project.blend",
+          "missing_evidence": [
+            "declared_export_event"
+          ],
+          "next_probe": "inspect project export log or embedded project identifier",
+          "relation": "version_of",
+          "score": 0.72,
+          "score_breakdown": {
+            "base": 0.12,
+            "explanation": "shared tokens=['aurora'] + media artifact paired with project artifact",
+            "signals": [
+              {
+                "contribution": 0.22,
+                "explanation": "shared tokens=['aurora']",
+                "name": "shared_name_tokens",
+                "value": [
+                  "aurora"
+                ]
+              },
+              {
+                "contribution": 0.38,
+                "explanation": "media artifact paired with project artifact",
+                "name": "project_to_media",
+                "value": true
+              }
+            ]
+          },
+          "source_id": "artifact:aurora/aurora_export.png",
+          "status": "pending_relation",
+          "target_id": "artifact:aurora/aurora_project.blend"
+        },
+        {
+          "alternatives": [
+            {
+              "reason": "shared tokens=['aurora']",
+              "relation": "manifestation_of",
+              "score": 0.34,
+              "status": "unresolved_candidate"
+            }
+          ],
+          "evidence_refs": [
+            "artifact:aurora/aurora_export.png#name_tokens",
+            "artifact:aurora/aurora_export.png#path_tokens",
+            "artifact:published/aurora_public_post.jpg#name_tokens",
+            "artifact:published/aurora_public_post.jpg#path_tokens"
+          ],
+          "id": "candidate:published_as:artifact:aurora/aurora_export.png->artifact:published/aurora_public_post.jpg",
+          "missing_evidence": [
+            "publication_record_or_url"
+          ],
+          "next_probe": "inspect publication record or platform URL",
+          "relation": "published_as",
+          "score": 0.64,
+          "score_breakdown": {
+            "base": 0.12,
+            "explanation": "shared tokens=['aurora'] + one path/name is publication-like",
+            "signals": [
+              {
+                "contribution": 0.22,
+                "explanation": "shared tokens=['aurora']",
+                "name": "shared_name_tokens",
+                "value": [
+                  "aurora"
+                ]
+              },
+              {
+                "contribution": 0.3,
+                "explanation": "one path/name is publication-like",
+                "name": "publication_token",
+                "value": true
+              }
+            ]
+          },
+          "source_id": "artifact:aurora/aurora_export.png",
+          "status": "pending_relation",
+          "target_id": "artifact:published/aurora_public_post.jpg"
+        },
+        {
+          "alternatives": [
+            {
+              "reason": "shared tokens=['aurora'] + one path/name is publication-like",
+              "relation": "published_as",
+              "score": 0.64,
+              "status": "pending_relation"
+            }
+          ],
+          "evidence_refs": [
+            "artifact:aurora/aurora_export.png#name_tokens",
+            "artifact:aurora/aurora_export.png#path_tokens",
+            "artifact:published/aurora_public_post.jpg#name_tokens",
+            "artifact:published/aurora_public_post.jpg#path_tokens"
+          ],
+          "id": "candidate:manifestation_of:artifact:aurora/aurora_export.png->artifact:published/aurora_public_post.jpg",
+          "missing_evidence": [
+            "curatorial_lineage",
+            "declared_work_id"
+          ],
+          "next_probe": "inspect declared work ID, source record, or curatorial note",
+          "relation": "manifestation_of",
+          "score": 0.34,
+          "score_breakdown": {
+            "base": 0.12,
+            "explanation": "shared tokens=['aurora']",
+            "signals": [
+              {
+                "contribution": 0.22,
+                "explanation": "shared tokens=['aurora']",
+                "name": "shared_name_tokens",
+                "value": [
+                  "aurora"
+                ]
+              }
+            ]
+          },
+          "source_id": "artifact:aurora/aurora_export.png",
+          "status": "unresolved_candidate",
+          "target_id": "artifact:published/aurora_public_post.jpg"
+        }
+      ],
+      "schema": "mak-cycle-c07-practice-art-graph-v1",
+      "summary": {
+        "artifact_count": 6,
+        "candidate_count": 11,
+        "pending_relation_count": 5,
+        "supported_count": 0,
+        "unresolved_candidate_count": 6
+      }
+    },
+    "project_without_export": {
+      "artifacts": [
+        {
+          "alpha": null,
+          "aspect_ratio": null,
+          "bytes": 32,
+          "dimensions": null,
+          "evidence_refs": [
+            "artifact:unexported/installation_project.blend#path",
+            "artifact:unexported/installation_project.blend#extension",
+            "artifact:unexported/installation_project.blend#sha256",
+            "artifact:unexported/installation_project.blend#bytes",
+            "artifact:unexported/installation_project.blend#name_tokens",
+            "artifact:unexported/installation_project.blend#path_tokens"
+          ],
+          "extension": "blend",
+          "id": "artifact:unexported/installation_project.blend",
+          "kind": "project",
+          "name_tokens": [
+            "installation",
+            "project"
+          ],
+          "path": "unexported/installation_project.blend",
+          "path_tokens": [
+            "tmp",
+            "tmpw23s2nw3",
+            "project",
+            "without",
+            "export",
+            "unexported"
+          ],
+          "sequence_family": null,
+          "sequence_index": null,
+          "sha256": "f3ca31796240e3cdadb8fa32ff5f7118abfe7258487cb79cdf9a08853d007f83",
+          "video_codec": null,
+          "video_duration": null,
+          "video_fps": null,
+          "xml_xmp": {
+            "fields": {},
+            "format": null,
+            "readable": false,
+            "reason": "not_xml_like"
+          }
+        }
+      ],
+      "edges": [],
+      "policy": {
+        "blender_or_adobe_execution": false,
+        "filesystem_scope": "explicit_paths_only",
+        "pending_statuses": [
+          "pending_relation",
+          "unresolved_candidate"
+        ],
+        "terminal_statuses": [
+          "supported"
+        ]
+      },
+      "relation_candidates": [
+        {
+          "alternatives": [],
+          "evidence_refs": [
+            "artifact:unexported/installation_project.blend#kind",
+            "artifact:unexported/installation_project.blend#path"
+          ],
+          "id": "candidate:published_as:artifact:unexported/installation_project.blend->missing",
+          "missing_evidence": [
+            "export_or_publication_artifact"
+          ],
+          "next_probe": "locate an export, publication, or delivery record",
+          "relation": "published_as",
+          "score": 0.12,
+          "score_breakdown": {
+            "base": 0.12,
+            "explanation": "no positive signal",
+            "signals": []
+          },
+          "source_id": "artifact:unexported/installation_project.blend",
+          "status": "unresolved_candidate",
+          "target_id": null
+        }
+      ],
+      "schema": "mak-cycle-c07-practice-art-graph-v1",
+      "summary": {
+        "artifact_count": 1,
+        "candidate_count": 1,
+        "pending_relation_count": 0,
+        "supported_count": 0,
+        "unresolved_candidate_count": 1
+      }
+    },
+    "same_name_different_work": {
+      "artifacts": [
+        {
+          "alpha": true,
+          "aspect_ratio": 1.0,
+          "bytes": 284,
+          "dimensions": {
+            "height": 90,
+            "width": 90
+          },
+          "evidence_refs": [
+            "artifact:red/final.png#path",
+            "artifact:red/final.png#extension",
+            "artifact:red/final.png#sha256",
+            "artifact:red/final.png#bytes",
+            "artifact:red/final.png#name_tokens",
+            "artifact:red/final.png#path_tokens",
+            "artifact:red/final.png#dimensions"
+          ],
+          "extension": "png",
+          "id": "artifact:red/final.png",
+          "kind": "image",
+          "name_tokens": [
+            "final"
+          ],
+          "path": "red/final.png",
+          "path_tokens": [
+            "tmp",
+            "tmpw23s2nw3",
+            "same",
+            "name",
+            "different",
+            "work",
+            "red"
+          ],
+          "sequence_family": null,
+          "sequence_index": null,
+          "sha256": "e8b9496bd5b252b36b253719a14d0dd05f92322d00dcdea8dd877004077d3cb3",
+          "video_codec": null,
+          "video_duration": null,
+          "video_fps": null,
+          "xml_xmp": {
+            "fields": {},
+            "format": null,
+            "readable": false,
+            "reason": "not_xml_like"
+          }
+        },
+        {
+          "alpha": true,
+          "aspect_ratio": 1.0,
+          "bytes": 284,
+          "dimensions": {
+            "height": 90,
+            "width": 90
+          },
+          "evidence_refs": [
+            "artifact:blue/final.png#path",
+            "artifact:blue/final.png#extension",
+            "artifact:blue/final.png#sha256",
+            "artifact:blue/final.png#bytes",
+            "artifact:blue/final.png#name_tokens",
+            "artifact:blue/final.png#path_tokens",
+            "artifact:blue/final.png#dimensions"
+          ],
+          "extension": "png",
+          "id": "artifact:blue/final.png",
+          "kind": "image",
+          "name_tokens": [
+            "final"
+          ],
+          "path": "blue/final.png",
+          "path_tokens": [
+            "tmp",
+            "tmpw23s2nw3",
+            "same",
+            "name",
+            "different",
+            "work",
+            "blue"
+          ],
+          "sequence_family": null,
+          "sequence_index": null,
+          "sha256": "610ccc4240d940379ecea47a740c38d5475004d33ad82ad09e24f9f4be406032",
+          "video_codec": null,
+          "video_duration": null,
+          "video_fps": null,
+          "xml_xmp": {
+            "fields": {},
+            "format": null,
+            "readable": false,
+            "reason": "not_xml_like"
+          }
+        }
+      ],
+      "edges": [],
+      "policy": {
+        "blender_or_adobe_execution": false,
+        "filesystem_scope": "explicit_paths_only",
+        "pending_statuses": [
+          "pending_relation",
+          "unresolved_candidate"
+        ],
+        "terminal_statuses": [
+          "supported"
+        ]
+      },
+      "relation_candidates": [
+        {
+          "alternatives": [],
+          "evidence_refs": [
+            "artifact:blue/final.png#name_tokens",
+            "artifact:blue/final.png#path_tokens",
+            "artifact:red/final.png#name_tokens",
+            "artifact:red/final.png#path_tokens"
+          ],
+          "id": "candidate:manifestation_of:artifact:red/final.png->artifact:blue/final.png",
+          "missing_evidence": [
+            "curatorial_lineage",
+            "declared_work_id"
+          ],
+          "next_probe": "inspect declared work ID, source record, or curatorial note",
+          "relation": "manifestation_of",
+          "score": 0.32,
+          "score_breakdown": {
+            "base": 0.12,
+            "explanation": "same basename",
+            "signals": [
+              {
+                "contribution": 0.2,
+                "explanation": "same basename",
+                "name": "same_basename",
+                "value": true
+              }
+            ]
+          },
+          "source_id": "artifact:red/final.png",
+          "status": "unresolved_candidate",
+          "target_id": "artifact:blue/final.png"
+        },
+        {
+          "alternatives": [],
+          "evidence_refs": [
+            "artifact:red/final.png#kind",
+            "artifact:red/final.png#path"
+          ],
+          "id": "candidate:version_of:artifact:red/final.png->missing",
+          "missing_evidence": [
+            "project_artifact"
+          ],
+          "next_probe": "locate the authoring project or export witness",
+          "relation": "version_of",
+          "score": 0.12,
+          "score_breakdown": {
+            "base": 0.12,
+            "explanation": "no positive signal",
+            "signals": []
+          },
+          "source_id": "artifact:red/final.png",
+          "status": "unresolved_candidate",
+          "target_id": null
+        },
+        {
+          "alternatives": [],
+          "evidence_refs": [
+            "artifact:blue/final.png#kind",
+            "artifact:blue/final.png#path"
+          ],
+          "id": "candidate:version_of:artifact:blue/final.png->missing",
+          "missing_evidence": [
+            "project_artifact"
+          ],
+          "next_probe": "locate the authoring project or export witness",
+          "relation": "version_of",
+          "score": 0.12,
+          "score_breakdown": {
+            "base": 0.12,
+            "explanation": "no positive signal",
+            "signals": []
+          },
+          "source_id": "artifact:blue/final.png",
+          "status": "unresolved_candidate",
+          "target_id": null
+        }
+      ],
+      "schema": "mak-cycle-c07-practice-art-graph-v1",
+      "summary": {
+        "artifact_count": 2,
+        "candidate_count": 3,
+        "pending_relation_count": 0,
+        "supported_count": 0,
+        "unresolved_candidate_count": 3
+      }
+    },
+    "same_work_different_proportions": {
+      "artifacts": [
+        {
+          "alpha": true,
+          "aspect_ratio": 0.8,
+          "bytes": 294,
+          "dimensions": {
+            "height": 100,
+            "width": 80
+          },
+          "evidence_refs": [
+            "artifact:study/study_4x5.png#path",
+            "artifact:study/study_4x5.png#extension",
+            "artifact:study/study_4x5.png#sha256",
+            "artifact:study/study_4x5.png#bytes",
+            "artifact:study/study_4x5.png#name_tokens",
+            "artifact:study/study_4x5.png#path_tokens",
+            "artifact:study/study_4x5.png#dimensions"
+          ],
+          "extension": "png",
+          "id": "artifact:study/study_4x5.png",
+          "kind": "image",
+          "name_tokens": [
+            "study",
+            "4x5"
+          ],
+          "path": "study/study_4x5.png",
+          "path_tokens": [
+            "tmp",
+            "tmpw23s2nw3",
+            "same",
+            "work",
+            "different",
+            "proportions",
+            "study"
+          ],
+          "sequence_family": null,
+          "sequence_index": null,
+          "sha256": "68582d936bb771ab22e0cc773f29bae0f54f499aa5a6ed72136c76d5b6e0d6d0",
+          "video_codec": null,
+          "video_duration": null,
+          "video_fps": null,
+          "xml_xmp": {
+            "fields": {},
+            "format": null,
+            "readable": false,
+            "reason": "not_xml_like"
+          }
+        },
+        {
+          "alpha": true,
+          "aspect_ratio": 1.777778,
+          "bytes": 315,
+          "dimensions": {
+            "height": 90,
+            "width": 160
+          },
+          "evidence_refs": [
+            "artifact:study/study_16x9.png#path",
+            "artifact:study/study_16x9.png#extension",
+            "artifact:study/study_16x9.png#sha256",
+            "artifact:study/study_16x9.png#bytes",
+            "artifact:study/study_16x9.png#name_tokens",
+            "artifact:study/study_16x9.png#path_tokens",
+            "artifact:study/study_16x9.png#dimensions"
+          ],
+          "extension": "png",
+          "id": "artifact:study/study_16x9.png",
+          "kind": "image",
+          "name_tokens": [
+            "study",
+            "16x9"
+          ],
+          "path": "study/study_16x9.png",
+          "path_tokens": [
+            "tmp",
+            "tmpw23s2nw3",
+            "same",
+            "work",
+            "different",
+            "proportions",
+            "study"
+          ],
+          "sequence_family": null,
+          "sequence_index": null,
+          "sha256": "c5176b5360c22b855dbd1bd41c23b22a62976012887708265b1ca336e1330f7a",
+          "video_codec": null,
+          "video_duration": null,
+          "video_fps": null,
+          "xml_xmp": {
+            "fields": {},
+            "format": null,
+            "readable": false,
+            "reason": "not_xml_like"
+          }
+        }
+      ],
+      "edges": [],
+      "policy": {
+        "blender_or_adobe_execution": false,
+        "filesystem_scope": "explicit_paths_only",
+        "pending_statuses": [
+          "pending_relation",
+          "unresolved_candidate"
+        ],
+        "terminal_statuses": [
+          "supported"
+        ]
+      },
+      "relation_candidates": [
+        {
+          "alternatives": [],
+          "evidence_refs": [
+            "artifact:study/study_16x9.png#aspect_ratio",
+            "artifact:study/study_16x9.png#name_tokens",
+            "artifact:study/study_16x9.png#path_tokens",
+            "artifact:study/study_4x5.png#aspect_ratio",
+            "artifact:study/study_4x5.png#name_tokens",
+            "artifact:study/study_4x5.png#path_tokens"
+          ],
+          "id": "candidate:manifestation_of:artifact:study/study_4x5.png->artifact:study/study_16x9.png",
+          "missing_evidence": [
+            "curatorial_lineage",
+            "declared_work_id"
+          ],
+          "next_probe": "inspect declared work ID, source record, or curatorial note",
+          "relation": "manifestation_of",
+          "score": 0.46,
+          "score_breakdown": {
+            "base": 0.12,
+            "explanation": "shared tokens=['study'] + same-name family with different proportions",
+            "signals": [
+              {
+                "contribution": 0.22,
+                "explanation": "shared tokens=['study']",
+                "name": "shared_name_tokens",
+                "value": [
+                  "study"
+                ]
+              },
+              {
+                "contribution": 0.12,
+                "explanation": "same-name family with different proportions",
+                "name": "different_aspect_ratio",
+                "value": [
+                  0.8,
+                  1.777778
+                ]
+              }
+            ]
+          },
+          "source_id": "artifact:study/study_4x5.png",
+          "status": "pending_relation",
+          "target_id": "artifact:study/study_16x9.png"
+        }
+      ],
+      "schema": "mak-cycle-c07-practice-art-graph-v1",
+      "summary": {
+        "artifact_count": 2,
+        "candidate_count": 1,
+        "pending_relation_count": 1,
+        "supported_count": 0,
+        "unresolved_candidate_count": 0
+      }
+    }
+  },
+  "schema": "mak-cycle-c07-run-v1"
+}

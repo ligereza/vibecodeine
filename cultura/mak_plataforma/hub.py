@@ -213,6 +213,14 @@ except Exception as _project_router_exc:  # noqa: BLE001 - learning is additive
 else:
     _PROJECT_ROUTER_IMPORT_ERROR = ""
 
+try:
+    from flujo.knowledge import portfolio_evidence as _portfolio_evidence
+except Exception as _portfolio_evidence_exc:  # noqa: BLE001 - queue is additive
+    _portfolio_evidence = None
+    _PORTFOLIO_EVIDENCE_IMPORT_ERROR = type(_portfolio_evidence_exc).__name__
+else:
+    _PORTFOLIO_EVIDENCE_IMPORT_ERROR = ""
+
 
 def _research_registry_path():
     """Persistent registry for the reusable research-job layer."""
@@ -1382,6 +1390,64 @@ def _project_probe_request(body):
         record=bool(body.get("record")) if isinstance(body, dict) else False,
         episode_id=body.get("episode_id") if isinstance(body, dict) else None,
     )
+
+
+def _portfolio_evidence_queue_read(project_id):
+    if _portfolio_evidence is None:
+        return {"ok": False, "error": "portfolio_evidence_unavailable",
+                "detail": _PORTFOLIO_EVIDENCE_IMPORT_ERROR}, 503
+    if not project_id:
+        return {"ok": False, "error": "project_id_requerido"}, 400
+    try:
+        record = _portfolio_evidence.load_record(_learning_db_path(), project_id)
+        return _portfolio_evidence.queue_payload(record), 200
+    except _portfolio_evidence.PortfolioEvidenceError as exc:
+        return {"ok": False, "error": str(exc)}, 404
+    except Exception as exc:  # noqa: BLE001 - read surface must remain bounded
+        return {"ok": False, "error": type(exc).__name__}, 500
+
+
+def _portfolio_evidence_draft_read(project_id):
+    if _portfolio_evidence is None:
+        return {"ok": False, "error": "portfolio_evidence_unavailable",
+                "detail": _PORTFOLIO_EVIDENCE_IMPORT_ERROR}, 503
+    if not project_id:
+        return {"ok": False, "error": "project_id_requerido"}, 400
+    try:
+        record = _portfolio_evidence.load_record(_learning_db_path(), project_id)
+        return _portfolio_evidence.build_draft(record), 200
+    except _portfolio_evidence.PortfolioEvidenceError as exc:
+        return {"ok": False, "error": str(exc)}, 404
+    except Exception as exc:  # noqa: BLE001 - read surface must remain bounded
+        return {"ok": False, "error": type(exc).__name__}, 500
+
+
+def _portfolio_evidence_decision(body):
+    if _portfolio_evidence is None:
+        return {"ok": False, "error": "portfolio_evidence_unavailable",
+                "detail": _PORTFOLIO_EVIDENCE_IMPORT_ERROR}, 503
+    if not isinstance(body, dict):
+        return {"ok": False, "error": "json_debe_ser_objeto"}, 400
+    required = ("project_id", "candidate_id", "action")
+    missing = [key for key in required if not str(body.get(key) or "").strip()]
+    if missing:
+        return {"ok": False, "error": "campos_requeridos", "fields": missing}, 400
+    try:
+        result = _portfolio_evidence.apply_human_decision(
+            _learning_db_path(),
+            project_id=str(body["project_id"]),
+            candidate_id=str(body["candidate_id"]),
+            action=str(body["action"]),
+            actor=str(body.get("actor") or "human"),
+            note=str(body.get("note") or ""),
+            corrected_relation=str(body.get("corrected_relation") or ""),
+            corrected_target_id=str(body.get("corrected_target_id") or ""),
+        )
+        return result, 200
+    except _portfolio_evidence.PortfolioEvidenceError as exc:
+        return {"ok": False, "error": str(exc)}, 400
+    except Exception as exc:  # noqa: BLE001 - decision errors are caller-visible
+        return {"ok": False, "error": type(exc).__name__}, 500
 
 
 def _director_work(body):
@@ -4815,6 +4881,14 @@ class H(BaseHTTPRequestHandler):
         if p == "/api/portfolio/review-queue":
             item_id = (urllib.parse.parse_qs(u.query).get("source_id") or [""])[0]
             return self._json(_portfolio_review_queue(item_id))
+        if p == "/api/portfolio/evidence-queue":
+            project_id = (urllib.parse.parse_qs(u.query).get("project_id") or [""])[0]
+            payload, code = _portfolio_evidence_queue_read(project_id)
+            return self._json(payload, code)
+        if p == "/api/portfolio/evidence-draft":
+            project_id = (urllib.parse.parse_qs(u.query).get("project_id") or [""])[0]
+            payload, code = _portfolio_evidence_draft_read(project_id)
+            return self._json(payload, code)
         if p == "/api/portfolio/external-candidates":
             item_id = (urllib.parse.parse_qs(u.query).get("item_id") or [""])[0]
             return self._json(_portfolio_external_candidates(item_id))
@@ -5095,6 +5169,17 @@ class H(BaseHTTPRequestHandler):
             if not isinstance(body, dict):
                 return self._json({"ok": False, "error": "json debe ser objeto"}, 400)
             return self._json(_diagnostic_payload(body))
+        if u.path == "/api/portfolio/evidence-decision":
+            try:
+                length = min(int(self.headers.get("Content-Length") or 0), 12000)
+            except (TypeError, ValueError):
+                return self._json({"ok": False, "error": "content_length_invalido"}, 400)
+            try:
+                body = json.loads(self.rfile.read(length).decode("utf-8", "replace") or "{}")
+            except (ValueError, TypeError):
+                return self._json({"ok": False, "error": "json invalido"}, 400)
+            payload, code = _portfolio_evidence_decision(body)
+            return self._json(payload, code)
         for prefix in SERVICE_PROXY_PREFIXES:
             if u.path.startswith("/" + prefix + "/"):
                 length = min(int(self.headers.get("Content-Length") or 0),

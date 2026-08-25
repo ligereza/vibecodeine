@@ -1,0 +1,36 @@
+{
+  "fixture_role": "synthetic_adversarial_input_only",
+  "schema": "mak-cycle-c04-evidence-input-v1",
+  "case_id": "declared_exists",
+  "native_aep": {
+    "source_id": "aep-arica",
+    "evidence_refs": ["aep://ARICA.aep#/declarations/0"],
+    "declarations": [
+      {
+        "declaration_id": "decl-001",
+        "declared_path": "C:\\ARICA\\tottem_ojo.mp4",
+        "technical_id": "tech-video-001",
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "evidence_refs": ["aep://ARICA.aep#byte-offset=1200"]
+      }
+    ]
+  },
+  "local_media_observation": {
+    "observation_id": "obs-local-001",
+    "evidence_refs": ["media://tottem_ojo.mp4#stat", "media://tottem_ojo.mp4#hash"],
+    "observations": [
+      {
+        "observation_id": "obs-local-001",
+        "path": "/fixture/media/tottem_ojo.mp4",
+        "declared_path": "C:\\ARICA\\tottem_ojo.mp4",
+        "exists": true,
+        "is_file": true,
+        "technical_id": "tech-video-001",
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "dimensions": {"width": 256, "height": 1536},
+        "evidence_refs": ["media://tottem_ojo.mp4#stat", "media://tottem_ojo.mp4#hash"]
+      }
+    ]
+  },
+  "export_event": null
+}

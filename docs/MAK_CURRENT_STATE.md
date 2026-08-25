@@ -1,13 +1,63 @@
 # Estado actual de MAK
 
 > Fuente canónica de orientación para agentes y colaboradores. Leer primero
-> `/home/mak/flujo/agents.md`, luego este archivo y finalmente
-> `context/LAST_HANDOFF.md`. Verificado el 2026-08-20, tras la auditoría de
-> las fases históricas disponibles hasta Phase 570.
+> `/home/mak/flujo/agents.md`, ejecutar `tools/agent_bootstrap.py`, luego este
+> archivo y únicamente el paquete `Agent bootstrap — CURRENT` que emite el
+> bootstrap. No recorrer el cuerpo histórico de `context/LAST_HANDOFF.md` para
+> decidir el estado actual. Verificado el 2026-08-25.
 
 Este documento consolida decisiones durables. No reemplaza la evidencia
 histórica, no convierte cada experimento en una obligación y no afirma que una
 credencial funcione solo porque existe en un archivo de entorno.
+
+## Current experimental frontier — 2026-08-25
+
+Los ciclos aislados C02–C04 demostraron observación nativa, límites de entrada
+pública y separación entre referencia técnica y rol de output. C05 agregó el
+primer witness real de exportación: `RAYU.blend` → `rayu_export.py` →
+`rayu_resources.glb`. Su gate pasa siete comprobaciones y conserva el hash de
+la fuente antes/después; el resultado está en
+`experiments/cycles/C05/real_export_witness.json` y
+`experiments/cycles/C05/RESULTS.md`.
+
+C05 permite afirmar únicamente un evento `export` apoyado para ese GLB. C06 ya
+lo materializa como una arista aislada `EXPORTS_TO`; sus tres casos
+adversariales vuelven a `unknown` y crean cero aristas. Ninguno prueba entrega
+final, publicación, autoría, intención artística ni ausencia de modificación
+posterior. El catálogo público real sigue unavailable y el rol de output del
+caso AEP/MP4 de C04 sigue `unknown`. El siguiente slice debe probar el join con
+una manifestación pública real o registrar explícitamente su ausencia; no
+integrar producción ni ejecutar scripts de archivos artísticos.
+
+La búsqueda mecánica acotada en `ARICA` encontró además un segundo patrón
+importante: `MYRA_final.mp4`, frames PNG, marcadores `done ok=True`, un log de
+sequencer y `ffprobe` real (`H.264`, `1440x1080`, 20 s, 600 frames). Sin
+embargo, dentro de `ARICA` no apareció un `.uproject`, `.uasset` o `.umap` que
+permita enlazar ese resultado con su estado Unreal nativo. Se conserva como
+`activity/output observed` con `source_binding=unknown`, no como un segundo
+`EXPORTS_TO` apoyado. Esto fija un caso real de salida sin proyecto fuente.
+
+### Practice graph and curatorial evaluation — 2026-08-25
+
+C07 y C08 cambian la unidad experimental: el archivo ya no se trata como un
+catálogo de labels únicas. C07 observa artefactos y propone relaciones
+`component_of`, `version_of`, `manifestation_of`, `same_series_candidate` y
+`published_as` con score explicable, evidencia, alternativas, evidencia
+faltante y próxima sonda. Un frame, una escena, un proyecto nativo, un export
+y una publicación pueden coexistir como nodos distintos; `pending_relation` y
+`unresolved_candidate` son estados operativos, no un callejón sin salida.
+
+C08 evalúa esas relaciones contra un baseline vacío y agrega fases, series y un
+planificador greedy mínimo de portafolio. Sobre cinco fixtures compartidas con
+C07, el puente de integración obtuvo recall `1.000` al top-5, precision
+`0.400` al top-1 y `0.240` al top-5; por eso no hay promoción automática de
+relaciones. El planificador cubrió las cuatro fases y los tres cortes
+cronológicos sin repetir la secuencia de 2.048 frames.
+
+Estos resultados son evidencia de contrato y de arquitectura, no aprendizaje
+estadístico sobre ARICA. El siguiente experimento debe ejecutar C07 sobre una
+muestra acotada de ARICA y compararlo con un gold set ciego del artista antes
+de incorporar embeddings, modelos grandes o producción.
 
 ## 0. Aprendizaje evaluable
 
@@ -360,7 +410,8 @@ acotada del área son suficientes.
 ## Referencias canónicas
 
 - `agents.md`
-- `context/LAST_HANDOFF.md`
+- `context/LAST_HANDOFF.md` (solo el paquete `Agent bootstrap — CURRENT`; el
+  resto es evidencia histórica)
 - `context/OWNER_MANIFEST.md`
 - `context/VIDEO_WORKFLOW_MAK_20260817.md`
 - `CAPACIDADES.md`

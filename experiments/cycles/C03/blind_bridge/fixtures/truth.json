@@ -1,0 +1,13 @@
+{
+  "archive_id": "archive-arica-001",
+  "cases": [
+    {"expected_local_id": "local-exact", "expected_status": "confirmed", "query_id": "pub-exact"},
+    {"expected_local_id": "local-reencode", "expected_status": "candidate_or_confirmed", "query_id": "pub-reencode"},
+    {"expected_local_id": "local-decoy-z", "expected_status": "candidate_or_confirmed", "query_id": "pub-decoy"},
+    {"expected_status": "unknown", "query_id": "pub-no-local"},
+    {"expected_status": "ambiguous", "query_id": "pub-ambiguous"},
+    {"expected_status": "contradicted", "query_id": "pub-conflict"}
+  ],
+  "orphan_local_ids": ["local-only"],
+  "schema": "mak-cycle-c03-truth-v1"
+}

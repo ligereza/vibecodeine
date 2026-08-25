@@ -1,0 +1,79 @@
+{
+  "schema": "mak-operating-world-cases-v1",
+  "suite_id": "mak-operating-world-v0",
+  "description": "Same Project IR inputs compared as one-label routing and typed world-model planning.",
+  "cases": [
+    {
+      "case_id": "research-to-simulation-composition",
+      "project_id": "jardines-interpretativos-research",
+      "phase": "simulate",
+      "objective": "Reach a verified bounded simulation without treating the research hypothesis as fact.",
+      "initial_facts": ["source_available", "domain:research"],
+      "goal_facts": ["simulation_verified"],
+      "expected_status": "planned",
+      "composite": true,
+      "legacy_tools": ["research_job_router"],
+      "expected_missing_facts": []
+    },
+    {
+      "case_id": "research-to-relations-composition",
+      "project_id": "jardines-interpretativos-research",
+      "phase": "relate",
+      "objective": "Reach linked claims while preserving the evidence basis and interpretation boundary.",
+      "initial_facts": ["source_available", "domain:research"],
+      "goal_facts": ["relations_linked"],
+      "expected_status": "planned",
+      "composite": true,
+      "legacy_tools": ["research_job_router"],
+      "expected_missing_facts": []
+    },
+    {
+      "case_id": "tennis-single-capability",
+      "project_id": "mak-tennis-decision-lab-external-20260821",
+      "phase": "tennis_shot_event_projection",
+      "objective": "Validate annotated source notation as loss-aware shot events.",
+      "initial_facts": ["annotated_notation_available"],
+      "goal_facts": ["shot_events_validated"],
+      "expected_status": "planned",
+      "composite": false,
+      "legacy_tools": ["tennis_shot_event_consumer"],
+      "expected_missing_facts": []
+    },
+    {
+      "case_id": "source-memory-single-capability",
+      "project_id": "mak-pnp-search-ecology-2026-08-19",
+      "phase": "source_learning_ingestion",
+      "objective": "Verify traceable source memory without promoting mathematical truth.",
+      "initial_facts": ["source_bundle_available", "domain:source_memory"],
+      "goal_facts": ["source_memory_verified"],
+      "expected_status": "planned",
+      "composite": false,
+      "legacy_tools": ["source_learning_bridge"],
+      "expected_missing_facts": []
+    },
+    {
+      "case_id": "publication-blocked-by-license",
+      "project_id": "jardines-interpretativos-research",
+      "phase": "publish",
+      "objective": "Publish only if license review has produced an approved license fact.",
+      "initial_facts": ["source_available", "domain:research", "license_review_pending"],
+      "goal_facts": ["publication_permitted"],
+      "expected_status": "capability_gap",
+      "composite": true,
+      "legacy_tools": [],
+      "expected_missing_facts": ["license_approved"]
+    },
+    {
+      "case_id": "unknown-rendering-capability",
+      "project_id": "mak-tennis-decision-lab-external-20260821",
+      "phase": "render",
+      "objective": "Produce a validated render when no render capability is declared.",
+      "initial_facts": ["artifact:image", "domain:portfolio"],
+      "goal_facts": ["render_verified"],
+      "expected_status": "capability_gap",
+      "composite": false,
+      "legacy_tools": [],
+      "expected_missing_facts": ["render_verified"]
+    }
+  ]
+}

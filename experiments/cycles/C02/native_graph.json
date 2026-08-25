@@ -1,0 +1,267 @@
+{
+  "archive_id": "archive-arica-001",
+  "capabilities": [
+    {
+      "authoring_id": "authoring:blend:ARICA/RAYU.blend",
+      "capability": "render",
+      "claim_limit": "configured capability; no render event or output proven",
+      "evidence_refs": [
+        "blender_endpoint/snapshot.json#/snapshot/native/scenes/0/render"
+      ],
+      "scene": "Scene",
+      "settings": {
+        "engine": "CYCLES",
+        "file_format": "PNG",
+        "filepath_declared": "C:/ARICA/LOGOOO/2/",
+        "resolution_percentage": 100,
+        "resolution_x": 1920,
+        "resolution_y": 1080
+      },
+      "status": "observed"
+    }
+  ],
+  "edges": [
+    {
+      "claim_limit": "native dependency declaration; external availability is not inferred",
+      "evidence_refs": [
+        "blender_endpoint/snapshot.json#/snapshot/native/dependencies/0"
+      ],
+      "extractor_version": "luna-a-c02-blender-endpoint-v1",
+      "relation": "uses",
+      "source": {
+        "id": "authoring:blend:ARICA/RAYU.blend",
+        "kind": "authoring"
+      },
+      "status": "supported",
+      "target": {
+        "id": "component:blend-image:c2d60f8e745fd0c6",
+        "kind": "component"
+      }
+    },
+    {
+      "claim_limit": "native dependency declaration; external availability is not inferred",
+      "evidence_refs": [
+        "blender_endpoint/snapshot.json#/snapshot/native/dependencies/1"
+      ],
+      "extractor_version": "luna-a-c02-blender-endpoint-v1",
+      "relation": "uses",
+      "source": {
+        "id": "authoring:blend:ARICA/RAYU.blend",
+        "kind": "authoring"
+      },
+      "status": "supported",
+      "target": {
+        "id": "component:blend-image:2220f7cca90580c4",
+        "kind": "component"
+      }
+    },
+    {
+      "claim_limit": "basename/existence candidate only; output role unknown",
+      "evidence_refs": [
+        "aep_endpoint/observation.json#/local_resolution/references/0",
+        "aep://byte-offset/9323"
+      ],
+      "extractor_version": "aep-endpoint-1.0",
+      "relation": "uses",
+      "source": {
+        "id": "authoring:aep:ARICA/ARICA.aep",
+        "kind": "authoring"
+      },
+      "status": "candidate",
+      "target": {
+        "id": "artifact:candidate:dca1f9df2871d4bd",
+        "kind": "deliverable_candidate"
+      }
+    },
+    {
+      "claim_limit": "basename/existence candidate only; output role unknown",
+      "evidence_refs": [
+        "aep_endpoint/observation.json#/local_resolution/references/1",
+        "aep://byte-offset/13251"
+      ],
+      "extractor_version": "aep-endpoint-1.0",
+      "relation": "uses",
+      "source": {
+        "id": "authoring:aep:ARICA/ARICA.aep",
+        "kind": "authoring"
+      },
+      "status": "candidate",
+      "target": {
+        "id": "artifact:candidate:1356cd550cb699b5",
+        "kind": "deliverable_candidate"
+      }
+    },
+    {
+      "claim_limit": "basename/existence candidate only; output role unknown",
+      "evidence_refs": [
+        "aep_endpoint/observation.json#/local_resolution/references/2",
+        "aep://byte-offset/21099"
+      ],
+      "extractor_version": "aep-endpoint-1.0",
+      "relation": "uses",
+      "source": {
+        "id": "authoring:aep:ARICA/ARICA.aep",
+        "kind": "authoring"
+      },
+      "status": "candidate",
+      "target": {
+        "id": "artifact:candidate:ef857194f7ac314b",
+        "kind": "deliverable_candidate"
+      }
+    },
+    {
+      "claim_limit": "basename/existence candidate only; output role unknown",
+      "evidence_refs": [
+        "aep_endpoint/observation.json#/local_resolution/references/3",
+        "aep://byte-offset/364461"
+      ],
+      "extractor_version": "aep-endpoint-1.0",
+      "relation": "uses",
+      "source": {
+        "id": "authoring:aep:ARICA/ARICA.aep",
+        "kind": "authoring"
+      },
+      "status": "candidate",
+      "target": {
+        "id": "artifact:candidate:50d57f43000a7927",
+        "kind": "deliverable_candidate"
+      }
+    },
+    {
+      "claim_limit": "basename/existence candidate only; output role unknown",
+      "evidence_refs": [
+        "aep_endpoint/observation.json#/local_resolution/references/4",
+        "aep://byte-offset/370557"
+      ],
+      "extractor_version": "aep-endpoint-1.0",
+      "relation": "uses",
+      "source": {
+        "id": "authoring:aep:ARICA/ARICA.aep",
+        "kind": "authoring"
+      },
+      "status": "candidate",
+      "target": {
+        "id": "artifact:candidate:9e825dd8b6cd0e25",
+        "kind": "directory"
+      }
+    }
+  ],
+  "inputs": {
+    "aep": {
+      "actual_sha256": "99247d6506c6d1d9ce3023f4a1e044da47c806e3cd606d47b61e70fb32f5c460",
+      "expected_sha256": "99247d6506c6d1d9ce3023f4a1e044da47c806e3cd606d47b61e70fb32f5c460",
+      "hash_status": "PASS",
+      "path": "/home/mak/curatoria_inbox/ARICA/ARICA.aep"
+    },
+    "blender": {
+      "expected_sha256": "acafc1db0088016139921b1ea2c9d7a5310247658117fa7021662e13e907ce86",
+      "locator": "ARICA/RAYU.blend"
+    }
+  },
+  "nodes": [
+    {
+      "archive_id": "archive-arica-001",
+      "basename": "BANNER.png",
+      "id": "artifact:candidate:1356cd550cb699b5",
+      "kind": "deliverable_candidate",
+      "locator": "/home/mak/curatoria_inbox/ARICA/BANNER.png"
+    },
+    {
+      "archive_id": "archive-arica-001",
+      "basename": "tottem_ojo.mp4",
+      "id": "artifact:candidate:50d57f43000a7927",
+      "kind": "deliverable_candidate",
+      "locator": "/home/mak/curatoria_inbox/ARICA/tottem_ojo.mp4"
+    },
+    {
+      "archive_id": "archive-arica-001",
+      "basename": "ARICA",
+      "id": "artifact:candidate:9e825dd8b6cd0e25",
+      "kind": "directory",
+      "locator": "/home/mak/curatoria_inbox/ARICA"
+    },
+    {
+      "archive_id": "archive-arica-001",
+      "basename": "512 CIELO.png",
+      "id": "artifact:candidate:dca1f9df2871d4bd",
+      "kind": "deliverable_candidate",
+      "locator": "/home/mak/curatoria_inbox/ARICA/512 CIELO.png"
+    },
+    {
+      "archive_id": "archive-arica-001",
+      "basename": "CENTRAL.png",
+      "id": "artifact:candidate:ef857194f7ac314b",
+      "kind": "deliverable_candidate",
+      "locator": "/home/mak/curatoria_inbox/ARICA/CENTRAL.png"
+    },
+    {
+      "archive_id": "archive-arica-001",
+      "format": "aep",
+      "id": "authoring:aep:ARICA/ARICA.aep",
+      "kind": "authoring",
+      "locator": "ARICA/ARICA.aep"
+    },
+    {
+      "archive_id": "archive-arica-001",
+      "format": "blend",
+      "id": "authoring:blend:ARICA/RAYU.blend",
+      "kind": "authoring",
+      "locator": "ARICA/RAYU.blend"
+    },
+    {
+      "archive_id": "archive-arica-001",
+      "declared_path": "//../Users/issvk/blenderkit_data/materials/glass-imperfecti_04f951be-04b6-4e21-bd5d-36272a7d6f37/textures_1k/metal-smudge-smoothness-2.jpg",
+      "id": "component:blend-image:2220f7cca90580c4",
+      "kind": "component",
+      "source_kind": "blender_image"
+    },
+    {
+      "archive_id": "archive-arica-001",
+      "declared_path": "//../Users/issvk/blenderkit_data/materials/glass-cyan_5ea2e67d-8f2c-4bab-bd98-2ec70634882d/textures_1k/metal-smudge-smoothness-3.jpg",
+      "id": "component:blend-image:c2d60f8e745fd0c6",
+      "kind": "component",
+      "source_kind": "blender_image"
+    }
+  ],
+  "output_role_unknowns": [
+    {
+      "declared_path": "C:\\ARICA\\512 CIELO.png",
+      "evidence_ref": "aep_endpoint/observation.json#/local_resolution/references/0/output_claim",
+      "reason": "existence_and_basename_do_not_prove_output_role"
+    },
+    {
+      "declared_path": "C:\\ARICA\\BANNER.png",
+      "evidence_ref": "aep_endpoint/observation.json#/local_resolution/references/1/output_claim",
+      "reason": "existence_and_basename_do_not_prove_output_role"
+    },
+    {
+      "declared_path": "C:\\ARICA\\CENTRAL.png",
+      "evidence_ref": "aep_endpoint/observation.json#/local_resolution/references/2/output_claim",
+      "reason": "existence_and_basename_do_not_prove_output_role"
+    },
+    {
+      "declared_path": "C:\\ARICA\\tottem_ojo.mp4",
+      "evidence_ref": "aep_endpoint/observation.json#/local_resolution/references/3/output_claim",
+      "reason": "existence_and_basename_do_not_prove_output_role"
+    },
+    {
+      "declared_path": "C:\\ARICA",
+      "evidence_ref": "aep_endpoint/observation.json#/local_resolution/references/4/output_claim",
+      "reason": "existence_and_basename_do_not_prove_output_role"
+    }
+  ],
+  "safety": {
+    "forbidden_relations_absent": true,
+    "learning_or_inference_performed": false,
+    "public_catalog_available": false
+  },
+  "schema": "mak-cycle-c02-native-graph-v1",
+  "unknowns": [
+    {
+      "evidence_ref": "aep_endpoint/observation.json#/public_catalog/join",
+      "reason": "no_real_local_social_catalog",
+      "status": "unknown",
+      "type": "public_join"
+    }
+  ]
+}

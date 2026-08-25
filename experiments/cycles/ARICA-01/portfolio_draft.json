@@ -1,0 +1,176 @@
+{
+  "audit": {
+    "every_item_has_evidence": true,
+    "human_reviews": [
+      {
+        "action": "correct",
+        "actor": "human_operator",
+        "decided_at": "2026-08-25T06:57:02+00:00",
+        "note": "Operator correction: numbered frames are sequence components, not standalone works; relation to MYRA_final remains an auditable curatorial correction.",
+        "provenance": {
+          "candidate_evidence_refs": [
+            "artifact:MYRA/render_20s/f_0000.png#sequence_family",
+            "artifact:MYRA/render_20s/f_0000.png#sequence_index",
+            "artifact:MYRA/render_20s/f_0599.png#sequence_family",
+            "artifact:MYRA/render_20s/f_0599.png#sequence_index"
+          ],
+          "promotion": "none",
+          "source_snapshot_hash": "19c5582438fd81f8f1d4dfeb05cbe24a57e89d83e89927897c2b3aa699b1a8d1"
+        }
+      },
+      {
+        "action": "accept",
+        "actor": "human_operator",
+        "decided_at": "2026-08-25T06:57:02+00:00",
+        "note": "Operator instruction explicitly requires the supported C05/C06 RAYU export chain; accept the export-event relation only, with no final-delivery or public-publication claim.",
+        "provenance": {
+          "candidate_evidence_refs": [
+            "C05/source_blend/sha256=acafc1db0088016139921b1ea2c9d7a5310247658117fa7021662e13e907ce86",
+            "C05/export_script/sha256=976182451c074632732808b35c2ec332787edb1b0f4d4fd7c75883f8ac76d120",
+            "C05/export_marker/sha256=70e53d71d56e6269acc904fe8145443256550256c1f99464a3a8fa258821f746",
+            "C05/output_glb/sha256=dfa70c3248a739959e8366dbc0eb4382ce17f97592114e51fb6bbb67ae565042",
+            "C02/blender_endpoint/snapshot.json#/snapshot/native/scenes/0/objects"
+          ],
+          "promotion": "none",
+          "source_snapshot_hash": "19c5582438fd81f8f1d4dfeb05cbe24a57e89d83e89927897c2b3aa699b1a8d1"
+        }
+      },
+      {
+        "action": "request_evidence",
+        "actor": "human_operator",
+        "decided_at": "2026-08-25T06:57:02+00:00",
+        "note": "Keep source_binding=unknown; request the native project, export manifest, or public publication record before binding MYRA_final to a source.",
+        "provenance": {
+          "candidate_evidence_refs": [
+            "ARICA/MYRA/MYRA_final.mp4#sha256",
+            "ARICA/MYRA/bridge/render_done.txt#observed"
+          ],
+          "promotion": "none",
+          "source_snapshot_hash": "19c5582438fd81f8f1d4dfeb05cbe24a57e89d83e89927897c2b3aa699b1a8d1"
+        }
+      }
+    ],
+    "source_snapshot_hash": "19c5582438fd81f8f1d4dfeb05cbe24a57e89d83e89927897c2b3aa699b1a8d1",
+    "unknowns": [
+      "MYRA_final.mp4 source_binding=unknown",
+      "ARICA.aep/tottem_ojo.mp4 output_role=unknown",
+      "public_manifestation_catalog=unavailable"
+    ]
+  },
+  "generated_at": "2026-08-25T06:58:10+00:00",
+  "project_id": "arica-01-portfolio-evidence",
+  "promotion": "none",
+  "schema": "mak-portfolio-draft-v1",
+  "selection": {
+    "accepted_relation_count": 2,
+    "human_accepted_relation_keys": [
+      "artifact:MYRA/render_20s/f_0000.png -[component_of]-> artifact:MYRA/MYRA_final.mp4",
+      "authoring:blend:ARICA/RAYU.blend -[EXPORTS_TO]-> artifact:glb:rayu_resources.glb"
+    ],
+    "human_accepted_relations": [
+      {
+        "candidate_id": "candidate:same_series_candidate:artifact:MYRA/render_20s/f_0000.png->artifact:MYRA/render_20s/f_0599.png",
+        "relation": "component_of",
+        "review_action": "correct",
+        "source_id": "artifact:MYRA/render_20s/f_0000.png",
+        "target_id": "artifact:MYRA/MYRA_final.mp4"
+      },
+      {
+        "candidate_id": "candidate:export_witness:authoring:blend:ARICA/RAYU.blend->artifact:glb:rayu_resources.glb",
+        "relation": "EXPORTS_TO",
+        "review_action": "accept",
+        "source_id": "authoring:blend:ARICA/RAYU.blend",
+        "target_id": "artifact:glb:rayu_resources.glb"
+      }
+    ],
+    "pending_relation_count": 2
+  },
+  "source_of_truth": "data/mak_knowledge.db:project_records.ir_json",
+  "works": [
+    {
+      "artifact_id": "artifact:MYRA/MYRA_final.mp4",
+      "evidence": [
+        "artifact:MYRA/MYRA_final.mp4#path",
+        "artifact:MYRA/MYRA_final.mp4#extension",
+        "artifact:MYRA/MYRA_final.mp4#sha256",
+        "artifact:MYRA/MYRA_final.mp4#bytes",
+        "artifact:MYRA/MYRA_final.mp4#name_tokens",
+        "artifact:MYRA/MYRA_final.mp4#path_tokens",
+        "artifact:MYRA/MYRA_final.mp4#dimensions",
+        "artifact:MYRA/MYRA_final.mp4#video_duration",
+        "artifact:MYRA/MYRA_final.mp4#video_fps",
+        "artifact:MYRA/MYRA_final.mp4#video_codec"
+      ],
+      "kind": "video",
+      "path": "MYRA/MYRA_final.mp4",
+      "publication_status": "unverified",
+      "role": "observed_output_source_binding_unknown"
+    },
+    {
+      "artifact_id": "artifact:MYRA/render_20s/f_0000.png",
+      "evidence": [
+        "artifact:MYRA/render_20s/f_0000.png#path",
+        "artifact:MYRA/render_20s/f_0000.png#extension",
+        "artifact:MYRA/render_20s/f_0000.png#sha256",
+        "artifact:MYRA/render_20s/f_0000.png#bytes",
+        "artifact:MYRA/render_20s/f_0000.png#name_tokens",
+        "artifact:MYRA/render_20s/f_0000.png#path_tokens",
+        "artifact:MYRA/render_20s/f_0000.png#dimensions"
+      ],
+      "kind": "image",
+      "path": "MYRA/render_20s/f_0000.png",
+      "publication_status": "unverified",
+      "role": "sequence_frame_not_standalone_work"
+    },
+    {
+      "artifact_id": "artifact:MYRA/render_20s/f_0599.png",
+      "evidence": [
+        "artifact:MYRA/render_20s/f_0599.png#path",
+        "artifact:MYRA/render_20s/f_0599.png#extension",
+        "artifact:MYRA/render_20s/f_0599.png#sha256",
+        "artifact:MYRA/render_20s/f_0599.png#bytes",
+        "artifact:MYRA/render_20s/f_0599.png#name_tokens",
+        "artifact:MYRA/render_20s/f_0599.png#path_tokens",
+        "artifact:MYRA/render_20s/f_0599.png#dimensions"
+      ],
+      "kind": "image",
+      "path": "MYRA/render_20s/f_0599.png",
+      "publication_status": "unverified",
+      "role": "sequence_frame_not_standalone_work"
+    },
+    {
+      "artifact_id": "artifact:rayu_resources.glb",
+      "evidence": [
+        "artifact:rayu_resources.glb#path",
+        "artifact:rayu_resources.glb#extension",
+        "artifact:rayu_resources.glb#sha256",
+        "artifact:rayu_resources.glb#bytes",
+        "artifact:rayu_resources.glb#name_tokens",
+        "artifact:rayu_resources.glb#path_tokens"
+      ],
+      "kind": "document",
+      "path": "rayu_resources.glb",
+      "publication_status": "unverified",
+      "role": "export_artifact_final_delivery_unproven"
+    },
+    {
+      "artifact_id": "artifact:tottem_ojo.mp4",
+      "evidence": [
+        "artifact:tottem_ojo.mp4#path",
+        "artifact:tottem_ojo.mp4#extension",
+        "artifact:tottem_ojo.mp4#sha256",
+        "artifact:tottem_ojo.mp4#bytes",
+        "artifact:tottem_ojo.mp4#name_tokens",
+        "artifact:tottem_ojo.mp4#path_tokens",
+        "artifact:tottem_ojo.mp4#dimensions",
+        "artifact:tottem_ojo.mp4#video_duration",
+        "artifact:tottem_ojo.mp4#video_fps",
+        "artifact:tottem_ojo.mp4#video_codec"
+      ],
+      "kind": "video",
+      "path": "tottem_ojo.mp4",
+      "publication_status": "unverified",
+      "role": "aep_used_media_output_role_unknown"
+    }
+  ]
+}

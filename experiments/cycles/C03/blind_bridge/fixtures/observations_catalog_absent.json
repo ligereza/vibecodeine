@@ -1,0 +1,17 @@
+{
+  "archive_id": "archive-arica-001",
+  "catalog_request_id": "catalog-request-arica-001",
+  "catalog_status": "unavailable",
+  "local_native_observations": [
+    {
+      "evidence_refs": ["local:artifact:catalog-absent-only"],
+      "id": "local-catalog-absent-only",
+      "media_kind": "image",
+      "native": {"evidence_refs": ["native:artifact:catalog-absent-only"], "conflicts_with_public_ids": []},
+      "sha256": "5160ce6d4126c39adcd52b898c49c6259b4619ad66de90ea793a6ae8c59c185b",
+      "technical": {"height": 800, "mime": "image/png", "width": 800}
+    }
+  ],
+  "public_observations": [],
+  "schema": "mak-cycle-c03-observations-v1"
+}

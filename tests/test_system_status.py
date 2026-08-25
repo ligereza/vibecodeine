@@ -68,6 +68,8 @@ def test_system_status_is_read_only_and_redacts_provider_values(tmp_path: Path, 
     assert result["schema"] == "mak-system-status-v1"
     assert result["read_only"] is True
     assert result["components"]["hub"]["status"] == "ready"
+    assert result["components"]["hub"]["evidence"]["source"]["role"] == "declared"
+    assert result["components"]["hub"]["evidence"]["runtime_source"]["observed"] is False
     assert result["components"]["render"]["status"] in {"ready", "active"}
     assert result["components"]["lanes"]["status"] == "attention"
     assert result["components"]["providers"]["evidence"]["configured"] >= 1
