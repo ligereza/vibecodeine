@@ -153,6 +153,8 @@ modo lectura: existen los tres campos nuevos y los triggers
 no cambió y `provenance_rows=0` para los históricos, como corresponde.
 La suite completa posterior a esta corrección terminó nuevamente `EXIT 0`;
 los únicos avisos siguen siendo las 7 deprecaciones de Pillow ya conocidas.
+La idempotencia de `record_episode` también compara `started_at` y
+`finished_at`, y rechaza un mismo `episode_id` con timestamps distintos.
 
 ## Slice validated - PNG XMP adversarial witness - 2026-08-24
 

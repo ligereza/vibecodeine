@@ -769,12 +769,12 @@ class LearningStore:
             existing = con.execute(
                 """SELECT project_id,objective,phase,action_json,observation_json,
                    outcome_json,validation_json,status,provider,model,cost_json,parent_episode_id,
-                   source_snapshot_hash,code_commit,tool_versions_json
+                   source_snapshot_hash,code_commit,tool_versions_json,started_at,finished_at
                    FROM project_episodes WHERE episode_id=?""",
                 (episode_id,),
             ).fetchone()
             if existing:
-                if tuple(existing) == payload:
+                if tuple(existing) == payload + (start, finished_at):
                     return episode_id
                 raise ProjectIRError(f"episode_id_conflict: {episode_id}")
             con.execute(
