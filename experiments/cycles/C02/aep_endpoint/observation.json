@@ -1,0 +1,268 @@
+{
+  "adapter_version": "aep-endpoint-1.0",
+  "aep_reader": {
+    "chunks_seen": 30,
+    "completeness": "exhaustive",
+    "contract": "mak-aepfile-v1",
+    "declared_reference_count": 5,
+    "error": "",
+    "header": {
+      "declared_size": 372686,
+      "form": "Egg!",
+      "trailing_bytes": 4229
+    },
+    "truncated": false
+  },
+  "input": {
+    "actual_sha256": "99247d6506c6d1d9ce3023f4a1e044da47c806e3cd606d47b61e70fb32f5c460",
+    "expected_sha256": "99247d6506c6d1d9ce3023f4a1e044da47c806e3cd606d47b61e70fb32f5c460",
+    "hash_status": "PASS",
+    "path": "/home/mak/curatoria_inbox/ARICA/ARICA.aep"
+  },
+  "local_resolution": {
+    "ambiguous_count": 0,
+    "candidate_count": 5,
+    "method": "explicit_basename_probe",
+    "references": [
+      {
+        "aep_record": {
+          "byte_offset": 9323,
+          "declared_path": "C:\\ARICA\\512 CIELO.png",
+          "kind": "after_effects_reference",
+          "platform": 1,
+          "scan_method": "whole_file_structured_scan",
+          "server_name": "kubernetes",
+          "server_volume_name": "Windows",
+          "target_is_folder": false
+        },
+        "declared_basename": "512 CIELO.png",
+        "declared_path": "C:\\ARICA\\512 CIELO.png",
+        "declared_target_is_folder": false,
+        "local_resolution": {
+          "candidate_count": 1,
+          "candidate_paths": [
+            "/home/mak/curatoria_inbox/ARICA/512 CIELO.png"
+          ],
+          "cause": null,
+          "classification": "candidate",
+          "evidence": {
+            "basename_checked": true,
+            "existence_checked": true,
+            "probes": [
+              {
+                "basename": "512 CIELO.png",
+                "basename_matches": true,
+                "exists": true,
+                "is_dir": false,
+                "is_file": true,
+                "path": "/home/mak/curatoria_inbox/ARICA/512 CIELO.png"
+              }
+            ]
+          },
+          "local_kind": "file",
+          "status": "candidate"
+        },
+        "observation_status": "observed",
+        "output_claim": {
+          "reason": "existence_and_basename_do_not_prove_output_role",
+          "status": "unknown"
+        }
+      },
+      {
+        "aep_record": {
+          "byte_offset": 13251,
+          "declared_path": "C:\\ARICA\\BANNER.png",
+          "kind": "after_effects_reference",
+          "platform": 1,
+          "scan_method": "whole_file_structured_scan",
+          "server_name": "kubernetes",
+          "server_volume_name": "Windows",
+          "target_is_folder": false
+        },
+        "declared_basename": "BANNER.png",
+        "declared_path": "C:\\ARICA\\BANNER.png",
+        "declared_target_is_folder": false,
+        "local_resolution": {
+          "candidate_count": 1,
+          "candidate_paths": [
+            "/home/mak/curatoria_inbox/ARICA/BANNER.png"
+          ],
+          "cause": null,
+          "classification": "candidate",
+          "evidence": {
+            "basename_checked": true,
+            "existence_checked": true,
+            "probes": [
+              {
+                "basename": "BANNER.png",
+                "basename_matches": true,
+                "exists": true,
+                "is_dir": false,
+                "is_file": true,
+                "path": "/home/mak/curatoria_inbox/ARICA/BANNER.png"
+              }
+            ]
+          },
+          "local_kind": "file",
+          "status": "candidate"
+        },
+        "observation_status": "observed",
+        "output_claim": {
+          "reason": "existence_and_basename_do_not_prove_output_role",
+          "status": "unknown"
+        }
+      },
+      {
+        "aep_record": {
+          "byte_offset": 21099,
+          "declared_path": "C:\\ARICA\\CENTRAL.png",
+          "kind": "after_effects_reference",
+          "platform": 1,
+          "scan_method": "whole_file_structured_scan",
+          "server_name": "kubernetes",
+          "server_volume_name": "Windows",
+          "target_is_folder": false
+        },
+        "declared_basename": "CENTRAL.png",
+        "declared_path": "C:\\ARICA\\CENTRAL.png",
+        "declared_target_is_folder": false,
+        "local_resolution": {
+          "candidate_count": 1,
+          "candidate_paths": [
+            "/home/mak/curatoria_inbox/ARICA/CENTRAL.png"
+          ],
+          "cause": null,
+          "classification": "candidate",
+          "evidence": {
+            "basename_checked": true,
+            "existence_checked": true,
+            "probes": [
+              {
+                "basename": "CENTRAL.png",
+                "basename_matches": true,
+                "exists": true,
+                "is_dir": false,
+                "is_file": true,
+                "path": "/home/mak/curatoria_inbox/ARICA/CENTRAL.png"
+              }
+            ]
+          },
+          "local_kind": "file",
+          "status": "candidate"
+        },
+        "observation_status": "observed",
+        "output_claim": {
+          "reason": "existence_and_basename_do_not_prove_output_role",
+          "status": "unknown"
+        }
+      },
+      {
+        "aep_record": {
+          "byte_offset": 364461,
+          "declared_path": "C:\\ARICA\\tottem_ojo.mp4",
+          "kind": "after_effects_reference",
+          "platform": 1,
+          "scan_method": "whole_file_structured_scan",
+          "server_name": "kubernetes",
+          "server_volume_name": "Windows",
+          "target_is_folder": false
+        },
+        "declared_basename": "tottem_ojo.mp4",
+        "declared_path": "C:\\ARICA\\tottem_ojo.mp4",
+        "declared_target_is_folder": false,
+        "local_resolution": {
+          "candidate_count": 1,
+          "candidate_paths": [
+            "/home/mak/curatoria_inbox/ARICA/tottem_ojo.mp4"
+          ],
+          "cause": null,
+          "classification": "candidate",
+          "evidence": {
+            "basename_checked": true,
+            "existence_checked": true,
+            "probes": [
+              {
+                "basename": "tottem_ojo.mp4",
+                "basename_matches": true,
+                "exists": true,
+                "is_dir": false,
+                "is_file": true,
+                "path": "/home/mak/curatoria_inbox/ARICA/tottem_ojo.mp4"
+              }
+            ]
+          },
+          "local_kind": "file",
+          "status": "candidate"
+        },
+        "observation_status": "observed",
+        "output_claim": {
+          "reason": "existence_and_basename_do_not_prove_output_role",
+          "status": "unknown"
+        }
+      },
+      {
+        "aep_record": {
+          "byte_offset": 370557,
+          "declared_path": "C:\\ARICA",
+          "kind": "after_effects_reference",
+          "platform": 1,
+          "scan_method": "whole_file_structured_scan",
+          "server_name": "kubernetes",
+          "server_volume_name": "Windows",
+          "target_is_folder": true
+        },
+        "declared_basename": "ARICA",
+        "declared_path": "C:\\ARICA",
+        "declared_target_is_folder": true,
+        "local_resolution": {
+          "candidate_count": 1,
+          "candidate_paths": [
+            "/home/mak/curatoria_inbox/ARICA"
+          ],
+          "cause": null,
+          "classification": "candidate",
+          "evidence": {
+            "basename_checked": true,
+            "existence_checked": true,
+            "probes": [
+              {
+                "basename": "ARICA",
+                "basename_matches": true,
+                "exists": true,
+                "is_dir": true,
+                "is_file": false,
+                "path": "/home/mak/curatoria_inbox/ARICA"
+              }
+            ]
+          },
+          "local_kind": "folder",
+          "status": "candidate"
+        },
+        "observation_status": "observed",
+        "output_claim": {
+          "reason": "existence_and_basename_do_not_prove_output_role",
+          "status": "unknown"
+        }
+      }
+    ],
+    "root": "/home/mak/curatoria_inbox/ARICA",
+    "unknown_count": 0
+  },
+  "public_catalog": {
+    "join": {
+      "cause": "MISSING_EVIDENCE",
+      "reason": "no_real_local_social_catalog",
+      "status": "unknown",
+      "verifiable": false
+    },
+    "real_local_catalog_available": false,
+    "status": "unavailable"
+  },
+  "read_policy": {
+    "after_effects_opened": false,
+    "input_written": false,
+    "recursive_local_scan": false,
+    "renders_requested": false
+  },
+  "schema": "mak-cycle-c02-aep-observation-v1"
+}

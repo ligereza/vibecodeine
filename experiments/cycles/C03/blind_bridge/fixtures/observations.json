@@ -1,0 +1,144 @@
+{
+  "archive_id": "archive-arica-001",
+  "catalog_status": "available",
+  "local_native_observations": [
+    {
+      "evidence_refs": ["local:artifact:exact:sha256"],
+      "id": "local-exact",
+      "media_kind": "image",
+      "native": {
+        "evidence_refs": ["native:artifact:exact"],
+        "conflicts_with_public_ids": []
+      },
+      "sha256": "9e5d2de42087e5b9d944b9234e0020f1d2adfefb808ad74a75b3102c2f36cfda",
+      "technical": {"height": 1080, "mime": "image/png", "width": 1080}
+    },
+    {
+      "evidence_refs": ["local:artifact:reencode:sha256"],
+      "id": "local-reencode",
+      "media_kind": "video",
+      "native": {
+        "evidence_refs": ["native:export-observation:reencode-01"],
+        "observed_export_key": "release:reencode-01",
+        "conflicts_with_public_ids": []
+      },
+      "sha256": "5da4a70b36b195d2a287f3f2feb8a6d159ec85a4a05a02f8d8f6459a519fcc5f",
+      "technical": {"duration_ms": 15000, "height": 1920, "mime": "video/webm", "width": 1080}
+    },
+    {
+      "evidence_refs": ["local:artifact:decoy-a:sha256"],
+      "id": "local-decoy-a",
+      "media_kind": "image",
+      "native": {"evidence_refs": ["native:artifact:decoy-a"], "conflicts_with_public_ids": []},
+      "sha256": "d080ff293b861f38d4d3836340025f94ab1bf3d531325da783462e516ede0e48",
+      "technical": {"height": 900, "mime": "image/png", "width": 1600}
+    },
+    {
+      "evidence_refs": ["local:artifact:decoy-z:sha256"],
+      "id": "local-decoy-z",
+      "media_kind": "image",
+      "native": {
+        "evidence_refs": ["native:export-observation:decoy-01"],
+        "observed_export_key": "release:decoy-01",
+        "conflicts_with_public_ids": []
+      },
+      "sha256": "061b16569c25735224fd7901ad3a106bd34ba8d9fcf38e9200e3b1c9469c250b",
+      "technical": {"height": 900, "mime": "image/jpeg", "width": 1600}
+    },
+    {
+      "evidence_refs": ["local:artifact:ambiguous-a:sha256"],
+      "id": "local-ambiguous-a",
+      "media_kind": "image",
+      "native": {"evidence_refs": ["native:artifact:ambiguous-a"], "conflicts_with_public_ids": []},
+      "sha256": "70aa226c9ebf2f8221c59c00ffd548207241b2f9f7d95752df6930c43dfdec9b",
+      "technical": {"height": 720, "mime": "image/png", "width": 1280}
+    },
+    {
+      "evidence_refs": ["local:artifact:ambiguous-b:sha256"],
+      "id": "local-ambiguous-b",
+      "media_kind": "image",
+      "native": {"evidence_refs": ["native:artifact:ambiguous-b"], "conflicts_with_public_ids": []},
+      "sha256": "70aa226c9ebf2f8221c59c00ffd548207241b2f9f7d95752df6930c43dfdec9b",
+      "technical": {"height": 720, "mime": "image/jpeg", "width": 1280}
+    },
+    {
+      "evidence_refs": ["local:artifact:conflict:sha256"],
+      "id": "local-conflict",
+      "media_kind": "image",
+      "native": {
+        "evidence_refs": ["native:explicit-conflict:conflict-01"],
+        "conflicts_with_public_ids": ["pub-conflict"]
+      },
+      "sha256": "36032ce79e742f011311b74abab15f53be5405af5a0e44d744afbba44602d308",
+      "technical": {"height": 600, "mime": "image/png", "width": 600}
+    },
+    {
+      "evidence_refs": ["local:artifact:only-local:sha256"],
+      "id": "local-only",
+      "media_kind": "image",
+      "native": {"evidence_refs": ["native:artifact:only-local"], "conflicts_with_public_ids": []},
+      "sha256": "5160ce6d4126c39adcd52b898c49c6259b4619ad66de90ea793a6ae8c59c185b",
+      "technical": {"height": 800, "mime": "image/png", "width": 800}
+    }
+  ],
+  "public_observations": [
+    {
+      "bridge_observation_key": "release:exact-01",
+      "evidence_refs": ["public:media:exact:sha256"],
+      "id": "pub-exact",
+      "media_index": 0,
+      "media_kind": "image",
+      "publication_id": "publication-exact",
+      "sha256": "9e5d2de42087e5b9d944b9234e0020f1d2adfefb808ad74a75b3102c2f36cfda",
+      "technical": {"height": 1080, "mime": "image/png", "width": 1080}
+    },
+    {
+      "bridge_observation_key": "release:reencode-01",
+      "evidence_refs": ["public:media:reencode:sha256"],
+      "id": "pub-reencode",
+      "media_index": 0,
+      "media_kind": "video",
+      "publication_id": "publication-reencode",
+      "sha256": "c71ce25bdb4276e8e91958d2c2df1169ca4e45e7dcf2a788743be4e5ab725bac",
+      "technical": {"duration_ms": 15000, "height": 1920, "mime": "video/mp4", "width": 1080}
+    },
+    {
+      "bridge_observation_key": "release:decoy-01",
+      "evidence_refs": ["public:media:decoy:sha256"],
+      "id": "pub-decoy",
+      "media_index": 0,
+      "media_kind": "image",
+      "publication_id": "publication-decoy",
+      "sha256": "c71ce25bdb4276e8e91958d2c2df1169ca4e45e7dcf2a788743be4e5ab725bac",
+      "technical": {"height": 900, "mime": "image/webp", "width": 1600}
+    },
+    {
+      "evidence_refs": ["public:media:no-local:sha256"],
+      "id": "pub-no-local",
+      "media_index": 0,
+      "media_kind": "image",
+      "publication_id": "publication-no-local",
+      "sha256": "c71ce25bdb4276e8e91958d2c2df1169ca4e45e7dcf2a788743be4e5ab725bac",
+      "technical": {"height": 777, "mime": "image/jpeg", "width": 1111}
+    },
+    {
+      "evidence_refs": ["public:media:ambiguous:sha256"],
+      "id": "pub-ambiguous",
+      "media_index": 0,
+      "media_kind": "image",
+      "publication_id": "publication-ambiguous",
+      "sha256": "70aa226c9ebf2f8221c59c00ffd548207241b2f9f7d95752df6930c43dfdec9b",
+      "technical": {"height": 720, "mime": "image/jpeg", "width": 1280}
+    },
+    {
+      "evidence_refs": ["public:media:conflict:sha256"],
+      "id": "pub-conflict",
+      "media_index": 0,
+      "media_kind": "image",
+      "publication_id": "publication-conflict",
+      "sha256": "36032ce79e742f011311b74abab15f53be5405af5a0e44d744afbba44602d308",
+      "technical": {"height": 600, "mime": "image/png", "width": 600}
+    }
+  ],
+  "schema": "mak-cycle-c03-observations-v1"
+}

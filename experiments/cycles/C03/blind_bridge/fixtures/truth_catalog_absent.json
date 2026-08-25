@@ -1,0 +1,7 @@
+{
+  "archive_id": "archive-arica-001",
+  "cases": [
+    {"expected_status": "unknown", "query_id": "catalog-request-arica-001"}
+  ],
+  "schema": "mak-cycle-c03-truth-v1"
+}

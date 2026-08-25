@@ -1,0 +1,10 @@
+{
+  "schema": "mak-cycle-c07-fixtures-v1",
+  "cases": [
+    {"id": "frames_plus_export", "description": "numbered frames and an export share a family"},
+    {"id": "export_without_project", "description": "export-like image with no authoring project"},
+    {"id": "project_without_export", "description": "authoring project with no media output"},
+    {"id": "same_name_different_work", "description": "same basename but different bytes and paths"},
+    {"id": "same_work_different_proportions", "description": "same study family in 4:5 and 16:9 proportions"}
+  ]
+}

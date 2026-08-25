@@ -1,0 +1,57 @@
+{
+  "fixture_role": "synthetic_benchmark_only",
+  "schema": "c03.public_input.canonical.v1",
+  "archive_id": "fixture-c03-canonical-001",
+  "catalog_status": "available",
+  "completeness": {
+    "status": "complete",
+    "source": "synthetic_fixture"
+  },
+  "records": [
+    {
+      "type": "post",
+      "id": "post-001",
+      "origin": {
+        "kind": "declared_export",
+        "ref": "fixture-post-001"
+      },
+      "evidence_refs": ["fixture-evidence-post-001"],
+      "hashes": {
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "media": [
+        {
+          "media_id": "media-post-001",
+          "kind": "image",
+          "origin": {
+            "kind": "declared_export",
+            "ref": "fixture-media-post-001"
+          },
+          "evidence_refs": ["fixture-evidence-media-001"],
+          "hashes": {
+            "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        }
+      ]
+    },
+    {
+      "type": "reel",
+      "id": "reel-001",
+      "completeness": {
+        "status": "partial",
+        "missing": ["caption"]
+      },
+      "media": [
+        {
+          "media_id": "media-reel-001",
+          "origin": "fixture-reel-media-origin"
+        }
+      ]
+    },
+    {
+      "type": "story",
+      "id": "story-001",
+      "media": []
+    }
+  ]
+}

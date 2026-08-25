@@ -1,6 +1,6 @@
 # Operational Handoff
 
-## Agent bootstrap — CURRENT — 2026-08-25 — Stage 2D accepted
+## Agent bootstrap — CURRENT — 2026-08-25 — real ARICA/Fondart pilot completed
 
 **Operative rule.** This is the only active packet. Bootstrap with
 `tools/agent_bootstrap.py`; use `docs/MAK_SYSTEM_DIRECTIVE.md` as the durable
@@ -14,11 +14,23 @@ and curatorial intelligence -> portfolio/application/research compilers ->
 learning. ARICA, MYRA, RAYU and ISKVW are cases, never the architecture. Years
 of finished work are supervision; user review is optional, not a pipeline gate.
 
-Stage 2D is accepted. The active slice is Stage 3A: connect provisional archive
-knowledge to MAK's existing organism. Reuse `copilot.py` as the curatorial
-candidate/learning engine and `triangular.py` plus the Conductor as the model
-for evidence -> actionable uncertainty -> competent organ -> returned evidence.
-Do not create a parallel department framework or connect Portfolio yet.
+Stage 2D accepted; epistemic Piso 1 also remains accepted: local documentary
+evidence compiles into opportunity constraints; accepted Project IR projects
+into an evidence-only practice state; and the two authorities meet only through
+explicit requirement-to-evidence bindings. Possibility Piso 2 is now accepted:
+MAK generates, independently falsifies and strategically ranks provisional
+artistic-program possibilities. Autonomous research Piso 3 is also accepted:
+prioritized gaps compile into non-dispatched jobs, captured claims are
+triangulated across independent source groups, and supported results return as
+additive evidence proposals without promotion. Product compilation Piso 4 is
+accepted: one common plan derives curatorial portfolio, application and
+research products from the same evidence-governed state. Controlled autonomy
+Piso 5 is accepted: product decisions compile into ledger-compatible episode
+candidates, verified external outcomes become bounded shadow-learning signals,
+and a finite policy selects the next plan-only action. A real read-only
+ARICA/Fondart pilot has now crossed the entire accepted chain. Its result is a
+useful internal dossier plus an explicit research-first abstention, not a false
+submission-ready product.
 
 ### Authority
 
@@ -44,13 +56,112 @@ roots, protected art and media remain outside the write set.
   `unknown` and source archives are never rescanned.
 - Director gate over observer, memory, Stages 2A-2D, Project IR, Copilot,
   departments, visible organs, Curatoria triangulation and Conductor:
-  `171 passed`, exit `0`; Stage 2D `py_compile` and path-limited
+  171 focused tests were measured;
+  exit `0`; Stage 2D `py_compile` and path-limited
   `git diff --check`: exit `0`.
 - Independent Stage 2D cross-smoke: observe -> memory -> replay -> relations ->
   units -> Project IR -> evaluator; `valid=true`, zero errors.
 - Read-only MYRA run with temporary SQLite: 1,517 artifacts, 23 observations,
   512 bounded candidates, 10 units, 1,325 assigned, 0 ambiguous, 192 unassigned,
   `balanced=true`; source unchanged.
+- Epistemic Piso 1 adds three pure read-only contracts:
+  `mak-opportunity-constraints-v1`, `mak-practice-evidence-state-v1` and
+  `mak-opportunity-fit-v1`. The director gate passed 34 focused tests plus
+  compilation and path-limited `git diff --check`.
+- The integration gate rejected and corrected three false-green boundaries:
+  invented producer fields, collision between external PDF evidence and
+  internal artifact evidence, and fit declared against an unverified source.
+  Opportunity documentary refs never prove applicant fit; only explicit
+  `requirement_ids` on internal evidence can connect both authorities.
+- Opportunity source validity is a control gate. `observed_local`, `unknown`
+  and `stale` abstain; `expired` and `ineligible` fail; only
+  `current_verified` plus explicit confirmation can pass.
+- Possibility Piso 2 adds three pure contracts:
+  `mak-artistic-program-candidates-v1`,
+  `mak-artistic-program-evaluation-v1` and `mak-possibility-field-v1`.
+  The director gate over Piso 1 plus Piso 2 passed 71 focused tests,
+  compilation and path-limited `git diff --check`.
+- The Piso 2 integration gate corrected two false boundaries: the field now
+  consumes the evaluator's real `results{program_id: row}` contract, and
+  cross-candidate resource contention remains a strategic conflict instead of
+  invalidating every candidate before selection.
+- A current-verified fixture produced two accepted and ranked candidates with
+  one explicit resource conflict and `training_permitted=false`. The same
+  chain with an `observed_local` unconfirmed source produced two abstentions,
+  zero ranked candidates, three non-dispatched research-frontier actions and
+  no false-ready state. Abstention remains an input to control, not a dead end.
+- Autonomous research Piso 3 adds three pure contracts:
+  `mak-research-frontier-jobs-v1`, `mak-research-triangulation-v1` and
+  `mak-evidence-return-v1`. The director gate over Pisos 1-3 passed 110 focused
+  tests, compilation and path-limited `git diff --check`.
+- The Piso 3 integration gate corrected three false-green boundaries: source
+  validity refresh jobs now carry the explicit technical requirement
+  `source-validity:<opportunity_id>`; result pairs absent from the frontier
+  fail closed instead of disappearing; and evidence return consumes the real
+  `independent_source_groups` field while verifying job/requirement membership.
+- Real-chain smoke with an unconfirmed local source produced two technical
+  refresh jobs and two `unresolved` results, never an empty triangulation.
+  A bounded two-source/two-domain capture produced one
+  `supported_candidate`, one additive opportunity-evidence proposal and one
+  fit-recompute request; it produced zero practice-evidence proposals and kept
+  `training_permitted=false`.
+- Product compilation Piso 4 adds three pure contracts:
+  `mak-product-plan-v1`, `mak-portfolio-dossier-v1` and
+  `mak-application-research-package-v1`. The director gate over Pisos 1-4
+  passed 136 focused tests, compilation and path-limited `git diff --check`.
+- The Piso 4 integration gate corrected three false-green boundaries: product
+  plans now preserve claim-to-program and asset-to-program links; dossier
+  coverage distinguishes documented claims from explicit provisional program
+  bindings; and application/research compilation consumes plural programs,
+  targets and requirement IDs from the real plan contract.
+- In the verified chain, two ranked programs produced a draftable common plan,
+  one supported narrative atom, three distinct physical assets, no falsely
+  missing requirements, a draftable application and no research jobs. In the
+  `observed_local` chain, two research-first programs still produced an
+  internal dossier, while application stayed blocked and two non-dispatched
+  source-validity jobs remained in the research brief. Publication, submission,
+  dispatch and training stayed disabled in both chains.
+- Controlled autonomy Piso 5 adds three pure contracts:
+  `mak-product-episode-candidate-v1`,
+  `mak-product-learning-evaluation-v1` and `mak-autonomy-plan-v1`. The director
+  gate over Pisos 1-5 passed 168 focused tests, compilation and path-limited
+  `git diff --check`.
+- The Piso 5 integration gate corrected three false-green boundaries: autonomy
+  now consumes the structured VOI emitted by real research jobs; product
+  episodes preserve a stable tenant/archive identity group separately from
+  snapshot identity; and learning consumes the real episode projection rather
+  than fixture-only top-level validation fields.
+- In the verified chain without an outcome, the episode remained `open`, the
+  learning report was valid but abstained with
+  `outcome_open_not_negative`, and autonomy selected one bounded `wait`. In the
+  `observed_local` chain, autonomy selected two bounded `research` actions with
+  `max_attempts=1`. A verified external portfolio receipt produced only
+  `attention` and `ranking` examples; one identity group was insufficient for
+  a policy candidate, and training remained disabled.
+- The real ARICA/Fondart pilot used the canonical observer against the bounded
+  ARICA root and wrote outputs only under `/tmp`. It observed 417 artifacts and
+  11,916 observations; Stage 2A-2D produced 413 relation candidates, one
+  provisional unit, 99 assigned artifacts, 318 explicit unassigned refs, one
+  valid Project IR record and a valid practice state. All 14 source-file hashes
+  declared by the prior ARICA snapshot were unchanged after the pilot.
+- The opportunity was the real local Fondart Nacional Línea Investigación 2027
+  corpus: 38-page PDF, 22 constraints, eight hard gates and eight required
+  documents. Because its current official validity was not fetched, its source
+  gate remained `observed_local`/unconfirmed.
+- End-to-end ARICA/Fondart result: fit abstained with 16 unsupported required
+  constraints; one practice-native program abstained and one empty conditioned
+  program was independently rejected; the possibility field preserved one
+  abstention and one rejection. The product plan made the internal dossier
+  draftable, blocked application and made research draftable. The dossier has
+  one provisional program, a two-row sequence, 99 private/internal assets,
+  zero public assets, zero invented narrative atoms and nine explicit gaps.
+  Application maps all 22 requirements and remains blocked. Autonomy emits one
+  bounded non-dispatched `research` action.
+- Real-data corrections were limited to contract boundaries: an evaluator
+  rejection can no longer be revived by abstaining gates; structured rejection
+  reasons are deduplicated canonically; and dossier evidence namespaces are
+  separated from physical/public assets. The final fifteen-contract regression
+  passed 173 focused tests plus `git diff --check`.
 
 ### Boundaries and risks
 
@@ -64,24 +175,49 @@ roots, protected art and media remain outside the write set.
 - MAK currently exposes overlapping topologies: the three-area department
   registry, six runtime organs and the broader owner/consumer map. Stage 3A
   must reconcile capabilities and handoffs without declaring another registry.
+- Research results are environmental evidence. They may update opportunity
+  knowledge, but cannot become evidence of the artist's practice unless a
+  future explicit practice-scoped contract names existing artifact refs.
+- Piso 4 must not build independent portfolio and application silos. Both must
+  derive from one product plan with shared claim, asset, requirement, privacy,
+  license and uncertainty controls.
+- A draftable product is not a published/submitted product. Piso 5 may learn
+  routing, ranking and attention from observed episodes, but it may not learn
+  factual truth, authorship or artistic identity from its own drafts.
+- The next risk is no longer contract architecture but real-data portability:
+  a green fixture cannot prove that ARICA, MYRA or another artist archive has
+  enough accepted Project IR, explicit practice evidence and opportunity
+  evidence to produce a useful first dossier.
+- ARICA now has accepted Project IR/practice output in `/tmp`, but only three
+  unknown claims and no supported/candidate claim atoms. The existing C04-C06
+  technical witnesses are not yet represented as canonical practice evidence,
+  so the dossier correctly refuses to write a curatorial narrative or publish
+  media from them.
 
 ### Single next action
 
-Implement and independently evaluate one Stage 3A circulation bridge:
+Do not add another architectural floor. Close the two evidence gaps selected by
+the real autonomy plan, then replay the same pilot:
 
-`accepted provisional Project IR -> existing Copilot candidate/atlas vocabulary
--> evidence-gap packets for existing Curatoria/Research capabilities`.
+1. Execute the single official-source validity research job for Fondart through
+   a bounded general capture path and triangulate the receipt; do not reuse the
+   legacy hard-coded plant query.
+2. Project the already-existing ARICA C04-C06 technical witness receipts into
+   the accepted practice-evidence vocabulary without treating them as web
+   evidence, authorship proof or automatic curatorial claims.
 
-Treat `triangular` as the reference pattern, not as a flyer-only special case:
-observation creates a sourced question, the competent organ investigates, and
-returned evidence re-enters without automatic promotion. No production writes,
-network dispatch, user-label gate, permanent service or Portfolio compiler.
+After additive ingestion/recompute, rerun from fit onward using the same `/tmp`
+Project IR/practice snapshot. Improvement means more explicit evidence and
+fewer justified gaps, not a forced positive fit. Publication, submission,
+training and source mutation remain disabled.
 
 ### Last verified
 
-2026-08-25 America/Santiago — Stages 1 and 2A-2D accepted by the director;
-171 focused tests, independent cross-smoke, compilation, whitespace and bounded
-real MYRA execution exited `0`. Stage 3A organism integration is active.
+2026-08-25 America/Santiago — Stages 1 and 2A-2D plus epistemic Pisos 1-5 and
+the real ARICA/Fondart pilot accepted by the director. The fifteen-contract gate
+passed 173 focused tests, compilation, whitespace and verified,
+observed-local, outcome and real-archive smokes. The next action is evidence
+closure and replay, not another layer.
 
 ## Agent bootstrap — HISTORICAL — pre-archive-memory correction
 
@@ -115,7 +251,7 @@ current write set.
 - C04 real MP4 observation plus AEP-to-media evidence evaluation; `uses` is
   `supported`, dimensions are `observed`, output role is `unknown`; gate
   `PYTHONPATH=. .venv/bin/python experiments/cycles/C04/verify_cycle.py` is
-  `EXIT 0` with 20 tests.
+  `EXIT 0` with focused contract coverage.
 - C05 real Blender export witness: `RAYU.blend` -> `rayu_export.py` ->
   `rayu_resources.glb`; seven evidence checks pass, the source hash is
   unchanged, and `witness_status=supported`. Gate

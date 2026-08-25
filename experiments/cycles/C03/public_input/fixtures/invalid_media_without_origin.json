@@ -1,0 +1,17 @@
+{
+  "fixture_role": "synthetic_negative_benchmark_only",
+  "wrapper": "c03.public_input.declared_json_export.v1",
+  "archive_id": "fixture-c03-invalid-media-001",
+  "posts": [
+    {
+      "id": "post-invalid-media-001",
+      "media": [
+        {
+          "media_id": "media-without-origin"
+        }
+      ]
+    }
+  ],
+  "reels": [],
+  "stories": []
+}

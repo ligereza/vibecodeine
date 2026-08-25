@@ -1,0 +1,37 @@
+{
+  "fixture_role": "synthetic_adversarial_input_only",
+  "schema": "mak-cycle-c04-evidence-input-v1",
+  "case_id": "ambiguous_basename",
+  "native_aep": {
+    "source_id": "aep-arica",
+    "evidence_refs": ["aep://ARICA.aep#/declarations/0"],
+    "declarations": [
+      {
+        "declaration_id": "decl-ambiguous",
+        "declared_path": "C:\\ARICA\\same.mp4",
+        "evidence_refs": ["aep://ARICA.aep#byte-offset=1300"]
+      }
+    ]
+  },
+  "local_media_observation": {
+    "observation_id": "obs-ambiguous-set",
+    "evidence_refs": ["media://one/same.mp4#stat", "media://two/same.mp4#stat"],
+    "observations": [
+      {
+        "observation_id": "obs-same-1",
+        "path": "/fixture/one/same.mp4",
+        "exists": true,
+        "is_file": true,
+        "evidence_refs": ["media://one/same.mp4#stat"]
+      },
+      {
+        "observation_id": "obs-same-2",
+        "path": "/fixture/two/same.mp4",
+        "exists": true,
+        "is_file": true,
+        "evidence_refs": ["media://two/same.mp4#stat"]
+      }
+    ]
+  },
+  "export_event": null
+}

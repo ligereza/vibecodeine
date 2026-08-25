@@ -1,0 +1,31 @@
+{
+  "fixture_role": "synthetic_benchmark_only",
+  "wrapper": "c03.public_input.declared_json_export.v1",
+  "archive_id": "fixture-c03-json-001",
+  "catalog_status": "available",
+  "completeness": {
+    "status": "complete",
+    "source": "synthetic_fixture"
+  },
+  "posts": [
+    {
+      "id": "post-json-001",
+      "published_at": "declared-only",
+      "media": [
+        {
+          "media_id": "media-json-001",
+          "origin": {
+            "kind": "json_export",
+            "ref": "fixture-media-json-001"
+          },
+          "evidence_refs": ["fixture-evidence-media-001"],
+          "hashes": {
+            "md5": "cccccccccccccccccccccccccccccccc"
+          }
+        }
+      ]
+    }
+  ],
+  "reels": [],
+  "stories": []
+}

@@ -1,0 +1,10 @@
+{
+  "fixture_role": "synthetic_expected_outcome_only",
+  "case_id": "nonconventional_dimensions",
+  "claims": [
+    {"claim": "uses", "expected_status": "supported", "expected_positive": true},
+    {"claim": "dimensions", "expected_status": "observed", "expected_positive": false},
+    {"claim": "output_role", "expected_status": "unknown", "expected_positive": false}
+  ],
+  "expected_relations": []
+}

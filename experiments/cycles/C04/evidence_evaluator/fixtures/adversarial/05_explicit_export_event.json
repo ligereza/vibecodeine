@@ -1,0 +1,39 @@
+{
+  "fixture_role": "synthetic_adversarial_input_only",
+  "schema": "mak-cycle-c04-evidence-input-v1",
+  "case_id": "explicit_export_event",
+  "native_aep": {
+    "source_id": "aep-arica",
+    "evidence_refs": ["aep://ARICA.aep#/declarations/0"],
+    "declarations": [
+      {
+        "declaration_id": "decl-export-source",
+        "declared_path": "C:\\ARICA\\composition.aep",
+        "evidence_refs": ["aep://ARICA.aep#composition=main"]
+      }
+    ]
+  },
+  "local_media_observation": {
+    "observation_id": "obs-export-output",
+    "evidence_refs": ["media://exports/main.mp4#stat", "media://exports/main.mp4#hash"],
+    "observations": [
+      {
+        "observation_id": "obs-export-output",
+        "path": "/fixture/exports/main.mp4",
+        "exists": true,
+        "is_file": true,
+        "technical_id": "tech-export-001",
+        "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "dimensions": {"width": 1920, "height": 1080},
+        "evidence_refs": ["media://exports/main.mp4#stat", "media://exports/main.mp4#hash"]
+      }
+    ]
+  },
+  "export_event": {
+    "event_id": "event-export-001",
+    "event_type": "export",
+    "source_ref": "decl-export-source",
+    "output_ref": "obs-export-output",
+    "evidence_refs": ["export-log://event-export-001", "export-log://event-export-001#output"]
+  }
+}

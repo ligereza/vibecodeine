@@ -1,0 +1,290 @@
+{
+  "baseline": {
+    "by_case": {
+      "export_without_project": {
+        "k1": {
+          "gold": 0,
+          "hits_at_k": 0,
+          "precision_at_k": 0.0,
+          "predicted": 0,
+          "recall_at_k": null
+        },
+        "k3": {
+          "gold": 0,
+          "hits_at_k": 0,
+          "precision_at_k": 0.0,
+          "predicted": 0,
+          "recall_at_k": null
+        },
+        "k5": {
+          "gold": 0,
+          "hits_at_k": 0,
+          "precision_at_k": 0.0,
+          "predicted": 0,
+          "recall_at_k": null
+        }
+      },
+      "frames_plus_export": {
+        "k1": {
+          "gold": 5,
+          "hits_at_k": 0,
+          "precision_at_k": 0.0,
+          "predicted": 0,
+          "recall_at_k": 0.0
+        },
+        "k3": {
+          "gold": 5,
+          "hits_at_k": 0,
+          "precision_at_k": 0.0,
+          "predicted": 0,
+          "recall_at_k": 0.0
+        },
+        "k5": {
+          "gold": 5,
+          "hits_at_k": 0,
+          "precision_at_k": 0.0,
+          "predicted": 0,
+          "recall_at_k": 0.0
+        }
+      },
+      "project_without_export": {
+        "k1": {
+          "gold": 0,
+          "hits_at_k": 0,
+          "precision_at_k": 0.0,
+          "predicted": 0,
+          "recall_at_k": null
+        },
+        "k3": {
+          "gold": 0,
+          "hits_at_k": 0,
+          "precision_at_k": 0.0,
+          "predicted": 0,
+          "recall_at_k": null
+        },
+        "k5": {
+          "gold": 0,
+          "hits_at_k": 0,
+          "precision_at_k": 0.0,
+          "predicted": 0,
+          "recall_at_k": null
+        }
+      },
+      "same_name_different_work": {
+        "k1": {
+          "gold": 0,
+          "hits_at_k": 0,
+          "precision_at_k": 0.0,
+          "predicted": 0,
+          "recall_at_k": null
+        },
+        "k3": {
+          "gold": 0,
+          "hits_at_k": 0,
+          "precision_at_k": 0.0,
+          "predicted": 0,
+          "recall_at_k": null
+        },
+        "k5": {
+          "gold": 0,
+          "hits_at_k": 0,
+          "precision_at_k": 0.0,
+          "predicted": 0,
+          "recall_at_k": null
+        }
+      },
+      "same_work_different_proportions": {
+        "k1": {
+          "gold": 1,
+          "hits_at_k": 0,
+          "precision_at_k": 0.0,
+          "predicted": 0,
+          "recall_at_k": 0.0
+        },
+        "k3": {
+          "gold": 1,
+          "hits_at_k": 0,
+          "precision_at_k": 0.0,
+          "predicted": 0,
+          "recall_at_k": 0.0
+        },
+        "k5": {
+          "gold": 1,
+          "hits_at_k": 0,
+          "precision_at_k": 0.0,
+          "predicted": 0,
+          "recall_at_k": 0.0
+        }
+      }
+    },
+    "case_count": 5,
+    "coverage": 0.0,
+    "coverage_at_1": 0.0,
+    "coverage_at_3": 0.0,
+    "coverage_at_5": 0.0,
+    "gold_count": 6,
+    "kind": "relation",
+    "precision_at_1": 0.0,
+    "precision_at_3": 0.0,
+    "precision_at_5": 0.0,
+    "recall": 0.0,
+    "recall_at_1": 0.0,
+    "recall_at_3": 0.0,
+    "recall_at_5": 0.0
+  },
+  "candidate": {
+    "by_case": {
+      "export_without_project": {
+        "k1": {
+          "gold": 0,
+          "hits_at_k": 0,
+          "precision_at_k": 0.0,
+          "predicted": 0,
+          "recall_at_k": null
+        },
+        "k3": {
+          "gold": 0,
+          "hits_at_k": 0,
+          "precision_at_k": 0.0,
+          "predicted": 0,
+          "recall_at_k": null
+        },
+        "k5": {
+          "gold": 0,
+          "hits_at_k": 0,
+          "precision_at_k": 0.0,
+          "predicted": 0,
+          "recall_at_k": null
+        }
+      },
+      "frames_plus_export": {
+        "k1": {
+          "gold": 5,
+          "hits_at_k": 1,
+          "precision_at_k": 1.0,
+          "predicted": 11,
+          "recall_at_k": 0.2
+        },
+        "k3": {
+          "gold": 5,
+          "hits_at_k": 3,
+          "precision_at_k": 1.0,
+          "predicted": 11,
+          "recall_at_k": 0.6
+        },
+        "k5": {
+          "gold": 5,
+          "hits_at_k": 5,
+          "precision_at_k": 1.0,
+          "predicted": 11,
+          "recall_at_k": 1.0
+        }
+      },
+      "project_without_export": {
+        "k1": {
+          "gold": 0,
+          "hits_at_k": 0,
+          "precision_at_k": 0.0,
+          "predicted": 0,
+          "recall_at_k": null
+        },
+        "k3": {
+          "gold": 0,
+          "hits_at_k": 0,
+          "precision_at_k": 0.0,
+          "predicted": 0,
+          "recall_at_k": null
+        },
+        "k5": {
+          "gold": 0,
+          "hits_at_k": 0,
+          "precision_at_k": 0.0,
+          "predicted": 0,
+          "recall_at_k": null
+        }
+      },
+      "same_name_different_work": {
+        "k1": {
+          "gold": 0,
+          "hits_at_k": 0,
+          "precision_at_k": 0.0,
+          "predicted": 1,
+          "recall_at_k": null
+        },
+        "k3": {
+          "gold": 0,
+          "hits_at_k": 0,
+          "precision_at_k": 0.0,
+          "predicted": 1,
+          "recall_at_k": null
+        },
+        "k5": {
+          "gold": 0,
+          "hits_at_k": 0,
+          "precision_at_k": 0.0,
+          "predicted": 1,
+          "recall_at_k": null
+        }
+      },
+      "same_work_different_proportions": {
+        "k1": {
+          "gold": 1,
+          "hits_at_k": 1,
+          "precision_at_k": 1.0,
+          "predicted": 1,
+          "recall_at_k": 1.0
+        },
+        "k3": {
+          "gold": 1,
+          "hits_at_k": 1,
+          "precision_at_k": 0.3333333333333333,
+          "predicted": 1,
+          "recall_at_k": 1.0
+        },
+        "k5": {
+          "gold": 1,
+          "hits_at_k": 1,
+          "precision_at_k": 0.2,
+          "predicted": 1,
+          "recall_at_k": 1.0
+        }
+      }
+    },
+    "case_count": 5,
+    "coverage": 1.0,
+    "coverage_at_1": 1.0,
+    "coverage_at_3": 1.0,
+    "coverage_at_5": 1.0,
+    "gold_count": 6,
+    "kind": "relation",
+    "precision_at_1": 0.4,
+    "precision_at_3": 0.26666666666666666,
+    "precision_at_5": 0.24,
+    "recall": 1.0,
+    "recall_at_1": 0.3333333333333333,
+    "recall_at_3": 0.6666666666666666,
+    "recall_at_5": 1.0
+  },
+  "gold_relation_count": 6,
+  "pending_or_unresolved_by_case": {
+    "export_without_project": 1,
+    "frames_plus_export": 11,
+    "project_without_export": 1,
+    "same_name_different_work": 3,
+    "same_work_different_proportions": 1
+  },
+  "predicted_relation_count": 13,
+  "same_cases": [
+    "export_without_project",
+    "frames_plus_export",
+    "project_without_export",
+    "same_name_different_work",
+    "same_work_different_proportions"
+  ],
+  "schema": "mak-cycle-c08-c07-integration-v1",
+  "source": "/home/mak/flujo/experiments/cycles/C07/graph.json",
+  "status_counts": {
+    "pending_relation": 6,
+    "unresolved_candidate": 11
+  }
+}

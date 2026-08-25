@@ -1,0 +1,1179 @@
+{
+  "schema": "mak-cycle-c08-report-v1",
+  "sections": {
+    "phases": {
+      "baseline": {
+        "by_case": {
+          "export_without_project": {
+            "k1": {
+              "gold": 1,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            },
+            "k3": {
+              "gold": 1,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            },
+            "k5": {
+              "gold": 1,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            }
+          },
+          "frames_one_work": {
+            "k1": {
+              "gold": 2048,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            },
+            "k3": {
+              "gold": 2048,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            },
+            "k5": {
+              "gold": 2048,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            }
+          },
+          "post_without_project": {
+            "k1": {
+              "gold": 1,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            },
+            "k3": {
+              "gold": 1,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            },
+            "k5": {
+              "gold": 1,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            }
+          },
+          "project_without_export": {
+            "k1": {
+              "gold": 1,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            },
+            "k3": {
+              "gold": 1,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            },
+            "k5": {
+              "gold": 1,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            }
+          },
+          "same_work_formats_ratios": {
+            "k1": {
+              "gold": 4,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            },
+            "k3": {
+              "gold": 4,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            },
+            "k5": {
+              "gold": 4,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            }
+          },
+          "similar_names": {
+            "k1": {
+              "gold": 2,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            },
+            "k3": {
+              "gold": 2,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            },
+            "k5": {
+              "gold": 2,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            }
+          },
+          "third_party_similar": {
+            "k1": {
+              "gold": 1,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            },
+            "k3": {
+              "gold": 1,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            },
+            "k5": {
+              "gold": 1,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            }
+          }
+        },
+        "case_count": 7,
+        "coverage": 0.0,
+        "coverage_at_1": 0.0,
+        "coverage_at_3": 0.0,
+        "coverage_at_5": 0.0,
+        "gold_count": 2058,
+        "kind": "phase",
+        "precision_at_1": 0.0,
+        "precision_at_3": 0.0,
+        "precision_at_5": 0.0,
+        "recall": 0.0,
+        "recall_at_1": 0.0,
+        "recall_at_3": 0.0,
+        "recall_at_5": 0.0
+      },
+      "candidate": {
+        "by_case": {
+          "export_without_project": {
+            "k1": {
+              "gold": 1,
+              "hits_at_k": 1,
+              "precision_at_k": 1.0,
+              "predicted": 1,
+              "recall_at_k": 1.0
+            },
+            "k3": {
+              "gold": 1,
+              "hits_at_k": 1,
+              "precision_at_k": 0.3333333333333333,
+              "predicted": 1,
+              "recall_at_k": 1.0
+            },
+            "k5": {
+              "gold": 1,
+              "hits_at_k": 1,
+              "precision_at_k": 0.2,
+              "predicted": 1,
+              "recall_at_k": 1.0
+            }
+          },
+          "frames_one_work": {
+            "k1": {
+              "gold": 2048,
+              "hits_at_k": 1,
+              "precision_at_k": 1.0,
+              "predicted": 5,
+              "recall_at_k": 0.00048828125
+            },
+            "k3": {
+              "gold": 2048,
+              "hits_at_k": 3,
+              "precision_at_k": 1.0,
+              "predicted": 5,
+              "recall_at_k": 0.00146484375
+            },
+            "k5": {
+              "gold": 2048,
+              "hits_at_k": 5,
+              "precision_at_k": 1.0,
+              "predicted": 5,
+              "recall_at_k": 0.00244140625
+            }
+          },
+          "post_without_project": {
+            "k1": {
+              "gold": 1,
+              "hits_at_k": 1,
+              "precision_at_k": 1.0,
+              "predicted": 1,
+              "recall_at_k": 1.0
+            },
+            "k3": {
+              "gold": 1,
+              "hits_at_k": 1,
+              "precision_at_k": 0.3333333333333333,
+              "predicted": 1,
+              "recall_at_k": 1.0
+            },
+            "k5": {
+              "gold": 1,
+              "hits_at_k": 1,
+              "precision_at_k": 0.2,
+              "predicted": 1,
+              "recall_at_k": 1.0
+            }
+          },
+          "project_without_export": {
+            "k1": {
+              "gold": 1,
+              "hits_at_k": 1,
+              "precision_at_k": 1.0,
+              "predicted": 1,
+              "recall_at_k": 1.0
+            },
+            "k3": {
+              "gold": 1,
+              "hits_at_k": 1,
+              "precision_at_k": 0.3333333333333333,
+              "predicted": 1,
+              "recall_at_k": 1.0
+            },
+            "k5": {
+              "gold": 1,
+              "hits_at_k": 1,
+              "precision_at_k": 0.2,
+              "predicted": 1,
+              "recall_at_k": 1.0
+            }
+          },
+          "same_work_formats_ratios": {
+            "k1": {
+              "gold": 4,
+              "hits_at_k": 1,
+              "precision_at_k": 1.0,
+              "predicted": 3,
+              "recall_at_k": 0.25
+            },
+            "k3": {
+              "gold": 4,
+              "hits_at_k": 3,
+              "precision_at_k": 1.0,
+              "predicted": 3,
+              "recall_at_k": 0.75
+            },
+            "k5": {
+              "gold": 4,
+              "hits_at_k": 3,
+              "precision_at_k": 0.6,
+              "predicted": 3,
+              "recall_at_k": 0.75
+            }
+          },
+          "similar_names": {
+            "k1": {
+              "gold": 2,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            },
+            "k3": {
+              "gold": 2,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            },
+            "k5": {
+              "gold": 2,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            }
+          },
+          "third_party_similar": {
+            "k1": {
+              "gold": 1,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            },
+            "k3": {
+              "gold": 1,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            },
+            "k5": {
+              "gold": 1,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            }
+          }
+        },
+        "case_count": 7,
+        "coverage": 0.7142857142857143,
+        "coverage_at_1": 0.7142857142857143,
+        "coverage_at_3": 0.7142857142857143,
+        "coverage_at_5": 0.7142857142857143,
+        "gold_count": 2058,
+        "kind": "phase",
+        "precision_at_1": 0.7142857142857143,
+        "precision_at_3": 0.42857142857142855,
+        "precision_at_5": 0.3142857142857143,
+        "recall": 0.005344995140913508,
+        "recall_at_1": 0.0024295432458697765,
+        "recall_at_3": 0.004373177842565598,
+        "recall_at_5": 0.005344995140913508
+      }
+    },
+    "portfolio": {
+      "baseline": {
+        "chronology": {
+          "covered_buckets": [],
+          "required_buckets": [
+            "early",
+            "late",
+            "mid"
+          ],
+          "score": 0.0
+        },
+        "coverage": {
+          "covered_phases": [],
+          "required_phases": [
+            "authoring",
+            "capture",
+            "export",
+            "post"
+          ],
+          "score": 0.0
+        },
+        "diversity": {
+          "formats": [],
+          "ratios": [],
+          "score": 0.0
+        },
+        "portfolio_score": 0.0,
+        "redundancy": {
+          "duplicate_count": 0,
+          "rate": 0.0,
+          "unique_works": 0
+        },
+        "selected_count": 0
+      },
+      "candidate": {
+        "chronology": {
+          "covered_buckets": [
+            "early",
+            "late",
+            "mid"
+          ],
+          "required_buckets": [
+            "early",
+            "late",
+            "mid"
+          ],
+          "score": 1.0
+        },
+        "coverage": {
+          "covered_phases": [
+            "authoring",
+            "capture",
+            "export",
+            "post"
+          ],
+          "required_phases": [
+            "authoring",
+            "capture",
+            "export",
+            "post"
+          ],
+          "score": 1.0
+        },
+        "diversity": {
+          "formats": [
+            "blend",
+            "glb",
+            "jpg",
+            "png"
+          ],
+          "ratios": [
+            "16:9",
+            "1:1",
+            "3:2",
+            "4:3"
+          ],
+          "score": 1.0
+        },
+        "portfolio_score": 1.0,
+        "redundancy": {
+          "duplicate_count": 0,
+          "rate": 0.0,
+          "unique_works": 4
+        },
+        "selected_count": 4
+      },
+      "selected_ids": [
+        "frame-lumen-0001",
+        "project-silent",
+        "export-ghost",
+        "post-orphan"
+      ],
+      "selection_method": "greedy_phase_coverage"
+    },
+    "relations": {
+      "baseline": {
+        "by_case": {
+          "export_without_project": {
+            "k1": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            },
+            "k3": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            },
+            "k5": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            }
+          },
+          "frames_one_work": {
+            "k1": {
+              "gold": 2048,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            },
+            "k3": {
+              "gold": 2048,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            },
+            "k5": {
+              "gold": 2048,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            }
+          },
+          "post_without_project": {
+            "k1": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            },
+            "k3": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            },
+            "k5": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            }
+          },
+          "project_without_export": {
+            "k1": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            },
+            "k3": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            },
+            "k5": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            }
+          },
+          "same_work_formats_ratios": {
+            "k1": {
+              "gold": 4,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            },
+            "k3": {
+              "gold": 4,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            },
+            "k5": {
+              "gold": 4,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            }
+          },
+          "similar_names": {
+            "k1": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            },
+            "k3": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            },
+            "k5": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            }
+          },
+          "third_party_similar": {
+            "k1": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            },
+            "k3": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            },
+            "k5": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            }
+          }
+        },
+        "case_count": 7,
+        "coverage": 0.0,
+        "coverage_at_1": 0.0,
+        "coverage_at_3": 0.0,
+        "coverage_at_5": 0.0,
+        "gold_count": 2052,
+        "kind": "relation",
+        "precision_at_1": 0.0,
+        "precision_at_3": 0.0,
+        "precision_at_5": 0.0,
+        "recall": 0.0,
+        "recall_at_1": 0.0,
+        "recall_at_3": 0.0,
+        "recall_at_5": 0.0
+      },
+      "candidate": {
+        "by_case": {
+          "export_without_project": {
+            "k1": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 1,
+              "recall_at_k": null
+            },
+            "k3": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 1,
+              "recall_at_k": null
+            },
+            "k5": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 1,
+              "recall_at_k": null
+            }
+          },
+          "frames_one_work": {
+            "k1": {
+              "gold": 2048,
+              "hits_at_k": 1,
+              "precision_at_k": 1.0,
+              "predicted": 5,
+              "recall_at_k": 0.00048828125
+            },
+            "k3": {
+              "gold": 2048,
+              "hits_at_k": 3,
+              "precision_at_k": 1.0,
+              "predicted": 5,
+              "recall_at_k": 0.00146484375
+            },
+            "k5": {
+              "gold": 2048,
+              "hits_at_k": 5,
+              "precision_at_k": 1.0,
+              "predicted": 5,
+              "recall_at_k": 0.00244140625
+            }
+          },
+          "post_without_project": {
+            "k1": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 1,
+              "recall_at_k": null
+            },
+            "k3": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 1,
+              "recall_at_k": null
+            },
+            "k5": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 1,
+              "recall_at_k": null
+            }
+          },
+          "project_without_export": {
+            "k1": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 1,
+              "recall_at_k": null
+            },
+            "k3": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 1,
+              "recall_at_k": null
+            },
+            "k5": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 1,
+              "recall_at_k": null
+            }
+          },
+          "same_work_formats_ratios": {
+            "k1": {
+              "gold": 4,
+              "hits_at_k": 1,
+              "precision_at_k": 1.0,
+              "predicted": 4,
+              "recall_at_k": 0.25
+            },
+            "k3": {
+              "gold": 4,
+              "hits_at_k": 3,
+              "precision_at_k": 1.0,
+              "predicted": 4,
+              "recall_at_k": 0.75
+            },
+            "k5": {
+              "gold": 4,
+              "hits_at_k": 3,
+              "precision_at_k": 0.6,
+              "predicted": 4,
+              "recall_at_k": 0.75
+            }
+          },
+          "similar_names": {
+            "k1": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 1,
+              "recall_at_k": null
+            },
+            "k3": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 1,
+              "recall_at_k": null
+            },
+            "k5": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 1,
+              "recall_at_k": null
+            }
+          },
+          "third_party_similar": {
+            "k1": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 1,
+              "recall_at_k": null
+            },
+            "k3": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 1,
+              "recall_at_k": null
+            },
+            "k5": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 1,
+              "recall_at_k": null
+            }
+          }
+        },
+        "case_count": 7,
+        "coverage": 1.0,
+        "coverage_at_1": 1.0,
+        "coverage_at_3": 1.0,
+        "coverage_at_5": 1.0,
+        "gold_count": 2052,
+        "kind": "relation",
+        "precision_at_1": 0.2857142857142857,
+        "precision_at_3": 0.2857142857142857,
+        "precision_at_5": 0.22857142857142856,
+        "recall": 0.003898635477582846,
+        "recall_at_1": 0.0009746588693957114,
+        "recall_at_3": 0.0029239766081871343,
+        "recall_at_5": 0.003898635477582846
+      }
+    },
+    "series": {
+      "baseline": {
+        "by_case": {
+          "export_without_project": {
+            "k1": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            },
+            "k3": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            },
+            "k5": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            }
+          },
+          "frames_one_work": {
+            "k1": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            },
+            "k3": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            },
+            "k5": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            }
+          },
+          "post_without_project": {
+            "k1": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            },
+            "k3": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            },
+            "k5": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            }
+          },
+          "project_without_export": {
+            "k1": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            },
+            "k3": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            },
+            "k5": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            }
+          },
+          "same_work_formats_ratios": {
+            "k1": {
+              "gold": 4,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            },
+            "k3": {
+              "gold": 4,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            },
+            "k5": {
+              "gold": 4,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": 0.0
+            }
+          },
+          "similar_names": {
+            "k1": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            },
+            "k3": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            },
+            "k5": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            }
+          },
+          "third_party_similar": {
+            "k1": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            },
+            "k3": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            },
+            "k5": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            }
+          }
+        },
+        "case_count": 7,
+        "coverage": 0.0,
+        "coverage_at_1": 0.0,
+        "coverage_at_3": 0.0,
+        "coverage_at_5": 0.0,
+        "gold_count": 4,
+        "kind": "series",
+        "precision_at_1": 0.0,
+        "precision_at_3": 0.0,
+        "precision_at_5": 0.0,
+        "recall": 0.0,
+        "recall_at_1": 0.0,
+        "recall_at_3": 0.0,
+        "recall_at_5": 0.0
+      },
+      "candidate": {
+        "by_case": {
+          "export_without_project": {
+            "k1": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            },
+            "k3": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            },
+            "k5": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            }
+          },
+          "frames_one_work": {
+            "k1": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            },
+            "k3": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            },
+            "k5": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            }
+          },
+          "post_without_project": {
+            "k1": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            },
+            "k3": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            },
+            "k5": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            }
+          },
+          "project_without_export": {
+            "k1": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            },
+            "k3": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            },
+            "k5": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            }
+          },
+          "same_work_formats_ratios": {
+            "k1": {
+              "gold": 4,
+              "hits_at_k": 1,
+              "precision_at_k": 1.0,
+              "predicted": 4,
+              "recall_at_k": 0.25
+            },
+            "k3": {
+              "gold": 4,
+              "hits_at_k": 3,
+              "precision_at_k": 1.0,
+              "predicted": 4,
+              "recall_at_k": 0.75
+            },
+            "k5": {
+              "gold": 4,
+              "hits_at_k": 3,
+              "precision_at_k": 0.6,
+              "predicted": 4,
+              "recall_at_k": 0.75
+            }
+          },
+          "similar_names": {
+            "k1": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            },
+            "k3": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            },
+            "k5": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            }
+          },
+          "third_party_similar": {
+            "k1": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            },
+            "k3": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            },
+            "k5": {
+              "gold": 0,
+              "hits_at_k": 0,
+              "precision_at_k": 0.0,
+              "predicted": 0,
+              "recall_at_k": null
+            }
+          }
+        },
+        "case_count": 7,
+        "coverage": 1.0,
+        "coverage_at_1": 1.0,
+        "coverage_at_3": 1.0,
+        "coverage_at_5": 1.0,
+        "gold_count": 4,
+        "kind": "series",
+        "precision_at_1": 0.14285714285714285,
+        "precision_at_3": 0.14285714285714285,
+        "precision_at_5": 0.08571428571428572,
+        "recall": 0.75,
+        "recall_at_1": 0.25,
+        "recall_at_3": 0.75,
+        "recall_at_5": 0.75
+      }
+    }
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "inputs": [
+    {
+      "mtime_ns": 1783102415000000000,
+      "path": "/home/mak/curatoria_inbox/ARICA/RAYU.blend",
+      "sha256": "acafc1db0088016139921b1ea2c9d7a5310247658117fa7021662e13e907ce86",
+      "size": 6374943
+    },
+    {
+      "mtime_ns": 1783147813000000000,
+      "path": "/home/mak/curatoria_inbox/ARICA/rayu_export.py",
+      "sha256": "976182451c074632732808b35c2ec332787edb1b0f4d4fd7c75883f8ac76d120",
+      "size": 690
+    },
+    {
+      "mtime_ns": 1783147816000000000,
+      "path": "/home/mak/curatoria_inbox/ARICA/rayu_export_done.txt",
+      "sha256": "70e53d71d56e6269acc904fe8145443256550256c1f99464a3a8fa258821f746",
+      "size": 69
+    },
+    {
+      "mtime_ns": 1783147816000000000,
+      "path": "/home/mak/curatoria_inbox/ARICA/rayu_resources.glb",
+      "sha256": "dfa70c3248a739959e8366dbc0eb4382ce17f97592114e51fb6bbb67ae565042",
+      "size": 1537592
+    },
+    {
+      "mtime_ns": 1782892609000000000,
+      "path": "/home/mak/curatoria_inbox/ARICA/ARICA.aep",
+      "sha256": "99247d6506c6d1d9ce3023f4a1e044da47c806e3cd606d47b61e70fb32f5c460",
+      "size": 376923
+    },
+    {
+      "mtime_ns": 1782886164000000000,
+      "path": "/home/mak/curatoria_inbox/ARICA/tottem_ojo.mp4",
+      "sha256": "b7253320e7a23917439dd6ad2fa084a68510469517b76b6428c54f9856ca0776",
+      "size": 12092541
+    },
+    {
+      "mtime_ns": 1783145780000000000,
+      "path": "/home/mak/curatoria_inbox/ARICA/MYRA/MYRA_final.mp4",
+      "sha256": "c3e75cd2a06726b530665237de437e375059193fb8fa0cb540c05acbc27ca791",
+      "size": 16019118
+    },
+    {
+      "mtime_ns": 1783066674000000000,
+      "path": "/home/mak/curatoria_inbox/ARICA/MYRA/estado.json",
+      "sha256": "d0700a38cfcdaa5f87e4b4d80d93b185b261cc3643f227ea8c6dd293dc55d383",
+      "size": 421
+    },
+    {
+      "mtime_ns": 1783063982000000000,
+      "path": "/home/mak/curatoria_inbox/ARICA/MYRA/mapping_guide.txt",
+      "sha256": "35ea08ba6e3999e8cfe62dda78b9e1c86d203fa0bb78d35dbf599ea309cd000f",
+      "size": 961
+    },
+    {
+      "mtime_ns": 1783066674000000000,
+      "path": "/home/mak/curatoria_inbox/ARICA/MYRA/log_maestro.txt",
+      "sha256": "1ada7b40aca478036f25351d702ed91cc50b00c82fef4d0a2ae3a3bbd316cff0",
+      "size": 4551
+    },
+    {
+      "mtime_ns": 1783138725000000000,
+      "path": "/home/mak/curatoria_inbox/ARICA/MYRA/bridge/render_done.txt",
+      "sha256": "3dabfc2186a815fe435f5093de37953bbf93f29c13acf70f1798fc6da06eafa7",
+      "size": 12
+    },
+    {
+      "mtime_ns": 1783145727000000000,
+      "path": "/home/mak/curatoria_inbox/ARICA/MYRA/bridge/voidrender_1783145672.txt",
+      "sha256": "c8580764cb9cb0abe9daed80f8432561ef37a2c2c3993a75875e0a36701b7621",
+      "size": 18
+    },
+    {
+      "mtime_ns": 1783133708000000000,
+      "path": "/home/mak/curatoria_inbox/ARICA/MYRA/render_20s/f_0000.png",
+      "sha256": "8407aa7336da06923f3e7181fc9a6095288cf5368b7fec897d61ec1a5e91ee64",
+      "size": 588606
+    },
+    {
+      "mtime_ns": 1783133748000000000,
+      "path": "/home/mak/curatoria_inbox/ARICA/MYRA/render_20s/f_0599.png",
+      "sha256": "56cfc60ae8d26cad2ea0cc7fd7f7199e08ef8afbc5738d0b85f43d7a5d5c4c6b",
+      "size": 1807030
+    },
+    {
+      "mtime_ns": 1787638257631692364,
+      "path": "/home/mak/flujo/experiments/cycles/C05/real_export_witness.json",
+      "sha256": "a695704657e40529c68029179e7861fa4c367cf12f0b34cecc1781bb290b09ba",
+      "size": 4450
+    },
+    {
+      "mtime_ns": 1787638257779694198,
+      "path": "/home/mak/flujo/experiments/cycles/C06/real_export_graph.json",
+      "sha256": "37bc6d1348f5235f35f810e3a004071ba1eee844bf16321a31f9430569157c5f",
+      "size": 1831
+    },
+    {
+      "mtime_ns": 1787632569262798976,
+      "path": "/home/mak/flujo/experiments/cycles/C04/real_evidence.json",
+      "sha256": "0bcff6cbaa55a98ee4361621239035e1fc37a51d2cd76bcbb3c3a066a953bf6e",
+      "size": 3968
+    }
+  ],
+  "project_id": "arica-01-portfolio-evidence",
+  "schema": "mak-arica01-input-snapshot-v1",
+  "source_root": "/home/mak/curatoria_inbox/ARICA",
+  "source_snapshot_hash": "19c5582438fd81f8f1d4dfeb05cbe24a57e89d83e89927897c2b3aa699b1a8d1"
+}

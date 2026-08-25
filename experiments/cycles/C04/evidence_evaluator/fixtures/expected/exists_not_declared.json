@@ -1,0 +1,9 @@
+{
+  "fixture_role": "synthetic_expected_outcome_only",
+  "case_id": "exists_not_declared",
+  "claims": [
+    {"claim": "uses", "expected_status": "unknown", "expected_positive": false},
+    {"claim": "output_role", "expected_status": "unknown", "expected_positive": false}
+  ],
+  "expected_relations": []
+}

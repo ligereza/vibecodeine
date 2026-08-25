@@ -47,6 +47,13 @@ def main(argv: list[str] | None = None) -> int:
     print(f"read_only={result['read_only']}")
     print(f"attention={result['counts']['attention']}")
     print(f"blocked={result['counts']['blocked']}")
+    policy = result.get("learning", {}).get("policy", {})
+    if policy:
+        print(f"policy_schema={policy.get('schema', 'unknown')}")
+        print(f"policy_status={policy.get('status', 'unknown')}")
+        print(f"policy_reason={policy.get('reason', 'unknown')}")
+        projects = result.get("learning", {}).get("projects", {})
+        print(f"projects_review_required={projects.get('review_required', 0)}")
     if result["next_actions"]:
         print("next_actions:")
         for action in result["next_actions"]:

@@ -1,0 +1,29 @@
+{
+  "archive": {
+    "media_members_excluding_brand_logo": [],
+    "member_count": 9,
+    "members": [
+      "files/Instagram-Logo.png",
+      "start_here.html",
+      "connections/followers_and_following/blocked_profiles.html",
+      "connections/followers_and_following/followers_1.html",
+      "connections/followers_and_following/following.html",
+      "connections/followers_and_following/pending_follow_requests.html",
+      "connections/followers_and_following/recent_follow_requests.html",
+      "connections/followers_and_following/recently_unfollowed_profiles.html",
+      "connections/followers_and_following/close_friends.html"
+    ],
+    "public_named_members_outside_connections": []
+  },
+  "catalog_status": "unavailable",
+  "input": {
+    "exists": true,
+    "extracted": false,
+    "path": "/media/mak/PortableSSD/descargas hasta RDFLYER 2050/instagram-iskvw-2025-04-08-jyAjQO7Z.zip",
+    "read_method": "zip_directory_listing_only",
+    "sha256": "ce12e0bb043989d4397578b705fab221793db661a818ef33e824babf5cf73d50"
+  },
+  "public_join": "unknown",
+  "reason": "no_posts_reels_stories_or_media_exported",
+  "schema": "mak-cycle-c03-public-input-audit-v1"
+}
