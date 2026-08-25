@@ -161,6 +161,8 @@ def record_probe(
     store: LearningStore, project: Mapping[str, Any], decision: Mapping[str, Any],
     probe: Mapping[str, Any], *, phase: str = "consumer_probe",
     episode_id: str | None = None,
+    source_snapshot_hash: str = "", code_commit: str = "",
+    tool_versions: Mapping[str, Any] | None = None,
 ) -> str:
     """Persist one probe result using the router's conservative classification."""
     project_id = str(project.get("project_id") or "").strip()
@@ -182,4 +184,6 @@ def record_probe(
         validation=probe.get("validation") if isinstance(probe.get("validation"), Mapping) else {},
         status=evaluated["status"], provider="local", model="policy-router",
         episode_id=episode_id,
+        source_snapshot_hash=source_snapshot_hash, code_commit=code_commit,
+        tool_versions=tool_versions,
     )

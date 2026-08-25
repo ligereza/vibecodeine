@@ -420,6 +420,9 @@ def record_verified_result(database: str | Path, packet_path: str | Path) -> str
         parent_episode_id=str(packet.get("parent_episode_id") or "") or None,
         episode_id=str(packet.get("episode_id") or "episode_verified_" + packet_fingerprint[:24]),
         finished_at=str(packet.get("finished_at") or "") or None,
+        source_snapshot_hash=str(packet.get("source_snapshot_hash") or ""),
+        code_commit=str(packet.get("code_commit") or ""),
+        tool_versions=packet.get("tool_versions") if isinstance(packet.get("tool_versions"), Mapping) else {},
     )
 
 
