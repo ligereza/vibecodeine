@@ -113,7 +113,7 @@ autonomous path.
 
 ## Validated checkpoint
 
-The observer-to-memory vertical slice is complete:
+Stages 1 and 2A-2C are complete:
 
 - strict observer validation occurs before database creation or writes;
 - duplicate bytes at different paths remain different physical artifacts;
@@ -125,11 +125,6 @@ The observer-to-memory vertical slice is complete:
 - replay produces a valid, deterministically serializable observer batch;
 - schema migration is additive and legacy rows are not destroyed.
 
-Director acceptance on 2026-08-25: 33 focused tests passed, compilation and
-`git diff --check` exited 0, and an independent end-to-end smoke passed.
-
-Stage 2A and Stage 2B are also implemented and independently accepted:
-
 - `archive_reconstruction.py` projects strict archive-memory replay into a
   deterministic, lossless reconstruction-input vocabulary without rescanning
   the source or claiming works/projects;
@@ -139,11 +134,19 @@ Stage 2A and Stage 2B are also implemented and independently accepted:
 - `archive_relation_evaluator.py` independently falsifies candidate IDs,
   endpoints, evidence refs, inverse orientation, status, score, bounds,
   diagnostics and archive isolation;
-- the real MYRA bounded run projected 43 artifacts, summarized 1,474
-  `limit_reached` observations as coverage diagnostics, emitted 96 bounded
-  candidates and passed the independent evaluator with zero errors;
-- director acceptance after integration: 62 focused tests passed, compilation
-  and `git diff --check` exited 0, and the real source remained unchanged.
+- `archive_unit_reconstruction.py` turns candidates into balanced provisional
+  units while leaving shared ancestors ambiguous, physical duplicates separate,
+  dependencies outside membership and every artifact explicitly assigned,
+  ambiguous or unassigned;
+- `archive_unit_evaluator.py` independently verifies provenance hashes, IDs,
+  endpoints, membership, output-only constraints, zero truth promotion and
+  exact reconciliation;
+- a read-only MYRA run produced 10 units from 1,517 artifacts and left 192
+  artifacts explicitly unassigned under the 512-candidate bound; this is
+  uncertainty, not evidence of artistic non-membership;
+- director acceptance on 2026-08-25: 78 focused tests passed; compilation,
+  path-limited `git diff --check` and the independent end-to-end cross-smoke
+  exited 0; the real source remained unchanged.
 
 ## Lessons from the three-agent integration
 
@@ -156,6 +159,8 @@ Stage 2A and Stage 2B are also implemented and independently accepted:
   changing content into snapshot state.
 - Acceptance must include the inverse path: replay must satisfy the same strict
   contract that ingestion accepts.
+- Independent cross-smokes are contract tests: Stage 2B and Stage 2C both
+  exposed hash, field and reconciliation mismatches that isolated suites missed.
 - Work must remain a bounded vertical slice while still respecting the full
   mission. The correct next step is reconstruction over memory, not a portfolio
   page and not another archive-specific experiment.
@@ -169,6 +174,9 @@ Stage 2A and Stage 2B are also implemented and independently accepted:
 - Volatile ingestion time and mtime must not participate in semantic identity.
 - Existing Project IR, learning ledgers and legacy tables can be preserved while
   a corrected materialization becomes canonical.
+- Unit construction must be balanced before Project IR materialization. Shared
+  ancestry, duplicates and missing bindings remain explicit uncertainty instead
+  of being forced into convenient projects.
 
 ### Physical observer
 
@@ -198,18 +206,18 @@ export/manifestation and series continuity. Each candidate must contain
 positive evidence, counterevidence, alternatives, missing evidence and a stable
 reason code. No mandatory user decision.
 
-### Stage 2C: reconstructed project units
+### Stage 2C: reconstructed project units (implemented)
 
 Reuse the existing reconstruction roles and inverse-relation contract to group
 artifacts into balanced project units. Libraries and shared resources remain
-dependencies rather than becoming fake projects. Emit a replayable
-reconstruction plus Project IR projections.
+dependencies rather than becoming fake projects. Emit a replayable unit
+reconstruction with complete assignment reconciliation.
 
-### Stage 2D: autonomous evaluation
+### Stage 2D: Project IR projection and autonomous evaluation (current)
 
-Evaluate against structural invariants and natural supervision: explicit export
-witness recovery, manifest/native-reference agreement, temporal stability,
-assignment balance, contradiction rate and deterministic replay. Compare with
+Project accepted units into additive Project IR records with archive-memory
+provenance and no fact promotion. Independently evaluate structural invariants,
+deterministic replay, assignment balance and reconciliation; then compare with
 the current lexicographic/index baseline.
 
 ### Stage 3: cultural model and product compilers
@@ -221,8 +229,9 @@ the shared model, never a hard-coded ARICA product.
 
 ## Immediate next action
 
-Implement and test the smallest read-only bridge from
-`archive_memory.replay_snapshot` to the existing reconstruction vocabulary.
+Implement and independently evaluate the smallest additive adapter from
+accepted Stage 2C units to Project IR. Archive memory remains factual authority;
+Portfolio and other product compilers remain disconnected.
 The gate is one real pipeline:
 
 ```text
