@@ -25,6 +25,14 @@ READ_ONLY_TOOL_IDS = frozenset(
 )
 OBSERVATION_STATUSES = frozenset({"succeeded", "failed", "abstained", "needs_evidence"})
 VALIDATION_STATUSES = frozenset({"ok", "passed", "verified", "ready"})
+RECOVERY_ACTIONS = {
+    "proposed": "continue_start",
+    "running": "reprobe_required",
+    "observed": "continue_validate",
+    "validated": "continue_record_if_passed",
+    "recorded": "terminal",
+    "rejected": "terminal",
+}
 
 
 class DirectorError(ProjectIRError):
@@ -207,8 +215,12 @@ class MakDirector:
         self, run: Mapping[str, Any], project: Mapping[str, Any],
     ) -> dict[str, Any]:
         self._require_state(run, "validated")
-        decision = run.get("decision")
         probe = run.get("probe")
+        validation = probe.get("validation") if isinstance(probe, Mapping) else {}
+        validation_status = str(validation.get("status") or "").casefold() if isinstance(validation, Mapping) else ""
+        if validation_status in {"failed", "rejected", "invalid"}:
+            raise DirectorError("director_validation_failed")
+        decision = run.get("decision")
         if not isinstance(decision, Mapping) or not isinstance(probe, Mapping):
             raise DirectorError("director_record_inputs_missing")
         episode_id = record_probe(
@@ -254,6 +266,34 @@ class MakDirector:
             "event_count": len(events),
             "resumable": latest["state"] not in {"recorded", "rejected"},
             "events": events,
+        }
+
+    def recovery_plan(self, run_id: str) -> dict[str, Any]:
+        """Return a non-mutating recovery recommendation for an interrupted run."""
+        checkpoint = self.checkpoint(run_id)
+        state = str(checkpoint["state"])
+        action = RECOVERY_ACTIONS.get(state, "quarantine_unknown_state")
+        safe_to_record = False
+        if state == "validated":
+            events = checkpoint["events"]
+            payload = events[-1].get("payload") if isinstance(events[-1].get("payload"), Mapping) else {}
+            safe_to_record = bool(payload.get("passed"))
+            if not safe_to_record:
+                validation = payload.get("validation") if isinstance(payload.get("validation"), Mapping) else {}
+                validation_status = str(validation.get("status") or "").casefold()
+                action = (
+                    "quarantine_failed_validation"
+                    if validation_status in {"failed", "rejected", "invalid"}
+                    else "quarantine_pending_validation"
+                )
+        return {
+            "schema": DIRECTOR_SCHEMA,
+            "run_id": run_id,
+            "state": state,
+            "action": action,
+            "safe_to_record": safe_to_record,
+            "mutated": False,
+            "checkpoint_event_id": checkpoint["event_id"],
         }
 
     def resume(self, run_id: str) -> dict[str, Any]:

@@ -92,3 +92,28 @@ def test_director_rejects_invalid_transition_and_tool_mismatch(tmp_path):
             "tool_id": "deep_learning_gate",
             "validation": {"status": "not_run"},
         })
+
+
+def test_director_recovery_plan_is_read_only_and_requires_reprobe(tmp_path):
+    store, project, decision, director = _fixture(tmp_path)
+    run = director.propose(project, decision, run_id="run-recovery")
+    run = director.start(run)
+    plan = director.recovery_plan("run-recovery")
+    assert plan["state"] == "running"
+    assert plan["action"] == "reprobe_required"
+    assert plan["mutated"] is False
+    assert len(store.run_events("run-recovery")) == 2
+
+
+def test_director_cannot_record_failed_validation(tmp_path):
+    store, project, decision, director = _fixture(tmp_path)
+    run = director.propose(project, decision, run_id="run-failed-validation")
+    run = director.start(run)
+    run = director.observe(run, {
+        "status": "failed", "tool_id": "source_learning_bridge",
+        "validation": {"status": "failed"},
+    })
+    run = director.validate(run)
+    assert director.recovery_plan("run-failed-validation")["action"] == "quarantine_failed_validation"
+    with pytest.raises(DirectorError, match="validation_failed"):
+        director.record(run, project)

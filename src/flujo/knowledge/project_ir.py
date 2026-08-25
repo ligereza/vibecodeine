@@ -938,7 +938,8 @@ class LearningStore:
     def upsert_rule(
         self, *, trigger: Mapping[str, Any], action: Mapping[str, Any],
         evidence: Iterable[Mapping[str, Any]] = (), scope: Mapping[str, Any] | None = None,
-        expires_at: str | None = None, rule_id: str | None = None,
+        expires_at: str | None = None, evaluation_id: str | None = None,
+        rule_id: str | None = None,
     ) -> str:
         """Register a candidate semantic rule without promoting it."""
         scope = dict(scope or {})
@@ -952,14 +953,16 @@ class LearningStore:
             con.execute(
                 """INSERT INTO semantic_rules
                    (rule_id,fingerprint,trigger_json,action_json,scope_json,evidence_json,status,
-                    created_at,updated_at,expires_at)
-                   VALUES (?,?,?,?,?,?,?,?,?,?)
+                    created_at,updated_at,expires_at,evaluation_id)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?)
                    ON CONFLICT(fingerprint) DO UPDATE SET
                    trigger_json=excluded.trigger_json, action_json=excluded.action_json,
                    scope_json=excluded.scope_json, evidence_json=excluded.evidence_json,
-                   expires_at=excluded.expires_at, updated_at=excluded.updated_at""",
+                   expires_at=excluded.expires_at, evaluation_id=excluded.evaluation_id,
+                   updated_at=excluded.updated_at""",
                 (rule_id, fingerprint, _json(trigger), _json(action), _json(scope),
-                 _json(list(evidence)), "candidate", now, now, _text(expires_at, 80)),
+                 _json(list(evidence)), "candidate", now, now, _text(expires_at, 80),
+                 _text(evaluation_id, 240)),
             )
             actual = con.execute("SELECT rule_id FROM semantic_rules WHERE fingerprint=?", (fingerprint,)).fetchone()
             if actual:

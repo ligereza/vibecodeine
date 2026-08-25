@@ -24,6 +24,7 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from .project_ir import LearningStore, stable_json
+from .project_router import TOOL_CATALOG
 
 
 POLICY_SCHEMA = "mak-learning-policy-v1"
@@ -35,6 +36,16 @@ MIN_EXAMPLES = 4
 MIN_HOLDOUT = 2
 MIN_HOLDOUT_GROUPS = 2
 MIN_ACCURACY = 0.60
+
+_ROUTE_TOOL_IDS_BY_PATH: dict[str, set[str]] = defaultdict(set)
+for _contract in TOOL_CATALOG:
+    if _contract.mode in {"read_only", "plan_only"}:
+        _ROUTE_TOOL_IDS_BY_PATH[_contract.path].add(_contract.tool_id)
+_ROUTE_TOOL_BY_PATH = {
+    path: next(iter(tool_ids))
+    for path, tool_ids in _ROUTE_TOOL_IDS_BY_PATH.items()
+    if len(tool_ids) == 1
+}
 
 
 @dataclass(frozen=True)
@@ -68,6 +79,23 @@ def _tokens(value: Any) -> list[str]:
     if isinstance(value, Sequence) and not isinstance(value, (bytes, bytearray)):
         return [str(item).casefold().strip() for item in value if str(item).strip()]
     return []
+
+
+def _declared_route_label(action: Mapping[str, Any], validation: Mapping[str, Any]) -> str:
+    """Extract only an explicit route identity backed by a known contract."""
+    decision = action.get("decision")
+    selected = decision.get("selected") if isinstance(decision, Mapping) else None
+    if isinstance(selected, Mapping):
+        label = str(selected.get("tool_id") or "").strip()
+        if label in {contract.tool_id for contract in TOOL_CATALOG}:
+            return label
+    route_label = str(action.get("route_label") or "").strip()
+    if route_label in {contract.tool_id for contract in TOOL_CATALOG}:
+        return route_label
+    checks = validation.get("checks")
+    if isinstance(checks, Sequence) and not isinstance(checks, (str, bytes)) and "project_ir_route" in checks:
+        return _ROUTE_TOOL_BY_PATH.get(str(action.get("tool") or "").strip(), "")
+    return ""
 
 
 def _features(project: Mapping[str, Any], episode: Mapping[str, Any]) -> tuple[tuple[str, str], ...]:
@@ -118,8 +146,7 @@ def compile_dataset(database: str | Path) -> Dataset:
         action = _json_object(row["action_json"])
         outcome = _json_object(row["outcome_json"])
         validation = _json_object(row["validation_json"])
-        selected = action.get("decision", {}).get("selected") if isinstance(action.get("decision"), Mapping) else None
-        label = str(selected.get("tool_id") or "").strip() if isinstance(selected, Mapping) else ""
+        label = _declared_route_label(action, validation)
         if not label:
             excluded["missing_route_label"] += 1
             continue
@@ -318,7 +345,23 @@ def record_policy(database: str | Path, result: Mapping[str, Any]) -> str:
     trigger = {"kind": "learned_route_policy", "schema": POLICY_SCHEMA, "policy_version": version}
     action = {"tool": "learned_route_policy", "algorithm": ALGORITHM, "model": result.get("model"), "evaluation": result.get("evaluation")}
     evidence = [{"kind": "holdout_evaluation", "dataset_fingerprint": result.get("dataset_fingerprint"), "policy_version": version, "evaluation": result.get("evaluation")}]
-    return LearningStore(database).upsert_rule(trigger=trigger, action=action, evidence=evidence, rule_id="rule_learning_" + version)
+    store = LearningStore(database)
+    rule_id = "rule_learning_" + version
+    evaluation_id = "evaluation-policy-" + version
+    rule_id = store.upsert_rule(
+        trigger=trigger, action=action, evidence=evidence,
+        scope={"policy": "route_selection", "features": "project_ir_and_episode"},
+        evaluation_id=evaluation_id, rule_id=rule_id,
+    )
+    evaluation = result.get("evaluation") if isinstance(result.get("evaluation"), Mapping) else {}
+    store.record_learning_evaluation(
+        target_kind="semantic_rule", target_id=rule_id,
+        dataset_fingerprint=str(result.get("dataset_fingerprint") or ""),
+        split_kind="holdout", status="passed", metrics=evaluation,
+        evidence=evidence, candidate_policy_id=version,
+        evaluation_id=evaluation_id,
+    )
+    return rule_id
 
 
 def record_verified_result(database: str | Path, packet_path: str | Path) -> str:
