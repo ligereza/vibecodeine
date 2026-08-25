@@ -1,0 +1,221 @@
+# MAK System Directive
+
+Status: canonical direction for agents as of 2026-08-25.
+
+## Mission
+
+MAK is not a single portfolio task and it is not an ARICA-specific workflow.
+MAK is an autonomous, reusable operating system for artistic and cultural
+archives. It must be able to ingest an arbitrary SSD, directory tree or large
+archive belonging to any artist or person, learn from the evidence already
+present in that archive, reconstruct works and projects over time, and compile
+fit-for-purpose cultural products.
+
+The system covers one continuous evidence chain:
+
+```text
+physical archive
+  -> immutable observations and temporal memory
+  -> autonomous reconstruction of works, projects and processes
+  -> cultural and curatorial knowledge
+  -> portfolio, application and research compilers
+  -> evaluation and learning from completed outcomes
+```
+
+ARICA, ISKVW, RAYU and MYRA are cases and evidence sources. They are never the
+architecture, the tenant model or the final product.
+
+## Non-negotiable operating principles
+
+1. The archive is the primary input. Years of completed work, exports, native
+   documents, manifests, publications, references, sequences and historical
+   selections are supervision already present in the archive.
+2. User review is optional evidence, not a required pipeline gate. Uncertainty
+   changes wording, ranking and product selection; it must not stop the system
+   from completing a bounded reconstruction or draft.
+3. Observation is not interpretation. A file, hash, path, timestamp or native
+   reference is evidence. A work, project, phase, series or cultural claim is a
+   derived hypothesis with provenance and alternatives.
+4. Project IR is an interchange projection, not the authority. Immutable
+   archive observations, artifact states and transformation witnesses remain
+   the factual base.
+5. A product compiler consumes the shared cultural model. Portfolio,
+   application, research and curatorial outputs must not each reconstruct the
+   archive independently.
+6. Exact duplicates remain separate physical artifacts. Content identity and
+   physical identity are different concepts.
+7. Filesystem noise is not artistic evolution. A changed mtime without a
+   semantic change does not create a new work, project or snapshot identity.
+8. The system fails closed at contract boundaries, preserves uncertainty and
+   never upgrades a candidate into a fact without evidence.
+9. Existing implementations are reused before new frameworks are introduced.
+10. Every stage must have an executable consumer, deterministic replay and an
+    adversarial test. A document or status field is not integration evidence.
+
+## Canonical architecture
+
+### 1. Physical archive observer
+
+`src/flujo/knowledge/archive_observer.py` performs deterministic, read-only
+observation of an explicitly supplied root. It emits
+`mak-archive-observation-batch-v1` with tenant-scoped physical identities,
+content identities when bytes are readable, candidate structural observations
+and an incremental change set.
+
+It does not infer authorship, works, projects, series or transformations.
+
+### 2. Temporal archive memory
+
+`src/flujo/knowledge/archive_memory.py` validates the observer contract before
+opening the database and materializes it in the existing `LearningStore`.
+The additive v2 tables preserve physical artifacts, immutable states by
+snapshot, candidate observations and replay. Legacy tables remain untouched.
+
+This is the factual authority for downstream reconstruction.
+
+### 3. Autonomous reconstruction
+
+The next active stage must consume archive-memory replay, not rescan the source
+and not require a hand-labelled gold set. It must reuse the proven concepts in
+`project_reconstruction.py` and `reconstruction_adapter.py`:
+
+- project units, subprojects, exported products, libraries and shared resources;
+- directed relations with declared inverses;
+- evidence for and against each decision;
+- alternatives and explicit unresolved ties;
+- asset assignment with balance checks;
+- Project IR as a downstream projection.
+
+Natural supervision must come from archive evidence such as explicit export
+witnesses, native references, manifests, repeated delivery structures, public
+manifestations, chronological states and prior completed product selections.
+
+### 4. Operating-world model
+
+Reconstructed units form a temporal cultural graph. Nodes may represent native
+documents, components, sources, versions, phases, manifestations, deliverables,
+works, projects and series. Relations must retain evidence, confidence,
+alternatives and the probe that could reduce uncertainty.
+
+### 5. Product compilers
+
+Portfolio, application, curatorial and research compilers receive a goal and
+constraints, then select and narrate from the shared model. They do not modify
+the factual archive memory and do not make one case the universal template.
+
+### 6. Evaluation and learning
+
+Learning uses reproducible outcomes and natural archive supervision. It
+evaluates reconstruction consistency, witness recovery, temporal stability,
+coverage, contradiction rate and product fitness. Human corrections may be
+recorded when available, but the absence of a correction never blocks the
+autonomous path.
+
+## Validated checkpoint
+
+The observer-to-memory vertical slice is complete:
+
+- strict observer validation occurs before database creation or writes;
+- duplicate bytes at different paths remain different physical artifacts;
+- directories, symlinks, special entries and failures may have null content;
+- the same physical path retains identity across byte changes;
+- byte changes create new snapshot states;
+- mtime-only changes are idempotent and preserve the first volatile state;
+- archive tenants remain isolated;
+- replay produces a valid, deterministically serializable observer batch;
+- schema migration is additive and legacy rows are not destroyed.
+
+Director acceptance on 2026-08-25: 33 focused tests passed, compilation and
+`git diff --check` exited 0, and an independent end-to-end smoke passed.
+
+## Lessons from the three-agent integration
+
+### Director
+
+- Separate modules passing independently is not integration. The first real
+  observer-to-memory smoke exposed incompatible schemas immediately.
+- Fixing only the schema name would have preserved a false model. The decisive
+  correction was separating physical identity from byte identity and moving
+  changing content into snapshot state.
+- Acceptance must include the inverse path: replay must satisfy the same strict
+  contract that ingestion accepts.
+- Work must remain a bounded vertical slice while still respecting the full
+  mission. The correct next step is reconstruction over memory, not a portfolio
+  page and not another archive-specific experiment.
+
+### Context integrator
+
+- Database evolution must be additive because an earlier content-addressed
+  schema cannot safely represent physical duplicates.
+- Occurrences belong to snapshots. Stable candidate observation IDs may recur
+  across different snapshots without becoming duplicate facts.
+- Volatile ingestion time and mtime must not participate in semantic identity.
+- Existing Project IR, learning ledgers and legacy tables can be preserved while
+  a corrected materialization becomes canonical.
+
+### Physical observer
+
+- `artifact_id`, `physical_id` and `artifact_ref` are tenant-and-path scoped;
+  `content_id` is byte scoped and may be shared.
+- A path may keep physical identity while its bytes change.
+- Candidate observations reference physical artifact refs and never assert an
+  artistic truth.
+- `change_set` is diagnostic, especially when scan limits differ; it is not an
+  automatic transformation witness.
+- Roots, wall-clock time and volatile mtime must not silently redefine semantic
+  archive identity.
+
+## Directed implementation plan
+
+### Stage 2A: archive-memory projection
+
+Build one read-only projection from a selected archive snapshot into the
+feature vocabulary required by the existing reconstruction engine. It must
+preserve every artifact reference, content state, candidate observation and
+snapshot provenance. No second database and no source rescan.
+
+### Stage 2B: autonomous relation inference
+
+Produce ranked candidates for containment, version, component, dependency,
+export/manifestation and series continuity. Each candidate must contain
+positive evidence, counterevidence, alternatives, missing evidence and a stable
+reason code. No mandatory user decision.
+
+### Stage 2C: reconstructed project units
+
+Reuse the existing reconstruction roles and inverse-relation contract to group
+artifacts into balanced project units. Libraries and shared resources remain
+dependencies rather than becoming fake projects. Emit a replayable
+reconstruction plus Project IR projections.
+
+### Stage 2D: autonomous evaluation
+
+Evaluate against structural invariants and natural supervision: explicit export
+witness recovery, manifest/native-reference agreement, temporal stability,
+assignment balance, contradiction rate and deterministic replay. Compare with
+the current lexicographic/index baseline.
+
+### Stage 3: cultural model and product compilers
+
+Only after Stage 2 passes on generic fixtures and at least one bounded real
+archive snapshot should Portfolio, Application, Curatorial and Research
+compilers be connected. Their first output is always a goal-driven draft from
+the shared model, never a hard-coded ARICA product.
+
+## Immediate next action
+
+Implement and test the smallest read-only bridge from
+`archive_memory.replay_snapshot` to the existing reconstruction vocabulary.
+The gate is one real pipeline:
+
+```text
+observe_archive
+  -> ingest_observation_batch
+  -> replay_snapshot
+  -> autonomous reconstruction candidates
+  -> deterministic reconstruction replay
+```
+
+The first implementation must use temporary databases and fixtures, then one
+bounded real archive root read-only. It must not connect Portfolio, mutate the
+production database, start services or request user labels.
