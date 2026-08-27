@@ -1,5 +1,8 @@
 import copy, json, subprocess, sys
+from pathlib import Path
 from flujo.knowledge.autonomy_plan import compile_autonomy_plan
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 def base(source="current_verified", app="draftable", research="not_required", jobs=None, evidence=None):
     plan={"schema":"mak-product-plan-v1","plan_id":"plan-1","opportunity_id":"opp-1","input_hashes":{"plan":"h1"},"selected_programs":[{"program_id":"p1"}],"targets":{"application_draft":{"status":app},"research_brief":{"status":research}},"research_jobs":jobs or [],"gaps":[],"control":{}}
@@ -50,5 +53,5 @@ def test_deterministic_no_mutation_and_cli(tmp_path):
     paths=[]
     for i,value in enumerate(args):
         path=tmp_path/f"{i}.json"; path.write_text(json.dumps(value),encoding="utf-8"); paths.append(str(path))
-    run=subprocess.run([sys.executable,"tools/compile_autonomy_plan.py",*paths],cwd="/home/mak/flujo",capture_output=True,text=True)
+    run=subprocess.run([sys.executable,"tools/compile_autonomy_plan.py",*paths],cwd=REPO_ROOT,capture_output=True,text=True)
     assert run.returncode==0 and json.loads(run.stdout)["schema"]=="mak-autonomy-plan-v1"
