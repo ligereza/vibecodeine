@@ -2,8 +2,11 @@ import copy
 import json
 import subprocess
 import sys
+from pathlib import Path
 
 from flujo.knowledge.evidence_return import build_evidence_return, dry_run_evidence_return
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def inputs(results, *, scope="opportunity", artifacts=None):
@@ -94,6 +97,6 @@ def test_cli(tmp_path):
         path = tmp_path / f"{index}.json"
         path.write_text(json.dumps(value), encoding="utf-8")
         paths.append(str(path))
-    completed = subprocess.run([sys.executable, "tools/build_evidence_return.py", *paths], cwd="/home/mak/flujo", capture_output=True, text=True)
+    completed = subprocess.run([sys.executable, "tools/build_evidence_return.py", *paths], cwd=REPO_ROOT, capture_output=True, text=True)
     assert completed.returncode == 0
     assert json.loads(completed.stdout)["schema"] == "mak-evidence-return-v1"

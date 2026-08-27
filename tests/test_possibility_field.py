@@ -1,10 +1,13 @@
 import json
 import subprocess
 import sys
+from pathlib import Path
 
 from flujo.knowledge.possibility_field import build_possibility_field
 from flujo.knowledge.artistic_program_hypotheses import generate_artistic_program_hypotheses
 from flujo.knowledge.artistic_program_evaluator import evaluate_artistic_program_payload
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def candidates(rows):
@@ -173,6 +176,6 @@ def test_cli_stdout(tmp_path):
     candidates_path.write_text(json.dumps(candidates([row("cli")])), encoding="utf-8")
     evaluations_path.write_text(json.dumps(evaluations([ev("cli")])), encoding="utf-8")
     command = [sys.executable, "tools/build_possibility_field.py", str(candidates_path), str(evaluations_path)]
-    completed = subprocess.run(command, cwd=tmp_path.parents[1] / "home" / "mak" / "flujo" if False else "/home/mak/flujo", capture_output=True, text=True)
+    completed = subprocess.run(command, cwd=REPO_ROOT, capture_output=True, text=True)
     assert completed.returncode == 0
     assert json.loads(completed.stdout)["schema"] == "mak-possibility-field-v1"

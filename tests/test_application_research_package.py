@@ -2,8 +2,11 @@ import copy
 import json
 import subprocess
 import sys
+from pathlib import Path
 
 from flujo.knowledge.application_research_package import compile_application_research_package
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def opportunity(source="current_verified", confirmed=True):
@@ -63,6 +66,6 @@ def test_cli(tmp_path):
     pp, op = tmp_path / "plan.json", tmp_path / "opp.json"
     pp.write_text(json.dumps(plan()), encoding="utf-8")
     op.write_text(json.dumps(opportunity()), encoding="utf-8")
-    run = subprocess.run([sys.executable, "tools/compile_application_research_package.py", str(pp), str(op)], cwd="/home/mak/flujo", capture_output=True, text=True)
+    run = subprocess.run([sys.executable, "tools/compile_application_research_package.py", str(pp), str(op)], cwd=REPO_ROOT, capture_output=True, text=True)
     assert run.returncode == 0
     assert json.loads(run.stdout)["schema"] == "mak-application-research-package-v1"
