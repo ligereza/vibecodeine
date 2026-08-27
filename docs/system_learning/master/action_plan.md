@@ -1,5 +1,20 @@
 # MAK: plan maestro único de acción
 
+## Frontera de procedencia de este documento
+
+Este archivo es el único artefacto que versionó el commit `d592480`; ese
+commit creó el plan, no una actualización completa del conjunto de maestros ni
+un paquete reproducible del piloto. Por lo tanto, las rutas de código,
+manifests, resultados y los otros tres maestros citados aquí son evidencia del
+checkout de trabajo cuando están presentes, no contenido garantizado de un
+checkout limpio ni de `origin/main`.
+
+Una afirmación marcada como estado local, replay local o resultado local no
+puede presentarse como integración distribuida hasta que su artefacto,
+validator y hash estén versionados o estén disponibles mediante un paquete
+durable explícitamente referenciado. Este plan conserva la dirección del
+sistema; no sustituye esos artefactos de evidencia.
+
 ## Resultado buscado
 
 MAK v1 recibe cualquier archivo artístico autorizado y produce, sin depender
@@ -15,10 +30,12 @@ de revisión humana como gate normal:
 7. aprendizaje shadow desde outcomes externos independientes;
 8. una acción siguiente finita, explicable, segura y eventualmente ejecutable.
 
-Este es el único plan. `inventory.json` define qué existe y en qué estado;
-`hashmap.json` define las dependencias causales; este documento define el orden
-de ejecución. Los seis planes fuente son perspectivas históricas, no backlogs
-paralelos.
+Este es el único plan activo. En el checkout reconciliado, `inventory.json`
+define qué existe y en qué estado; `hashmap.json` define las dependencias
+causales; este documento define el orden de ejecución. Los seis planes fuente
+son perspectivas históricas, no backlogs paralelos. La frontera de procedencia
+anterior deja claro que esos maestros no fueron incluidos automáticamente en
+el commit de este archivo.
 
 ## Fotografía operativa — 2026-08-27
 
@@ -41,22 +58,27 @@ flowchart LR
     J -. "sólo ranking, VOI y atención" .-> D
 ```
 
-### Estado actual
+### Estado actual — separar repositorio versionado de checkout de trabajo
 
-- **Núcleo operativo:** observer, Archive Memory, Stage 2A–2D, Project IR,
-  practice state, relaciones tipadas, snapshots, provenance, replay y
-  abstención están disponibles como cadena reusable.
+- **Núcleo operativo local:** observer, Archive Memory, Stage 2A–2D, Project
+  IR, practice state, relaciones tipadas, snapshots, provenance, replay y
+  abstención están presentes en el checkout de trabajo y tienen gates locales
+  registrados. Este documento por sí solo no demuestra que toda esa cadena
+  esté contenida en `origin/main`.
 - **Corte activo:** catálogo explícito + practice states -> relaciones
   cross-archive -> `mak-project-context-v1` -> research frontier. DREF,
   HARRY, BAH y Escarlata son casos de prueba de ese enlace, no entidades
   arquitectónicas.
-- **Productos:** el plan común y los dossiers internos pueden compilarse con
-  evidencia; `fit=abstain`, `application=blocked` o `source_binding=unknown`
-  son resultados válidos y no detienen la reconstrucción del resto del
-  archivo.
+- **Productos locales:** el plan común y las vistas internas pueden compilarse
+  con evidencia; `fit=abstain`, `application=blocked` o
+  `source_binding=unknown` son resultados válidos y no detienen la
+  reconstrucción del resto del archivo. El output actual no debe llamarse
+  portafolio curado: la vista enriquecida registra 11.534 assets internos y
+  cero assets con elegibilidad pública explícita.
 - **Percepción:** ffprobe/ffmpeg, Pillow, Tesseract y pdftotext son sensores
-  reales. DINOv2, Whisper.cpp y Multilingual-E5 están decididos como el
-  siguiente subcorte de Piso 7, pero sus pesos todavía no son runtime activo.
+  locales disponibles. DINOv2, Whisper.cpp y Multilingual-E5 son candidatos
+  condicionados para un subcorte futuro de Piso 7; sus pesos no son runtime
+  activo ni una dependencia comprometida por este plan.
 - **Aprendizaje:** no hay promoción de políticas ni entrenamiento para verdad,
   autoría, identidad o valor artístico. La cabeza futura sólo podrá aprender
   ranking, atención, VOI y selección de consultas desde episodios/outcomes
@@ -137,10 +159,16 @@ debe conservar la manifestación como candidata útil para curaduría/research,
 sin bloquear el resto del archivo y sin inferir autoría desde la ausencia del
 proyecto nativo.
 
-## Estado verificado del corte actual — 2026-08-26
+## Estado local verificado del corte actual — 2026-08-26
 
-El primer corte causal ya fue ejecutado y no debe reabrirse como auditoría
-general. El gate focalizado de episodios pasó con exit 0. Desde el mismo
+Lo que sigue está respaldado por outputs locales del checkout y no por el
+commit `d592480` de forma autosuficiente. La discrepancia de procedencia entre
+el piloto histórico y el replay durable queda abierta y no se resuelve
+reinterpretando conteos.
+
+El primer corte causal local ya fue ejecutado y no debe reabrirse como auditoría
+general. El gate focalizado de episodios pasó con exit 0 según su registro
+local. Desde el mismo
 `experiments/pilots/ARICA-FONDART-2027/input/archive_observation.json` se
 regeneraron `full-baseline` y `enriched`; ambos preservan 12.332 artefactos,
 128 observaciones, 512 candidatos y 174 unidades. El enriquecimiento añade
@@ -148,14 +176,21 @@ cuatro claims de práctica apoyados, pasa la captura de vigencia a
 `current_verified`, produce un programa candidato y reduce los jobs de research
 de 17 a 16; el fit permanece `abstain` y la postulación `blocked_with_reasons`.
 
-La comparación durable registra 14 salidas downstream cambiadas, 9 salidas
+La comparación durable local registra 14 salidas downstream cambiadas, 9 salidas
 comunes idénticas y `unexplained_output_deltas=0`. Los manifests fueron
 reabiertos desde disco: los hashes de salida de `mak-pilot-run-manifest-v1` son
 hashes semánticos del JSON normalizado, no hashes de los bytes de formato
 pretty-printed; esa distinción queda explícita y no se presenta como una
 verificación byte-a-byte inexistente.
 
-El mismo corte se repitió sobre HARRY con una captura de vigencia oficial ya
+La procedencia de conteos sigue siendo una discrepancia abierta: el replay
+durable local registra 12.332 artefactos, 128 observaciones, 512 candidatos y
+174 unidades, mientras el reporte histórico registraba 417 artefactos, 11.916
+observaciones y 413 candidatos. El `run_comparison.json` local conserva ambos
+conjuntos como snapshots distintos y los marca como `unresolved_provenance_difference`;
+este plan no los fusiona ni declara que el histórico haya sido reproducido.
+
+El mismo corte local se repitió sobre HARRY con una captura de vigencia oficial ya
 existente. El delta `mak-opportunity-delta-v1` registró dos cambios reales
 (`source.validity` y `unknowns`): la oportunidad pasó a `current_verified`, los
 jobs bajaron de 17 a 16, pero la práctica, el snapshot y sus claims quedaron
@@ -363,17 +398,21 @@ Un `run_comparison.json` reproducible y un `RESULTS.md` humano bajo el root del
 piloto, con hashes, comandos, exit codes, deltas y límites. Sólo entonces se
 puede llamar aceptado al replay enriquecido.
 
-## Piso 2 — Entregar el primer producto artístico real
+## Piso 2 — Entregar primero el producto interno y después el portafolio curado
 
 ### Objetivo
 
-Convertir el run aceptado en el primer conjunto durable de productos de MAK,
-sin crear un portafolio manual paralelo.
+Convertir el run aceptado en un conjunto durable de productos internos de MAK y
+usar ese fundamento para producir después un portafolio curado, sin llamar
+portafolio a un inventario técnico ni crear un portafolio manual paralelo.
 
 ### Producto coordinado
 
-- **Dossier/portfolio interno:** secuencia, claims apoyados, assets internos,
-  provenance, alternativas y gaps.
+- **Vista/dossier interno de evidencia:** secuencia, claims apoyados, assets
+  internos, provenance, alternativas y gaps.
+- **Portafolio curado:** selección representativa de obras, series o procesos
+  solo cuando exista una función curatorial explícita y una trazabilidad de
+  cada inclusión. El output actual todavía no alcanza este estado.
 - **Postulación Fondart:** requirements completos, hard gates, documentos y
   estado bloqueado o draftable según evidencia real.
 - **Research brief:** preguntas que aún pueden cambiar el producto, con VOI,
@@ -394,7 +433,8 @@ sin crear un portafolio manual paralelo.
 
 Una persona puede entender la práctica, ver evidencia representativa y saber
 qué falta para una oportunidad sin leer el filesystem ni los reports técnicos.
-El producto sigue siendo válido si la postulación queda bloqueada.
+La vista actual no se declara terminada mientras solo exponga un inventario
+interno; el producto sigue siendo válido si la postulación queda bloqueada.
 
 ### Gate
 
@@ -648,7 +688,8 @@ sensores actuales -> features reproducibles -> representación congelada
 -> cabeza MAK pequeña -> ranking/VOI/query selection en shadow
 ```
 
-La primera combinación queda decidida así:
+La siguiente combinación es una lista de candidatos condicionados, no una
+decisión de implementación ni una dependencia del núcleo:
 
 - `ffprobe`/`ffmpeg`, Pillow, Tesseract y `pdftotext` permanecen como sensores
   primarios de hechos técnicos, texto visible, estructura temporal y formato;
