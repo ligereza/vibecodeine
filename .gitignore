@@ -274,3 +274,16 @@ web/venues/index.html
 # Tambien es derivada, y su generador esta al lado:
 # `py tools/venue_geometria_scd.py`.
 !data/venues/scd-plaza-egana.json
+
+# Orden 2026-08-28. `data/*.json` (linea 60) ignora todo el nivel superior de
+# data/, lo que dejaba fuera de git los insumos DECLARADOS que la cadena de
+# portafolio necesita: sin ellos `tools/compile_portfolio.py` no corre en un
+# checkout limpio. Son entradas escritas a mano con esquema propio, no salidas.
+!data/portfolio_practices.json
+!data/portfolio_attestations.json
+!data/demand_source_assessment.json
+!data/evidence_surface_assessments.json
+
+# El payload retirado no entra al historial (138 MB, mayormente PNG de render).
+# El registro de que se retiro y por que SI se versiona: MANIFEST.md.
+.archive/*/retirado/

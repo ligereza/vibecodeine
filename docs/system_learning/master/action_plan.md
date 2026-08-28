@@ -1,4 +1,13 @@
-# MAK: plan maestro único de acción
+# MAK: plan de acción de la sesión maestra (2026-08-27)
+
+**Estado: evidencia fechada de una sesión. No está en el orden de lectura.**
+
+Hasta el 2026-08-28 este archivo se titulaba «plan maestro único de acción». No
+lo era: el orden que carga `tools/agent_bootstrap.py` es `agents.md` →
+`docs/MAK_CURRENT_STATE.md` → `context/LAST_HANDOFF.md`, y este archivo no
+aparece ahí. Su propia sección siguiente ya lo admitía — un solo commit lo
+versionó — pero el título decía lo contrario, y el título es lo que un agente
+lee primero. Ver `docs/AUTORIDAD.md`.
 
 ## Frontera de procedencia de este documento
 

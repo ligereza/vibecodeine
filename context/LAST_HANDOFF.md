@@ -1,9 +1,268 @@
 # Operational Handoff
 
-## Agent bootstrap — CURRENT — 2026-08-27 — general archive portfolio view
+## Agent bootstrap — CURRENT — 2026-08-28 — file ordering and cleanup
 
 This is the only current operational packet. The material below the marked
 historical boundary is retained evidence and must not override this packet.
+
+### What this session did
+
+File-level ordering and cleanup of the whole repo. **No process, service, code,
+test or workflow was touched** -- that boundary was set by the operator and holds.
+Everything that needed a code edit is declared in `docs/AUTORIDAD.md` under "Lo
+que queda declarado y no ejecutado" and was left alone.
+
+Full record with per-item consumer evidence:
+`.archive/2026-08-28-orden/MANIFEST.md`.
+
+### Standing contract, carried forward unchanged
+
+A new current packet must not silently drop an accepted boundary. These remain
+in force exactly as the 2026-08-27 packet stated them, and
+`tests/test_agent_bootstrap.py::test_current_packet_stops_before_historical_heading`
+enforces that they stay in the current packet:
+
+Stage 2D accepted: the archive-to-Project-IR boundary remains in force:
+`mak-archive-observation-batch-v1` is the physical evidence contract, and the
+accepted gate records 171 focused tests. The full suite count is always measured
+by the test command, not maintained in this packet. The governing operational
+directive is `docs/MAK_SYSTEM_DIRECTIVE.md` -- mission doctrine, dated, and not
+part of the three-file read order (see `docs/AUTORIDAD.md`).
+
+That test caught a real regression in this session: the first version of this
+packet dropped all four statements, and the suite went red for it. The gate is
+correct -- a cleanup that loses a standing contract is a regression, not tidying.
+
+### The one thing to read first
+
+**`docs/AUTORIDAD.md`** (new). Nine documents in this repo declared themselves
+canonical and `tools/agent_bootstrap.py` loads three. That file resolves which is
+which, states the four writing rules that keep a document verifiable, and lists
+what is still broken and why it was not fixed here.
+
+Read order, unchanged and now stated identically everywhere:
+`agents.md` -> `docs/MAK_CURRENT_STATE.md` -> `context/LAST_HANDOFF.md`.
+
+### The diagnosis, in one line
+
+The problem was never which tool to delete. It is that **4 of 92 registered
+tools have a trigger**: 88 only run if a person types the command. That is why
+the flyer render is the only chain that feels alive -- an issue calls it.
+
+### Method: nothing retired without a measured consumer
+
+Three obvious candidates survived the check and stayed in place, which is the
+point of doing the check:
+
+| Candidate | Why it stayed |
+|---|---|
+| `checkpoints/` (only `.gitkeep`) | consumed by `src/flujo/airdrop.py`, `src/flujo/knowledge/project_ir.py`, `src/flujo/knowledge/director.py` and 3 test suites |
+| `inbox/` (2 txt from June) | consumed by `src/flujo/cli.py`, `src/flujo/intake/reception.py` and tests |
+| `data/flujo.db` (frozen 2026-06-30, Windows paths) | consumed by `tools/repo_audit.py`, which runs in CI, and `tests/test_portfolio_gen.py` |
+
+### Retired to `.archive/2026-08-28-orden/retirado/` -- 9.4 MB
+
+`.aider.chat.history.md`, `.aider.input.history`, `.aider.conf.example.yml`,
+`.playwright-mcp/`, `.remember/`, `proyectos/`, `dist_compartir/`. All measured
+with zero code consumer. `.archive/` is the repo's own retirement zone --
+`tests/test_higiene_docs.py` lists it in `ZONA_MUERTA`.
+
+Two of them were tracked in Git (`.aider.conf.example.yml`,
+`proyectos/flujo/OptimizerGen/prompt_optimizado.txt`), so `git status` shows them
+as deleted. **No commit was made**; versioning the retirement is the operator's
+call. Reverting one is `mv .archive/2026-08-28-orden/retirado/<ruta> <ruta>`.
+
+### Deduplicated by hardlink -- 187.2 MB, zero paths lost
+
+76 byte-identical copies now share an inode. Verified by `md5sum` over the 895
+files of the affected trees before and after: **empty diff**. `experiments/`
+went 420 MB -> 237 MB.
+
+Hardlink, not retirement, because **9 test suites read `experiments/pilots/` as a
+live fixture**. Moving a file there breaks tests; linking it changes nothing
+observable.
+
+Deliberate exclusions, each for a reason: editable source (a hardlink over code
+turns a future edit into a silent change of its twin), `web/` (`public/` is build
+input and `dist*/` its output), and `experiments/pilots/*/input/` (a run could
+otherwise overwrite the input it started from).
+
+**Residual risk**: `open(path, 'w')` on one of the 76 changes its twin. To
+diverge on purpose: `cp --remove-destination <origen> <destino>`.
+
+### Two findings from the dedup worth more than the megabytes
+
+1. `runs/*/observation.json` in three ARICA runs is **byte-identical to
+   `input/archive_observation.json`**: the pilot's "observation" output is a copy
+   of its own input.
+2. `enriched` and `enriched-technical-surface-20260827` share **24 of 29 files,
+   117.4 MB identical**. The "technical surface" run differs in 5 files, not 30.
+
+### Documents corrected, none retired
+
+| Document | Asserted | Measured 2026-08-28 |
+|---|---|---|
+| `context/PHASE_REPORTS_INDEX.md` | 748 PHASE files, "untracked", plus its own list of truth sources omitting `docs/MAK_CURRENT_STATE.md` | 13 files, all tracked; now repeats the bootstrap order |
+| `docs/SCRIPTS_INVENTORY.md` | four minor versions behind; `checkpoint.sh` "inexistente"; `scripts/app.py` active; legacy in `_archive/**`; protocol in `docs/AGENT_AIRDROP_PROTOCOL.md` | version matches `pyproject.toml`; `checkpoint.sh` exists and `src/flujo/airdrop.py` invokes it; `app.py` does not exist; `_archive/` did not exist; neither did the protocol. Rewritten with a measured invoker column: 15 with an invoker, 14 with none |
+| `CAPACIDADES.md` | 4 databases with "integridad OK" under `research/**` and `labs/**`; `mak_knowledge.db` 35 tables; runbooks at `xio/RUNBOOK.md` | neither tree exists; 49 tables; the runbooks exist only in `/home/mak/WIN/flujo/xio/`, the legacy surface. New section 5-bis holds the measured registry |
+| `README.md` | 113 bytes, an ASCII image and nothing else | real entry point with the read order and a minimal map |
+
+Headers demoted so they stop competing with the read order:
+`docs/MAK_SYSTEM_DIRECTIVE.md`, `docs/system_learning/master/action_plan.md`,
+`docs/INFLECTION_POINT_ARTISTIC_ARCHIVE_2026-08-24.md`,
+`docs/PORTAFOLIO_PRODUCCION.md`, `PLAN.md`, `context/MD_CONTEXT_MASTER.md`.
+
+### `CAPACIDADES.md` section 5-bis: the registry, measured
+
+The 2026-07-25 rule set the registry's retirement condition as *"cuando exista
+chequeo automatico de consumidores"*. Section 5-bis is that check, regenerable,
+with per-tool reference counts and workflow trigger.
+
+**A measurement bug was found and fixed inside this session.** Searching for
+`<name>.py` alone reported 24 tools with zero references, including
+`tools/agent_bootstrap.py`, which does have a test -- because
+`tests/test_agent_bootstrap.py` does `from tools.agent_bootstrap import SCHEMA`,
+the module form, not the filename. Searching three forms (`<name>.py`,
+`tools.<stem>`, `import <stem>`) gives **13**, not 24. Any consumer audit of this
+repo must search the module form or it will condemn live tools.
+
+### Post-cleanup verification, against a baseline captured before touching anything
+
+| Surface | Before | After |
+|---|---|---|
+| test ids collected | 3799 | **identical set -- 0 disappeared, 0 new** |
+| `flujo.*` modules that import | 196 | **196, identical set** |
+| endpoints in `cultura/mak_plataforma/hub.py` | 121 | **identical** |
+| endpoints in `src/flujo/web/hub.py` | 50 | **identical** |
+| `mak-*-v1` schema identifiers | 209 | **identical** |
+| product hashes under `out/` | 41 | **none changed** |
+| hashes of the deduplicated trees | 895 | **empty diff** |
+
+Comparing **test ids**, not the total, is deliberate: a total stays green when a
+test is deleted along with the code it guarded. Disappearance is the failure mode
+a cleanup produces, and only the id set sees it.
+
+The suite caught one real regression mid-work:
+`test_higiene_docs.py::test_la_version_afirmada_coincide_con_pyproject` went red
+because `docs/AUTORIDAD.md`, while documenting the gate's blind spot, wrote the
+exact pattern the gate matches. Fixed by rewording the row.
+
+### Two measured blind spots in `tests/test_higiene_docs.py`
+
+Both verified, both left alone because closing them edits a test:
+
+- the version gate misses a claim written as `Version:` + `v` + number. That is
+  how `docs/SCRIPTS_INVENTORY.md` held a stale version for 41 days with CI green.
+- the suite-total gate only fires when the line also carries a scope word
+  (`suite`, `green tests`, `0 rojos`). A bare "N tests" passes unseen.
+
+### Next, in order of what it costs against what it returns
+
+1. **Retire the airdrop chain.** `_airdrop/` does not exist. Sustained by
+   `src/flujo/airdrop.py` (494 lines), 4 scripts,
+   `.github/workflows/airdrop_gate.yml`, the `flujo airdrop` command and 42
+   passing tests. `flujo doctor` reports `airdrop pendiente: OK -- no`: absence
+   reads as health. Nothing consumes it. Cleanest block to remove.
+2. **Pick one of the three portfolio implementations.**
+   `cultura/mak_plataforma/contrato_archivo.py`,
+   `tools/portfolio/generar_works.py`, `src/flujo/knowledge/portfolio_*.py`. No
+   shared data path. 14 suites, ~200 tests, three incompatible definitions of
+   "obra".
+3. **Resolve the two hubs.** 121 endpoints and 50, sharing 10 endpoint names.
+4. **Give the 88 triggerless tools a trigger, or accept they are manual.** This
+   is the actual problem; the rest is tidying.
+5. **Fix `docs/MAK_CURRENT_STATE.md`.** It is second in the read order and cites
+   4 dead paths, including 2 PHASE files that no longer exist.
+
+### Language: the rule this session almost broke
+
+`agents.md`, Language section: machine-facing code, identifiers, filenames,
+configuration keys, tests, technical logs and **operational metadata are English
+ASCII**. Human-facing RD and Portfolio material keeps correct Spanish with
+diacritics.
+
+The first version of every document authored in this session was Spanish with
+diacritics -- including `docs/AUTORIDAD.md`, the file that states the rule.
+Corrected: `docs/AUTORIDAD.md`, `README.md`, `docs/SCRIPTS_INVENTORY.md`,
+`docs/GLOSSARY.md`, `.archive/2026-08-28-orden/MANIFEST.md`,
+`context/PHASE_REPORTS_INDEX.md`, `context/MD_CONTEXT_MASTER.md`,
+`docs/MAK_SYSTEM_DIRECTIVE.md` and this packet now measure **zero non-ASCII**.
+
+The house convention was learned by measurement, not assumed:
+`docs/admissibility.md`, `context/OBJECTIVE_AUDIT.md`,
+`context/OWNER_MANIFEST.md` and `context/DEPENDENCY_SURFACE.md` are all English
+with zero non-ASCII. That is the target shape.
+
+**`context/*.md` cannot be mass-converted.** `tools/agent_bootstrap.py:18`
+defines `CURRENT_PACKET_START` with an em-dash, and
+`tests/test_agent_bootstrap.py` asserts a heading carrying an accent. Those
+characters are load-bearing; converting them breaks the loader.
+
+The language ratchet `tests/test_idioma_ratchet.py` (measured by
+`tools/idioma.py`, pinned in `tests/fixtures/idioma_baseline.txt`) was
+**tightened by hand from 406 to 405** after `cultura/mak_plataforma/hub.py` left
+the Spanish-carrying set. Its docstring says the pin only tightens by hand.
+
+`docs/GLOSSARY.md` carried an inverted premise: it claimed Spanish comments
+outnumbered English several times over, measured 2026-07-30. `tools/idioma.py`
+now measures 405 carrying Spanish against 435 English over 1039 tracked files,
+and inside `src/` English is the majority. The document's rule survives; its
+justifying figure did not.
+
+An emoji in `context/VIDEO_WORKFLOW_MAK_20260817.md:86` was left alone: it is
+part of a real media filename, so it is data, not decoration.
+
+### Restored from the legacy tree -- 4 documents
+
+Four operational documents were missing from `/home/mak/flujo` while four active
+documents cited them: nine dangling references, including the show-day runbook.
+They lived only in `/home/mak/WIN/flujo/xio/` and were **not stale** --
+`xio/FACES.md` is byte-identical in both trees, so WIN never diverged. Copied
+with `cp -p`; the legacy tree was not modified.
+
+`xio/RUNBOOK.md` (23 KB), `xio/HOTSPOT_SHOW_RUNBOOK.md`, `xio/CAPACIDADES.md`,
+`xio/PLAN_SERVICIOS_SIN_ROOT.md`.
+
+### A third measurement error of my own
+
+An earlier version of this packet reported 59.1 MB of duplication remaining.
+That figure counted a group of 4 paths as 3 recoverable copies when 3 of them
+already shared an inode. Counting distinct inodes instead of paths gives
+**29.7 MB**, and every remaining group is a deliberate exclusion with a stated
+cause (pilot input vs run output, live data vs preserved evidence, build
+projections, source code). The dedup work is complete.
+
+### One decision left to the operator: versioning
+
+No commit was made -- forbidden this session. That leaves a dangling dependency:
+**`docs/AUTORIDAD.md` is untracked**, and nine tracked documents now reference
+it. In a clean checkout those nine references point at nothing. It is not
+gitignored; it only needs `git add`.
+
+Also untracked and worth deciding: `docs/PORTAFOLIO_PRODUCCION.md` (created in a
+prior session, never versioned) and `.archive/2026-08-28-orden/` (versioning it
+preserves the retirement record). `PLAN.md` is gitignored at `.gitignore:230`, so
+this session's retitle stays local by design.
+
+Two files show as deleted in `git status` because they were tracked and are now
+under `.archive/`: `.aider.conf.example.yml` and
+`proyectos/flujo/OptimizerGen/prompt_optimizado.txt`.
+
+Three files were already modified before this session and are not from it:
+`cultura/mak_plataforma/hub.py`, `iskvw/editor.html`, `src/flujo/departments.py`.
+
+### Standing constraints, unchanged
+
+Do not modify `/home/mak/WIN`, SSD physical files, `archivo_index.sqlite`,
+`order_projection.json`, `questions.json`, `ties_full.db`, `intake.sqlite`,
+`artist_discographies.json`, `archivo.json`, media/artwork/historical sources, or
+external wrappers. No `git reset`, `checkout`, `clean`, `commit` or `push`. No
+physical rescan of the SSD.
+
+
+## Agent bootstrap — HISTORICAL — 2026-08-27 — general archive portfolio view
+
+Retained evidence. The current packet is the 2026-08-28 one above.
 
 ### Current objective
 
@@ -14,11 +273,15 @@ physical archive -> evidence memory -> reconstruction -> cultural/curatorial
 reasoning -> portfolio/application/research products -> outcomes -> learning
 ```
 
-The current useful product is a general, internal portfolio view over the
-existing ISKVW archive projection. It must separate declared works, observed
-archive material and technical practice without forcing labels or rewriting
-identity. ARICA, DREF, HARRY, MYRA, RAYU, ISKVW and Fondart remain cases and
-holdouts, never architecture.
+The current useful product is the internal Contracurador mounted over the
+existing ISKVW archive projection. The live Hub consumes that same view
+read-only at `GET /api/portfolio/archive-view`, advertises it through the
+existing ISKVW department catalog and renders it in the existing ISKVW editor;
+the SSD foundation is a separate evidence boundary and never silently selects
+ISKVW pieces. It separates declared works, observed archive material and
+technical practice without forcing labels or rewriting identity. ARICA, DREF,
+HARRY, MYRA, RAYU, ISKVW and Fondart remain cases and holdouts, never
+architecture.
 
 Stage 2D accepted: the archive-to-Project-IR boundary remains in force:
 `mak-archive-observation-batch-v1` is the physical evidence contract, and the
@@ -65,9 +328,82 @@ carried into the output. Do not delete or move physical evidence.
   works, 24 bounded observed-field items, 24 bounded practice/code items and
   61 links between selected items. The remaining 1,978 pieces stay in the
   source and are reported as omitted, not deleted or merged.
+- `src/flujo/knowledge/ssd_order_foundation.py` and
+  `tools/compile_ssd_order_foundation.py` now triangulate the existing SSD
+  index, order projection, intake DB, Project IR/reconstructions, research
+  authority, research corpus and ISKVW archive without rescanning or mutating
+  any source. The foundation covers 45,536 assets, 917 projects, 13,121
+  families and 113 indexed relations; its review order is explicitly not an
+  artistic-quality ranking. It records 4097 certified-same and 7
+  certified-distinct identities, 50 unresolved operator ties and 6 open
+  questions. The existing `questions.json` is now carried as
+  `mak-order-operator-review-v1`: 6 asked + 44 deferred, 50 total, 93.22%
+  disputed-byte coverage, `machine_answerable=false` and `selection_effect=none`.
+  Each question also records whether its left/right container has an
+  authority-bound external context; this is prioritization evidence only, not
+  a name or authorship assertion.
+- The same foundation finds 52 exact external-locator candidates across the
+  2,034 ISKVW pieces and 52 SSD assets (one-to-one, all with research-corpus
+  receipts). They remain `status=candidate`, `typed_reference_count=0`,
+  `selection_eligible=false` and missing full-content/delivery evidence;
+  filenames, routes and locators never become authorship or work identity.
+- `src/flujo/knowledge/contracurator.py` consumes the bounded 56-row view and
+  mounts 8 source-declared records. It retains three incompatible theses,
+  counterevidence, 48 exclusions and an abstaining alternative. The SSD
+  foundation is visible as `partial_order` in the Hub but
+  `used_for_selection=false`.
+- The explicit write boundary was exercised through the existing
+  `LearningStore`: the latest episode
+  `episode:contracurator:f1deae941e5b1cf30758998d82b1d242` was appended to the
+  pre-existing `iskvw-contracurator-20260827` Project IR with archive,
+  foundation and operator-question hashes plus code provenance. The project
+  now has 5 Contracurador episodes; the latest is `needs_evidence`, has
+  `truth_promotions=0`, and records `database_write=false` for the Hub
+  consumer. Replaying the same episode is idempotent.
 - The output explicitly keeps title separate from source identity: untitled
   observed rows retain `title=null` and may retain `observed_description`,
   marked as not an author statement. Code rows are context, not artwork.
+- `cultura/mak_plataforma/hub.py` now mounts the existing pure consumer at
+  `GET /api/portfolio/archive-view`. The route reads only
+  `iskvw/datos/archivo.json`, fixes the existing bound at 24 items per observed
+  and practice format, emits `mak-archive-portfolio-view-v1` directly and
+  returns 503 without a partial view when the source or contract is invalid.
+- A real foreground HTTP smoke on an ephemeral localhost port returned 200
+  with the same input hash, 2,034 source pieces, 5,812 source links, 56 selected
+  items, 61 projected links and zero truth promotions. The physical source
+  SHA-256 stayed `eef1788dc4462e71dd13be84b446463ac6169324de95a11f2bb4b5f19215f8d6`
+  before and after. The server was shut down in the same command.
+- `tests/test_hub_archive_portfolio_view.py` adds four cases: deterministic
+  replay and refs, GET route contract, an authorial-looking path that remains
+  untitled observed evidence, and malformed JSON failing closed. The focused
+  Hub/product-view regression passed 47/47 with `PYTHONPATH=.:src`; `py_compile`
+  passed. The first sandboxed socket smoke was denied before bind and the first
+  combined regression collection lacked the repository root on `PYTHONPATH`;
+  both were rerun with the correct bounded environment and passed.
+- The existing `mak-hub.service` was restarted after verifying its actual
+  `ExecStart` points directly to the canonical Hub. PID changed `973 -> 178677`;
+  the unit is active/running on `127.0.0.1:8900` and the real endpoint returns
+  HTTP 200 with the same 2,034/5,812 source counts, 56 selected items, 61
+  projected links, `truth_promotions=0` and unchanged physical source hash.
+  `/home/mak/plataforma/hub.py` remains an unchanged compatibility wrapper;
+  its SHA-256 stayed `8ac11ae6a15181b23905d67f2d8951be97c5e807bd28a31a0394ac1bb8a13abd`.
+- `iskvw/editor.html` now fetches that endpoint automatically and renders the
+  three existing formats with counts, gaps, omissions and source refs. The
+  Contracurador card also exposes `6 preguntas operador + 44 diferidas` while
+  keeping them out of selection; opening the operator section exposes the six
+  question samples, examples, answer options, authority-context status and
+  source refs. Untitled rows use a neutral `ref` display explicitly marked `no
+  es titulo autoral`; invalid/partial responses clear prior data and fail
+  closed. The existing atlas and `mesa_montaje.js` mount remain intact.
+- `src/flujo/departments.py` advertises the exact route under the existing
+  `iskvw.tool_links` with `mode=read_only`, `status=draft`,
+  `publication=false` and `authorship=false`; no portfolio area or alias was
+  added. Two focused test files cover the UI and catalog boundaries.
+- The consolidated root regression passed 67/67 with bytecode/cache writes
+  disabled. Live API and editor requests both returned 200; the physical
+  archive hash stayed unchanged. Browser verification rendered all three
+  columns, exercised `actualizar lectura`, retained the epistemic labels and
+  reported no console warnings/errors.
 - Focused product-view tests, product-plan/dossier/application/pilot
   regressions, `py_compile` and `git diff --check` all exited 0. The general
   view source, CLI, tests and the consolidated recent MAK code, tests,
@@ -75,18 +411,470 @@ carried into the output. Do not delete or move physical evidence.
   pushed to `origin/main`; generated pilot outputs remain local and are not
   deleted.
 
+### Completed work — 2026-08-28 — operator frontier deepening
+
+- `src/flujo/knowledge/ssd_order_foundation.py` keeps the same
+  `mak-ssd-order-foundation-v1` contract and raises its algorithm to
+  `evidence-first-order-2-operator-dossier`. The existing `operator_review`
+  field now carries one deterministic dossier per tie instead of a bare
+  question row. No second base, index, endpoint or crawler was created.
+- Each of the 50 dossiers records the question id, both containers, declared
+  and recomputed shared bytes/classes, concrete examples, SSD asset/project
+  refs per side, evidence for, evidence against, missing evidence, the answer
+  options the source permits, `reopen_when` with its origin, external-authority
+  status per side, an exact `source_ref` on every claim,
+  `machine_answerable=false` and `selection_effect=none`.
+- The decisive new evidence is an independent recomputation. Reading
+  `ties_full.db` read-only, all 50 questions reproduce their declared
+  `shared_classes` and `shared_bytes` exactly (50/50). This corroborates the
+  question ledger from a second byte-level source; it does not answer any tie.
+- That recomputation also grades the ties by substance:
+  **34 substantive, 1 partially degenerate, 15 metadata_only**. The 15
+  metadata-only ties (deferred 29-43) rest entirely on the zero-byte content
+  class `sha256:e3b0c442…` or on a single AppleDouble resource fork, so they
+  carry no shared authored material. This lowers their evidence; it does not
+  answer or close them. All 50 remain `unresolved`,
+  `resolved_by=operator_attestation_only`.
+- 7 questions name a container that is not a `container_root` in the SSD index
+  (`Spotlight-V100`, a macOS Spotlight store, and `_KAYAKAZE 2025 2.xml`, a
+  file). Those sides are reported `container_binding=unbound` with explicit
+  counterevidence and missing evidence, never silently treated as projects.
+- A new `attestation_queue` orders all 50 ties for a human: the 6 asked first,
+  then by substantive shared bytes. Every row ships `answered=false`,
+  `answer=null`, `attested_by=null`, `selection_effect=none`, and the queue is
+  `pending_human_input` with `answers_recorded=0`.
+- The research frontier is an explicit abstention, not a silent skip. The new
+  `research_frontier` block records `status=abstain`, `job_count=0`,
+  `dispatch=false`, `create_job_invoked=false` and names the three gates that
+  block it: `cross_archive_relations.py#_descriptor` requires an
+  `artist_identity` per archive, `#_matching_artifacts` requires a catalogue
+  title to match a filename stem, and
+  `cross_archive_research_frontier.py#compile_cross_archive_research_frontier`
+  requires a typed `mak-cross-archive-relations-v1` payload. Feeding it would
+  mean inventing an identity for DREFGIRA, DrefQuila, HARRY or BAHPARTY, so the
+  52 shared locators stay `candidate`, `typed_reference_count=0`,
+  `selection_eligible=false`. No provider, job or research store was touched.
+- `src/flujo/knowledge/contracurator.py` projects the deepened basis into the
+  Hub: full dossiers for the 6 asked ties, compact rows for the 44 deferred,
+  the 50-row queue, the triage and the frontier abstention. It fails closed on
+  a prefilled queue (`attestation_queue_prefilled`), a dispatched frontier
+  (`research_frontier_dispatched`) and a missing triage or frontier.
+- The durable episode now references the foundation by digest rather than
+  embedding a fourth copy of every dossier. This kept the live payload at
+  315,709 bytes instead of 719,170 and keeps the ledger row readable; the
+  evidence itself stays in the compiled foundation, reachable by
+  `semantic_hash`.
+- The selection did not move. The Contracurador still consumes the bounded
+  56-row view, still mounts the same 8 source-declared records, still retains
+  3 theses with 2 defeated and an abstaining alternative, and
+  `used_for_selection` stays `false`. A focused test asserts the selected
+  `source_refs` are byte-identical with and without the SSD basis.
+- Real commands: `tools/compile_ssd_order_foundation.py` over the real index,
+  order projection, intake, knowledge DB, research authority, reconstructions,
+  archive and corpus exited 0 twice with byte-identical output
+  (`sha256:4f5a190c9c5a82b66c1ae97f015e58f00cd1b7bc94741a8c80cc07b6dcc9e45c`,
+  semantic hash
+  `sha256:88666334765954e04764373dffdd6e07c778f63a7ef33ef1ea782244bf6cf8f7`).
+  Inventory is unchanged: 45,536 assets, 917 projects, 13,121 families, 113
+  relations, 4,097 certified-same, 7 certified-distinct, 50 ties, 6+44
+  questions, 52 candidate crosswalks.
+- `iskvw/editor.html` renders the frontier inside the existing Contracurador
+  card. `archiveViewOperatorSection()` shows the priority/deferred counts, the
+  triage, the queue status, per-tie grade and substantive bytes, the answer
+  options, examples, both sides' binding and authority, the byte recomputation,
+  the three evidence lists with their source refs, `reopen_when`, and the
+  frontier abstention with its gates. It leads with an explicit warning that
+  these are questions for a person, not answers from MAK, and keeps
+  `no usada para seleccionar`, `falta referencia tipada`, `no es titulo
+  autoral`, `database_write=false` and `training=false`. The client validator
+  now also rejects a payload whose queue is prefilled or whose frontier is
+  dispatched. The section contains no form, input, button or fetch.
+- Validation: `py_compile` on the foundation, contracurator and hub exited 0;
+  `node --check` on the extracted inline script exited 0; `git diff --check`
+  exited 0. The focused suite over contracurator, hub view, editor UI,
+  department catalog, the new operator-frontier file and product-view passed
+  45/45, including 13 new adversarial cases and 2 new UI cases. The whole
+  `tests/` tree ran 3,756 cases: 3,750 passed, 5 skipped and 1 failed. The one
+  failure is the pre-existing `test_higiene_repo.py::test_tools_en_registro`,
+  which asks for a `CAPACIDADES.md` entry for `tools/compile_contracurator.py`
+  and `tools/compile_ssd_order_foundation.py`; both tools and that failure
+  predate this slice and `CAPACIDADES.md` was outside the permitted write set.
+- Fail-closed evidence, observed rather than asserted: after the code change
+  and before the foundation was regenerated, the three Hub view tests returned
+  503 instead of a partial view, because the deepened contract rejected the
+  stale on-disk basis. They passed again once the foundation was recompiled.
+- The service was restarted (PID `197774 -> 202144`) and
+  `GET /api/portfolio/archive-view` returned HTTP 200 three times with a
+  byte-identical body
+  (`sha256:52d16758cf4317d210e74566f93213983d3935a9b5c516a320b0499377ebeba9`),
+  56 visible rows, 2,034 source pieces, 5,812 links, 8 selected refs and
+  `truth_promotions=0`. The physical archive hash stayed
+  `eef1788dc4462e71dd13be84b446463ac6169324de95a11f2bb4b5f19215f8d6`.
+- Read-only proof: `data/mak_knowledge.db` kept size 190,066,688, mtime
+  `1787889634883579055` and
+  `sha256:e6e6acd85a8c7d4460ed15c5a4037646d77bb27646c1af76d750b138039dc689`
+  across six GETs before the write, and after the write it stayed at
+  `sha256:7176a4519d22a50a1b43cf7076485128b830db5aa254d3e92f3e276a235f2d6b`
+  across three further GETs. A GET never writes.
+- The single durable write went through `record_contracurator_episode` /
+  `LearningStore.record_episode`, never manual SQL. `project_episodes` went
+  26 -> 27 and the existing `iskvw-contracurator-20260827` project went 5 -> 6
+  episodes. The new episode is
+  `episode:contracurator:06198a3b9f3cf6e4f2f07ff9ab671f6d` with
+  `status=needs_evidence`, `truth_promotions=0`,
+  `artistic_fact_mutations=0`, `database_write=false`,
+  `training_permitted=false`, `source_snapshot_hash=sha256:3005f632…`,
+  `code_commit=15ee50d6034810416d6bc571d86e782a95a25b5b` and tool versions
+  carrying the foundation, questions, tie-ledger, index and archive hashes
+  plus `worktree_dirty=true`. Replaying the same episode returned the same id.
+- Browser verification used headless Firefox against the live payload rendered
+  through the editor's own functions and stylesheet. The card shows the 8
+  selected records, the 2 defeated theses, the abstaining alternative, the
+  collapsed 48-row exclusion map, the six full dossiers, the 44 deferred rows
+  with their grades, and the frontier abstention with its three gates and
+  source refs.
+
+### Completed work — 2026-08-28 — night guard, triangulated frontier
+
+Eight ordered cycles ran; each was validated before the next began.
+
+**Cycle 1 — base audit.** No drift. The SSD index, order projection, questions,
+tie ledger, intake, research authority and `archivo.json` all matched the
+recorded hashes; the service was active on PID `202144`, the endpoint returned
+HTTP 200, and `data/mak_knowledge.db` held 27 episodes with 6 on
+`iskvw-contracurator-20260827`.
+
+**Cycle 2 — priority ties triangulated.** Each of the 50 dossiers now also
+carries the identity tier, intake evidence, reconstruction evidence, the index
+relation reality and every shared member path, each with its own `source_ref`.
+- The tier is **reproduced, not copied**: applying the order projection's own
+  rule to the byte ledger yields `T1=24, T2=458, T3=865`, exactly the declared
+  totals, and every tie's classes sum to its declared `shared_classes`.
+- Intake and reconstruction are folded per container from the existing sources:
+  6 containers hold a bounded intake candidate and 3 hold reconstructed
+  decisions (BAHPARTY 50, DREFGIRA 8, LYON 387).
+
+**Decisive measured fact.** All **111** `exact_duplicate` relations in the SSD
+index are on the empty content class `sha256:e3b0c442…`; **zero** are
+substantive. The index holds only **2** non-duplicate typed relations, and
+**neither crosses a container boundary**: `contains_scene` points a `3D JJJ`
+`.blend` at its own scene, and `video_covers_sequence_candidate` points
+`BAHPARTYCONCERESI/Comp 1.mp4` at a family inside the same container while
+declaring `policy=coverage_candidate_not_same_work_proof` with a frame mismatch
+(5 expected, 900 observed). So `questions_with_a_binding_typed_relation = 0`
+across all 50 ties — a measurement, not an assumption.
+
+**Cycle 3 — deferred ties given a stated reason.** Every tie now records
+`actionable_evidence_kinds` and, when empty, an explicit `deferral_reason`.
+46 ties carry actionable evidence, 4 carry none; the kinds break down as
+substantive bytes 35, intake candidate 34, authority context 22, reconstructed
+decision 17, declared native input 1. A deferral is now stated rather than
+silent.
+
+**Cycle 4 — all 52 crosswalk candidates audited one by one.**
+`typed_reference_count=0` is now **measured across 5 bases** rather than
+asserted. Per candidate the audit records the content-hash check, the delivery
+receipt check, the typed-reference lookup and the corpus derivation:
+- **52/52** SSD assets are `hash_state=pending` with **no** full content hash,
+  so byte identity with the ISKVW piece cannot be computed at all;
+- **52/52** ISKVW pieces carry `fuente_original.estado=ausente`, so there is no
+  file on that side either, and none carries a checksum field;
+- **52/52** declare `fuente_original.rol=obra_original`, recorded as a
+  declaration of that projection only, explicitly not a binding of the SSD
+  asset and not a receipt;
+- `entity_relations` (6,058 rows), `context_relations`, `project_artifacts`
+  (17,917 rows) and the index relation table returned **zero** references.
+
+**The near-miss, recorded as such.** Three rows in `artifacts` do contain a
+crosswalk locator — contact-sheet thumbnails named
+`sheets/00N-<locator>.jpg` from a 2026-08-08 portfolio sample run, with no
+`sha256` and no `declared_work_id`. They are kept as
+`derived_locator_echo` with `is_typed_reference=false`: a locator inside a
+generated filename is not a reference. This is exactly the case the guard rule
+exists for, and it is now covered by a test.
+
+**Cycle 5 — a correction to the previous handoff.** The earlier packet said no
+valid research-frontier input existed. That was too strong. A valid
+`mak-cross-archive-relations-v1` payload **does** exist at pilot scope
+(`experiments/pilots/DREFQUILA/runs/cross-archive-escarlata-20260826`,
+`sha256:bb9e7a8e…`, 6 relations, all `candidate`), and a non-dispatched
+frontier was already compiled from it (1 job, `planned_not_dispatched`,
+0 dispatched). Recompiling it in memory reproduces the on-disk artifact
+byte-for-byte and validates.
+
+It is now **cited and explicitly not adopted**, because it only exists through
+the two inferences this projection refuses: both archives declared an artist
+identity (`DrefQuila`, `Harry Nach`), and its positive evidence is
+`catalog_track` plus `artifact_name_signal` with `reason_codes` including
+`local_title_match`. It declares `same_title_different_work` as a live
+alternative and `exact_cross_archive_content_unavailable` as counterevidence.
+The abstention is therefore rescoped to `ssd_order_frontier` with a
+`precision_note`, and the foundation records `not_usable_for`: answering any of
+the 50 ties, binding any of the 52 candidates, or selecting an ISKVW piece.
+No pilot file was modified, no job was dispatched, no provider was called.
+
+**Cycle 6 — foundation and Hub.** Everything landed inside the existing
+`mak-ssd-order-foundation-v1` contract, reusing `operator_review`; the
+dossier algorithm is now `byte-identity-corroboration-2-triangulated`. No new
+base, endpoint, crawler, registry, runtime or superior contract was created.
+The Hub keeps the single route `GET /api/portfolio/archive-view`.
+`iskvw/editor.html` shows the recomputed tiers, the index relation reality, the
+52-candidate binding audit, the pilot chain marked *citada y no adoptada*, and
+per tie the tier badge, actionable-evidence kinds or deferral reason, the
+typed-relation count for the pair, intake and reconstruction per side, and the
+shared member paths. The client validator now also rejects a promoted,
+rescoped or dispatched pilot chain and a binding claim on an unbound crosswalk.
+
+**Cycle 7 — one episode.** `project_episodes` 27 → 28 and the project 6 → 7.
+The new episode is `episode:contracurator:17464f33f77f0294feb3a8f48fbb221c`,
+`status=needs_evidence`, `truth_promotions=0`,
+`artistic_fact_mutations=0`, `source_snapshot_hash=sha256:3005f632…`,
+`code_commit=15ee50d6…`, with tool versions carrying the foundation, questions,
+tie-ledger, index, archive and pilot-relations hashes plus
+`identity_tiers_reproduce_declared=true`,
+`index_cross_container_typed_relations=0`,
+`crosswalk_typed_reference_count=0` and `crosswalk_bases_scanned=5`. The replay
+returned the same id. The DB went
+`sha256:7176a451…` → `sha256:7e3abd24…`; three GETs before and three after left
+mtime and hash untouched.
+
+**Cycle 8 — adversarial.** 11 new attacks were added and pass: the tier must be
+reproduced not asserted; a relation count must not be read as binding power;
+every crosswalk candidate must be measured; a locator in a generated filename
+must never become a reference; the pilot chain must be cited but never adopted;
+an absent pilot run must degrade without breaking; a deferral must be stated;
+the Hub must fail closed on a promoted, rescoped or dispatched pilot chain and
+on a binding claim over an unbound crosswalk; renaming every container to
+`OBRA MAESTRA …` must manufacture nothing; and stripping every
+`evidence_against` and `missing_evidence` list must not soften a single verdict
+or move the 8 selected refs.
+
+**Selection unchanged throughout.** 56 visible rows, 8 selected source refs,
+3 theses, 2 defeated, counterevidence on all three, the abstaining alternative,
+48 exclusions, `used_for_selection=false`. The live payload is byte-identical
+across three GETs (`sha256:ab658034…`, 371,009 bytes) and the physical archive
+hash stayed `eef1788dc4462e71dd13be84b446463ac6169324de95a11f2bb4b5f19215f8d6`.
+Service restarted, PID `202144 → 294343`, active.
+
+**Cycle 4 extended — the wider base scan.** Scanning 5 surfaces was not enough
+to claim `typed_reference_count=0`, so all 8 registered MAK stores in
+`docs/system_learning/master/inventory.json` were read read-only for the 52
+asset ids, piece ids and locators. `rd.db`, `rd_datos.db` (a privacy boundary,
+counts only), `flujo.db` and the research registry returned **zero**. The 52
+matches in `artifacts`, `entities`, `temporal_events` and `git_files` resolve to
+the research-corpus files, whose filenames *are* the piece ids and which are
+already recorded as `derived_from_iskvw` with
+`independent_confirmation=false`.
+
+**Two real leads, both refused with a stated reason.** `intake.mak_links` and
+`mak_knowledge.operational_curation_links` each name 20 of the 52 pieces — 44
+link rows in total. They are now read, classified and carried as
+`operational_possible_link`, and they do **not** bind, for two independent
+reasons visible in the rows themselves: the relation is
+`possible_consumer_or_origin` at confidence `0.55` with
+`evidence_json.method = "path_token"` (the token `anima`, from
+`iskvw/piel/animadas/`), and the left endpoint is an intake project
+(`intake_project:6f6a046f…:project_e88363…`), never one of the crosswalk SSD
+assets. Every one of the 44 rows is recorded with
+`endpoint_is_a_crosswalk_ssd_asset=false` and `is_typed_reference=false`, and
+the Hub now refuses any class that is not `possible_*` on `path_token`.
+
+So `typed_reference_count=0` is now measured over **7 surfaces named in the
+payload**, with 44 pre-existing path-token links and 3 derived filename echoes
+found and explicitly disqualified rather than absent.
+
+**Second episode.** Because that added a real evidence class, one further
+episode was appended: `project_episodes` 28 → 29 and the project 7 → 8.
+`episode:contracurator:b06cf657170a7766f424dd700f4248d7`,
+`status=needs_evidence`, `truth_promotions=0`, `artistic_fact_mutations=0`,
+`source_snapshot_hash=sha256:3005f632…`, `code_commit=15ee50d6…`, with
+`crosswalk_bases_scanned=7`, `operational_possible_links=44`,
+`operational_possible_link_classes={"possible_consumer_or_origin/path_token":44}`
+and `derived_locator_echoes=3`. Replay returned the same id. The DB moved
+`sha256:7e3abd24…` → `sha256:840d2724…`; three GETs after left mtime and hash
+untouched.
+
+**Validation.** `py_compile` on the three modules exited 0; `node --check` on
+the extracted inline script exited 0; `git diff --check` exited 0. The focused
+suite passed 58/58, the operator-frontier file alone 26/26 (13 of them new
+adversarial attacks). The whole `tests/` tree ran 3,769 cases: 3,763 passed,
+5 skipped and 1 failed — still only the pre-existing
+`test_higiene_repo.py::test_tools_en_registro`, which asks for a
+`CAPACIDADES.md` entry for `tools/compile_contracurator.py` and
+`tools/compile_ssd_order_foundation.py`; both tools and that failure predate
+this work and `CAPACIDADES.md` is outside the permitted write set. The foundation compiles to byte-identical output across
+repeated runs; the final artifact is `sha256:a049baec…` with semantic hash
+`sha256:da6e859b…`. The live payload is byte-identical across three GETs
+(`sha256:1160868e…`, 372,085 bytes). Service PID `294343 → 299493`, active.
+Every protected source kept its hash and mtime; `WIN` is untouched
+(2026-08-14).
+
+**Browser verification did not complete this cycle.** Headless Firefox returned
+`RenderCompositorSWGL failed mapping default framebuffer` at 6000, 3000 and
+1600 px heights and wrote no PNG, so the rendered card was not re-captured.
+The render itself is still covered by the node-based UI test, which asserts 26
+booleans over the HTML the editor's own functions produce from the live payload
+— including the new tier line, relation-reality line, binding-audit line with
+`sobre 7 superficies`, the 44 path-token links marked `no vinculan`, and the
+pilot chain marked `citada y no adoptada`. The previous cycle's screenshots of
+the same card remain valid evidence for the surrounding layout.
+
+### Completed work — 2026-08-28 — portfolio production, the direction change
+
+The Contracurador/SSD-order line is **superseded**, not extended. It produced
+eight cycles, 3,769 tests, two episodes and zero products. The full diagnosis
+and the corrected model live in `docs/PORTAFOLIO_PRODUCCION.md`, which is the
+durable record for this direction; read it before touching anything here.
+
+**The architectural correction.** Files were being treated as the substrate that
+entities are made of, when they are *evidence about* entities that exist
+independently. A song existed, a show happened, a client paid; none of that stops
+being true because an mp4 cannot be hashed. Three consequences followed: one
+relation used as the universal join, `unknown` global instead of per-layer, and
+no notion of sufficiency relative to a purpose — so the bar was set at
+jury-defensible authorship and applied to showing an image in a grid.
+
+**Three new contracts, all read-only projections, no second base.**
+
+- `mak-portfolio-format-v1` (`portfolio_format.py`): the declared plant. Specs
+  are **data** in `data/portfolio_formats/*.json`. Each slot declares count,
+  claim verb, layer, minimum state, minimum permission and a caption grammar
+  whose fields are allow-listed. Five verbs: `puedo`, `hice_esta_parte`,
+  `ocurrio`, `significa`, `es_mio`. Five states, each with a named external test
+  and a stated refutation. Hard ceilings: `es_mio` and `hice_esta_parte` cannot
+  exceed `candidate` without a named third-party receipt, and a format that
+  demands more is rejected.
+- `mak-portfolio-claims-v1` (`portfolio_claims.py`): the claim base. Every claim
+  carries verb, layer, scope, state, permission, `generated_by`, `supported_by`,
+  caption fields, evidence refs and `refuted_by`. Two invariants are enforced in
+  code: **no route promotes the claim it generated**, and the authorship ceiling.
+- `mak-portfolio-render-v1` (`portfolio_render.py`): feasibility **before**
+  producing, then the document. A required slot that cannot be filled reports a
+  count and a reason, never a question.
+
+**A fourth: reading live practice.** `screen_setup_evidence.py` identifies a
+producing application from the document's own root element, never from its
+filename. It reads what nobody had read.
+
+**The nine root XML files were the best evidence in the archive** and were
+classified `indexed_only`. They are Resolume Arena 7 ScreenSetup exports — the
+projection mapping of each room: **136 bezier-warped surfaces across 18 screens**
+between 2024-08 and 2026-05. `BERLIN 1` alone has 4 screens and 59 slices on a
+3043×272 canvas, with screens named `pista modificada`, `pista original`,
+`club modificacion`. Canvases range from 1080×1920 to 3840×1664.
+
+Reliability is declared, after an operator correction: a save-as carries the
+previous document name and the ids of kept screens, so `label_reliability` and
+`dating_reliability` are recorded per file. `CHILLAN.xml` declares `harry`
+internally — that is a **stale label, not a link**. What sustains the
+Harry↔Chillán relation is the operator's attestation.
+
+**Attestations are now a mechanism** (`data/portfolio_attestations.json`,
+`mak-portfolio-attestation-v1`). A named authority is the only route that lifts
+a role or authorship claim past `candidate`. Negative attestations ("this is not
+mine") are accepted without corroboration because they reduce what the system
+asserts. Three are recorded: the Chillán show with Harry (positive), the
+*Escarlata* visual made by a third party (negative), and the ARICA logo PSD
+(negative, which fixes the general rule that a native file does not imply own
+process).
+
+**The external authority resolved the identities**, and it had been sitting in
+`data/artist_discographies.json` unread: `DREFGIRA` has
+`canonical_name=DrefQuila`; `DREFMOVISTAR` is `kind=event`; `LYON` is Lyon La F;
+`MARLONLOLLA` is Marlon Breeze; `SCD` is `kind=venue`, Salas SCD; `FELINA` has
+no URLs and stays unknown. That collapses the "two different clients" reading of
+the DREFGIRA↔DrefQuila tie without deciding whether it is one commission.
+
+**The SSD is partitioned** in `data/portfolio_practices.json` — 18 declared
+containers with a written basis each, reversible by one line. Two of my own
+classification errors were found and fixed: `abril2026post` is not a frame
+sequence (its "numbers" are 17-digit platform media ids, so it is
+`published_export`), and 40 "containers" were loose files at the volume root.
+Final: 25 `production`, 10 `delivery`, 1 `published_export`, 1 `render_output`,
+1 `source_footage`, 2 `installed_tool` (NestDrop and Loopback are tool
+inventory, not work), 40 `loose_root_file`, 17 `system_metadata`,
+4 `indexed_only`.
+
+**Products actually produced**, via `tools/compile_portfolio.py` into
+`out/portfolio/`: 279 claims (175 `observed`, 77 `candidate`,
+25 `supported_candidate`, 2 `externally_attested`).
+
+| Format | Status | Items |
+|---|---|---|
+| F1-trayectoria | rendered | 30 |
+| F2-capacidad · visual para música y eventos | rendered | 24 in 5 sections |
+| F3-rol-técnico | rendered | 16 in 4 sections |
+| F2-capacidad-barbería | **infeasible, correctly** | 0 |
+
+Real figures in the capability document: Blender 927 native projects across 19
+contexts 2016–2026; After Effects 408 across 16. Every line carries its state,
+its route and what would refute it.
+
+The barber format is the generalization test: a `transformacion` vertical with
+completely different evidence kinds and permission dominant. **It loaded and was
+assessed without one line of code changing**, and it is infeasible because this
+archive has no barber evidence. That is the correct answer.
+
+**Product bugs found by reading the rendered document**, not by testing: an item
+budget that starved the last required slot; the same claim appearing in two
+slots; dominant tool computed alphabetically (it said *After Effects* for LYON,
+where 426 of 559 are Blender); scale figures that never named their container;
+and plural agreement. All fixed.
+
+**Tests inverted.** `tests/test_portfolio_production.py` adds 22 cases that
+assert the system **produces**: a feasible plant must render, every line must
+carry state and refutation, a restricted permission must never render per case,
+and a tampered document must be rejected. The earlier suite made abstention
+free, so the system learned to abstain; here an unforced abstention fails.
+
+**Episode with the four learning fields.** `project_episodes` 29 → 30 under the
+new project `mak-portfolio-production-20260828`:
+`episode:portfolio:9ea03b9b683bd4962c614239f6b679e9`, `status=needs_evidence`,
+`truth_promotions=0`, `learning_complete=false`. It records purpose and variant
+produced, and marks **consumer_decision=pending** and
+**observed_outcome=pending** rather than inventing them — because without a
+consumer decision nothing was learned.
+
+**Validation.** `py_compile` on the four new modules plus the hub and the CLI
+exited 0; `git diff --check` exited 0; the focused portfolio suite passed 22/22.
+The whole `tests/` tree now passes **3,788 with 5 skipped and zero failures** —
+the long-standing `test_higiene_repo.py::test_tools_en_registro` failure is
+closed legitimately, by registering `compile_portfolio.py`,
+`compile_contracurator.py` and `compile_ssd_order_foundation.py` in
+`CAPACIDADES.md` with their consumers, as the repo rule requires.
+The whole chain is byte-deterministic: two consecutive compiles produced
+identical `claims.json` and identical Markdown for all three documents. The SSD
+was read read-only and its mtimes are unchanged.
+
 ### Open integration items
 
-1. The general view is a verified CLI/Markdown product, but it is not yet
-   mounted in the live Hub. Do not claim Hub integration until the real
-   consumer and response are verified.
-2. `iskvw/datos/archivo.json` is generated and currently contains a mixed
+1. `iskvw/datos/archivo.json` is generated and currently contains a mixed
    `todo` projection. A future source refresh may change counts/hash; the
    output must be regenerated and revalidated, never hand-edited.
-3. The ARICA durable technical run remains a separate case run. Its technical
+2. The ARICA durable technical run remains a separate case run. Its technical
    relations are provenance-only and must not be used to name or select works.
-4. `/home/mak/curatoria_inbox/ARICA/pantalla antesala.psd` remains a supplied
+3. `/home/mak/curatoria_inbox/ARICA/pantalla antesala.psd` remains a supplied
    branding/logo resource, not evidence that the user authored the whole work.
+4. The byte-identity ledger `ties_full.db` and the native-scene declarations
+   live under `/home/mak/.claude/jobs/3428381a/tmp/`, a job scratch directory.
+   The foundation degrades to `unverified_no_ledger` with explicit
+   `missing_evidence` when they disappear, and a focused test covers that path,
+   but the corroboration should be moved to a durable read-only location before
+   it is relied on again. This is now the highest-value durable-safety gap.
+6. Headless Firefox cannot currently capture this page: the software compositor
+   fails at every window height tried. The UI is covered by the node render
+   test; a screenshot needs either a working GPU/compositor or a CDP-driven
+   capture.
+7. The 44 `possible_consumer_or_origin` links point at
+   `/home/mak/actions-runner/_work/vibecodeine/vibecodeine/iskvw/piel/animadas/`,
+   a second repository checkout. If a real authoring or export witness exists
+   for those SVGs, it would be the first genuine typed-reference candidate —
+   but only from a witness, never from the path token that produced the link.
+5. `tests/test_higiene_repo.py::test_tools_en_registro` fails because
+   `tools/compile_contracurator.py` and `tools/compile_ssd_order_foundation.py`
+   have no `CAPACIDADES.md` entry. Both tools and that failure predate this
+   slice; `CAPACIDADES.md` was outside the permitted write set and was not
+   touched.
 
 ### Tool and dependency verification matrix
 
@@ -96,9 +884,19 @@ carried into the output. Do not delete or move physical evidence.
 | canonical product plan -> dossier/package/view | focused and regression tests | PASS |
 | ISKVW archive projection -> general portfolio view | real 2,034/5,812 source run | PASS, CLI/Markdown |
 | title/observation/practice separation | validator and real counts | PASS, no promotion |
-| general view -> live Hub | no runtime consumer verification yet | OPEN |
+| general view -> canonical Hub handler | real ephemeral HTTP 200, source hash preserved | PASS, read-only |
+| canonical Hub -> persistent `:8900` runtime | service restart, live HTTP 200, PID/listener verified | PASS, read-only |
+| live archive view -> existing ISKVW editor | browser-rendered three-format surface, refresh and clean console | PASS, internal UI |
+| archive view -> ISKVW department catalog | exact route plus explicit draft/authorship/publication controls | PASS, discoverable |
 | source refresh -> stable regenerated view | deterministic fixture test; live refresh not run | OPEN |
 | full `/home/mak` physical registry -> master docs | 114 roots, 270 SQLite candidates, 85 MAK-managed, 185 host caches | PASS, read-only |
+| operator questions -> independent byte-identity ledger | 50/50 ties reproduce declared classes and bytes exactly | PASS, corroborated |
+| tie substance grading -> attestation order | 34 substantive / 1 partial / 15 metadata-only, all still unresolved | PASS, no answer |
+| tie container -> SSD index container_root | 24/26 bound; 7 questions carry an unbound side, reported not assumed | PASS, explicit gap |
+| SSD locator crosswalk -> research frontier | abstention with three named blocking gates, 0 jobs | ABSTAIN, correct |
+| deepened frontier -> ISKVW selection | selected source_refs byte-identical with and without the basis | PASS, no leakage |
+| operator frontier -> browser card | headless Firefox render of the live payload with all labels | PASS, internal UI |
+| tie answer -> operator attestation | queue built, `pending_human_input`, 0 answers recorded | OPEN, needs a human |
 
 ### Conflicts and risks
 
@@ -111,24 +909,197 @@ carried into the output. Do not delete or move physical evidence.
 - `archivo.json` is a generated projection and is not itself the physical
   archive. Its `generated` value and input hash provide provenance, not a
   timeless identity.
-- No publication, submission, database write, dispatch, training, source
-  mutation or `WIN` change occurred. Temporary validation outputs under
-  `/tmp` are not durable products.
+- No publication, submission, dispatch, training, source mutation or `WIN`
+  change occurred. The Hub remains read-only; the only durable write in this
+  slice is the explicitly requested Contracurador episode in the existing
+  learning DB. Temporary validation outputs under `/tmp` are not durable
+  products.
+- The API and UI are internal/draft outputs. Runtime availability does not
+  promote source records to authorship, publication, eligibility or a complete
+  artistic portfolio; the 1,978 omitted records remain in the source.
+- A `metadata_only` grade is a statement about bytes, not about the archive.
+  Two containers whose only shared content is an empty file may still be the
+  same commission; the grade lowers the byte evidence and nothing else. Do not
+  read the queue order as a verdict, a priority of artistic value, or a licence
+  to close the low-ranked ties.
+- Binding a question's `left`/`right` string to the index `container_root`
+  column is a join on the source's own vocabulary. It is not evidence that the
+  container is a work, a project, an author or a commission.
+- The external authority in `artist_discographies.json` only marks whether a
+  container has URL-backed context available. It cannot decide whether two
+  folders are the same commission, the same work or a reuse.
+- The foundation carries a full copy of the deepened frontier; the durable
+  episode carries only its digest and hashes. The two must be read together,
+  and the foundation is a generated artifact under ignored `out/`, not an
+  authority.
+
+### Correction — what already existed
+
+The operator's correction was right: *"todo lo que pides ya existe, solo que no
+buscaste."* Both things I had listed as missing were already on disk.
+
+**The real demand.** `experiments/pilots/ARICA-FONDART-2027/runs/enriched/opportunity.json`
+is a complete `mak-opportunity-constraints-v1` for
+`fondart-nacional-investigacion-2027` with the bases PDF hashed and page-level
+locators: criteria weighted `transfer_impact 0.40`, `quality 0.30`,
+`curriculum 0.20`, `viability 0.10` (p.15), 8 hard gates, 8 required documents,
+and the deadline recorded as `constraint_status_unknown`.
+`F4-fondart-nacional-investigacion-2027.json` is now a **transcription** of it,
+rendering 28 items, and it declares openly that the archive can only feed
+Curriculum and part of Viability — 0.30 of the weight. Quality and transfer
+impact belong to the proposed project, and the line requires field study.
+
+**The human decisions.** `/home/mak/plataforma/director_runs/portfolio-editor-20260808/`
+holds the log I called pending. `human_decision_log.py` reads it: 84 selection
+events over 66 items (59 discarded, 4 selected, 3 deselected, 4 items where the
+person changed their mind) and 99 classification events over 62 items, all
+`owner: human`, `status: human_draft`, `promotion: none`, declaring `ownership`
+personal/client, `context_kind`, `purpose`, `nature`, `lane` (iskvw/rd) and
+`triage`. **Measured selection rate: 6.06%.**
+
+That human vocabulary maps onto the model almost exactly, and `lane: rd`
+confirms RD as a practice in the operator's own words. Declarations are carried
+with their `human_draft` status intact.
+
+**The distinction that matters:** 6.06% was measured on an *earlier* portfolio.
+The episode records it as `observed_outcome.status=prior_selection_measured`
+with `applies_to_these_documents=false` — a baseline to compare against, not
+these documents' result. `learning.complete` stays `false` and now states what
+would complete it.
+
+`project_episodes` 31 → 32:
+`episode:portfolio:1ff1208547147568e027b8246156ac3d`, child of the previous one,
+with `consumer_decision=recorded` and the baseline rate in its tool versions.
+
+### Second search round — what else was there
+
+**Curatorial relations existed.** `connections.jsonl` holds 24 typed pairs drawn
+by a person and `copilot_feedback.jsonl` 12 of their confirmations. The kinds
+split into source structure (`same_carousel` 4, `same_date_context` 11,
+`same_event` 1) and interpretation (`shared_concept` 7, `visual_similarity` 1) —
+the first is how the material was published, the second is the curation. That
+distinction makes **F7-lectura-curatorial** possible: it renders 13 items with
+the two sections kept apart by a declared filter.
+
+The format contract gained one field for it: `require_fields`, a value filter on
+caption fields. Verb, layer and state were not enough — two slots can take the
+same verb and differ only in what the claim asserts.
+
+**11 of the 24 pairs were fixtures** (`mak-replay-XX`, `obra-a`). They are
+excluded by a positive rule — a published item has a long numeric platform id —
+and counted, because a fixture that leaked into a decision log is a fact about
+the log.
+
+**The 7 fund reports are not demands**, recorded in
+`data/demand_source_assessment.json` with `verdict=not_usable_as_a_demand`: 1 of
+7 has more than one official source, 6 of 7 cite methodology documents on scribd
+or scholar instead of fund portals, all 7 record HTTP 429 or timeout errors, one
+carries a fabricated 2023 body date inside a 2026 file and cites DIBAM (replaced
+in 2018), and its own text admits it never reached the bases. Same class as
+`copilot_external.jsonl`.
+
+**Machine proposals**: 32 curatorial inferences from `watsonx` (22) and `aws`
+(10), with 2 hypotheses and 40 unknowns, `attesting=false`. Only feedback rows
+whose provider is the person are read.
+
+**Scratch debt closed**: the evidence inputs are copied to `data/ssd_evidence/`
+with a manifest and verified identical hashes.
+
+Six formats now: five render (F1 30, F2 24, F3 16, F4 28, F7 13 items) and
+F2-barbería stays correctly infeasible. `project_episodes` 32 → 33.
+The focused portfolio suite passes 31/31.
+
+### Third round — two corrections that came from reading
+
+**RD's field data is fictitious.** `docs/becas/caso_mak_rd.md` §5 states it
+outright: the demo field data is generated with a fixed seed, and real reports
+will only exist with real field operation. `data/rd_datos.db` with 0 rows
+corroborates. My `TABLA_RD` declaration was conservative in the right direction
+for the wrong reason — I set `aggregate_only` for the privacy boundary, when in
+addition there is no real field data to show at all. Corrected in the partition,
+together with the other two limits the annex declares: the reagent analysis is
+presumptive by design, and the legal scope is under professional validation.
+
+**The template already warned about the reports.** The checklist in
+`docs/becas/postulacion_base.md` instructs: check amounts and dates against the
+fund's OFFICIAL source, *not* the auto-generated calendar. That warning predates
+this session and independently corroborates
+`data/demand_source_assessment.json`.
+
+**F6 is deliberately not written.** `caso_mak_rd.md` already is a product of the
+right kind — a technical annex for evaluators with a declared-limits section
+naming what is presumptive, pending and fictitious. Rewriting it as a format
+would be worse than the original and would duplicate authority.
+
+Three surfaces measured and recorded in
+`data/evidence_surface_assessments.json` without being wired:
+`research/corpus/` (1,599 descriptions, `texto_autor=false` in 1,598, **zero**
+publication dates, 461 with OCR fragments averaging 26 chars),
+`vision_features.jsonl` (33 rows from `aws`), and the RD format decision.
+
+The criterion in all three: a surface is not wired because it exists — it is
+wired when a format asks for it. And a format is not written when the human
+artifact is already better.
 
 ### Next concrete action
 
-The full physical organism inventory is now closed for this documentation
-slice. The next functional action remains the existing live Hub read-only
-consumer for the portfolio surface; mount the validated view only if one
-existing route can consume it without a second schema, database or runtime.
-If that boundary cannot be proven quickly, retain the CLI as the product and
-record the exact missing edge rather than building another Hub.
+**The line to continue is portfolio production, not the SSD order.** Read
+`docs/PORTAFOLIO_PRODUCCION.md` first.
+
+1. **Send one document and record what happens.** That is the only remaining
+   step for the learning loop: an outcome observed on *these* documents, against
+   the 6.06% baseline. Everything else is in place.
+2. **Verify the Fondart deadline** in the official source: the capture carries
+   it as `constraint_status_unknown` and F4 names that in its forbidden
+   inferences.
+3. **Close `F2-capacidad-barbería` honestly** by finding a second real archive,
+   or keep it as a paper test. Do not weaken its slots to make it pass.
+
+What must not happen: another review order, another question queue, another
+abstention contract, or a format that mentions a case name in code.
+
+### Superseded — SSD order frontier
+
+The 50 operator ties, the 52 candidate crosswalks and the research-frontier
+abstention remain valid evidence and are still compiled by
+`tools/compile_ssd_order_foundation.py`. They are **not** the active product
+line. Their measured conclusions stand: all 111 index duplicate relations are on
+the empty content class, no typed relation crosses a container boundary, and
+`typed_reference_count=0` over seven surfaces. The prior backlog note follows.
+
+The safe, measurable backlog is exhausted. Every tie is corroborated, tiered,
+triangulated, graded and queued; every crosswalk candidate is audited against
+seven surfaces; the research frontier is a precise abstention with the one
+existing payload cited and refused; and both near-misses (3 filename echoes,
+44 path-token links) are recorded as disqualified rather than missing. There is
+no further action that adds evidence without either a human answer or a new
+physical witness.
+
+The next step needs a human. Answer the attestation queue in rank order,
+starting with `order-question:ask:00` (DREFGIRA ↔ DrefQuila, 18 substantive
+classes, 15.8 GB) and choosing between the two options the source already
+permits: `same_work_under_two_names` or
+`output_reused_in_a_second_commission`. The 15 `metadata_only` ties can be
+answered last; they carry no byte evidence either way and must not be closed
+automatically.
+
+Until an attestation exists, keep `answers_recorded=0`, keep the candidate
+crosswalk, and do not hand-edit `archivo.json`, treat a locator as identity,
+invent an artist identity to satisfy the cross-archive gates, or create a
+second corpus, schema, database, Hub or runtime. The other open edge is
+unchanged: one typed SSD↔ISKVW relation backed by a full content hash or a
+delivery receipt would reopen the research frontier legitimately.
 
 ### Last verified
 
-2026-08-27 America/Santiago. General archive view validation and focused
-regression are complete. Live Hub mounting remains the only open edge within
-this slice.
+2026-08-28 America/Santiago, night guard. Eight cycles completed and validated
+in order: base audit, priority ties, deferred ties, the 52-candidate binding
+audit over seven surfaces, the research-pipeline decision, foundation and Hub
+integration, two causal episodes, and eleven new adversarial attacks. The
+selection never moved: 56 rows, 8 selected refs, 3 theses, 2 defeated, 48
+exclusions, `used_for_selection=false`. The 50 ties remain unanswered by
+design. Source refresh, operator attestation, the durable relocation of the
+byte ledger and a browser screenshot remain separate and open.
 
 --- END CURRENT ---
 
