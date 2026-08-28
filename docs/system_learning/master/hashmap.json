@@ -1,6 +1,6 @@
 {
   "schema": "mak-system-master-hashmap-v2",
-  "map_id": "map:mak-causal-operating-system:2026-08-26",
+  "map_id": "map:mak-causal-operating-system:2026-08-27",
   "node_key_policy": "Stable functional identity, never a case name or filesystem label alone.",
   "nodes": [
     {"id": "world:artistic-archive", "class": "authority", "state": "read_only_source"},
@@ -63,7 +63,27 @@
     {"id": "store:intake-snapshots", "class": "application_intake_projections", "state": "2_snapshots_integrity_ok"},
     {"id": "store:pilot-captures", "class": "bounded_pilot_captures", "state": "2_stores_integrity_ok"},
     {"id": "store:execution-snapshots", "class": "historical_execution_evidence", "state": "3_stores_integrity_ok"},
-    {"id": "store:archaeology", "class": "historical_analysis_output", "state": "28_tables_265742_rows_integrity_ok"}
+    {"id": "store:archaeology", "class": "historical_analysis_output", "state": "28_tables_265742_rows_integrity_ok"},
+    {"id": "world:mak-linux-organism", "class": "physical_scope", "state": "114_non_win_top_level_entries_measured"},
+    {"id": "boundary:win-exclusion", "class": "protected_historical_boundary", "state": "excluded_and_untouched"},
+    {"id": "registry:physical-organism", "class": "complete_physical_inventory", "state": "mak-physical-organism-registry-v1"},
+    {"id": "root:flujo", "class": "authoring_baseline", "state": "active_source"},
+    {"id": "root:plataforma", "class": "runtime_projection", "state": "live_process_source_observed"},
+    {"id": "root:research", "class": "research_surface", "state": "active"},
+    {"id": "root:curatoria-inbox", "class": "protected_artistic_input", "state": "present_read_only_by_default"},
+    {"id": "root:rd", "class": "rd_source_surface", "state": "separate_authority"},
+    {"id": "root:portfolio-media", "class": "media_reference_surface", "state": "present"},
+    {"id": "root:indexes", "class": "cross_root_index_surface", "state": "projection_only"},
+    {"id": "root:labs", "class": "bounded_experiment_surface", "state": "non_authoritative"},
+    {"id": "root:actions-runner", "class": "ci_transport_surface", "state": "replica"},
+    {"id": "root:models", "class": "optional_model_surface", "state": "capability_unproven"},
+    {"id": "root:xio-puente", "class": "external_bridge_surface", "state": "isolated"},
+    {"id": "runtime:hub-8900", "class": "live_consumer", "state": "listener_observed"},
+    {"id": "runtime:research-8890", "class": "live_consumer", "state": "listener_observed"},
+    {"id": "runtime:codex-8891", "class": "live_consumer", "state": "listener_observed"},
+    {"id": "runtime:ollama-11434", "class": "local_provider", "state": "listener_observed_no_model_claim"},
+    {"id": "mount:cloud-drives", "class": "external_mount", "state": "not_scanned_not_authority"},
+    {"id": "store:host-application-cache", "class": "host_cache_inventory", "state": "185_files_excluded_from_MAK_authority"}
   ],
   "links": [
     {"id": "edge:observe", "from": "world:artistic-archive", "to": "sensor:archive-observer", "type": "observed_by", "preserves": ["relative_path", "physical identity", "content identity", "errors", "mtime state"]},
@@ -132,7 +152,24 @@
     {"id": "edge:rd-separation", "from": "store:rd-private", "to": "store:rd-catalog", "type": "privacy_boundary", "status": "isolated", "preserves": ["no implicit copy", "empty runtime state", "RD ownership"]},
     {"id": "edge:pilot-to-memory", "from": "store:pilot-captures", "to": "store:mak-knowledge", "type": "manifest_receipt_projection", "status": "optional_case_scoped", "preserves": ["pilot scope", "hash", "validator status", "no promotion"]},
     {"id": "edge:memory-to-intake", "from": "store:mak-knowledge", "to": "store:intake-snapshots", "type": "rebuildable_product_projection", "status": "derived", "preserves": ["Project IR refs", "requirements", "provenance"]},
-    {"id": "edge:history-isolated", "from": "store:archaeology", "to": "registry:database-topology", "type": "historical_context_only", "status": "non_authoritative", "preserves": ["analysis evidence", "no runtime state"]}
+    {"id": "edge:history-isolated", "from": "store:archaeology", "to": "registry:database-topology", "type": "historical_context_only", "status": "non_authoritative", "preserves": ["analysis evidence", "no runtime state"]},
+    {"id": "edge:physical-organism-scope", "from": "world:mak-linux-organism", "to": "registry:physical-organism", "type": "complete_physical_inventory", "status": "measured_read_only", "preserves": ["114 non-WIN top-level entries", "root paths", "nested repositories", "live runtime observations", "external mount boundaries"]},
+    {"id": "edge:protect-win", "from": "boundary:win-exclusion", "to": "world:mak-linux-organism", "type": "scope_exclusion", "status": "enforced", "preserves": ["WIN historical evidence", "no delete", "no move", "no merge"]},
+    {"id": "edge:organism-to-flujo", "from": "registry:physical-organism", "to": "root:flujo", "type": "authoring_baseline_selection", "status": "active", "preserves": ["source ownership", "contracts", "tests", "documentation"]},
+    {"id": "edge:organism-to-platform", "from": "registry:physical-organism", "to": "root:plataforma", "type": "runtime_projection_inventory", "status": "observed", "preserves": ["runtime path", "listener", "source boundary"]},
+    {"id": "edge:flujo-platform-runtime", "from": "root:flujo", "to": "root:plataforma", "type": "source_to_runtime_projection", "status": "process_observed", "preserves": ["hub.py source", "runtime must be revalidated after source changes"]},
+    {"id": "edge:hub-listener", "from": "root:plataforma", "to": "runtime:hub-8900", "type": "live_listener_observation", "status": "observed", "preserves": ["127.0.0.1:8900", "process presence", "no health claim"]},
+    {"id": "edge:research-listener", "from": "root:research", "to": "runtime:research-8890", "type": "live_listener_observation", "status": "observed", "preserves": ["127.0.0.1:8890", "process presence", "no API health claim"]},
+    {"id": "edge:codex-listener", "from": "root:flujo", "to": "runtime:codex-8891", "type": "live_listener_observation", "status": "observed", "preserves": ["127.0.0.1:8891", "process presence", "no consumer health claim"]},
+    {"id": "edge:flujo-research-surface", "from": "root:flujo", "to": "root:research", "type": "contract_consumption", "status": "declared_and_tested", "preserves": ["opportunity evidence", "research jobs", "triangulation", "no authority collapse"]},
+    {"id": "edge:flujo-rd-surface", "from": "root:flujo", "to": "root:rd", "type": "projection_crosswalk", "status": "separate_authority", "preserves": ["rd.db", "rd_datos.db", "privacy boundary"]},
+    {"id": "edge:flujo-portfolio-media", "from": "root:flujo", "to": "root:portfolio-media", "type": "read_only_media_reference", "status": "declared", "preserves": ["media path", "product provenance", "no media mutation"]},
+    {"id": "edge:indexes-to-memory", "from": "root:indexes", "to": "store:knowledge-projections", "type": "index_to_contract", "status": "read_only", "preserves": ["source hash", "archive refs", "projection status"]},
+    {"id": "edge:runner-not-authority", "from": "root:actions-runner", "to": "root:flujo", "type": "ci_transport_replica", "status": "non_authoritative", "preserves": ["workflow result", "checkout separation", "no source overwrite"]},
+    {"id": "edge:model-capability-boundary", "from": "root:models", "to": "runtime:ollama-11434", "type": "optional_provider_boundary", "status": "listener_only", "preserves": ["model config", "provider identity", "no inference claim"]},
+    {"id": "edge:cloud-mount-boundary", "from": "mount:cloud-drives", "to": "world:mak-linux-organism", "type": "external_storage_boundary", "status": "not_scanned", "preserves": ["mount identity", "no implicit source authority", "no unbounded traversal"]},
+    {"id": "edge:host-cache-exclusion", "from": "store:host-application-cache", "to": "registry:physical-organism", "type": "physical_context_only", "status": "excluded_from_MAK_knowledge", "preserves": ["185 detected files", "no browser/session ingestion", "no semantic claims"]},
+    {"id": "edge:organism-database-registry", "from": "registry:physical-organism", "to": "registry:database-topology", "type": "full_scope_database_crosswalk", "status": "measured_read_only", "preserves": ["270 SQLite candidates", "85 MAK-managed", "185 host caches", "85 integrity checks passed"]}
   ],
   "control_loops": [
     {

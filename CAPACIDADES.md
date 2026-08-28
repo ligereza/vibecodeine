@@ -12,10 +12,14 @@ contra el repo real; the capability and database baseline was refreshed on
 de aca no calza con lo que ves, el repo cambio despues -- confia en el repo,
 no en este doc, y actualizalo en el mismo PR que lo detecte.
 
-## 0. Distributed system authority (measured 2026-08-13)
+## 0. Distributed system authority (physical scope measured 2026-08-27)
 
-This repository is a projection of a distributed organism, not its complete
-material inventory. The measured authority order is:
+This repository is the authoring projection of a distributed organism. The
+complete physical scope outside `WIN` is now measured in
+`docs/system_learning/master/inventory.json:physical_organism_registry`; the
+repo remains the source of versioned contracts, tests and documentation, not a
+reason to pretend that external runtimes are inside Git. The measured
+authority order is:
 
 1. Windows and MAK Linux local surfaces: files, databases, memories, mounts,
    services, and generated outputs determine what physically exists.
@@ -62,7 +66,8 @@ mass folder migration implied by this architecture.
 ### Reconciliación física de bases — 2026-08-27
 
 El registro completo está en
-`docs/system_learning/master/inventory.json:database_registry`. La regla
+`docs/system_learning/master/inventory.json:physical_organism_registry` y su
+catálogo de bases en `database_registry`. La regla
 operativa es una autoridad por dominio y conexiones por contratos, hashes y
 refs; “consolidar” no significa copiar tablas ni borrar snapshots.
 
@@ -80,9 +85,48 @@ refs; “consolidar” no significa copiar tablas ni borrar snapshots.
 | `out/archaeology/*.sqlite` | arqueología histórica de sesiones/repositorio | evidencia histórica, no runtime |
 
 Todas las rutas anteriores tienen hash SHA-256 y conexiones declaradas en el
-master. No hay una “base duplicada” que deba eliminarse: los nombres parecidos
-representan snapshots, privacidad, dominios u outputs distintos. `WIN`, media,
-artwork, credenciales y bases no listadas no se tocan automáticamente.
+master. La medición completa fuera de `WIN` encontró 270 archivos con
+extensiones SQLite: 85 pertenecen a superficies MAK y 185 son cachés del
+host/aplicaciones. Los 85 pasaron `integrity_check`; los 185 están registrados
+como contexto físico, pero no son memoria MAK ni fuente semántica.
+
+La clasificación completa y reproducible es:
+
+| Clase física | Archivos | Regla |
+|---|---:|---|
+| memoria, Research, labs, índices, pilotos, Curatoria y outputs | 46 | stores de dominio o snapshots; autoridad declarada por ruta |
+| arqueología, runner, agentes y caches de crawler | 39 | evidencia/soporte no autoritativo; no se fusionan con MAK memory |
+| caché host/aplicaciones | 185 | detectados, excluidos del conocimiento MAK |
+
+No hay una “base duplicada” que deba eliminarse: los nombres parecidos
+representan snapshots, privacidad, dominios, réplicas u outputs distintos.
+`WIN`, media, artwork, credenciales y bases no listadas no se tocan
+automáticamente. El inventario usa `/home/mak` como raíz, excluye
+`/home/mak/WIN` y no recorre los montajes `GoogleDrive`/`OneDrive`.
+
+### Organismo físico MAK fuera de WIN — 2026-08-27
+
+La autoridad operativa no termina en `flujo`. El registro maestro enumera las
+114 entradas de primer nivel y las clasifica sin moverlas:
+
+| Superficie | Función | Estado |
+|---|---|---|
+| `flujo` | autoría, contratos, tests, docs, CLI | baseline activo |
+| `plataforma` | runtime proyectado del Hub | proceso observado |
+| `research`, `vigia` | corpus, jobs, capturas, vigencia y triangulación | activos |
+| `curatoria`, `curatoria_inbox`, `RD` | órganos, inputs artísticos y fuente RD | protegidos/separados |
+| `portfolio_media`, `indexes` | media y catálogos transversales | referencias derivadas |
+| `labs`, `experiments`, `state`, `out` | pruebas, pilotos, arqueología | no autoritativos |
+| `actions-runner`, `tools`, `src`, `apps` | transporte y herramientas auxiliares | fuera de autoridad de producto |
+| `models`, `model-config`, `blender*` | proveedores y runtimes creativos | capacidad condicionada |
+| `xio_puente`, `n8n-local`, `searxng` | puentes/runtimes específicos | aislados; no core |
+
+Runtimes observados: Hub `127.0.0.1:8900`, Research `127.0.0.1:8890`, Codex
+`127.0.0.1:8891`, Ollama `127.0.0.1:11434`, Open WebUI `:8080` y el runner de
+Actions. La escucha prueba presencia del proceso, no salud del servicio,
+capacidad del proveedor ni validez de sus datos. `GoogleDrive` y `OneDrive`
+son montajes externos no escaneados; `WIN` es histórico protegido y queda
+fuera de este mapa.
 
 ## 1. Mapa index del repo
 

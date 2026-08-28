@@ -870,11 +870,17 @@ Este registro no abre otro piso: fija cómo se considera limpio el mismo plan.
 3. Las bases de `research/`, `labs/`, `experiments/pilots/` y
    `out/archaeology/` son capturas, snapshots o evidencia histórica. Cada una
    conserva su hash, fecha y alcance; ninguna se presenta como runtime actual.
-4. El inventario físico completo y los hashes de los stores están en
-   `inventory.json:database_registry`; el mapa causal de sus conexiones está
-   en `hashmap.json`. Si una ruta no aparece ahí, queda como gap de inventario,
+4. El inventario físico completo fuera de `WIN` está en
+   `inventory.json:physical_organism_registry`; `database_registry` mantiene
+   la clasificación de 270 archivos SQLite detectados (85 superficies MAK,
+   185 caches host/aplicación). El mapa causal de las conexiones está en
+   `hashmap.json`. Si una ruta no aparece ahí, queda como gap de inventario,
    no como autoridad implícita.
-5. La validación de orden es reproducible: SQLite `integrity_check`, JSON
+5. La frontera física es `/home/mak` menos `/home/mak/WIN`; los montajes
+   `GoogleDrive` y `OneDrive` se registran pero no se recorren. `flujo` es el
+   baseline de autoría; `plataforma`, Research, Curatoria, RD, Vigía,
+   Portfolio, Labs, runner, modelos y puentes tienen owner y estado propio.
+6. La validación de orden es reproducible: SQLite `integrity_check`, JSON
    parseable, tests del consumidor, `git diff --check`, estado local limpio y
    `origin/main` sin ramas permanentes adicionales. Ningún paso de este orden
    elimina evidencia, media, artwork, `WIN` o bases.
