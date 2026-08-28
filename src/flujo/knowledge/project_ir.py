@@ -1040,6 +1040,8 @@ class LearningStore:
         if status not in EPISODE_STATES:
             raise ProjectIRError(f"episode_bad_status: {status}")
         episode_id = episode_id or "episode_" + uuid.uuid4().hex
+        explicit_started_at = started_at is not None
+        explicit_finished_at = finished_at is not None
         start = started_at or now_iso()
         source_snapshot_hash = _text(source_snapshot_hash, 128)
         code_commit = _text(code_commit, 128)
@@ -1068,7 +1070,16 @@ class LearningStore:
                 (episode_id,),
             ).fetchone()
             if existing:
-                if tuple(existing) == payload + (start, finished_at):
+                # A caller that supplies a stable episode id but no timestamps
+                # is replaying the same logical write.  The generated start
+                # time is storage metadata, not episode identity; requiring it
+                # to match made otherwise identical retries conflict.
+                existing_core = tuple(existing[:-2])
+                times_match = (
+                    (not explicit_started_at or existing[-2] == start)
+                    and (not explicit_finished_at or existing[-1] == finished_at)
+                )
+                if existing_core == payload and times_match:
                     return episode_id
                 raise ProjectIRError(f"episode_id_conflict: {episode_id}")
             con.execute(

@@ -7,8 +7,8 @@
 
 Inventario de arranque rapido. Objetivo: empezar un proyecto nuevo (dentro o
 fuera de este repo) sin tener que leer/buscar por todo `flujo`. Verificado
-contra el repo real; the inventory baseline is 2026-08-15 (commands executed,
-not memory). If something
+contra el repo real; the capability and database baseline was refreshed on
+2026-08-27 (commands executed, not memory). If something
 de aca no calza con lo que ves, el repo cambio despues -- confia en el repo,
 no en este doc, y actualizalo en el mismo PR que lo detecte.
 
@@ -58,6 +58,31 @@ Git transport. A transport manifest with source, hash, physical node,
 organism owner, database/memory authority, Git eligibility, and promotion gate
 is required before any selected material is projected into Git. There is no
 mass folder migration implied by this architecture.
+
+### Reconciliación física de bases — 2026-08-27
+
+El registro completo está en
+`docs/system_learning/master/inventory.json:database_registry`. La regla
+operativa es una autoridad por dominio y conexiones por contratos, hashes y
+refs; “consolidar” no significa copiar tablas ni borrar snapshots.
+
+| Superficie | Autoridad/uso | Estado medido |
+|---|---|---|
+| `data/mak_knowledge.db` | memoria MAK, Project IR, contexto, episodios y aprendizaje | activa, 35 tablas, 387.089 filas, integridad OK |
+| `data/rd.db` | proyección regenerable del catálogo RD | activa, 20 tablas, 7.585 filas, integridad OK |
+| `data/rd_datos.db` | frontera privada de datos de campo RD | activa, 3 tablas, 0 filas, integridad OK |
+| `data/flujo.db` | índice operativo de flyers | activa, 1 tabla, 6 filas, integridad OK |
+| `research/jardines_interpretativos/jardines_interpretativos.sqlite` | registro de jobs, fuentes, claims y resultados Research | activo, 23 tablas, 276 filas, integridad OK |
+| `research/corpus/**/sources.sqlite` | capturas versionadas de Research/Fondart | 14 snapshots, todos íntegros y no intercambiables |
+| `research/intake/**/intake.sqlite` | proyecciones de intake derivadas de Project IR | 2 snapshots, uno vacío y uno poblado, ambos íntegros |
+| `labs/**/archivo_index.sqlite` | índices y pruebas históricas de reconstrucción | 6 snapshots íntegros, no runtime único |
+| `experiments/pilots/**/sources.sqlite` | evidencia acotada por piloto | 2 stores íntegros, alcance de caso |
+| `out/archaeology/*.sqlite` | arqueología histórica de sesiones/repositorio | evidencia histórica, no runtime |
+
+Todas las rutas anteriores tienen hash SHA-256 y conexiones declaradas en el
+master. No hay una “base duplicada” que deba eliminarse: los nombres parecidos
+representan snapshots, privacidad, dominios u outputs distintos. `WIN`, media,
+artwork, credenciales y bases no listadas no se tocan automáticamente.
 
 ## 1. Mapa index del repo
 

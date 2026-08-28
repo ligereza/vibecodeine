@@ -51,7 +51,19 @@
     {"id": "projection:cross-archive-role-context", "class": "role_aware_context_projection", "state": "focused_real_smoke_pass_no_authorship_inference"},
     {"id": "evidence:dref-cross-context-probe", "class": "coverage_probe", "state": "read_only_four_context_probe_no_promotion"},
     {"id": "frontier:escarlata-research", "class": "research_frontier_projection", "state": "one_grouped_job_evidence_return_scoped_no_dispatch"},
-    {"id": "evidence:escarlata-research-return", "class": "captured_research_evidence", "state": "supported_candidate_public_collaboration_scope_only"}
+    {"id": "evidence:escarlata-research-return", "class": "captured_research_evidence", "state": "supported_candidate_public_collaboration_scope_only"},
+    {"id": "registry:database-topology", "class": "physical_authority_and_consumer_map", "state": "measured_2026-08-27"},
+    {"id": "store:mak-knowledge", "class": "active_primary_memory", "state": "35_tables_387089_rows_integrity_ok"},
+    {"id": "store:rd-catalog", "class": "regenerable_rd_projection", "state": "20_tables_7585_rows_integrity_ok"},
+    {"id": "store:rd-private", "class": "privacy_runtime_boundary", "state": "3_tables_0_rows_integrity_ok"},
+    {"id": "store:flujo-index", "class": "flyer_index_projection", "state": "1_table_6_rows_integrity_ok"},
+    {"id": "store:research-registry", "class": "research_job_registry", "state": "23_tables_276_rows_integrity_ok"},
+    {"id": "store:source-corpus-snapshots", "class": "versioned_research_captures", "state": "14_snapshots_integrity_ok"},
+    {"id": "store:archive-index-snapshots", "class": "archive_index_snapshots", "state": "6_snapshots_integrity_ok"},
+    {"id": "store:intake-snapshots", "class": "application_intake_projections", "state": "2_snapshots_integrity_ok"},
+    {"id": "store:pilot-captures", "class": "bounded_pilot_captures", "state": "2_stores_integrity_ok"},
+    {"id": "store:execution-snapshots", "class": "historical_execution_evidence", "state": "3_stores_integrity_ok"},
+    {"id": "store:archaeology", "class": "historical_analysis_output", "state": "28_tables_265742_rows_integrity_ok"}
   ],
   "links": [
     {"id": "edge:observe", "from": "world:artistic-archive", "to": "sensor:archive-observer", "type": "observed_by", "preserves": ["relative_path", "physical identity", "content identity", "errors", "mtime state"]},
@@ -111,7 +123,16 @@
     {"id": "edge:research-return", "from": "frontier:escarlata-research", "to": "evidence:escarlata-research-return", "type": "bounded_captured_evidence_return", "status": "materialized_scoped", "preserves": ["Apple Music source group", "YouTube source group", "supported_candidate", "public collaboration statement scope", "exact local delivery/content binding remains missing", "no relation promotion", "no dispatch", "no production DB write"], "evidence": "experiments/pilots/DREFQUILA/runs/cross-archive-escarlata-20260826/research-capture;experiments/pilots/DREFQUILA/runs/cross-archive-escarlata-20260826/research-result.json;experiments/pilots/DREFQUILA/runs/cross-archive-escarlata-20260826/research-triangulation.json"},
     {"id": "edge:harry-opportunity-enrichment", "from": "world:opportunity-ecosystem", "to": "case:harry-nach-holdout", "type": "cross_domain_replay_delta", "status": "materialized", "preserves": ["same practice input", "current_verified validity", "two semantic opportunity changes", "16 unresolved research jobs", "fit abstention"], "evidence": "experiments/pilots/HARRY-NACH-2026/runs/fondart-enriched-opportunity-20260826/opportunity-delta.json"},
     {"id": "edge:holdout-portability-gap", "from": "evidence:second-archive-replay", "to": "evidence:independent-artist-holdout", "type": "requires_independent_identity", "status": "person_scope_closed_subarchive_scope_open", "reason": "Harry Nach identity and archive replay are supported at person scope; HARRY CHILLAN remains a contextual subarchive binding and is not proof that every file belongs to one work or show"},
-    {"id": "edge:semantic-manifest-rehash", "from": "case:arica-fondart", "to": "store:knowledge-projections", "type": "disk_reopened_semantic_hash_validation", "status": "materialized", "preserves": ["manifest bytes", "canonical JSON output hashes", "run IDs"]}
+    {"id": "edge:semantic-manifest-rehash", "from": "case:arica-fondart", "to": "store:knowledge-projections", "type": "disk_reopened_semantic_hash_validation", "status": "materialized", "preserves": ["manifest bytes", "canonical JSON output hashes", "run IDs"]},
+    {"id": "edge:database-registry", "from": "world:artistic-archive", "to": "registry:database-topology", "type": "physical_store_inventory", "status": "measured_read_only", "preserves": ["absolute path", "table count", "row count", "sqlite integrity", "sha256", "authority class", "consumer"]},
+    {"id": "edge:mak-memory-authority", "from": "registry:database-topology", "to": "store:mak-knowledge", "type": "canonical_mak_memory", "status": "active", "preserves": ["Project IR", "practice/context", "operational events", "learning ledger"]},
+    {"id": "edge:archive-index-to-memory", "from": "store:archive-index-snapshots", "to": "store:mak-knowledge", "type": "typed_archive_projection", "status": "contracted", "preserves": ["archive refs", "snapshot hashes", "unknowns", "no physical merge"]},
+    {"id": "edge:research-corpus-to-memory", "from": "store:source-corpus-snapshots", "to": "store:mak-knowledge", "type": "opportunity_evidence_projection", "status": "contracted", "preserves": ["source version", "validity", "requirements", "evidence refs"]},
+    {"id": "edge:research-registry-to-memory", "from": "store:research-registry", "to": "store:mak-knowledge", "type": "job_result_crosswalk", "status": "bounded", "preserves": ["job id", "requirement id", "claims", "source refs"]},
+    {"id": "edge:rd-separation", "from": "store:rd-private", "to": "store:rd-catalog", "type": "privacy_boundary", "status": "isolated", "preserves": ["no implicit copy", "empty runtime state", "RD ownership"]},
+    {"id": "edge:pilot-to-memory", "from": "store:pilot-captures", "to": "store:mak-knowledge", "type": "manifest_receipt_projection", "status": "optional_case_scoped", "preserves": ["pilot scope", "hash", "validator status", "no promotion"]},
+    {"id": "edge:memory-to-intake", "from": "store:mak-knowledge", "to": "store:intake-snapshots", "type": "rebuildable_product_projection", "status": "derived", "preserves": ["Project IR refs", "requirements", "provenance"]},
+    {"id": "edge:history-isolated", "from": "store:archaeology", "to": "registry:database-topology", "type": "historical_context_only", "status": "non_authoritative", "preserves": ["analysis evidence", "no runtime state"]}
   ],
   "control_loops": [
     {

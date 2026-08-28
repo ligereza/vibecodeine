@@ -40,6 +40,12 @@ Do not delete or commit unreviewed local work.
 - Existing `src/flujo/knowledge/product_view.py` was extended with the pure
   `project_archive_portfolio_view()` consumer and strict validator. It does
   not create a database, rescan an archive, mutate media or infer authorship.
+- The physical database topology was reconciled read-only on 2026-08-27:
+  `data/mak_knowledge.db` is the active MAK memory; RD, flyer, Research,
+  archive-index, intake, pilot and archaeology stores retain separate
+  authority/classes and are connected only through existing contracts, hashes
+  and refs. All 33 discovered SQLite files passed `integrity_check` and were
+  recorded in `docs/system_learning/master/inventory.json`.
 - Existing `tools/render_product_view.py` now accepts `--archive` while
   retaining the prior plan/dossier/package mode. It renders JSON or Markdown
   from the same source.
