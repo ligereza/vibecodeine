@@ -65,6 +65,16 @@ Runtimes comprobados por proceso/listener: Hub `127.0.0.1:8900`, Research
 `:8080`, runner de Actions y los puentes rclone. Esto prueba presencia, no
 salud, capacidad del proveedor ni corrección de sus datos.
 
+## Regla de parada para tareas simples
+
+Una consulta de sólo lectura con alcance y formato acotados se resuelve con
+este estado actual y los archivos directamente nombrados. No debe disparar un
+escaneo del repositorio, una recalculación de hashes no solicitada, una
+consulta de base o servicio, ni una auditoría de consumidores. Una discrepancia
+ajena a la pregunta se registra brevemente y no abre otro trabajo. Esta regla
+no reduce los gates de una edición o integración: sólo evita que una pregunta
+pequeña se convierta en un diagnóstico no pedido.
+
 ## Current experimental frontier — 2026-08-25
 
 Los ciclos aislados C02–C04 demostraron observación nativa, límites de entrada
