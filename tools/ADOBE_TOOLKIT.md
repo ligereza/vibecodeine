@@ -28,7 +28,7 @@ temporales.
 
 ## Panel (addon) CEP
 
-Un solo panel acoplable para las tres apps. Ver `adobe_panel/README.md` para la
+Un solo panel acoplable para las tres apps. Ver `tools/adobe_panel/README.md` para la
 instalacion (activar PlayerDebugMode + copiar a la carpeta de extensiones CEP).
 El panel muestra distintos botones segun la app activa y ejecuta los mismos
 `.jsx` de arriba (fuente unica, sin duplicar).

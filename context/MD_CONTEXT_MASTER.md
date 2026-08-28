@@ -75,7 +75,7 @@ consumer or a provenance question, not by size alone.
 
 ## Exact duplicate groups
 
-### `corpus_olvido/corpus.md`
+### `projects/cultura/corpus_olvido/corpus.md`
 
 SHA-256: `22d6671915d29097142b8acb37bb19df4413329c0f13c3a562e05bf4cd3908fe`
 

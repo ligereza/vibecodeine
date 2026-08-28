@@ -67,7 +67,7 @@ vocabulario de la pieza, la regla doublecup— corría únicamente bajo
 tiempo cada nodo eran dos arcos**: un gradiente radial y un círculo sólido. Eso
 es el círculo con hilos que se ve el 95% del tiempo.
 
-`mejoras.nodo_glifo` en `datos/tablero.json` hace que el nodo use la MISMA
+`mejoras.nodo_glifo` en `iskvw/datos/tablero.json` hace que el nodo use la MISMA
 materia que la obra: el mismo campo, evaluado en la posición del nodo en vez de
 en el punto de la forma. No se inventó una estética: se aplicó la escrita un
 nivel más arriba. **Se publica apagada**; encenderla es del artista, igual que

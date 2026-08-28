@@ -18,12 +18,12 @@ ambas recuperaciones primero y sólo después carga el archivo de evaluación.
 - `bridge.py` — normalización, validación, baseline directo y puente mediado.
 - `evaluator.py` — carga separada de la verdad y cálculo de métricas.
 - `runner.py` — ejecución reproducible y salida JSON por stdout.
-- `fixtures/observations.json` — observaciones públicas y locales/nativas; no
+- `experiments/cycles/C03/blind_bridge/fixtures/observations.json` — observaciones públicas y locales/nativas; no
   contiene etiquetas de evaluación.
-- `fixtures/truth.json` — verdad separada para puntuar los seis queries.
-- `fixtures/observations_catalog_absent.json` y
-  `fixtures/truth_catalog_absent.json` — caso separado de catálogo ausente.
-- `tests/test_blind_bridge.py` — 9 pruebas `unittest` de stdlib.
+- `experiments/cycles/C03/blind_bridge/fixtures/truth.json` — verdad separada para puntuar los seis queries.
+- `experiments/cycles/C03/blind_bridge/fixtures/observations_catalog_absent.json` y
+  `experiments/cycles/C03/blind_bridge/fixtures/truth_catalog_absent.json` — caso separado de catálogo ausente.
+- `experiments/cycles/C03/blind_bridge/tests/test_blind_bridge.py` — 9 pruebas `unittest` de stdlib.
 
 ## Casos adversariales
 

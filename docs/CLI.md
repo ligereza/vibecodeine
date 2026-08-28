@@ -161,7 +161,10 @@ flujo airdrop status
 flujo airdrop apply "mensaje" --allow-airdrop-engine
 ```
 
-Runner recomendado para aplicar y probar en una pasada (ver `docs/AGENT_AIRDROP_PROTOCOL.md`):
+Runner recomendado para aplicar y probar en una pasada. Nota 2026-08-28: el
+`docs/AGENT_AIRDROP_PROTOCOL.md` que esta linea citaba **no existe**, y tampoco
+el directorio `_airdrop/` sobre el que opera toda esta familia. Ver
+`docs/SCRIPTS_INVENTORY.md`, seccion airdrop.
 
 ```bash
 py scripts/run_airdrop_checks.py "mensaje"

@@ -40,7 +40,7 @@ python3 tools/iconos_conjunto.py construir --raiz docs/cultura/ensayos/rave --ti
 ```
 
 > **Truco:** cada `.svg` funciona solo. Puedes arrastrar
-> `iconos/05-shoom-smiley-acid-house.svg` directo al navegador y verlo animado,
+> `docs/cultura/ensayos/rave/iconos/05-shoom-smiley-acid-house.svg` directo al navegador y verlo animado,
 > sin pasar por la galería. Así iteras más rápido.
 
 ---
