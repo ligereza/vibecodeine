@@ -166,6 +166,33 @@ Las bases existentes se conectan mediante contratos y refs, no mediante copias
 masivas ni joins por nombre. DuckDB, SQLite, índices o vectores pueden acelerar
 consultas y representación; no elevan el estatus epistemológico de sus filas.
 
+### Topología física reconciliada — 2026-08-27
+
+La limpieza operativa de MAK no significa reducir el número de archivos a la
+fuerza. Significa que cada store tiene una sola clase y un camino legible:
+
+```text
+archivo/indexes -> archive memory -> Project IR -> mak_knowledge.db
+fuentes Vigía   -> source captures -> constraints/fit -> Research + MAK memory
+RD catálogo     -> rd.db -> RD/serve/departments
+RD privado      -> rd_datos.db -> intake privado aislado
+flyers          -> flujo.db -> index/flyer consumers
+MAK memory      -> intake/product projections -> Portfolio/Postulación/Research
+```
+
+`data/mak_knowledge.db` es la memoria transversal activa de MAK, no un depósito
+para absorber las soberanías de RD ni los snapshots de Research. `data/rd.db`,
+`data/rd_datos.db` y `data/flujo.db` siguen siendo stores separados porque sus
+consumidores, privacidad y políticas de escritura son distintos. Las bases en
+`labs/`, `research/corpus/`, `research/intake/`, `experiments/pilots/` y
+`out/archaeology/` son snapshots, capturas o evidencia histórica; se conectan
+por hashes, contratos y referencias, nunca por una copia que borre su origen.
+
+El inventario físico, los conteos, los hashes y las conexiones están en
+`docs/system_learning/master/inventory.json` bajo `database_registry`; el
+mapa causal de sus consumidores está en `hashmap.json`. Esa pareja es la
+referencia única para distinguir autoridad, proyección, fixture y legado.
+
 ## Deep learning en el lugar correcto
 
 Los años de trabajo contienen supervisión natural: proyectos nativos, exports,

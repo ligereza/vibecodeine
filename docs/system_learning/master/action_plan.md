@@ -856,3 +856,33 @@ implícitos.
 
 Hasta entonces, el norte no es “cero bugs”. Es una causalidad cada vez más
 completa, portable, útil y honesta.
+
+## Baseline de orden operativo — 2026-08-27
+
+Este registro no abre otro piso: fija cómo se considera limpio el mismo plan.
+
+1. `data/mak_knowledge.db` es la memoria MAK activa y el único destino común
+   para las proyecciones MAK que ya tienen contrato; no se crea otra base de
+   autoridad.
+2. `data/rd.db`, `data/rd_datos.db` y `data/flujo.db` permanecen separados por
+   ownership, privacidad y consumidores. Se conectan mediante referencias y
+   crosswalks existentes, no mediante copias masivas.
+3. Las bases de `research/`, `labs/`, `experiments/pilots/` y
+   `out/archaeology/` son capturas, snapshots o evidencia histórica. Cada una
+   conserva su hash, fecha y alcance; ninguna se presenta como runtime actual.
+4. El inventario físico completo y los hashes de los stores están en
+   `inventory.json:database_registry`; el mapa causal de sus conexiones está
+   en `hashmap.json`. Si una ruta no aparece ahí, queda como gap de inventario,
+   no como autoridad implícita.
+5. La validación de orden es reproducible: SQLite `integrity_check`, JSON
+   parseable, tests del consumidor, `git diff --check`, estado local limpio y
+   `origin/main` sin ramas permanentes adicionales. Ningún paso de este orden
+   elimina evidencia, media, artwork, `WIN` o bases.
+
+### Criterio de cierre de esta limpieza
+
+El corte queda cerrado cuando el registro de stores, capacidades, estado,
+teoría, plan y handoff contienen la misma autoridad y fecha de medición; los
+consumidores declarados existen; los hashes se pueden repetir; y la única
+pendiente restante es una integración funcional explícita, no una confusión de
+ruta o de autoridad.

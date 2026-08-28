@@ -10,6 +10,30 @@ Este documento consolida decisiones durables. No reemplaza la evidencia
 histórica, no convierte cada experimento en una obligación y no afirma que una
 credencial funcione solo porque existe en un archivo de entorno.
 
+## Reconciliación de autoridad y bases — 2026-08-27
+
+La topología física medida y sus hashes están en
+`docs/system_learning/master/inventory.json:database_registry`; el mapa causal
+de conexiones está en `docs/system_learning/master/hashmap.json`. La autoridad
+operativa queda fijada así:
+
+```text
+data/mak_knowledge.db  = memoria MAK transversal
+data/rd.db             = proyección regenerable del catálogo RD
+data/rd_datos.db       = frontera privada de datos RD
+data/flujo.db          = índice de flyers FLUJO
+research/...sqlite     = Research/capturas versionadas
+labs/...sqlite         = índices y ejecuciones históricas
+experiments/...sqlite  = evidencia de pilotos acotados
+out/archaeology/...    = análisis histórico
+```
+
+Estas bases están conectadas por contratos, `artifact_ref`, `project_id`,
+`requirement_id`, `evidence_ref`, hashes y consumidores declarados. No se
+fusionan físicamente porque no comparten autoridad, privacidad ni ciclo de
+vida. “Limpio” significa que cada una tiene clase, owner, consumidor y estado
+visible; no significa eliminarla ni copiarla a una base universal.
+
 ## Current experimental frontier — 2026-08-25
 
 Los ciclos aislados C02–C04 demostraron observación nativa, límites de entrada

@@ -641,6 +641,181 @@
       }
     }
   },
+  "database_registry": {
+    "schema": "mak-database-registry-v1",
+    "measured_at": "2026-08-27",
+    "purpose": "Registro físico y de autoridad para evitar que una base, snapshot o fixture se confunda con otra.",
+    "scan_roots": [
+      "/home/mak/flujo",
+      "/home/mak/labs",
+      "/home/mak/research"
+    ],
+    "measurement": {
+      "mode": "read_only",
+      "sqlite_integrity_check": "ok_for_all_listed_files",
+      "database_files": 33,
+      "policy": "No se fusionan bytes ni se eliminan stores; la conexión ocurre por contratos, hashes, refs y consumidores declarados."
+    },
+    "authority": {
+      "mak_memory": "/home/mak/flujo/data/mak_knowledge.db",
+      "rd_catalog_projection": "/home/mak/flujo/data/rd.db",
+      "rd_private_runtime_boundary": "/home/mak/flujo/data/rd_datos.db",
+      "flyer_index": "/home/mak/flujo/data/flujo.db",
+      "research_registry": "/home/mak/research/jardines_interpretativos/jardines_interpretativos.sqlite",
+      "rule": "Cada store conserva su autoridad y alcance; los derivados solo referencian al origen y nunca elevan su estatus epistemico."
+    },
+    "stores": [
+      {
+        "id": "store:mak-knowledge",
+        "path": "/home/mak/flujo/data/mak_knowledge.db",
+        "class": "active_primary_memory",
+        "authority": "MAK learning/context/project memory",
+        "tables": 35,
+        "rows": 387089,
+        "sha256": "752964c93c687704bd7db67d550947dfa6e5a3818350e53333855d300bc65310",
+        "consumers": ["project_ir", "project_context", "practice_evidence", "learning", "operational_memberships", "mak_status", "Hub"],
+        "write_policy": "Existing LearningStore consumers only; no ad-hoc merge."
+      },
+      {
+        "id": "store:rd-catalog",
+        "path": "/home/mak/flujo/data/rd.db",
+        "class": "active_regenerable_projection",
+        "authority": "RD catalog projection",
+        "tables": 20,
+        "rows": 7585,
+        "sha256": "f43f514527137f265f61a9d1e8edbbb6e586967bb017aeabc74dd4c867e5b2e2",
+        "consumers": ["rd-db", "departments", "serve", "RD products", "operational_bridge"],
+        "write_policy": "Regenerate from declared RD sources; not a MAK artistic-memory store."
+      },
+      {
+        "id": "store:rd-private",
+        "path": "/home/mak/flujo/data/rd_datos.db",
+        "class": "privacy_runtime_boundary",
+        "authority": "RD field/privacy runtime boundary",
+        "tables": 3,
+        "rows": 0,
+        "sha256": "70feaf43b5269b6c0341d1ba3debdac60e40fb902cc4bedb41254fdc84d1f703",
+        "consumers": ["rd-datos", "departments", "web Hub"],
+        "write_policy": "Privacy-first explicit intake; emptiness is a valid observed state."
+      },
+      {
+        "id": "store:flujo-index",
+        "path": "/home/mak/flujo/data/flujo.db",
+        "class": "active_flyer_index",
+        "authority": "FLUJO flyer/index operations",
+        "tables": 1,
+        "rows": 6,
+        "sha256": "4a87478d573509f3595f848cb2e887bc62c83a1a78e7483c2ac5bc21ebec20a4",
+        "consumers": ["src/flujo/index", "CLI index/flyer-list"],
+        "write_policy": "Index projection; does not define artistic identity."
+      },
+      {
+        "id": "store:research-registry",
+        "path": "/home/mak/research/jardines_interpretativos/jardines_interpretativos.sqlite",
+        "class": "active_research_registry",
+        "authority": "Research jobs, sources, claims and results",
+        "tables": 23,
+        "rows": 276,
+        "sha256": "c73105ee563d29c57499d743df15aec56ed62cbe2b4492a21a4ff4e1eccb7e51",
+        "consumers": ["research_job_router", "execute_research_job", "research interface", "reconcile_garden_knowledge"],
+        "write_policy": "Research registry only; practice and opportunity claims retain separate evidence refs."
+      },
+      {
+        "id": "store:source-corpus-snapshots",
+        "class": "research_capture_snapshots",
+        "authority": "Captured source bytes for bounded research/opportunity runs",
+        "stores": [
+          {"path": "/home/mak/research/corpus/fondart-live-worker-20260813/sources.sqlite", "tables": 5, "rows": 7473, "sha256": "32018373dc1eca871533290b952db99867d757c878d3dd94f3af90560b75e18c"},
+          {"path": "/home/mak/research/corpus/fondart-smoke-20260813/sources.sqlite", "tables": 5, "rows": 39, "sha256": "6eadead0988eefd2bf93f09b2b952728fbc19f60eab19652ee69714b4d1fe32f"},
+          {"path": "/home/mak/research/corpus/fondart-smoke2-20260813/sources.sqlite", "tables": 5, "rows": 66, "sha256": "5b62f0e90be122c6088257427af96fe77d1695420a7f88bdf2eddeaca0ce6fae"},
+          {"path": "/home/mak/research/corpus/fondart-smoke3-20260813/sources.sqlite", "tables": 5, "rows": 3599, "sha256": "20fa2e3bd9bd1c76df667c0ef4446a6a8f88cbd669d0a00c7ff78f2a68bc6f1b"},
+          {"path": "/home/mak/research/corpus/fondart-tables-smoke-20260813/sources.sqlite", "tables": 5, "rows": 3638, "sha256": "b8feba6d98d762fc289513278da8046d1aba695d5729d66f4baead2511b8c9c2"},
+          {"path": "/home/mak/research/corpus/fondart-worker-20260813/sources.sqlite", "tables": 5, "rows": 7150, "sha256": "f5192264b7dabd1afb80fba21e127ee56e347f3e686fb71d33038a54955e18ff"},
+          {"path": "/home/mak/research/corpus/fondart_annual_2015_2025_20260813/sources.sqlite", "tables": 5, "rows": 12950, "sha256": "405e7efd1b8fc11146d2360bb87b55e455493d95159ec40c7fbe682482ffe2c3"},
+          {"path": "/home/mak/research/corpus/fondart_annual_2015_2025_20260813_v2/sources.sqlite", "tables": 5, "rows": 12679, "sha256": "97c0f397dcc554b8adf57af811f823464f1f123cde74360f2effc1f06ff2ea24"},
+          {"path": "/home/mak/research/corpus/fondart_annual_2015_2025_20260813_v3/sources.sqlite", "tables": 5, "rows": 15765, "sha256": "9cb26007b8ad6fa8441083fea0707eb618e5a61a416d7739deae705314e2c377"},
+          {"path": "/home/mak/research/corpus/fondart_annual_2015_2025_20260813_v4/sources.sqlite", "tables": 5, "rows": 15657, "sha256": "aefae50d6591fd5610dcc96cd1857b7413dcbf3abcd29cf603a5775c2bcab898"},
+          {"path": "/home/mak/research/corpus/fondart_annual_2015_2025_20260813_v5/sources.sqlite", "tables": 5, "rows": 15655, "sha256": "44747650eccd7dceba6ef7488393ab9aced076007f94734eb34b6685eb8bd5c3"},
+          {"path": "/home/mak/research/corpus/fondart_historical_selected/sources.sqlite", "tables": 5, "rows": 11452, "sha256": "59848ae8b61c55f98cf2e196e3f155fce690cfce13ea3a8760b3135e8c444adc"},
+          {"path": "/home/mak/research/jobs/3/sources.sqlite", "tables": 2, "rows": 4, "sha256": "0ef03c8cd8a0c52847505d4b07f56e4468e5eacc16910c2ebb84f25f080b7d58"},
+          {"path": "/home/mak/research/jobs/4/sources.sqlite", "tables": 2, "rows": 4, "sha256": "8b19a71fe3bf4b6e092589285456af7fe6e7505f6e5c0ba1598707ed87d2d8fb"}
+        ],
+        "connection": "Vigia/capture -> opportunity constraints -> fit/frontier; snapshots never become practice truth."
+      },
+      {
+        "id": "store:archive-index-snapshots",
+        "class": "archive_reconstruction_snapshots",
+        "authority": "Physical archive indexes used by reconstruction adapters",
+        "stores": [
+          {"path": "/home/mak/labs/portable-ssd-index-20260813/archivo_index.sqlite", "tables": 13, "rows": 252196, "sha256": "d3afb072fe1633125ac20da82aa1d3c7514f763cb8cac28655f19216ac53d8df"},
+          {"path": "/home/mak/labs/rd-auto-index-20260813/archivo_index.sqlite", "tables": 10, "rows": 4008, "sha256": "84286e59e8f127c9d08325ec6febac173ac740d41a08ca561302a4c73d02af52"},
+          {"path": "/home/mak/labs/triple-cartel-20260813/archivo_index.sqlite", "tables": 9, "rows": 22, "sha256": "7f962015700bf2fb69bffb41707fc87245693199ea74073c6b9ada9a0c3a8a76"},
+          {"path": "/home/mak/labs/visual-join-20260813/archivo_index.sqlite", "tables": 6, "rows": 10, "sha256": "a7026f8b90c90d8965b2456ffcfdfe65d8671f821a381e84404f3e68201d890b"},
+          {"path": "/home/mak/labs/lineage-join-20260813/archivo_index.sqlite", "tables": 6, "rows": 14, "sha256": "9a1509349e0b8bd60e8b024dafb8a32667531d2d3b07e8c3cf7d1e6407ff0af4"},
+          {"path": "/home/mak/labs/lineage-join-20260813-v2/archivo_index.sqlite", "tables": 6, "rows": 16, "sha256": "8a0ed82be62f6757de1b00fd7e849760d65098a29ce91e6977b66fe5eef7dc72"}
+        ],
+        "connection": "Observer/index -> archive memory -> reconstruction -> Project IR; no filename-only identity."
+      },
+      {
+        "id": "store:intake-snapshots",
+        "class": "application_intake_projections",
+        "authority": "Derived intake packages for the existing application consumer",
+        "stores": [
+          {"path": "/home/mak/research/intake/portable-ssd-20260813-scd/intake.sqlite", "tables": 10, "rows": 0, "sha256": "91b6adf57073852322dd8ee4c9da2b55643aa08ed2c35306af3b5a63d0eb89c7"},
+          {"path": "/home/mak/research/intake/portable-ssd-20260813-scd-r4/intake.sqlite", "tables": 10, "rows": 166597, "sha256": "4fe2959d904bfa660c6f2429fa8445b96bcadffabd5684f8ea516c4b397054ee"}
+        ],
+        "connection": "Project IR/reconstruction -> build_application_intake; projection, not source authority."
+      },
+      {
+        "id": "store:pilot-captures",
+        "class": "bounded_pilot_sources",
+        "authority": "Evidence local to a named pilot run",
+        "stores": [
+          {"path": "/home/mak/flujo/experiments/pilots/ARICA-FONDART-2027/source_corpus/sources.sqlite", "tables": 2, "rows": 3, "sha256": "804de11c447a25416e5a9f4e0e1354750f7979aaae79fe6434b6c652a7379c2c"},
+          {"path": "/home/mak/flujo/experiments/pilots/DREFQUILA/runs/cross-archive-escarlata-20260826/research-capture/sources.sqlite", "tables": 2, "rows": 4, "sha256": "2fb48cdd6b14d87d9abdb30f1473eb75b378f42d7d926f85dfa1ab821ba192ec"}
+        ],
+        "connection": "Pilot manifests/receipts -> existing validators; no automatic promotion to production memory."
+      },
+      {
+        "id": "store:execution-snapshots",
+        "class": "historical_labs",
+        "authority": "Historical bounded execution evidence only",
+        "stores": [
+          {"path": "/home/mak/labs/portable-ssd-index-20260813/organism-execution-20260813-drefgira.sqlite", "tables": 8, "rows": 10, "sha256": "4b71655ec209c370a2af7c989ffb5c2966b7599e6fefa5a6f22c017dd9976905"},
+          {"path": "/home/mak/labs/portable-ssd-index-20260813/organism-execution-20260813-family54.sqlite", "tables": 8, "rows": 10, "sha256": "f06139dd620cb0b6c9e85a4d65f174e754384293bd6e3996ef39f2437e316a8b"},
+          {"path": "/home/mak/labs/portable-ssd-index-20260813/organism-execution-20260813-family8983.sqlite", "tables": 8, "rows": 10, "sha256": "4329019b44e22c0d93a2b5e04d01e7e5aeb0320e7745ed2e1741b243e7f3adac"}
+        ],
+        "connection": "Historical evidence; not an active dispatcher, authority or runtime dependency."
+      },
+      {
+        "id": "store:archaeology",
+        "path": "/home/mak/flujo/out/archaeology/claude-codex-mak-20260815.sqlite",
+        "class": "historical_analysis",
+        "authority": "Conversation/repository archaeology output",
+        "tables": 28,
+        "rows": 265742,
+        "sha256": "9c0c4acde43dce859ae904b68ef0eb84025ed9871a961190329a3c4f1eda7508",
+        "consumers": ["archaeology reports"],
+        "connection": "Learning context only; never a source of artistic truth or runtime state."
+      }
+    ],
+    "connections": [
+      {"from": "store:archive-index-snapshots", "to": "store:mak-knowledge", "via": "archive observer/memory -> Project IR -> LearningStore", "direction": "derived_read_then_explicit_write", "status": "contracted"},
+      {"from": "store:source-corpus-snapshots", "to": "store:mak-knowledge", "via": "Vigia/capture -> opportunity constraints -> fit/frontier", "direction": "typed_projection", "status": "contracted"},
+      {"from": "store:research-registry", "to": "store:mak-knowledge", "via": "research jobs/results and evidence refs", "direction": "bounded_crosswalk", "status": "existing_consumers"},
+      {"from": "store:rd-catalog", "to": "store:mak-knowledge", "via": "department/context refs only", "direction": "read_only_cross_domain", "status": "separate_authorities"},
+      {"from": "store:rd-private", "to": "store:rd-catalog", "via": "no implicit merge; explicit privacy boundary", "direction": "isolated", "status": "protected"},
+      {"from": "store:pilot-captures", "to": "store:mak-knowledge", "via": "manifest/receipt validators", "direction": "bounded_optional", "status": "case_scoped"},
+      {"from": "store:mak-knowledge", "to": "store:intake-snapshots", "via": "Project IR/application projection", "direction": "derived", "status": "rebuildable"}
+    ],
+    "non_mergeable_boundaries": [
+      "RD privacy data is not copied into MAK learning memory.",
+      "Research source snapshots are not merged across dates/versions; each keeps its own hash and validity.",
+      "Archive indexes and pilot databases are not artistic truth and do not replace physical evidence.",
+      "Archaeology and lab databases are historical evidence, not active runtime stores.",
+      "WIN and media/artwork are outside this registry's write scope and remain protected."
+    ]
+  },
   "open_gaps_in_priority_order": [
     {
       "id": "gap:restore-current-replay",
