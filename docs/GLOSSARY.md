@@ -1,16 +1,28 @@
-# GLOSSARY — Spanish code, English rule
+# GLOSSARY -- Spanish code, English rule
 
-> **Why this file exists.** The repository language policy says everything except human-facing
-> product is written in English. The tree says otherwise, measured 2026-07-30:
-> **236 Python files carry Spanish comments against 36 in English.** So an agent
-> reads the rule, searches in English, finds nothing, and concludes the thing
-> does not exist — then rebuilds it or reports it missing. That is not a style
-> problem. It is how `curatoria` was recorded in memory as `curation` and a
-> Spanish search answered "nothing found" while the answer sat right there.
+> **Why this file exists.** An agent reads the language policy, searches in
+> English, finds nothing, and concludes the thing does not exist -- then rebuilds
+> it or reports it missing. That is not a style problem. It is how `curatoria`
+> was recorded in memory as `curation` and a Spanish search answered "nothing
+> found" while the answer sat right there.
 >
-> Renaming 236 files is not the fix: cron lines, systemd units and the box's
-> running copies all reference those names, so a rename breaks the machine that
-> works. The fix is that **a search in either language finds the other side.**
+> **The proportion that motivated this file has since inverted.** The 2026-07-30
+> line claimed Spanish comments outnumbered English several times over. The
+> authority is now `tools/idioma.py`, which classifies comments and docstrings of
+> every tracked `*.py` and is pinned by `tests/test_idioma_ratchet.py`. Measured
+> 2026-08-28 over 1039 tracked files: **405 carrying Spanish, 435 English, 49
+> mixed, 199 with no language evidence.** Inside `src/` alone English is now the
+> majority. Re-measure with `python3 tools/idioma.py`; do not trust a figure
+> written here.
+>
+> That does not retire the file -- it moves the risk to the other side. An agent
+> searching in Spanish for a thing written in English now fails the same way, and
+> the Spanish names that cron and systemd call are still there. The table below
+> works in both directions and that is the point.
+>
+> Mass renaming is not the fix: cron lines, systemd units and the box's running
+> copies all reference those names, so a rename breaks the machine that works.
+> The fix is that **a search in either language finds the other side.**
 
 ## The rule from here on
 
@@ -91,11 +103,15 @@ either column.
 
 - `curatoria` was written in memory as `curation`; searching the Spanish word
   returned "nothing found" while the note existed. Fixed at the root by writing
-  memory in English from 2026-07-26 — and by this table, which lets the Spanish
+  memory in English from 2026-07-26 -- and by this table, which lets the Spanish
   word reach it.
-- `.remember/` is invisible to ripgrep (its `.gitignore` is `*`). Search it with
-  PowerShell `Select-String -Path "<repo>\.remember\*"`. A Grep that returns
-  nothing over an ignored path is not evidence of absence.
+- `.remember/` was invisible to ripgrep (its `.gitignore` was `*`), and the
+  advice here was a PowerShell command on a box that runs Linux. The directory
+  was retired on 2026-08-28 to
+  `.archive/2026-08-28-orden/retirado/.remember/`; its last entry was from
+  2026-08-01. The lesson outlives it: **a Grep that returns nothing over an
+  ignored path is not evidence of absence.** On this box, force it:
+  `grep -r --no-ignore <patron> <ruta>` or `rg -uu`.
 
 Retirement: when the tree is English enough that the table has fewer than ten
 rows worth keeping.

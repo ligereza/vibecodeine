@@ -49,7 +49,6 @@ cultura/mak_plataforma/energia.py
 cultura/mak_plataforma/energia_log.py
 cultura/mak_plataforma/entregar.py
 cultura/mak_plataforma/filtro_entrada.py
-cultura/mak_plataforma/hub.py
 cultura/mak_plataforma/junta.py
 cultura/mak_plataforma/mantenimiento.py
 cultura/mak_plataforma/material.py
