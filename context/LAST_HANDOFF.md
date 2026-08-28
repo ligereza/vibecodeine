@@ -57,9 +57,10 @@ Do not delete or commit unreviewed local work.
   marked as not an author statement. Code rows are context, not artwork.
 - Focused product-view tests, product-plan/dossier/application/pilot
   regressions, `py_compile` and `git diff --check` all exited 0. The general
-  view source, CLI, tests and this handoff are committed in `c5666e6` and
-  pushed to `origin/main`; other recent MAK code, tests, learning documents
-  and generated pilot outputs remain outside that commit and were not deleted.
+  view source, CLI, tests and the consolidated recent MAK code, tests,
+  learning documents and capability registry are committed in `6ba51fa` and
+  pushed to `origin/main`; generated pilot outputs remain local and are not
+  deleted.
 
 ### Open integration items
 

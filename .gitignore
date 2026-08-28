@@ -98,6 +98,11 @@ datadrops/*/*.webp
 tmp_*/
 ig_*/
 
+# Pilot runs are local generated evidence (large JSON replays), not source
+# code. Keep them on the MAK box for replay and provenance without pushing
+# hundreds of megabytes into the repository.
+experiments/pilots/
+
 # xio runtime (logs + on-device secrets -- nunca al repo)
 xio/**/*.log
 xio/**/ntfy_topic.txt
