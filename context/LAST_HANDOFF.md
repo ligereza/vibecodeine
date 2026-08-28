@@ -28,12 +28,13 @@ directive is `docs/MAK_SYSTEM_DIRECTIVE.md`.
 
 ### Physical authority and migration status
 
-`/home/mak/flujo` is the authoring baseline. `/home/mak/WIN` is historical
-evidence and is not to be changed. Archive roots, artwork, media, databases,
-and runtime sources are protected unless a later task names an exact safe
-write-set. `iskvw/datos/archivo.json` is the current generated source for the
-general view; it is read-only input and its hash is carried into the output.
-Do not delete or commit unreviewed local work.
+`/home/mak/flujo` is the authoring baseline inside the wider MAK organism
+`/home/mak`. `/home/mak/WIN` is historical evidence and is not to be changed;
+`GoogleDrive` and `OneDrive` are external mounts not traversed. Archive roots,
+artwork, media, databases and runtime sources are protected unless a later
+task names an exact safe write-set. `iskvw/datos/archivo.json` is the current
+generated source for the general view; it is read-only input and its hash is
+carried into the output. Do not delete or move physical evidence.
 
 ### Completed work with command and result
 
@@ -42,10 +43,16 @@ Do not delete or commit unreviewed local work.
   not create a database, rescan an archive, mutate media or infer authorship.
 - The physical database topology was reconciled read-only on 2026-08-27:
   `data/mak_knowledge.db` is the active MAK memory; RD, flyer, Research,
-  archive-index, intake, pilot and archaeology stores retain separate
-  authority/classes and are connected only through existing contracts, hashes
-  and refs. All 33 discovered SQLite files passed `integrity_check` and were
+  archive-index, intake, pilot, Curatoria, archaeology, CI and agent stores
+  retain separate authority/classes and are connected only through existing
+  contracts, hashes and refs. The bounded full-host scan found 270 SQLite
+  files outside `WIN`: 85 MAK-managed and 185 host/application caches. All 85
+  MAK-managed files passed `integrity_check`; the complete classification is
   recorded in `docs/system_learning/master/inventory.json`.
+- The complete physical organism map now covers 114 non-WIN top-level entries,
+  17 nested repositories, live process/listener observations and the explicit
+  external-mount boundary. No files, databases, media, artwork or `WIN` were
+  moved, deleted or merged.
 - Existing `tools/render_product_view.py` now accepts `--archive` while
   retaining the prior plan/dossier/package mode. It renders JSON or Markdown
   from the same source.
@@ -91,6 +98,7 @@ Do not delete or commit unreviewed local work.
 | title/observation/practice separation | validator and real counts | PASS, no promotion |
 | general view -> live Hub | no runtime consumer verification yet | OPEN |
 | source refresh -> stable regenerated view | deterministic fixture test; live refresh not run | OPEN |
+| full `/home/mak` physical registry -> master docs | 114 roots, 270 SQLite candidates, 85 MAK-managed, 185 host caches | PASS, read-only |
 
 ### Conflicts and risks
 
@@ -109,11 +117,12 @@ Do not delete or commit unreviewed local work.
 
 ### Next concrete action
 
-Inspect the existing live Hub's real read-only consumer for the portfolio
-surface and mount this already-validated general view only if one existing
-route can consume it without a second schema, database or runtime. If that
-boundary cannot be proven quickly, retain the CLI as the product and record
-the exact missing edge rather than building another Hub.
+The full physical organism inventory is now closed for this documentation
+slice. The next functional action remains the existing live Hub read-only
+consumer for the portfolio surface; mount the validated view only if one
+existing route can consume it without a second schema, database or runtime.
+If that boundary cannot be proven quickly, retain the CLI as the product and
+record the exact missing edge rather than building another Hub.
 
 ### Last verified
 

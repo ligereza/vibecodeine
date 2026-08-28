@@ -189,9 +189,35 @@ consumidores, privacidad y políticas de escritura son distintos. Las bases en
 por hashes, contratos y referencias, nunca por una copia que borre su origen.
 
 El inventario físico, los conteos, los hashes y las conexiones están en
-`docs/system_learning/master/inventory.json` bajo `database_registry`; el
-mapa causal de sus consumidores está en `hashmap.json`. Esa pareja es la
-referencia única para distinguir autoridad, proyección, fixture y legado.
+`docs/system_learning/master/inventory.json` bajo
+`physical_organism_registry` y `database_registry`; el mapa causal de sus
+consumidores está en `hashmap.json`. Esa pareja es la referencia única para
+distinguir autoridad, proyección, fixture y legado.
+
+### El organismo completo no es el repositorio
+
+La unidad física correcta de MAK es `/home/mak` menos `/home/mak/WIN`. `flujo`
+es el órgano de autoría e integración; `plataforma`, `research`, `curatoria`,
+`RD`, `vigia`, `portfolio_media`, `indexes`, `labs`, los pilotos, runtimes y
+stores auxiliares son superficies conectadas, no carpetas que deban fundirse.
+El inventario registra 114 entradas de primer nivel, 17 repositorios anidados,
+270 archivos SQLite y 7 observaciones de runtime. Esa cifra incluye el entorno
+físico completo, pero separa 85 bases administradas por MAK de 185 cachés del
+host/aplicación que no tienen autoridad epistemológica.
+
+La consolidación correcta es una función de conexión:
+
+```text
+source path -> owner -> authority -> contract/ref -> consumer -> verification
+```
+
+Una réplica de `actions-runner`, un snapshot de `research`, un índice de
+`labs`, una base de `curatoria_inbox` o una ejecución histórica puede ser
+valiosa sin ser la memoria transversal. `data/mak_knowledge.db` conserva esa
+memoria; los otros stores mantienen privacidad, ciclo de vida y procedencia.
+No se borran ni se convierten en duplicados sólo porque sus nombres, tablas o
+contenidos se parezcan. `WIN` queda fuera del alcance operativo y sólo puede
+usarse como evidencia histórica mediante un cruce explícito.
 
 ## Deep learning en el lugar correcto
 

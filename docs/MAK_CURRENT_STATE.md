@@ -4,7 +4,7 @@
 > `/home/mak/flujo/agents.md`, ejecutar `tools/agent_bootstrap.py`, luego este
 > archivo y únicamente el paquete `Agent bootstrap — CURRENT` que emite el
 > bootstrap. No recorrer el cuerpo histórico de `context/LAST_HANDOFF.md` para
-> decidir el estado actual. Verificado el 2026-08-25.
+> decidir el estado actual. Verificado el 2026-08-27.
 
 Este documento consolida decisiones durables. No reemplaza la evidencia
 histórica, no convierte cada experimento en una obligación y no afirma que una
@@ -13,8 +13,9 @@ credencial funcione solo porque existe en un archivo de entorno.
 ## Reconciliación de autoridad y bases — 2026-08-27
 
 La topología física medida y sus hashes están en
-`docs/system_learning/master/inventory.json:database_registry`; el mapa causal
-de conexiones está en `docs/system_learning/master/hashmap.json`. La autoridad
+`docs/system_learning/master/inventory.json:physical_organism_registry` y
+`database_registry`; el mapa causal de conexiones está en
+`docs/system_learning/master/hashmap.json`. La autoridad
 operativa queda fijada así:
 
 ```text
@@ -33,6 +34,36 @@ Estas bases están conectadas por contratos, `artifact_ref`, `project_id`,
 fusionan físicamente porque no comparten autoridad, privacidad ni ciclo de
 vida. “Limpio” significa que cada una tiene clase, owner, consumidor y estado
 visible; no significa eliminarla ni copiarla a una base universal.
+
+## Reconciliación del organismo completo fuera de WIN — 2026-08-27
+
+La frontera operativa de MAK es `/home/mak`, no sólo `/home/mak/flujo`.
+`/home/mak/WIN` queda expresamente fuera por ser archivo histórico protegido;
+`GoogleDrive` y `OneDrive` son montajes externos y no fueron recorridos. El
+registro físico canónico es
+`docs/system_learning/master/inventory.json:physical_organism_registry` y
+su mapa causal es `docs/system_learning/master/hashmap.json`.
+
+La medición encontró 114 entradas de primer nivel fuera de `WIN`, 17
+repositorios anidados y 7 superficies de runtime/proceso observadas. La
+clasificación funcional quedó así: `flujo` autoría e integración; `plataforma`
+runtime; `research`/`vigia` mundo externo; `curatoria`/`curatoria_inbox` y `RD`
+fuentes y órganos protegidos; `portfolio_media`/`indexes` referencias; `labs`,
+`experiments`, `state` y `out` snapshots o evidencia; `actions-runner`, `tools`,
+`src`, `apps`, modelos y runtimes creativos como soporte.
+
+La búsqueda SQLite acotada, con `-xdev`, encontró 270 archivos fuera de `WIN`:
+85 pertenecen a superficies MAK y 185 son cachés del host/aplicaciones. Los
+85 pasaron `integrity_check` en modo lectura; no se copiaron ni fusionaron.
+`data/mak_knowledge.db` sigue siendo la memoria MAK transversal, pero las
+réplicas CI, stores de agentes, arqueología, snapshots de Research, bases de
+labs y cachés no se elevan a esa autoridad. Sus conexiones son contratos,
+hashes y refs; su presencia física no prueba que sean consumidores activos.
+
+Runtimes comprobados por proceso/listener: Hub `127.0.0.1:8900`, Research
+`127.0.0.1:8890`, Codex `127.0.0.1:8891`, Ollama `127.0.0.1:11434`, Open WebUI
+`:8080`, runner de Actions y los puentes rclone. Esto prueba presencia, no
+salud, capacidad del proveedor ni corrección de sus datos.
 
 ## Current experimental frontier — 2026-08-25
 

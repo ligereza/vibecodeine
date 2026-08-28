@@ -1,8 +1,8 @@
 {
   "schema": "mak-system-master-inventory-v2",
-  "document_id": "inventory:mak-system-master:2026-08-26",
+  "document_id": "inventory:mak-system-master:2026-08-27",
   "language": "es",
-  "purpose": "Inventario maestro reconciliado de seis perspectivas de agente, el maestro anterior y el estado fisico actual de la cadena ARICA/Fondart.",
+  "purpose": "Inventario maestro reconciliado de MAK completo fuera de WIN: autoridades, archivos, bases, runtimes, índices, consumidores y superficies auxiliares.",
   "mission": {
     "id": "mission:mak-autonomous-artistic-archive-os",
     "statement": "MAK es un sistema operativo reusable para convertir archivos artisticos extensos en memoria de evidencia, conocimiento cultural y curatorial revisable, portfolio, dossier, postulacion y research, con aprendizaje incremental y sin exigir revision humana como gate normal.",
@@ -641,21 +641,152 @@
       }
     }
   },
+  "physical_organism_registry": {
+    "schema": "mak-physical-organism-registry-v1",
+    "measured_at": "2026-08-27",
+    "scope": {
+      "root": "/home/mak",
+      "included": "Todo el árbol Linux salvo la exclusión explícita y los montajes externos no recorridos.",
+      "excluded": ["/home/mak/WIN"],
+      "external_mounts_not_scanned": ["/home/mak/GoogleDrive", "/home/mak/OneDrive"],
+      "top_level_non_win_entries": 114,
+      "expected_but_absent": ["/home/mak/post", "/home/mak/workspace"],
+      "policy": "Se inventaría físicamente todo el alcance; sólo las superficies MAK con owner y consumidor entran al mapa semántico. Cachés del host, secretos y datos personales se registran como fuera de autoridad, no se convierten en conocimiento."
+    },
+    "source_catalogs": [
+      {"path": "/home/mak/indexes/mak-reality-20260813/full-organism/database_inventory.json", "sha256": "198d0fb2808aa1087cdadb246fce1e10c0d12624cc142160bd2d4f7dc3cc5846", "role": "prior_database_catalog", "status": "input_evidence"},
+      {"path": "/home/mak/indexes/mak-reality-20260813/full-organism/multi_root_summary.json", "sha256": "7c4674a4ec8e11730262eb395a8d17bce1949d2cdf345378417d4877e8892745", "role": "prior_multiroot_summary", "status": "input_evidence"},
+      {"path": "/home/mak/indexes/mak-reality-20260813/full-organism/provenance_matrix.json", "sha256": "ff13d80e172a78ea4c8eef02b01bb277f7f9e8480e70058ddd3eeeb105f8d6dd", "role": "prior_provenance_matrix", "status": "input_evidence"},
+      {"path": "/home/mak/indexes/mak-reality-20260813/full-organism/runtime_matrix.json", "sha256": "4242eb148b7bfca56e39eea189a00479046a97ee84c40d596af923c0e99ea2c4", "role": "prior_runtime_matrix", "status": "input_evidence"},
+      {"path": "/home/mak/indexes/mak-reality-20260813/full-organism/department_transport_manifest.json", "sha256": "bc61ad7b7d78905916affe433a64e1270cef608628f071ee7032a5057ded1fd0", "role": "prior_department_transport", "status": "input_evidence"},
+      {"path": "/home/mak/indexes/mak-reality-20260813/full-organism/summary.json", "sha256": "7f0cfae9bb326104b4cbf2ce24d356781580488156d4faa928f3553f9b1c50ea", "role": "prior_full_organism_summary", "status": "input_evidence"},
+      {"path": "/home/mak/indexes/mak-consolidation-20260813/mak_consolidation_manifest.json", "sha256": "b84476ec15d9c2fc45065ab2da3f62ecf27a19a7fe0d232eb3b14facc02b4549", "role": "prior_consolidation_manifest", "status": "input_evidence"},
+      {"path": "/home/mak/indexes/mak-consolidation-20260813/mak_consolidation_report.json", "sha256": "5741a91ffe0cd8e2b58dce6ac2982fab1757a94fb43ac8577745d4388da8168d", "role": "prior_consolidation_report", "status": "input_evidence"},
+      {"path": "/home/mak/indexes/mak-consolidation-20260813/mak_local_reality_index_post_nudo.json", "sha256": "b84c374d3f7dab4dbea3113050c3597044d8b9d61f9e648566e85ef2b567a1d5", "role": "prior_local_reality_index", "status": "input_evidence"}
+    ],
+    "top_level_entries": [
+      ".ICEauthority", ".Xauthority", ".aws", ".bash_history", ".bash_logout", ".bashrc", ".cache", ".claude", ".claude.json", ".codex", ".config", ".continue", ".copilot", ".crawl4ai", ".dmrc", ".dotnet", ".gemini", ".gitconfig", ".gnupg", ".icons", ".idlerc", ".ipython", ".lesshst", ".lmstudio", ".lmstudio-home-pointer", ".local", ".mozilla", ".npm", ".nv", ".ollama", ".pki", ".profile", ".pytest_cache", ".ssh", ".sudo_as_admin_successful", ".themes", ".venvs", ".vscode", ".vscode-shared", ".wget-hsts", ".wine", ".xsession-errors", ".xsession-errors.old", "2026-08-21-022101-clone-httpsgithubcomligerezamat-sigit.txt", "Apps", "Descargas", "Documentos", "Documents", "Escritorio", "GENESIS.md", "GoogleDrive", "Imágenes", "Modelfile", "Música", "OneDrive", "PENDIENTES_SUDO.md", "Plantillas", "Público", "RD", "Vídeos", "WhiteSur-icon-theme", "__pycache__", "_archive", "actions-runner", "antigravity.launch.log", "apps", "backups", "barrierc-xtest-debug.log", "bin", "blender", "blender-4.5.3-viejo", "bucle", "cli_watsonx.py", "codex", "crontab.bak-20260727", "curatoria", "curatoria_inbox", "curatoria_test", "descargas", "diag-barrier-now.sh", "diag-kvm-linux.sh", "diag-red-linux.sh", "documentos", "flujo", "global.yml", "go", "gpu_fix_report.txt", "indexes", "labs", "lenguaje", "model-config", "models", "n8n-local", "oi-qwen.py", "opt", "plataforma", "portfolio_media", "quarantine", "rclone.log", "render_rd_1080.log", "renders", "research", "rollback", "searxng", "src", "state", "tmp", "tools", "trazos", "venv-providers", "venvs", "vigia", "vscode.launch.log", "xio_puente"
+    ],
+    "authority_roots": [
+      {"id": "root:flujo", "path": "/home/mak/flujo", "class": "authoring_integration_baseline", "authority": "versioned MAK source, contracts, tests and docs", "consumers": ["Hub", "Research", "Codex", "CLI", "GitHub Actions"], "status": "active"},
+      {"id": "root:plataforma", "path": "/home/mak/plataforma", "class": "runtime_projection", "authority": "live platform/deployment runtime; not source of truth", "consumers": ["hub.py", "local runtime"], "status": "live_process_observed"},
+      {"id": "root:research", "path": "/home/mak/research", "class": "research_memory_and_captures", "authority": "Research registry, jobs and versioned source captures", "consumers": ["research_job_router", "Research interface", "triangulation"], "status": "active"},
+      {"id": "root:curatoria", "path": "/home/mak/curatoria", "class": "curatorial_runtime_or_workspace", "authority": "curatorial tools and outputs; claims remain bounded by evidence", "consumers": ["triangular", "Curatoria"], "status": "present"},
+      {"id": "root:curatoria-inbox", "path": "/home/mak/curatoria_inbox", "class": "artistic_inputs_and_historical_work", "authority": "protected source/artwork and development material", "consumers": ["archive observers", "research fixtures", "curatorial work"], "status": "protected_read_only_by_default"},
+      {"id": "root:curatoria-test", "path": "/home/mak/curatoria_test", "class": "sandbox", "authority": "test material only", "consumers": ["tests and bounded probes"], "status": "non_authoritative"},
+      {"id": "root:rd", "path": "/home/mak/RD", "class": "rd_artistic_operational_source", "authority": "RD source material; not silently merged into MAK memory", "consumers": ["RD projection", "serve", "departments"], "status": "protected"},
+      {"id": "root:portfolio-media", "path": "/home/mak/portfolio_media", "class": "portfolio_media_surface", "authority": "media referenced by portfolio projections", "consumers": ["Portfolio", "product view"], "status": "present"},
+      {"id": "root:indexes", "path": "/home/mak/indexes", "class": "cross_root_indices", "authority": "physical catalogs and transport manifests; never sole semantic authority", "consumers": ["reconciliation", "archive adapters"], "status": "present"},
+      {"id": "root:labs", "path": "/home/mak/labs", "class": "bounded_experiments_and_snapshots", "authority": "experimental evidence, fixtures and snapshots", "consumers": ["tests", "replay validators"], "status": "non_authoritative"},
+      {"id": "root:vigia", "path": "/home/mak/vigia", "class": "world_observation_state", "authority": "Vigia discovery/capture state", "consumers": ["Research", "opportunity constraints"], "status": "present"},
+      {"id": "root:xio-puente", "path": "/home/mak/xio_puente", "class": "external_bridge", "authority": "XIO bridge material; not MAK core authority", "consumers": ["XIO-specific workflows"], "status": "isolated"},
+      {"id": "root:actions-runner", "path": "/home/mak/actions-runner", "class": "ci_runtime_and_checkout", "authority": "execution transport and checkout replica", "consumers": ["GitHub Actions"], "status": "live_service_observed"},
+      {"id": "root:models", "path": "/home/mak/models", "class": "model_artifacts", "authority": "optional inference assets; no learning truth", "consumers": ["bounded providers"], "status": "inventory_only"},
+      {"id": "root:model-config", "path": "/home/mak/model-config", "class": "provider_configuration", "authority": "configuration only", "consumers": ["local providers"], "status": "inventory_only"},
+      {"id": "root:creative-runtimes", "path": "/home/mak/blender", "class": "creative_runtime", "authority": "installed active Blender runtime", "consumers": ["render workflows", "scene probes"], "status": "present"},
+      {"id": "root:creative-runtime-legacy", "path": "/home/mak/blender-4.5.3-viejo", "class": "creative_runtime_legacy", "authority": "older runtime retained for compatibility only", "consumers": ["legacy checks"], "status": "legacy"},
+      {"id": "root:tools", "path": "/home/mak/tools", "class": "host_tool_surface", "authority": "tool mirror; repo implementations remain authoritative when duplicated", "consumers": ["host scripts"], "status": "present"},
+      {"id": "root:src", "path": "/home/mak/src", "class": "auxiliary_source_repositories", "authority": "external tool source, not MAK product source", "consumers": ["local builds"], "status": "present"}
+    ],
+    "support_surfaces": [
+      {"path": "/home/mak/apps", "class": "installed_app_support"},
+      {"path": "/home/mak/Apps", "class": "auxiliary_repositories_and_apps"},
+      {"path": "/home/mak/n8n-local", "class": "workflow_runtime"},
+      {"path": "/home/mak/searxng", "class": "search_runtime"},
+      {"path": "/home/mak/bucle", "class": "user_or_auxiliary_repo"},
+      {"path": "/home/mak/WhiteSur-icon-theme", "class": "host_theme_repository"},
+      {"path": "/home/mak/Escritorio", "class": "user_workspace_with_auxiliary_repositories"},
+      {"path": "/home/mak/Documents", "class": "user_documents_and_codex_context"},
+      {"path": "/home/mak/Descargas", "class": "user_downloads"},
+      {"path": "/home/mak/descargas", "class": "user_downloads_lowercase"},
+      {"path": "/home/mak/documentos", "class": "user_documents_lowercase"},
+      {"path": "/home/mak/Documentos", "class": "user_documents"},
+      {"path": "/home/mak/lenguaje", "class": "artistic_or_language_material"},
+      {"path": "/home/mak/trazos", "class": "artistic_material"},
+      {"path": "/home/mak/renders", "class": "render_outputs"},
+      {"path": "/home/mak/_archive", "class": "historical_archive"},
+      {"path": "/home/mak/backups", "class": "recoverable_backups"},
+      {"path": "/home/mak/rollback", "class": "rollback_material"},
+      {"path": "/home/mak/quarantine", "class": "reversible_quarantine"},
+      {"path": "/home/mak/state", "class": "historical_and_runtime_state"},
+      {"path": "/home/mak/tmp", "class": "temporary_working_state"},
+      {"path": "/home/mak/venvs", "class": "environment_runtime"},
+      {"path": "/home/mak/venv-providers", "class": "provider_environment_runtime"},
+      {"path": "/home/mak/go", "class": "toolchain"},
+      {"path": "/home/mak/opt", "class": "installed_optional_software"},
+      {"path": "/home/mak/bin", "class": "host_entrypoints"},
+      {"path": "/home/mak/codex", "class": "agent_runtime_support"},
+      {"path": "/home/mak/.codex", "class": "agent_state_not_MAK_knowledge"},
+      {"path": "/home/mak/.claude", "class": "agent_state_not_MAK_knowledge"},
+      {"path": "/home/mak/.gemini", "class": "agent_state_not_MAK_knowledge"},
+      {"path": "/home/mak/.continue", "class": "agent_state_not_MAK_knowledge"},
+      {"path": "/home/mak/.copilot", "class": "agent_state_not_MAK_knowledge"}
+    ],
+    "nested_repositories_outside_win": {
+      "count": 17,
+      "paths": [
+        "/home/mak/.codex/.tmp/plugins/.git", "/home/mak/.codex/memories/.git", "/home/mak/.gemini/antigravity/brain/2066da79-05d1-456c-a223-71a0c6727355/.git", "/home/mak/.gemini/antigravity/brain/beae7bf2-aaf3-436a-b444-e390f6aa79f9/.git", "/home/mak/.local/share/Trash/files/vibecodeine-legacy-20260824/.git", "/home/mak/Apps/llama.cpp/.git", "/home/mak/Escritorio/MAT-SI/.git", "/home/mak/Escritorio/bucle/bucle/.git", "/home/mak/Escritorio/zorin-desktop-themes/.git", "/home/mak/Escritorio/zorin-icon-themes/.git", "/home/mak/WhiteSur-icon-theme/.git", "/home/mak/actions-runner/_work/vibecodeine/vibecodeine/.git", "/home/mak/bucle/.git", "/home/mak/curatoria_inbox/DIMENSIONES DEL ORDEN/.git", "/home/mak/flujo/.git", "/home/mak/src/ml-mobileclip/.git", "/home/mak/src/mwb-linux/.git"
+      ],
+      "policy": "Sólo /home/mak/flujo es baseline de autoría MAK. El checkout del runner es transporte; los repos auxiliares, soporte de agentes y Trash son contextos separados y no se fusionan."
+    },
+    "live_runtime_observation": {
+      "mode": "read_only_process_and_listener_probe",
+      "observed": [
+        {"source": "/home/mak/flujo/cultura/mak_plataforma/hub.py", "listener": "127.0.0.1:8900", "class": "MAK_Hub", "status": "process_observed"},
+        {"source": "/home/mak/flujo/cultura/mak_research/interfaz.py", "listener": "127.0.0.1:8890", "class": "Research_interface", "status": "process_observed"},
+        {"source": "/home/mak/flujo/cultura/mak_codex/interfaz_codex.py", "listener": "127.0.0.1:8891", "class": "Codex_bridge", "status": "process_observed"},
+        {"source": "/usr/local/bin/ollama", "listener": "127.0.0.1:11434", "class": "local_model_provider", "status": "process_observed"},
+        {"source": "Open WebUI", "listener": "0.0.0.0:8080", "class": "host_ui", "status": "process_observed"},
+        {"source": "/home/mak/actions-runner", "listener": null, "class": "GitHub_Actions_runner", "status": "service_observed"},
+        {"source": "rclone", "listener": "GoogleDrive/OneDrive mounts", "class": "external_mount_bridge", "status": "process_observed"}
+      ],
+      "limits": ["listener means process presence only", "no provider capability or API health is inferred", "external mounts were not scanned or promoted to source authority"]
+    },
+    "organism_connections": [
+      {"from": "root:flujo", "to": "root:plataforma", "contract": "runtime source/projection boundary", "status": "observed_process_source"},
+      {"from": "root:flujo", "to": "root:research", "contract": "knowledge contracts and research consumers", "status": "declared_and_tested"},
+      {"from": "root:indexes", "to": "root:flujo", "contract": "archive/index references and hashes", "status": "read_only_crosswalk"},
+      {"from": "root:research", "to": "root:flujo", "contract": "opportunity/evidence contracts", "status": "declared_and_tested"},
+      {"from": "root:rd", "to": "root:flujo", "contract": "RD projections and department consumers", "status": "separate_authority"},
+      {"from": "root:actions-runner", "to": "root:flujo", "contract": "CI checkout and workflow transport", "status": "replica_not_authority"},
+      {"from": "root:models", "to": "root:flujo", "contract": "optional provider configuration", "status": "capability_not_proven"},
+      {"from": "root:portfolio-media", "to": "root:flujo", "contract": "media refs/product projections", "status": "read_only_reference"}
+    ],
+    "database_scope_summary": {"candidate_sqlite_files": 270, "mak_managed_files": 85, "host_or_application_cache_files": 185, "mak_managed_integrity_failures": 0, "mak_managed_bytes": 2642407424, "mak_managed_table_count_sum": 799, "measurement": "find -xdev outside WIN/GoogleDrive/OneDrive plus sqlite read-only integrity_check"}
+  },
   "database_registry": {
     "schema": "mak-database-registry-v1",
     "measured_at": "2026-08-27",
     "purpose": "Registro físico y de autoridad para evitar que una base, snapshot o fixture se confunda con otra.",
-    "scan_roots": [
-      "/home/mak/flujo",
-      "/home/mak/labs",
-      "/home/mak/research"
-    ],
+    "scan_roots": ["/home/mak"],
+    "excluded_roots": ["/home/mak/WIN", "/home/mak/GoogleDrive", "/home/mak/OneDrive"],
     "measurement": {
       "mode": "read_only",
-      "sqlite_integrity_check": "ok_for_all_listed_files",
-      "database_files": 33,
-      "policy": "No se fusionan bytes ni se eliminan stores; la conexión ocurre por contratos, hashes, refs y consumidores declarados."
+      "database_files": 270,
+      "mak_managed_files": 85,
+      "host_or_app_cache_files": 185,
+      "mak_managed_bytes": 2642407424,
+      "mak_managed_table_count_sum": 799,
+      "mak_managed_integrity_failures": 0,
+      "sqlite_integrity_check": "ok_for_all_85_mak_managed_files",
+      "policy": "No se fusionan bytes ni se eliminan stores; la conexión ocurre por contratos, hashes, refs y consumidores declarados. Los 185 cachés del host quedan fuera de la autoridad MAK aunque fueron detectados físicamente."
     },
+    "physical_file_classes": [
+      {"class": "mak_memory", "files": 4, "root_prefix": "/home/mak/flujo/data/", "authority": "active MAK/RD/flyer stores", "status": "integrity_ok"},
+      {"class": "mak_research", "files": 17, "root_prefix": "/home/mak/research/", "authority": "Research registry, captures and intake snapshots", "status": "integrity_ok"},
+      {"class": "mak_labs", "files": 9, "root_prefix": "/home/mak/labs/", "authority": "bounded index and experiment snapshots", "status": "integrity_ok"},
+      {"class": "mak_indexes", "files": 2, "root_prefix": "/home/mak/indexes/", "authority": "cross-root index projections", "status": "integrity_ok"},
+      {"class": "mak_pilots", "files": 2, "root_prefix": "/home/mak/flujo/experiments/", "authority": "case-scoped pilot captures", "status": "integrity_ok"},
+      {"class": "mak_curatoria", "files": 11, "root_prefix": "/home/mak/curatoria_inbox/", "authority": "curatorial/artistic inputs and local development stores", "status": "integrity_ok"},
+      {"class": "mak_archive_output", "files": 1, "root_prefix": "/home/mak/flujo/out/", "authority": "historical analysis output", "status": "integrity_ok"},
+      {"class": "mak_state", "files": 4, "root_prefix": "/home/mak/state/", "authority": "archaeology and runtime history", "status": "integrity_ok_non_authoritative"},
+      {"class": "mak_runner_checkout", "files": 2, "root_prefix": "/home/mak/actions-runner/", "authority": "CI checkout replica", "status": "integrity_ok_non_authoritative"},
+      {"class": "mak_agent_ephemeral", "files": 20, "root_prefix": "/home/mak/.claude/", "authority": "agent scratch and temporary test stores", "status": "integrity_ok_non_authoritative"},
+      {"class": "mak_codex_state", "files": 6, "root_prefix": "/home/mak/.codex/", "authority": "Codex application state", "status": "integrity_ok_non_authoritative"},
+      {"class": "mak_continue_state", "files": 3, "root_prefix": "/home/mak/.continue/", "authority": "editor/index state", "status": "integrity_ok_non_authoritative"},
+      {"class": "mak_crawl_cache", "files": 2, "root_prefix": "/home/mak/.crawl4ai/", "authority": "crawler cache", "status": "integrity_ok_non_authoritative"},
+      {"class": "mak_gemini_state", "files": 2, "root_prefix": "/home/mak/.gemini/", "authority": "agent conversation state", "status": "integrity_ok_non_authoritative"}
+    ],
     "authority": {
       "mak_memory": "/home/mak/flujo/data/mak_knowledge.db",
       "rd_catalog_projection": "/home/mak/flujo/data/rd.db",
