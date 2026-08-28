@@ -1,6 +1,554 @@
 # Operational Handoff
 
-## Agent bootstrap — CURRENT — 2026-08-25 — real ARICA/Fondart pilot completed
+## Agent bootstrap — CURRENT — 2026-08-27 — general archive portfolio view
+
+This is the only current operational packet. The material below the marked
+historical boundary is retained evidence and must not override this packet.
+
+### Current objective
+
+MAK is a reusable autonomous system for artistic archives:
+
+```text
+physical archive -> evidence memory -> reconstruction -> cultural/curatorial
+reasoning -> portfolio/application/research products -> outcomes -> learning
+```
+
+The current useful product is a general, internal portfolio view over the
+existing ISKVW archive projection. It must separate declared works, observed
+archive material and technical practice without forcing labels or rewriting
+identity. ARICA, DREF, HARRY, MYRA, RAYU, ISKVW and Fondart remain cases and
+holdouts, never architecture.
+
+### Physical authority and migration status
+
+`/home/mak/flujo` is the authoring baseline. `/home/mak/WIN` is historical
+evidence and is not to be changed. Archive roots, artwork, media, databases,
+and runtime sources are protected unless a later task names an exact safe
+write-set. `iskvw/datos/archivo.json` is the current generated source for the
+general view; it is read-only input and its hash is carried into the output.
+Do not delete or commit unreviewed local work.
+
+### Completed work with command and result
+
+- Existing `src/flujo/knowledge/product_view.py` was extended with the pure
+  `project_archive_portfolio_view()` consumer and strict validator. It does
+  not create a database, rescan an archive, mutate media or infer authorship.
+- Existing `tools/render_product_view.py` now accepts `--archive` while
+  retaining the prior plan/dossier/package mode. It renders JSON or Markdown
+  from the same source.
+- The real command
+  `./.venv/bin/python tools/render_product_view.py --archive
+  iskvw/datos/archivo.json --format json --max-items-per-format 24` exited 0.
+  The reopened output validated as `mak-archive-portfolio-view-v1` with input
+  hash `sha256:3005f632fde06d9772cbab6fa9827103895246cfc50eb32429975b81bdab35bd`.
+- Observed real counts: 2,034 source pieces, 5,812 source links, 8 declared
+  works, 24 bounded observed-field items, 24 bounded practice/code items and
+  61 links between selected items. The remaining 1,978 pieces stay in the
+  source and are reported as omitted, not deleted or merged.
+- The output explicitly keeps title separate from source identity: untitled
+  observed rows retain `title=null` and may retain `observed_description`,
+  marked as not an author statement. Code rows are context, not artwork.
+- Focused product-view tests, product-plan/dossier/application/pilot
+  regressions, `py_compile` and `git diff --check` all exited 0. The exact
+  changed source/test/CLI files remain uncommitted and must be preserved.
+
+### Open integration items
+
+1. The general view is a verified CLI/Markdown product, but it is not yet
+   mounted in the live Hub. Do not claim Hub integration until the real
+   consumer and response are verified.
+2. `iskvw/datos/archivo.json` is generated and currently contains a mixed
+   `todo` projection. A future source refresh may change counts/hash; the
+   output must be regenerated and revalidated, never hand-edited.
+3. The ARICA durable technical run remains a separate case run. Its technical
+   relations are provenance-only and must not be used to name or select works.
+4. `/home/mak/curatoria_inbox/ARICA/pantalla antesala.psd` remains a supplied
+   branding/logo resource, not evidence that the user authored the whole work.
+
+### Tool and dependency verification matrix
+
+| Boundary | Current evidence | Status |
+|---|---|---|
+| archive observation -> Stage 2A-2D | real ARICA/DREF/HARRY replays and validators | PASS |
+| canonical product plan -> dossier/package/view | focused and regression tests | PASS |
+| ISKVW archive projection -> general portfolio view | real 2,034/5,812 source run | PASS, CLI/Markdown |
+| title/observation/practice separation | validator and real counts | PASS, no promotion |
+| general view -> live Hub | no runtime consumer verification yet | OPEN |
+| source refresh -> stable regenerated view | deterministic fixture test; live refresh not run | OPEN |
+
+### Conflicts and risks
+
+- The 8 declared works are selected only because the source has `class=obra`,
+  title and summary; this is a source-backed presentation rule, not a claim
+  that they are the artist's complete or best body of work.
+- Perceptual text, filenames, paths, link similarity and technical context
+  remain evidence/signals. They do not prove authorship, intention, series,
+  delivery or public eligibility.
+- `archivo.json` is a generated projection and is not itself the physical
+  archive. Its `generated` value and input hash provide provenance, not a
+  timeless identity.
+- No publication, submission, database write, dispatch, training, source
+  mutation or `WIN` change occurred. Temporary validation outputs under
+  `/tmp` are not durable products.
+
+### Next concrete action
+
+Inspect the existing live Hub's real read-only consumer for the portfolio
+surface and mount this already-validated general view only if one existing
+route can consume it without a second schema, database or runtime. If that
+boundary cannot be proven quickly, retain the CLI as the product and record
+the exact missing edge rather than building another Hub.
+
+### Last verified
+
+2026-08-27 America/Santiago. General archive view validation and focused
+regression are complete. Live Hub mounting remains the only open edge within
+this slice.
+
+--- END CURRENT ---
+
+## Historical snapshot retained — 2026-08-26 — general MAK objective / DREF evidence
+
+**Operative rule.** This is the only active packet. Read the four reconciled
+master documents under `docs/system_learning/master/`. The historical packets
+below remain evidence and must not be used to reopen completed work.
+
+### Current objective
+
+MAK is an autonomous reusable operating system for artistic archives:
+physical archive -> evidence memory -> provisional reconstruction -> cultural
+and curatorial intelligence -> shared portfolio/application/research plan ->
+products -> verified episodes -> learning and bounded control. ARICA, MYRA,
+RAYU, ISKVW and Fondart are cases, never architecture. User review is optional,
+not the normal pipeline gate.
+
+Six agent perspectives and the prior master were reconciled into exactly four
+documents:
+
+- `docs/system_learning/master/inventory.json`: agents, hashes, authorities,
+  components, current evidence and ordered gaps;
+- `docs/system_learning/master/hashmap.json`: nodes, causal edges, loops,
+  invariants, failure modes and the current broken edge;
+- `docs/system_learning/master/system_theory.md`: unified system theory;
+- `docs/system_learning/master/action_plan.md`: the only active plan.
+
+The target session `Responder saludo` (`01a03414-252c-7333-9492-cc2d43687040`)
+continues as primary MAK director after this transfer.
+
+The permanent objective remains the complete MAK system described above. The
+current DREF/DREFQUILA portability work is only an execution slice used to
+produce evidence for that objective; Piso 3 is not a replacement objective.
+
+### Current bounded slice — role-aware cross-archive context — 2026-08-27
+
+The plan is maintained in `docs/system_learning/master/action_plan.md`; this
+handoff records only the execution checkpoint. The active chain is
+`catalogue + practice states -> cross_archive_relations -> existing
+mak-project-context-v1 consumer -> bounded research frontier`.
+
+Bootstrap: `mak-agent-bootstrap-v1`, task `Add role-aware cross-archive
+manifestation context`, exact code write-set:
+`src/flujo/knowledge/cross_archive_relations.py`,
+`tests/test_cross_archive_relations.py`; documentation write-set:
+`docs/system_learning/master/action_plan.md`,
+`docs/system_learning/master/inventory.json`,
+`docs/system_learning/master/hashmap.json`,
+`context/LAST_HANDOFF.md`.
+Context hashes for the documentation update: `agents.md=53afe6c85f431db10aee822f5a250af66968bb7c3ac9a27cbf38269b9386ce75`,
+`CURRENT=c98a7fb488b825ecfef0aff4d3770189d3167de469644aa03a90b03964b808e0`,
+`LAST_HANDOFF=25e69a007ada4cdff962e76bbf5b5df00771dd81ebd954a48a6e6c108eec5d14`.
+
+Implemented additively in the existing context projection: `role_bindings`
+and relation evidence now distinguish `candidate_visual_manifestation`,
+`archive_observed` and `reconstructed_reference`; authorship remains
+`not_inferred`, with missing evidence
+`native_authoring_project_or_explicit_visual_credit`. Participation scope is
+explicitly `matched_archive_artists_only`, `exhaustive=false`. The physical
+relation payload, artifact identity and existing context schema remain
+unchanged; no new database, registry, service or ontology was added.
+
+### Latest bounded execution — artist-wide public-work anchors — 2026-08-27
+
+The DREF/DREFQUILA slice was improved without treating a filename as a cultural
+fact. `data/artist_discographies.json` now contains a sourced local cache of the
+2024 `Los Sentimientos de un Robot` track list, including `Pego Fuerte` with
+Harry Nach and Young High, and the existing
+`src/flujo/knowledge/cross_archive_relations.py` now exposes
+`project_archive_catalog_context(...)`. This is a read-only
+`mak-project-context-v1` projection for one archive plus an explicit public
+catalogue; it emits `candidate_manifestation_of`, preserves
+`authorship_status=not_inferred`, and leaves the native authoring/export witness
+as missing evidence. It does not create a work, merge artifacts, infer that the
+third-party visual was made by the artist, or write the database.
+
+The matcher was hardened after a real smoke exposed a bad qualifier-only match:
+empty token sets and arbitrary filename subsets no longer match every catalogue
+track. The bounded real projection now validates with zero errors and reports 25
+candidate artifact endpoints across 15 catalogue works; `Pego Fuerte` resolves
+to `DREFGIRA/BLOQUE 01 LSDR/07 PEGO FUERTE.mp4`; `EDIT.mov`, `b ( ).mov` and
+`1.png` produce zero matches. Focused cross-archive tests passed 9/9; the
+cross-archive/project-context/research-frontier/feature-policy regression passed
+46/46; `py_compile`, JSON parsing and `git diff --check` passed. No media,
+archive, production DB, service, WIN or Git history was modified; the three
+changed paths are the catalogue, the existing relation projection and its test.
+
+The catalogue is an explicit public-work anchor, not proof that the local
+endpoint is the delivered visual. The DREFGIRA `Pego Fuerte` endpoint is a
+reconstructed/reference-only artifact in this slice, so the next consumer gate
+must preserve `candidate` and `native_authoring_project_or_explicit_visual_credit`
+until a real `.blend`/`.aep` -> export -> publication witness is available.
+
+The existing consumer boundary was smoke-tested in a temporary SQLite database:
+`project_archive_catalog_context` persisted the same `mak-project-context-v1`
+package and `read_context` returned `mak-project-context-read-v1` with one
+context, 40 entities and 25 candidate relations. All returned relation statuses
+were `candidate`; the temporary database was removed. This proves consumer
+compatibility only; no production context was written.
+
+The real DREF/HARRY smoke passed: 6 candidate cross-archive relations, 11
+context relations, 5 role bindings (3 reconstructed DREF references and 2
+observed HARRY artifacts), zero context validation errors, zero physical
+merges and zero truth promotions. Focused tests passed 7/7; cross-archive,
+project-context and research-frontier regression passed 18/18; py_compile and
+git diff --check passed. No source rescan, production DB write, dispatch,
+media mutation or authorship inference occurred.
+
+The preceding operational-membership/capability projection remains validated
+in its existing LearningStore path and is not reopened here. Open: if a visual
+authorship statement is needed, connect an explicit native authoring/export
+witness (`.blend`/`.aep` -> render -> publication). If it is absent, retain
+the manifestation as a bounded candidate for curation/research rather than
+turning absence of a native file into a negative authorship claim.
+
+### Physical authority and current evidence
+
+`/home/mak/flujo` is the authoring baseline; `/home/mak/WIN` is historical
+evidence; archive roots are read-only. Git is transport, not physical truth.
+Production DBs, protected artwork/media, publication, submission and training
+remain outside this consolidation.
+
+The durable ARICA/Fondart input slice now contains:
+
+- full observation: 12,332 artifacts, 12,015 files, 128 observations,
+  `snapshot:70cdbc7c142391b4fca9f8fc18c042c369f8396eacb3b4185659b8b8a35243b3`;
+- official opportunity validity capture: valid, `current_verified`,
+  `confirmed=true`, `effective_to=2026-09-10`;
+- practice receipt evidence with four exact physical bindings;
+- full-baseline and enriched materializations under
+  `experiments/pilots/ARICA-FONDART-2027/runs/`, regenerated from that same
+  observation input and verified by reopening every listed output.
+
+The snapshot string above and its input hash are also recorded in the master
+inventory. Do not infer identity from prose or filenames.
+
+The DREF/DREFQUILA federation is durable at
+`experiments/pilots/DREFQUILA/runs/metadata-federation-20260826/` and includes
+the physical `DREF CHOCOLATE` root, DREFGIRA reconstruction/Project IR,
+DREFGIRA.blend reference, BAH media, XIO/show records, historical copies and
+the read-only `data/mak_knowledge.db` context graph. `BAHPARTY/bah` is also
+captured as a contextually adjacent reconstructed project (87 artifacts),
+but remains explicitly unmerged because its physical source and project-level
+binding to DREFGIRA are not verified. Its observed counts are
+41 physical files plus 3 directories, 467 DREFGIRA reconstructed project
+artifacts and 87 adjacent BAHPARTY artifacts,
+93 DREF database artifact rows, 41 exact path matches to DREF CHOCOLATE, 12
+persisted context relations (3 verified, 4 human_attested, 5 candidate),
+1,149 curation links and 353 temporal events. No source or media was changed.
+
+### Current execution evidence
+
+The Piso 0 focused gate passed with exit 0 (48 tests across product episode,
+learning, product plan, application/research and autonomy). The previous
+`program_requirement_ids` failure was stale state, not a current blocker.
+The ARICA replay comparison is now durable: baseline and enriched retain the
+same archive/reconstruction outputs; 14 downstream outputs change under the
+two declared enrichments, 9 common outputs remain identical, and
+`unexplained_output_deltas=0`. Manifest v1 hashes are canonical JSON semantic
+hashes; parsed output rehash passes for all 23 baseline and 26 enriched files.
+Raw pretty-printed file bytes are intentionally not compared against those
+semantic hashes because that is not the v1 contract.
+
+La regresión ampliada de los consumidores del plan pasó con 159 tests (exit 0),
+incluyendo manifest, constraints/validity, fit/possibility, frontier,
+triangulation, programas, plan, dossier, application, episodio, learning,
+autonomy y product view. Una primera sonda de conteos falló por asumir claves
+`supported_claims/candidate_claims` en `practice.reconciliation`; el contrato
+real usa `claims_by_status`. Se corrigió leyendo el payload y la segunda sonda
+pasó. Esto queda como aprendizaje de contrato, no como fallo del pipeline.
+
+La arista incremental del mundo ya tiene una proyección ejecutable y durable:
+`experiments/pilots/ARICA-FONDART-2027/runs/opportunity-delta.json`
+(`mak-opportunity-delta-v1`, SHA-256
+`7c3a8f6d33fe7c8eb24766825aebbc543a0b15031bfca9a62daa56fe90180a01`). El
+comparador puro `src/flujo/knowledge/opportunity_delta.py` recibe dos
+`mak-opportunity-constraints-v1`, detecta dos cambios reales (`source.validity`
+ y `unknowns`), preserva la evidencia de deadline y marca nueve consumidores
+downstream. El cross-check contra baseline/enriched confirmó que exactamente
+esos nueve outputs cambiaron. No ejecuta red, DB ni recomputación implícita;
+deja el siguiente trabajo como enlace Vigía/evidence-return -> esta frontera.
+
+El subenlace Vigía -> captura acotada quedó verificado el 2026-08-26. La
+proyección pura `src/flujo/knowledge/vigia_capture_bridge.py` consume el
+resultado real de `cultura/mak_vigia/vigia.py:revisar_fuente`, conserva IDs de
+fuente, hashes de items, títulos, URL normalizada y skips, y consulta
+`tools/research_source_capture.py:capture_one` únicamente con `record=false`.
+El smoke controlado produjo una oportunidad y un plan
+`mak-source-capture-gate-v1`; `network_called=false`, `database_write=false`,
+`dispatch=false` y `promotion=none`. La regresión
+`tests/test_vigia.py tests/test_vigia_opportunity_queue.py
+tests/test_vigia_capture_bridge.py` pasó con exit 0; `py_compile` y
+`git diff --check` de los tres paths nuevos también pasaron. El primer smoke
+falló porque el fixture tenía un título de dos palabras y el parser real exige
+al menos tres; al reproducir el criterio del consumidor, el smoke pasó. Ese
+fallo se conserva como aprendizaje de contrato, no como evidencia de red.
+
+El puente conserva el modo plan-only y ahora añade la operación explícita
+`capture_vigia_plans`/CLI `--record`: valida el plan, ejecuta únicamente los
+planes bounded mediante `capture_one(record=True)` y devuelve
+`mak-vigia-capture-receipts-v1` con `source_plan_hash`, `plan_id`, `capture_id`,
+`source_id` y `text_path`. El smoke temporal con el consumidor real y backend
+fixture pasó; el default sigue sin red ni escritura. Vigía todavía no tiene un
+esquema versionado propio: el input aceptado sigue siendo su contrato observado
+`results[]/nuevos[]`. El próximo enlace causal es receipt de captura -> memoria
+de oportunidad -> delta y recomputación selectiva. La portabilidad a nivel de
+persona ya quedó cerrada con HARRY-NACH; sólo permanece contextual el binding
+exhaustivo de la subcarpeta HARRY CHILLAN, que no bloquea el core ni se rellena
+con DREFGIRA, BAHPARTY o nombres de directorio.
+
+También se ejecutó una sonda de integración completa en un directorio temporal,
+sin red: `capture_one(record=true)` con un backend fixture escribió un receipt
+local, `adapt_execute_research_report` lo convirtió al batch de resultados
+existente y `triangulate_research_evidence` devolvió 16 pares, todos
+`unresolved` por ausencia de claims. `build_evidence_return` conservó los 16
+gaps, produjo cero propuestas promocionables y mantuvo `promotion=none`.
+Esto prueba la forma del retorno y la abstención, no una captura pública real ni
+la recomputación durable; el temporal se eliminó al terminar la sonda.
+
+El holdout de portabilidad avanzó con un archivo físicamente distinto de
+DREF: `/home/mak/curatoria_inbox/HARRY CHILLAN`. El profile
+`experiments/pilots/HARRY-NACH-2026/input/archive_profile.json` conserva como
+evidencia local el binding contextual a Harry Nach, y el observer produjo el
+snapshot `snapshot:4ba52b415e213b68f7ad0d95a888d1535c530cac5318735d13b961248cd9a1b0`.
+El replay durable en
+`experiments/pilots/HARRY-NACH-2026/runs/fondart-holdout-20260826` pasó con 20
+artefactos, 2 observaciones, 2 candidatos topológicos, 1 unidad provisional,
+20 asignaciones y 1 Project IR. Repetir el replay en memoria produjo el mismo
+`run_id` y los mismos hashes de salida. La cadena dejó `fit=abstain`, dossier
+`draft_only`, application `blocked_with_reasons`, 3 claims unknown y 17 jobs
+de research; no se promovió ningún nombre de carpeta, canción, obra o show.
+
+Este es `independent_artist_person_scope_replay_pass`: el catálogo y el profile
+respaldan la identidad de Harry Nach a nivel de persona/archivo y el replay es
+reproducible. La pertenencia exhaustiva de la subcarpeta HARRY CHILLAN sigue
+`contextual_candidate`, como límite separado de obra/show. El próximo gate
+puede resolver ese binding o encontrar otro profile explícito; no debe convertir
+DREFGIRA/BAHPARTY ni el nombre del directorio en evidencia.
+
+El mismo snapshot HARRY fue reejecutado con la captura oficial Fondart existente
+en `experiments/pilots/HARRY-NACH-2026/runs/fondart-enriched-opportunity-20260826/`.
+El delta `opportunity-delta.json` (SHA-256
+`sha256:7c3a8f6d33fe7c8eb24766825aebbc543a0b15031bfca9a62daa56fe90180a01`)
+registró dos cambios (`source.validity` y `unknowns`): source gate
+`current_verified`, 16 jobs en vez de 17, pero práctica, snapshot y claims
+idénticos; fit `abstain`, dossier `draft_only` y application bloqueada. La
+captura de oportunidad no se convirtió en evidencia del archivo artístico.
+La comparación durable enlaza ambos runs desde
+`experiments/pilots/HARRY-NACH-2026/runs/fondart-holdout-20260826/portability-comparison.json`.
+
+La inspección completa descartó una falsa deriva de lineage: `programs.json`
+contiene dos candidatos legítimos —uno condicionado por oportunidad y otro
+nativo de práctica— y los productos seleccionan el candidato nativo presente
+en el conjunto completo.
+
+La evidencia `Escarlata (Remix)` corrigió el límite de relación entre DREFQUILA
+y HARRY. El compilador puro
+`src/flujo/knowledge/cross_archive_relations.py` consumió la discografía local,
+la federación DREF y el estado de práctica HARRY, y dejó seis candidatos en
+`experiments/pilots/DREFQUILA/runs/cross-archive-escarlata-20260826/relations.json`
+(SHA-256 `sha256:bb9e7a8e1f3bc707a97ba5ea910200a3afcec4b395271212b7cb31d233c2a433`).
+Son tres refs reconstruidas DREFGIRA por dos artefactos físicos HARRY, con
+`status=candidate`, un track explícito, provenance, `physical_merge=false` y
+`truth_promotion=false`. La proyección existente
+`experiments/pilots/DREFQUILA/runs/cross-archive-escarlata-20260826/project-context.json`
+(`mak-project-context-v1`, SHA-256
+`sha256:1fa949162ea1998f5af8679ac2c70f27888ffc3bbabc65385957cb7599307799`)
+expone esos seis pares y cinco enlaces `candidate_manifestation_of` hacia el
+nodo catalogado `Escarlata (Remix)`, por lo que la relación ya es consumible
+por el contexto sin dejar el track huérfano. DREF queda marcado
+`reconstructed_reference_only` y HARRY `contextual_candidate`: la colaboración
+es relacionable, pero no prueba que todo HARRY CHILLAN sea una sola obra ni que
+exista una entrega exacta.
+
+La cobertura DREF se contrastó además en una sonda read-only de cuatro
+contextos: DREF físico completo (40 artefactos), DREFGIRA reconstruido (467),
+BAHPARTY adyacente (87) y HARRY (20), con 614 refs y 20 relaciones candidatas.
+La sonda encontró 12 enlaces DREFGIRA reconstruido↔DREF físico, 6
+DREFGIRA↔HARRY y 2 BAHPARTY↔DREFGIRA para cuatro tracks catalogados; el DREF
+físico no contiene una ref física de Escarlata. Esto no contradice la relación
+Escarlata: demuestra que el puente pasa por la reconstrucción DREFGIRA y que
+los contextos físicos/reconstruidos del mismo artista no deben colapsarse en
+un `archive_id` sin contrato explícito. La sonda no persistió output nuevo,
+no fusionó artifacts y no promovió hechos.
+
+The complete second-archive run was generated from `DREF CHOCOLATE` with the
+existing `archive_observer.py`. The same Stage 2A -> 2D functions produced a
+valid `mak-practice-evidence-state-v1` over 44 physical artifacts: 40 local
+relations, one unresolved `exported_product` unit, 40 assigned artifacts and
+four unassigned structural artifacts. It produced zero supported claims and
+seven explicit abstentions; no false merge or truth promotion occurred. The
+durable result is recorded in
+`experiments/pilots/DREFQUILA/runs/full-physical-20260826/`.
+
+The earlier bounded sample remains at
+`experiments/pilots/DREFQUILA/runs/portable-sample-20260826/` as a comparison
+of partial coverage. The complete run is `PISO3_PASS_FOR_SECOND_ARCHIVE`.
+
+The full `DREF CHOCOLATE` root was hashed successfully; its size is
+approximately 98.2 GB. The separate metadata-only observer run remains valid
+as a cheap coverage diagnostic and records three directory artifacts plus 41
+`limit_reached` observations, which correctly produces zero relations and
+zero units. DREFGIRA and BAHPARTY reconstructed media outside that root remain
+reference-only and are not silently treated as physically bound.
+
+### Single next action
+
+Do not open another architecture or scan 98.2 GB blindly. The same-artist
+second-archive gate is now closed for DREF CHOCOLATE. The next general-plan
+milestone now has a passing independent-person replay: HARRY-NACH-2026. Its
+person/archive boundary is usable for portability, while its subarchive
+binding remains contextual and is not a work/show fact. La inspección read-only
+del grafo existente encontró además el registro
+`intake_projects` con `source_key`
+`6f6a046fb3c639a35b32:project_29335da67c429530baaa`, `record_hash`
+`cf54df0c494008e7b83a353eafd819e427cdeb78e1bcd1d9cd06c619997ee116` y
+`relative_path=HARRY CHILLAN`; sigue siendo un registro `candidate`, no una
+afirmación de autoría. El mismo grafo conserva 617 enlaces de curatoria para
+20 rutas físicas, todos de fuerza `path_token_context_only`; sirven como
+contexto de búsqueda, no como prueba. La comparación durable de tres casos está registrada en
+`experiments/pilots/HARRY-NACH-2026/runs/fondart-holdout-20260826/portability-comparison.json`.
+The next gate is to strengthen that binding or obtain another explicit one, and
+then compare two archives with
+`source_mutations=0`, `false_identity_merges=0`, `lost_artifact_refs=0` and
+deterministic replay. BAHPARTY/DREFGIRA must not be promoted into that role
+without evidence.
+
+El enlace de contexto ya fue validado con el consumidor existente en una base
+temporal: seis relaciones de pares y cinco anclajes al track, todos
+`candidate`, cero proyectos creados, cero promoción y cero escritura en la base
+de producción. La lectura de vuelta usa el contrato real
+`mak-project-context-read-v1` y devuelve el grafo bajo `contexts[]`; la primera
+aserción que esperaba `relations` en el nivel superior fue un error de
+verificación y quedó corregida. La proyección de Research ya existe en
+`experiments/pilots/DREFQUILA/runs/cross-archive-escarlata-20260826/research-frontier.json`:
+un job agrupado de dominio `curatoria` cubre las seis relaciones, usa el
+requisito técnico `relation-binding:catalog-track:b1f1a69c33797bd851e92d872cb8eb35`,
+mantiene `dispatch=false` y, al pasar resultados vacíos al triangulador,
+devuelve `unresolved` con `result_missing`. El namespace `opportunity_id` es
+técnico y no representa una convocatoria. El siguiente cierre causal es
+evidence-return capturado -> recomputación de esta frontera; esa captura ya
+se ejecutó de forma acotada y quedó durable en
+`experiments/pilots/DREFQUILA/runs/cross-archive-escarlata-20260826/research-capture`.
+Apple Music y YouTube aportaron dos grupos independientes; la triangulación
+válida devuelve `supported_candidate`, pero sólo para el registro público de
+colaboración. El binding exacto entre la entrega local y los endpoints sigue
+ausente: no se promovió la relación, no se despachó ningún job y no se tocó la
+base de producción.
+
+Una segunda sonda bounded sobre la publicación oficial de ELEVEN1.1
+(`https://www.youtube.com/watch?v=8XxFX6_w6CA`) quedó registrada en el mismo
+`SourceCorpusStore`. La URL canónica produjo dos receipts porque cambiaron los
+bytes crudos aunque el texto normalizado coincidió; se conserva como versión
+de fuente y no se agregó automáticamente al claim ni a la triangulación.
+
+### Registro de ejecución del corte actual
+
+- Bootstrap `Continue reusable Vigia capture delta loop`: exit 0; los hashes
+  emitidos fueron `agents=53afe6c85f431db10aee822f5a250af66968bb7c3ac9a27cbf38269b9386ce75`,
+  `CURRENT=c98a7fb488b825ecfef0aff4d3770189d3167de469644aa03a90b03964b808e0`
+  y `LAST_HANDOFF=99e745a50def5f858cb48f66971934e8cecfba4b5cb32c0eb564497eba76b640`.
+- Replay DREFGIRA + HARRY -> relaciones, contexto y frontier: exit 0; los
+  tres outputs fueron byte-identical a los durables (`6`, `11` y `1`). La
+  primera prueba omitió el segundo archive y falló cerrado; se corrigió sin
+  modificar ninguna fuente.
+- Replay HARRY baseline/enriched desde el mismo observation: exit 0; ambos
+  `run_id`, summaries y todos los outputs coincidieron semánticamente con sus
+  manifests durables. `validate_pilot_run` devolvió cero errores para ambos.
+- Regresiones: `cross_archive_relations + project_context +
+  cross_archive_research_frontier` = 18 tests; piloto/research/evidence-return/
+  episode = 41; Vigía/capture/delta = 71. Todos exit 0. JSON, `py_compile` y
+  `git diff --check` también exit 0.
+- Endurecimiento e integración del corte vigente: el validador de
+  `mak-vigia-capture-receipts-v1` ahora exige controles y provenance exactos;
+  `tools/capture_opportunity_validity.py` hidrata esos receipts desde el
+  `SourceCorpusStore` seleccionado en lectura y los entrega al compilador
+  oficial existente. La prueba temporal de tres URLs alcanzó
+  `current_verified`, con `network_called=false` en el compilador y sin
+  mutación de fuentes. El gate focalizado final pasó con 57 tests; `py_compile`
+  y `git diff --check` pasaron. El tramo genérico receipt -> constraints sigue
+  absteniéndose cuando la URL no pertenece al contrato oficial.
+- Bootstrap `Connect Vigia capture receipts to existing opportunity validity evidence`: exit 0;
+  `agents=53afe6c85f431db10aee822f5a250af66968bb7c3ac9a27cbf38269b9386ce75`,
+  `CURRENT=c98a7fb488b825ecfef0aff4d3770189d3167de469644aa03a90b03964b808e0`,
+  `LAST_HANDOFF=0a4e1a2d14a3c7eb7ee6ab34cf6e292bea44a76de4b0769d5dff5b12f56e1276`;
+  write-set exacto `tools/capture_opportunity_validity.py` y
+  `tests/test_opportunity_validity_capture.py`. El gate ampliado final pasó con
+  120 tests; `py_compile`, `json.tool` de los dos maestros y `git diff --check`
+  también terminaron con exit 0.
+- Bootstrap `Build selective recomputation causal receipt`: exit 0;
+  `agents=53afe6c85f431db10aee822f5a250af66968bb7c3ac9a27cbf38269b9386ce75`,
+  `CURRENT=c98a7fb488b825ecfef0aff4d3770189d3167de469644aa03a90b03964b808e0`,
+  `LAST_HANDOFF=909027581a52179577fdb75b6e19a82235415af4658211db21dfa40ba7bcdbfd`;
+  write-set exacto `src/flujo/knowledge/selective_recompute_receipt.py`,
+  `tools/compile_selective_recompute_receipt.py` y
+  `tests/test_selective_recompute_receipt.py`. El gate produjo 34 tests con
+  exit 0; el CLI aplicado a ARICA en `/tmp` devolvió
+  `mak-selective-recompute-receipt-v1`, `status=mixed_or_unexplained`, 17
+  outputs cambiados, 9 consumidores afectados y 7 outputs no atribuibles al
+  delta de oportunidad. No se escribió DB ni se ejecutó ningún consumidor.
+
+The general plan remains the governing objective after this slice: archive
+memory, reconstruction, cultural/curatorial reasoning, shared products,
+research/opportunity circulation, episodes/outcomes, learning and bounded
+control. No phase label can narrow or replace that mission.
+
+### Boundaries and risks
+
+- No output may claim readiness until the current replay and its canonical
+  semantic hashes pass; `fit=abstain` and `application=blocked` remain valid
+  outcomes, not failures to hide.
+- Opportunity evidence cannot become practice evidence.
+- C04-C06 receipts prove only their bounded technical predicates.
+- Research jobs remain non-dispatched unless a separate authorized capture
+  path already supplies the receipt.
+- Publication, submission, promotion, training and source mutation remain
+  disabled.
+- Departments, organs, Copilot capabilities and owner-consumer maps are
+  projections requiring a crosswalk, not a new registry.
+- Independent archive and artist holdouts remain necessary for portability
+  and learning claims.
+
+### Last verified
+
+2026-08-26 America/Santiago — product episode focused gate and durable
+ARICA/Fondart replay validated. The gate passed with exit 0; the regenerated
+baseline/enriched manifests preserve the same snapshot and their listed JSON
+outputs pass canonical semantic rehash. The enriched run adds four supported
+practice claims, passes the opportunity source gate, keeps fit abstained and
+the application blocked; no external effects occurred.
+
+2026-08-26 America/Santiago — DREF full observer batch validated; Stage 2A,
+2B, 2C, 2D and practice-state validators passed on 44 physical artifacts;
+the full run produced 40 relation candidates, one unresolved output unit,
+40 assigned and 4 unassigned artifacts; the
+federation JSON parsed and its semantic input hash replayed identically;
+`triangular_fichas.py` returned zero events from one ficha with no event
+metadata; the interrupted full-media observer was stopped and no matching
+process remains. Generated files are limited to
+`experiments/pilots/DREFQUILA/`; no database, artwork, media, WIN or source
+code was modified in this cut.
+
+## Agent bootstrap — HISTORICAL — 2026-08-25 — real ARICA/Fondart pilot completed
 
 **Operative rule.** This is the only active packet. Bootstrap with
 `tools/agent_bootstrap.py`; use `docs/MAK_SYSTEM_DIRECTIVE.md` as the durable
@@ -3651,3 +4199,46 @@ the autonomy phase.
 events all retain producer, raw date, venue and flyer/source evidence; 0 were
 forced into ISO dates and 0 curation links are orphaned. No source mutation or
 new process remained.
+
+2026-08-26 America/Santiago — Piso 0 episode-lineage repair and durable pilot
+replay verified. Bootstrap schema `mak-agent-bootstrap-v1`; context hashes were
+`agents.md=53afe6c85f431db10aee822f5a250af66968bb7c3ac9a27cbf38269b9386ce75`,
+`docs/MAK_CURRENT_STATE.md=c98a7fb488b825ecfef0aff4d3770189d3167de469644aa03a90b03964b808e0`,
+`context/LAST_HANDOFF.md=be8fb2e1c4524ebd9152a0a471d907c48285856432d4d417214c08f25446cce1`.
+Removed the undefined requirement-ID computation from `_input_hashes` in
+`src/flujo/knowledge/product_episode.py`; `_validate_plan` now derives separate
+program and research requirement sets and validates application requirements
+against the program set. The focused gate passed: 49 tests, exit 0; py_compile,
+JSON validation and diff check passed.
+
+Using only the durable snapshot
+`experiments/pilots/ARICA-FONDART-2027/input/archive_observation.json` (no
+rescan), regenerated `runs/full-baseline` and `runs/enriched`. Both manifests
+were reopened and all listed output hashes matched. The current durable source
+replays 12,332 artifacts, 128 observations, 512 relation candidates and 174
+units; it does not reproduce the unavailable historical 417/11,916/413 counts,
+which is recorded as an unresolved provenance difference in
+`experiments/pilots/ARICA-FONDART-2027/runs/run_comparison.json` and
+`RESULTS.md`. The enriched run adds four supported practice claims and passes
+the opportunity source gate, while fit remains `abstain`, dossier remains
+`draft_only`, application remains blocked, and all external side effects stay
+false. No commit or push.
+
+2026-08-26 America/Santiago — Piso 2 product lineage and human view verified.
+`portfolio_dossier` and `application_research_package` now expose the same
+canonical `product_plan_hash`; the focused lineage/product gate passed 54 tests
+(exit 0), py_compile and path-limited diff check passed. The accepted enriched
+run was regenerated after this additive contract repair and its manifests were
+reverified from disk.
+
+The first human-readable product is materialized from the enriched run as
+`experiments/pilots/ARICA-FONDART-2027/runs/enriched/portfolio-view.json`
+(`mak-product-view-v1`, SHA-256
+`51faed8207152ddf16314bef48fa35c0a9454c58c8a7e6a3b3994310a06c1d72`) and
+`portfolio-view.md` (SHA-256
+`066205d71c62105d2242248ad2de33671871970b431d9ade27ea4484e7af37ed`). It
+contains 4 supported claims with explicit evidence refs, 11,534 internal
+physical assets, 0 explicitly public-eligible assets, 16 non-dispatched
+research jobs, and a blocked application. It is an internal draft only: no
+publication, submission, dispatch, promotion, training, database write or
+source mutation.
