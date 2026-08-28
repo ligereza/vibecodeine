@@ -22,7 +22,7 @@ esta gitignorada (salida efimera del instrumento); lo curado se versiona aqui.
 | `mihrab_tilde_meter.svg` | mihrab | `desktop/tilde_meter.py` | El medidor de sobrevivencia de la tilde orientado hacia su nicho: el instrumento reza por las marcas. |
 | `medallion_entrada.svg` | medallion | `projects/tapiz/vibecode_spaces.py` | La puerta de entrada del instrumento como medallon minimo: casi vacio, porque la entrada solo delega. |
 | `cauce_sala3d.svg` | cauce (animada, SMIL) | `tools/sala3d/build.js` | La galeria tejiendose a si misma: el build de la sala 3D leido por el cauce. |
-| `void_animado.svg` | espaciado + zigzag_vertical + raices (animadas, SMIL, compuesta en 3 paneles) | `SAMPLE_CODE` (muestra canonica de `vibecode/spaces.py`) | Las tres morfologias del vacio animado (direccion 2026-07-12): el hueco que respira, el hilo en zigzag que teje hacia abajo, la raiz rectangular que crece y ramifica. |
+| `void_animado.svg` | espaciado + zigzag_vertical + raices (animadas, SMIL, compuesta en 3 paneles) | `SAMPLE_CODE` (muestra canonica de `projects/tapiz/vibecode/spaces.py`) | Las tres morfologias del vacio animado (direccion 2026-07-12): el hueco que respira, el hilo en zigzag que teje hacia abajo, la raiz rectangular que crece y ramifica. |
 
 ## Regeneracion exacta
 

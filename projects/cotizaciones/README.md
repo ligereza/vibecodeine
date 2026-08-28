@@ -17,7 +17,7 @@ Proyecto para generar cotizaciones que se dividen en 2 audiencias, usando estilo
 ## Integración
 
 - Consume el mismo `evento.json` que `plano/`.
-- Usa `flujo/flujo.json` para paleta y estilos.
+- Usa `projects/flujo/flujo.json` para paleta y estilos.
 - Puede generar infografía usando el sistema de piezas_vectoriales (config + render) o SVG directo.
 - Los JSON descriptivos de ejemplos se almacenan en `flujo/json/` para que agentes extraigan reglas estéticas.
 

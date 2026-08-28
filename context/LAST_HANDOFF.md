@@ -174,6 +174,50 @@ Both verified, both left alone because closing them edits a test:
 5. **Fix `docs/MAK_CURRENT_STATE.md`.** It is second in the read order and cites
    4 dead paths, including 2 PHASE files that no longer exist.
 
+### The finding that outranks everything else: MAK is stopped
+
+**MAK is `/home/mak`, not `/home/mak/flujo`.** Full measurement in
+`docs/MAK_ORGANISMO.md`. The headline:
+
+```
+crontab -l | grep -v '^#' | grep -c .    ->   0
+crontab -l | grep -c '^# PAUSED'         ->  23
+```
+
+Twenty-three scheduled jobs, none active, paused **2026-08-14 19:03** by the
+markers `PAUSED-DOCTOR-RENOVATION-20260814-1903` (16),
+`PAUSED-DOCTOR-20260814-1903` (6) and `PAUSED-FARO` (1). Every process log
+under `/home/mak/plataforma/logs/` stops that same day. Every `mak-*` systemd
+unit is inactive; the only active units are cloud sync. One process runs:
+`hub.py`, from `plataforma/.venv`.
+
+**No document in this repo said so.** For fourteen days the documentation has
+described a running system. This is why only the flyer chain feels alive: it
+runs on GitHub Actions, not on this box.
+
+**The logs were not trustworthy evidence.** `tests/test_entregar_micelio.py`
+wrote into `/home/mak/plataforma/logs/`; fixed 2026-08-28 and verified.
+Measured: running one suite appended 361 bytes to
+`logs/entregar_micelio.log`, and the lines it wrote read `simulated: box
+unreachable`. `tests/test_entregar_smoke_gate.py:89` already carries a comment
+saying not to do this.
+
+### The scope error, made twice in this session
+
+Documents that live in `flujo/` cite sibling surfaces in relative form, so from
+inside the repo they read as missing. An earlier pass declared
+`research/**` and `labs/**` nonexistent and removed four rows from
+`CAPACIDADES.md`. They exist under `/home/mak/`, and the original figures were
+exact: 23 tables / 276 rows in `jardines_interpretativos.sqlite`, 6 snapshots in
+`labs/`, 2 in `research/intake/`. Only `research/corpus/` drifted, 14 to 12.
+Reverted and rewritten with absolute paths.
+
+`agents.md` warns about exactly this and the warning did not prevent it.
+
+**Rule.** A reference to a surface outside the repo carries its absolute path
+from `/home/mak`. A repo-internal reference carries its path from the repo
+root. No relative form crosses that boundary.
+
 ### Language: the rule this session almost broke
 
 `agents.md`, Language section: machine-facing code, identifiers, filenames,
@@ -4520,7 +4564,7 @@ esta en `Next concrete action`.
 | Firecrawl capture | foreground `capture_url("https://example.com", backend="firecrawl")` | exit 0; backend `firecrawl`; 167 captured characters |
 | Cerebras availability | foreground explicit `LLM(cerebras)` probe | expected failure; HTTP 402 `payment_required`; excluded from automatic route |
 | Azure runtime audit | `rg` over active provider/runtime surfaces | no active Azure call/configuration; remaining matches are historical/comments/vocabulary |
-| Web typecheck/build | `NODE_BIN=.../node ./node_modules/typescript/bin/tsc --noEmit`; `NODE_BIN=.../node ./node_modules/vite/bin/vite.js build`; `NODE_BIN=.../node scripts/copy-context.mjs` | exit 0 with Node 24.19.0; 1840 modules; `dist/index.html` 777.98 kB |
+| Web typecheck/build | `NODE_BIN=.../node ./node_modules/typescript/bin/tsc --noEmit`; `NODE_BIN=.../node ./node_modules/vite/bin/vite.js build`; `NODE_BIN=.../node scripts/copy-context.mjs` | exit 0 with Node 24.19.0; 1840 modules; `web/dist/index.html` 777.98 kB |
 | Math Kernel cycle | `PYTHONPATH=src ./.venv/bin/python tools/math_kernel.py cycle --db data/mak_knowledge.db --target knowledge/math_targets/p_vs_np_target_capsule_2026-08-19.json --iterations 1 --compute-units 1 --max-expanded-cost 100` | exit 0; `mak-math-ledger-v1`; target `UNTRUSTED`; one `METADATA_ONLY` request; truth promotion blocked |
 | Lane registry | `PYTHONPATH=src ./.venv/bin/python tools/project_lanes.py validate` | exit 0; `mak-cross-domain-lane-registry-v1`; 19 lanes; common `cultural_research_first` layer; read-only |
 | Tennis MCP slice | `PYTHONPATH=src ./.venv/bin/python -m pytest -q tests/test_tennis_mcp.py tests/test_project_lanes.py` | exit 0; parser preserves raw notation, unknown tokens, source hash and `ANNOTATED` status |

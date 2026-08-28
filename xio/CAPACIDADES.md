@@ -5,10 +5,10 @@ el Xiaomi. La palabra `operativo` no se usa sin una prueba en el dispositivo.
 
 | Superficie | Lee estado | Recibe senales | Envia senales | Ejecuta control | Estado en repo | Estado en Xiaomi |
 |---|---:|---:|---:|---:|---|---|
-| `mak_xio_puente/monitor.py` | si | no | no | no | implementado | no verificado |
+| `cultura/mak_xio_puente/monitor.py` | si | no | no | no | implementado | no verificado |
 | `foh_monitor` | si | si, UDP | no | no | implementado | no verificado |
 | `showcontrol` | si | si, OSC opt-in | si, OSC/Art-Net/sACN | si, con token/permisos | implementado y testeado | no verificado |
-| `show_kit/cue_engine.py` | si | si, timecode | si, OSC desde laptop | dispara cues en Resolume | implementado y testeado | no aplica: corre en laptop |
+| `xio/show_kit/cue_engine.py` | si | si, timecode | si, OSC desde laptop | dispara cues en Resolume | implementado y testeado | no aplica: corre en laptop |
 | panel web del MAK | si | no | no | no | implementado | no aplica |
 
 ## Lectura correcta

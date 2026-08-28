@@ -45,7 +45,7 @@ is mistyped -- admissibility depends on the k observed in the instance.
 
 ## What was built
 
-**A resolution that carries its cardinality.** `substrate/resolution.py`:
+**A resolution that carries its cardinality.** `src/flujo/substrate/resolution.py`:
 `Unique | Many | Absent`. `Many` deliberately exposes no attribute that yields a
 single value, because accidentally reading one candidate out of many IS the bug.
 `require_unique` is the one unsound step in the system turned into a term the

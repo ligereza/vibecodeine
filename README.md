@@ -42,7 +42,7 @@ python -m flujo --help
 |---|---|
 | `src/flujo/` | runtime and CLI. Implementation authority |
 | `src/flujo/knowledge/` | archive, portfolio, evidence, `mak-*-v1` schemas |
-| `cultura/mak_*/` | in-house subsystems, including the human Hub (`mak_plataforma/hub.py`) |
+| `cultura/mak_*/` | in-house subsystems, including the human Hub (`cultura/mak_plataforma/hub.py`) |
 | `tools/` | tools, each registered in `CAPACIDADES.md` with its consumer |
 | `tests/` | suites by domain |
 | `docs/` | doctrine and dated evidence. Start at `docs/AUTORIDAD.md` |
@@ -51,6 +51,11 @@ python -m flujo --help
 | `experiments/pilots/` | pilot runs. Live fixtures: 9 suites read them |
 | `out/` | generated products. Not source |
 | `.archive/` | retirement. `tests/test_higiene_docs.py` excludes it on purpose |
+
+**MAK is `/home/mak`, not this repo.** The repo is the authoring baseline
+inside the organism. `docs/MAK_ORGANISMO.md` measures the machine: what runs,
+what is paused, and the sibling surfaces (`research/`, `labs/`, `plataforma/`,
+`WIN/`) that a repo-relative path cannot reach.
 
 ## Writing rules the repo enforces
 

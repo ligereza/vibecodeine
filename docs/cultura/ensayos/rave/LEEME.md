@@ -29,12 +29,12 @@ py tools/iconos_conjunto.py animar --raiz docs/cultura/ensayos/rave --salida <sc
   sus velocidades declaradas como variables: cambiarlas no puede romper la
   animación, porque la apariencia está separada del motor. Los cuatro niveles de
   riesgo están en la guía.
-- **Cada `.svg` funciona solo.** Arrastrá `iconos/05-shoom-smiley-acid-house.svg`
+- **Cada `.svg` funciona solo.** Arrastrá `docs/cultura/ensayos/rave/iconos/05-shoom-smiley-acid-house.svg`
   al navegador y se ve animado, sin pasar por la galería. Así se itera rápido.
 - **El estilo no se unifica.** Son 16 lenguajes visuales distintos a propósito.
   El validador cuida que no se rompan, no que se parezcan.
 - **`ancla` no es decoración.** Es el pasaje del ensayo que justifica el ícono, y
-  `tests/test_ensayo_rave.py` exige que sea un título real del documento.
+  `tests/test_archivo_ensayos.py` y `tests/test_formato_ensayo.py` exige que sea un título real del documento.
 - **Las fuentes del ensayo están declaradas como deuda** en su cabecera: el texto
   cita fuentes que no viajaron con el material original. Se completan leyendo, no
   inventando una URL.

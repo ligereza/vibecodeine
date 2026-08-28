@@ -43,7 +43,7 @@ Hay **dos** tipos de flyer, con destinos distintos:
    plantilla y los nombres de los objetos imagen.
 3. **Encadenar con el intake:** un pedido de cartelera (JSON o links IG) →
    descarga IG (avisando si la 1ª del carrusel es video o el perfil es privado,
-   ya detectado por `intake/email_parser.py`) → Blender enmarca → PS droplet
+   ya detectado por `src/flujo/intake/email_parser.py`) → Blender enmarca → PS droplet
    exporta. Todo orquestado por un comando `flujo cartelera`.
 
 ## Avisos ya disponibles (reutilizar)

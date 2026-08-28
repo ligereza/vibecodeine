@@ -4,7 +4,7 @@ This directory preserves candidate material recovered from the external
 session tree on 2026-08-12. It is evidence, not an operational instruction
 set and not an automatic source of truth.
 
-`raw/` keeps source-relative paths. `raw/MANIFEST.json` records the source
+`raw/` keeps source-relative paths. `docs/recovered/claude_sessions_2026-08-12/raw/MANIFEST.json` records the source
 path, imported files, byte sizes, and SHA-256 values. The import deliberately
 excludes `.venv`, Python caches, credential-shaped files, and the private
 `claude_web_export_2026-08-11` directory.
@@ -24,13 +24,13 @@ byte**: `rd_grafo_relaciones_informe`, `rd_reactivos_auditoria_internacional`
 instead of pointing.
 
 Three files here are also byte-identical to live data under `data/rd_fuentes/`:
-`rd_universo_entidades_2026-08-11.json` = `candidates/entity_universe_v0.1.json`,
-`rd_indice_integracion_relaciones_2026-08-11.json` = `candidates/relation_index_v0.1.json`,
+`rd_universo_entidades_2026-08-11.json` = `data/rd_fuentes/candidates/entity_universe_v0.1.json`,
+`rd_indice_integracion_relaciones_2026-08-11.json` = `data/rd_fuentes/candidates/relation_index_v0.1.json`,
 and `rd_testeos_eventos_2025_evidence_2026-08-12.json` (5.3 MB) =
 `testeo_eventos_2025_evidence.json`.
 
 Those duplicate pairs now **share an inode** (hardlink): every path still
-resolves and the bytes are stored once. `raw/MANIFEST.json` remains the
+resolves and the bytes are stored once. `docs/recovered/claude_sessions_2026-08-12/raw/MANIFEST.json` remains the
 authority on provenance -- it records the source path and SHA-256 of each
 imported file, and the dedup did not change a single hash.
 

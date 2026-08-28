@@ -55,7 +55,7 @@ nueva -- ni Rama C, ni prosa. Lo que baja de umbral es la VISIBILIDAD de la
 asimetria: en prosa (OBRA_01) es una afirmacion que hay que creer; recast como
 esquema, la inmunidad del autor es una propiedad del modelo de datos -- su fila no
 puede portar un 'antes' libre, por esquema, no por narracion. Mismo movimiento que
-`dossiers/precursor.md` (prestar la FORMA de un documento ajeno, no su contenido
+`projects/cultura/dossiers/precursor.md` (prestar la FORMA de un documento ajeno, no su contenido
 operativo): aca la forma prestada es "bitacora/libro mayor", nunca datos reales de
 rastreo de contactos ni epidemiologia.
 

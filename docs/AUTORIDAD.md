@@ -191,6 +191,13 @@ All of the following requires touching code, tests or workflows, not files:
   also cites 4 dead paths, two of them PHASE files that no longer exist.
   Correcting the second authority deserves its own pass.
 
+## The scope error this document was also built on
+
+Every figure above measures `/home/mak/flujo`. MAK is `/home/mak`. See
+`docs/MAK_ORGANISMO.md`, which measures the machine and records the finding
+that outranks all document hygiene: **the organism has been paused since
+2026-08-14 19:03 and no document said so.**
+
 ## Retirement condition
 
 When the read order is generated from the repo and no document outside it

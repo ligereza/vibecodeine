@@ -23,7 +23,7 @@ lo que importa es dejar ver la obra, no venderla.
 define la conversión compartida, y `ESQUEMA_ARCHIVO.md` define exactamente qué
 datos vas a recibir. Todo lo que muestres tiene que salir de ahí.
 
-Lo que recibís es **un solo archivo**, `datos/archivo.json`, con dos listas:
+Lo que recibís es **un solo archivo**, `iskvw/datos/archivo.json`, con dos listas:
 **piezas** y **vínculos entre piezas**. No importa qué hay detrás — obras del
 artista, piezas gráficas derivadas del taller, código — todo llega con la misma
 forma. Los informes y conceptos de research existen como vista explícita, pero
@@ -92,14 +92,14 @@ desplazarse.
 
 ## Qué entregar
 
-Una carpeta autocontenida con un `index.html` que lea **`datos/archivo.json`**
+Una carpeta autocontenida con un `index.html` que lea **`iskvw/datos/archivo.json`**
 —el mismo que se describe arriba— con rutas relativas desde `piel/<nombre>/`, o
 sea `../../datos/archivo.json`. Si usás librerías, que viajen adentro.
 
-`datos/obras.json` contiene 8 entradas y son HERRAMIENTAS del repo, no el
+`iskvw/datos/obras.json` contiene 8 entradas y son HERRAMIENTAS del repo, no el
 archivo público completo. Una piel escrita contra ese archivo mostraría 8 cosas
 en lugar de la proyección actual; por eso la entrada obligatoria es
-`datos/archivo.json`.
+`iskvw/datos/archivo.json`.
 
 Y aparte, en tu respuesta: **tres o cuatro líneas explicando cuál es la idea**.
 Qué es esto, por qué esta forma y no otra, y qué hace el visitante. Si no podés

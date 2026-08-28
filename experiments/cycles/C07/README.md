@@ -28,5 +28,5 @@ python3 runner.py
 El runner ejecuta los tests, `py_compile` y escribe `graph.json`. Las fixtures
 se materializan en un directorio temporal: frames + export, export sin
 proyecto, proyecto sin export, mismo nombre/diferente obra y misma obra en
-proporciones distintas. El archivo `fixtures/manifest.json` documenta los
+proporciones distintas. El archivo `experiments/cycles/C07/fixtures/manifest.json` documenta los
 casos.

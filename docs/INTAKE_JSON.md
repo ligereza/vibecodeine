@@ -206,7 +206,7 @@ Formato típico: `rider_eventos_a4_horizontal` (29.7 × 21 cm, A4 horizontal).
 ### 3.6 Otros (`sticker`, `tarjeta`, `pendon`)
 Aún no tienen plantilla dedicada en el catálogo. Se aceptan en el intake con
 `medidas` explícitas; el sistema genera una base proporcional universal.
-Medidas de referencia (heurística en `intake/pipeline.py`):
+Medidas de referencia (heurística en `src/flujo/intake/pipeline.py`):
 - `sticker`: 10 × 10 cm · `tarjeta`: 9 × 5 cm · `pendon`: medida explícita.
 
 ---

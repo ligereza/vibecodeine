@@ -20,6 +20,23 @@ sys.path.insert(0, str(REPO_ROOT / "cultura" / "mak_plataforma"))
 import entregar_micelio as EM  # noqa: E402
 
 
+@pytest.fixture(autouse=True)
+def _isolated_log(tmp_path, monkeypatch):
+    """Point LOG at tmp_path so the suite never writes MAK's production log.
+
+    Same convention as tests/test_entregar_smoke_gate.py:89. Without it the
+    three tests that call EM.main() append to
+    /home/mak/plataforma/logs/entregar_micelio.log. Measured 2026-08-28: one
+    run added 361 bytes there, and the lines it left read "simulated: box
+    unreachable", which is indistinguishable from a real outage.
+
+    This matters more than it looks. The MAK organism has been paused since
+    2026-08-14 and those logs are the evidence of what ran and when. A test
+    writing into them destroys the evidence. See docs/MAK_ORGANISMO.md.
+    """
+    monkeypatch.setattr(EM, "LOG", str(tmp_path / "entregar_micelio.log"))
+
+
 GRAFO = {
     "nodes": [
         {"id": "obra-1.md", "dir": "corpus", "titulo": "percibido uno",

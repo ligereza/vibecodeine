@@ -3,7 +3,7 @@
 # showcontrol -- the phone as a network show-control node
 
 This is the active control surface, not the read-only `foh_monitor` or
-`mak_xio_puente/monitor.py`. Its code being present in the repository does not
+`cultura/mak_xio_puente/monitor.py`. Its code being present in the repository does not
 prove that the plugin is installed or enabled on the Xiaomi; verify the runtime
 state and token before using any route in a live show.
 
