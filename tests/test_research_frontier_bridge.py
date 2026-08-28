@@ -258,7 +258,7 @@ def test_unknown_declared_domain_falls_back_to_general() -> None:
     assert job["provenance"]["domain_source"] == "unknown_domain_fallback"
 
 
-def test_rejected_and_invalid_inputs_never_create_jobs() -> None:
+def test_rejected_program_preserves_fit_research_but_invalid_inputs_create_no_jobs() -> None:
     opportunity = _opportunity()
     action = _action("research:rejected", "req:rejected")
     fit = _fit([action])
@@ -268,7 +268,9 @@ def test_rejected_and_invalid_inputs_never_create_jobs() -> None:
         rejected=["program:rejected"],
     )
     rejected_payload = compile_research_frontier(rejected_field, fit, opportunity)
-    assert rejected_payload["jobs"] == []
+    assert len(rejected_payload["jobs"]) == 1
+    assert rejected_payload["jobs"][0]["candidate_id"] == "opportunity-scope:fondart-investigacion-2027"
+    assert rejected_payload["jobs"][0]["research_action_ids"] == [action["candidate_id"]]
     invalid_fit = _fit([action], valid=False, errors=["fit_input_invalid"])
     invalid_payload = compile_research_frontier(_possibility([{"candidate_id": "program:invalid", "research_action_ids": [action["candidate_id"]]}]), invalid_fit, opportunity)
     assert invalid_payload["jobs"] == []

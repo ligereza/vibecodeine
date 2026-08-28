@@ -20,6 +20,12 @@ archive material and technical practice without forcing labels or rewriting
 identity. ARICA, DREF, HARRY, MYRA, RAYU, ISKVW and Fondart remain cases and
 holdouts, never architecture.
 
+Stage 2D accepted: the archive-to-Project-IR boundary remains in force:
+`mak-archive-observation-batch-v1` is the physical evidence contract, and the
+accepted gate records 171 focused tests. The full suite count is always measured
+by the test command, not maintained in this packet. The governing operational
+directive is `docs/MAK_SYSTEM_DIRECTIVE.md`.
+
 ### Physical authority and migration status
 
 `/home/mak/flujo` is the authoring baseline. `/home/mak/WIN` is historical
@@ -50,8 +56,10 @@ Do not delete or commit unreviewed local work.
   observed rows retain `title=null` and may retain `observed_description`,
   marked as not an author statement. Code rows are context, not artwork.
 - Focused product-view tests, product-plan/dossier/application/pilot
-  regressions, `py_compile` and `git diff --check` all exited 0. The exact
-  changed source/test/CLI files remain uncommitted and must be preserved.
+  regressions, `py_compile` and `git diff --check` all exited 0. The general
+  view source, CLI, tests and this handoff are committed in `c5666e6` and
+  pushed to `origin/main`; other recent MAK code, tests, learning documents
+  and generated pilot outputs remain outside that commit and were not deleted.
 
 ### Open integration items
 
@@ -258,8 +266,8 @@ persisted context relations (3 verified, 4 human_attested, 5 candidate),
 
 ### Current execution evidence
 
-The Piso 0 focused gate passed with exit 0 (48 tests across product episode,
-learning, product plan, application/research and autonomy). The previous
+The Piso 0 focused gate passed with exit 0 across product episode, learning,
+product plan, application/research and autonomy. The previous
 `program_requirement_ids` failure was stale state, not a current blocker.
 The ARICA replay comparison is now durable: baseline and enriched retain the
 same archive/reconstruction outputs; 14 downstream outputs change under the
@@ -269,8 +277,8 @@ hashes; parsed output rehash passes for all 23 baseline and 26 enriched files.
 Raw pretty-printed file bytes are intentionally not compared against those
 semantic hashes because that is not the v1 contract.
 
-La regresión ampliada de los consumidores del plan pasó con 159 tests (exit 0),
-incluyendo manifest, constraints/validity, fit/possibility, frontier,
+La regresión ampliada de los consumidores del plan pasó con exit 0, incluyendo
+manifest, constraints/validity, fit/possibility, frontier,
 triangulation, programas, plan, dossier, application, episodio, learning,
 autonomy y product view. Una primera sonda de conteos falló por asumir claves
 `supported_claims/candidate_claims` en `practice.reconciliation`; el contrato
@@ -4208,7 +4216,7 @@ replay verified. Bootstrap schema `mak-agent-bootstrap-v1`; context hashes were
 Removed the undefined requirement-ID computation from `_input_hashes` in
 `src/flujo/knowledge/product_episode.py`; `_validate_plan` now derives separate
 program and research requirement sets and validates application requirements
-against the program set. The focused gate passed: 49 tests, exit 0; py_compile,
+ against the program set. The focused gate passed with exit 0; py_compile,
 JSON validation and diff check passed.
 
 Using only the durable snapshot

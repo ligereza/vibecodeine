@@ -4,7 +4,10 @@ import subprocess
 import sys
 from pathlib import Path
 
-from flujo.knowledge.application_research_package import compile_application_research_package
+from flujo.knowledge.application_research_package import (
+    _stable_hash,
+    compile_application_research_package,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -60,6 +63,15 @@ def test_deterministic_and_no_mutation():
     before = (copy.deepcopy(p), copy.deepcopy(o))
     assert compile_application_research_package(p, o) == compile_application_research_package(copy.deepcopy(p), copy.deepcopy(o))
     assert (p, o) == before
+
+
+def test_package_declares_consumed_plan_and_opportunity_hashes():
+    p, o = plan(), opportunity()
+    out = compile_application_research_package(p, o)
+    assert out["input_hashes"] == {
+        "product_plan": _stable_hash(p),
+        "opportunity_constraints": _stable_hash(o),
+    }
 
 
 def test_cli(tmp_path):

@@ -1,0 +1,195 @@
+{
+  "schema": "mak-session-learning-hashmap-v1",
+  "generated_on": "2026-08-25",
+  "scope": "stable identities, flows, relations and failure modes for portable archive observation",
+  "identities": [
+    {
+      "id": "archive_id",
+      "definition": "namespace supplied by the caller for one physical archive tenant",
+      "algorithm": "opaque non-empty string; included in artifact identity and semantic snapshot",
+      "invariants": ["mandatory", "prior batch must match", "different archive_id values cannot share artifact IDs"],
+      "example": "arica-bounded-2026-08-25"
+    },
+    {
+      "id": "relative_path",
+      "definition": "normalized POSIX location within the explicit root",
+      "algorithm": "relative path, no absolute root, no empty/dot/dotdot components",
+      "invariants": ["stable under copying the root to another absolute location", "one current artifact per path", "path change is a physical change, not content identity"],
+      "example": "renders/shot_0001.png"
+    },
+    {
+      "id": "artifact_id",
+      "definition": "stable physical artifact identity scoped by archive and relative path",
+      "algorithm": "artifact:<sha256(canonical_json({archive_id, relative_path}))>",
+      "invariants": ["not derived from bytes", "same path changing bytes retains artifact_id", "same bytes at another path get another artifact_id"],
+      "example": "artifact:<digest>"
+    },
+    {
+      "id": "physical_id",
+      "definition": "physical identity alias for the same archive/path identity",
+      "algorithm": "physical:<same digest as artifact_id>",
+      "invariants": ["one physical location, one identity", "never collapse exact duplicates by this field"],
+      "example": "physical:<digest>"
+    },
+    {
+      "id": "artifact_ref",
+      "definition": "stable external reference to a physical artifact",
+      "algorithm": "archive-artifact:<same digest as artifact_id>",
+      "invariants": ["endpoint for relations and projections", "must resolve within archive namespace", "not interchangeable with content_id"],
+      "example": "archive-artifact:<digest>"
+    },
+    {
+      "id": "content_id",
+      "definition": "nullable identity of observed bytes, shared by exact duplicates",
+      "algorithm": "content:sha256:<sha256 bytes>",
+      "invariants": ["not physical identity", "absent for directories/symlinks/errors/specials or unreadable bytes", "equal content_id does not authorize merge"],
+      "example": "content:sha256:<digest>"
+    },
+    {
+      "id": "sha256",
+      "definition": "raw content digest for readable regular files",
+      "algorithm": "SHA-256 of bytes observed by the observer",
+      "invariants": ["null is valid when content is not hashable", "hash equality is byte equality only", "does not prove provenance or authorship"]
+    },
+    {
+      "id": "snapshot_id",
+      "definition": "semantic identity of one observation batch",
+      "algorithm": "snapshot:<sha256(canonical schema, archive_id, limits, semantic artifacts, observations)>",
+      "invariants": ["excludes absolute root", "excludes wall-clock time", "excludes mtime_ns from semantic artifact material", "same relative content under another absolute root reproduces it", "change_set is diagnostic and not part of snapshot material"],
+      "example": "snapshot:<digest>"
+    },
+    {
+      "id": "observation_id",
+      "definition": "stable candidate observation reference",
+      "algorithm": "observation:<sha256(canonical observation_type, sorted artifact_refs, evidence)>",
+      "invariants": ["candidate status only", "must resolve to the current batch", "duplicates are rejected", "observation evidence does not promote a relation"]
+    },
+    {
+      "id": "change_set",
+      "definition": "incremental path comparison against an optional prior batch",
+      "members": ["added", "changed", "unchanged", "missing"],
+      "invariants": ["sorted unique relative paths", "same path with bytes changed is changed, not a new physical path", "missing is prior path absent from current scan", "does not mutate prior snapshot"]
+    },
+    {
+      "id": "unit_id",
+      "definition": "provisional reconstruction grouping identity",
+      "algorithm": "core-specific deterministic hash over accepted unit semantics, never filename truth",
+      "invariants": ["provisional_unit or unresolved_unit", "members and dependencies remain separate", "ambiguous/unassigned partition is conserved"]
+    },
+    {
+      "id": "project_id",
+      "definition": "Project IR record identity for a provisional/reviewable unit",
+      "algorithm": "adapter/Project IR normalized identifier, not physical artifact identity",
+      "invariants": ["one record can reference many physical artifacts", "portable SSD source is review_required", "library dependencies do not become projects by default"]
+    },
+    {
+      "id": "requirement_id",
+      "definition": "external opportunity constraint identity",
+      "algorithm": "source/compiler-defined stable ID",
+      "invariants": ["internal evidence may carry it only when explicitly declared", "no field/value/name similarity may create it", "document source evidence does not prove practice fit"]
+    },
+    {
+      "id": "source_id",
+      "definition": "captured external research source identity",
+      "algorithm": "research result batch supplied identifier",
+      "invariants": ["source_group and URL/hash/capture/license metadata required", "same group/domain does not count as independent twice", "source integrity is not claim truth"]
+    },
+    {
+      "id": "claim_id",
+      "definition": "evidence-bearing claim identity in practice or research projections",
+      "invariants": ["supported/candidate/unknown remain distinct", "supported requires explicit evidence refs", "research claims never silently become practice claims"]
+    },
+    {
+      "id": "identity_group",
+      "definition": "stable archive/artist grouping for learning split, separate from snapshot",
+      "invariants": ["group split prevents leakage", "snapshot is never used as identity substitute", "identity is not a learning feature or truth label"]
+    }
+  ],
+  "flows": [
+    {
+      "id": "flow_physical_to_memory",
+      "edges": ["explicit_root -> archive_observer -> observation_batch -> archive_memory -> replay"],
+      "contracts": ["mak-archive-observation-batch-v1", "mak-archive-memory-v2"],
+      "preserved": ["physical identities", "nullable content", "observations", "append-only snapshots"],
+      "blocked_inferences": ["artistic identity", "project truth", "publication"]
+    },
+    {
+      "id": "flow_memory_to_project_ir",
+      "edges": ["replay -> Stage 2A candidate observations -> Stage 2B relations -> Stage 2C units -> Stage 2D Project IR"],
+      "contracts": ["mak-archive-reconstruction-input-v1", "mak-archive-relation-candidates-v1", "mak-archive-unit-reconstruction-v1", "mak-project-ir-v1"],
+      "preserved": ["artifact_refs", "candidate IDs", "evidence/counterevidence", "alternatives", "missing evidence", "ambiguous/unassigned refs", "dependencies"],
+      "blocked_inferences": ["verified/active truth", "synthetic project from shared ancestor", "duplicate collapse"]
+    },
+    {
+      "id": "flow_project_ir_to_practice",
+      "edges": ["accepted Project IR -> practice_evidence_state -> opportunity_fit via explicit requirement_ids"],
+      "contracts": ["mak-practice-evidence-state-v1", "mak-opportunity-constraints-v1", "mak-opportunity-fit-v1"],
+      "preserved": ["physical artifact refs", "unit evidence refs", "claims", "dimensions", "gaps", "provenance"],
+      "blocked_inferences": ["research claim as practice proof", "filename as cultural claim", "unverified opportunity as current"]
+    },
+    {
+      "id": "flow_practice_to_products",
+      "edges": ["practice + opportunity -> possibility -> product plan -> portfolio/application/research drafts"],
+      "contracts": ["mak-artistic-program-candidates-v1", "mak-product-plan-v1", "mak-portfolio-dossier-v1"],
+      "preserved": ["program rank", "claim/asset/requirement bindings", "candidate and unknown atoms", "license/privacy", "research-first abstention"],
+      "blocked_inferences": ["draft equals publishable", "candidate equals documented fact", "private asset equals public asset"]
+    },
+    {
+      "id": "flow_products_to_learning",
+      "edges": ["product episode -> external receipt/binding -> product_learning -> shadow-only candidate signal"],
+      "contracts": ["mak-product-episode-candidate-v1", "mak-product-learning-evaluation-v1", "mak-deep-learning-task-gate-v1"],
+      "preserved": ["external outcome status", "source hashes", "identity group split", "holdout", "counterfactual alternatives"],
+      "blocked_inferences": ["open outcome as negative", "self-generated draft as truth label", "automatic policy activation"]
+    }
+  ],
+  "relations": [
+    {"id": "component_of", "domain": "physical_artifact -> provisional_unit", "inverse": "has_component", "status": "candidate until evidence", "guard": "shared bytes do not imply component relation"},
+    {"id": "version_of", "domain": "physical_artifact -> physical_artifact", "inverse": "has_version", "status": "candidate until evidence", "guard": "mtime/number sequence alone is insufficient"},
+    {"id": "manifestation_of", "domain": "physical_artifact -> unit/project", "inverse": "has_manifestation", "status": "candidate until evidence", "guard": "output filename alone does not prove manifestation"},
+    {"id": "published_as", "domain": "unit/project -> external manifestation", "inverse": "describes", "status": "unknown without public/native binding", "guard": "C05 export witness is not publication"},
+    {"id": "same_series_candidate", "domain": "physical_artifact or unit <-> physical_artifact or unit", "inverse": "same_series_candidate", "status": "symmetric candidate", "guard": "sequence/sidecar/visual similarity are evidence, not identity"},
+    {"id": "depends_on", "domain": "unit/project -> resource/artifact", "inverse": "depended_on_by", "status": "explicit or candidate", "guard": "dependency is not membership or artwork"},
+    {"id": "exports_to", "domain": "native source/action witness -> output artifact", "inverse": "exported_from", "status": "supported only by bounded witness", "guard": "does not imply final delivery, intent or authorship"}
+  ],
+  "invariants": [
+    "archive_id is the tenant boundary for all artifact identities",
+    "physical identity and content identity are orthogonal",
+    "same path changed bytes is one physical identity with a changed snapshot state",
+    "two exact duplicate paths are two artifacts with one shared content_id",
+    "entries without sha256 remain valid physical observations with null content_id",
+    "relative paths are POSIX and deterministic",
+    "snapshot semantic hash excludes absolute root and wall-clock time",
+    "candidate observations are not promoted truths",
+    "source provenance is carried forward, not replaced by derived labels",
+    "ambiguous and unassigned refs are explicit conservation buckets",
+    "output role requires an evidence chain, not a filename or folder guess",
+    "research evidence and practice evidence have different authorities",
+    "all external product actions remain disabled until their own gates pass",
+    "learning is shadow-only and cannot learn truth, authorship, identity or artistic worth"
+  ],
+  "failure_modes": [
+    {"id": "cross_archive_ref", "symptom": "artifact_ref from archive A appears in archive B", "fail_closed_response": "reject payload/projection; never repair by content_id"},
+    {"id": "content_endpoint", "symptom": "relation endpoint uses content_id", "fail_closed_response": "reject; endpoint must resolve physical artifact_ref"},
+    {"id": "missing_sha256_assumed_zero", "symptom": "directory/symlink/error treated as empty file", "fail_closed_response": "retain null sha256 and kind/availability/error evidence"},
+    {"id": "prior_mutation", "symptom": "incremental scan edits old snapshot or reuses its lists", "fail_closed_response": "copy/validate prior; append current result only"},
+    {"id": "candidate_as_truth", "symptom": "relation/unit/claim becomes supported or active without required evidence", "fail_closed_response": "retain pending/unresolved/candidate/unknown and expose missing evidence"},
+    {"id": "research_to_practice_leak", "symptom": "web claim is inserted as artist practice claim", "fail_closed_response": "keep environmental evidence and return unresolved practice gap"},
+    {"id": "legacy_dependency", "symptom": "portable archive pipeline needs Hub/network/DB/router", "fail_closed_response": "bypass optional consumer and report unavailable capability"},
+    {"id": "nondeterministic_replay", "symptom": "ordering/IDs vary with absolute root, map order or wall clock", "fail_closed_response": "reject semantic hash or regression; no downstream ingestion"}
+  ],
+  "source_refs": [
+    {"id": "archive_observer", "path": "src/flujo/knowledge/archive_observer.py", "sha256": "4a397fbb78ccbd783590ed1074cc7a91640e733123fc328853ca03debe8e9cbf"},
+    {"id": "archive_memory", "path": "src/flujo/knowledge/archive_memory.py", "sha256": "35b4683ad522365965d32e82fee6c6c18be1dfc75ccc05b5ad59880ef8b2c54a"},
+    {"id": "project_reconstruction", "path": "src/flujo/knowledge/project_reconstruction.py", "sha256": "bb5d9977966db7280155ad41d0149e059a045ec3ec5060e1b2d1c2a8bf28386d"},
+    {"id": "reconstruction_adapter", "path": "src/flujo/knowledge/reconstruction_adapter.py", "sha256": "d53aa72405c273f606973c167c3a5018ea504c5c56ad03da682d6e0cfa9cd8d9"},
+    {"id": "project_ir", "path": "src/flujo/knowledge/project_ir.py", "sha256": "9178033ae4e013763c4fd50508de9cb900fb98fa82c20161739b6b0bee4a06af"},
+    {"id": "practice_state", "path": "src/flujo/knowledge/practice_evidence_state.py", "sha256": "095c796b42a9e46234f52ba81ba6375d2df703c80da4d75dea14b9c16450450b"},
+    {"id": "portfolio_dossier", "path": "src/flujo/knowledge/portfolio_dossier.py", "sha256": "b91702445edc347107226b9f2d9b087162ff26f1aa9e27d34e9199a42898e2cb"},
+    {"id": "research_triangulation", "path": "src/flujo/knowledge/research_evidence_triangulation.py", "sha256": "d31f32ef9e2d9be6e574eb4b298e3510673bbee2b119c590ec173436c9a4a695"},
+    {"id": "product_learning", "path": "src/flujo/knowledge/product_learning.py", "sha256": "94663fc1141d565298bc1764ab279314ed34084b65bd22d308365c1dd46d1b64"},
+    {"id": "c05_witness", "path": "experiments/cycles/C05/real_export_witness.json", "sha256": "a695704657e40529c68029179e7861fa4c367cf12f0b34cecc1781bb290b09ba"},
+    {"id": "iskvw_reconciliation", "path": "tools/reconcile_iskvw_media.py", "sha256": "c89e16c7b1dde7320ebc7a214f8b1bd3848836bc8829c8ebe7350aa49f95c2ef"},
+    {"id": "fondart_corpus", "path": "cultura/mak_research/fondart_corpus.py", "sha256": "bb254fc47d68ede815faf721b32b5d35535d01130222c99e2d886bef98c63869"},
+    {"id": "current_packet", "path": "context/LAST_HANDOFF.md", "sha256": "d66dda5e81f36f9d30e5908ed0ea974167fc738df8cd43b23f5063919dd3b54c"}
+  ]
+}

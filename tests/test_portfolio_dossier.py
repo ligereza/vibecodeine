@@ -10,6 +10,7 @@ import pytest
 
 from flujo.knowledge.portfolio_dossier import (
     PortfolioDossierError,
+    _hash,
     assert_portfolio_dossier,
     compile_portfolio_dossier,
     stable_json,
@@ -236,6 +237,61 @@ def _plan() -> dict:
             "promotion": "none",
             "training_permitted": False,
             "research_status": "abstained",
+        },
+    }
+
+
+def _technical_context() -> dict:
+    return {
+        "schema": "mak-project-context-v1",
+        "context_id": "tool-context:surface",
+        "title": "Technical archive observations",
+        "entities": [
+            {
+                "entity_id": "artifact:one",
+                "kind": "physical_artifact",
+                "display_name": "native.psd",
+            },
+            {
+                "entity_id": "artifact:two",
+                "kind": "physical_artifact",
+                "display_name": "logo.png",
+            },
+        ],
+        "sources": [
+            {
+                "source_id": "tool-observation:surface",
+                "source_type": "technical_tool_observation",
+                "independence_group": "tool:archive-toolchain",
+                "locator": "artifact:one",
+                "claim": "technical_observation:surface_match_retrieval",
+                "status": "observed",
+                "metadata": {
+                    "relative_path": "private/native.psd",
+                    "facts": {"target_ref": "artifact:two"},
+                },
+            },
+        ],
+        "relations": [
+            {
+                "subject": "artifact:one",
+                "predicate": "technical_surface_match_candidate",
+                "object": "artifact:two",
+                "status": "candidate",
+                "source_ids": ["tool-observation:surface"],
+                "metadata": {
+                    "signals": ["perceptual_surface_similarity"],
+                    "relative_path": "private/native.psd",
+                    "truth_promotion": False,
+                },
+            },
+        ],
+        "projects": [],
+        "provenance": {
+            "archive_id": "archive:generic",
+            "snapshot_id": "snapshot:one",
+            "input_hash": "sha256:technical-input",
+            "source_schema": "mak-archive-tool-observations-v1",
         },
     }
 
@@ -496,6 +552,58 @@ def test_deterministic_and_non_mutating() -> None:
     assert validate_portfolio_dossier(first) == []
 
 
+def test_dossier_declares_consumed_product_plan_hash() -> None:
+    plan = _plan()
+    dossier = compile_portfolio_dossier(plan, _practice())
+    assert dossier["input_hashes"] == {"product_plan": _hash(plan)}
+
+
+def test_technical_context_reaches_dossier_as_provenance_only() -> None:
+    context = _technical_context()
+    dossier = compile_portfolio_dossier(_plan(), _practice(), context)
+
+    assert dossier["technical_context"]["provenance_only"] is True
+    assert dossier["technical_context"]["claim_promotion"] is False
+    assert dossier["technical_context"]["asset_selection"] is False
+    assert len(dossier["technical_context"]["relations"]) == 1
+    relation = dossier["technical_context"]["relations"][0]
+    assert relation["predicate"] == "technical_surface_match_candidate"
+    assert relation["evidence_refs"] == ["tool-observation:surface"]
+    assert relation["artistic_truth"] is False
+    assert relation["asset_selection"] is False
+    assert "technical_context" in dossier["input_hashes"]
+    assert validate_portfolio_dossier(dossier) == []
+    encoded = stable_json(dossier)
+    assert "private/native.psd" not in encoded
+
+
+def test_technical_context_reorder_is_deterministic_and_promotion_fails_closed() -> None:
+    context = _technical_context()
+    first = compile_portfolio_dossier(_plan(), _practice(), context)
+    reordered = copy.deepcopy(context)
+    reordered["sources"].reverse()
+    reordered["relations"].reverse()
+    second = compile_portfolio_dossier(_plan(), _practice(), reordered)
+    assert first == second
+
+    promoted = copy.deepcopy(context)
+    promoted["relations"][0]["metadata"]["truth_promotion"] = True
+    with pytest.raises(PortfolioDossierError, match="technical_context_relation_0_truth_promotion"):
+        compile_portfolio_dossier(_plan(), _practice(), promoted)
+
+
+def test_technical_context_cannot_cross_archive_or_snapshot_boundary() -> None:
+    context = _technical_context()
+    context["provenance"]["archive_id"] = "archive:other"
+    with pytest.raises(PortfolioDossierError, match="technical_context_identity_mismatch:archive_id"):
+        compile_portfolio_dossier(_plan(), _practice(), context)
+
+    context = _technical_context()
+    context["provenance"]["snapshot_id"] = "snapshot:other"
+    with pytest.raises(PortfolioDossierError, match="technical_context_identity_mismatch:snapshot_id"):
+        compile_portfolio_dossier(_plan(), _practice(), context)
+
+
 def test_foreign_refs_fail_closed() -> None:
     plan = _plan()
     plan["selected_programs"][0]["evidence_refs"] = ["artifact:not-in-practice"]
@@ -526,3 +634,23 @@ def test_cli_file_to_stdout(tmp_path: Path) -> None:
     assert written.returncode == 0
     assert written.stdout == ""
     assert json.loads(output_path.read_text(encoding="utf-8")) == dossier
+
+
+def test_cli_can_carry_technical_context(tmp_path: Path) -> None:
+    plan_path = tmp_path / "plan.json"
+    practice_path = tmp_path / "practice.json"
+    context_path = tmp_path / "context.json"
+    plan_path.write_text(json.dumps(_plan()), encoding="utf-8")
+    practice_path.write_text(json.dumps(_practice()), encoding="utf-8")
+    context_path.write_text(json.dumps(_technical_context()), encoding="utf-8")
+
+    result = subprocess.run([
+        sys.executable, "tools/compile_portfolio_dossier.py",
+        "--plan", str(plan_path), "--practice", str(practice_path),
+        "--technical-context", str(context_path),
+    ], cwd=Path(__file__).parents[1], capture_output=True, text=True, check=False)
+
+    assert result.returncode == 0, result.stderr
+    dossier = json.loads(result.stdout)
+    assert len(dossier["technical_context"]["relations"]) == 1
+    assert dossier["control"]["publication"] is False

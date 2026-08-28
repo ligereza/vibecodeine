@@ -68,7 +68,8 @@ def test_observed_local_preserves_abstained_programs_as_research_first() -> None
     assert plan["targets"]["portfolio_dossier"]["status"] == "draftable"
     assert plan["targets"]["application_draft"]["status"] == "blocked"
     assert plan["targets"]["research_brief"]["status"] == "draftable"
-    assert len(plan["research_jobs"]) == 2
+    assert len(plan["research_jobs"]) == 1
+    assert plan["research_jobs"][0]["candidate_id"] == "opportunity-scope:opportunity:fixture"
     assert all(row["dispatch"] is False for row in plan["research_jobs"])
     assert all(row["evidence_return_status"] == "pending_ingestion" for row in plan["research_jobs"])
 

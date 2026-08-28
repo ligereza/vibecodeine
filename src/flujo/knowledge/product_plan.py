@@ -22,7 +22,7 @@ from .research_frontier_bridge import validate_research_frontier_payload
 
 
 SCHEMA = "mak-product-plan-v1"
-ALGORITHM_VERSION = "common-product-plan-1"
+ALGORITHM_VERSION = "common-product-plan-2"
 OPPORTUNITY_SCHEMA = "mak-opportunity-constraints-v1"
 PRACTICE_SCHEMA = "mak-practice-evidence-state-v1"
 FIT_SCHEMA = "mak-opportunity-fit-v1"
@@ -35,6 +35,7 @@ TARGET_STATUSES = {"draftable", "blocked", "not_required"}
 _TOP_LEVEL_FIELDS = {
     "schema", "algorithm_version", "opportunity_id", "practice_identity",
     "input_hashes", "selected_programs", "claim_index", "asset_index",
+    "practice_evidence_refs",
     "targets", "research_jobs", "gaps", "control", "provenance",
     "reconciliation",
 }
@@ -610,6 +611,11 @@ def _validate_plan_payload(payload: Mapping[str, Any]) -> bool:
     if program_ids != expected_program_order:
         raise ProductPlanError("selected_program_order_invalid")
     claims = _list(payload.get("claim_index"), "payload.claim_index")
+    practice_evidence_refs = set(_refs(
+        payload.get("practice_evidence_refs"),
+        "payload.practice_evidence_refs",
+        sorted_unique=True,
+    ))
     claim_ids: list[str] = []
     for raw in claims:
         row = _mapping(raw, "payload.claim")
@@ -617,6 +623,8 @@ def _validate_plan_payload(payload: Mapping[str, Any]) -> bool:
             raise ProductPlanError("claim_fields_invalid")
         claim_ids.append(_text(row.get("claim_id"), "claim.claim_id"))
         _refs(row.get("evidence_refs"), "claim.evidence_refs", sorted_unique=True)
+        if not set(row["evidence_refs"]).issubset(practice_evidence_refs):
+            raise ProductPlanError("claim_evidence_ref_foreign")
         _refs(row.get("requirement_ids"), "claim.requirement_ids", sorted_unique=True)
         if row.get("evidence_scope") != "practice":
             raise ProductPlanError("claim_evidence_scope_invalid")
@@ -638,6 +646,8 @@ def _validate_plan_payload(payload: Mapping[str, Any]) -> bool:
             raise ProductPlanError("asset_fields_invalid")
         asset_ids.append(_text(row.get("asset_ref"), "asset.asset_ref"))
         _refs(row.get("evidence_refs"), "asset.evidence_refs", sorted_unique=True)
+        if not {row["artifact_ref"], *row["evidence_refs"]}.issubset(practice_evidence_refs):
+            raise ProductPlanError("asset_evidence_ref_foreign")
         program_refs = _refs(row.get("program_ids"), "asset.program_ids", sorted_unique=True)
         if not set(program_refs).issubset(set(program_ids)):
             raise ProductPlanError("asset_program_ref_foreign")
@@ -744,6 +754,7 @@ def _compile(
         "selected_programs": selected,
         "claim_index": claims,
         "asset_index": assets,
+        "practice_evidence_refs": sorted(practice_index["practice_refs"]),
         "targets": targets,
         "research_jobs": jobs,
         "gaps": gaps,

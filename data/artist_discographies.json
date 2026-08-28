@@ -1,8 +1,8 @@
 {
   "schema": "mak-artist-discographies-v1",
   "purpose": "Local cache of the artist_discography authority declared in data/ordering_features.json. A folder name under a client container is only allowed to decide a track identity when this authority is consulted, so the authority has to be durable, auditable and carry the URL of every datum. Absence from this file is NOT evidence that a name is not a track: it means the lookup has not been done.",
-  "collected": "2026-08-23",
-  "collected_by": "read-only discovery workflow wmff24999, 7 identity agents",
+  "collected": "2026-08-27",
+  "collected_by": "read-only discovery workflow wmff24999, 7 identity agents, targeted DREF/BAH research",
   "how_to_extend": "Re-run the identity probe for a container and append. Never add a track without a source_url: a date with no source is exactly the kind of datum this authority exists to refuse.",
   "containers": {
     "DREFMOVISTAR": {
@@ -299,12 +299,138 @@
         "https://es.wikipedia.org/wiki/DrefQuila",
         "https://music.apple.com/us/artist/drefquila/1424620452",
         "https://www.deezer.com/mx/album/831478711",
+        "https://www.musicapopular.cl/artista/drefquila/",
+        "https://www.youtube.com/watch?v=qHq9GSkcgqo",
         "https://www.letras.com/drefquila/discografia/despues-del-sol-2025/",
         "https://los40.cl/2025/09/02/drefquila-revela-nueva-fecha-de-su-show-en-movistar-arena-2025-cuando-es-el-concierto/",
         "https://rdn.cl/2025/05/20/drefquila-reprograma-su-show-del-movistar-arena-de-junio-a-noviembre/"
       ],
       "why": "DrefQuila (Andres Salazar), rapero/cantante urbano chileno. Su sexto album 'Despues del Sol' (BAH Music) salio el 2025-10-02 (Deezer), con 'La Ciudad del Reggaeton' como corte de avance ya verificado por el operador como track 01 (CDR). El show de gira en Movistar Arena, originalmente en junio 2025, fue reprogramado a noviembre de 2025 (LOS40, rdn.cl) -- esto calza exactamente con la pista del operador de que 'la GIRA fue noviembre 2025'. Por lo tanto DREFGIRA = material de VJ/pantallas de MAK para la gira 'Despues del Sol' de DrefQuila, noviembre 2025.",
       "tracks": [
+        {
+          "title": "Ultimo Dia",
+          "release_date": "2024",
+          "album": "Los Sentimientos de un Robot (track 01)",
+          "features": [],
+          "source_url": "https://www.musicapopular.cl/artista/drefquila/"
+        },
+        {
+          "title": "2000's",
+          "release_date": "2024",
+          "album": "Los Sentimientos de un Robot (track 02)",
+          "features": [
+            "YSY A",
+            "Ovyze"
+          ],
+          "source_url": "https://www.musicapopular.cl/artista/drefquila/"
+        },
+        {
+          "title": "Un Call",
+          "release_date": "2024",
+          "album": "Los Sentimientos de un Robot (track 03)",
+          "features": [
+            "Red Fingers",
+            "FUKA"
+          ],
+          "source_url": "https://www.musicapopular.cl/artista/drefquila/"
+        },
+        {
+          "title": "Lo Deberias Pensar",
+          "release_date": "2024",
+          "album": "Los Sentimientos de un Robot (track 04)",
+          "features": [
+            "Jonas Sanche"
+          ],
+          "source_url": "https://www.musicapopular.cl/artista/drefquila/"
+        },
+        {
+          "title": "La Receta",
+          "release_date": "2024",
+          "album": "Los Sentimientos de un Robot (track 05)",
+          "features": [
+            "Kidd Voodoo",
+            "Easykid",
+            "Ovyze"
+          ],
+          "source_url": "https://www.musicapopular.cl/artista/drefquila/"
+        },
+        {
+          "title": "Bossa Lova",
+          "release_date": "2024",
+          "album": "Los Sentimientos de un Robot (track 06)",
+          "features": [
+            "Joe Vasconcellos",
+            "Ovyze",
+            "Andy Lamur"
+          ],
+          "source_url": "https://www.musicapopular.cl/artista/drefquila/"
+        },
+        {
+          "title": "2+1",
+          "release_date": "2024",
+          "album": "Los Sentimientos de un Robot (track 07)",
+          "features": [
+            "Young High"
+          ],
+          "source_url": "https://www.musicapopular.cl/artista/drefquila/"
+        },
+        {
+          "title": "Pego Fuerte",
+          "release_date": "2024-05-16",
+          "album": "Los Sentimientos de un Robot (track 08)",
+          "features": [
+            "Harry Nach",
+            "Young High"
+          ],
+          "source_url": "https://www.youtube.com/watch?v=qHq9GSkcgqo"
+        },
+        {
+          "title": "Las Flores Que Te Gustan",
+          "release_date": "2024",
+          "album": "Los Sentimientos de un Robot (track 09)",
+          "features": [
+            "Gloria Simonetti",
+            "Fran C"
+          ],
+          "source_url": "https://www.musicapopular.cl/artista/drefquila/"
+        },
+        {
+          "title": "Despertador",
+          "release_date": "2024",
+          "album": "Los Sentimientos de un Robot (track 10)",
+          "features": [
+            "Fran C"
+          ],
+          "source_url": "https://www.musicapopular.cl/artista/drefquila/"
+        },
+        {
+          "title": "Botero Freestyle",
+          "release_date": "2024",
+          "album": "Los Sentimientos de un Robot (track 11)",
+          "features": [
+            "Ovyze"
+          ],
+          "source_url": "https://www.musicapopular.cl/artista/drefquila/"
+        },
+        {
+          "title": "Llama A Tu Amiga",
+          "release_date": "2024",
+          "album": "Los Sentimientos de un Robot (track 12)",
+          "features": [
+            "ITHAN NY",
+            "Ovyze"
+          ],
+          "source_url": "https://www.musicapopular.cl/artista/drefquila/"
+        },
+        {
+          "title": "Pinky",
+          "release_date": "2024",
+          "album": "Los Sentimientos de un Robot (track 13)",
+          "features": [
+            "Cobuz & Bustta"
+          ],
+          "source_url": "https://www.musicapopular.cl/artista/drefquila/"
+        },
         {
           "title": "Escarlata (Remix)",
           "release_date": "2024-11-11",

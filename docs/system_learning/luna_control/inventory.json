@@ -1,0 +1,274 @@
+{
+  "schema": "mak-system-learning-inventory-v1",
+  "scope": {
+    "id": "scope.luna_control",
+    "purpose": "Preserve an evidence-bounded control model of MAK governance, epistemic control, and autonomous orchestration.",
+    "write_set": "docs/system_learning/luna_control/",
+    "physical_authority": "/home/mak/*",
+    "authoring_baseline": "/home/mak/flujo",
+    "historical_evidence_root": "/home/mak/WIN",
+    "archive_policy": "read_only_input",
+    "excluded_mutations": [
+      "production_databases",
+      "runtime_roots",
+      "protected_art",
+      "protected_media",
+      "publication",
+      "submission",
+      "dispatch",
+      "training"
+    ],
+    "topology_policy": "reconcile_existing_projections_without_declaring_a_new_registry"
+  },
+  "departments": {
+    "dept.rd": {
+      "registry_id": "rd",
+      "label": "RD / Reduciendo Dano",
+      "authority": ["src/flujo/rd", "src/flujo/plano", "data/rd.db"],
+      "capability_refs": ["cap.observe_operational_evidence", "cap.compile_rd_products"],
+      "consumer_refs": ["consumer.rd_operations", "consumer.venue_outputs"],
+      "limits": ["does_not_lose_domain_authority_when_linked_to_cultura", "candidate_relations_are_not_canonical_ids"]
+    },
+    "dept.cultura": {
+      "registry_id": "cultura",
+      "label": "Cultura / Research",
+      "authority": ["cultura", "cultura/mak_research", "context/diagnostics"],
+      "capability_refs": ["cap.observe_archive", "cap.propose_copilot", "cap.propose_triangular_questions", "cap.refute_and_triangulate", "cap.compile_products", "cap.plan_autonomy"],
+      "consumer_refs": ["consumer.curatoria", "consumer.research", "consumer.application"],
+      "limits": ["optional_APIs_are_not_operational_without_recent_evidence", "research_evidence_is_not_practice_evidence"]
+    },
+    "dept.iskvw": {
+      "registry_id": "iskvw",
+      "label": "ISKVW / Portfolio",
+      "authority": ["iskvw", "iskvw/editor.html", "tools/portfolio"],
+      "capability_refs": ["cap.compile_products", "cap.emit_public_product"],
+      "consumer_refs": ["consumer.portfolio"],
+      "limits": ["never_auto_publish", "privacy_and_license_gates_apply"]
+    }
+  },
+  "organs": {
+    "organ.entrada": {
+      "flow_role": "observe_and_receive",
+      "verb": "receives",
+      "material": "works_ideas_references",
+      "department_refs": ["dept.cultura", "dept.iskvw", "dept.rd"]
+    },
+    "organ.curatoria": {
+      "flow_role": "observe_extract_and_reconstruct",
+      "verb": "perceives_extracts",
+      "department_refs": ["dept.cultura"],
+      "capability_refs": ["cap.observe_archive", "cap.compile_project_ir"]
+    },
+    "organ.research": {
+      "flow_role": "search_propose_contradict",
+      "verb": "searches_debates",
+      "department_refs": ["dept.cultura"],
+      "capability_refs": ["cap.propose_triangular_questions", "cap.refute_and_triangulate"]
+    },
+    "organ.codex": {
+      "flow_role": "implement_and_test",
+      "verb": "implements_tests",
+      "department_refs": ["dept.cultura"],
+      "capability_refs": ["cap.compile_contracts", "cap.validate_outputs"]
+    },
+    "organ.plataforma": {
+      "flow_role": "coordinate_gate_and_deliver",
+      "verb": "coordinates_delivers",
+      "department_refs": ["dept.cultura"],
+      "capability_refs": ["cap.plan_autonomy", "cap.dispatch_validated"]
+    },
+    "organ.emerge": {
+      "flow_role": "publish_or_return",
+      "verb": "publishes_returns",
+      "department_refs": ["dept.iskvw", "dept.rd"],
+      "capability_refs": ["cap.emit_public_product"],
+      "limits": ["inactive_in_observed_runtime_projection", "requires_external_consequence_gate"]
+    }
+  },
+  "capabilities": {
+    "cap.observe_archive": {
+      "role": "observer",
+      "inputs": ["input.physical_archive"],
+      "outputs": ["output.observation_batch", "output.temporal_memory"],
+      "authority": "physical_evidence_only",
+      "promotion": "none"
+    },
+    "cap.observe_operational_evidence": {
+      "role": "observer",
+      "inputs": ["input.rd_sources", "input.runtime_status"],
+      "outputs": ["output.typed_relations", "output.health_snapshot"],
+      "authority": "source_or_runtime_observation",
+      "promotion": "none"
+    },
+    "cap.propose_copilot": {
+      "role": "proposer",
+      "inputs": ["input.portfolio_items", "input.feedback"],
+      "outputs": ["output.curatorial_hypotheses", "output.ordering_candidates"],
+      "authority": "candidate_generation",
+      "promotion": "none"
+    },
+    "cap.propose_triangular_questions": {
+      "role": "proposer",
+      "inputs": ["input.rd_flyer_records"],
+      "outputs": ["output.research_questions"],
+      "authority": "queue_preparation_only",
+      "promotion": "none",
+      "dispatch": false
+    },
+    "cap.refute_and_triangulate": {
+      "role": "refuter",
+      "inputs": ["input.research_frontier", "input.research_result_batches"],
+      "outputs": ["output.triangulation", "output.contradiction_notices"],
+      "authority": "independent_source_groups",
+      "promotion": "none"
+    },
+    "cap.compile_project_ir": {
+      "role": "compiler",
+      "inputs": ["output.temporal_memory", "output.provisional_units"],
+      "outputs": ["output.project_ir", "output.practice_evidence_state"],
+      "authority": "lossless_evidence_projection",
+      "allowed_states": ["candidate", "unknown"]
+    },
+    "cap.compile_contracts": {
+      "role": "compiler",
+      "inputs": ["output.project_ir", "input.opportunity_document"],
+      "outputs": ["output.opportunity_constraints", "output.opportunity_fit", "output.possibility_field"],
+      "authority": "typed_contracts_and_explicit_bindings",
+      "promotion": "none"
+    },
+    "cap.compile_products": {
+      "role": "compiler",
+      "inputs": ["output.practice_evidence_state", "output.opportunity_fit", "output.possibility_field", "output.evidence_return"],
+      "outputs": ["output.product_plan", "output.portfolio_dossier", "output.application_research_package"],
+      "authority": "one_common_plan",
+      "publication": false,
+      "submission": false
+    },
+    "cap.plan_autonomy": {
+      "role": "controller",
+      "inputs": ["output.product_plan", "output.portfolio_dossier", "output.application_research_package", "output.evidence_return", "output.learning_evaluation"],
+      "outputs": ["output.autonomy_plan"],
+      "authority": "bounded_plan_only_policy",
+      "dispatch": false,
+      "conductor_projection": "plan-only"
+    },
+    "cap.dispatch_validated": {
+      "role": "actuator",
+      "inputs": ["input.authorized_job", "input.explicit_gate_decision"],
+      "outputs": ["output.validated_job_result"],
+      "authority": "claimed_job_plus_validation_plus_required_external_gate",
+      "limits": ["not_wired_from_autonomy_plan_by_evidence_consulted", "completion_requires_validated_true"]
+    },
+    "cap.validate_outputs": {
+      "role": "refuter",
+      "inputs": ["output.candidate_artifact"],
+      "outputs": ["output.validation_result"],
+      "authority": "independent_evaluator_or_foreground_gate",
+      "promotion": "only_the_next_explicit_state_transition"
+    },
+    "cap.compile_rd_products": {
+      "role": "compiler",
+      "inputs": ["input.rd_sources"],
+      "outputs": ["output.rd_operational_product"],
+      "authority": "rd_domain_contracts"
+    },
+    "cap.emit_public_product": {
+      "role": "external_boundary",
+      "inputs": ["output.validated_job_result", "input.explicit_gate_decision"],
+      "outputs": ["output.publication_or_delivery_receipt"],
+      "authority": "explicit_external_consequence_gate",
+      "self_promotion": "forbidden"
+    }
+  },
+  "inputs": {
+    "input.physical_archive": {"authority": "archive_root", "mutation": "forbidden"},
+    "input.rd_sources": {"authority": "rd_owner", "mutation": "outside_scope"},
+    "input.runtime_status": {"authority": "observed_process_filesystem_and_read_only_status", "inference_is_proof": false},
+    "input.portfolio_items": {"authority": "portfolio_owner", "public_by_default": false},
+    "input.feedback": {"authority": "observed_feedback", "truth_label": false},
+    "input.rd_flyer_records": {"authority": "curatoria_fichas", "names_are_candidates": true},
+    "input.research_frontier": {"schema": "mak-research-frontier-jobs-v1", "dispatch": false},
+    "input.research_result_batches": {"schema": "mak-research-result-batch-v1", "claims_status": "candidate"},
+    "input.opportunity_document": {"authority": "external_documentary_source", "proves_practice_fit": false},
+    "input.authorized_job": {"authority": "queue_contract", "requires_claim": true},
+    "input.explicit_gate_decision": {"authority": "external_consequence_policy", "required_for": ["publication", "promotion", "delivery", "repository_mutation"]}
+  },
+  "outputs": {
+    "output.observation_batch": {"schema": "mak-archive-observation-batch-v1"},
+    "output.temporal_memory": {"schema_family": "archive_memory_v2"},
+    "output.typed_relations": {"status": "candidate_or_explicit"},
+    "output.health_snapshot": {"authority": "read_only_observation"},
+    "output.curatorial_hypotheses": {"status": "candidate", "promotion": "none"},
+    "output.ordering_candidates": {"status": "human_candidate", "promotion": "none"},
+    "output.research_questions": {"status": "planned", "dispatch": false},
+    "output.triangulation": {"schema": "mak-research-triangulation-v1", "promotion": "none"},
+    "output.contradiction_notices": {"effect": "abstain_or_refute"},
+    "output.provisional_units": {"status": "candidate_or_unknown"},
+    "output.project_ir": {"schema": "mak-project-ir-v1", "states": ["candidate", "unknown"]},
+    "output.practice_evidence_state": {"schema": "mak-practice-evidence-state-v1"},
+    "output.opportunity_constraints": {"schema": "mak-opportunity-constraints-v1"},
+    "output.opportunity_fit": {"schema": "mak-opportunity-fit-v1"},
+    "output.possibility_field": {"schema": "mak-possibility-field-v1"},
+    "output.evidence_return": {"schema": "mak-evidence-return-v1", "status": "additive_proposal_pending_ingestion"},
+    "output.product_plan": {"schema": "mak-product-plan-v1", "common_plan": true},
+    "output.portfolio_dossier": {"schema": "mak-portfolio-dossier-v1", "draft_is_publication": false},
+    "output.application_research_package": {"schema": "mak-application-research-package-v1", "draft_is_submission": false},
+    "output.learning_evaluation": {"schema": "mak-product-learning-evaluation-v1", "training_permitted": false},
+    "output.autonomy_plan": {"schema": "mak-autonomy-plan-v1", "dispatch": false, "loop": false},
+    "output.candidate_artifact": {"status": "staged_or_provisional"},
+    "output.validation_result": {"effect": "bounded_state_transition"},
+    "output.validated_job_result": {"requires": "validated_true"},
+    "output.rd_operational_product": {"authority": "rd_owner"},
+    "output.publication_or_delivery_receipt": {"authority": "external_observation"}
+  },
+  "authorities": {
+    "authority.physical": {"decides": "what_exists", "path": "/home/mak/*"},
+    "authority.archive": {"decides": "source_evidence", "mutation": "forbidden"},
+    "authority.opportunity": {"decides": "external_requirements_and_current_validity", "cannot_prove": "artist_practice"},
+    "authority.practice": {"decides": "artifact_scoped_practice_evidence", "cannot_be_filled_by": "generic_web_research"},
+    "authority.evaluator": {"decides": "contract_accept_reject_abstain", "independence_required": true},
+    "authority.external_consequence": {"decides": "publish_submit_deliver_or_mutate", "automatic": false}
+  },
+  "consumers": {
+    "consumer.rd_operations": {"reads": ["output.typed_relations", "output.rd_operational_product"]},
+    "consumer.venue_outputs": {"reads": ["output.typed_relations"]},
+    "consumer.curatoria": {"reads": ["output.project_ir", "output.practice_evidence_state", "output.triangulation"]},
+    "consumer.research": {"reads": ["output.research_questions", "input.research_frontier", "output.autonomy_plan"]},
+    "consumer.portfolio": {"reads": ["output.product_plan", "output.portfolio_dossier"]},
+    "consumer.application": {"reads": ["output.product_plan", "output.application_research_package"]},
+    "consumer.conductor": {"reads": ["input.authorized_job"], "does_not_currently_consume": "output.autonomy_plan"}
+  },
+  "states": {
+    "state.unknown": {"meaning": "evidence_insufficient_or_binding_unresolved", "terminal": false},
+    "state.candidate": {"meaning": "falsifiable_proposal", "fact": false},
+    "state.abstain": {"meaning": "safe_control_signal", "success": false, "failure": false},
+    "state.rejected": {"meaning": "independent_gate_refuted_candidate", "revivable_by_abstention": false},
+    "state.planned_not_dispatched": {"meaning": "bounded_work_exists_without_execution_authority", "dispatch": false},
+    "state.pending_ingestion": {"meaning": "additive_evidence_proposal_not_yet_authoritative"},
+    "state.draftable": {"meaning": "internal_product_can_be_compiled", "published_or_submitted": false},
+    "state.blocked": {"meaning": "named_gate_or_requirement_is_unsatisfied"},
+    "state.shadow": {"meaning": "learning_signal_may_adjust_attention_or_ranking_only", "truth_update": false},
+    "state.completed": {"meaning": "claimed_job_validated_and_queue_transition_recorded", "external_release_implied": false}
+  },
+  "evidence": {
+    "evidence.bootstrap": {"source_ref": "source.agents", "claim": "Delegated work requires bootstrap, exact write set, and foreground validation."},
+    "evidence.current_state": {"source_ref": "source.current_state", "claim": "The durable owner map, department boundaries, shared semantics, and provider limits are documented."},
+    "evidence.current_packet": {"source_ref": "source.current_packet", "claim": "Stages 1 and 2A-2D plus epistemic floors 1-5 and the read-only ARICA/Fondart pilot are accepted with explicit limits."},
+    "evidence.departments": {"source_ref": "source.departments", "claim": "The canonical registry exposes exactly rd, cultura, and iskvw."},
+    "evidence.organs": {"source_ref": "source.research_interface", "claim": "The visible runtime flow exposes entrada, curatoria, research, codex, plataforma, and emerge."},
+    "evidence.copilot": {"source_ref": "source.copilot", "claim": "Copilot generates evidenced candidates and evaluations with promotion none."},
+    "evidence.triangular_queue": {"source_ref": "source.triangular", "claim": "triangular.py prepares bounded research questions and explicitly does not dispatch research."},
+    "evidence.research_triangulation": {"source_ref": "source.research_triangulation", "claim": "Research triangulation requires explicit evidence references and independent source groups and performs no truth promotion."},
+    "evidence.common_product_plan": {"source_ref": "source.product_plan", "claim": "Portfolio, application, and research products derive from one evidence-governed product plan."},
+    "evidence.plan_only_autonomy": {"source_ref": "source.autonomy_plan", "claim": "Autonomy selects finite observe, research, recompute, compile, wait, or abstain actions with dispatch false."},
+    "evidence.conductor": {"source_ref": "source.conductor", "claim": "Conductor completes a claimed job only after explicit validation and gates externally consequential stages."}
+  },
+  "gaps": {
+    "gap.topology_reconciliation": {"status": "open", "description": "Three departments, six visible organs, five repo/runtime coherence pairs, and the broader owner map overlap but are not one canonical topology."},
+    "gap.fondart_current_validity": {"status": "open", "description": "The local Fondart corpus is observed_local and unconfirmed; official-source validity must be captured and triangulated."},
+    "gap.arica_practice_witness_projection": {"status": "open", "description": "C04-C06 technical witness receipts are not yet expressed in the accepted practice-evidence vocabulary."},
+    "gap.autonomy_to_conductor_wiring": {"status": "open", "description": "Evidence consulted supports a plan-only conductor projection, not live autonomous dispatch."},
+    "gap.real_data_portability": {"status": "open", "description": "A green fixture and one ARICA pilot do not establish useful dossier coverage for other archives."},
+    "gap.independent_learning_holdout": {"status": "open", "description": "Observed learning evidence is insufficient for policy promotion; training remains disabled."}
+  }
+}

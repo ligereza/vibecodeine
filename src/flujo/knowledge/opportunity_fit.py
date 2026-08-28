@@ -161,19 +161,23 @@ def _normalise_inputs(opportunity: Mapping[str, Any], practice: Mapping[str, Any
             if isinstance(row, Mapping):
                 raw_evidence.append({**row, "kind": dimension})
     evidence: dict[str, dict[str, Any]] = {}
+    explicit_evidence_ids: set[str] = set()
     for index, raw in enumerate(raw_evidence):
         if not isinstance(raw, Mapping):
             errors.append(f"evidence_{index}_not_object")
             continue
         refs = _as_refs(raw.get("evidence_refs"))
-        evidence_id = _text(raw.get("evidence_id")) or _text(raw.get("id")) or (
+        explicit_evidence_id = _text(raw.get("evidence_id")) or _text(raw.get("id"))
+        evidence_id = explicit_evidence_id or (
             refs[0] if refs else f"{raw.get('kind', 'evidence')}:{index}"
         )
         if not evidence_id:
             errors.append(f"evidence_{index}_id_missing")
             continue
-        if evidence_id in evidence:
+        if explicit_evidence_id and explicit_evidence_id in explicit_evidence_ids:
             errors.append(f"evidence_duplicate:{evidence_id}")
+        if explicit_evidence_id:
+            explicit_evidence_ids.add(explicit_evidence_id)
         normalized = {
             "evidence_id": evidence_id,
             "status": _text(raw.get("status")) or _text(raw.get("claim_status")) or "unknown",

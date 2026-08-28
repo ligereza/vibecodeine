@@ -1,0 +1,277 @@
+{
+  "schema": "mak-system-learning-inventory-v1",
+  "agent_id": "LUNA-ARCHIVE",
+  "purpose": "Preserve a portable system model of MAK's archive-to-learning circulation without promoting hypotheses, products, or scores into authorial truth.",
+  "scope": {
+    "included": [
+      "read-only artistic archive observation",
+      "immutable evidence memory and replay",
+      "provisional reconstruction and Project IR",
+      "evidence-only practice state",
+      "external opportunity constraints and explicit fit bindings",
+      "curatorial, portfolio, application, and research compilation",
+      "bounded outcome learning and plan-only autonomy"
+    ],
+    "excluded": [
+      "source archive mutation",
+      "production database writes",
+      "automatic publication or submission",
+      "automatic research dispatch",
+      "authorship, intention, or artistic identity inference",
+      "truth promotion from scores, filenames, drafts, or model outputs"
+    ],
+    "case_policy": "ARICA, MYRA, RAYU, ISKVW, and Fondart are evidence-bearing cases, never architectural types.",
+    "evidence_cutoff": "2026-08-25"
+  },
+  "authorities": [
+    {
+      "authority_id": "auth.archive_physical",
+      "role": "physical artistic source",
+      "rule": "Files and native artifacts remain authoritative for their bytes and observable structure; observation is read-only."
+    },
+    {
+      "authority_id": "auth.repo_baseline",
+      "role": "contract and implementation baseline",
+      "rule": "/home/mak/flujo defines executable contracts but does not replace physical source authority."
+    },
+    {
+      "authority_id": "auth.win_history",
+      "role": "historical evidence",
+      "rule": "/home/mak/WIN is not an active runtime and is not proof of integration."
+    },
+    {
+      "authority_id": "auth.opportunity_document",
+      "role": "external opportunity authority",
+      "rule": "Opportunity documents can establish requirements and validity only within their own source scope."
+    },
+    {
+      "authority_id": "auth.verified_receipt",
+      "role": "bounded outcome authority",
+      "rule": "A verified external receipt can evidence an outcome episode, not the truth of artistic claims."
+    }
+  ],
+  "consumers": [
+    {
+      "consumer_id": "consumer.curatoria",
+      "needs": ["provisional units", "claim partitions", "gaps", "provenance"]
+    },
+    {
+      "consumer_id": "consumer.portfolio",
+      "needs": ["shared product plan", "privacy and license controls", "supported narrative atoms", "public asset evidence"]
+    },
+    {
+      "consumer_id": "consumer.postulacion",
+      "needs": ["current verified opportunity constraints", "explicit requirement bindings", "blocking gaps"]
+    },
+    {
+      "consumer_id": "consumer.research",
+      "needs": ["bounded unresolved questions", "source policy", "independent source groups", "non-dispatch default"]
+    },
+    {
+      "consumer_id": "consumer.learning",
+      "needs": ["verified outcome receipts", "stable identity groups", "independent holdout", "no factual target leakage"]
+    },
+    {
+      "consumer_id": "consumer.conductor",
+      "needs": ["finite plan-only actions", "preconditions", "success and failure signals", "stop conditions"]
+    }
+  ],
+  "states": {
+    "evidence": ["observed", "supported", "candidate", "unknown", "contradicted"],
+    "control": ["accept", "abstain", "reject", "blocked", "draftable", "open", "shadow"],
+    "forbidden_promotions": [
+      "candidate_to_supported_without_new_evidence",
+      "unknown_to_negative_label",
+      "draftable_to_published",
+      "open_outcome_to_failure",
+      "score_to_authorship_or_meaning"
+    ]
+  },
+  "inputs": [
+    {"input_id": "input.archive_snapshot", "authority_id": "auth.archive_physical", "mutability": "read_only"},
+    {"input_id": "input.accepted_project_ir", "authority_id": "auth.repo_baseline", "mutability": "immutable_projection"},
+    {"input_id": "input.opportunity_corpus", "authority_id": "auth.opportunity_document", "mutability": "read_only"},
+    {"input_id": "input.research_receipts", "authority_id": "auth.opportunity_document", "mutability": "additive_candidate"},
+    {"input_id": "input.external_outcome_receipt", "authority_id": "auth.verified_receipt", "mutability": "append_only"}
+  ],
+  "outputs": [
+    {"output_id": "output.observation_batch", "schema": "mak-archive-observation-batch-v1"},
+    {"output_id": "output.project_ir_bundle", "schema": "mak-archive-project-ir-bundle-v1"},
+    {"output_id": "output.practice_state", "schema": "mak-practice-evidence-state-v1"},
+    {"output_id": "output.opportunity_constraints", "schema": "mak-opportunity-constraints-v1"},
+    {"output_id": "output.fit", "schema": "mak-opportunity-fit-v1"},
+    {"output_id": "output.possibility_field", "schema": "mak-possibility-field-v1"},
+    {"output_id": "output.research_frontier", "schema": "mak-research-frontier-jobs-v1"},
+    {"output_id": "output.evidence_return", "schema": "mak-evidence-return-v1"},
+    {"output_id": "output.product_plan", "schema": "mak-product-plan-v1"},
+    {"output_id": "output.portfolio_dossier", "schema": "mak-portfolio-dossier-v1"},
+    {"output_id": "output.application_research", "schema": "mak-application-research-package-v1"},
+    {"output_id": "output.autonomy_plan", "schema": "mak-autonomy-plan-v1"}
+  ],
+  "components": [
+    {
+      "component_id": "component.archive_observer",
+      "status": "accepted_read_only_contract",
+      "inputs": ["input.archive_snapshot"],
+      "outputs": ["output.observation_batch"],
+      "authority_ids": ["auth.archive_physical"],
+      "consumer_ids": ["consumer.curatoria"],
+      "evidence": ["Current packet checkpoint 82768ca", "ARICA pilot observed 417 artifacts and 11916 observations without changing declared source hashes"],
+      "gaps": ["A bounded scan cannot prove absence outside its declared root", "Tool observations do not establish authorial meaning"]
+    },
+    {
+      "component_id": "component.archive_memory",
+      "status": "accepted_fail_closed_contract",
+      "inputs": ["output.observation_batch"],
+      "outputs": ["immutable snapshot replay"],
+      "authority_ids": ["auth.repo_baseline", "auth.archive_physical"],
+      "consumer_ids": ["consumer.curatoria", "consumer.research"],
+      "evidence": ["Current packet describes additive archive_memory_v2 tables and deterministic replay"],
+      "gaps": ["A replay preserves recorded evidence; it cannot recover observations never made"]
+    },
+    {
+      "component_id": "component.reconstruction",
+      "status": "accepted_provisional_contract",
+      "inputs": ["immutable snapshot replay"],
+      "outputs": ["relation candidates", "provisional units", "ambiguous partition", "unassigned partition"],
+      "authority_ids": ["auth.archive_physical", "auth.repo_baseline"],
+      "consumer_ids": ["consumer.curatoria"],
+      "evidence": ["Stage 2A-2C checkpoints 708c948 and e453adc", "MYRA run reconciled 1517 artifacts while keeping 192 unassigned"],
+      "gaps": ["Candidate bounds may increase unassigned counts", "Duplicate bytes do not determine project identity"]
+    },
+    {
+      "component_id": "component.project_ir",
+      "status": "accepted_provisional_contract",
+      "inputs": ["provisional units"],
+      "outputs": ["output.project_ir_bundle"],
+      "authority_ids": ["auth.repo_baseline", "auth.archive_physical"],
+      "consumer_ids": ["consumer.curatoria", "consumer.portfolio", "consumer.postulacion", "consumer.research"],
+      "evidence": ["Stage 2D checkpoint 3d2869c", "ARICA pilot produced one valid Project IR record"],
+      "gaps": ["Project IR state remains candidate or unknown", "It is not a publication or application decision"]
+    },
+    {
+      "component_id": "component.practice_state",
+      "status": "accepted_evidence_only_contract",
+      "inputs": ["input.accepted_project_ir"],
+      "outputs": ["output.practice_state"],
+      "authority_ids": ["auth.archive_physical", "auth.repo_baseline"],
+      "consumer_ids": ["consumer.curatoria", "consumer.portfolio", "consumer.postulacion", "consumer.research"],
+      "evidence": ["Piso 1 contract mak-practice-evidence-state-v1", "ARICA pilot produced a valid practice state with three unknown claims and zero supported or candidate claim atoms"],
+      "gaps": ["C04-C06 technical witnesses are not yet canonical practice evidence", "Missing evidence causes abstention rather than semantic completion"]
+    },
+    {
+      "component_id": "component.opportunity_constraints",
+      "status": "accepted_external_authority_contract",
+      "inputs": ["input.opportunity_corpus"],
+      "outputs": ["output.opportunity_constraints"],
+      "authority_ids": ["auth.opportunity_document"],
+      "consumer_ids": ["consumer.postulacion", "consumer.research"],
+      "evidence": ["Fondart pilot parsed a 38-page local corpus into 22 constraints, eight hard gates, and eight required documents"],
+      "gaps": ["The official current validity was not fetched", "Documentary evidence cannot prove applicant fit"]
+    },
+    {
+      "component_id": "component.opportunity_fit",
+      "status": "accepted_dual_authority_join",
+      "inputs": ["output.practice_state", "output.opportunity_constraints"],
+      "outputs": ["output.fit"],
+      "authority_ids": ["auth.archive_physical", "auth.opportunity_document"],
+      "consumer_ids": ["consumer.postulacion", "consumer.research"],
+      "evidence": ["Piso 1 integration gate requires explicit requirement_ids on internal evidence", "ARICA/Fondart fit abstained with 16 unsupported required constraints"],
+      "gaps": ["Unverified, stale, expired, and ineligible source states must not pass"]
+    },
+    {
+      "component_id": "component.possibility_field",
+      "status": "accepted_hypothesis_and_falsification_contract",
+      "inputs": ["output.fit", "output.practice_state"],
+      "outputs": ["output.possibility_field"],
+      "authority_ids": ["auth.repo_baseline"],
+      "consumer_ids": ["consumer.curatoria", "consumer.research", "consumer.conductor"],
+      "evidence": ["Piso 2 independently evaluates and ranks provisional artistic-program candidates", "Real pilot preserved one abstention and one rejection"],
+      "gaps": ["A ranked candidate is a strategy hypothesis, not artistic intention"]
+    },
+    {
+      "component_id": "component.research_frontier",
+      "status": "accepted_plan_only_contract",
+      "inputs": ["output.possibility_field", "output.fit", "output.opportunity_constraints"],
+      "outputs": ["output.research_frontier"],
+      "authority_ids": ["auth.repo_baseline", "auth.opportunity_document"],
+      "consumer_ids": ["consumer.research", "consumer.conductor"],
+      "evidence": ["Piso 3 emits planned_not_dispatched jobs with explicit technical requirements"],
+      "gaps": ["A planned job is not a captured source", "Source-group independence must be demonstrated"]
+    },
+    {
+      "component_id": "component.evidence_return",
+      "status": "accepted_additive_proposal_contract",
+      "inputs": ["input.research_receipts", "output.research_frontier"],
+      "outputs": ["output.evidence_return"],
+      "authority_ids": ["auth.opportunity_document", "auth.repo_baseline"],
+      "consumer_ids": ["consumer.research", "consumer.postulacion", "consumer.conductor"],
+      "evidence": ["Piso 3 bounded two-source capture emitted one opportunity-evidence proposal and zero practice-evidence proposals"],
+      "gaps": ["Environmental research cannot become practice evidence without an explicit practice-scoped contract naming artifact refs"]
+    },
+    {
+      "component_id": "component.product_plan",
+      "status": "accepted_common_plan_contract",
+      "inputs": ["output.practice_state", "output.fit", "output.possibility_field", "output.research_frontier"],
+      "outputs": ["output.product_plan"],
+      "authority_ids": ["auth.repo_baseline"],
+      "consumer_ids": ["consumer.curatoria", "consumer.portfolio", "consumer.postulacion", "consumer.research"],
+      "evidence": ["Piso 4 derives all products from one plan preserving claim-to-program and asset-to-program links"],
+      "gaps": ["Draftability does not authorize publication or submission"]
+    },
+    {
+      "component_id": "component.portfolio_dossier",
+      "status": "accepted_private_compiler_contract",
+      "inputs": ["output.product_plan"],
+      "outputs": ["output.portfolio_dossier"],
+      "authority_ids": ["auth.repo_baseline", "auth.archive_physical"],
+      "consumer_ids": ["consumer.curatoria", "consumer.portfolio"],
+      "evidence": ["Real pilot compiled a draftable internal dossier with 99 private assets, zero public assets, zero invented narrative atoms, and nine gaps"],
+      "gaps": ["Public manifestation joins and licenses remain unproven"]
+    },
+    {
+      "component_id": "component.application_research",
+      "status": "accepted_blocking_compiler_contract",
+      "inputs": ["output.product_plan", "output.opportunity_constraints", "output.research_frontier"],
+      "outputs": ["output.application_research"],
+      "authority_ids": ["auth.opportunity_document", "auth.repo_baseline"],
+      "consumer_ids": ["consumer.postulacion", "consumer.research"],
+      "evidence": ["Real pilot mapped all 22 requirements, blocked application, and kept research draftable"],
+      "gaps": ["Official source validity and unsupported requirements remain open"]
+    },
+    {
+      "component_id": "component.product_learning",
+      "status": "accepted_shadow_learning_contract",
+      "inputs": ["input.external_outcome_receipt", "output.product_plan"],
+      "outputs": ["attention examples", "ranking examples", "shadow policy candidate or abstention"],
+      "authority_ids": ["auth.verified_receipt", "auth.repo_baseline"],
+      "consumer_ids": ["consumer.learning", "consumer.conductor"],
+      "evidence": ["Piso 5 kept an open outcome from becoming a negative example", "One identity group was insufficient for policy promotion"],
+      "gaps": ["Independent identity groups and holdout evidence are required", "Learning may not target authorship or factual truth"]
+    },
+    {
+      "component_id": "component.autonomy_plan",
+      "status": "accepted_finite_control_contract",
+      "inputs": ["output.product_plan", "output.portfolio_dossier", "output.application_research", "output.evidence_return"],
+      "outputs": ["output.autonomy_plan"],
+      "authority_ids": ["auth.repo_baseline"],
+      "consumer_ids": ["consumer.conductor"],
+      "evidence": ["Piso 5 emits bounded plan-only actions with max_attempts=1 and publication, submission, dispatch, promotion, and training disabled", "Real pilot emitted one non-dispatched research action"],
+      "gaps": ["Execution receipts must return through explicit adapters before recompute"]
+    }
+  ],
+  "evidence_summary": {
+    "accepted_contract_floors": ["Stage 2A", "Stage 2B", "Stage 2C", "Stage 2D", "Piso 1", "Piso 2", "Piso 3", "Piso 4", "Piso 5"],
+    "latest_focused_gate": {"tests_passed": 173, "exit_code": 0, "claim_scope": "fifteen-contract regression reported by the CURRENT packet"},
+    "real_pilot": {"archive_case": "ARICA", "opportunity_case": "Fondart Nacional Linea Investigacion 2027", "result": "internal dossier useful; application abstained/blocked; research-first action planned"},
+    "readiness_claim": "No universal archive readiness is claimed. Portability remains a falsifiable objective requiring cross-archive conformance and independent outcome groups."
+  },
+  "gaps": [
+    "Project and work identity across renamed or moved snapshots lacks a generally validated cross-archive identity protocol.",
+    "Public manifestation joins remain sparse and cannot be inferred from local exports.",
+    "Technical witness receipts need a generic practice-evidence adapter with semantic scope controls.",
+    "Official opportunity validity needs bounded refresh and triangulation.",
+    "Portability has not been demonstrated on independent artist archives with held-out evaluation.",
+    "Outcome learning lacks enough independent identity groups for policy promotion."
+  ]
+}

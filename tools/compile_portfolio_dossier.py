@@ -26,6 +26,11 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("practice_input", nargs="?", help="practice-state JSON path")
     parser.add_argument("--plan", dest="plan_flag", help="mak-product-plan-v1 JSON")
     parser.add_argument("--practice", dest="practice_flag", help="mak-practice-evidence-state-v1 JSON")
+    parser.add_argument(
+        "--technical-context",
+        dest="technical_context_flag",
+        help="optional mak-project-context-v1 technical evidence JSON",
+    )
     parser.add_argument("--output", help="write JSON here; stdout is the default")
     return parser
 
@@ -43,7 +48,14 @@ def main(argv: list[str] | None = None) -> int:
         practice_path = args.practice_flag or args.practice_input
         if not plan_path or not practice_path:
             raise PortfolioDossierError("plan_and_practice_inputs_required")
-        dossier = compile_portfolio_dossier(_read(plan_path), _read(practice_path))
+        technical_context = (
+            _read(args.technical_context_flag)
+            if args.technical_context_flag
+            else None
+        )
+        dossier = compile_portfolio_dossier(
+            _read(plan_path), _read(practice_path), technical_context
+        )
         encoded = stable_json(dossier) + "\n"
         if args.output:
             Path(args.output).write_text(encoded, encoding="utf-8")

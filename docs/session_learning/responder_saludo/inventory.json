@@ -1,0 +1,225 @@
+{
+  "schema": "mak-session-learning-inventory-v1",
+  "session_id": "responder_saludo-2026-08-25",
+  "language": "es",
+  "scope": {
+    "purpose": "Preservar el modelo intelectual y operativo acumulado sobre MAK sin convertir los casos de desarrollo en la arquitectura.",
+    "repository": "/home/mak/flujo",
+    "physical_authority": "/home/mak/*",
+    "historical_authority": "/home/mak/WIN",
+    "protected_inputs": ["artistic archives", "media", "artwork", "production databases"],
+    "human_review_policy": "optional_not_pipeline_gate",
+    "source_of_learning": "finished artistic work, native files, transformations, publications, exports, opportunities, episodes and validated outcomes"
+  },
+  "mission": {
+    "id": "mission:mak-autonomous-artistic-archive-os",
+    "human_result": "Convertir un archivo artístico grande y desordenado en relaciones revisables internamente, reconstrucciones prudentes y productos culturales utilizables: portfolio, dossier, postulación y research.",
+    "not_the_goal": [
+      "ordenar carpetas por nombre",
+      "recrear cada obra desde sus fuentes",
+      "clasificar cada archivo con una etiqueta única",
+      "obligar al artista a etiquetar o responder preguntas antes de producir",
+      "tratar una inferencia técnica como verdad de autoría o intención"
+    ],
+    "generalization_unit": "one archive belonging to one artist/person, containing many years of finished work and process traces",
+    "cases_not_architecture": ["ARICA", "MYRA", "RAYU", "ISKVW"]
+  },
+  "concepts": [
+    {
+      "id": "concept:chaos_to_reduction",
+      "name": "caos como problema de reducción y verificación",
+      "problem": "Un SSD no entrega proyectos ya separados; mezcla obras, procesos, versiones, assets, exports, publicaciones y residuos.",
+      "valid_part": "Buscar una reducción operacional barata y luego verificarla con evidencia es una analogía útil con P versus NP.",
+      "failure": "Se convirtió en ordenar carpetas o perseguir una certificación perfecta.",
+      "autonomy": "MAK debe generar hipótesis y productos aun cuando algunas relaciones permanezcan desconocidas."
+    },
+    {
+      "id": "concept:object_centric_memory",
+      "name": "memoria centrada en objetos y estados",
+      "problem": "El mismo archivo físico cambia, dos paths pueden compartir bytes y un output no es el mismo objeto que su fuente.",
+      "valid_part": "Artifact físico estable, ArtifactState por snapshot, Observation y TransformationEvent separados.",
+      "failure": "Confundir content_id con identidad física o tratar mtime/change_set como hechos semánticos.",
+      "autonomy": "Permite replay, comparación temporal y razonamiento sin colapsar duplicados."
+    },
+    {
+      "id": "concept:project_ir",
+      "name": "Project IR como proyección de intercambio",
+      "problem": "Los consumidores necesitan un formato común sin hacer de él la autoridad de todo el archivo.",
+      "valid_part": "Project IR conserva unidades, artifacts, relaciones, evidence y unknowns; es una vista portable.",
+      "failure": "Se esperaba que un único Project IR resolviera la identidad artística o fuera directamente un portfolio.",
+      "autonomy": "El sistema puede producir IR provisional y continuar con evidencia explícita."
+    },
+    {
+      "id": "concept:evidence_graph",
+      "name": "grafo de evidencia y procedencia",
+      "problem": "Una relación útil requiere saber de dónde salió, qué la apoya, qué la contradice y qué falta.",
+      "valid_part": "Evidence refs, evidence_for, evidence_against, alternatives, missing_evidence y next_probe.",
+      "failure": "Un score o filename empezó a circular como si fuera una afirmación cultural.",
+      "autonomy": "El grafo permite comparar hipótesis, falsarlas y redactar con calibración."
+    },
+    {
+      "id": "concept:transformation_provenance",
+      "name": "cadena de transformación",
+      "problem": "Una obra digital suele existir como fuente nativa, script, export, edición, versión y publicación.",
+      "valid_part": "Los eventos de transformación deben conservar inputs, outputs, witness, método y estado.",
+      "failure": "Coexistencia, basename o metadata fueron usados para afirmar causalidad.",
+      "autonomy": "Permite reconocer eventos apoyados sin afirmar entrega final, intención o autoría."
+    },
+    {
+      "id": "concept:operating_world",
+      "name": "modelo operativo del mundo del proyecto",
+      "problem": "La decisión correcta puede ser una composición de capacidades y no una sola label/tool_id.",
+      "valid_part": "Capacidades con precondiciones, efectos, costo, riesgo, validadores y evidencia.",
+      "failure": "El router multiclase se volvió el centro y falló en holdouts con acciones no vistas.",
+      "autonomy": "MAK planifica, simula, detecta imposibilidad y deriva una secuencia acotada."
+    },
+    {
+      "id": "concept:natural_supervision",
+      "name": "supervisión natural de años de trabajo terminado",
+      "problem": "No hay labels humanas exhaustivas y el input no debe convertirse en una entrevista.",
+      "valid_part": "Exports, manifests, versiones, entregas, publicaciones, documentos nativos, timestamps y co-consumo son señales.",
+      "failure": "Se trató unknown como fracaso o se devolvió el problema al usuario.",
+      "autonomy": "La señal débil ajusta ranking, redacción, selección y sondas; no inventa hechos."
+    },
+    {
+      "id": "concept:representation_learning",
+      "name": "representación antes que clasificación",
+      "problem": "Obra, proceso, escena, texto, imagen, video y contexto se relacionan desde múltiples extremos.",
+      "valid_part": "Feature extraction, embeddings congelados, similarity/metric learning, clustering y modelos pequeños.",
+      "failure": "Se propuso deep learning antes de probar estabilidad, holdout, leakage y señal suficiente.",
+      "autonomy": "Primero aprende una representación y usa modelos pequeños sólo donde exista evaluación."
+    },
+    {
+      "id": "concept:curatorial_compilation",
+      "name": "curatoria como optimización de producto",
+      "problem": "Un portfolio no es un inventario; debe seleccionar obras, secuencias, medios, textos y huecos para un propósito.",
+      "valid_part": "Cobertura, calidad observable, diversidad, coherencia, temporalidad, no redundancia, evidencia y ajuste a objetivo.",
+      "failure": "La ficha de un caso ARICA fue confundida con el portfolio completo.",
+      "autonomy": "El compilador puede producir variantes y separar draftable, blocked y research-first."
+    },
+    {
+      "id": "concept:research_feedback",
+      "name": "research como consumidor y retorno de evidencia",
+      "problem": "Una oportunidad externa determina qué debe verificarse; no prueba por sí misma la práctica del artista.",
+      "valid_part": "Opportunity constraints, frontier jobs, source validity, triangulation y evidence return.",
+      "failure": "Research y Portfolio se convirtieron en silos o las fuentes web fueron tratadas como evidencia de obra.",
+      "autonomy": "El sistema agenda preguntas técnicas y vuelve con propuestas aditivas sin promoción automática."
+    },
+    {
+      "id": "concept:episode_learning",
+      "name": "aprendizaje por episodios",
+      "problem": "MAK debe aprender de sus decisiones y resultados sin reescribir la verdad del archivo.",
+      "valid_part": "Separar decision, observation y outcome; usar episodios para ranking, attention, VOI y query selection.",
+      "failure": "Se quería registrar un outcome abierto como etiqueta negativa o promover políticas sin holdout.",
+      "autonomy": "El ledger conserva replay y permite aprendizaje operacional acotado."
+    }
+  ],
+  "epistemic_layers": [
+    {"id": "layer:evidence", "meaning": "observación física, hash, metadata, native witness, publication record o transformación validada", "can_assert": ["existence_observed", "bytes_or_metadata_observed", "event_supported_by_witness"], "cannot_assert": ["intent", "authorship", "artistic_value"]},
+    {"id": "layer:probabilistic_signal", "meaning": "similarity, basename, temporal proximity, co-consumption, embedding, visual or textual feature", "can_assert": ["candidate_relation", "ranking_signal", "next_probe_priority"], "cannot_assert": ["fact"]},
+    {"id": "layer:curatorial_hypothesis", "meaning": "possible work, series, program, selection or narrative", "can_assert": ["hypothesis_with_evidence_and_counterevidence"], "cannot_assert": ["confirmed_authorial_meaning"]},
+    {"id": "layer:objective", "meaning": "goal and constraints for a portfolio, application, dossier or research brief", "can_assert": ["what_to_optimize", "what_is_blocked"], "cannot_assert": ["fit_without_internal_binding"]},
+    {"id": "layer:automatic_validation", "meaning": "schema, hash, replay, coverage, reference resolution, split and gate checks", "can_assert": ["contract_integrity", "deterministic_reproduction", "bounded_eligibility"], "cannot_assert": ["cultural_truth"]}
+  ],
+  "architecture": [
+    {"id": "component:physical_observer", "name": "physical observer", "input": "explicit archive root or supplied native endpoint", "output": "mak-archive-observation-batch-v1", "authority": "observation only", "consumer": "archive memory and Stage 2A", "status": "accepted_contract"},
+    {"id": "component:archive_memory", "name": "archive memory", "input": "strict observation batches", "output": "immutable artifact states, observations and replay", "authority": "persistent physical evidence", "consumer": "Stage 2A projection", "status": "accepted_contract"},
+    {"id": "component:reconstruction", "name": "reconstruction and relation inference", "input": "replayed observation batch", "output": "candidate relations, provisional units and mak-project-ir-v1", "authority": "provisional structural hypotheses", "consumer": "practice state and product compilers", "status": "accepted_contract"},
+    {"id": "component:epistemic_compiler", "name": "opportunity, practice, possibility and research", "input": "practice evidence plus opportunity constraints", "output": "fit, program candidates, frontier jobs and additive evidence returns", "authority": "separate external and internal evidence", "consumer": "product plan", "status": "accepted_contract"},
+    {"id": "component:product_compiler", "name": "common product plan and dossier/application/research", "input": "selected programs, claims, assets, requirements and gaps", "output": "draftable, blocked or research-first products", "authority": "derived product view", "consumer": "portfolio, postulation and research consumers", "status": "accepted_contract"},
+    {"id": "component:episode_controller", "name": "episode ledger and bounded autonomy", "input": "product decision, observations and external outcomes", "output": "episodes, learning evaluation and next plan-only action", "authority": "operational learning only", "consumer": "next bounded action", "status": "accepted_contract"}
+  ],
+  "organs_and_departments": [
+    {"id": "organ:hub", "name": "Hub", "role": "single local exposure surface and status/control view", "owner": "cultura/mak_plataforma", "status": "runtime_surface", "warning": "overlapping topologies must not become another registry"},
+    {"id": "department:curatoria", "name": "Curatoria", "role": "archive reconstruction, relation hypotheses, dossier", "owner": "curatoria/ and cultura/mak_curatoria", "consumer": "Project IR, evidence graph, product plan"},
+    {"id": "department:portfolio", "name": "Portfolio/ISKVW", "role": "works, media, presentation and public artifact projection", "owner": "iskvw/, web/, tools/portfolio", "consumer": "draftable product only after evidence/privacy/license gates"},
+    {"id": "department:research", "name": "Research/Vigia", "role": "opportunity capture, source validity, questions, claims and triangulation", "owner": "cultura/mak_research and tools", "consumer": "frontier jobs and evidence return"},
+    {"id": "department:postulation", "name": "Postulación", "role": "application package derived from the common product plan", "owner": "tools/ and application contracts", "consumer": "hard gates, source gate and requirements"},
+    {"id": "department:rd", "name": "RD/Eventos", "role": "operational event and venue products", "owner": "RD/ and event tools", "consumer": "shared project/asset/provenance vocabulary"},
+    {"id": "organ:learning_ledger", "name": "LearningStore/ledger", "role": "append-only episodes, evidence and operational outcomes", "owner": "src/flujo/knowledge", "consumer": "learning policy and autonomy"},
+    {"id": "organ:copilot", "name": "Copilot", "role": "capability catalog and bounded candidate surface", "owner": "cultura/mak_plataforma/copilot.py", "consumer": "Stage 3A only when public contract is stable"}
+  ],
+  "inputs": [
+    {"id": "input:archive", "kind": "physical_archive", "examples": ["folders", "native files", "media", "exports", "sidecars", "logs", "documents"], "authority": "physical source", "risk": "chaos and mutable states"},
+    {"id": "input:native_authoring", "kind": "native_project", "examples": [".blend", ".aep", ".psd", ".kra", ".uproject", "scene files"], "authority": "declared authoring state, not automatic final output", "risk": "missing references and unavailable application state"},
+    {"id": "input:outputs", "kind": "manifestation", "examples": ["png", "mp4", "glb", "publication", "Instagram export"], "authority": "observed output or public record", "risk": "flat output cannot reveal full provenance"},
+    {"id": "input:opportunity", "kind": "external_document", "examples": ["Fondart Nacional Investigación 2027", "PDF, validity and requirements"], "authority": "opportunity constraints only", "risk": "stale or unverified source"},
+    {"id": "input:episodes", "kind": "operational_history", "examples": ["decision", "observation", "outcome", "research receipt"], "authority": "learning about operations, not authorship"
+    }
+  ],
+  "outputs": [
+    {"id": "output:practice_state", "schema": "mak-practice-evidence-state-v1", "status": "evidence_only", "consumer": "fit and program hypotheses"},
+    {"id": "output:product_plan", "schema": "mak-product-plan-v1", "status": "derived", "consumer": "dossier/application/research"},
+    {"id": "output:portfolio_dossier", "schema": "mak-portfolio-dossier-v1", "status": "draftable_or_blocked", "consumer": "Portfolio", "constraint": "not automatically published"},
+    {"id": "output:application_package", "schema": "mak-application-research-package-v1", "status": "blocked_until_gates_pass", "consumer": "Postulación"},
+    {"id": "output:research_brief", "schema": "mak-application-research-package-v1", "status": "research_first_when_gaps_exist", "consumer": "Research"},
+    {"id": "output:episode", "schema": "mak-product-episode-candidate-v1", "status": "open_without_outcome", "consumer": "LearningStore projection"},
+    {"id": "output:next_action", "schema": "mak-autonomy-plan-v1", "status": "plan_only", "consumer": "bounded executor or future run"}
+  ],
+  "authorities": [
+    {"id": "authority:physical_archive", "scope": "bytes, paths and native artifacts", "not_authority_for": ["meaning", "authorship", "final_work_role"]},
+    {"id": "authority:observation_memory", "scope": "observed states, methods, tools, versions and hashes", "not_authority_for": ["artistic truth"]},
+    {"id": "authority:evidence_graph", "scope": "typed relations and provenance", "not_authority_for": ["promotion from candidate to fact"]},
+    {"id": "authority:opportunity_source", "scope": "requirements, dates, hard gates and source validity", "not_authority_for": ["artist practice or eligibility fit"]},
+    {"id": "authority:human_history", "scope": "existing decisions, publications and outcomes as evidence", "not_authority_for": ["mandatory future labeling"]},
+    {"id": "authority:product_projection", "scope": "derived variants and readable products", "not_authority_for": ["source truth or publication permission"]}
+  ],
+  "evidence": [
+    {"id": "evidence:c05_export", "case": "RAYU", "supports": "one Blender export event to GLB", "does_not_support": ["final delivery", "publication", "artistic intent", "authorship"], "status": "supported_event"},
+    {"id": "evidence:c04_aep_mp4", "case": "ARICA", "supports": ["native declaration", "local media existence", "media metadata"], "does_not_support": ["export causality", "output role"], "status": "output_role_unknown"},
+    {"id": "evidence:myra_output", "case": "MYRA", "supports": ["observed MP4", "frames", "render markers", "ffprobe metadata"], "does_not_support": ["native source binding"], "status": "source_binding_unknown"},
+    {"id": "evidence:arica_fondart_pilot", "case": "ARICA/Fondart", "supports": ["417 artifacts observed", "11,916 observations", "413 relation candidates", "one provisional unit", "one Project IR", "valid practice state", "99 assigned", "318 unassigned", "research-first dossier"], "status": "current_packet_assertion_transient_tmp", "caveat": "durable output artifact and replay command must remain reproducible"},
+    {"id": "evidence:c07_c08_metrics", "case": "fixtures", "supports": ["recall 1.000 top-5", "precision 0.400 top-1", "precision 0.240 top-5", "bounded planner coverage"], "does_not_support": ["statistical learning on ARICA"], "status": "architecture_fixture_evidence"},
+    {"id": "evidence:fondart_constraints", "case": "Fondart Nacional Investigación 2027", "supports": ["38-page local PDF", "22 constraints", "8 hard gates", "8 required documents"], "caveat": "source validity remained observed_local/unconfirmed"}
+  ],
+  "gaps": [
+    {"id": "gap:durable_real_artifact", "description": "The current packet reports valid ARICA/Fondart outputs under /tmp, while the durable repo inventory contains older ARICA schemas and no canonical Project IR/practice files.", "impact": "replay and handoff portability cannot be proved from the repo alone", "next_action": "persist a bounded manifest or reproduce the same pure chain into an explicitly managed output root"},
+    {"id": "gap:source_validity", "description": "Fondart official-source validity was not confirmed during the pilot.", "impact": "application remains blocked and research-first", "next_action": "one official-source-only validity job"},
+    {"id": "gap:practice_witness_projection", "description": "C04-C06 technical witness receipts are not yet canonical practice evidence.", "impact": "dossier has no supported narrative atoms and refuses publication claims", "next_action": "additive projection into practice-evidence vocabulary without web-evidence or authorship promotion"},
+    {"id": "gap:independent_learning_holdout", "description": "Existing learning examples previously had no independent project holdout.", "impact": "no policy promotion or confidence in generalization", "next_action": "split by archive/person/project and replay known outcomes"},
+    {"id": "gap:public_manifestation", "description": "Public catalog/publication joins are unavailable or incomplete.", "impact": "outputs remain private/internal or unknown", "next_action": "search only through bounded explicit source captures"},
+    {"id": "gap:cross_archive_portability", "description": "MYRA is a real smoke and ARICA is a real pilot, but two independent artist archives are required for v1 acceptance.", "impact": "architecture portability remains under-tested", "next_action": "run the same contracts on a second archive without case-specific code"}
+  ],
+  "contradictions": [
+    {"id": "contradiction:fixture_vs_real", "declared": "accepted contracts and green focused tests", "observed": "real portability and evidence sufficiency are separate questions", "resolution": "treat contract acceptance and real-data usefulness as different gates"},
+    {"id": "contradiction:current_vs_durable", "declared": "CURRENT reports an end-to-end ARICA/Fondart pilot in /tmp", "observed": "repo-visible ARICA files are old portfolio evidence schemas and fail current validators", "resolution": "record transient pilot evidence separately from durable replay artifacts"},
+    {"id": "contradiction:unknown_vs_product", "declared": "unknown is uncertainty", "observed": "unknown was repeatedly treated as a dead end", "resolution": "unknown changes confidence, wording, selection or next probe; it does not halt autonomous compilation"},
+    {"id": "contradiction:case_vs_system", "declared": "ARICA is an example", "observed": "ARICA-specific scripts and dossiers became a product path", "resolution": "cases remain fixtures/holdouts; reusable contracts own the path"},
+    {"id": "contradiction:router_vs_world_model", "declared": "choose one tool/action label", "observed": "artistic decisions require composition, preconditions and evidence", "resolution": "router is a bounded capability selector inside an operating-world planner, not the learning target"}
+  ],
+  "failure_patterns": [
+    {"id": "failure:taskification", "pattern": "Treating MAK as a sequence of file-cleaning tasks", "cause": "local optimization without a human product or state model", "correction": "start from archive-to-product circulation and preserve feedback"},
+    {"id": "failure:case_product", "pattern": "Turning ARICA-01 into the product", "cause": "the first real case was mistaken for the general portfolio", "correction": "case is evidence source; product is an aggregate projection"},
+    {"id": "failure:unknown_loop", "pattern": "Returning questions or unknowns as the only result", "cause": "no compiler policy for hypotheses and draftable partial products", "correction": "produce bounded variants, research-first plans and calibrated text"},
+    {"id": "failure:single_label", "pattern": "Multiclass router over fixed tool catalog", "cause": "unseen actions and compositional goals are outside label space", "correction": "capabilities, effects, preconditions, planning and falsification"},
+    {"id": "failure:metadata_truth", "pattern": "Filename, basename, coexistence or similarity becomes artwork fact", "cause": "evidence layer and semantic layer were collapsed", "correction": "typed candidates, explicit evidence and zero truth promotion"},
+    {"id": "failure:green_fixture", "pattern": "Tests pass and architecture is declared done", "cause": "synthetic fixtures do not test archive portability or useful product", "correction": "real archive smoke, second archive and measurable product outcome"},
+    {"id": "failure:duplicated_surface", "pattern": "Many hubs, lanes, handoffs or frameworks", "cause": "documentation or orchestration was mistaken for integration", "correction": "reuse existing authorities and wire only proven missing edges"},
+    {"id": "failure:premature_ml", "pattern": "Embeddings/fine-tuning before proving signal", "cause": "model complexity substituted for data and evaluation", "correction": "frozen features, small baselines, archive holdout and leakage checks"}
+  ],
+  "cases": {
+    "ARICA": {"role": "real archive/opportunity pilot", "architecture_role": "holdout and portability test", "known": ["RAYU Blender export witness", "AEP/media unknown", "MYRA output without native source binding", "Fondart constraints"], "not_authority_for": ["general artist portfolio", "global biography", "universal schema exceptions"]},
+    "MYRA": {"role": "real archive smoke", "architecture_role": "bounded scale and null-content/unassigned behavior test", "known": ["1517 artifacts", "23 observations", "512 candidate bound", "10 units", "192 unassigned"], "not_authority_for": ["universal performance", "artistic non-membership" ]},
+    "RAYU": {"role": "technical transformation witness", "architecture_role": "export provenance test", "known": ["blend -> script -> glb event supported"], "not_authority_for": ["final delivery", "publication", "intent"]},
+    "ISKVW": {"role": "portfolio/media consumer and existing archive surface", "architecture_role": "real downstream consumer", "known": ["media and selection projections exist"], "not_authority_for": ["automatic global curation without evidence"]}
+  },
+  "learning_policy": {
+    "learnable": ["ranking", "attention", "value_of_information", "query_selection", "resource planning", "confidence calibration"],
+    "not_learnable_from_own_drafts": ["authorship", "artistic intent", "identity", "claim truth", "publication permission"],
+    "natural_supervision": ["exports", "manifests", "native references", "version sequences", "public posts", "delivery artifacts", "co-consumption", "timestamps", "duplicate content groups", "historical decisions", "external outcomes"],
+    "model_order": ["rules and structural validators", "frozen multimodal features", "kNN/logistic regression/ranking baseline", "metric learning only with independent holdout", "adapters/LoRA only after a stable target", "fine-tuning large models not required for v1"],
+    "split_policy": "by artist/archive/project before feature fitting; no cross-artist leakage; temporal and project holdouts",
+    "episode_policy": "decision, observation and outcome are separate; open outcomes are not negative labels"
+  },
+  "preserved_principles": [
+    "one artist archive can be chaotic without being semantically unknowable",
+    "the product is a useful, auditable cultural dossier/portfolio, not an inventory report",
+    "unknown is a state that can coexist with production",
+    "evidence is not knowledge, knowledge is not policy, and policy is not product truth",
+    "physical artifacts remain distinct even when bytes match",
+    "all transformations and projections must be replayable and provenance-aware",
+    "opportunity constraints and internal practice evidence meet only through explicit bindings",
+    "the system must make progress autonomously without fabricating certainty",
+    "ARICA/MYRA/RAYU/ISKVW remain cases and holdouts, never hardcoded architecture"
+  ]
+}

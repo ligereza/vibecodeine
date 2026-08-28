@@ -1,0 +1,734 @@
+{
+  "schema": "mak-system-master-inventory-v2",
+  "document_id": "inventory:mak-system-master:2026-08-26",
+  "language": "es",
+  "purpose": "Inventario maestro reconciliado de seis perspectivas de agente, el maestro anterior y el estado fisico actual de la cadena ARICA/Fondart.",
+  "mission": {
+    "id": "mission:mak-autonomous-artistic-archive-os",
+    "statement": "MAK es un sistema operativo reusable para convertir archivos artisticos extensos en memoria de evidencia, conocimiento cultural y curatorial revisable, portfolio, dossier, postulacion y research, con aprendizaje incremental y sin exigir revision humana como gate normal.",
+    "generalization_unit": "one person or artist archive with years of finished work and process traces",
+    "cases_not_architecture": [
+      "ARICA",
+      "MYRA",
+      "RAYU",
+      "ISKVW",
+      "Fondart"
+    ],
+    "forbidden_shortcut": "No convertir una tarea, un caso, un filename, una similitud o un draft en la arquitectura ni en verdad artistica."
+  },
+  "source_packets": [
+    {
+      "agent_id": "session:auditar_capacidades_mak",
+      "contribution": "Distingue herramienta disponible, capacidad integrada, conocimiento operativo y producto verificable; mapea Copilot, departamentos, RD triangular y capacidades historicas.",
+      "directory": "docs/session_learning/auditar_capacidades_mak",
+      "documents": {
+        "inventory.json": "sha256:24ab1b6fc6bb2cdd9a06b55d31cd3fcf25353e2780fa2e88506da395baf661d7",
+        "hashmap.json": "sha256:dec96b81761130c854258c3f210e7c4b7499ef037e295001dc75fd0052a138be",
+        "system_theory.md": "sha256:f3277454031ff715594dcf48439eec200c8b6f4b286bf1704914e16cc1b81e95",
+        "action_plan.md": "sha256:bacb51e035fa828a836791a2df38abc584b9a2395d973c4188a9db94a1537d3c"
+      }
+    },
+    {
+      "agent_id": "session:luna_observar_archivos_mak",
+      "contribution": "Define identidad fisica versus contenido, memoria temporal, replay, relaciones, unidades, Project IR y portabilidad entre archivos.",
+      "directory": "docs/session_learning/luna_observar_archivos_mak",
+      "documents": {
+        "inventory.json": "sha256:71d97e6ee94341d589f1d67b16d2219d5c2d7aab804d42d4e4430075a9dbcd17",
+        "hashmap.json": "sha256:f1ba5cf1d8deef105f67bc1e1c5356c5830a1eaa7e2272b8b30200ec62d9341b",
+        "system_theory.md": "sha256:4054bcaa31a9c31c15bb62e3f4ad0783cf6e1380a4528fe470154b53814dc120",
+        "action_plan.md": "sha256:1f8c908a8c46bfa5f66ae88b570ce0ba05256545e2d22b76843f8fbadd50661d"
+      }
+    },
+    {
+      "agent_id": "session:responder_saludo",
+      "contribution": "Formula la mision, el operating world, la supervision natural, representation learning, curaduria como compilacion y episodios como aprendizaje.",
+      "directory": "docs/session_learning/responder_saludo",
+      "documents": {
+        "inventory.json": "sha256:be4d4d6c199be125d0896846601cdd3e192059cd47146452b69fb623d9d9ea08",
+        "hashmap.json": "sha256:3d174ffa2187d3fc6191898e6874048a1c5f84e8a34d4bfb7a29ba7df108eafa",
+        "system_theory.md": "sha256:276f4d023eb1344bbd131dc728816ea2ad98cfa8dc0172f344673319960d14a5",
+        "action_plan.md": "sha256:cf6267023a8f02ebce0a5ecf895afb21480ad0e40b0f150d7537513ddbdc6ae1"
+      }
+    },
+    {
+      "agent_id": "system:luna_archive",
+      "contribution": "Aporta conservacion de identidad, procedencia, incertidumbre y significado a traves de toda proyeccion.",
+      "directory": "docs/system_learning/luna_archive",
+      "documents": {
+        "inventory.json": "sha256:a663aa9364d59be86d1882b8f5c05a01ffdc6f758a1301f16616d7e03612638c",
+        "hashmap.json": "sha256:bfd0ad55433d58b549bb1034a205edf429aceafbe73c14a6234e54ba0cf39ab6",
+        "system_theory.md": "sha256:15a33ffbc7de91841a72f465fdc2bfd0fb322fa158f2b72bfe4e7abae65739dc",
+        "action_plan.md": "sha256:fc76de242298c3ab01a1f5466ffa33469e7851782509f6307f13566abcc11489"
+      }
+    },
+    {
+      "agent_id": "system:luna_control",
+      "contribution": "Aporta el modelo de control distribuido, departamentos, organos, Conductor, gates y prohibiciones de efectos externos implicitos.",
+      "directory": "docs/system_learning/luna_control",
+      "documents": {
+        "inventory.json": "sha256:85ade0370b4c90d559a1aad01ae187bb7bb4ae16136a5c657c2ac8018b382735",
+        "hashmap.json": "sha256:de6f1a075ded8f87d5a530a14314db58b52d2ab369345225bee225de6987c4ef",
+        "system_theory.md": "sha256:b641745cd6cbf9f8194814bee25bd3eed364a664513d5bc09ea65ee247721c5b",
+        "action_plan.md": "sha256:ed71d9316693e10a22180566f41d6974f1e00a2cabd1db6bee0c83c9a4524179"
+      }
+    },
+    {
+      "agent_id": "system:luna_world",
+      "contribution": "Aporta sensing externo, Vigia, captura bounded, vigencia diferencial, triangulacion, evidencia ambiental y bucles de retorno.",
+      "directory": "docs/system_learning/luna_world",
+      "documents": {
+        "inventory.json": "sha256:bcc709238f2bdcebed2890b1c8c4ed31143a14c0ca4a47f4b0bbb1a75343b289",
+        "hashmap.json": "sha256:312043ed5f1be4af0e42f21831186e46a42118f9f1a8c3f26de8b590cf0d0108",
+        "system_theory.md": "sha256:8dfb0adf05a2e34c842746d86184f3c6af24ea81600a8f1a3d70e318d5c13745",
+        "action_plan.md": "sha256:145dada984e356d121f62e4db24ef37d7ed61c35514370c510faf55ee8888bc5"
+      }
+    },
+    {
+      "agent_id": "director:master-v1",
+      "contribution": "Primera reconciliacion de las seis perspectivas y plan por fases; preservada como antecedente de esta version.",
+      "directory": "docs/system_learning/master",
+      "documents_before_v2": {
+        "inventory.json": "sha256:041dec8b87e573bd569a635f1196ad5ae16e310774c9080d31d3f8b8001383d8",
+        "hashmap.json": null,
+        "system_theory.md": "sha256:89e871147163fb114d068fc6f938ab72b70423bc20e8d3e0879029fc069d94c6",
+        "action_plan.md": "sha256:5ea45b5087131464e3e46053469f1745270585275738da454143305ed3800dfa"
+      },
+      "hash_note": "The prior master-v1 hashmap hash was observed only as a truncated 60-character command rendering after the file was replaced; it is intentionally null rather than presented as a false SHA-256. The six source-agent packets remain independently hash-verified."
+    }
+  ],
+  "authorities": [
+    {
+      "id": "authority:physical",
+      "scope": "/home/mak/* and explicitly mounted archive roots",
+      "proves": "existence, bytes, paths, physical states and observed transformations",
+      "does_not_prove": "authorship, artistic identity, work identity, publication or intent"
+    },
+    {
+      "id": "authority:archive-memory",
+      "scope": "accepted observation batches and append-only replay",
+      "proves": "what MAK observed at a snapshot and how it changed"
+    },
+    {
+      "id": "authority:practice",
+      "scope": "Project IR plus practice-scoped receipts with exact artifact refs",
+      "proves": "bounded claims about the archive-side practice"
+    },
+    {
+      "id": "authority:opportunity",
+      "scope": "versioned official sources, captures and compiled constraints",
+      "proves": "requirements and currentness within the captured validity window"
+    },
+    {
+      "id": "authority:outcome",
+      "scope": "verified external receipts",
+      "proves": "bounded external consequence, never its artistic cause"
+    }
+  ],
+  "system_components": [
+    {
+      "id": "component:observer-memory",
+      "paths": ["src/flujo/knowledge/archive_observer.py", "src/flujo/knowledge/archive_memory.py"],
+      "status": "accepted_and_real_input_materialized",
+      "consumer": "reconstruction",
+      "current_evidence": "ARICA full observation: 12332 artifacts, 12015 files, 128 observations"
+    },
+  {
+    "id": "component:reconstruction-project-ir",
+      "paths": ["src/flujo/knowledge/archive_reconstruction.py", "src/flujo/knowledge/archive_unit_reconstruction.py", "src/flujo/knowledge/archive_project_ir_adapter.py"],
+      "status": "accepted_and_replayed_on_full_observation",
+      "consumer": "practice evidence and curatorial hypotheses",
+      "current_evidence": "174 units and 174 Project IR records; 11534 assigned and 794 unassigned in the materialized run"
+  },
+  {
+    "id": "component:portable-holdout-replay",
+    "paths": [
+      "experiments/pilots/HARRY-NACH-2026/input/archive_profile.json",
+      "experiments/pilots/HARRY-NACH-2026/input/archive_observation.json",
+      "experiments/pilots/HARRY-NACH-2026/runs/fondart-holdout-20260826"
+    ],
+    "status": "independent_artist_candidate_replay_pass",
+    "consumer": "accepted chain replay and portability evaluation",
+    "current_evidence": "Harry Nach contextual archive: 20 artifacts, 2 observations, 1 provisional unit, 1 Project IR and deterministic full-chain replay",
+    "invariant": "holdout evidence tests generic contracts; it cannot promote subarchive membership, authorship, work identity or product readiness"
+  },
+  {
+    "id": "component:cross-archive-relations",
+    "paths": [
+      "src/flujo/knowledge/cross_archive_relations.py",
+      "tools/compile_cross_archive_relations.py",
+      "experiments/pilots/DREFQUILA/runs/cross-archive-escarlata-20260826/relations.json",
+      "experiments/pilots/DREFQUILA/runs/cross-archive-escarlata-20260826/project-context.json"
+    ],
+    "status": "accepted_bounded_candidate_projection",
+    "consumer": "cross-archive context, curatorial and research projections",
+    "current_evidence": "six Escarlata collaboration candidates connect three reconstructed DREFGIRA artifact refs to two HARRY physical artifact refs; the existing project-context projection exposes six pair relations plus five candidate manifestation links to the catalog track, and its read-only consumer round-trips all 11 as candidate",
+    "invariant": "catalogue collaboration evidence creates candidate relations only; physical artifacts remain separate and no whole-subarchive identity is promoted"
+  },
+    {
+      "id": "component:cross-archive-research-frontier",
+      "paths": [
+        "src/flujo/knowledge/cross_archive_research_frontier.py",
+        "tools/compile_cross_archive_research_frontier.py",
+        "experiments/pilots/DREFQUILA/runs/cross-archive-escarlata-20260826/research-frontier.json",
+        "experiments/pilots/DREFQUILA/runs/cross-archive-escarlata-20260826/research-result.json",
+        "experiments/pilots/DREFQUILA/runs/cross-archive-escarlata-20260826/research-triangulation.json",
+        "experiments/pilots/DREFQUILA/runs/cross-archive-escarlata-20260826/research-capture"
+      ],
+      "status": "accepted_bounded_research_projection",
+      "consumer": "src/flujo/knowledge/research_evidence_triangulation.py and existing Research job vocabulary",
+      "current_evidence": "one grouped curatoria job covers all six Escarlata relation candidates; two captured independent public sources produce a supported_candidate result scoped to the public collaboration record while the exact local delivery/content gap remains explicit",
+      "invariant": "the synthetic opportunity namespace is not an opportunity claim; supported_candidate is scoped by its statement and does not promote file identity, authorship or delivery"
+    },
+    {
+      "id": "component:practice-evidence",
+      "paths": ["src/flujo/knowledge/practice_evidence_state.py", "src/flujo/knowledge/practice_receipt_adapter.py", "tools/adapt_practice_receipts.py"],
+      "status": "accepted_and_replayed_on_arica_baseline_and_enriched",
+      "consumer": "fit, possibility and product plan",
+      "current_evidence": "four exact ARICA artifact bindings; no basename or similarity join"
+    },
+    {
+      "id": "component:opportunity-world",
+      "paths": ["src/flujo/knowledge/opportunity_constraints.py", "src/flujo/knowledge/opportunity_validity_capture.py", "tools/capture_opportunity_validity.py"],
+      "status": "official_capture_materialized_and_replayed",
+      "consumer": "source gate, fit and frontier",
+      "current_evidence": "valid capture, current_verified, confirmed=true, effective_to=2026-09-10"
+    },
+  {
+    "id": "component:opportunity-version-diff",
+      "paths": ["src/flujo/knowledge/opportunity_delta.py", "tools/compile_opportunity_delta.py"],
+      "status": "accepted_real_consumer_crosschecked",
+      "consumer": "selective downstream recomputation",
+      "current_evidence": "ARICA baseline/enriched delta: 2 semantic changes, 9 affected consumers, 9 matching changed outputs",
+    "invariant": "source provenance changes do not imply recomputation unless documentary semantics or validity changes"
+  },
+  {
+    "id": "component:selective-recompute-receipt",
+    "paths": [
+      "src/flujo/knowledge/selective_recompute_receipt.py",
+      "tools/compile_selective_recompute_receipt.py",
+      "tests/test_selective_recompute_receipt.py"
+    ],
+    "status": "accepted_read_only_output_reconciliation",
+    "consumer": "delta gate and future bounded recomputation controller",
+    "current_evidence": "real ARICA baseline/enriched manifests reconcile 17 changed outputs; nine map to declared opportunity-delta consumers and seven remain mixed_or_unexplained because practice evidence was enriched in the same run",
+    "invariant": "output change is not causal proof; execution_performed remains false and any output outside the delta's declared consumer set is reported, never attributed",
+    "limits": [
+      "the projection observes manifests and does not execute or persist recomputation",
+      "the ARICA mixed-input replay cannot serve as a single-cause learning label"
+    ]
+  },
+  {
+    "id": "component:vigia-capture-bridge",
+      "paths": [
+      "src/flujo/knowledge/vigia_capture_bridge.py",
+      "tools/compile_vigia_capture_plans.py",
+      "tests/test_vigia_capture_bridge.py"
+    ],
+    "status": "accepted_plan_and_explicit_receipt_bridge",
+    "consumer": "tools/research_source_capture.py:capture_one (plan-only by default; record=True only through explicit bounded operation)",
+    "current_evidence": "real cultura/mak_vigia/vigia.py discovery produced one normalized URL and one validated bounded plan; temporal smoke through the real capture_one consumer produced one mak-vigia-capture-receipts-v1 receipt with source_plan_hash and no dispatch",
+    "invariant": "Vigia discovery is deduplicated by canonical URL; capture execution is explicit, bounded and provenance-bound, while the default path remains non-network and non-persistent"
+  },
+  {
+    "id": "component:vigia-opportunity-evidence-join",
+    "paths": [
+      "tools/capture_opportunity_validity.py",
+      "src/flujo/knowledge/opportunity_validity_capture.py",
+      "tests/test_opportunity_validity_capture.py"
+    ],
+    "status": "accepted_existing_consumer_integration",
+    "consumer": "opportunity validity compiler and its existing research/evidence batch",
+    "current_evidence": "mak-vigia-capture-receipts-v1 can be hydrated read-only from the selected SourceCorpusStore and consumed by the existing Fondart validity compiler; a temporary three-source fixture reached current_verified without a second network call",
+    "invariant": "a generic Vigia receipt is not an opportunity constraint by itself; role, URL, stored hashes, content and freshness must pass the existing official-source extractor, otherwise the result remains observed_local or unresolved",
+    "limits": [
+      "the join is bounded to the declared official opportunity URLs",
+      "failed or incomplete receipts remain explicit inputs and cannot produce validity"
+    ]
+  },
+    {
+      "id": "component:fit-possibility-frontier",
+      "paths": ["src/flujo/knowledge/opportunity_fit.py", "src/flujo/knowledge/possibility_field.py", "src/flujo/knowledge/research_frontier_bridge.py"],
+      "status": "accepted_and_replayed_on_baseline_and_enriched_runs",
+      "consumer": "research, product compiler and autonomy",
+      "current_evidence": "enriched run passes source gate, produces one candidate program and reduces research jobs from 17 to 16",
+      "current_risk": "fit remains abstain; no external outcome exists and frontier evidence remains unresolved"
+    },
+    {
+      "id": "component:product-compiler",
+      "paths": ["src/flujo/knowledge/product_plan.py", "src/flujo/knowledge/portfolio_dossier.py", "src/flujo/knowledge/application_research_package.py"],
+      "status": "accepted_and_replayed_with_shared_lineage",
+      "consumer": "Portfolio, Postulacion and Research",
+      "invariant": "all products derive from one shared evidence-governed plan"
+    },
+    {
+      "id": "component:episode-learning-control",
+      "paths": ["src/flujo/knowledge/product_episode.py", "src/flujo/knowledge/product_learning.py", "src/flujo/knowledge/autonomy_plan.py"],
+      "status": "accepted_focused_replay",
+      "observed_validation": "PYTHONPATH=. ./.venv/bin/python -m pytest -q tests/test_product_episode.py tests/test_product_learning.py tests/test_product_plan.py tests/test_application_research_package.py tests/test_autonomy_plan.py => exit 0",
+      "consumer": "bounded next-action selection"
+    },
+  {
+    "id": "component:world-sensing",
+      "paths": ["cultura/mak_vigia/vigia.py", "tools/research_source_capture.py", "src/flujo/knowledge/research_evidence_triangulation.py", "src/flujo/knowledge/evidence_return.py"],
+    "status": "partial_generic_incremental_loop",
+    "consumer": "opportunity memory and research frontier",
+    "closed_subedges": [
+      "Vigia discovery -> bounded capture plan",
+      "constraints version -> semantic delta -> affected consumers"
+    ],
+    "closed_subedges": [
+      "Vigia receipt -> existing official opportunity validity compiler for declared URLs"
+    ],
+    "remaining": "generic opportunity-memory ingestion and selective recomputation receipt; plan-to-receipt and bounded receipt-to-validity bridge remain explicit/opt-in"
+    },
+    {
+      "id": "component:organizational-control",
+      "paths": ["cultura/mak_plataforma/copilot.py", "cultura/mak_plataforma/hub.py", "tools/triangular.py", "context/OWNER_MANIFEST.md"],
+      "status": "multiple_valid_projections_not_yet_reconciled",
+      "consumer": "director and future Conductor",
+      "invariant": "departments, organs, capabilities and owner-consumer relations are projections, not rival registries"
+    },
+    {
+      "id": "component:knowledge-storage",
+      "paths": ["data/mak_knowledge.db", "data/rd.db", "src/flujo/knowledge"],
+      "status": "bounded_stores_exist_no_universal_database_claim",
+      "consumer": "replay, queries, episodes and department-specific products",
+      "invariant": "a database is a projection with producer and consumer, never automatic authority"
+    },
+    {
+      "id": "component:operational-membership-memory",
+      "paths": [
+        "src/flujo/knowledge/project_ir.py",
+        "src/flujo/knowledge/operational_memberships.py",
+        "tools/inspect_operational_memberships.py",
+        "tests/test_operational_memberships.py"
+      ],
+      "status": "accepted_focused_projection_with_capability_read_model",
+      "consumer": "read-only operational membership CLI with optional artifact capability projection",
+      "current_evidence": "17 focused tests pass: shared resource memberships remain independent, reject-A does not alter B, concurrent decisions remain conflicted, duplicate event ids fail closed, event retries are idempotent, archive reads are isolated, material reopen is trigger-gated, the view rebuilds from the existing LearningStore, and real observer->memory->replay->Stage 2A capability output is deterministic",
+      "authority": "mak_operational_events append-only table inside the existing LearningStore; membership JSON is rebuildable",
+      "limits": [
+        "DREF/HARRY Stage 2C outputs replayed into temporary stores; no real shared-resource case exists yet",
+        "mak-operational-capabilities-v1 reports structural preconditions, not installed providers or completed operations",
+        "execution, backup and export remain blocked until an explicit policy/target consumer exists",
+        "no artistic truth, asset promotion or user decision is implied",
+        "Hypothesis is test-only and no statistical learner is active"
+      ]
+    }
+  ],
+  "active_bounded_slice": {
+    "id": "slice:cross-archive-role-context-2026-08-27",
+    "objective": "project catalogue-backed cross-archive relations into the existing context consumer without confusing collaboration, manifestation, holder or authorship",
+    "source": "existing cross_archive_relations payload plus DREF and HARRY practice states",
+    "authority": "physical practice evidence states and explicit local catalogue; project context remains a projection",
+    "projection": "mak-project-context-v1 with role_bindings and relation evidence",
+    "validation": "7 focused cross-archive tests; 18 cross-archive/context/research-frontier regression tests; real DREF/HARRY smoke passed with 6 candidates, 11 context relations and 5 role bindings",
+    "next_gate": "bind an explicit native authoring/export witness when available, while retaining candidate visual manifestations when it is absent",
+    "stop_conditions": [
+      "new database or parallel ledger proposed",
+      "catalogue collaboration promoted to visual authorship or delivery truth",
+      "physical artifacts merged because of title, filename or participant overlap",
+      "Hub/runtime repair required before the pure context contract is proven"
+    ]
+  },
+  "current_real_slice": {
+    "id": "pilot:ARICA-FONDART-2027",
+    "root": "experiments/pilots/ARICA-FONDART-2027",
+    "input_hashes": {
+      "archive_observation.json": "sha256:508d2d7f7c6a3f4bfe6174ce332a9c24fae5dd9a623f0570c93da7ce61e9cf29",
+      "opportunity_document_package.json": "sha256:37f29f518fb8091fbe5209444c0e9761a5c130f207192e460a0bdf8ecab1b45e",
+      "opportunity_validity_capture.json": "sha256:1693b5ad061a6cc8a6c6a2a459191b83846676b4b73f8a622bb7b43aeda7e794",
+      "practice_receipt_bindings.json": "sha256:404817721f0e2c91e21d73ca078bb7e47bfb83001ebcab3e484aa993025cd532",
+      "practice_receipt_evidence.json": "sha256:8f8182a3aba304520b705ecaeeb70d21a526e5893593c66e712f96b4be9ca9dd"
+    },
+    "observation_identity": {
+      "archive_id": "arica",
+      "snapshot_id": "snapshot:70cdbc7c142391b4fca9f8fc18c042c369f8396eacb3b4185659b8b8a35243b3"
+    },
+    "closed_gaps": [
+      "durable full archive observation",
+      "bounded official opportunity validity capture",
+      "exact practice-scoped receipt bindings"
+    ],
+    "not_yet_accepted": [
+      "the historical 417 artifact, 11916 observation and 413 candidate run cannot be reproduced because its temporary inputs no longer exist",
+      "manifest v1 records semantic JSON hashes rather than raw formatted-file byte hashes; semantic rehash is verified, but a separate byte-hash field is not part of v1",
+      "no independent external outcome exists for training or policy promotion"
+    ]
+  },
+  "recent_execution_evidence": {
+    "id": "execution:dref-and-arica-replay:2026-08-26",
+    "dref": {
+      "archive_root": "/home/mak/curatoria_inbox/DREF CHOCOLATE",
+      "run_root": "experiments/pilots/DREFQUILA/runs/full-physical-20260826",
+      "archive_id": "drefquila",
+      "snapshot_id": "snapshot:9415d9f80c0ce01186de4670018c09b3cbb25889bcb56beffe73e93f441e8c8d",
+      "archive_observation_sha256": "sha256:6d068aab4aaf3673a0faaf1172fb5bb11bc496ab26700201a2e57748586db633",
+      "practice_sha256": "sha256:82bf1fbb10108290ddf2410db279e67df8dcdd1c0571e9c623d8068616cb04b7",
+      "counts": {
+        "physical_artifacts": 44,
+        "content_hashes": 41,
+        "relation_candidates": 40,
+        "units": 1,
+        "assigned": 40,
+        "ambiguous": 0,
+        "unassigned": 4,
+        "supported_claims": 0,
+        "candidate_claims": 0,
+        "unknown_claims": 2,
+        "gaps": 7
+      },
+      "status": "same_artist_second_archive_pass",
+      "validation": {
+        "observer_stage2a_2d_practice": "pass",
+        "focused_regression_tests": 159,
+        "py_compile": "pass",
+        "source_mutation": false,
+        "database_writes": false
+      },
+      "limits": [
+        "no independent person/artist holdout is accepted",
+        "no artistic truth was inferred from DREF names or folders",
+        "the full physical observer produced zero observer candidates; topology still produced bounded containment candidates"
+      ]
+    },
+    "arica_fondart": {
+      "run_root": "experiments/pilots/ARICA-FONDART-2027/runs",
+      "baseline_manifest_sha256": "sha256:7dc2c9ad6c3418778fc7ac5e4208a5e20629ef15100d791e98bfb390490a3cd3",
+      "enriched_manifest_sha256": "sha256:c317916d50c3d39db2afff8b3c4b5f38c5a4d36cc8addfe269ae91a49c2ec1c3",
+      "observation_sha256": "sha256:508d2d7f7c6a3f4bfe6174ce332a9c24fae5dd9a623f0570c93da7ce61e9cf29",
+      "counts": {
+        "artifacts": 12332,
+        "observations": 128,
+        "relation_candidates": 512,
+        "units": 174,
+        "assigned": 11534,
+        "unassigned": 794,
+        "baseline_supported_claims": 0,
+        "enriched_supported_claims": 4,
+        "baseline_research_jobs": 17,
+        "enriched_research_jobs": 16
+      },
+      "causal_delta": "14 downstream outputs changed; 9 common outputs remained identical; unexplained_output_deltas=0",
+      "status": "semantic_disk_replay_verified_no_external_side_effects",
+      "opportunity_delta": {
+        "path": "experiments/pilots/ARICA-FONDART-2027/runs/opportunity-delta.json",
+        "schema": "mak-opportunity-delta-v1",
+      "sha256": "sha256:7c3a8f6d33fe7c8eb24766825aebbc543a0b15031bfca9a62daa56fe90180a01",
+      "changes": 2,
+      "affected_consumers": 9,
+      "impact_crosscheck": "pass"
+    },
+    "vigia_capture_bridge": {
+      "schema": "mak-vigia-capture-plans-v1",
+      "receipt_schema": "mak-vigia-capture-receipts-v1",
+      "implementation": "src/flujo/knowledge/vigia_capture_bridge.py",
+      "consumer": "tools/research_source_capture.py:capture_one(record=True) only when explicitly requested",
+      "real_smoke": "pass: cultura/mak_vigia/vigia.py -> one discovery -> one plan",
+      "tests": "tests/test_vigia_capture_bridge.py:9 passed",
+      "receipt_smoke": "pass: plan -> capture_vigia_plans -> real capture_one with fixture backend -> one durable receipt in a temporary SourceCorpusStore",
+      "receipt_cross_smoke": "pass: capture_one fixture receipt -> existing research result adapter -> triangulation 16 unresolved pairs -> evidence-return zero promotions",
+      "receipt_to_validity_smoke": "pass: three hydrated Vigia receipts -> existing official validity compiler -> current_verified; compiler network_called=false",
+      "selective_recompute_receipt": {
+        "schema": "mak-selective-recompute-receipt-v1",
+        "path": "src/flujo/knowledge/selective_recompute_receipt.py",
+        "real_arica_status": "mixed_or_unexplained",
+        "changed_outputs": 17,
+        "changed_affected_consumers": 9,
+        "unexplained_outputs": ["evidence-return", "opportunity-validity-capture", "practice", "practice-receipt-evidence", "program-evaluation", "project-ir-practice", "triangulation"],
+        "temporary_output_sha256": "sha256:e4cc2f9883147ea0095766e2274e5362c7777dbcef63811ea139267c1e60364c"
+      },
+      "controls": {
+        "network_called": "false for plan-only; explicit record mode reports executor result",
+        "database_write": "false for plan-only; explicit record mode writes only the selected capture root",
+        "dispatch": false,
+        "promotion": "none"
+      },
+      "limits": [
+        "no network capture was executed",
+        "Vigia has no formal versioned input schema; the bridge accepts only its observed results/nuevos contract"
+      ]
+    },
+    "harry_nach_holdout": {
+      "profile": "experiments/pilots/HARRY-NACH-2026/input/archive_profile.json",
+      "observation": "experiments/pilots/HARRY-NACH-2026/input/archive_observation.json",
+      "run_root": "experiments/pilots/HARRY-NACH-2026/runs/fondart-holdout-20260826",
+      "comparison": "experiments/pilots/HARRY-NACH-2026/runs/fondart-holdout-20260826/portability-comparison.json",
+      "results": "experiments/pilots/HARRY-NACH-2026/runs/fondart-holdout-20260826/RESULTS.md",
+      "enriched_run": "experiments/pilots/HARRY-NACH-2026/runs/fondart-enriched-opportunity-20260826",
+      "opportunity_delta": "experiments/pilots/HARRY-NACH-2026/runs/fondart-enriched-opportunity-20260826/opportunity-delta.json",
+      "archive_id": "harry-chillan",
+      "tenant_id": "harry-nach",
+      "snapshot_id": "snapshot:4ba52b415e213b68f7ad0d95a888d1535c530cac5318735d13b961248cd9a1b0",
+      "observation_sha256": "sha256:ea02379d5a3b2db042ee1f5fbb21b14de2607d2fe12eccfcbf9d19211878a292",
+      "profile_sha256": "sha256:25c8a016b3afc1da78b58bdd02a912f63bb5eddb51b468c932fb418ba53b1b6c",
+      "comparison_sha256": "sha256:459f9d4aa94fa115c8cc1ec4949422913970d87cd57537bd3da4f4379c31531a",
+      "enriched_manifest_sha256": "sha256:53dd7cc88ef40bc73e0f828beb018215189305bc7e4a96e18ac4d11aa0cdfb1f",
+      "opportunity_delta_sha256": "sha256:7c3a8f6d33fe7c8eb24766825aebbc543a0b15031bfca9a62daa56fe90180a01",
+      "counts": {
+        "artifacts": 20,
+        "observations": 2,
+        "relation_candidates": 2,
+        "units": 1,
+        "assigned": 20,
+        "ambiguous": 0,
+        "unassigned": 0,
+        "project_records": 1,
+        "unknown_claims": 3,
+        "research_jobs": 17,
+        "enriched_research_jobs": 16
+      },
+      "physical_binding": {
+        "status": "observed_candidate",
+        "source_key": "6f6a046fb3c639a35b32:project_29335da67c429530baaa",
+        "record_hash": "cf54df0c494008e7b83a353eafd819e427cdeb78e1bcd1d9cd06c619997ee116",
+        "relative_path": "HARRY CHILLAN"
+      },
+      "status": "independent_artist_candidate_replay_pass",
+      "validation": {
+        "observer": "pass",
+        "full_chain": "pass",
+        "deterministic_replay": "pass",
+        "durable_manifest_reopened": "pass",
+        "pilot_manifest_validator": "pass",
+        "focused_regression": "41 tests passed",
+        "source_mutation": false,
+        "database_writes": false,
+        "network_calls": false,
+        "fit": "abstain",
+        "dossier": "draft_only",
+        "application": "blocked_with_reasons"
+      },
+      "enriched_validation": {
+        "source_gate": "current_verified",
+        "fit": "abstain",
+        "dossier": "draft_only",
+        "application": "blocked_with_reasons",
+        "practice_unchanged": true,
+        "jobs": 16,
+        "opportunity_delta_changes": 2,
+        "opportunity_delta_affected_consumers": 9,
+        "program_id_projection_check": "passed: selected practice-native ID is present in the full candidate set"
+      },
+      "limits": [
+        "subarchive binding is contextual_candidate, not proof that every file belongs to one work or show",
+        "no practice receipt was supplied, so claims remain unknown and no assets or narrative atoms were promoted",
+        "the local catalog supports Harry Nach identity but does not prove a single work identity for HARRY CHILLAN"
+      ]
+    },
+    "escarlata_cross_archive": {
+      "path": "experiments/pilots/DREFQUILA/runs/cross-archive-escarlata-20260826/relations.json",
+      "schema": "mak-cross-archive-relations-v1",
+      "sha256": "sha256:bb9e7a8e1f3bc707a97ba5ea910200a3afcec4b395271212b7cb31d233c2a433",
+      "source_catalog": "data/artist_discographies.json",
+      "source_catalog_track": "Escarlata (Remix)",
+      "archive_ids": ["drefquila", "harry-chillan"],
+      "relation_count": 6,
+      "context_projection_path": "experiments/pilots/DREFQUILA/runs/cross-archive-escarlata-20260826/project-context.json",
+      "context_projection_schema": "mak-project-context-v1",
+      "context_projection_sha256": "sha256:1fa949162ea1998f5af8679ac2c70f27888ffc3bbabc65385957cb7599307799",
+      "context_entity_count": 6,
+      "context_relation_count": 11,
+      "physical_artifact_count": 487,
+      "matched_catalog_work_count": 1,
+      "status": "candidate_relation_materialized",
+      "binding_limits": [
+        "DREF endpoints come from reconstructed_reference_only practice state with archive_id/snapshot_id unknown",
+        "HARRY subarchive remains contextual_candidate",
+        "exact cross-archive delivery/content binding is missing"
+      ],
+      "controls": {
+        "source_rescan": false,
+        "database_write": false,
+        "network_called": false,
+        "physical_merge": false,
+        "truth_promotion": false
+      }
+    },
+    "escarlata_role_context_projection": {
+      "implementation": "src/flujo/knowledge/cross_archive_relations.py:project_cross_archive_context",
+      "schema": "mak-project-context-v1",
+      "source_relation_schema": "mak-cross-archive-relations-v1",
+      "role_binding_count": 5,
+      "role_bindings": {
+        "candidate_visual_manifestation": 5,
+        "archive_observed": 2,
+        "reconstructed_reference": 3,
+        "authorship_not_inferred": 5
+      },
+      "context_relation_count": 11,
+      "shared_collaboration_relations": 6,
+      "candidate_manifestation_relations": 5,
+      "participation_scope": "matched_archive_artists_only_non_exhaustive",
+      "durable_context_file_refreshed": false,
+      "role_projection_replay": "read-only_in_memory_from_existing_relation_payload",
+      "validation": "7 focused tests; 18 related regression tests; real read-only smoke valid",
+      "controls": {
+        "source_rescan": false,
+        "database_write": false,
+        "physical_merge": false,
+        "truth_promotion": false,
+        "authorship_inference": false
+      },
+      "limits": [
+        "role metadata is a context projection and does not change the durable relation payload",
+        "native authoring project or explicit visual credit is still missing",
+        "public collaboration evidence does not bind either local video to delivery or authorship"
+      ]
+    },
+    "dref_full_cross_context_probe": {
+      "source_paths": [
+        "experiments/pilots/DREFQUILA/runs/full-physical-20260826/practice.json",
+        "experiments/pilots/DREFQUILA/runs/portable-sample-20260826/drefgira-reconstructed-practice.json",
+        "experiments/pilots/DREFQUILA/runs/portable-sample-20260826/bahparty-adjacent-practice.json",
+        "experiments/pilots/HARRY-NACH-2026/runs/fondart-enriched-opportunity-20260826/practice.json",
+        "data/artist_discographies.json"
+      ],
+      "schema": "mak-cross-archive-relations-v1",
+      "status": "read_only_coverage_probe",
+      "archive_context_count": 4,
+      "physical_artifact_count": 614,
+      "relation_count": 20,
+      "matched_catalog_work_count": 4,
+      "pair_counts": {
+        "drefgira-reconstructed:drefquila-physical": 12,
+        "drefgira-reconstructed:harry-chillan": 6,
+        "bahparty-adjacent:drefgira-reconstructed": 2
+      },
+      "direct_physical_escarlata_refs": 0,
+      "output_persisted": false,
+      "interpretation": "The full DREF physical archive connects to reconstructed DREF contexts through other catalogued works, while Escarlata still connects through reconstructed DREFGIRA refs to HARRY. Same-artist physical and reconstructed contexts cannot share one archive identity without a declared context distinction; the probe therefore does not promote or merge them."
+    },
+    "escarlata_research_frontier": {
+      "path": "experiments/pilots/DREFQUILA/runs/cross-archive-escarlata-20260826/research-frontier.json",
+      "schema": "mak-research-frontier-jobs-v1",
+      "algorithm_version": "cross-archive-relation-to-research-1",
+      "sha256": "sha256:9ee2b06145a67636e9a2590192b29bc50a5efe66d7200aa2a895547dcecd4b0c",
+      "source_relation_path": "experiments/pilots/DREFQUILA/runs/cross-archive-escarlata-20260826/relations.json",
+      "capture_root": "experiments/pilots/DREFQUILA/runs/cross-archive-escarlata-20260826/research-capture",
+      "capture_store_sha256": "sha256:2fb48cdd6b14d87d9abdb30f1473eb75b378f42d7d926f85dfa1ab821ba192ec",
+      "result_path": "experiments/pilots/DREFQUILA/runs/cross-archive-escarlata-20260826/research-result.json",
+      "result_sha256": "sha256:cb7bd58f57a8e0f5cb1b482ce933f8a2664b5ce96f8c6b33353a18867abd1960",
+      "triangulation_path": "experiments/pilots/DREFQUILA/runs/cross-archive-escarlata-20260826/research-triangulation.json",
+      "triangulation_report_hash": "report:sha256:8bcbe858e8c18a220fe5eade9d9b03fb9ab8adf666ec30c6ebbd001b2c52a2ce",
+      "triangulation_sha256": "sha256:ebf73a94a51bc41fc3f86a145de45425800094008851a734052024e267c24bb3",
+      "job_count": 1,
+      "relation_count": 6,
+      "relations_with_jobs": 6,
+      "domain": "curatoria",
+      "triangulation_without_results": "unresolved",
+      "triangulation_with_captured_sources": "supported_candidate_public_collaboration_scope_only",
+      "independent_source_groups": ["apple-music", "youtube-official-channel"],
+      "additional_official_capture_probe": {
+        "url": "https://www.youtube.com/watch?v=8XxFX6_w6CA",
+        "source_id": "04e37b18a0662546c142344ad8f73267c591ad70e0fca0d2f3da76b64e141bbf",
+        "capture_ids": ["bd6472cf59245b6b17928e5f8ff4486bbf55a74401e0d3b67f05d5aaf0cf1b05", "c7fc9d553ec4fb0b3c303316734b9d45249321651581b0ce5a539f610e400be4"],
+        "text_sha256": "sha256:7b51f81d79ef7fa1f3fbf63548d0808e6d6bb287467cce6bae3c5a173db6b1ca",
+        "used_in_current_result": false,
+        "interpretation": "same canonical URL and same text across two captures but different raw bytes; source store versions raw captures, while the current triangulated claim remains bound to the two previously selected source receipts"
+      },
+      "dispatch_count": 0,
+      "promotion": "none",
+      "database_write": false,
+      "network_called": false,
+      "synthetic_opportunity_namespace_only": true
+    },
+    "validation": {
+        "focused_product_gate": "pass",
+        "baseline_outputs_semantic_rehashed": 23,
+        "enriched_outputs_semantic_rehashed": 26,
+        "raw_pretty_bytes_compared_to_semantic_hash": false
+      }
+    }
+  },
+  "open_gaps_in_priority_order": [
+    {
+      "id": "gap:restore-current-replay",
+      "priority": 0,
+      "status": "completed",
+      "condition": "completed: product_episode requirement derivation is inside _validate_plan and the focused gate passes",
+      "why": "all later evidence is invalid while the common causal chain cannot complete"
+    },
+    {
+      "id": "gap:causal-delta",
+      "priority": 1,
+      "status": "completed_with_semantic_hashes",
+      "condition": "completed: baseline and enriched were regenerated from the same observation and compared by output and lineage",
+      "why": "MAK must prove improvement, not merely possess adapters"
+    },
+    {
+      "id": "gap:first-durable-product",
+      "priority": 2,
+      "status": "completed_internal_only",
+      "condition": "completed: enriched run exposes dossier, portfolio view, blocked application and research brief from one plan",
+      "why": "the first useful product is the proof that the machinery serves the artistic mission"
+    },
+    {
+      "id": "gap:portable-holdouts",
+      "priority": 3,
+      "status": "partial_person_scope_pass_subarchive_binding_open",
+      "condition": "retain Harry Nach as an independent-person replay while strengthening the HARRY CHILLAN subarchive binding or materializing another explicitly bound archive/person",
+      "why": "the person-level chain is portable; work/show membership of a contextual subarchive is a separate relation and must not block the reusable pipeline"
+    },
+    {
+      "id": "gap:incremental-world-loop",
+      "priority": 4,
+      "status": "partial_diff_edge_closed",
+      "condition": "connect Vigia candidate, bounded capture, version diff, triangulation, evidence return and selective recompute without a crawler or DB duplicate",
+      "why": "opportunities define live constraints and research priorities",
+      "closed_subedge": "versioned constraints -> semantic delta -> affected existing consumers",
+      "closed_subedges": [
+        "Vigia plan -> bounded capture receipt",
+        "receipt -> existing official opportunity validity compiler for declared URLs"
+      ],
+      "remaining": "wire generic evidence-return ingestion to the same recompute boundary and emit a causal recomputation receipt"
+    },
+    {
+      "id": "gap:organization-crosswalk",
+      "priority": 5,
+      "condition": "reconcile departments, organs, Copilot capabilities and owner-consumer paths without inventing a new registry",
+      "why": "execution needs routing, ownership and a consumer"
+    },
+    {
+      "id": "gap:operational-membership-replay",
+      "priority": 5,
+      "status": "bounded_capability_projection_pass_real_archive_gate_open",
+      "condition": "replay real Stage 2C assignments through propositions, shared memberships, negative memory and capability preconditions without source mutation",
+      "why": "the archive can be observed and grouped, but its provisional structure is not yet an independently reusable operational state",
+      "evidence": "src/flujo/knowledge/operational_memberships.py; tests/test_operational_memberships.py",
+      "remaining": [
+        "real shared-resource archive replay",
+        "consumer-specific provider/target binding",
+        "two-archive isolation at the operational layer"
+      ]
+    },
+    {
+      "id": "gap:learning-evidence",
+      "priority": 6,
+      "condition": "collect independent verified outcomes and frozen holdouts before any training promotion",
+      "why": "years of work provide natural supervision, but drafts and open outcomes are not labels"
+    },
+    {
+      "id": "gap:public-manifestation",
+      "priority": 7,
+      "condition": "resolve licenses, privacy and public manifestation witnesses",
+      "why": "an internal dossier is not a public portfolio"
+    }
+  ],
+  "success_definition": [
+    "A new archive can be observed and replayed without source mutation or identity loss.",
+    "Relationships and projects remain provisional until independently supported.",
+    "Practice evidence and opportunity evidence join only through explicit requirement bindings.",
+    "A single plan compiles dossier, portfolio, application and research outputs with full provenance and visible gaps.",
+    "Every relevant unknown becomes a bounded probe, a contradiction or an explained abstention.",
+    "Verified external outcomes can improve ranking and query selection under identity-separated holdout.",
+    "The controller selects and eventually executes only allowlisted finite actions with receipts and rollback.",
+    "No case name, manual review gate or bespoke ARICA rule is required for the reusable core."
+  ],
+  "director_transfer": {
+    "target_thread": "Responder saludo",
+    "target_thread_id": "01a03414-252c-7333-9492-cc2d43687040",
+    "authority": "continue as primary MAK director after reading the four master documents and current bootstrap packet",
+    "first_obligation": "restore the replay, verify it, then execute the causal comparison before opening another architectural floor"
+  }
+}

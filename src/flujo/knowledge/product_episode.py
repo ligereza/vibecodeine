@@ -219,7 +219,10 @@ def _signal_scopes(product_id: str) -> list[str]:
 def _validate_plan(plan: Mapping[str, Any]) -> dict[str, Any]:
     if plan.get("schema") != PLAN_SCHEMA:
         raise ProductEpisodeError("product_plan_schema_invalid")
-    for field in ("opportunity_id", "selected_programs", "claim_index", "asset_index", "targets", "control", "input_hashes"):
+    for field in (
+        "opportunity_id", "selected_programs", "claim_index", "asset_index",
+        "practice_evidence_refs", "targets", "control", "input_hashes",
+    ):
         if field not in plan:
             raise ProductEpisodeError(f"product_plan_{field}_missing")
     opportunity_id = _text(plan.get("opportunity_id"), "product_plan.opportunity_id")
@@ -252,7 +255,10 @@ def _validate_plan(plan: Mapping[str, Any]) -> dict[str, Any]:
         ):
             _refs(row.get(field, []), f"product_plan.program.{field}")
 
-    practice_refs: set[str] = set()
+    practice_refs = set(_refs(
+        plan.get("practice_evidence_refs"),
+        "product_plan.practice_evidence_refs",
+    ))
     assets = _list(plan.get("asset_index"), "product_plan.asset_index")
     asset_by_ref: dict[str, Mapping[str, Any]] = {}
     for index, raw in enumerate(assets):
@@ -261,8 +267,9 @@ def _validate_plan(plan: Mapping[str, Any]) -> dict[str, Any]:
         if artifact_ref in asset_by_ref:
             raise ProductEpisodeError("product_plan_artifact_ref_collision")
         asset_by_ref[artifact_ref] = row
-        practice_refs.add(artifact_ref)
-        practice_refs.update(_refs(row.get("evidence_refs", []), "product_plan.asset.evidence_refs"))
+        asset_evidence_refs = _refs(row.get("evidence_refs", []), "product_plan.asset.evidence_refs")
+        if not {artifact_ref, *asset_evidence_refs}.issubset(practice_refs):
+            raise ProductEpisodeError("product_plan_asset_evidence_ref_foreign")
         program_refs = _refs(row.get("program_ids", []), "product_plan.asset.program_ids")
         if not set(program_refs).issubset(program_by_id):
             raise ProductEpisodeError("product_plan_asset_program_ref_foreign")
@@ -292,6 +299,21 @@ def _validate_plan(plan: Mapping[str, Any]) -> dict[str, Any]:
         if not set(_refs(row.get("evidence_refs", []), "product_plan.program.evidence_refs")).issubset(practice_refs):
             raise ProductEpisodeError("product_plan_program_evidence_ref_foreign")
 
+    program_requirement_ids = {
+        requirement_id
+        for row in program_by_id.values()
+        for requirement_id in _refs(
+            row.get("requirement_ids", []), "product_plan.program.requirement_ids"
+        )
+    }
+    research_requirement_ids: set[str] = set()
+    for raw in _list(plan.get("research_jobs", []), "product_plan.research_jobs"):
+        row = _mapping(raw, "product_plan.research_job")
+        research_requirement_ids.update(_refs(
+            row.get("requirement_ids", []),
+            "product_plan.research_job.requirement_ids",
+        ))
+
     targets = _mapping(plan.get("targets"), "product_plan.targets")
     if set(targets) != set(PRODUCT_IDS):
         raise ProductEpisodeError("product_plan_target_keys_invalid")
@@ -313,13 +335,9 @@ def _validate_plan(plan: Mapping[str, Any]) -> dict[str, Any]:
         "claim_by_id": claim_by_id,
         "asset_by_ref": asset_by_ref,
         "practice_refs": practice_refs,
-        "requirement_ids": {
-            requirement_id
-            for row in program_by_id.values()
-            for requirement_id in _refs(
-                row.get("requirement_ids", []), "product_plan.program.requirement_ids"
-            )
-        },
+        "program_requirement_ids": program_requirement_ids,
+        "research_requirement_ids": research_requirement_ids,
+        "requirement_ids": program_requirement_ids | research_requirement_ids,
         "targets": targets,
         "decision_at": decision_at,
     }
@@ -426,7 +444,7 @@ def _validate_package(
             raise ProductEpisodeError("application_program_evidence_ref_foreign")
         if not set(_refs(
             row.get("requirement_ids", []), "application.program.requirement_ids"
-        )).issubset(requirement_ids):
+        )).issubset(context["program_requirement_ids"]):
             raise ProductEpisodeError("application_program_requirement_ref_foreign")
     for raw in jobs:
         row = _mapping(raw, "application_research_package.research_job")

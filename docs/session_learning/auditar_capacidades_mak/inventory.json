@@ -1,0 +1,141 @@
+{
+  "schema": "mak-capability-session-inventory-v1",
+  "session_scope": "auditoria acumulada de capacidades MAK; estado contrastado al 2026-08-25",
+  "epistemic_rule": "una declaracion de CAPACIDADES.md no prueba integracion; la autoridad es la implementacion, consumidor y validacion fisica",
+  "entries": [
+    {
+      "id": "archive_to_project_ir",
+      "capability": "observacion de archivo, memoria temporal, reconstruccion 2A-2D y Project IR",
+      "status": "integrated_and_tested",
+      "authority": "flujo source plus read-only archive roots; DB is optional persistence, not proof",
+      "consumers": ["practice_evidence_state", "project_gate", "curatoria", "portfolio", "research"],
+      "evidence": ["src/flujo/knowledge/archive_observer.py", "src/flujo/knowledge/archive_memory.py", "src/flujo/knowledge/archive_project_ir_adapter.py", "docs/MAK_CURRENT_STATE.md"],
+      "potential": "convertir archivos nuevos en unidades materiales revisables sin perder unknowns, relaciones, hashes ni particion ambiguous/unassigned",
+      "debt": ["los witness tecnicos C04-C06 de ARICA aun no estan proyectados como practice evidence canonica", "no confundir provisional unit con obra o autoría"],
+      "disposition": "preserve_and_reuse"
+    },
+    {
+      "id": "epistemic_opportunity_fit",
+      "capability": "constraints, practice state y opportunity fit con bindings explicitos",
+      "status": "integrated_and_tested",
+      "authority": "accepted Piso 1 contracts",
+      "consumers": ["artistic_program_hypotheses", "product_plan", "application_research_package", "autonomy_plan"],
+      "evidence": ["src/flujo/knowledge/opportunity_constraints.py", "src/flujo/knowledge/practice_evidence_state.py", "src/flujo/knowledge/opportunity_fit.py", "context/LAST_HANDOFF.md CURRENT"],
+      "potential": "unir oportunidad y archivo sin hacer que refs documentales externas prueben practica",
+      "debt": ["source validity no verificada bloquea fit/application", "unknown no es negativo ni similitud es evidencia"],
+      "disposition": "preserve_and_reuse"
+    },
+    {
+      "id": "possibility_field",
+      "capability": "generacion, falsacion independiente y ranking estrategico de programas provisionales",
+      "status": "integrated_and_tested",
+      "authority": "Piso 2 contracts and evaluator results mapping",
+      "consumers": ["research_frontier", "product_plan", "autonomy_plan"],
+      "evidence": ["src/flujo/knowledge/possibility_field.py", "tests/test_possibility_field.py", "context/LAST_HANDOFF.md CURRENT"],
+      "potential": "mantener practice_native y opportunity_conditioned separados, usando diversidad y conflictos de recursos",
+      "debt": ["rejected explicito no debe revivir como research-first", "scores son estrategicos y no probabilidades", "learning_features no autorizan training"],
+      "disposition": "preserve_and_reuse"
+    },
+    {
+      "id": "research_frontier_triangulation_return",
+      "capability": "gaps -> jobs no dispatchados -> triangulacion -> propuestas aditivas",
+      "status": "integrated_and_tested",
+      "authority": "Piso 3 contracts",
+      "consumers": ["product_plan", "application_research_package", "autonomy_plan"],
+      "evidence": ["src/flujo/knowledge/research_frontier_bridge.py", "src/flujo/knowledge/evidence_return.py", "tools/research_job_router.py", "context/LAST_HANDOFF.md CURRENT"],
+      "potential": "cerrar primero source validity y luego recomputar, conservando grupos independientes y promotion none",
+      "debt": ["investigacion externa no es evidencia de practica salvo scope practice y artifact_refs existentes", "capture y triangulation siguen siendo estados distintos"],
+      "disposition": "preserve_and_reuse"
+    },
+    {
+      "id": "product_compilers",
+      "capability": "plan comun -> dossier, application/research package y autonomia",
+      "status": "integrated_and_tested",
+      "authority": "Piso 4-5 contracts",
+      "consumers": ["portfolio dossier", "application research package", "episode candidate", "autonomy plan"],
+      "evidence": ["src/flujo/knowledge/product_plan.py", "src/flujo/knowledge/portfolio_dossier.py", "src/flujo/knowledge/application_research_package.py", "docs/MAK_CURRENT_STATE.md"],
+      "potential": "una misma matriz de claims/assets/requirements/privacy alimenta productos internos sin silos",
+      "debt": ["draftable no es publishable ni submission_ready", "application observed_local sigue blocked correctamente"],
+      "disposition": "preserve_and_reuse"
+    },
+    {
+      "id": "learning_and_deep_learning_gate",
+      "capability": "ledger de episodios, holdout/leakage gate y policy shadow",
+      "status": "wired_not_ready_for_training",
+      "authority": "learning_policy and deep_learning_gate; current state says no promotion",
+      "consumers": ["project_gate", "autonomy_plan", "learning evaluation"],
+      "evidence": ["src/flujo/knowledge/learning_policy.py", "tools/project_learning.py", "tools/deep_learning_gate.py", "docs/MAK_CURRENT_STATE.md"],
+      "potential": "aprender ranking, routing y seleccion de queries desde episodios verificados, no hechos o autoria",
+      "debt": ["no independent holdout in the measured example", "abstained/failed/needs_evidence no son labels negativas", "training_permitted permanece false"],
+      "disposition": "keep_shadow_only"
+    },
+    {
+      "id": "iskvw_curatorial_field",
+      "capability": "fichas -> campo, vinculos conceptuales, archivo ISKVW y piel verificable",
+      "status": "integrated_for_declared_projections",
+      "authority": "iskvw data contracts plus publishing workflow",
+      "consumers": ["gen_archivo_iskvw", "gen_vinculos_iskvw", "GET /api/archivo", "publishing workflow", "iskvw_piel_smoke"],
+      "evidence": ["tools/gen_archivo_iskvw.py", "tools/gen_vinculos_iskvw.py", "CAPACIDADES.md", "tests/test_contrato_archivo.py"],
+      "potential": "retornar conceptos y relaciones al archivo publico sin confundir palabra compartida con similitud semantica",
+      "debt": ["embeddings/t-SNE son proyeccion visual, no verdad curatorial", "research SVG debe mantenerse separado de corpus publico", "workflow remoto consume snapshot, no runtime LAN"],
+      "disposition": "preserve_with_explicit_views"
+    },
+    {
+      "id": "rd_triangular_pipeline",
+      "capability": "fichas RD -> triangular_fichas -> dashboards/presentaciones/propuestas",
+      "status": "integrated_in_rd_surface",
+      "authority": "RD files and measured consumers",
+      "consumers": ["gen_dashboard_productoras.py", "gen_presentacion_db.py", "gen_propuestas_rd.py", "RD DB projections"],
+      "evidence": ["tools/triangular_fichas.py", "tools/gen_dashboard_productoras.py", "tools/gen_presentacion_db.py", "CAPACIDADES.md"],
+      "potential": "reutilizar su disciplina de evidencia >=2, dudas visibles y catalogos actuales para Research/Curatoria",
+      "debt": ["RD y Portfolio son organismos soberanos", "no convertir el triage de productoras en evidencia de practica artistica", "DB local es proyeccion/migracion hasta fijar autoridad"],
+      "disposition": "reuse_pattern_not_schema"
+    },
+    {
+      "id": "research_capture_stack",
+      "capability": "research source capture, discovery, hashes, licencia y claims",
+      "status": "wired_with_runtime_variance",
+      "authority": "cultura/mak_research and local capture contracts",
+      "consumers": ["research_job_router", "execute_research_job", "triangulation", "research reports"],
+      "evidence": ["tools/research_source_capture.py", "tools/research_job_router.py", "cultura/mak_research/research_lib.py", "CAPACIDADES.md"],
+      "potential": "resolver source validity official del caso Fondart y volver con receipt triangulado",
+      "debt": ["backend availability and credentials vary", "no network/source validity means abstain", "capture candidate is not fact until triangulated"],
+      "disposition": "activate_one_bounded_job"
+    },
+    {
+      "id": "copilot_and_departments",
+      "capability": "coordination surfaces, prompt/context routing and department ownership",
+      "status": "partially_mapped_not_evidence_integrated",
+      "authority": "cultura/mak_plataforma, cultura/mak_codex, cultura/mak_research and current department map",
+      "consumers": ["hub 8900", "capataz/junta/guardia", "route_idea/context_pack", "Research, Curatoria, Portfolio, RD"],
+      "evidence": ["docs/MAK_CURRENT_STATE.md", "CAPACIDADES.md", "cultura/mak_plataforma/", "cultura/mak_codex/", "tools/context_pack.py", "tools/route_idea.py"],
+      "potential": "hacer que cada handoff cite producer, consumer, contract, evidence and stop condition",
+      "debt": ["Copilot no es una autoridad de claims", "hay topologias superpuestas de departamentos/organos/owners", "no crear otro registry"],
+      "disposition": "reconcile_consumers_without_new_framework"
+    },
+    {
+      "id": "review_historical_tools",
+      "capability": "herramientas REVISAR o con consumidor pendiente",
+      "status": "historical_or_unwired",
+      "authority": "CAPACIDADES.md rows require measured consumer",
+      "consumers": ["none proven for context_pack, token_budget, verify_all, tapiz_live_loop, tapiz_telemetry, render_archaeology_deliverables"],
+      "evidence": ["CAPACIDADES.md rows 391, 413, 425, 426, 428, 430"],
+      "potential": "recuperar sólo una herramienta si existe un vertical slice con input/output/test/owner",
+      "debt": ["sin consumidor no hay readiness", "live loop/telemetry pueden crear procesos o estado permanente", "archaeology deliverables puede duplicar inventarios"],
+      "disposition": "do_not_revive_without_consumer; otherwise_archive_as_historical"
+    }
+  ],
+  "global_connections": [
+    "archive Project IR -> practice evidence -> fit -> possibility -> frontier -> evidence return -> product plan -> dossier/application/autonomy",
+    "RD triangular_fichas -> RD dashboards/proposals; pattern reusable, authority not mergeable",
+    "ISKVW gen_vinculos/gen_campo -> public/private views; concept overlap is not semantic truth",
+    "research capture -> environmental opportunity/context evidence; practice return requires explicit practice scope",
+    "Copilot/departments -> routing and ownership; Project IR/provenance remains epistemic authority"
+  ],
+  "unresolved": [
+    "official current validity of Fondart source",
+    "canonical practice projection for ARICA C04-C06 witness receipts",
+    "consumer-level reconciliation among department registry, runtime organs and owner/consumer map",
+    "independent holdout sufficient for learning policy promotion"
+  ]
+}
