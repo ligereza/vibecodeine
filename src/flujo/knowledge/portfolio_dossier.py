@@ -35,6 +35,8 @@ LICENSE_ALLOWLIST = frozenset({
     "cc-by", "cc-by-sa", "cc-by-nc", "cc_by", "cc_by_sa", "cc_by_nc",
 })
 PRIVATE_VALUES = frozenset({"private", "restricted", "internal", "confidential", "blocked"})
+TECHNICAL_CONTEXT_SCHEMA = "mak-project-context-v1"
+TECHNICAL_CONTEXT_STATUSES = frozenset({"candidate", "observed"})
 
 
 class PortfolioDossierError(ValueError):
@@ -55,8 +57,19 @@ def stable_json(value: Any) -> str:
     )
 
 
+def _canonical(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return {
+            str(key): _canonical(child)
+            for key, child in sorted(value.items(), key=lambda item: str(item[0]))
+        }
+    if isinstance(value, list):
+        return sorted((_canonical(child) for child in value), key=stable_json)
+    return copy.deepcopy(value)
+
+
 def _hash(value: Any) -> str:
-    return "sha256:" + hashlib.sha256(stable_json(value).encode("utf-8")).hexdigest()
+    return "sha256:" + hashlib.sha256(stable_json(_canonical(value)).encode("utf-8")).hexdigest()
 
 
 def _text(value: Any) -> str:
@@ -792,11 +805,138 @@ def _dossier_without_hash(dossier: Mapping[str, Any]) -> dict[str, Any]:
     return result
 
 
+def _technical_context_projection(
+    technical_context: Mapping[str, Any] | None,
+    expected_identity: Mapping[str, Any] | None = None,
+) -> tuple[dict[str, Any] | None, list[str]]:
+    """Keep technical context as provenance without making cultural claims.
+
+    ``project_tool_observations_to_context`` already produces the shared
+    ``mak-project-context-v1`` contract.  The dossier only carries its
+    technical relations, never paths, tool payloads, project rows or a
+    relation promoted to authorship/work truth.  This makes a PSD-to-logo
+    observation useful to a curator while keeping it outside claims and
+    public assets.
+    """
+    if technical_context is None:
+        return None, []
+    if not isinstance(technical_context, Mapping):
+        return None, ["technical_context_not_object"]
+    context = _copy_json(technical_context)
+    from .project_context import validate_context
+
+    context_errors = validate_context(context)
+    if context_errors:
+        return None, [f"technical_context_{error}" for error in context_errors]
+    context_id = _text(context.get("context_id"))
+    if not context_id:
+        return None, ["technical_context_context_id_missing"]
+    provenance = context.get("provenance")
+    if expected_identity is not None:
+        if not isinstance(provenance, Mapping):
+            return None, ["technical_context_provenance_missing"]
+        identity_errors: list[str] = []
+        for key in ("archive_id", "snapshot_id"):
+            expected = _text(expected_identity.get(key))
+            observed = _text(provenance.get(key))
+            if expected and observed and expected != observed:
+                identity_errors.append(f"technical_context_identity_mismatch:{key}")
+            elif expected and not observed:
+                identity_errors.append(f"technical_context_identity_missing:{key}")
+        if identity_errors:
+            return None, sorted(identity_errors)
+    source_ids = {
+        _text(source.get("source_id"))
+        for source in context.get("sources", [])
+        if isinstance(source, Mapping)
+    }
+    rows: list[dict[str, Any]] = []
+    errors: list[str] = []
+    for index, relation in enumerate(context.get("relations", [])):
+        if not isinstance(relation, Mapping):
+            errors.append(f"technical_context_relation_{index}_not_object")
+            continue
+        predicate = _text(relation.get("predicate"))
+        if not predicate.startswith("technical_"):
+            continue
+        subject = _text(relation.get("subject"))
+        object_ref = _text(relation.get("object"))
+        status = _text(relation.get("status") or relation.get("requested_status")).casefold()
+        raw_sources = relation.get("source_ids")
+        if not subject or not object_ref:
+            errors.append(f"technical_context_relation_{index}_endpoint_missing")
+            continue
+        if status not in TECHNICAL_CONTEXT_STATUSES:
+            errors.append(f"technical_context_relation_{index}_status_not_candidate")
+            continue
+        if not isinstance(raw_sources, list) or any(
+            not isinstance(value, str) or not value.strip() for value in raw_sources
+        ):
+            errors.append(f"technical_context_relation_{index}_source_ids_invalid")
+            continue
+        evidence_refs = sorted(set(raw_sources))
+        if evidence_refs != raw_sources:
+            errors.append(f"technical_context_relation_{index}_source_ids_not_sorted_unique")
+        if any(value not in source_ids for value in evidence_refs):
+            errors.append(f"technical_context_relation_{index}_source_ref_unresolved")
+        metadata = relation.get("metadata", {})
+        if not isinstance(metadata, Mapping):
+            errors.append(f"technical_context_relation_{index}_metadata_invalid")
+            metadata = {}
+        if metadata.get("truth_promotion") is True:
+            errors.append(f"technical_context_relation_{index}_truth_promotion")
+        raw_signals = metadata.get("signals", [])
+        if not isinstance(raw_signals, list) or any(
+            not isinstance(value, str) or not value.strip() for value in raw_signals
+        ):
+            errors.append(f"technical_context_relation_{index}_signals_invalid")
+            raw_signals = []
+        signals = sorted(set(raw_signals))
+        semantic = {
+            "context_id": context_id,
+            "subject_ref": subject,
+            "predicate": predicate,
+            "object_ref": object_ref,
+            "status": status,
+            "evidence_refs": evidence_refs,
+            "signals": signals,
+        }
+        rows.append({
+            "evidence_id": "technical-evidence:" + hashlib.sha256(
+                stable_json(semantic).encode("utf-8")
+            ).hexdigest()[:32],
+            "subject_ref": subject,
+            "predicate": predicate,
+            "object_ref": object_ref,
+            "status": status,
+            "evidence_refs": evidence_refs,
+            "signals": signals,
+            "artistic_truth": False,
+            "asset_selection": False,
+        })
+    rows.sort(key=lambda row: row["evidence_id"])
+    if errors:
+        return None, sorted(set(errors))
+    return {
+        "context_id": context_id,
+        "context_hash": _hash(context),
+        "relations": rows,
+        "provenance_only": True,
+        "claim_promotion": False,
+        "asset_selection": False,
+    }, []
+
+
 def compile_portfolio_dossier(
     plan: Mapping[str, Any],
     practice_state: Mapping[str, Any],
+    technical_context: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Compile one deterministic internal dossier from accepted evidence state."""
+    """Compile one deterministic internal dossier from accepted evidence state.
+
+    The optional technical context is a provenance-only projection.  Omitting
+    it preserves the original dossier contract and output.
+    """
     plan_copy = _copy_json(plan)
     practice_copy = _copy_json(practice_state)
     errors = _validate_plan_shape(plan_copy) + _validate_practice_shape(practice_copy)
@@ -836,6 +976,10 @@ def compile_portfolio_dossier(
         practice_evidence_refs,
     )
     errors.extend(asset_errors)
+    technical_projection, technical_errors = _technical_context_projection(
+        technical_context, identity
+    )
+    errors.extend(technical_errors)
     if errors:
         unique_errors = sorted(set(errors))
         raise PortfolioDossierError("input_invalid:" + ",".join(unique_errors), unique_errors)
@@ -907,10 +1051,16 @@ def compile_portfolio_dossier(
         "facts_separated_from_curatorial_decision": True,
         "private_assets_excluded_from_public_manifest": True,
     }
+    input_hashes = {
+        "product_plan": _hash(plan_copy),
+    }
+    if technical_projection is not None:
+        input_hashes["technical_context"] = technical_projection["context_hash"]
     dossier: dict[str, Any] = {
         "schema": SCHEMA,
         "algorithm_version": ALGORITHM_VERSION,
         "opportunity_id": _text(plan_copy["opportunity_id"]),
+        "input_hashes": input_hashes,
         "practice_identity": identity,
         "selected_programs": programs,
         "claim_index": [
@@ -953,6 +1103,8 @@ def compile_portfolio_dossier(
         "valid": True,
         "errors": [],
     }
+    if technical_projection is not None:
+        dossier["technical_context"] = technical_projection
     dossier["dossier_hash"] = "dossier:" + _hash(_dossier_without_hash(dossier))
     validation_errors = validate_portfolio_dossier(dossier)
     if validation_errors:
@@ -1036,6 +1188,63 @@ def validate_portfolio_dossier(dossier: Any) -> list[str]:
         errors.append("dossier_public_manifest_ineligible_asset")
     if dossier.get("public_asset_manifest") != dossier.get("public_manifest"):
         errors.append("dossier_public_asset_manifest_mismatch")
+    technical_context = dossier.get("technical_context")
+    if technical_context is not None:
+        if not isinstance(technical_context, Mapping):
+            errors.append("dossier_technical_context_invalid")
+        else:
+            expected_fields = {
+                "context_id", "context_hash", "relations", "provenance_only",
+                "claim_promotion", "asset_selection",
+            }
+            if set(technical_context) != expected_fields:
+                errors.append("dossier_technical_context_field_set_invalid")
+            if not _text(technical_context.get("context_id")):
+                errors.append("dossier_technical_context_id_missing")
+            context_hash = technical_context.get("context_hash")
+            if not isinstance(context_hash, str) or not context_hash.startswith("sha256:"):
+                errors.append("dossier_technical_context_hash_invalid")
+            if technical_context.get("provenance_only") is not True:
+                errors.append("dossier_technical_context_not_provenance_only")
+            if technical_context.get("claim_promotion") is not False:
+                errors.append("dossier_technical_context_claim_promotion")
+            if technical_context.get("asset_selection") is not False:
+                errors.append("dossier_technical_context_asset_selection")
+            relation_ids: set[str] = set()
+            for row in technical_context.get("relations", []) if isinstance(technical_context.get("relations"), list) else []:
+                if not isinstance(row, Mapping):
+                    errors.append("dossier_technical_relation_invalid")
+                    continue
+                required = {
+                    "evidence_id", "subject_ref", "predicate", "object_ref", "status",
+                    "evidence_refs", "signals", "artistic_truth", "asset_selection",
+                }
+                if set(row) != required:
+                    errors.append("dossier_technical_relation_field_set_invalid")
+                    continue
+                evidence_id = _text(row.get("evidence_id"))
+                if not evidence_id or evidence_id in relation_ids:
+                    errors.append("dossier_technical_relation_id_invalid")
+                relation_ids.add(evidence_id)
+                if not _text(row.get("subject_ref")) or not _text(row.get("object_ref")):
+                    errors.append("dossier_technical_relation_endpoint_invalid")
+                if not _text(row.get("predicate")).startswith("technical_"):
+                    errors.append("dossier_technical_relation_predicate_invalid")
+                if row.get("status") not in TECHNICAL_CONTEXT_STATUSES:
+                    errors.append("dossier_technical_relation_status_invalid")
+                for field in ("evidence_refs", "signals"):
+                    refs, ref_error = _refs(row.get(field), f"dossier_technical_{field}")
+                    if ref_error:
+                        errors.append(ref_error)
+                if row.get("artistic_truth") is not False or row.get("asset_selection") is not False:
+                    errors.append("dossier_technical_relation_promotion")
+            if isinstance(technical_context.get("relations"), list):
+                if technical_context["relations"] != sorted(
+                    technical_context["relations"], key=lambda row: row.get("evidence_id", "")
+                ):
+                    errors.append("dossier_technical_relations_not_sorted")
+            if dossier.get("input_hashes", {}).get("technical_context") != context_hash:
+                errors.append("dossier_technical_context_hash_not_declared")
     expected_hash = dossier.get("dossier_hash")
     if not isinstance(expected_hash, str) or not expected_hash.startswith("dossier:sha256:"):
         errors.append("dossier_hash_missing")
@@ -1059,6 +1268,7 @@ assert_dossier = assert_portfolio_dossier
 
 __all__ = [
     "ALGORITHM_VERSION", "PLAN_SCHEMA", "PRACTICE_SCHEMA", "SCHEMA",
+    "TECHNICAL_CONTEXT_SCHEMA",
     "PortfolioDossierError", "assert_dossier", "assert_portfolio_dossier",
     "build_portfolio_dossier", "compile_dossier", "compile_portfolio_dossier",
     "stable_json", "validate_dossier", "validate_portfolio_dossier",

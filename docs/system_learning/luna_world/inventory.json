@@ -1,0 +1,401 @@
+{
+  "schema": "mak-system-learning-inventory-v1",
+  "document_id": "inventory:luna-world:2026-08-25",
+  "generated_for": "LUNA-WORLD",
+  "scope": {
+    "system": "MAK",
+    "boundary": "external-world sensing, opportunity evidence, bounded capture, research triangulation, evidence return, and plan-only feedback",
+    "included": [
+      "opportunity discovery",
+      "official-source capture",
+      "documentary constraint compilation",
+      "temporal validity control",
+      "opportunity-to-practice fit",
+      "research frontier planning",
+      "independent-source triangulation",
+      "additive evidence return",
+      "bounded autonomous action planning"
+    ],
+    "excluded": [
+      "live scraping performed by this documentation task",
+      "production database mutation",
+      "network dispatch",
+      "submission or publication",
+      "automatic truth promotion",
+      "automatic authorship or artistic-identity inference"
+    ],
+    "case_architecture_separation": "ARICA/Fondart is one real pilot and supervision signal; it is not the reusable architecture."
+  },
+  "authorities": [
+    {
+      "authority_id": "authority:physical-mak",
+      "name": "MAK physical state",
+      "rule": "Physical files and observed processes are authoritative; Git is transport only."
+    },
+    {
+      "authority_id": "authority:external-source",
+      "name": "Versioned external documentary evidence",
+      "rule": "An opportunity claim requires a captured source, content hash, version, locator, and temporal-validity state."
+    },
+    {
+      "authority_id": "authority:archive-practice",
+      "name": "Artist archive evidence",
+      "rule": "Practice, artifacts, relations, and authorship are supported only by archive-scoped evidence; opportunity documents cannot prove them."
+    },
+    {
+      "authority_id": "authority:operator-external-outcome",
+      "name": "Verified external outcome",
+      "rule": "Receipts and externally observed outcomes may inform routing and ranking, never factual truth or artistic identity by themselves."
+    }
+  ],
+  "consumers": [
+    {
+      "consumer_id": "consumer:vigia-ledger-review",
+      "name": "Shared opportunity review queue",
+      "accepts": "ranked discovery candidates, not verified eligibility"
+    },
+    {
+      "consumer_id": "consumer:opportunity-fit",
+      "name": "Opportunity fit evaluator",
+      "accepts": "constraints plus explicit requirement-to-practice-evidence bindings"
+    },
+    {
+      "consumer_id": "consumer:research",
+      "name": "Research capability",
+      "accepts": "non-dispatched bounded jobs with source policy and value-of-information metadata"
+    },
+    {
+      "consumer_id": "consumer:product-plan",
+      "name": "Shared product plan",
+      "accepts": "evidence-governed possibility and fit state for portfolio, application, and research products"
+    },
+    {
+      "consumer_id": "consumer:autonomy",
+      "name": "Bounded autonomy planner",
+      "accepts": "validated product, research, evidence-return, and optional shadow-learning state"
+    },
+    {
+      "consumer_id": "consumer:human-supervision",
+      "name": "Human supervision",
+      "accepts": "abstentions, contradictions, gaps, proposals, and external-action boundaries"
+    }
+  ],
+  "states": [
+    {
+      "state_id": "state:discovered-candidate",
+      "meaning": "A listing was detected and deduplicated; truth, currency, and eligibility remain unverified."
+    },
+    {
+      "state_id": "state:observed-local",
+      "meaning": "A local source snapshot exists but current official validity is not confirmed."
+    },
+    {
+      "state_id": "state:current-verified",
+      "meaning": "Current official validity is explicitly confirmed by provenance-bearing evidence."
+    },
+    {
+      "state_id": "state:stale-or-unknown",
+      "meaning": "Temporal validity is stale, unknown, or incomplete; downstream fit must abstain."
+    },
+    {
+      "state_id": "state:expired-or-ineligible",
+      "meaning": "The source gate fails; downstream fit cannot pass."
+    },
+    {
+      "state_id": "state:planned-not-dispatched",
+      "meaning": "A research job is specified but no network or external action has been authorized or executed."
+    },
+    {
+      "state_id": "state:supported-candidate",
+      "meaning": "Triangulation found support from the required independent source groups; promotion remains none."
+    },
+    {
+      "state_id": "state:contradicted-or-mixed",
+      "meaning": "Counterevidence is preserved and prevents silent closure."
+    },
+    {
+      "state_id": "state:candidate-pending-ingestion",
+      "meaning": "Returned evidence is additive and awaits explicit ingestion and deterministic recomputation."
+    },
+    {
+      "state_id": "state:abstain",
+      "meaning": "The system preserves an actionable uncertainty instead of manufacturing a positive or negative fact."
+    }
+  ],
+  "interfaces": [
+    {
+      "interface_id": "interface:listing-candidates",
+      "schema": "vigia listing rows",
+      "direction": "world_to_mak",
+      "required_properties": ["source id", "title", "URL", "timestamp", "stable item hash"]
+    },
+    {
+      "interface_id": "interface:capture-receipt",
+      "schema": "mak-source-capture-gate-v1",
+      "direction": "world_to_evidence_memory",
+      "required_properties": ["canonical URL", "backend", "capture status", "content hashes", "network-called flag"]
+    },
+    {
+      "interface_id": "interface:opportunity-document-package",
+      "schema": "mak-opportunity-document-package-v1",
+      "direction": "evidence_memory_to_compiler",
+      "required_properties": ["opportunity id", "source reference", "SHA-256", "version", "validity", "locators"]
+    },
+    {
+      "interface_id": "interface:opportunity-constraints",
+      "schema": "mak-opportunity-constraints-v1",
+      "direction": "compiler_to_fit_and_research",
+      "required_properties": ["hard gates", "eligibility", "dates", "budget", "required documents", "criteria", "contradictions", "unknowns"]
+    },
+    {
+      "interface_id": "interface:practice-evidence",
+      "schema": "mak-practice-evidence-state-v1",
+      "direction": "archive_memory_to_fit",
+      "required_properties": ["artifact references", "evidence references", "unknowns", "source snapshot identity"]
+    },
+    {
+      "interface_id": "interface:opportunity-fit",
+      "schema": "mak-opportunity-fit-v1",
+      "direction": "fit_to_possibility_and_research",
+      "required_properties": ["source gate", "hard-gate status", "requirement matrix", "allowed claims", "unsupported requirements", "research candidates"]
+    },
+    {
+      "interface_id": "interface:research-frontier",
+      "schema": "mak-research-frontier-jobs-v1",
+      "direction": "possibility_to_research",
+      "required_properties": ["job id", "requirement ids", "question", "source policy", "independent groups", "VOI", "dispatch=false"]
+    },
+    {
+      "interface_id": "interface:research-result-batch",
+      "schema": "mak-research-result-batch-v1",
+      "direction": "capture_to_triangulation",
+      "required_properties": ["job and requirement pair", "source groups", "URLs", "raw and text hashes", "license state", "claim evidence refs"]
+    },
+    {
+      "interface_id": "interface:research-triangulation",
+      "schema": "mak-research-triangulation-v1",
+      "direction": "triangulation_to_evidence_return",
+      "required_properties": ["pair reconciliation", "independent source groups", "support", "counterevidence", "gaps", "promotion=none"]
+    },
+    {
+      "interface_id": "interface:evidence-return",
+      "schema": "mak-evidence-return-v1",
+      "direction": "research_to_evidence_memory",
+      "required_properties": ["opportunity proposals", "practice proposals", "bindings", "contradictions", "unresolved", "fit recompute request"]
+    },
+    {
+      "interface_id": "interface:autonomy-plan",
+      "schema": "mak-autonomy-plan-v1",
+      "direction": "feedback_to_control",
+      "required_properties": ["bounded actions", "preconditions", "success observations", "failure observations", "max attempts", "dispatch=false"]
+    }
+  ],
+  "components": [
+    {
+      "component_id": "component:vigia",
+      "path": "cultura/mak_vigia/vigia.py",
+      "role": "Detect change in watched sources, deduplicate listings, isolate per-source failures, rank candidates, and enqueue review candidates.",
+      "inputs": ["interface:listing-candidates"],
+      "outputs": ["interface:listing-candidates"],
+      "authority_ids": ["authority:external-source"],
+      "consumer_ids": ["consumer:vigia-ledger-review", "consumer:human-supervision"],
+      "state_ids": ["state:discovered-candidate"],
+      "status": "implemented_observed_source",
+      "evidence_refs": ["evidence:vigia-source-inspection"],
+      "limits": ["priority is heuristic", "does not prove eligibility", "listing hash is not a documentary snapshot hash"]
+    },
+    {
+      "component_id": "component:source-capture-gate",
+      "path": "tools/research_source_capture.py",
+      "role": "Separate capture planning from one-URL recording and preserve whether a network call occurred.",
+      "inputs": ["interface:listing-candidates"],
+      "outputs": ["interface:capture-receipt"],
+      "authority_ids": ["authority:external-source"],
+      "consumer_ids": ["consumer:research", "consumer:human-supervision"],
+      "state_ids": ["state:planned-not-dispatched", "state:abstain"],
+      "status": "implemented_not_live_verified_in_this_task",
+      "evidence_refs": ["evidence:capture-source-inspection"],
+      "limits": ["default is plan-only", "license review precedes record", "backend availability is not source truth"]
+    },
+    {
+      "component_id": "component:opportunity-compiler",
+      "path": "src/flujo/knowledge/opportunity_constraints.py",
+      "role": "Compile a local, versioned documentary package into deterministic operational constraints without fetching, database writes, or fit claims.",
+      "inputs": ["interface:opportunity-document-package"],
+      "outputs": ["interface:opportunity-constraints"],
+      "authority_ids": ["authority:external-source"],
+      "consumer_ids": ["consumer:opportunity-fit", "consumer:research", "consumer:product-plan"],
+      "state_ids": ["state:observed-local", "state:current-verified", "state:stale-or-unknown", "state:expired-or-ineligible"],
+      "status": "accepted_contract",
+      "evidence_refs": ["evidence:opportunity-compiler-source", "evidence:current-packet"],
+      "limits": ["local observation is not current verification", "missing source hash fails closed", "locators are mandatory"]
+    },
+    {
+      "component_id": "component:fit-gate",
+      "path": "src/flujo/knowledge/opportunity_fit.py",
+      "role": "Join external requirements to internal practice evidence only through explicit requirement IDs and compute conservative fit state.",
+      "inputs": ["interface:opportunity-constraints", "interface:practice-evidence"],
+      "outputs": ["interface:opportunity-fit"],
+      "authority_ids": ["authority:external-source", "authority:archive-practice"],
+      "consumer_ids": ["consumer:research", "consumer:product-plan"],
+      "state_ids": ["state:abstain", "state:current-verified", "state:expired-or-ineligible"],
+      "status": "accepted_contract",
+      "evidence_refs": ["evidence:fit-source-inspection", "evidence:current-packet"],
+      "limits": ["external PDF evidence never proves practice fit", "unconfirmed source validity forces abstention"]
+    },
+    {
+      "component_id": "component:research-frontier",
+      "path": "src/flujo/knowledge/research_frontier_bridge.py",
+      "role": "Project explicit gaps and source-validity uncertainty into deterministic non-dispatched research jobs.",
+      "inputs": ["interface:opportunity-constraints", "interface:opportunity-fit"],
+      "outputs": ["interface:research-frontier"],
+      "authority_ids": ["authority:external-source", "authority:archive-practice"],
+      "consumer_ids": ["consumer:research", "consumer:autonomy"],
+      "state_ids": ["state:planned-not-dispatched", "state:abstain"],
+      "status": "accepted_contract",
+      "evidence_refs": ["evidence:frontier-source-inspection", "evidence:current-packet"],
+      "limits": ["does not dispatch", "generated questions are restricted to explicit source-validity refresh"]
+    },
+    {
+      "component_id": "component:research-triangulation",
+      "path": "src/flujo/knowledge/research_evidence_triangulation.py",
+      "role": "Reconcile frontier job-requirement pairs with provenance-bearing result batches and test source-group and domain independence.",
+      "inputs": ["interface:research-frontier", "interface:research-result-batch"],
+      "outputs": ["interface:research-triangulation"],
+      "authority_ids": ["authority:external-source"],
+      "consumer_ids": ["consumer:research", "consumer:human-supervision"],
+      "state_ids": ["state:supported-candidate", "state:contradicted-or-mixed", "state:abstain"],
+      "status": "accepted_contract",
+      "evidence_refs": ["evidence:triangulation-source-inspection", "evidence:current-packet"],
+      "limits": ["two URLs from one source group are not independent", "unexpected job-requirement pairs fail reconciliation", "promotion remains none"]
+    },
+    {
+      "component_id": "component:evidence-return",
+      "path": "src/flujo/knowledge/evidence_return.py",
+      "role": "Transform supported or contradicted research results into additive proposals, notices, and deterministic fit-recompute requests.",
+      "inputs": ["interface:opportunity-constraints", "interface:practice-evidence", "interface:opportunity-fit", "interface:research-frontier", "interface:research-triangulation"],
+      "outputs": ["interface:evidence-return"],
+      "authority_ids": ["authority:external-source", "authority:archive-practice"],
+      "consumer_ids": ["consumer:product-plan", "consumer:autonomy", "consumer:human-supervision"],
+      "state_ids": ["state:candidate-pending-ingestion", "state:contradicted-or-mixed", "state:abstain"],
+      "status": "accepted_contract",
+      "evidence_refs": ["evidence:evidence-return-source", "evidence:current-packet"],
+      "limits": ["no mutation or promotion", "practice proposals require existing artifact refs", "fit changes only after explicit ingestion and recomputation"]
+    },
+    {
+      "component_id": "component:autonomy-plan",
+      "path": "src/flujo/knowledge/autonomy_plan.py",
+      "role": "Select bounded plan-only observe, research, recompute, compile, wait, or abstain actions with explicit stop conditions.",
+      "inputs": ["interface:evidence-return", "interface:research-frontier"],
+      "outputs": ["interface:autonomy-plan"],
+      "authority_ids": ["authority:operator-external-outcome"],
+      "consumer_ids": ["consumer:autonomy", "consumer:human-supervision"],
+      "state_ids": ["state:planned-not-dispatched", "state:abstain"],
+      "status": "accepted_contract",
+      "evidence_refs": ["evidence:autonomy-source-inspection", "evidence:current-packet"],
+      "limits": ["dispatch, publication, submission, promotion, training, and database writes are disabled", "max attempts is one"]
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "evidence:vigia-source-inspection",
+      "source_ref": "source:vigia-py",
+      "observation": "Per-source exceptions are isolated; 304 is not failure; stable listing hashes suppress duplicates; ranking explicitly avoids eligibility or truth claims."
+    },
+    {
+      "evidence_id": "evidence:capture-source-inspection",
+      "source_ref": "source:research-source-capture",
+      "observation": "The default decision is plan; record=true performs one bounded capture and emits network_called plus a receipt."
+    },
+    {
+      "evidence_id": "evidence:opportunity-compiler-source",
+      "source_ref": "source:opportunity-constraints",
+      "observation": "Source SHA-256, locators, explicit validity, contradictions, unknowns, and deterministic reconciliation are enforced by the compiler."
+    },
+    {
+      "evidence_id": "evidence:fit-source-inspection",
+      "source_ref": "source:opportunity-fit",
+      "observation": "Source validity is a control gate; missing required evidence or incomplete scored criteria remains abstention rather than positive fit."
+    },
+    {
+      "evidence_id": "evidence:frontier-source-inspection",
+      "source_ref": "source:research-frontier",
+      "observation": "Research jobs preserve requirement ownership, source policy, independent-group count, VOI, and planned_not_dispatched status."
+    },
+    {
+      "evidence_id": "evidence:triangulation-source-inspection",
+      "source_ref": "source:research-triangulation",
+      "observation": "Captured sources require URLs, raw and text hashes, license state, and independent explicit source group plus URL domain; unmatched pairs are errors."
+    },
+    {
+      "evidence_id": "evidence:evidence-return-source",
+      "source_ref": "source:evidence-return",
+      "observation": "Only supported candidates with at least two groups and evidence refs can become pending opportunity proposals; contradictions and unresolved rows remain explicit."
+    },
+    {
+      "evidence_id": "evidence:autonomy-source-inspection",
+      "source_ref": "source:autonomy-plan",
+      "observation": "Every action is plan-only, bounded to one attempt, includes preconditions and success/failure observations, and keeps all consequential controls false."
+    },
+    {
+      "evidence_id": "evidence:current-packet",
+      "source_ref": "source:current-packet",
+      "observation": "The accepted Piso 1-5 chain passed 173 focused tests in its recorded checkpoint; the real ARICA/Fondart pilot remained research-first because source validity was observed_local and unconfirmed. This task did not rerun that gate."
+    }
+  ],
+  "gaps": [
+    {
+      "gap_id": "gap:official-validity-receipt",
+      "owner_component_ids": ["component:source-capture-gate", "component:research-triangulation"],
+      "status": "open",
+      "evidence_needed": "A current official-source capture tied to the Fondart source-validity requirement and triangulated receipt.",
+      "blocked_claims": ["opportunity is currently valid", "ARICA is eligible", "application is submission-ready"]
+    },
+    {
+      "gap_id": "gap:capture-runtime-currentness",
+      "owner_component_ids": ["component:source-capture-gate"],
+      "status": "not_verified_in_this_task",
+      "evidence_needed": "A bounded current backend run with receipt, hashes, license state, exit code, and no secret exposure.",
+      "blocked_claims": ["capture backend is currently operational"]
+    },
+    {
+      "gap_id": "gap:watcher-to-versioned-snapshot",
+      "owner_component_ids": ["component:vigia", "component:source-capture-gate", "component:opportunity-compiler"],
+      "status": "architectural_gap",
+      "evidence_needed": "A tested adapter from listing candidate to capture plan and versioned documentary package without bypassing license or validity gates.",
+      "blocked_claims": ["all watched opportunities automatically enter the canonical opportunity compiler"]
+    },
+    {
+      "gap_id": "gap:temporal-refresh-policy",
+      "owner_component_ids": ["component:opportunity-compiler", "component:research-frontier", "component:autonomy-plan"],
+      "status": "policy_not_yet_measured",
+      "evidence_needed": "Per-source refresh intervals and expiry semantics measured against official change behavior, deadlines, and capture cost.",
+      "blocked_claims": ["refresh timing is adequate for every opportunity family"]
+    },
+    {
+      "gap_id": "gap:arica-technical-witness-projection",
+      "owner_component_ids": ["component:evidence-return", "component:fit-gate"],
+      "status": "open_case_specific",
+      "evidence_needed": "Projection of existing C04-C06 technical witnesses into practice evidence with artifact refs and without web-evidence or authorship promotion.",
+      "blocked_claims": ["ARICA dossier has supported curatorial claim atoms", "ARICA media is publicable"]
+    },
+    {
+      "gap_id": "gap:closed-loop-outcome-diversity",
+      "owner_component_ids": ["component:autonomy-plan"],
+      "status": "insufficient_evidence",
+      "evidence_needed": "Verified outcomes across independent artist/archive identity groups before any policy promotion.",
+      "blocked_claims": ["MAK has learned a reusable opportunity-selection policy"]
+    }
+  ],
+  "provenance": {
+    "bootstrap_schema": "mak-agent-bootstrap-v1",
+    "bootstrap_context_hashes": {
+      "agents.md": "53afe6c85f431db10aee822f5a250af66968bb7c3ac9a27cbf38269b9386ce75",
+      "docs/MAK_CURRENT_STATE.md": "c98a7fb488b825ecfef0aff4d3770189d3167de469644aa03a90b03964b808e0",
+      "context/LAST_HANDOFF.md": "d66dda5e81f36f9d30e5908ed0ea974167fc738df8cd43b23f5063919dd3b54c"
+    },
+    "claims_promoted": 0,
+    "network_calls": 0,
+    "database_writes": 0
+  }
+}

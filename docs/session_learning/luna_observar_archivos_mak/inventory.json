@@ -1,0 +1,272 @@
+{
+  "schema": "mak-session-learning-inventory-v1",
+  "generated_on": "2026-08-25",
+  "agent": "LUNA",
+  "purpose": "Preservar el contexto acumulado sobre observacion fisica de archivos MAK y sus consumidores, separando arquitectura portable de casos locales.",
+  "scope": {
+    "authoring_root": "/home/mak/flujo",
+    "historical_root": "/home/mak/WIN",
+    "archive_inputs": "explicit roots supplied to the observer; read-only",
+    "write_policy": "only this session-learning directory is written by this record",
+    "excluded": [
+      "production databases",
+      "Hub runtime",
+      "archive roots",
+      "protected artwork and media",
+      "Git index and history",
+      "network and persistent services"
+    ]
+  },
+  "operational_state": {
+    "current_packet": "real ARICA/Fondart pilot completed",
+    "accepted_stages": ["archive_observation", "archive_memory", "stage_2a", "stage_2b", "stage_2c", "stage_2d", "epistemic_piso_1", "possibility_piso_2", "research_piso_3", "product_piso_4", "controlled_autonomy_piso_5"],
+    "portable_claim": "MAK puede observar un archivo fisico, materializar memoria append-only y producir proyecciones evidence-only sin convertir rutas, nombres o hashes en autoría, obra, proyecto, serie o publicabilidad.",
+    "real_pilot_claim": "El piloto ARICA/Fondart atraveso la cadena aceptada y produjo un dossier interno util con abstencion research-first; no produjo una postulacion lista ni una publicacion.",
+    "next_evidence_closure": [
+      "validar la vigencia oficial de Fondart mediante el camino bounded de research",
+      "proyectar los witnesses tecnicos C04-C06 de ARICA al vocabulario de practice evidence",
+      "recalcular desde fit sin promocion ni mutacion del archivo"
+    ]
+  },
+  "surfaces": [
+    {
+      "id": "archive_observer",
+      "path": "src/flujo/knowledge/archive_observer.py",
+      "contract": "mak-archive-observation-batch-v1",
+      "kind": "portable_source",
+      "role": "observacion fisica read-only y determinista",
+      "inputs": ["explicit root", "archive_id", "optional prior batch", "include", "exclude", "max_files", "follow_symlinks"],
+      "outputs": ["artifacts sorted by relative_path", "candidate observations", "semantic snapshot_id", "change_set"],
+      "physical_identity": "artifact_id, physical_id y artifact_ref derivan de archive_id + relative_path; no derivan del contenido.",
+      "content_identity": "sha256 y content_id describen bytes cuando existen; null es valido para directorios, symlinks, errores y especiales.",
+      "observed_capabilities": [
+        "normaliza rutas relativas POSIX",
+        "no sigue symlinks por defecto",
+        "conserva symlinks y fallos como artifacts",
+        "clasifica extension, family y media_type",
+        "emite candidatos de exact_duplicate, numbered_sequence, sidecar_manifest y failure",
+        "calcula snapshot semantico sin root absoluto, hora de pared ni mtime_ns",
+        "reproduce el snapshot con el mismo archive_id y contenido relativo bajo otra raiz absoluta",
+        "serializa y deserializa JSON con rechazo de claves duplicadas"
+      ],
+      "consumers": ["archive_memory", "Stage 2A projection", "read-only archive replay", "later evidence projections"],
+      "limits": [
+        "no infiere obra, proyecto, serie, autoría, transformacion o publicabilidad",
+        "include/exclude filtran superficie, no crean semantica",
+        "max_files puede producir observacion limit_reached y una vista parcial",
+        "errores de lectura/hash no abortan el batch completo cuando son representables"
+      ],
+      "failure_modes": ["invalid archive_id", "absolute or non-normalized relative path", "malformed prior", "duplicate refs", "symlink root rejected when not followed", "hash/read/stat error represented as error artifact"]
+    },
+    {
+      "id": "archive_memory",
+      "path": "src/flujo/knowledge/archive_memory.py",
+      "contract": "mak-archive-memory-v2",
+      "kind": "portable_consumer",
+      "role": "materializacion append-only y replay de snapshots",
+      "inputs": ["validated mak-archive-observation-batch-v1", "existing LearningStore or temporary SQLite"],
+      "outputs": ["archive namespace", "immutable snapshot state", "artifact state rows", "candidate observations", "replay_hash"],
+      "invariants": [
+        "artifact identity is physical and archive-scoped",
+        "content_sha256/content_id are nullable byte observations, never identity",
+        "same bytes at two paths remain two physical artifacts",
+        "snapshots and artifact states are append-only",
+        "change_set remains diagnostic and is not a transformation fact"
+      ],
+      "consumers": ["Stage 2A projection", "replay and evaluators", "Project IR adapter"],
+      "limits": ["does not rescan the source tree", "does not assert artistic relations", "database is an existing bounded storage surface, not a new archive ontology"]
+    },
+    {
+      "id": "ssd_reconstruction",
+      "path": "src/flujo/knowledge/project_reconstruction.py",
+      "contract": "mak-project-reconstruction-v1",
+      "kind": "portable_index_consumer",
+      "role": "reconstruccion provisional sobre un indice SSD ya existente",
+      "inputs": ["read-only SSD index", "bounded decisions/features/relations"],
+      "outputs": ["units", "decisions", "relations", "asset_assignment", "unknowns"],
+      "observed_boundary": "Un indice de SSD es una observacion de fuente; no equivale a una carpeta montada ni a una obra confirmada.",
+      "reusable_rules": ["inverse relation rules", "unit versus library/resource separation", "explicit unknowns", "asset assignment provenance"],
+      "non_portable_assumptions": ["project names or folder labels are not truth", "SSD index metadata is not a native source witness", "asset similarity is not authorship or series identity"]
+    },
+    {
+      "id": "reconstruction_adapter",
+      "path": "src/flujo/knowledge/reconstruction_adapter.py",
+      "contract": "mak-reconstruction-project-ir-v1 -> mak-project-ir-v1",
+      "kind": "portable_adapter",
+      "role": "puente bounded desde reconstruccion hacia Project IR",
+      "outputs": ["one reviewable Project IR record per accepted reconstruction unit"],
+      "invariants": ["source.kind=portable_ssd_index", "state=review_required", "physical_source_mount_unverified is explicit", "library dependencies and shared resources remain relations/assets, not projects", "inverse predicates are re-anchored when endpoint orientation changes"],
+      "limits": ["does not copy source files", "does not publish", "does not create application eligibility"]
+    },
+    {
+      "id": "project_ir",
+      "path": "src/flujo/knowledge/project_ir.py",
+      "contract": "mak-project-ir-v1",
+      "kind": "portable_shared_contract",
+      "role": "unidad comun para Curatoria, Portfolio, Research y Postulacion",
+      "fields_of_interest": ["project_id", "state", "source", "artifacts", "relations", "evidence", "unknowns", "provenance"],
+      "allowed_state_boundary": ["candidate", "unknown", "review_required", "historical", "quarantined"],
+      "truth_boundary": "active/verified requieren evidencia y no son estados que el observador deba fabricar.",
+      "consumer_policy": "cada consumidor recibe el mismo registro evidence-bearing y conserva su propio gate; no hay silos de portfolio o application paralelos"
+    },
+    {
+      "id": "practice_evidence_state",
+      "path": "src/flujo/knowledge/practice_evidence_state.py",
+      "contract": "mak-practice-evidence-state-v1",
+      "kind": "portable_projection",
+      "role": "enlace entre Project IR aceptado y lado interno del artista",
+      "outputs": ["tenant/archive/snapshot identity", "provisional units", "physical artifacts", "claims supported/candidate/unknown", "five evidence dimensions", "dependencies", "gaps", "provenance"],
+      "invariants": ["copies explicit evidence only", "keeps ambiguous/unassigned partition", "keeps duplicate physical refs even with equal content_id", "does not infer authorship, artistic meaning or publishability", "requirement_ids are copied only when explicitly declared", "input is not mutated"],
+      "limits": ["does not rescan SSD", "does not open database", "does not turn research evidence into practice evidence without an explicit practice-scoped link"]
+    },
+    {
+      "id": "opportunity_side",
+      "path": "src/flujo/knowledge/opportunity_constraints.py",
+      "contract": "mak-opportunity-constraints-v1",
+      "kind": "external_evidence_projection",
+      "role": "representa requisitos documentales externos sin confundirlos con evidencia de practica",
+      "observed_local_case": "Fondart Nacional Linea Investigacion 2027; 38-page PDF, 22 constraints, 8 hard gates, 8 required documents; source validity remained observed_local/unconfirmed.",
+      "invariants": ["observed_local/unknown/stale abstain", "expired/ineligible fail", "current_verified requires explicit confirmation", "requirement-to-practice links require explicit requirement_ids or supports"]
+    },
+    {
+      "id": "research_triangulation",
+      "path": "src/flujo/knowledge/research_evidence_triangulation.py",
+      "contract": "mak-research-triangulation-v1",
+      "kind": "portable_external_evidence_consumer",
+      "role": "normaliza fuentes y claims de Research sin certificar practica",
+      "invariants": ["source groups independent and hashed", "same domain/group does not count twice", "claims require evidence_refs and source_ids", "mixed conflict remains conflict", "promotion=none", "frontier membership is fail-closed", "training_permitted=false"],
+      "limits": ["URLs/hashes prove capture integrity, not claim truth by themselves", "a research result cannot become practice evidence without a future explicit scoped projection"]
+    },
+    {
+      "id": "portfolio_dossier",
+      "path": "src/flujo/knowledge/portfolio_dossier.py",
+      "contract": "mak-portfolio-dossier-v1",
+      "kind": "portable_product_projection",
+      "role": "compila un dossier interno desde un plan y practice state comunes",
+      "outputs": ["curatorial_sequence", "narrative_atoms", "asset_manifest", "requirement_coverage", "gaps", "alternate_sequences", "control"],
+      "invariants": ["rank orders selected programs but does not upgrade facts", "documented_fact only follows supported claim", "candidate/unknown remain visible", "physical asset refs stay distinct", "private/raw paths and unlicensed content never enter public manifest", "unit evidence refs may be candidate/observation refs and remain non-public provenance", "publication/export/promotion false or none"],
+      "limits": ["draft_only or blocked is not publication/submission readiness", "research-first with ready=false may remain an internal omission, not a fabricated unit"]
+    },
+    {
+      "id": "product_learning",
+      "path": "src/flujo/knowledge/product_learning.py",
+      "contract": "mak-product-learning-evaluation-v1",
+      "kind": "shadow_learning_evaluator",
+      "role": "aprende solo de outcomes externos verificados y bindings integros",
+      "allowed_signals": ["ranking", "attention", "voi_calibration", "query_selection"],
+      "forbidden_signals": ["truth", "authorship", "identity", "claim_status", "artistic_worth"],
+      "invariants": ["open/unknown/abstain are excluded, not negative", "split by stable identity_group, never snapshot", "independent holdout required", "training_permitted=false", "no policy activation, model training, DB or mutation"]
+    }
+  ],
+  "pipeline": [
+    {
+      "stage": "physical_observation",
+      "from": "explicit filesystem root",
+      "to": "mak-archive-observation-batch-v1",
+      "semantic_action": "enumerate entries and byte facts",
+      "must_preserve": ["relative_path", "kind", "availability", "size", "mtime_ns when available", "sha256 when readable", "error evidence", "symlink evidence"],
+      "must_not_infer": ["work", "project", "series", "author", "output", "transformation"]
+    },
+    {
+      "stage": "append_only_memory",
+      "from": "observation batch",
+      "to": "mak-archive-memory-v2",
+      "semantic_action": "persist immutable snapshot and replayable physical state",
+      "must_preserve": ["archive namespace", "duplicate physical refs", "nullable content identity", "candidate observations", "change_set diagnostics"]
+    },
+    {
+      "stage": "reconstruction",
+      "from": "physical/index evidence",
+      "to": "candidate relations, provisional units, mak-project-ir-v1",
+      "semantic_action": "bounded grouping with explicit alternatives and unknowns",
+      "must_preserve": ["members", "dependencies", "ambiguous/unassigned refs", "relation evidence", "source kind", "review_required/unknown state"]
+    },
+    {
+      "stage": "epistemic_projection",
+      "from": "Project IR + opportunity constraints",
+      "to": "practice evidence and opportunity fit",
+      "semantic_action": "join only explicit requirement-to-evidence bindings",
+      "must_preserve": ["external source validity", "internal evidence provenance", "gaps", "abstention"]
+    },
+    {
+      "stage": "product_compilation",
+      "from": "common product plan",
+      "to": "portfolio, application and research drafts",
+      "semantic_action": "derive multiple outputs without splitting authority",
+      "must_preserve": ["program rank", "claim and asset links", "license/privacy", "candidate/unknown atoms", "publication/export/submission gates"]
+    },
+    {
+      "stage": "shadow_learning",
+      "from": "verified external outcomes",
+      "to": "counterfactual evaluation",
+      "semantic_action": "estimate bounded routing/ranking signals",
+      "must_preserve": ["identity group split", "holdout", "uncertainty", "training disabled", "no truth or authorship labels"]
+    }
+  ],
+  "case_studies": {
+    "ARICA": {
+      "classification": "local evidence case, not architecture",
+      "observed": ["bounded real archive pilot", "417 artifacts", "11916 observations", "one provisional unit", "99 assigned artifacts", "318 explicit unassigned refs", "valid Project IR and practice state", "14 source-file hashes unchanged"],
+      "Fondart_relation": "local opportunity corpus is observed_local/unconfirmed; fit abstained and application remained blocked",
+      "technical_witnesses": ["C04 MP4/AEP evidence with output role unknown", "C05 RAYU export witness supported for one export event", "C06 one isolated EXPORTS_TO edge with three adversarial cases returning unknown"],
+      "non_claims": ["no automatic authorship", "no final delivery", "no public readiness", "no publication", "no truth promotion"],
+      "source_refs": ["docs/MAK_CURRENT_STATE.md", "context/LAST_HANDOFF.md", "experiments/cycles/C05/real_export_witness.json", "experiments/cycles/C05/RESULTS.md", "experiments/cycles/C06/RESULTS.md"]
+    },
+    "MYRA": {
+      "classification": "portability stress case for a different archive",
+      "observed": ["read-only run with temporary SQLite", "1517 artifacts", "23 observations", "512 bounded candidates", "10 units", "1325 assigned", "0 ambiguous", "192 unassigned", "balanced=true"],
+      "interpretation_limit": "unassigned is an evidence partition, not artistic non-membership; candidate count and bounds affect coverage",
+      "source_refs": ["context/LAST_HANDOFF.md", "docs/MAK_CURRENT_STATE.md"]
+    },
+    "RAYU": {
+      "classification": "ARICA subcase used for a real export witness",
+      "observed": ["RAYU.blend source hash", "rayu_export.py", "marker", "rayu_resources.glb", "seven witness checks passed"],
+      "supported_claim": "one export event for the concrete GLB only",
+      "not_supported": ["final deliverable", "artistic intent", "authorship", "absence of later modification"],
+      "source_refs": ["experiments/cycles/C05/real_export_witness.json", "experiments/cycles/C05/RESULTS.md", "experiments/cycles/C06/RESULTS.md"]
+    },
+    "ISKVW": {
+      "classification": "portable reconciliation case across archive JSON and media tree",
+      "observed": ["numeric IDs extracted from medio.src, extra.fuente_original.ruta and fallback fields", "contact sheets kept as derivatives", "cross-surface collisions reported rather than merged", "no-ID records remain pending"],
+      "invariants": ["archive and media are distinct surfaces", "filename/ID join is a bounded reconciliation key, not work identity", "read-only unless report output is explicitly supplied"],
+      "source_refs": ["tools/reconcile_iskvw_media.py", "docs/MAK_CURRENT_STATE.md", "MEMORY.md local reconciliation note"]
+    }
+  },
+  "evidence_classes": [
+    {"id": "observed_physical", "meaning": "entrada, ruta relativa, bytes, metadata o error observado por el observer", "can_support": ["existence at scan", "physical state", "candidate relation input"], "cannot_support": ["authorship", "artistic meaning", "public eligibility"]},
+    {"id": "candidate_relation", "meaning": "relacion propuesta con score, evidence_for, evidence_against y missing_evidence", "can_support": ["next probe", "provisional grouping"], "cannot_support": ["promoted truth"]},
+    {"id": "native_witness", "meaning": "cadena explicita de fuente, accion, marcador, output y hashes", "can_support": ["bounded transformation event"], "cannot_support": ["final delivery or authorship without separate evidence"]},
+    {"id": "external_research", "meaning": "captura de fuente, hashes, licencia, source_group y claim extraction", "can_support": ["opportunity knowledge", "research evidence proposal"], "cannot_support": ["practice authorship or identity"]},
+    {"id": "verified_outcome", "meaning": "resultado externo independiente con receipt/binding y hash valid", "can_support": ["shadow learning example"], "cannot_support": ["truth, quality or authorship labels"]}
+  ],
+  "risks": [
+    {"id": "duplicate_collapse", "description": "fusionar por content_id destruye la distincion entre dos posiciones fisicas con bytes iguales", "control": "artifact_id/physical_id/artifact_ref remain path-and-archive scoped; content_id is nullable metadata"},
+    {"id": "path_semantics", "description": "tratar carpeta, nombre, extension o secuencia como obra/proyecto", "control": "candidate observations and evidence gaps; no semantic promotion"},
+    {"id": "output_overclaim", "description": "confundir export observado con entrega final o publicacion", "control": "typed witness relation and claim_limit"},
+    {"id": "source_validity_false_green", "description": "usar una copia local de convocatoria como current_verified", "control": "observed_local/unconfirmed abstention until official refresh"},
+    {"id": "evidence_namespace_collision", "description": "tratar observation/candidate refs como assets publicables", "control": "preserve as non-public provenance; only physical artifact refs enter asset manifest"},
+    {"id": "learning_leakage", "description": "usar snapshot, identidad o estado propio como label o dividir episodios del mismo grupo", "control": "stable identity_group split, holdout, training_permitted=false"},
+    {"id": "legacy_runtime_coupling", "description": "hacer depender el archivo portable de Hub, DB, red o routers antiguos", "control": "pure contracts first; optional consumers fail closed or bypass explicitly"}
+  ],
+  "source_refs": [
+    {"id": "agents", "path": "agents.md", "sha256": "53afe6c85f431db10aee822f5a250af66968bb7c3ac9a27cbf38269b9386ce75", "consulted_for": "authority, write safety, bootstrap and verification rules"},
+    {"id": "current_state", "path": "docs/MAK_CURRENT_STATE.md", "sha256": "c98a7fb488b825ecfef0aff4d3770189d3167de469644aa03a90b03964b808e0", "consulted_for": "durable architecture, accepted experiments and boundaries"},
+    {"id": "current_packet", "path": "context/LAST_HANDOFF.md", "sha256": "d66dda5e81f36f9d30e5908ed0ea974167fc738df8cd43b23f5063919dd3b54c", "consulted_for": "operative CURRENT packet and ARICA/Fondart pilot facts"},
+    {"id": "system_directive", "path": "docs/MAK_SYSTEM_DIRECTIVE.md", "sha256": "bc6ef19c6f3d2ab7693b1f28032e1fa996a7888b1f0a01cf207cf8a4e70aa06e", "consulted_for": "mission and epistemic boundaries"},
+    {"id": "archive_observer", "path": "src/flujo/knowledge/archive_observer.py", "sha256": "4a397fbb78ccbd783590ed1074cc7a91640e733123fc328853ca03debe8e9cbf", "consulted_for": "physical observation contract and deterministic IDs"},
+    {"id": "archive_memory", "path": "src/flujo/knowledge/archive_memory.py", "sha256": "35b4683ad522365965d32e82fee6c6c18be1dfc75ccc05b5ad59880ef8b2c54a", "consulted_for": "append-only storage and replay boundary"},
+    {"id": "project_reconstruction", "path": "src/flujo/knowledge/project_reconstruction.py", "sha256": "bb5d9977966db7280155ad41d0149e059a045ec3ec5060e1b2d1c2a8bf28386d", "consulted_for": "SSD reconstruction, candidate relations and separation of units/resources"},
+    {"id": "reconstruction_adapter", "path": "src/flujo/knowledge/reconstruction_adapter.py", "sha256": "d53aa72405c273f606973c167c3a5018ea504c5c56ad03da682d6e0cfa9cd8d9", "consulted_for": "Project IR bridge and inverse relations"},
+    {"id": "project_ir", "path": "src/flujo/knowledge/project_ir.py", "sha256": "9178033ae4e013763c4fd50508de9cb900fb98fa82c20161739b6b0bee4a06af", "consulted_for": "shared Project IR fields and states"},
+    {"id": "practice_state", "path": "src/flujo/knowledge/practice_evidence_state.py", "sha256": "095c796b42a9e46234f52ba81ba6375d2df703c80da4d75dea14b9c16450450b", "consulted_for": "evidence-only internal projection"},
+    {"id": "portfolio_dossier", "path": "src/flujo/knowledge/portfolio_dossier.py", "sha256": "b91702445edc347107226b9f2d9b087162ff26f1aa9e27d34e9199a42898e2cb", "consulted_for": "common product plan, asset/provenance and publication gates"},
+    {"id": "research_triangulation", "path": "src/flujo/knowledge/research_evidence_triangulation.py", "sha256": "d31f32ef9e2d9be6e574eb4b298e3510673bbee2b119c590ec173436c9a4a695", "consulted_for": "independent source groups and fail-closed research claims"},
+    {"id": "product_learning", "path": "src/flujo/knowledge/product_learning.py", "sha256": "94663fc1141d565298bc1764ab279314ed34084b65bd22d308365c1dd46d1b64", "consulted_for": "shadow learning, allowed signals and leakage controls"},
+    {"id": "opportunity_constraints", "path": "src/flujo/knowledge/opportunity_constraints.py", "sha256": "c5c0d2a6fd49b9170eda0916d39f28a5cc8b449358321e24e217caa7ea27072e", "consulted_for": "external opportunity validity and hard-gate separation"},
+    {"id": "c05_witness", "path": "experiments/cycles/C05/real_export_witness.json", "sha256": "a695704657e40529c68029179e7861fa4c367cf12f0b34cecc1781bb290b09ba", "consulted_for": "RAYU export witness evidence and claim limit"},
+    {"id": "c05_results", "path": "experiments/cycles/C05/RESULTS.md", "sha256": "8e4dacfacba183ffbe918f4569a89dcdf1d5a9be33920a6370dd8dbd82970058", "consulted_for": "real witness gate and source unchanged result"},
+    {"id": "c06_results", "path": "experiments/cycles/C06/RESULTS.md", "sha256": "32e915e1833815bf70aa8eae4e3803f1910338d49e5309e5d3fbad0d17d8c9a1", "consulted_for": "isolated EXPORTS_TO bridge and adversarial behavior"},
+    {"id": "iskvw_reconciliation", "path": "tools/reconcile_iskvw_media.py", "sha256": "c89e16c7b1dde7320ebc7a214f8b1bd3848836bc8829c8ebe7350aa49f95c2ef", "consulted_for": "archive/media ID reconciliation and derivative handling"},
+    {"id": "fondart_corpus", "path": "cultura/mak_research/fondart_corpus.py", "sha256": "bb254fc47d68ede815faf721b32b5d35535d01130222c99e2d886bef98c63869", "consulted_for": "source-preserving local Fondart research corpus boundaries"}
+  ]
+}

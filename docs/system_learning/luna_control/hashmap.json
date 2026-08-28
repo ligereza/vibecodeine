@@ -1,0 +1,114 @@
+{
+  "schema": "mak-system-learning-hashmap-v1",
+  "nodes": {
+    "node.archive": {"kind": "authority", "inventory_ref": "authority.archive", "label": "physical archive evidence"},
+    "node.observer": {"kind": "control_role", "inventory_ref": "cap.observe_archive", "label": "read-only observer and temporal memory"},
+    "node.curatoria": {"kind": "organ", "inventory_ref": "organ.curatoria", "label": "reconstruction and evidence-scoped interpretation"},
+    "node.copilot": {"kind": "proposer", "inventory_ref": "cap.propose_copilot", "label": "curatorial and ordering candidate generator"},
+    "node.triangular_queue": {"kind": "proposer", "inventory_ref": "cap.propose_triangular_questions", "label": "bounded question compiler"},
+    "node.research": {"kind": "organ", "inventory_ref": "organ.research", "label": "capture and independent triangulation"},
+    "node.refuter": {"kind": "control_role", "inventory_ref": "cap.refute_and_triangulate", "label": "independent evaluator and contradiction gate"},
+    "node.project_ir": {"kind": "state", "inventory_ref": "output.project_ir", "label": "provisional project evidence state"},
+    "node.opportunity": {"kind": "authority", "inventory_ref": "authority.opportunity", "label": "external opportunity constraints"},
+    "node.practice": {"kind": "authority", "inventory_ref": "authority.practice", "label": "artifact-scoped practice evidence"},
+    "node.possibility": {"kind": "state", "inventory_ref": "output.possibility_field", "label": "evaluated provisional artistic programs"},
+    "node.product_compiler": {"kind": "compiler", "inventory_ref": "cap.compile_products", "label": "one common product plan"},
+    "node.dossier": {"kind": "product", "inventory_ref": "output.portfolio_dossier", "label": "internal curatorial dossier"},
+    "node.application": {"kind": "product", "inventory_ref": "output.application_research_package", "label": "application and research package"},
+    "node.learning": {"kind": "feedback", "inventory_ref": "output.learning_evaluation", "label": "bounded shadow learning"},
+    "node.autonomy": {"kind": "controller", "inventory_ref": "cap.plan_autonomy", "label": "finite plan-only action selector"},
+    "node.conductor": {"kind": "actuator", "inventory_ref": "cap.dispatch_validated", "label": "claimed and validated job dispatcher"},
+    "node.external_boundary": {"kind": "gate", "inventory_ref": "authority.external_consequence", "label": "publication submission delivery mutation boundary"}
+  },
+  "links": {
+    "link.archive_observer": {"from": "node.archive", "to": "node.observer", "relation": "observed_read_only", "guard": "source_hashes_unchanged"},
+    "link.observer_project_ir": {"from": "node.observer", "to": "node.project_ir", "relation": "compiles_via_relations_units_and_independent_evaluation", "guard": "balanced_partition_and_no_truth_promotion"},
+    "link.project_ir_practice": {"from": "node.project_ir", "to": "node.practice", "relation": "projects_to_evidence_only_state", "guard": "artifact_refs_and_missing_evidence_preserved"},
+    "link.rd_triangular": {"from": "node.curatoria", "to": "node.triangular_queue", "relation": "proposes_verifiable_questions", "guard": "date_plus_event_identifier_and_no_dispatch"},
+    "link.triangular_research": {"from": "node.triangular_queue", "to": "node.research", "relation": "planned_question_input", "guard": "dispatch_is_separate"},
+    "link.copilot_refuter": {"from": "node.copilot", "to": "node.refuter", "relation": "submits_candidates_for_evidence_review", "guard": "promotion_none"},
+    "link.research_refuter": {"from": "node.research", "to": "node.refuter", "relation": "supplies_bounded_claims_and_sources", "guard": "explicit_refs_and_independent_source_groups"},
+    "link.refuter_opportunity": {"from": "node.refuter", "to": "node.opportunity", "relation": "returns_additive_environmental_evidence_proposal", "guard": "pending_ingestion_and_membership_verified"},
+    "link.refuter_practice_blocked": {"from": "node.refuter", "to": "node.practice", "relation": "cannot_promote_generic_research_to_practice", "guard": "future_practice_scoped_contract_must_name_existing_artifact_refs"},
+    "link.opportunity_possibility": {"from": "node.opportunity", "to": "node.possibility", "relation": "constrains_generation_and_fit", "guard": "only_current_verified_plus_confirmation_can_pass_source_gate"},
+    "link.practice_possibility": {"from": "node.practice", "to": "node.possibility", "relation": "bounds_programs_by_documented_practice", "guard": "unsupported_claims_remain_gaps"},
+    "link.possibility_product": {"from": "node.possibility", "to": "node.product_compiler", "relation": "selected_ranked_or_research_first_programs", "guard": "rejected_candidates_cannot_be_revived"},
+    "link.practice_product": {"from": "node.practice", "to": "node.product_compiler", "relation": "supplies_claim_and_asset_indexes", "guard": "privacy_license_and_program_links_preserved"},
+    "link.product_dossier": {"from": "node.product_compiler", "to": "node.dossier", "relation": "derives", "guard": "draftable_is_not_published"},
+    "link.product_application": {"from": "node.product_compiler", "to": "node.application", "relation": "derives", "guard": "draftable_is_not_submitted"},
+    "link.products_learning": {"from": "node.product_compiler", "to": "node.learning", "relation": "projects_episode_candidates_and_external_outcomes", "guard": "outcome_open_is_not_negative_and_identity_groups_are_stable"},
+    "link.learning_autonomy": {"from": "node.learning", "to": "node.autonomy", "relation": "adjusts_attention_and_ranking_only", "guard": "training_false_and_no_truth_identity_or_authorship_learning"},
+    "link.products_autonomy": {"from": "node.product_compiler", "to": "node.autonomy", "relation": "supplies_current_state", "guard": "finite_actions_max_attempts_one_and_no_loop"},
+    "link.autonomy_conductor_blocked": {"from": "node.autonomy", "to": "node.conductor", "relation": "plan_only_projection_not_live_dispatch", "guard": "dispatch_false"},
+    "link.conductor_external": {"from": "node.conductor", "to": "node.external_boundary", "relation": "may_request_external_consequence", "guard": "claimed_job_validated_result_and_explicit_gate"}
+  },
+  "invariants": {
+    "invariant.physical_authority": {"statement": "Physical sources decide what exists; Git and documentation do not.", "node_refs": ["node.archive"]},
+    "invariant.no_candidate_truth": {"statement": "Candidates, inferred relations, provisional units, hypotheses, and extracted claims never self-promote to facts.", "node_refs": ["node.copilot", "node.project_ir", "node.refuter"]},
+    "invariant.authority_separation": {"statement": "Opportunity evidence and practice evidence remain separate authorities joined only by explicit requirement-to-evidence bindings.", "node_refs": ["node.opportunity", "node.practice"]},
+    "invariant.abstention_is_control": {"statement": "Abstention is a safe, informative state that can schedule bounded observation or research; it is neither success nor generic failure.", "node_refs": ["node.autonomy", "node.refuter"]},
+    "invariant.rejection_monotonicity": {"statement": "An independent rejection cannot be revived by a later abstaining gate.", "node_refs": ["node.refuter", "node.possibility"]},
+    "invariant.common_product_state": {"statement": "Portfolio, application, and research outputs derive from one common plan and preserve shared claim, asset, requirement, privacy, license, and uncertainty controls.", "node_refs": ["node.product_compiler", "node.dossier", "node.application"]},
+    "invariant.no_external_side_effect_from_plan": {"statement": "Autonomy outputs are plan-only: database write, dispatch, publication, submission, promotion, and training remain disabled.", "node_refs": ["node.autonomy", "node.external_boundary"]},
+    "invariant.no_self_training_truth": {"statement": "The system may learn routing, ranking, and attention from verified external outcomes, never factual truth, authorship, artistic identity, or negative labels from open or abstained episodes.", "node_refs": ["node.learning"]},
+    "invariant.explicit_validation_completion": {"statement": "A conductor job completes only after a claimed transition, result persistence, and validated output; external stages add an explicit gate.", "node_refs": ["node.conductor", "node.external_boundary"]},
+    "invariant.no_topology_fusion": {"statement": "Department, organ, runtime-coherence, and owner-consumer projections may cross-reference one another but do not become a new registry by documentation fiat.", "node_refs": ["node.curatoria", "node.research", "node.conductor"]}
+  },
+  "control_loops": {
+    "loop.evidence_closure": {
+      "sequence": ["node.opportunity", "node.research", "node.refuter", "node.opportunity", "node.possibility", "node.product_compiler", "node.autonomy"],
+      "feedback_signal": "fewer_explicit_gaps_or_a_better_justified_abstention",
+      "stop_conditions": ["no_hash_change", "budget_exhausted", "requirement_closed", "max_attempts_one"],
+      "external_effect": false
+    },
+    "loop.archive_reconstruction": {
+      "sequence": ["node.archive", "node.observer", "node.project_ir", "node.practice", "node.refuter"],
+      "feedback_signal": "balanced_partition_and_independent_evaluator_result",
+      "stop_conditions": ["source_mutation_detected", "contract_invalid", "partition_unbalanced"],
+      "external_effect": false
+    },
+    "loop.curatorial_proposal_refutation": {
+      "sequence": ["node.copilot", "node.refuter", "node.product_compiler"],
+      "feedback_signal": "supported_contradicted_or_unresolved_evidence",
+      "stop_conditions": ["missing_evidence", "low_confidence_abstention", "rejection"],
+      "external_effect": false
+    },
+    "loop.shadow_learning": {
+      "sequence": ["node.product_compiler", "node.learning", "node.autonomy"],
+      "feedback_signal": "verified_external_receipt_for_stable_identity_group",
+      "stop_conditions": ["outcome_open", "insufficient_identity_groups", "independent_holdout_missing"],
+      "allowed_updates": ["attention", "ranking", "routing_candidate"],
+      "forbidden_updates": ["truth", "authorship", "artistic_identity", "automatic_policy_promotion"]
+    }
+  },
+  "failure_modes": {
+    "failure.false_green_contract_shape": {"symptom": "A fixture field or consumer assumption does not match the real producer contract.", "containment": "fail_closed_and_correct_the_boundary", "link_refs": ["link.research_refuter", "link.products_autonomy"]},
+    "failure.source_validity_inference": {"symptom": "A local or stale opportunity document is treated as current.", "containment": "abstain_until_current_verified_plus_confirmation", "link_refs": ["link.opportunity_possibility"]},
+    "failure.evidence_namespace_collision": {"symptom": "External documentary evidence is counted as internal practice evidence or public media.", "containment": "separate_namespaces_and_require_explicit_artifact_refs", "link_refs": ["link.refuter_practice_blocked", "link.practice_product"]},
+    "failure.candidate_self_promotion": {"symptom": "Copilot, OCR, relation, program, or research candidates become facts without an independent gate.", "containment": "promotion_none_and_candidate_state", "link_refs": ["link.copilot_refuter", "link.rd_triangular", "link.research_refuter"]},
+    "failure.product_silo_divergence": {"symptom": "Portfolio and application compile independent claims or assets.", "containment": "derive_both_from_one_common_product_plan", "link_refs": ["link.product_dossier", "link.product_application"]},
+    "failure.plan_becomes_dispatch": {"symptom": "A ranked autonomy action is executed as though it carried authority.", "containment": "dispatch_false_and_no_live_wiring", "link_refs": ["link.autonomy_conductor_blocked"]},
+    "failure.draft_becomes_external_fact": {"symptom": "Draftable is interpreted as published, submitted, delivered, or accepted.", "containment": "explicit_external_consequence_gate_and_receipt", "link_refs": ["link.product_dossier", "link.product_application", "link.conductor_external"]},
+    "failure.self_confirming_learning": {"symptom": "The system trains on its own draft, abstention, or open outcome as truth or failure.", "containment": "verified_external_outcomes_stable_identity_groups_and_training_false", "link_refs": ["link.products_learning", "link.learning_autonomy"]},
+    "failure.topology_overwrite": {"symptom": "One projection is declared canonical over departments, organs, runtime mirrors, and owners without migration evidence.", "containment": "preserve_projection_kind_and_record_crosswalk_gap", "link_refs": []}
+  },
+  "source_refs": {
+    "source.agents": {"path": "agents.md", "sha256": "53afe6c85f431db10aee822f5a250af66968bb7c3ac9a27cbf38269b9386ce75", "consulted_scope": "whole_file"},
+    "source.current_state": {"path": "docs/MAK_CURRENT_STATE.md", "sha256": "c98a7fb488b825ecfef0aff4d3770189d3167de469644aa03a90b03964b808e0", "consulted_scope": "whole_file"},
+    "source.current_packet": {"path": "context/LAST_HANDOFF.md", "sha256": "d66dda5e81f36f9d30e5908ed0ea974167fc738df8cd43b23f5063919dd3b54c", "consulted_scope": "Agent_bootstrap_CURRENT_packet_only"},
+    "source.departments": {"path": "src/flujo/departments.py", "sha256": "6a099044ade6133bd3407d27c005069865dcebed5e6ad38524567a00064721b8", "consulted_scope": "registry_and_catalog"},
+    "source.copilot": {"path": "cultura/mak_plataforma/copilot.py", "sha256": "b02abcc27363c3e04595963709369dc5c3a19177722074857fb0fcdad04816e2", "consulted_scope": "schemas_candidate_outputs_evaluation_and_promotion_controls"},
+    "source.triangular": {"path": "cultura/mak_curatoria/triangular.py", "sha256": "032c267dd273d7718efa7eec2e6ecd2570522e351f1e94dd214a930636e7976a", "consulted_scope": "whole_file"},
+    "source.research_triangulation": {"path": "src/flujo/knowledge/research_evidence_triangulation.py", "sha256": "d31f32ef9e2d9be6e574eb4b298e3510673bbee2b119c590ec173436c9a4a695", "consulted_scope": "schemas_normalization_independence_status_and_promotion_controls"},
+    "source.research_frontier": {"path": "src/flujo/knowledge/research_frontier_bridge.py", "sha256": "8e588740ae6997b5436c9c445b8e6b27c2e5da832c506d99cfa21bff115f0422", "consulted_scope": "source_hash_and_current_packet_evidence"},
+    "source.evidence_return": {"path": "src/flujo/knowledge/evidence_return.py", "sha256": "1ce2cc54107889924dbe322d36748cd514ebef60521d5effe6b3d7beb6343fa0", "consulted_scope": "source_hash_and_current_packet_evidence"},
+    "source.product_plan": {"path": "src/flujo/knowledge/product_plan.py", "sha256": "86a76491408a384e2346c126d8b8d45604176908e3f0c4ecf8b718f7779690b2", "consulted_scope": "common_plan_inputs_outputs_validation_and_control_fields"},
+    "source.product_episode": {"path": "src/flujo/knowledge/product_episode.py", "sha256": "fe2b4f49ed0336cfe50620c5a7621702caf29ff29d623db21d0627ff3f7a7ff9", "consulted_scope": "source_hash_and_current_packet_evidence"},
+    "source.product_learning": {"path": "src/flujo/knowledge/product_learning.py", "sha256": "94663fc1141d565298bc1764ab279314ed34084b65bd22d308365c1dd46d1b64", "consulted_scope": "source_hash_and_current_packet_evidence"},
+    "source.autonomy_plan": {"path": "src/flujo/knowledge/autonomy_plan.py", "sha256": "c734e06f83fad979fac7108757d93973c413a346c65e72b3a94edddead9980b8", "consulted_scope": "allowed_actions_priority_stop_conditions_and_control_fields"},
+    "source.conductor": {"path": "cultura/mak_conductor/conductor.py", "sha256": "1c103330ddf5ee3e5e04684dd2817b9a84a0dba66b333249a2dc80b6e6c9b3c8", "consulted_scope": "claim_gate_validation_completion_and_failure_transitions"},
+    "source.coherence": {"path": "cultura/mak_plataforma/coherence.py", "sha256": "a6aa035b3e3fd556f58be1984be1fcc20b03d6d5f906aa6b89c01ea628dc485e", "consulted_scope": "runtime_repo_organ_pairs_and_drift_semantics"},
+    "source.hub": {"path": "cultura/mak_plataforma/hub.py", "sha256": "e4f70f1476b13d36a19cfbdc6901b3708915939821c1db2350a6112128ba9388", "consulted_scope": "organism_health_projection"},
+    "source.research_interface": {"path": "cultura/mak_research/interfaz.py", "sha256": "ad7aa992730bf0a3b11c51544b332e79e310431431eaea14f4b4dd34a91ae7a0", "consulted_scope": "six_visible_organs_projection"}
+  }
+}

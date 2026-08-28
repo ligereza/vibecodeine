@@ -280,10 +280,15 @@ def _rank_index(field: Mapping[str, Any]) -> tuple[dict[str, int], set[str]]:
     return ranks, rejected
 
 
-def _frontier_sources(field: Mapping[str, Any], action_index: Mapping[str, Mapping[str, Any]]) -> list[dict[str, Any]]:
+def _frontier_sources(
+    field: Mapping[str, Any],
+    action_index: Mapping[str, Mapping[str, Any]],
+    opportunity_id: str,
+) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     ranks, rejected = _rank_index(field)
     by_candidate: dict[str, Mapping[str, Any]] = {}
+    opportunity_candidate = f"opportunity-scope:{opportunity_id}"
     for name in ("candidates_ranked", "abstained"):
         for row in field[name]:
             candidate_id = row.get("candidate_id")
@@ -325,9 +330,9 @@ def _frontier_sources(field: Mapping[str, Any], action_index: Mapping[str, Mappi
             else:
                 add(candidate_id, None, kind, requirement_id, f"frontier:{index}")
         elif kind == "refresh_source_validity":
-            add(candidate_id, None, kind, requirement_id, f"frontier:{index}")
+            add(opportunity_candidate, None, kind, requirement_id, f"frontier:{index}")
         elif kind == "risk_flag" and "source" in str(row.get("risk_flag", "")).casefold():
-            add(candidate_id, None, "refresh_source_validity", requirement_id, f"frontier:{index}")
+            add(opportunity_candidate, None, "refresh_source_validity", requirement_id, f"frontier:{index}")
 
     for candidate_id, row in sorted(by_candidate.items()):
         if candidate_id in rejected:
@@ -335,7 +340,20 @@ def _frontier_sources(field: Mapping[str, Any], action_index: Mapping[str, Mappi
         for action_id in _refs(row.get("research_action_ids", []), f"candidate.{candidate_id}.research_action_ids"):
             add(candidate_id, action_id, "research_action", None, f"candidate:{candidate_id}")
         if row.get("source_gate_status") == "abstain":
-            add(candidate_id, None, "refresh_source_validity", None, f"candidate:{candidate_id}")
+            add(opportunity_candidate, None, "refresh_source_validity", None, f"candidate:{candidate_id}")
+
+    referenced_actions = {row["action_id"] for row in rows if row["action_id"]}
+    for action_id, action in sorted(action_index.items()):
+        if action_id in referenced_actions:
+            continue
+        requirement_id = action.get("requirement_id")
+        add(
+            opportunity_candidate,
+            action_id,
+            "research_action",
+            requirement_id if isinstance(requirement_id, str) else None,
+            f"fit:unbound-action:{action_id}",
+        )
     return rows
 
 
@@ -556,7 +574,9 @@ def compile_research_frontier(
     possibility_errors = canonical_possibility.get("provenance", {}).get("errors", [])
     fit_errors = canonical_fit["validation"].get("errors", [])
     input_valid = canonical_fit["validation"].get("valid") is True and not fit_errors and not possibility_errors
-    sources = _frontier_sources(canonical_possibility, action_index) if input_valid else []
+    sources = _frontier_sources(
+        canonical_possibility, action_index, opportunity["opportunity_id"]
+    ) if input_valid else []
     grouped: dict[tuple[str, str, str, str], dict[str, Any]] = {}
     fit_source_gate = canonical_fit.get("source_gate_status", "abstain")
     fit_hard_gate = canonical_fit.get("hard_gate_status", "abstain")

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 from pathlib import Path
 from typing import Any, Mapping
@@ -12,6 +13,24 @@ PLAN_SCHEMA = "mak-product-plan-v1"
 OPPORTUNITY_SCHEMA = "mak-opportunity-constraints-v1"
 PACKAGE_SCHEMA = "mak-application-research-package-v1"
 _STATUSES = {"supported", "missing", "contradicted", "unresolved"}
+
+
+def _stable_hash(value: Mapping[str, Any]) -> str:
+    def canonical(node: Any) -> Any:
+        if isinstance(node, Mapping):
+            return {
+                str(key): canonical(child)
+                for key, child in sorted(node.items(), key=lambda item: str(item[0]))
+            }
+        if isinstance(node, list):
+            return sorted((canonical(child) for child in node), key=lambda item: json.dumps(item, ensure_ascii=False, sort_keys=True, separators=(",", ":")))
+        return copy.deepcopy(node)
+
+    encoded = json.dumps(
+        canonical(value), ensure_ascii=False, sort_keys=True, separators=(",", ":"),
+        allow_nan=False,
+    ).encode("utf-8")
+    return "sha256:" + hashlib.sha256(encoded).hexdigest()
 
 
 def _text(value: Any) -> str | None:
@@ -235,7 +254,7 @@ def compile_application_research_package(plan: Mapping[str, Any], opportunity: M
     app_status = "draftable" if not reasons else "blocked_with_reasons"
     research_status = _text(research_target.get("status")) or ("not_required" if not research_jobs else "draftable")
     if research_status == "not_required": research_jobs = []
-    return {"schema": PACKAGE_SCHEMA, "application_draft": {"status": app_status, "blocked_with_reasons": sorted(set(reasons)), "program_ids": program_ids, "opportunity_id": opportunity_id, "programs": program_rows, "requirements": requirements, "sections": sorted(all_atoms, key=lambda row: (row["section"], row["atom_id"])), "submission_ready": False, "submission": False}, "research_brief": {"status": research_status, "jobs": research_jobs, "rejected_jobs": sorted(rejected_jobs, key=lambda row: json.dumps(row, sort_keys=True)), "gaps": [{"requirement_id": row["requirement_id"], "status": row["status"], "closure_criteria": next((job["closure_criteria"] for job in research_jobs if job["requirement_id"] == row["requirement_id"]), [])} for row in missing_required], "dispatch": False}, "controls": {"submission": False, "dispatch": False, "promotion": "none", "training_permitted": False, "user_review_required": False}, "provenance": {"source_schemas": [PLAN_SCHEMA, OPPORTUNITY_SCHEMA], "source_gate_status": source_status, "hard_gate_status": "pass" if all(row["hard_gate_status"] == "pass" for row in program_rows) else "abstain", "deterministic": True, "errors": sorted(set(errors))}}
+    return {"schema": PACKAGE_SCHEMA, "input_hashes": {"product_plan": _stable_hash(plan), "opportunity_constraints": _stable_hash(opportunity)}, "application_draft": {"status": app_status, "blocked_with_reasons": sorted(set(reasons)), "program_ids": program_ids, "opportunity_id": opportunity_id, "programs": program_rows, "requirements": requirements, "sections": sorted(all_atoms, key=lambda row: (row["section"], row["atom_id"])), "submission_ready": False, "submission": False}, "research_brief": {"status": research_status, "jobs": research_jobs, "rejected_jobs": sorted(rejected_jobs, key=lambda row: json.dumps(row, sort_keys=True)), "gaps": [{"requirement_id": row["requirement_id"], "status": row["status"], "closure_criteria": next((job["closure_criteria"] for job in research_jobs if job["requirement_id"] == row["requirement_id"]), [])} for row in missing_required], "dispatch": False}, "controls": {"submission": False, "dispatch": False, "promotion": "none", "training_permitted": False, "user_review_required": False}, "provenance": {"source_schemas": [PLAN_SCHEMA, OPPORTUNITY_SCHEMA], "source_gate_status": source_status, "hard_gate_status": "pass" if all(row["hard_gate_status"] == "pass" for row in program_rows) else "abstain", "deterministic": True, "errors": sorted(set(errors))}}
 
 
 def _empty(errors: list[str]) -> dict[str, Any]:

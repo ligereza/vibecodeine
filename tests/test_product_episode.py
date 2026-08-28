@@ -77,7 +77,7 @@ def test_observed_local_preserves_research_and_gate_observation() -> None:
     assert episode["outcome"]["eligible"] is False
     assert episode["observation"]["product_gates"]["application_draft"] == "blocked_with_reasons"
     assert episode["observation"]["product_gates"]["research_brief"] == "draftable"
-    assert episode["observation"]["counts"]["research_jobs"] == 2
+    assert episode["observation"]["counts"]["research_jobs"] == 1
     assert episode["observation"]["truth_promotions"] == 0
 
 

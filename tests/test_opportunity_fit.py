@@ -169,6 +169,20 @@ def test_artifact_ref_alone_is_not_support():
     assert result["matrix"][0]["status"] == "missing"
 
 
+def test_one_receipt_may_support_multiple_claims_without_identity_collision():
+    shared = "receipt:shared"
+    rows = [
+        {**claim(shared, requirement_ids=["c1"]), "claim_id": "claim:first"},
+        {**claim(shared, requirement_ids=["c1"]), "claim_id": "claim:second"},
+    ]
+    result = evaluate_opportunity_fit(
+        opportunity([constraint("c1", "criterio")], criteria=criteria(("criterio", 1))),
+        practice_state(rows),
+    )
+    assert result["validation"] == {"valid": True, "errors": []}
+    assert result["matrix"][0]["status"] == "supported"
+
+
 def test_candidates_are_sorted_by_explainable_voi():
     constraints = [
         constraint("low", "baja", research={"resolution_probability": 0.5, "utility_delta": 1, "cost": 2, "time": 2}),

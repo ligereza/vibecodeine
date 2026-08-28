@@ -1,0 +1,78 @@
+{
+  "schema": "mak-capability-system-hashmap-v1",
+  "generated_at": "2026-08-25",
+  "ids": {
+    "organs": [
+      {"id": "organ_hub", "name": "Hub MAK", "path": "cultura/mak_plataforma/hub.py", "consumer": "127.0.0.1:8900 and internal API", "status": "runtime_verified_in_current_state"},
+      {"id": "organ_research", "name": "Research", "path": "cultura/mak_research/", "consumer": "research jobs, capture, claims", "status": "wired"},
+      {"id": "organ_curatoria", "name": "Curatoria", "path": "curatoria/ and cultura/mak_curatoria/", "consumer": "classification, provenance, triangulation, dossier", "status": "wired"},
+      {"id": "organ_portfolio", "name": "Portfolio/ISKVW", "path": "iskvw/ and tools/portfolio/", "consumer": "archive, public/private products", "status": "wired_with_gates"},
+      {"id": "organ_rd", "name": "RD", "path": "data/rd.db and docs/rd/", "consumer": "triangular fichas and RD products", "status": "sovereign_projection"},
+      {"id": "organ_codex", "name": "Copilot/Codex coordination", "path": "cultura/mak_codex/ and tools/context_pack.py", "consumer": "bounded routing/context, not claim authority", "status": "partially_mapped"}
+    ],
+    "capabilities": [
+      {"id": "cap_archive", "producer": "archive_observer + archive_memory + 2A-2D adapters", "consumer": "Project IR/practice state", "evidence_state": "tested"},
+      {"id": "cap_fit", "producer": "opportunity_constraints + practice_evidence_state + opportunity_fit", "consumer": "program hypotheses and products", "evidence_state": "tested"},
+      {"id": "cap_possibility", "producer": "artistic candidates/evaluator/possibility_field", "consumer": "frontier and product plan", "evidence_state": "tested"},
+      {"id": "cap_research", "producer": "research_job_router + source capture + frontier + triangulation", "consumer": "evidence_return/product/autonomy", "evidence_state": "tested_with_abstention"},
+      {"id": "cap_products", "producer": "product_plan + dossier + application_research_package", "consumer": "internal dossier/application/research", "evidence_state": "tested"},
+      {"id": "cap_learning", "producer": "episode_runner + learning_policy + deep_learning_gate", "consumer": "shadow ranking/routing only", "evidence_state": "wired_not_promoted"},
+      {"id": "cap_iskvw", "producer": "gen_archivo_iskvw + gen_vinculos_iskvw + gen_campo_iskvw", "consumer": "archivo.json, API archivo, ISKVW piel", "evidence_state": "tested_for_declared_views"},
+      {"id": "cap_rd_triangular", "producer": "triangular_fichas", "consumer": "RD dashboards/presentations/proposals", "evidence_state": "tested_rd_surface"}
+    ],
+    "dependencies": [
+      {"id": "dep_project_ir", "from": "cap_archive", "to": "cap_fit", "contract": "mak-project-ir-v1 / mak-practice-evidence-state-v1", "failure_mode": "missing or provisional evidence causes abstention"},
+      {"id": "dep_explicit_binding", "from": "cap_fit", "to": "cap_possibility", "contract": "requirement_ids/supports", "failure_mode": "external document refs cannot support applicant fit"},
+      {"id": "dep_source_gate", "from": "cap_research", "to": "cap_products", "contract": "source validity and triangulation", "failure_mode": "observed_local/stale/unknown blocks application"},
+      {"id": "dep_common_plan", "from": "cap_products", "to": "cap_learning", "contract": "mak-product-plan-v1 and episode candidate", "failure_mode": "draft is not outcome or training label"},
+      {"id": "dep_independent_holdout", "from": "cap_learning", "to": "policy promotion", "contract": "deep_learning_gate", "failure_mode": "no independent holdout => abstain"}
+    ],
+    "flows": [
+      {"id": "flow_archive_memory", "sequence": ["archive_observation", "archive_memory", "reconstruction_2a_2d", "project_ir", "practice_state"], "write_policy": "source read-only; DB optional and outside this learning write-set"},
+      {"id": "flow_opportunity", "sequence": ["constraints", "practice_state", "fit", "program_candidates", "evaluation", "possibility"], "write_policy": "pure JSON contracts"},
+      {"id": "flow_research", "sequence": ["possibility", "frontier", "triangulation", "evidence_return"], "write_policy": "dispatch=false; promotion=none"},
+      {"id": "flow_products", "sequence": ["product_plan", "dossier", "application_research", "episode", "autonomy"], "write_policy": "publication=false; submission=false; database_write=false"},
+      {"id": "flow_rd", "sequence": ["fichas", "triangular_fichas", "dashboard/presentation/proposals"], "write_policy": "RD sovereignty; evidence threshold and human PR gates"},
+      {"id": "flow_iskvw", "sequence": ["fichas/concepts", "gen_vinculos/gen_campo", "gen_archivo", "API/piel/publish snapshot"], "write_policy": "public clean view separate from research essays"}
+    ]
+  },
+  "invariants": [
+    "Unknown and abstain are operational states, never negative labels or facts.",
+    "External opportunity evidence and internal practice evidence have separate authorities.",
+    "Similarity, shared concept and embedding proximity do not equal evidence.",
+    "A rejected evaluator result cannot be revived as research-first by gates.",
+    "Research results become practice evidence only with explicit practice scope and existing artifact refs.",
+    "Draftable, ready, published and submitted are distinct states.",
+    "DB/index/search/vector projections are not authority unless their producer and consumer are explicit.",
+    "Every promoted relation needs provenance, evidence refs, status and a falsifiable next probe.",
+    "Learning may adjust ranking/tie-break only after valid holdout; it cannot authorize facts, publication or submission."
+  ],
+  "failure_modes": [
+    {"id": "fm_stale_capability_doc", "symptom": "CAPACIDADES row says VIVO but no current consumer", "control": "filesystem, implementation, consumer and focused test"},
+    {"id": "fm_external_internal_collision", "symptom": "same string joins opportunity PDF ref to practice artifact", "control": "namespace separation and explicit requirement_ids"},
+    {"id": "fm_false_green_fixture", "symptom": "fixture shape differs from physical producer", "control": "cross-smoke real payloads and accepted validators"},
+    {"id": "fm_runtime_claim", "symptom": "wired provider treated as currently available", "control": "foreground probe and timestamped status"},
+    {"id": "fm_registry_duplication", "symptom": "new registry/framework duplicates organs/departments", "control": "consumer crosswalk only"},
+    {"id": "fm_learning_leakage", "symptom": "same project/episode enters train and holdout or drafts become labels", "control": "project-group split and deep_learning_gate"}
+  ],
+  "source_refs": [
+    {"path": "agents.md", "sha256": "53afe6c85f431db10aee822f5a250af66968bb7c3ac9a27cbf38269b9386ce75"},
+    {"path": "docs/MAK_CURRENT_STATE.md", "sha256": "c98a7fb488b825ecfef0aff4d3770189d3167de469644aa03a90b03964b808e0"},
+    {"path": "CAPACIDADES.md", "sha256": "ff04f1b84db07b2ea2c2c7feda9beff466368b1e0354c542e8a5e740bb33f879"},
+    {"path": "src/flujo/knowledge/archive_observer.py", "sha256": "4a397fbb78ccbd783590ed1074cc7a91640e733123fc328853ca03debe8e9cbf"},
+    {"path": "src/flujo/knowledge/practice_evidence_state.py", "sha256": "095c796b42a9e46234f52ba81ba6375d2df703c80da4d75dea14b9c16450450b"},
+    {"path": "src/flujo/knowledge/possibility_field.py", "sha256": "f01e331ceb95abef302373c6a7f05b7ba26e1fb2c7e7eb45bafa01744b3697c1"},
+    {"path": "src/flujo/knowledge/evidence_return.py", "sha256": "1ce2cc54107889924dbe322d36748cd514ebef60521d5effe6b3d7beb6343fa0"},
+    {"path": "src/flujo/knowledge/product_plan.py", "sha256": "86a76491408a384e2346c126d8b8d45604176908e3f0c4ecf8b718f7779690b2"},
+    {"path": "src/flujo/knowledge/learning_policy.py", "sha256": "146da485041f6d5d0af79bfe4119c5ec846bb4daaf26922d0a0ff64fb7c6d189"},
+    {"path": "tools/research_job_router.py", "sha256": "86aa46db80e72d33a1443162ff1d4faecd61f657274ff1587409be12e0b82c7c"},
+    {"path": "tools/triangular_fichas.py", "sha256": "778315b6a42f874a5f7cc03a06b2ec89f19ca11d6c17656af8a1f3fa28da090d"},
+    {"path": "tools/gen_archivo_iskvw.py", "sha256": "329d755a4f651b8579ec48f8952ca11ac0c6e9637fae32b857b2c452c0e291f3"},
+    {"path": "tools/gen_vinculos_iskvw.py", "sha256": "73935cd9a0b84242156297adeacb93ecf8ecd1f68c37530411d1c676ac907b76"},
+    {"path": "tools/deep_learning_gate.py", "sha256": "d4c69ebf483739a695abcc09ce8d63393d0712c1ccecbc22edd369c440c13be0"},
+    {"path": "experiments/cycles/C04/real_evidence.json", "sha256": "0bcff6cbaa55a98ee4361621239035e1fc37a51d2cd76bcbb3c3a066a953bf6e"},
+    {"path": "experiments/cycles/C05/real_export_witness.json", "sha256": "a695704657e40529c68029179e7861fa4c367cf12f0b34cecc1781bb290b09ba"},
+    {"path": "experiments/cycles/C06/real_export_graph.json", "sha256": "37bc6d1348f5235f35f810e3a004071ba1eee844bf16321a31f9430569157c5f"}
+  ],
+  "current_packet_sha256": "4d341f178351aea9b99e08f695a39dcb29e79397623dcb7489c2ea298bc605c0"
+}

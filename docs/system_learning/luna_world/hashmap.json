@@ -1,0 +1,425 @@
+{
+  "schema": "mak-system-learning-hashmap-v1",
+  "map_id": "hashmap:luna-world:2026-08-25",
+  "node_key_policy": "stable semantic IDs; never file-order or timestamp-derived IDs",
+  "nodes": {
+    "world:opportunity-ecosystem": {
+      "kind": "environment",
+      "label": "External opportunity ecosystem",
+      "state": "nonstationary",
+      "source_refs": ["source:current-state"]
+    },
+    "sensor:vigia": {
+      "kind": "sensor",
+      "label": "Vigia source-change sensor",
+      "state": "implemented",
+      "source_refs": ["source:vigia-py"]
+    },
+    "boundary:capture": {
+      "kind": "boundary",
+      "label": "One-URL capture gate",
+      "state": "implemented_not_live_verified_in_this_task",
+      "source_refs": ["source:research-source-capture"]
+    },
+    "memory:external-evidence": {
+      "kind": "memory",
+      "label": "Versioned external documentary evidence",
+      "state": "contract_accepted",
+      "source_refs": ["source:opportunity-constraints", "source:current-packet"]
+    },
+    "memory:archive-practice": {
+      "kind": "memory",
+      "label": "Archive-scoped practice evidence",
+      "state": "separate_authority",
+      "source_refs": ["source:current-packet"]
+    },
+    "transform:opportunity-constraints": {
+      "kind": "transform",
+      "label": "Documentary evidence to operational constraints",
+      "state": "contract_accepted",
+      "source_refs": ["source:opportunity-constraints", "source:current-packet"]
+    },
+    "gate:temporal-validity": {
+      "kind": "control_gate",
+      "label": "Current-source validity gate",
+      "state": "active_contract",
+      "source_refs": ["source:opportunity-constraints", "source:opportunity-fit", "source:current-packet"]
+    },
+    "junction:requirement-evidence": {
+      "kind": "typed_junction",
+      "label": "Requirement-to-practice-evidence binding",
+      "state": "contract_accepted",
+      "source_refs": ["source:opportunity-fit", "source:current-packet"]
+    },
+    "transform:fit": {
+      "kind": "transform",
+      "label": "Conservative opportunity fit",
+      "state": "contract_accepted",
+      "source_refs": ["source:opportunity-fit", "source:current-packet"]
+    },
+    "controller:research-frontier": {
+      "kind": "controller",
+      "label": "Value-of-information research frontier",
+      "state": "plan_only",
+      "source_refs": ["source:research-frontier", "source:current-packet"]
+    },
+    "transform:triangulation": {
+      "kind": "transform",
+      "label": "Independent-source triangulation",
+      "state": "contract_accepted",
+      "source_refs": ["source:research-triangulation", "source:current-packet"]
+    },
+    "boundary:evidence-return": {
+      "kind": "boundary",
+      "label": "Additive evidence-return gate",
+      "state": "proposal_only",
+      "source_refs": ["source:evidence-return", "source:current-packet"]
+    },
+    "controller:autonomy": {
+      "kind": "controller",
+      "label": "Finite bounded autonomy planner",
+      "state": "plan_only",
+      "source_refs": ["source:autonomy-plan", "source:current-packet"]
+    },
+    "product:shared-plan": {
+      "kind": "product_state",
+      "label": "Shared portfolio/application/research plan",
+      "state": "accepted_contract_not_submission",
+      "source_refs": ["source:current-packet"]
+    },
+    "case:arica-fondart": {
+      "kind": "case_evidence",
+      "label": "Real ARICA/Fondart pilot",
+      "state": "research_first_abstention",
+      "source_refs": ["source:current-packet"]
+    }
+  },
+  "links": {
+    "link:world-to-vigia": {
+      "from": "world:opportunity-ecosystem",
+      "to": "sensor:vigia",
+      "relation": "perturbs",
+      "invariant_ids": ["invariant:discovery-not-truth"],
+      "failure_mode_ids": ["failure:source-silent", "failure:url-shape-avalanche"]
+    },
+    "link:vigia-to-capture": {
+      "from": "sensor:vigia",
+      "to": "boundary:capture",
+      "relation": "proposes_candidate_url",
+      "invariant_ids": ["invariant:discovery-not-truth", "invariant:bounded-network"],
+      "failure_mode_ids": ["failure:watcher-capture-gap"]
+    },
+    "link:capture-to-external-memory": {
+      "from": "boundary:capture",
+      "to": "memory:external-evidence",
+      "relation": "records_versioned_receipt",
+      "invariant_ids": ["invariant:hash-and-provenance", "invariant:license-visible"],
+      "failure_mode_ids": ["failure:hash-missing", "failure:license-unknown"]
+    },
+    "link:external-memory-to-constraints": {
+      "from": "memory:external-evidence",
+      "to": "transform:opportunity-constraints",
+      "relation": "compiles",
+      "invariant_ids": ["invariant:hash-and-provenance", "invariant:locator-required", "invariant:deterministic-transform"],
+      "failure_mode_ids": ["failure:contradictory-rules", "failure:criteria-incomplete"]
+    },
+    "link:constraints-to-validity": {
+      "from": "transform:opportunity-constraints",
+      "to": "gate:temporal-validity",
+      "relation": "is_controlled_by",
+      "invariant_ids": ["invariant:currentness-before-fit"],
+      "failure_mode_ids": ["failure:stale-source", "failure:unconfirmed-date"]
+    },
+    "link:external-authority-to-junction": {
+      "from": "transform:opportunity-constraints",
+      "to": "junction:requirement-evidence",
+      "relation": "supplies_requirement_ids",
+      "invariant_ids": ["invariant:dual-authority-separation"],
+      "failure_mode_ids": ["failure:authority-collapse"]
+    },
+    "link:practice-authority-to-junction": {
+      "from": "memory:archive-practice",
+      "to": "junction:requirement-evidence",
+      "relation": "supplies_artifact_evidence",
+      "invariant_ids": ["invariant:dual-authority-separation", "invariant:no-authorship-promotion"],
+      "failure_mode_ids": ["failure:dangling-artifact-ref", "failure:authority-collapse"]
+    },
+    "link:junction-to-fit": {
+      "from": "junction:requirement-evidence",
+      "to": "transform:fit",
+      "relation": "evaluates",
+      "invariant_ids": ["invariant:currentness-before-fit", "invariant:abstention-is-information"],
+      "failure_mode_ids": ["failure:unsupported-hard-gate"]
+    },
+    "link:fit-to-frontier": {
+      "from": "transform:fit",
+      "to": "controller:research-frontier",
+      "relation": "turns_gaps_into_jobs",
+      "invariant_ids": ["invariant:bounded-network", "invariant:abstention-is-information"],
+      "failure_mode_ids": ["failure:empty-frontier-on-unknown"]
+    },
+    "link:frontier-to-capture": {
+      "from": "controller:research-frontier",
+      "to": "boundary:capture",
+      "relation": "requests_bounded_capture",
+      "invariant_ids": ["invariant:bounded-network", "invariant:license-visible"],
+      "failure_mode_ids": ["failure:dispatch-without-authority"]
+    },
+    "link:capture-to-triangulation": {
+      "from": "boundary:capture",
+      "to": "transform:triangulation",
+      "relation": "supplies_result_batches",
+      "invariant_ids": ["invariant:hash-and-provenance", "invariant:source-independence"],
+      "failure_mode_ids": ["failure:false-independence", "failure:unexpected-job-pair"]
+    },
+    "link:triangulation-to-return": {
+      "from": "transform:triangulation",
+      "to": "boundary:evidence-return",
+      "relation": "proposes_additive_evidence",
+      "invariant_ids": ["invariant:no-auto-promotion", "invariant:counterevidence-preserved"],
+      "failure_mode_ids": ["failure:research-becomes-practice"]
+    },
+    "link:return-to-external-memory": {
+      "from": "boundary:evidence-return",
+      "to": "memory:external-evidence",
+      "relation": "requests_ingestion_and_recompute",
+      "invariant_ids": ["invariant:no-auto-promotion", "invariant:deterministic-transform"],
+      "failure_mode_ids": ["failure:self-confirming-loop"]
+    },
+    "link:fit-to-product": {
+      "from": "transform:fit",
+      "to": "product:shared-plan",
+      "relation": "conditions",
+      "invariant_ids": ["invariant:one-shared-product-plan"],
+      "failure_mode_ids": ["failure:false-submission-readiness"]
+    },
+    "link:return-to-autonomy": {
+      "from": "boundary:evidence-return",
+      "to": "controller:autonomy",
+      "relation": "signals_recompute_or_abstain",
+      "invariant_ids": ["invariant:bounded-network", "invariant:no-auto-promotion"],
+      "failure_mode_ids": ["failure:infinite-loop"]
+    },
+    "link:product-to-autonomy": {
+      "from": "product:shared-plan",
+      "to": "controller:autonomy",
+      "relation": "exposes_gaps_and_outcomes",
+      "invariant_ids": ["invariant:outcome-not-truth", "invariant:one-shared-product-plan"],
+      "failure_mode_ids": ["failure:learning-from-own-draft"]
+    },
+    "link:autonomy-to-frontier": {
+      "from": "controller:autonomy",
+      "to": "controller:research-frontier",
+      "relation": "prioritizes_plan_only_action",
+      "invariant_ids": ["invariant:bounded-network", "invariant:stop-on-no-hash-change"],
+      "failure_mode_ids": ["failure:infinite-loop", "failure:dispatch-without-authority"]
+    },
+    "link:case-supervises-architecture": {
+      "from": "case:arica-fondart",
+      "to": "controller:autonomy",
+      "relation": "supervises_without_defining_architecture",
+      "invariant_ids": ["invariant:case-not-architecture", "invariant:outcome-not-truth"],
+      "failure_mode_ids": ["failure:case-overfit"]
+    }
+  },
+  "invariants": {
+    "invariant:discovery-not-truth": {
+      "statement": "A discovered listing is a candidate, never verified opportunity truth or eligibility."
+    },
+    "invariant:hash-and-provenance": {
+      "statement": "Captured evidence entering a semantic transform carries source identity, SHA-256, and provenance."
+    },
+    "invariant:locator-required": {
+      "statement": "Every documentary requirement cites a page, section, anchor, or bounded quote."
+    },
+    "invariant:currentness-before-fit": {
+      "statement": "Only current_verified plus explicit confirmation may pass the source-validity gate."
+    },
+    "invariant:dual-authority-separation": {
+      "statement": "Opportunity evidence and archive-practice evidence remain distinct and meet only through explicit requirement IDs."
+    },
+    "invariant:no-authorship-promotion": {
+      "statement": "No external source or filename inference automatically establishes authorship or artistic identity."
+    },
+    "invariant:bounded-network": {
+      "statement": "Planning is default; capture is one URL at a time; research and autonomy outputs do not dispatch."
+    },
+    "invariant:source-independence": {
+      "statement": "Independent support requires distinct explicit source groups and distinct URL domains."
+    },
+    "invariant:counterevidence-preserved": {
+      "statement": "Contradictions remain explicit inputs to control and are never averaged away."
+    },
+    "invariant:no-auto-promotion": {
+      "statement": "Triangulation and evidence return produce candidates with promotion=none."
+    },
+    "invariant:deterministic-transform": {
+      "statement": "Equal canonical inputs produce equal IDs, ordering, hashes, and outputs."
+    },
+    "invariant:abstention-is-information": {
+      "statement": "Unknown, stale, missing, and contradictory evidence produce actionable abstention rather than fabricated closure."
+    },
+    "invariant:one-shared-product-plan": {
+      "statement": "Portfolio, application, and research products derive from one evidence-governed plan."
+    },
+    "invariant:outcome-not-truth": {
+      "statement": "External outcomes may teach attention and ranking, not truth, authorship, or identity."
+    },
+    "invariant:stop-on-no-hash-change": {
+      "statement": "A bounded control loop stops when recomputation produces no state-hash change."
+    },
+    "invariant:case-not-architecture": {
+      "statement": "ARICA/Fondart is a supervision case; reusable contracts remain artist- and fund-agnostic."
+    },
+    "invariant:license-visible": {
+      "statement": "Capture and triangulation preserve license state; unknown license cannot be silently treated as reusable evidence."
+    }
+  },
+  "failure_modes": {
+    "failure:source-silent": {
+      "trigger": "A watched source stops producing parseable items or repeatedly errors.",
+      "fail_closed_action": "Raise a source-health alert and preserve previous hashes; do not infer that no opportunities exist."
+    },
+    "failure:url-shape-avalanche": {
+      "trigger": "Most parsed URLs suddenly appear new after a source redesign.",
+      "fail_closed_action": "Record hashes, suppress item spam, and emit one high-priority avalanche alert."
+    },
+    "failure:watcher-capture-gap": {
+      "trigger": "A Vigia row has not been adapted into a provenance-bearing capture plan.",
+      "fail_closed_action": "Keep it in discovered-candidate state."
+    },
+    "failure:hash-missing": {
+      "trigger": "Documentary or captured evidence lacks a valid SHA-256.",
+      "fail_closed_action": "Reject compilation or triangulation."
+    },
+    "failure:license-unknown": {
+      "trigger": "A capture lacks explicit license state.",
+      "fail_closed_action": "Keep the result unresolved and prohibit product reuse."
+    },
+    "failure:contradictory-rules": {
+      "trigger": "The same requirement has supported and contradictory evidence.",
+      "fail_closed_action": "Emit contradiction and prevent a positive hard-gate result."
+    },
+    "failure:criteria-incomplete": {
+      "trigger": "Scored-criteria weights are incomplete or do not reconcile.",
+      "fail_closed_action": "Do not compute a misleading weighted fit."
+    },
+    "failure:stale-source": {
+      "trigger": "The source snapshot is older than its validity policy or superseded by a new hash/version.",
+      "fail_closed_action": "Abstain and create a source-validity refresh job."
+    },
+    "failure:unconfirmed-date": {
+      "trigger": "Deadline or effective period lacks confirmation.",
+      "fail_closed_action": "Preserve unknown and block current_verified."
+    },
+    "failure:authority-collapse": {
+      "trigger": "Opportunity evidence is used as proof of archive practice or vice versa.",
+      "fail_closed_action": "Reject the binding and keep the requirement unsupported."
+    },
+    "failure:dangling-artifact-ref": {
+      "trigger": "A practice evidence proposal names an artifact absent from the accepted practice state.",
+      "fail_closed_action": "Return unresolved with the dangling refs."
+    },
+    "failure:unsupported-hard-gate": {
+      "trigger": "A required hard constraint lacks supporting practice evidence.",
+      "fail_closed_action": "Abstain rather than declare fit."
+    },
+    "failure:empty-frontier-on-unknown": {
+      "trigger": "Unknown validity or requirements disappear instead of producing research actions.",
+      "fail_closed_action": "Require explicit refresh or gap jobs and reconcile their IDs."
+    },
+    "failure:dispatch-without-authority": {
+      "trigger": "A plan-only job is executed without an authorized bounded capture step.",
+      "fail_closed_action": "Keep dispatch=false and stop."
+    },
+    "failure:false-independence": {
+      "trigger": "Multiple pages share a source group or domain but are counted as independent.",
+      "fail_closed_action": "Count at most one source per group and domain; remain unresolved."
+    },
+    "failure:unexpected-job-pair": {
+      "trigger": "A result batch contains a job/requirement pair absent from the frontier.",
+      "fail_closed_action": "Fail pair reconciliation and preserve the unmatched pair."
+    },
+    "failure:research-becomes-practice": {
+      "trigger": "Environmental research is promoted into practice evidence without an explicit practice scope and accepted artifact refs.",
+      "fail_closed_action": "Keep it as opportunity evidence or unresolved."
+    },
+    "failure:self-confirming-loop": {
+      "trigger": "MAK treats its own proposal or draft as independent supporting evidence.",
+      "fail_closed_action": "Require external provenance and prohibit promotion."
+    },
+    "failure:false-submission-readiness": {
+      "trigger": "A draftable internal product is presented as published, submitted, or eligible.",
+      "fail_closed_action": "Preserve draft/research-first state and disable submission."
+    },
+    "failure:infinite-loop": {
+      "trigger": "Repeated capture or recompute produces no new state hash.",
+      "fail_closed_action": "Stop after one attempt or no hash change."
+    },
+    "failure:learning-from-own-draft": {
+      "trigger": "A generated product is used as its own success label.",
+      "fail_closed_action": "Use only verified external outcomes and keep training disabled."
+    },
+    "failure:case-overfit": {
+      "trigger": "ARICA or Fondart-specific fields become architectural requirements.",
+      "fail_closed_action": "Keep case fixtures at the edge and preserve generic contract IDs."
+    }
+  },
+  "source_refs": {
+    "source:agents-contract": {
+      "path": "agents.md",
+      "sha256": "53afe6c85f431db10aee822f5a250af66968bb7c3ac9a27cbf38269b9386ce75",
+      "consulted_for": "authority, bounded write set, fail-closed verification rules"
+    },
+    "source:current-state": {
+      "path": "docs/MAK_CURRENT_STATE.md",
+      "sha256": "c98a7fb488b825ecfef0aff4d3770189d3167de469644aa03a90b03964b808e0",
+      "consulted_for": "durable system boundaries, departments, source capture and research semantics"
+    },
+    "source:current-packet": {
+      "path": "context/LAST_HANDOFF.md",
+      "sha256": "d66dda5e81f36f9d30e5908ed0ea974167fc738df8cd43b23f5063919dd3b54c",
+      "consulted_for": "only the bootstrap-emitted CURRENT packet, including accepted floors and real ARICA/Fondart pilot evidence"
+    },
+    "source:vigia-py": {
+      "path": "cultura/mak_vigia/vigia.py",
+      "sha256": "324e2765b2a434df81df0dda388909d6b2732d29580936b489e197924bccd296",
+      "consulted_for": "source isolation, change detection, deduplication, prioritization and queue boundary"
+    },
+    "source:research-source-capture": {
+      "path": "tools/research_source_capture.py",
+      "sha256": "d7077c667da989b58948c013f735d220189a7707065f94b33e398e696ab67dd7",
+      "consulted_for": "plan versus one-URL record semantics and network-called provenance"
+    },
+    "source:opportunity-constraints": {
+      "path": "src/flujo/knowledge/opportunity_constraints.py",
+      "sha256": "c5c0d2a6fd49b9170eda0916d39f28a5cc8b449358321e24e217caa7ea27072e",
+      "consulted_for": "source hash, locator, validity, constraints, contradictions, unknowns and determinism"
+    },
+    "source:opportunity-fit": {
+      "path": "src/flujo/knowledge/opportunity_fit.py",
+      "sha256": "8d44a2d40aa6f9540252e87b7a7ed51f5c9394dbf6170d4c4266a49286b22a7a",
+      "consulted_for": "source gate, hard-gate matrix, explicit evidence binding and abstention"
+    },
+    "source:research-frontier": {
+      "path": "src/flujo/knowledge/research_frontier_bridge.py",
+      "sha256": "8e588740ae6997b5436c9c445b8e6b27c2e5da832c506d99cfa21bff115f0422",
+      "consulted_for": "non-dispatched research jobs, requirement ownership, source policy and VOI"
+    },
+    "source:research-triangulation": {
+      "path": "src/flujo/knowledge/research_evidence_triangulation.py",
+      "sha256": "d31f32ef9e2d9be6e574eb4b298e3510673bbee2b119c590ec173436c9a4a695",
+      "consulted_for": "result normalization, source independence, pair reconciliation, counterevidence and no promotion"
+    },
+    "source:evidence-return": {
+      "path": "src/flujo/knowledge/evidence_return.py",
+      "sha256": "1ce2cc54107889924dbe322d36748cd514ebef60521d5effe6b3d7beb6343fa0",
+      "consulted_for": "additive proposals, practice-scope artifact guards and deterministic recompute request"
+    },
+    "source:autonomy-plan": {
+      "path": "src/flujo/knowledge/autonomy_plan.py",
+      "sha256": "c734e06f83fad979fac7108757d93973c413a346c65e72b3a94edddead9980b8",
+      "consulted_for": "finite plan-only actions, stop conditions and disabled consequential controls"
+    }
+  }
+}

@@ -561,6 +561,30 @@ class LearningStore:
                     tool_versions_json TEXT NOT NULL,
                     created_at TEXT NOT NULL
                 );
+                /*
+                 * Operational propositions are part of the existing
+                 * LearningStore authority, but are not project episodes or
+                 * execution checkpoints.  The event JSON is the append-only
+                 * record; the scalar columns are read indexes only.
+                 */
+                CREATE TABLE IF NOT EXISTS mak_operational_events (
+                    event_id TEXT PRIMARY KEY,
+                    archive_id TEXT NOT NULL,
+                    proposition_id TEXT NOT NULL,
+                    event_type TEXT NOT NULL,
+                    event_json TEXT NOT NULL,
+                    recorded_at TEXT NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS idx_mak_operational_events_archive
+                    ON mak_operational_events(archive_id, proposition_id, event_id);
+                CREATE INDEX IF NOT EXISTS idx_mak_operational_events_proposition
+                    ON mak_operational_events(proposition_id, event_id);
+                CREATE TRIGGER IF NOT EXISTS mak_operational_events_no_update
+                    BEFORE UPDATE ON mak_operational_events
+                    BEGIN SELECT RAISE(ABORT, 'mak_operational_events_append_only'); END;
+                CREATE TRIGGER IF NOT EXISTS mak_operational_events_no_delete
+                    BEFORE DELETE ON mak_operational_events
+                    BEGIN SELECT RAISE(ABORT, 'mak_operational_events_append_only'); END;
                 CREATE TABLE IF NOT EXISTS learning_evaluations (
                     evaluation_id TEXT PRIMARY KEY,
                     target_kind TEXT NOT NULL,
@@ -1124,6 +1148,90 @@ class LearningStore:
             )
         return event_id
 
+    def append_operational_event(self, event: Mapping[str, Any]) -> str:
+        """Append one semantic proposition event to the existing ledger.
+
+        This is intentionally separate from ``mak_run_events``: operational
+        propositions do not require a Project IR row or an execution episode.
+        The caller computes the semantic ``event_id``.  ``recorded_at`` is
+        storage metadata only, so retrying an event with a different clock
+        value remains idempotent and preserves the first stored timestamp.
+        """
+        if not isinstance(event, Mapping):
+            raise ProjectIRError("operational_event_not_mapping")
+        event_id = _text(event.get("event_id"), 240)
+        archive_id = _text(event.get("archive_id"), 240)
+        proposition_id = _text(event.get("proposition_id"), 240)
+        event_type = _text(event.get("event_type"), 80)
+        if not event_id or not archive_id or not proposition_id or not event_type:
+            raise ProjectIRError("operational_event_identity_incomplete")
+        stored = dict(event)
+        recorded_at = _text(stored.get("recorded_at"), 80) or now_iso()
+        stored["recorded_at"] = recorded_at
+        encoded = stable_json(stored)
+
+        def semantic(value: Mapping[str, Any]) -> str:
+            comparable = dict(value)
+            comparable.pop("event_id", None)
+            comparable.pop("recorded_at", None)
+            return stable_json(comparable)
+
+        with self.connect() as con:
+            self.ensure_schema(con)
+            existing = con.execute(
+                "SELECT event_json FROM mak_operational_events WHERE event_id=?",
+                (event_id,),
+            ).fetchone()
+            if existing:
+                try:
+                    previous = json.loads(existing["event_json"])
+                except (TypeError, json.JSONDecodeError) as exc:
+                    raise ProjectIRError("operational_event_stored_json_invalid") from exc
+                if isinstance(previous, Mapping) and semantic(previous) == semantic(stored):
+                    return event_id
+                raise ProjectIRError(f"operational_event_id_conflict: {event_id}")
+            con.execute(
+                """INSERT INTO mak_operational_events
+                   (event_id,archive_id,proposition_id,event_type,event_json,recorded_at)
+                   VALUES (?,?,?,?,?,?)""",
+                (event_id, archive_id, proposition_id, event_type, encoded, recorded_at),
+            )
+        return event_id
+
+    def operational_events(self, archive_id: str | None = None) -> list[dict[str, Any]]:
+        """Read operational events without creating schema or mutating data."""
+        if not self.database.is_file():
+            return []
+        uri = "file:" + str(self.database.resolve()) + "?mode=ro"
+        with sqlite3.connect(uri, uri=True) as con:
+            con.row_factory = sqlite3.Row
+            exists = con.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='mak_operational_events'"
+            ).fetchone()
+            if not exists:
+                return []
+            if archive_id is None:
+                rows = con.execute(
+                    "SELECT event_json FROM mak_operational_events "
+                    "ORDER BY archive_id, proposition_id, event_id"
+                ).fetchall()
+            else:
+                rows = con.execute(
+                    "SELECT event_json FROM mak_operational_events WHERE archive_id=? "
+                    "ORDER BY proposition_id, event_id",
+                    (archive_id,),
+                ).fetchall()
+        result: list[dict[str, Any]] = []
+        for row in rows:
+            try:
+                value = json.loads(row["event_json"])
+            except (TypeError, json.JSONDecodeError) as exc:
+                raise ProjectIRError("operational_event_json_invalid") from exc
+            if not isinstance(value, dict):
+                raise ProjectIRError("operational_event_json_not_object")
+            result.append(value)
+        return result
+
     def run_events(self, run_id: str) -> list[dict[str, Any]]:
         """Read one persisted director checkpoint chain without changing data."""
         run_id = _text(run_id, 160)
@@ -1418,6 +1526,7 @@ def inspect_learning_target(database: str | Path) -> dict[str, Any]:
         "project_records", "project_artifacts", "project_episodes",
         "project_transitions", "semantic_rules", "rule_observations",
         "project_contracts", "mak_run_events", "learning_evaluations",
+        "mak_operational_events",
         "archive_memory_v2_archives", "archive_memory_v2_snapshots",
         "archive_memory_v2_artifacts", "archive_memory_v2_artifact_states",
         "archive_memory_v2_observations", "archive_memory_v2_transformation_events",

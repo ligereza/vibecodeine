@@ -359,6 +359,18 @@ tabla; archivo sin entrada = ratchet rojo.
 | `compile_practice_evidence_state.py` | VIVO | projects accepted Project IR into practice evidence; consumed by Piso 1 tests | 2026-08-25 |
 | `compile_product_episode.py` | VIVO | compiles ledger-compatible product episode candidates; consumed by Piso 5 tests | 2026-08-25 |
 | `compile_product_plan.py` | VIVO | compiles the shared portfolio/application/research plan; consumed by Piso 4 tests | 2026-08-25 |
+| `adapt_practice_receipts.py` | VIVO | adapts explicit practice receipts into the accepted practice-evidence contract; consumed by practice receipt tests | 2026-08-27 |
+| `capture_opportunity_validity.py` | VIVO | captures a bounded local opportunity source with hash and validity state; consumed by opportunity validity tests | 2026-08-27 |
+| `compile_cross_archive_relations.py` | VIVO | compiles candidate-only relations across explicitly federated archive contexts; consumed by cross-archive relation tests | 2026-08-27 |
+| `compile_cross_archive_research_frontier.py` | VIVO | projects federated relation gaps into non-dispatched research frontier jobs; consumed by cross-archive frontier tests | 2026-08-27 |
+| `compile_opportunity_delta.py` | VIVO | computes an additive opportunity delta from versioned evidence returns; consumed by opportunity-delta tests | 2026-08-27 |
+| `compile_selective_recompute_receipt.py` | VIVO | compiles bounded recomputation receipts without mutating source evidence; consumed by selective-recompute tests | 2026-08-27 |
+| `compile_vigia_capture_plans.py` | VIVO | compiles read-only Vigia capture plans from declared source candidates; consumed by Vigia bridge tests | 2026-08-27 |
+| `inspect_operational_memberships.py` | VIVO | inspects archive-scoped operational membership projections without executing capabilities; consumed by membership tests | 2026-08-27 |
+| `materialize_pilot_run.py` | VIVO | materializes a durable manifest for an explicit pilot replay without copying media or writing the database; consumed by pilot manifest tests | 2026-08-27 |
+| `render_product_view.py` | VIVO | renders the common product view or the general ISKVW archive portfolio view as JSON/Markdown; consumed by product-view tests | 2026-08-27 |
+| `run_archive_toolchain.py` | VIVO | runs the bounded archive technical-surface projection into the existing project-context contract; consumed by archive-toolchain tests | 2026-08-27 |
+| `run_vision_feedback.py` | VIVO | compiles explicit vision feedback into a read-only memory projection; consumed by vision-feedback tests | 2026-08-27 |
 | `compile_research_frontier.py` | VIVO | compiles non-dispatched research jobs from prioritized gaps; consumed by Piso 3 tests | 2026-08-25 |
 | `evaluate_artistic_program_hypotheses.py` | VIVO | independently evaluates provisional artistic-program hypotheses; consumed by Piso 2 tests | 2026-08-25 |
 | `evaluate_opportunity_fit.py` | VIVO | evaluates opportunity-to-practice fit with explicit abstention; consumed by Piso 1 tests | 2026-08-25 |

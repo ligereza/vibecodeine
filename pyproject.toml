@@ -28,6 +28,7 @@ dev = [
     "vpype>=1.15.0",
     "pre-commit>=4.6.2",
     "pyflakes>=3.4.0",  # ratchet #139: NameError latentes en codigo autogenerado
+    "hypothesis>=6.165.10",
 ]
 render = [
     # El critico perceptual del motor semantico mide sobre PIXELES, asi que sin
