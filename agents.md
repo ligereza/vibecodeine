@@ -132,6 +132,28 @@ The packet is a compact operational projection; the remainder of
 `context/LAST_HANDOFF.md` is historical evidence and is never selected by
 position, recency of a heading, or a chat summary.
 
+## Fast path for simple bounded tasks
+
+Not every request is an integration slice. If the user asks for a simple
+read-only answer, names no implementation target and gives a bounded output
+shape (for example, “five lines”), use this fast path:
+
+1. Run the bootstrap, read `agents.md`, `docs/MAK_CURRENT_STATE.md` and the
+   emitted CURRENT packet.
+2. Read only the files directly named by the request or required to answer
+   that one fact. The current packet is sufficient for facts it explicitly
+   declares.
+3. Do not scan the repository, recalculate unrelated hashes, inspect
+   databases, query services, audit consumers or open historical handoff
+   sections unless the request explicitly asks for that evidence.
+4. If an unrelated discrepancy appears, mention it in one short sentence and
+   stop; it is not permission to widen the task or repair anything.
+5. Match the requested output bound exactly and stop after the direct answer.
+
+This fast path does not weaken validation for edits or integration work. It
+prevents a small question from becoming an unsolicited audit and keeps the
+agent's effort proportional to the user's requested result.
+
 ## Reflection gate
 
 Pause after at most 10 tool/command actions or 10 inspected files, whichever
