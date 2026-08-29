@@ -1,10 +1,17 @@
 """Read-only Blender scene audit for the RD render template."""
 from __future__ import annotations
 
-import bpy
 import json
 from collections import Counter
 from pathlib import Path
+
+try:
+    import bpy
+except ImportError as exc:
+    bpy = None
+    _BPY_IMPORT_ERROR = exc
+else:
+    _BPY_IMPORT_ERROR = None
 
 
 def animation_state(block):
@@ -69,6 +76,12 @@ def transform_at(obj, frame):
 
 
 def main():
+    if bpy is None:
+        raise SystemExit(
+            "bpy is not available: this script runs INSIDE Blender via "
+            "`blender --background <file.blend> --python "
+            "tools/audit_blend_scene.py`, never with the system interpreter. "
+            f"({_BPY_IMPORT_ERROR})")
     scenes = []
     for scene in bpy.data.scenes:
         render = scene.render

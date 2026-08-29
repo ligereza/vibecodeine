@@ -14,7 +14,13 @@ import sys
 from array import array
 from pathlib import Path
 
-import bpy
+try:
+    import bpy
+except ImportError as exc:
+    bpy = None
+    _BPY_IMPORT_ERROR = exc
+else:
+    _BPY_IMPORT_ERROR = None
 
 
 def parse_args() -> argparse.Namespace:
@@ -67,6 +73,12 @@ def material_signature(obj):
 
 def main() -> None:
     args = parse_args()
+    if bpy is None:
+        raise SystemExit(
+            "bpy is not available: this script runs INSIDE Blender via "
+            "`blender --background <file.blend> --python "
+            "tools/profile_blender_animation.py`, never with the system "
+            f"interpreter. ({_BPY_IMPORT_ERROR})")
     scene = bpy.data.scenes.get(args.scene) if args.scene else bpy.context.scene
     if scene is None:
         raise SystemExit("SCENE_NOT_FOUND")

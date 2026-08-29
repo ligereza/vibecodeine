@@ -16,12 +16,16 @@ import argparse
 import json
 from pathlib import Path
 
-import bpy
+try:
+    import bpy
+except ImportError as exc:
+    bpy = None
+    _BPY_IMPORT_ERROR = exc
+else:
+    _BPY_IMPORT_ERROR = None
 
 
 def parse_args():
-    raw = bpy.app.binary_path  # keeps the module import Blender-only
-    del raw
     argv = __import__("sys").argv
     values = argv[argv.index("--") + 1:] if "--" in argv else []
     parser = argparse.ArgumentParser()
@@ -125,6 +129,12 @@ def configure_cycles(scene):
 
 def main():
     args = parse_args()
+    if bpy is None:
+        raise SystemExit(
+            "bpy is not available: this script runs INSIDE Blender via "
+            "`blender --background <file.blend> --python "
+            "tools/optimize_blend_scene.py -- --output ...`, never with the "
+            f"system interpreter. ({_BPY_IMPORT_ERROR})")
     output = args.output.expanduser().resolve()
     if output == Path(bpy.data.filepath).resolve():
         raise SystemExit("OUTPUT_MUST_DIFFER_FROM_SOURCE")
