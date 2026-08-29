@@ -133,7 +133,7 @@ unverified. Do not merge by filename, age or language alone.
 | `web/dist-plano/plano.html` -> `dist_compartir/plano_rd.html` | `web/plano.html` + `mainPlano.tsx` + `vite.plano.config.ts` + copy script | standalone RD/VJ plano | separate plano projection; build gate open |
 
 `dist_compartir/` was retired on 2026-08-28 to
-`.archive/2026-08-28-orden/retirado/dist_compartir/`. The two mappings above
+`/home/mak/_archive/orden-limpieza-20260828/retirado/dist_compartir/`. The two mappings above
 stay accurate: `web/scripts/copy-rd-share.mjs` and `copy-plano-share.mjs` both
 call `mkdirSync(dirname(dest), {recursive: true})`, so `npm run build:rd` and
 `npm run build:plano` recreate the directory and its contents. It is a build
