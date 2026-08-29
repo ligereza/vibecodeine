@@ -129,8 +129,8 @@ unverified. Do not merge by filename, age or language alone.
 | surface | source/owner | consumer | status |
 |---|---|---|---|
 | `context/flujo_hub.html`, `context/plano_demo.html`, `context/svg_visualizer.html` | one Vite build from `web/src`, copied by `web/scripts/copy-context.mjs` | `src/flujo/web/hub.py` path aliases | active generated family; parity gate open |
-| `web/dist-rd/rd.html` -> `dist_compartir/herramientas_rd.html` | `web/rd.html` + `mainRd.tsx` + `vite.rd.config.ts` + copy script | standalone RD tools | separate RD projection; build gate open |
-| `web/dist-plano/plano.html` -> `dist_compartir/plano_rd.html` | `web/plano.html` + `mainPlano.tsx` + `vite.plano.config.ts` + copy script | standalone RD/VJ plano | separate plano projection; build gate open |
+| `web/dist-rd/rd.html` -> `dist_compartir/herramientas_rd.html` (regenerable) | `web/rd.html` + `mainRd.tsx` + `vite.rd.config.ts` + copy script | standalone RD tools | separate RD projection; build gate open |
+| `web/dist-plano/plano.html` -> `dist_compartir/plano_rd.html` (regenerable) | `web/plano.html` + `mainPlano.tsx` + `vite.plano.config.ts` + copy script | standalone RD/VJ plano | separate plano projection; build gate open |
 
 `dist_compartir/` was retired on 2026-08-28 to
 `/home/mak/_archive/orden-limpieza-20260828/retirado/dist_compartir/`. The two mappings above
