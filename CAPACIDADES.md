@@ -197,7 +197,7 @@ CLI real (`py -m flujo --help`, v0.56.1), comandos principales:
 - `tapiz` -- pipeline generativo Tapiz<->Psicosis<->Fungi (`tools/compete_engine.py`).
 - `datadrop`, `index`, `flyer-import`, `flyer-list`, `ig-redownload` -- ingesta y catalogo de material real.
 - `daily`, `handoff`, `portal`, `doctor`, `health`, `verify`, `version` -- operacion y diagnostico del repo.
-- `airdrop`, `github-sync` -- entrega sin push directo / sync simple con GitHub.
+- `github-sync` -- sync simple con GitHub. (`airdrop` se retiro el 2026-08-28; la cadena estaba muerta desde el 2026-08-14, ver `docs/SCRIPTS_INVENTORY.md`.)
 - `delegate`, `ai-prompt`, `privacy`, `knowledge`, `package`, `init`, `clean`, `brand` (legacy) -- utilidades de soporte.
 
 `tools/` (ejecutables sueltos, 1 linea cada uno):
@@ -460,7 +460,7 @@ su material queda como referencia historica separada.
 5. Elegir el modelo mas barato que resuelva la tarea (tabla seccion 2 + `CLAUDE.md` "Regulacion de gasto"); escala solo si aplica un trigger.
 6. Si es pieza cultural nueva: aplicar motor-omega (Omega11 declarada + fracaso no se reinterpreta) antes de exponer.
 7. Cambios minimos, completos, verificables -- nada a medias, nada de TODO/placeholder.
-8. Verificacion minima segun area tocada (Python: compileall+pytest+`flujo verify`; Web: typecheck+build:context; Airdrop: validate_airdrop+run_airdrop_checks).
+8. Verificacion minima segun area tocada (Python: compileall+pytest+`flujo verify`; Web: typecheck+build:context; 
 9. Entregables (datos/docs/piezas) en espanol correcto UTF-8; `CLAUDE.md`/`context/*.md` operativos en ASCII.
 10. PR siempre contra `main`, CI verde obligatorio; el director hace la
     promoción curada al dominio o superficie correspondiente.

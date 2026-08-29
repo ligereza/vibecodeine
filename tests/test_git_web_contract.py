@@ -31,12 +31,29 @@ def test_git_topology_guard_requires_one_trunk_and_archive_tag():
 
 
 def test_automated_gates_cannot_publish_repo_changes():
-    for name in ("airdrop_gate.yml",):
+    """No workflow that fires without a person may write to the repo.
+
+    Until 2026-08-28 this checked one file, `airdrop_gate.yml`, which was
+    retired with the rest of the airdrop chain. The property it names is about
+    every gate that runs unattended, so it now covers all of them: the ones
+    triggered by `push`, `pull_request`, `schedule` or `issues`. Workflows that
+    only run on `workflow_dispatch` are excluded -- a person pressed the button.
+    """
+    automated = (
+        "ci.yml",
+        "seguridad.yml",
+        "git-topology.yml",
+        "validar-piezas.yml",
+        "render_piezas_vectoriales.yml",
+        "issue_descarga_ig.yml",
+        "ordenes_curatoria.yml",
+    )
+    for name in automated:
         text = _workflow(name)
-        assert "git push" not in text
-        assert "gh pr create" not in text
-        assert "contents: write" not in text
-        assert "pull-requests: write" not in text
+        assert "git push" not in text, name
+        assert "gh pr create" not in text, name
+        assert "contents: write" not in text, name
+        assert "pull-requests: write" not in text, name
 
 
 def test_pages_publication_requires_explicit_dispatch():

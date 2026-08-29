@@ -73,8 +73,11 @@ def test_a_free_form_string_cannot_smuggle_a_second_command():
 
 
 def test_a_declared_destructive_command_demands_confirmation():
+    """`index` is one of the ten commands `context/comandos.json` marks
+    destructive. The example used to be `airdrop apply`, retired with the rest
+    of that chain on 2026-08-28; the property under test is unchanged."""
     h = _handler(RAIZ)
-    r = h._correr_comando({"cmd": "airdrop apply"})
+    r = h._correr_comando({"cmd": "index"})
     assert r["_http"] == 409
     assert r["destructivo"] is True
     assert "declarado como destructivo" in r["error"]
