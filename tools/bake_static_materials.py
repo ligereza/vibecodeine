@@ -15,7 +15,13 @@ import json
 import sys
 from pathlib import Path
 
-import bpy
+try:
+    import bpy
+except ImportError as exc:
+    bpy = None
+    _BPY_IMPORT_ERROR = exc
+else:
+    _BPY_IMPORT_ERROR = None
 
 
 SKIP_MATERIALS = {
@@ -145,6 +151,12 @@ def bake_one(scene, obj, slot_index, source_material, resolution):
 
 def main():
     args = parse_args()
+    if bpy is None:
+        raise SystemExit(
+            "bpy is not available: this script runs INSIDE Blender via "
+            "`blender --background <file.blend> --python "
+            "tools/bake_static_materials.py -- --output ...`, never with the "
+            f"system interpreter. ({_BPY_IMPORT_ERROR})")
     output = args.output.expanduser().resolve()
     source = Path(bpy.data.filepath).resolve()
     if output == source:
