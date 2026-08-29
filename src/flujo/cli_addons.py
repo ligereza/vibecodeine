@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-flujo.cli_addons  -  Registra los subcomandos del airdrop (serve/index/route)
+flujo.cli_addons  -  Registra los subcomandos serve/index/route
 en la app Typer existente, SIN pisar tus comandos (health/doctor/job/eventos...).
 
 Se agrupan bajo el namespace 'hub' para no colisionar con nada:

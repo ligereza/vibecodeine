@@ -1,6 +1,15 @@
 # MAK System Directive
 
-Status: canonical direction for agents as of 2026-08-25.
+Status: **mission doctrine, dated 2026-08-25. Not in the read order.**
+
+This file says what MAK is trying to become. It does not say what MAK currently
+is, and it is not loaded by `tools/agent_bootstrap.py`. The read order is
+`agents.md` -> `docs/MAK_CURRENT_STATE.md` -> `context/LAST_HANDOFF.md`; see
+`docs/AUTORIDAD.md` for why this header no longer says "canonical".
+
+Until 2026-08-28 it read "canonical direction for agents", which put it in
+competition with two documents that the loader does read. Nine documents in this
+repo made that same claim.
 
 ## Mission
 

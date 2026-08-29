@@ -27,7 +27,7 @@ ejecuta con [`real_input_audit.py`](real_input_audit.py). No se modificó el ZIP
 
 ### Entrada pública
 
-[`public_input/public_normalizer.py`](public_input/public_normalizer.py)
+[`experiments/cycles/C03/public_input/public_normalizer.py`](public_input/public_normalizer.py)
 acepta únicamente formas declaradas: canónica, JSON envuelto y HTML que
 contenga exactamente un `application/json`. Exige `archive_id`, conserva
 `post`/`reel`/`story`, media, origen, evidencias, hashes y completitud; falla
@@ -38,8 +38,8 @@ No produce joins, autoría, `generated` ni `RENDERS_TO`.
 
 ### Puente ciego
 
-[`blind_bridge/bridge.py`](blind_bridge/bridge.py) recibe únicamente
-observaciones normalizadas. La verdad está separada en `fixtures/truth.json`
+[`experiments/cycles/C03/blind_bridge/bridge.py`](blind_bridge/bridge.py) recibe únicamente
+observaciones normalizadas. La verdad está separada en `experiments/cycles/C03/blind_bridge/fixtures/truth.json`
 y se carga después de ejecutar ambos resolvers; el resolver no puede leerla.
 Los casos incluyen hash exacto, reencode, decoy técnico, publicación sin local,
 ambigüedad, conflicto nativo y local sin publicación.

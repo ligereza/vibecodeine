@@ -2,7 +2,7 @@
 
 El modulo no vive bajo scripts/__init__.py (scripts/ no es un paquete), asi
 que se carga por ruta via importlib -- mismo patron que
-tests/test_vj_git_performance.py y tests/test_run_airdrop_checks.py.
+tests/test_vj_git_performance.py.
 """
 from __future__ import annotations
 

@@ -76,7 +76,7 @@ cortos de git. Nunca: `.env*`, keys/secrets/tokens, `*.local.md`, contenido de
 - Renderer Resolume/VJ: spec OSC completa en `tools/TAPIZ_RESOLUME_SPEC.md`
   (implementacion en Resolume = trabajo de operador, la spec basta).
 - Escena Three.js: `tools/tapiz_three.html` (mismo contrato, file-picker +
-  fetch de `dist/system_status.json`; falta solo embeberla en el hub web).
+  fetch de `tools/dist/system_status.json`; falta solo embeberla en el hub web).
 - Autorretrato continuo: `py tools/tapiz_live_loop.py --interval 300`.
 
 ## Puentes construidos (2026-07-11, segunda tanda)

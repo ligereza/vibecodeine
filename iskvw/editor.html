@@ -203,6 +203,69 @@
   .estudio-archive-card-actions{display:flex;gap:3px;margin-top:4px}
   .estudio-archive-card-actions button{flex:1;padding:3px 4px;font-size:.48rem}
   .estudio-archive-card-actions button:first-child{border-color:#664c7c;color:#d6b9e8}
+  .archive-view{border:1px solid #4f4638;background:#0e0d0b;padding:12px;color:#cfc8bc}
+  .archive-view[data-state="unavailable"]{border-color:#5f3f3f;background:#120d0d}
+  .archive-view-header{display:flex;flex-wrap:wrap;align-items:flex-start;gap:10px}
+  .archive-view-heading{min-width:220px;margin-right:auto}
+  .archive-view-kicker{display:block;color:#b7936f;font-size:.55rem;letter-spacing:.14em;text-transform:uppercase}
+  .archive-view-heading h2{font-family:Georgia,serif;font-size:1rem;font-weight:400;color:#efe4d2;margin-top:2px}
+  .archive-view-heading p{max-width:78ch;margin-top:4px;color:#8f887d;font-size:.57rem;line-height:1.45}
+  .archive-view-refresh{font-size:.55rem;padding:5px 8px;border-color:#6c5d49;color:#d8c3a4;background:#15120e}
+  .archive-view-refresh:disabled{opacity:.55;cursor:wait}
+  .archive-view-status{margin-top:9px;border:1px solid #332f29;background:#0a0909;padding:10px;color:#aaa195;font-size:.59rem;line-height:1.45}
+  .archive-view-status[data-kind="error"]{border-color:#6c4444;color:#d9a7a0}
+  .archive-view-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin-top:10px}
+  .archive-view-stat{border:1px solid #322d26;background:#090909;padding:7px 8px}
+  .archive-view-stat b{display:block;color:#efe4d2;font-size:.88rem;font-weight:500}
+  .archive-view-stat span{display:block;color:#7f786e;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase}
+  .archive-view-formats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:9px}
+  .archive-view-format{min-width:0;border:1px solid #39332a;background:#090909;padding:9px}
+  .archive-view-format-header{display:flex;align-items:baseline;gap:7px;border-bottom:1px solid #28241e;padding-bottom:6px}
+  .archive-view-format-header h3{color:#d8c3a4;font-size:.63rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase}
+  .archive-view-format-header b{margin-left:auto;color:#eee3d2;font-size:.78rem;font-weight:500}
+  .archive-view-format-purpose{min-height:34px;margin-top:5px;color:#7f786e;font-size:.52rem;line-height:1.4}
+  .archive-view-list{display:grid;gap:5px;margin-top:7px;list-style:none}
+  .archive-view-item{border:1px solid #29251f;background:#0d0c0b;padding:7px;min-width:0}
+  .archive-view-item-title{display:block;color:#e2d8c9;font-size:.61rem;line-height:1.35;overflow-wrap:anywhere}
+  .archive-view-item-title[data-neutral="true"]{color:#b7af9f;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .archive-view-neutral{display:block;margin-top:2px;color:#b7936f;font-size:.47rem;letter-spacing:.06em;text-transform:uppercase}
+  .archive-view-description{margin-top:4px;color:#999185;font-size:.54rem;line-height:1.4;max-height:4.2em;overflow:auto}
+  .archive-view-meta{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px;color:#746e65;font-size:.48rem}
+  .archive-view-meta span{border:1px solid #28241e;padding:2px 4px}
+  .archive-view-provenance{margin-top:5px;color:#686158;font-size:.47rem;overflow-wrap:anywhere}
+  .archive-view-omitted{margin-top:6px;color:#81796d;font-size:.49rem}
+  .archive-view-gaps{margin-top:9px;border-top:1px solid #332f29;padding-top:8px;color:#8f887d;font-size:.54rem;line-height:1.5}
+  .archive-view-gaps strong{color:#b7af9f;font-weight:500}
+  .archive-view-source{margin-top:7px;color:#6f685f;font-size:.49rem;line-height:1.45;overflow-wrap:anywhere}
+  .archive-view-boundary{margin-top:7px;color:#b7936f;font-size:.51rem;line-height:1.45}
+  .archive-contracurator{margin-top:12px;border:1px solid #51463a;background:#0b0908;padding:10px}
+  .archive-contracurator-header{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline;border-bottom:1px solid #342d27;padding-bottom:7px}
+  .archive-contracurator h3{color:#e7d2b5;font:400 .87rem Georgia,serif}
+  .archive-contracurator-status{margin-left:auto;color:#c9a875;font-size:.49rem;letter-spacing:.09em;text-transform:uppercase}
+  .archive-contracurator-text{max-width:92ch;margin-top:8px;color:#b5aa9d;font-size:.57rem;line-height:1.55}
+  .archive-contracurator-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:9px}
+  .archive-contracurator-card{border:1px solid #322b25;background:#0a0908;padding:8px;min-width:0}
+  .archive-contracurator-card h4{color:#d6b98d;font-size:.56rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase}
+  .archive-contracurator-list{display:grid;gap:4px;margin-top:6px;list-style:none}
+  .archive-contracurator-list li{border-top:1px solid #25201c;padding-top:4px;color:#91897f;font-size:.51rem;line-height:1.4;overflow-wrap:anywhere}
+  .archive-contracurator-list b{color:#ddd2c2;font-weight:500}
+  .archive-contracurator-defeat{margin-top:8px;color:#aa8f82;font-size:.51rem;line-height:1.45}
+  .archive-contracurator-map{margin-top:8px;color:#8d8479;font-size:.51rem;line-height:1.45}
+  .archive-contracurator-map summary{cursor:pointer;color:#d1b68b}
+  .archive-contracurator-limit{margin-top:8px;color:#977f62;font-size:.5rem;line-height:1.45}
+  .archive-operator-warning{margin-top:6px;border-left:2px solid #b7936f;padding-left:7px;color:#d0b189;font-size:.52rem;line-height:1.5}
+  .archive-operator-meta{margin-top:4px;color:#8d8479;font-size:.5rem;line-height:1.45}
+  .archive-operator-ref{display:block;margin-top:3px;color:#6b645b;font-size:.46rem;line-height:1.4;overflow-wrap:anywhere}
+  .archive-operator-grade{margin-left:6px;border:1px solid #3a332b;padding:1px 4px;color:#a99a86;font-size:.45rem;letter-spacing:.06em;text-transform:uppercase}
+  .archive-operator-grade[data-grade="metadata_only"]{border-color:#5f4a44;color:#c09186}
+  .archive-operator-grade[data-grade="partially_degenerate"]{border-color:#5c5237;color:#c3ae7f}
+  .archive-operator-evidence{margin-top:5px;color:#948b80;font-size:.5rem;line-height:1.45}
+  .archive-operator-evidence b{display:block;color:#c2b49d;font-weight:500;font-size:.47rem;letter-spacing:.07em;text-transform:uppercase}
+  .archive-operator-evidence ul{margin-top:3px;padding-left:12px;list-style:disc}
+  .archive-operator-evidence li{margin-top:2px}
+  .archive-operator-frontier{margin-top:9px;border-top:1px solid #332c26;padding-top:7px;color:#9a9186;font-size:.51rem;line-height:1.45}
+  .archive-operator-frontier b{color:#d1b68b;font-weight:500}
+  body.estudio-principal>.archive-view{margin:0 30px 10px}
   .estudio-review-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;margin-top:8px}
   .estudio-review-card{min-width:0;border:1px solid #4d3b58;background:#08080a;padding:3px;color:#b9b4a8}
   .estudio-review-card:hover{border-color:#d6b9e8}
@@ -238,8 +301,8 @@
   .estudio-map-panel{margin-top:8px;border:1px solid #3d3348;background:#09080c;padding:7px}.estudio-map{position:relative;height:230px;background:linear-gradient(90deg,rgba(183,147,111,.08) 1px,transparent 1px),linear-gradient(rgba(183,147,111,.08) 1px,transparent 1px);background-size:12.5% 16.66%;overflow:hidden}.estudio-map-node{position:absolute;width:7px;height:7px;border-radius:50%;border:1px solid #8768a8;background:#60477c;padding:0;transform:translate(-50%,-50%);opacity:.65}.estudio-map-node:hover{width:12px;height:12px;opacity:1;z-index:4}.estudio-map-node[data-active="true"]{width:13px;height:13px;border-color:#f0dfc6;background:#d0a45c;opacity:1;z-index:3}.estudio-map-legend{display:flex;justify-content:space-between;gap:6px;margin-top:6px;color:#756d7e;font-size:.52rem}
   .estudio-dock{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;margin-top:7px}.estudio-dock-button{min-height:67px;border:1px solid #332f2b;background:#111112;color:#b9b4a8;display:flex;align-items:center;justify-content:center;gap:9px;font-size:.59rem;letter-spacing:.08em;text-transform:uppercase}.estudio-dock-button svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.25;stroke-linecap:round;stroke-linejoin:round}.estudio-dock-button:hover,.estudio-dock-button[data-active="true"]{border-color:#c49650;color:#e0b670;background:#17130f}.estudio-dock-button[data-primary="true"]{border-color:#694b91;color:#d6b9e8;background:#171022}.estudio-vision-chip{display:inline-flex;border:1px solid #6f4d91;color:#d9b9ee;background:#160f20;padding:4px 7px;margin:3px 3px 0 0;font-size:.57rem}.estudio-vision-evidence{margin-top:7px;color:#7e7885;font-size:.58rem}
   .estudio-loading{min-height:540px;border:1px solid #33283b;display:grid;place-items:center;color:#8a857a;font-size:.67rem;letter-spacing:.12em;text-transform:uppercase}
-  @media(max-width:980px){#estudio-app{padding:0 14px 20px}.estudio-layout{grid-template-columns:42px minmax(0,1fr);gap:10px}.estudio-decisions{grid-column:2;border-left:0;border-top:1px solid #312b2b;padding:18px 0 0}.estudio-left-rail{min-height:480px}.estudio-canvas{min-height:360px}.estudio-dock-button{min-height:54px;font-size:.52rem}}
-  @media(max-width:620px){.estudio-layout{grid-template-columns:1fr}.estudio-left-rail{min-height:0;flex-direction:row;justify-content:center}.estudio-left-rail:after{display:none}.estudio-center,.estudio-decisions{grid-column:1}.estudio-canvas{min-height:280px}.estudio-dock{grid-template-columns:repeat(2,minmax(0,1fr))}.estudio-dock-button{min-height:48px}.estudio-view-controls input{width:58px}}
+  @media(max-width:980px){#estudio-app{padding:0 14px 20px}.estudio-layout{grid-template-columns:42px minmax(0,1fr);gap:10px}.estudio-decisions{grid-column:2;border-left:0;border-top:1px solid #312b2b;padding:18px 0 0}.estudio-left-rail{min-height:480px}.estudio-canvas{min-height:360px}.estudio-dock-button{min-height:54px;font-size:.52rem}.archive-view-formats,.archive-contracurator-grid{grid-template-columns:1fr}.archive-view-format-purpose{min-height:0}body.estudio-principal>.archive-view{margin:0 14px 10px}}
+  @media(max-width:620px){.estudio-layout{grid-template-columns:1fr}.estudio-left-rail{min-height:0;flex-direction:row;justify-content:center;flex-wrap:wrap}.estudio-left-rail:after{display:none}.estudio-center,.estudio-decisions{grid-column:1}.estudio-canvas{min-height:280px}.estudio-dock{grid-template-columns:repeat(2,minmax(0,1fr))}.estudio-dock-button{min-height:48px}.estudio-view-controls input{width:58px}.archive-view-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
   #mak-inbox{display:grid;grid-template-columns:minmax(0,1fr) minmax(360px,410px);column-gap:18px;padding:18px 20px 28px;border-bottom:1px solid #1a1916;background:#101014}
   #mak-inbox>h2,#mak-inbox>.sub,#mak-inbox>.barra-inbox{grid-column:1 / -1}
   #inbox-asociacion{grid-column:2;grid-row:6 / span 7;position:sticky;top:110px;max-height:calc(100vh - 128px);overflow:auto;align-self:start}
@@ -859,6 +922,18 @@
   <div class="estudio-loading">Cargando archivo visual de MAK…</div>
 </section>
 
+<section id="archive-portfolio-view" class="archive-view" data-state="idle" aria-labelledby="archive-portfolio-title">
+  <div class="archive-view-header">
+    <div class="archive-view-heading">
+      <span class="archive-view-kicker">portafolio general · lectura interna</span>
+      <h2 id="archive-portfolio-title">Tres lecturas del mismo archivo</h2>
+      <p>Obras declaradas, campo observado y contexto de práctica permanecen separados. Esta superficie consulta el Hub en modo lectura.</p>
+    </div>
+    <button type="button" class="archive-view-refresh" onclick="cargarArchivePortfolioView()">actualizar lectura</button>
+  </div>
+  <div id="archive-portfolio-content"><div class="archive-view-status" role="status">La lectura general todavía no se ha solicitado.</div></div>
+</section>
+
 <section id="mak-inbox">
   <h2>Archivo visual</h2>
   <div class="sub">Explora el material original de Instagram. Las tarjetas muestran el archivo; la mesa de la derecha contiene únicamente tu selección.</div>
@@ -1031,6 +1106,9 @@ let ESTUDIO_PASS_OFFSET = 0;
 let ESTUDIO_PASS_SELECTED = new Set();
 const ESTUDIO_FEEDBACK_BUSY = new Set();
 const ESTUDIO_SUGGESTION_POSITIONS = new Map();
+const ARCHIVE_VIEW_FORMAT_IDS = ['declared-works','observed-field','practice-context'];
+let ARCHIVE_PORTFOLIO_VIEW = null;
+let ARCHIVE_PORTFOLIO_STATE = 'idle';
 const ESTUDIO_SESSION_ID = "estudio-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
 
 function estudioIcon(name){
@@ -1047,7 +1125,8 @@ function estudioIcon(name){
     send:'<path d="m3 4 18 8-18 8 4-8-4-8z"></path><path d="M7 12h14"></path>',
     tray:'<path d="M4 5h16v14H4z"></path><path d="M4 14h4l2 2h4l2-2h4"></path>',
     expand:'<path d="M8 3H3v5M16 3h5v5M8 21H3v-5M21 16v5h-5"></path>',
-    spark:'<path d="m12 2 1.4 7.6L21 12l-7.6 1.4L12 21l-1.4-7.6L3 12l7.6-2.4L12 2z"></path>'
+    spark:'<path d="m12 2 1.4 7.6L21 12l-7.6 1.4L12 21l-1.4-7.6L3 12l7.6-2.4L12 2z"></path>',
+    book:'<path d="M4 4h6a3 3 0 0 1 3 3v13a3 3 0 0 0-3-3H4z"></path><path d="M20 4h-4a3 3 0 0 0-3 3v13a3 3 0 0 1 3-3h4z"></path>'
   };
   return `<svg viewBox="0 0 24 24" aria-hidden="true">${shapes[name]||shapes.square}</svg>`;
 }
@@ -1109,6 +1188,266 @@ function estudioArchivePanel(){
   return `<section class="estudio-archive-panel" aria-label="Archivo visual ordenable"><div class="estudio-archive-head"><strong>archivo visual · obras editoriales</strong><label>orden <select onchange="estudioSetOrder(this.value)"><option value="date_asc" ${ESTUDIO_ORDER==='date_asc'?'selected':''}>fecha antigua → nueva</option><option value="date_desc" ${ESTUDIO_ORDER==='date_desc'?'selected':''}>fecha nueva → antigua</option></select></label><label>pasada <select onchange="estudioSetPassSize(this.value)"><option value="10" ${ESTUDIO_PASS_SIZE===10?'selected':''}>10 unidades</option><option value="20" ${ESTUDIO_PASS_SIZE===20?'selected':''}>20 unidades</option></select></label><button type="button" onclick="estudioPassPrevious()" aria-label="pasada anterior">←</button><button type="button" onclick="estudioPassNext()" aria-label="pasada siguiente">→</button><button type="button" onclick="estudioResetPass()">reiniciar</button></div><div class="estudio-archive-help">${all.length?`mostrando ${start+1}–${end} de ${all.length} unidades · ${mediaCount} medios dentro de esta pasada · ${ESTUDIO_PASS_SELECTED.size} medios seleccionados`: 'sin registros visuales'}</div><div class="estudio-archive-grid">${cards||'<span class="estudio-action-panel">No hay unidades para esta pasada.</span>'}</div></section>`;
 }
 
+function archiveViewValidate(payload){
+  if(!payload||typeof payload!=='object'||Array.isArray(payload))return false;
+  if(payload.schema!=='mak-archive-portfolio-view-v1'||payload.scope!=='general_archive_portfolio'||payload.status!=='draft_only')return false;
+  if(!payload.source||payload.source.kind!=='iskvw_archive_projection'||payload.source.path_hint!=='iskvw/datos/archivo.json'||!/^sha256:[0-9a-f]{64}$/.test(payload.source.input_hash||''))return false;
+  if(!Array.isArray(payload.formats)||payload.formats.length!==3||!Array.isArray(payload.items)||!Array.isArray(payload.relationships)||!Array.isArray(payload.gaps))return false;
+  if(payload.formats.map(format=>format?.format_id).join('|')!==ARCHIVE_VIEW_FORMAT_IDS.join('|'))return false;
+  const itemIds=new Set();
+  for(const item of payload.items){
+    if(!item||typeof item.item_id!=='string'||!item.item_id||typeof item.source_ref!=='string'||!item.source_ref.startsWith('iskvw:piece:'))return false;
+    if(itemIds.has(item.item_id)||!Array.isArray(item.roles)||!item.roles.length||item.roles.some(role=>!['declared_work','observed_archive_piece','practice_context'].includes(role)))return false;
+    if(item.title!==null&&typeof item.title!=='string')return false;
+    if(item.summary!==null&&typeof item.summary!=='string')return false;
+    if(item.observed_description!==null&&typeof item.observed_description!=='string')return false;
+    if(!item.medium||typeof item.medium!=='object'||Array.isArray(item.medium)||typeof item.epistemic_status!=='string')return false;
+    if(typeof item.observed_description_is_not_author_statement!=='boolean')return false;
+    itemIds.add(item.item_id);
+  }
+  for(const format of payload.formats){
+    if(!format||typeof format.purpose!=='string'||!Array.isArray(format.item_ids)||!Number.isInteger(format.omitted_count)||format.omitted_count<0)return false;
+    if(format.item_ids.some(itemId=>!itemIds.has(itemId)))return false;
+  }
+  const selection=payload.selection;
+  const catalog=payload.catalog;
+  if(!selection||!catalog||!Number.isInteger(catalog.piece_count)||catalog.piece_count<0||!Number.isInteger(catalog.link_count)||catalog.link_count<0)return false;
+  if(selection.selected_item_count!==payload.items.length||selection.declared_work_count!==payload.formats[0].item_ids.length||selection.observed_field_count!==payload.formats[1].item_ids.length||selection.practice_context_count!==payload.formats[2].item_ids.length)return false;
+  if(!payload.control||payload.control.publication!==false||payload.control.submission!==false||payload.control.dispatch!==false||payload.control.source_mutation!==false||payload.control.promotion!=='none')return false;
+  if(!payload.provenance||payload.provenance.filename_is_not_authorship!==true||payload.provenance.observed_text_is_not_author_statement!==true||payload.provenance.source_hash!==payload.source.input_hash)return false;
+  if(!payload.reconciliation||payload.reconciliation.truth_promotions!==0||payload.reconciliation.source_preserved_by_hash!==true)return false;
+  if(payload.contracurator!==undefined&&!archiveViewContracuratorValidate(payload.contracurator,payload.source.input_hash,payload.items.length))return false;
+  return payload.gaps.every(gap=>typeof gap==='string');
+}
+
+function archiveViewContracuratorValidate(value,sourceHash,visibleItemCount){
+  if(!value||typeof value!=='object'||Array.isArray(value))return false;
+  if(value.schema!=='mak-contracurator-exhibition-v1'||value.scope!=='iskvw_internal_falsifiable_curation'||!['survived','abstain'].includes(value.status))return false;
+  if(!value.input||value.input.source_hash!==sourceHash||value.input.visible_item_count!==visibleItemCount||value.input.source_rescan!==false)return false;
+  if(!Array.isArray(value.theses)||value.theses.length!==3||!value.result||value.result.status!==value.status)return false;
+  for(const thesis of value.theses){
+    if(!thesis||typeof thesis.thesis_id!=='string'||!Array.isArray(thesis.source_refs)||thesis.source_refs.length<8||thesis.source_refs.length>12||!Array.isArray(thesis.selection)||thesis.selection.length!==thesis.source_refs.length||!Array.isArray(thesis.counterevidence)||!thesis.counterevidence.length||!thesis.assessment)return false;
+    if(thesis.source_refs.some(ref=>typeof ref!=='string'||!ref.startsWith('iskvw:piece:')))return false;
+    if(thesis.selection.some(row=>!row||typeof row.source_ref!=='string'||!Array.isArray(row.relation_refs)||typeof row.contextual_reason!=='string'))return false;
+  }
+  if(!value.control||value.control.database_write!==false||value.control.publication!==false||value.control.submission!==false||value.control.dispatch!==false||value.control.training_permitted!==false||value.control.promotion!=='none')return false;
+  if(!value.provenance||value.provenance.filename_is_not_authorship!==true||value.provenance.observed_text_is_not_author_statement!==true||value.provenance.typed_derivation_required_for_independent_derivative!==true)return false;
+  if(!value.product_episode||value.product_episode.schema!=='mak-contracurator-product-episode-v1'||value.product_episode.result_status!==value.status)return false;
+  const basisGuard=value.provenance&&value.provenance.ssd_order_foundation;
+  if(basisGuard){
+    if(basisGuard.used_for_selection!==false)return false;
+    const reviewGuard=basisGuard.operator_review;
+    if(!reviewGuard||reviewGuard.machine_answerable!==false||reviewGuard.selection_effect!=='none')return false;
+    if(!Array.isArray(reviewGuard.attestation_queue)||reviewGuard.attestation_queue.some(row=>!row||row.answered!==false||row.selection_effect!=='none'))return false;
+    if(reviewGuard.answers_recorded!==0)return false;
+    const frontierGuard=basisGuard.research_frontier;
+    if(!frontierGuard||frontierGuard.dispatch!==false||frontierGuard.create_job_invoked!==false||frontierGuard.job_count!==0)return false;
+  }
+  if(value.status==='survived'){
+    const exhibition=value.result.exhibition;
+    if(!exhibition||!Array.isArray(exhibition.source_refs)||exhibition.source_refs.length<8||exhibition.source_refs.length>12||!Array.isArray(exhibition.why_in)||!Array.isArray(exhibition.why_out)||!exhibition.alternative_version)return false;
+    return exhibition.source_refs.every(ref=>typeof ref==='string'&&ref.startsWith('iskvw:piece:'));
+  }
+  return value.result.exhibition===null&&value.result.selected_thesis_id===null;
+}
+
+function archiveViewBytes(value){
+  const bytes=Number(value||0);
+  if(!Number.isFinite(bytes)||bytes<=0)return '0 B';
+  const units=['B','KB','MB','GB','TB'];
+  let index=0,scaled=bytes;
+  while(scaled>=1024&&index<units.length-1){scaled/=1024;index++;}
+  return `${scaled.toFixed(index?1:0)} ${units[index]}`;
+}
+
+function archiveViewEvidenceList(rows,label){
+  if(!Array.isArray(rows)||!rows.length)return '';
+  const items=rows.map(row=>`<li>${esc(row.statement||'')}<br><span class="archive-operator-ref">${esc(row.source_ref||'')}</span></li>`).join('');
+  return `<div class="archive-operator-evidence"><b>${esc(label)}</b><ul>${items}</ul></div>`;
+}
+
+function archiveViewSideNote(side){
+  if(!side)return 'sin lado';
+  const bound=side.container_binding==='bound_to_ssd_index_container_root';
+  const binding=bound?`${Number(side.ssd_project_count||0)} proyectos SSD · ${Number(side.ssd_asset_count||0)} assets`:'no ligado al índice SSD';
+  const authority=side.authority&&side.authority.status==='authority_bound_context'?'autoridad externa disponible':'sin autoridad externa ligada';
+  const pending=Number(side.hash_pending_assets||0);
+  const intake=Number(side.intake?.candidate_count||0);
+  const intakeNote=intake?`${intake} candidato(s) intake · atención de flujo, no valor artístico`:'sin candidato intake';
+  const recon=Number(side.reconstruction?.decided_project_count||0);
+  const roles=side.reconstruction?.role_counts||{};
+  const roleText=Object.keys(roles).sort().map(k=>`${k}=${Number(roles[k])}`).join(' ');
+  const reconNote=recon?`${recon} decisión(es) de reconstrucción${roleText?` (${roleText})`:''}`:'sin reconstrucción';
+  const rels=Number(side.index_relations?.touching_container||0);
+  return `${esc(side.container||'')} · ${esc(binding)} · ${esc(authority)}${pending?` · ${pending} hashes pendientes`:''} · ${esc(intakeNote)} · ${esc(reconNote)} · ${rels} relaciones del índice tocan el contenedor`;
+}
+
+function archiveViewOperatorQuestion(question,full){
+  const grade=esc(question.evidence_grade||'sin grado');
+  const examples=(question.examples||[]).slice(0,3).map(esc).join(' · ');
+  const answers=(question.answers||[]).map(esc).join(' / ');
+  const unbound=(question.unbound_containers||[]);
+  const tiers=question.identity_tiers||{};
+  const tierText=Object.keys(tiers).sort().map(k=>`${k}×${Number(tiers[k])}`).join(' ');
+  const kinds=(question.actionable_evidence_kinds||[]);
+  const binding=Number(question.typed_relation_binding_this_pair||0);
+  const head=`<b>${esc(question.left)} ↔ ${esc(question.right)}</b> <span class="archive-operator-grade" data-grade="${grade}">${grade} · ${esc(archiveViewBytes(question.substantive_shared_bytes))} sustantivos</span>${tierText?` <span class="archive-operator-grade" data-grade="tier">${esc(tierText)}</span>`:''}`;
+  if(!full){
+    const defer=question.deferral_reason?`<br><i>diferida: ${esc(question.deferral_reason)}</i>`:'';
+    return `<li>${head}<br><small>${Number(question.shared_classes||0)} clases · ${esc(archiveViewBytes(question.shared_bytes))} · opciones: ${answers} · relación tipada que une el par: ${binding}${kinds.length?` · evidencia accionable: ${kinds.map(esc).join(', ')}`:''}${unbound.length?` · sin contenedor indexado: ${unbound.map(esc).join(', ')}`:''}${defer}<br>${esc(question.evidence_ref||'')}</small></li>`;
+  }
+  const bi=question.byte_identity||{};
+  const sides=question.sides||{};
+  const spanning=Number(bi.classes_spanning_more_than_two_containers||0);
+  const others=(bi.other_containers_in_shared_classes||[]).map(esc).join(', ');
+  const byteLine=`recomputado desde el registro de bytes: ${Number(bi.recomputed_shared_classes||0)} clases · ${esc(archiveViewBytes(bi.recomputed_shared_bytes))} · reproduce la fuente: ${bi.matches_declared_question?'sí':'no'} · sustantivas ${Number(bi.substantive_class_count||0)} · vacías ${Number(bi.zero_byte_class_count||0)} · AppleDouble ${Number(bi.appledouble_class_count||0)}${spanning?` · ${spanning} clases alcanzan también: ${others}`:''}`;
+  const tr=question.typed_relations||{};
+  const trLine=`relación tipada que une este par: ${Number(tr.binding_this_pair||0)} · relaciones del índice que tocan un contenedor: ${Number(tr.relations_touching_either_container||0)} (${Number(tr.empty_content_duplicates_touching_either_container||0)} son duplicados sobre contenido vacío) · el índice tiene ${Number(tr.index_typed_non_duplicate_relations||0)} relaciones tipadas no-duplicado y ${Number(tr.index_cross_container_typed_non_duplicate_relations||0)} cruzan contenedores`;
+  const memberCount=Number(bi.shared_member_path_count||0);
+  const members=(bi.shared_member_paths||[]).map(esc).join(' · ');
+  const kindLine=kinds.length?`evidencia accionable disponible: ${kinds.map(esc).join(', ')}`:`sin evidencia accionable: ${esc(question.deferral_reason||'')}`;
+  return `<li>${head}<br>${esc(question.question||'')}
+    <div class="archive-operator-meta">${esc(kindLine)}</div>
+    <div class="archive-operator-meta">${esc(trLine)}</div>
+    <div class="archive-operator-meta">miembros compartidos (${memberCount}): ${members}</div>
+    <div class="archive-operator-meta">opciones permitidas por la fuente: ${answers}<br>ejemplos: ${examples}</div>
+    <div class="archive-operator-meta">izquierda: ${archiveViewSideNote(sides.left)}<br>derecha: ${archiveViewSideNote(sides.right)}</div>
+    <div class="archive-operator-meta">${esc(byteLine)}</div>
+    ${archiveViewEvidenceList(question.evidence_for,'Evidencia a favor')}
+    ${archiveViewEvidenceList(question.evidence_against,'Evidencia en contra')}
+    ${archiveViewEvidenceList(question.missing_evidence,'Evidencia faltante')}
+    <div class="archive-operator-meta">reabrir cuando: ${esc(question.reopen_when||'')} <span class="archive-operator-ref">(${esc(question.reopen_when_source||'')})</span></div>
+    <div class="archive-operator-meta">resuelve: ${esc((question.resolution||{}).resolved_by||'operator_attestation_only')} · machine_answerable=false · selection_effect=none</div>
+    <div class="archive-operator-ref">${esc(question.evidence_ref||'')}</div></li>`;
+}
+
+function archiveViewOperatorSection(basis){
+  const review=basis&&basis.operator_review;
+  if(!review||!Array.isArray(review.question_samples)||!review.question_samples.length)return '';
+  const triage=review.triage||{};
+  const grades=triage.grade_counts||{};
+  const gradeText=Object.keys(grades).sort().map(key=>`${Number(grades[key])} ${esc(key)}`).join(' · ');
+  const unbound=(triage.unbound_containers||[]).map(esc).join(', ');
+  const asked=review.question_samples.map(question=>archiveViewOperatorQuestion(question,true)).join('');
+  const deferred=(review.deferred_samples||[]).map(question=>archiveViewOperatorQuestion(question,false)).join('');
+  const deferredBlock=deferred?`<details class="archive-contracurator-map"><summary>${(review.deferred_samples||[]).length} preguntas diferidas · reabribles</summary><ul class="archive-contracurator-list">${deferred}</ul></details>`:'';
+  const frontier=basis.research_frontier||{};
+  const gates=(frontier.blocking_gates||[]).map(gate=>`<li><b>${esc(gate.gate||'')}</b><br>${esc(gate.why_refused||'')}<br><span class="archive-operator-ref">${esc(gate.source_ref||'')}</span></li>`).join('');
+  const pilot=frontier.existing_pilot_chain||{};
+  const pilotBlock=pilot.status==='present_pilot_scope'?`<div class="archive-operator-meta"><b>Cadena piloto preexistente, citada y no adoptada.</b> ${Number(pilot.relation_count||0)} relaciones ${esc(Object.keys(pilot.relation_statuses||{}).join(', '))} en <span class="archive-operator-ref">${esc(pilot.relations_ref||'')}</span> sha256 ${esc(String(pilot.relations_sha256||'').slice(0,16))}… · frontera ya compilada: ${Number(pilot.research_frontier?.job_count||0)} job(s) ${esc(pilot.research_frontier?.status||'')}, ${Number(pilot.research_frontier?.dispatched_job_count||0)} despachados.<br>No se adopta porque: ${(pilot.why_not_adopted||[]).map(esc).join(' · ')}<br>No sirve para: ${(pilot.not_usable_for||[]).map(esc).join(' · ')}</div>`:'';
+  const frontierBlock=`<div class="archive-operator-frontier"><b>Frontera de investigación (${esc(frontier.scope||'ssd_order_frontier')}): ${esc(frontier.status||'abstain')}</b> · ${Number(frontier.job_count||0)} jobs · dispatch=false · create_job_invoked=false<br>${esc(frontier.reason||'')}${frontier.precision_note?`<br><i>${esc(frontier.precision_note)}</i>`:''}<ul class="archive-contracurator-list">${gates}</ul>${pilotBlock}<div class="archive-operator-meta">reabrir cuando: ${esc(frontier.reopen_when||'')}</div></div>`;
+  const tiers=review.identity_tiers||{};
+  const tierRec=tiers.recomputed_from_ledger||{};
+  const tierLine=Object.keys(tierRec).sort().map(k=>`${esc(k)}=${Number(tierRec[k])}`).join(' · ');
+  const tierBlock=tierLine?`<p class="archive-operator-meta">Tiers de identidad recomputados desde el registro de bytes: ${tierLine} · reproduce los totales declarados por la proyección de orden: ${tiers.reproduces_declared_totals?'sí':'no'}</p>`:'';
+  const irr=review.index_relation_reality||{};
+  const irrBlock=`<p class="archive-operator-meta">Realidad de las relaciones del índice SSD: ${Number(irr.relation_total||0)} en total, de las cuales ${Number(irr.exact_duplicate_on_empty_content||0)} son duplicados exactos sobre contenido vacío y ${Number(irr.exact_duplicate_substantive||0)} sustantivos; ${Number(irr.typed_non_duplicate_relations||0)} relaciones tipadas no-duplicado, ${Number(irr.cross_container_typed_non_duplicate_relations||0)} de ellas cruzan contenedores. Preguntas con una relación tipada que une el par: ${Number(irr.questions_with_a_binding_typed_relation||0)}.</p>`;
+  const audit=basis.crosswalk_binding_audit||{};
+  const linkClasses=audit.operational_possible_link_classes||{};
+  const linkText=Object.keys(linkClasses).sort().map(k=>`${Number(linkClasses[k])}×${esc(k)}`).join(' · ');
+  const auditBlock=audit.candidates_checked?`<p class="archive-operator-meta">Cruce SSD↔ISKVW auditado uno por uno sobre ${(audit.bases_scanned||[]).length} superficies: ${Number(audit.candidates_checked)} candidatos · con hash de contenido compartido ${Number(audit.with_shared_content_hash||0)} · con recibo de entrega ${Number(audit.with_delivery_receipt||0)} · con referencia tipada ${Number(audit.with_typed_reference||0)} · ecos de locator en filenames derivados ${Number(audit.derived_locator_echoes||0)} (no son referencias)${linkText?` · enlaces operacionales preexistentes ${Number(audit.operational_possible_links||0)} (${linkText}), no vinculan`:''}. ${esc(audit.conclusion||'')}</p>`:'';
+  const sources=(review.evidence_sources||[]).map(row=>`${esc(row.role||'')}: ${esc(row.path||'')}${row.sha256?` · sha256 ${esc(String(row.sha256).slice(0,16))}…`:row.status?` · ${esc(row.status)}`:''}`).join('<br>');
+  return `<details class="archive-contracurator-map archive-operator">
+    <summary>Frontera operatoria · ${Number(review.asked_count||0)} preguntas prioritarias + ${Number(review.deferred_count||0)} diferidas · no resueltas por MAK</summary>
+    <p class="archive-operator-warning">Son preguntas para una persona, no respuestas de MAK. MAK no puede saber si dos carpetas son la misma comisión. Ninguna de estas filas cambia la selección: <b>no usada para seleccionar</b> · <b>falta referencia tipada</b> · <b>database_write=false</b> · <b>training=false</b>.</p>
+    <p class="archive-operator-meta">Triaje por bytes (no es calidad artística ni una respuesta): ${esc(gradeText)} · ${Number(triage.questions_reproduced_from_independent_ledger||0)}/${Number(review.asked_count||0)+Number(review.deferred_count||0)} reproducidas desde un registro de identidad de bytes independiente${unbound?` · contenedores sin proyecto indexado: ${unbound}`:''}</p>
+    <p class="archive-operator-meta">Cola de atestación: ${esc(review.attestation_queue_status||'')} · ${Number(review.answers_recorded||0)} respuestas registradas · ${(review.attestation_queue||[]).length} filas en espera · con evidencia accionable ${Number(triage.questions_with_actionable_evidence||0)} / sin ninguna ${Number(triage.questions_without_actionable_evidence||0)}</p>
+    ${tierBlock}
+    ${irrBlock}
+    ${auditBlock}
+    <ul class="archive-contracurator-list">${asked}</ul>
+    ${deferredBlock}
+    ${frontierBlock}
+    <div class="archive-operator-ref">Fuentes de evidencia (solo lectura):<br>${sources}</div>
+  </details>`;
+}
+
+function archiveViewDisplayLabel(item){
+  if(typeof item?.title==='string'&&item.title.trim())return {text:item.title.trim(),neutral:false};
+  return {text:`ref · ${String(item?.item_id||'sin-id')}`,neutral:true};
+}
+
+function archiveViewFormatLabel(formatId){
+  return {'declared-works':'obras declaradas','observed-field':'campo observado','practice-context':'práctica y contexto'}[formatId]||formatId;
+}
+
+function archiveViewItem(item,formatId){
+  const label=archiveViewDisplayLabel(item);
+  const description=formatId==='declared-works'?(item.summary||'sin resumen declarado'):(item.observed_description||item.summary||(formatId==='practice-context'?'registro técnico sin descripción declarada':'sin descripción observada'));
+  const roleNote=formatId==='practice-context'?'contexto técnico · no obra automáticamente':formatId==='observed-field'?'observación de fuente · no declaración del artista':'registro declarado en la fuente';
+  const tags=(item.tags||[]).slice(0,4).map(tag=>`<span>${esc(tag)}</span>`).join('');
+  return `<li class="archive-view-item"><span class="archive-view-item-title" data-neutral="${label.neutral}">${esc(label.text)}</span>${label.neutral?'<span class="archive-view-neutral">etiqueta de referencia · no es título autoral</span>':''}<div class="archive-view-description">${esc(description)}</div><div class="archive-view-meta"><span>${esc(item.date||'sin fecha')}</span><span>${esc(roleNote)}</span><span>${Number(item.link_degree||0)} vínculos</span>${tags}</div><div class="archive-view-provenance">procedencia: ${esc(item.source_ref)} · estado ${esc(item.epistemic_status)}</div></li>`;
+}
+
+function archiveViewContracurator(view){
+  const data=view.contracurator;
+  if(!data)return '';
+  if(data.status==='abstain')return `<section class="archive-contracurator" aria-label="Contracurador"><div class="archive-contracurator-header"><h3>Contracurador · abstención</h3><span class="archive-contracurator-status">sin exposición fabricada</span></div><p class="archive-contracurator-text">Ninguna tesis sobrevivió a la evidencia disponible. La abstención conserva el archivo sin convertir una lectura insuficiente en identidad.</p></section>`;
+  const exhibition=data.result.exhibition;
+  const byRef=new Map(view.items.map(item=>[item.source_ref,item]));
+  const selected=exhibition.why_in.map(row=>{
+    const item=byRef.get(row.source_ref);
+    const label=item?archiveViewDisplayLabel(item):{text:row.source_ref,neutral:true};
+    return `<li><b>${esc(label.text)}</b><br>${esc(row.contextual_reason)}<br><small>${esc(row.source_ref)} · ${row.relation_refs.length} vínculos tipados</small></li>`;
+  }).join('');
+  const excluded=exhibition.why_out.map(row=>`<li><b>${esc(row.source_ref)}</b><br>${esc(row.reason)}</li>`).join('');
+  const defeated=data.theses.filter(thesis=>thesis.assessment?.status==='defeated').map(thesis=>`<li><b>${esc(thesis.thesis_id)}</b><br>${esc((thesis.assessment.rejection_reasons||[]).join(' · '))}</li>`).join('');
+  const alternate=exhibition.alternative_version;
+  const limits=(data.result.limits||[]).map(limit=>esc(limit)).join(' · ');
+  const basis=data.provenance?.ssd_order_foundation;
+  const basisInventory=basis?.inventory;
+  const basisOrder=basis?.order_summary;
+  const basisReview=basis?.operator_review;
+  const basisBuckets=basisOrder?.bucket_counts;
+  const basisCandidates=basis?.crosswalk_candidate_count||0;
+  const basisTriage=basisReview?.triage?.grade_counts||{};
+  const basisTriageText=Object.keys(basisTriage).sort().map(key=>`${Number(basisTriage[key])} ${key}`).join(' / ');
+  const basisNote=basis?`Base SSD: ${esc(basis.status)} · ${basisInventory?.assets||0} assets / ${basisInventory?.projects||0} proyectos · ${basisOrder?.operator_ties||0} empates abiertos · ${basisReview?.asked_count||basisOrder?.questions_to_ask||0} preguntas operador${basisReview?.deferred_count?` + ${basisReview.deferred_count} diferidas`:''}${basisTriageText?` (${esc(basisTriageText)})`:''} · cruce SSD↔ISKVW: ${esc(basis.crosswalk_status)}${basisCandidates?` (${basisCandidates} candidatos por locator)` : ''} · ${basis.used_for_selection?'habilitada por referencia tipada':'no usada para seleccionar: falta referencia tipada'}`:'Base SSD no adjunta en esta ejecución';
+  const operatorQuestionDetails=basis?archiveViewOperatorSection(basis):'';
+  return `<section class="archive-contracurator" aria-labelledby="archive-contracurator-title"><div class="archive-contracurator-header"><h3 id="archive-contracurator-title">Contracurador · ${esc(exhibition.title)}</h3><span class="archive-contracurator-status">tesis sobreviviente</span></div><p class="archive-contracurator-text">${esc(exhibition.curatorial_text)}</p><div class="archive-contracurator-grid"><section class="archive-contracurator-card"><h4>Por qué entra</h4><ul class="archive-contracurator-list">${selected}</ul></section><section class="archive-contracurator-card"><h4>Dos tesis derrotadas</h4><ul class="archive-contracurator-list">${defeated}</ul><div class="archive-contracurator-defeat"><b>Versión alternativa:</b> ${esc(alternate.title)} · ${esc(alternate.status)}<br>${esc(alternate.reason)}</div></section></div><details class="archive-contracurator-map"><summary>Mapa completo: por qué queda fuera (${exhibition.why_out.length})</summary><ul class="archive-contracurator-list">${excluded}</ul></details>${operatorQuestionDetails}<div class="archive-contracurator-limit">Límites: ${limits}<br>${basisNote}<br>Episodio causal: ${esc(data.product_episode.episode_id)} · database_write=false · training=false.</div></section>`;
+}
+
+function archiveViewReadyContent(view){
+  const byId=new Map(view.items.map(item=>[item.item_id,item]));
+  const formats=view.formats.map(format=>{
+    const rows=format.item_ids.map(itemId=>archiveViewItem(byId.get(itemId),format.format_id)).join('');
+    return `<section class="archive-view-format" aria-labelledby="archive-view-${esc(format.format_id)}"><div class="archive-view-format-header"><h3 id="archive-view-${esc(format.format_id)}">${esc(archiveViewFormatLabel(format.format_id))}</h3><b>${format.item_ids.length}</b></div><div class="archive-view-format-purpose">${esc(format.purpose)}</div><ul class="archive-view-list">${rows||'<li class="archive-view-item">Sin registros seleccionados en este formato.</li>'}</ul><div class="archive-view-omitted">${format.omitted_count} registros omitidos por el límite; permanecen en la fuente.</div></section>`;
+  }).join('');
+  const gaps=view.gaps.length?view.gaps.map(gap=>esc(gap)).join(' · '):'sin gaps declarados';
+  return `<div class="archive-view-summary" aria-label="Conteos del archivo"><div class="archive-view-stat"><b>${view.catalog.piece_count}</b><span>piezas fuente</span></div><div class="archive-view-stat"><b>${view.catalog.link_count}</b><span>vínculos fuente</span></div><div class="archive-view-stat"><b>${view.selection.selected_item_count}</b><span>filas visibles</span></div><div class="archive-view-stat"><b>${view.selection.omitted_piece_count}</b><span>omitidas, no borradas</span></div></div><div class="archive-view-formats">${formats}</div>${archiveViewContracurator(view)}<div class="archive-view-gaps"><strong>Gaps declarados:</strong> ${gaps}</div><div class="archive-view-source">procedencia: ${esc(view.source.path_hint)} · ${esc(view.source.fuente)} · generado ${esc(view.source.generated||'sin fecha declarada')} · ${esc(view.source.input_hash)}</div><div class="archive-view-boundary">Lectura interna y read-only. No infiere autor, serie, publicación ni elegibilidad; publicación=false · submission=false · dispatch=false · promotion=none.</div>`;
+}
+
+function estudioArchivePortfolioView(){
+  let content='<div class="archive-view-status" role="status">La lectura general todavía no se ha solicitado.</div>';
+  if(ARCHIVE_PORTFOLIO_STATE==='loading')content='<div class="archive-view-status" role="status">Cargando las tres lecturas del archivo…</div>';
+  if(ARCHIVE_PORTFOLIO_STATE==='unavailable')content='<div class="archive-view-status" data-kind="error" role="alert">Vista general no disponible. No se muestran datos parciales; el archivo y sus decisiones permanecen sin cambios.</div>';
+  if(ARCHIVE_PORTFOLIO_STATE==='ready'&&ARCHIVE_PORTFOLIO_VIEW)content=archiveViewReadyContent(ARCHIVE_PORTFOLIO_VIEW);
+  return `<section id="archive-portfolio-view" class="archive-view" data-state="${esc(ARCHIVE_PORTFOLIO_STATE)}" aria-labelledby="archive-portfolio-title"><div class="archive-view-header"><div class="archive-view-heading"><span class="archive-view-kicker">portafolio general · lectura interna</span><h2 id="archive-portfolio-title">Tres lecturas del mismo archivo</h2><p>Obras declaradas, campo observado y contexto de práctica permanecen separados. Esta superficie consulta el Hub en modo lectura.</p></div><button type="button" class="archive-view-refresh" onclick="cargarArchivePortfolioView()" ${ARCHIVE_PORTFOLIO_STATE==='loading'?'disabled':''}>actualizar lectura</button></div><div id="archive-portfolio-content">${content}</div></section>`;
+}
+
+function archiveViewRefreshPanel(){
+  const panel=document.getElementById('archive-portfolio-view');
+  if(panel)panel.outerHTML=estudioArchivePortfolioView();
+}
+
+async function cargarArchivePortfolioView(){
+  ARCHIVE_PORTFOLIO_VIEW=null;
+  ARCHIVE_PORTFOLIO_STATE='loading';
+  archiveViewRefreshPanel();
+  try{
+    const response=await fetch('/api/portfolio/archive-view',{cache:'no-store'});
+    if(!response.ok)throw new Error(`HTTP ${response.status}`);
+    const payload=await response.json();
+    if(!archiveViewValidate(payload))throw new Error('archive_portfolio_view_contract_invalid');
+    ARCHIVE_PORTFOLIO_VIEW=payload;
+    ARCHIVE_PORTFOLIO_STATE='ready';
+  }catch(error){
+    ARCHIVE_PORTFOLIO_VIEW=null;
+    ARCHIVE_PORTFOLIO_STATE='unavailable';
+  }
+  archiveViewRefreshPanel();
+}
+
 function estudioOption(step,value,label,variant=''){
   const item=ESTUDIO_ITEMS.find(candidate=>candidate.id===ESTUDIO_ACTIVE_ID);
   const state=ESTUDIO_DECISIONS.get(item?.id)||{};
@@ -1163,7 +1502,7 @@ function estudioRender(){
   const suggestions=neighbors.slice(0,3).map(neighbor=>`<button type="button" class="estudio-suggestion-card" onclick="estudioOpen('${esc(neighbor.id)}')">${estudioMedia(neighbor)}<span>${esc(neighbor.fecha||neighbor.id)}</span></button>`).join('');
   const selected=Boolean(item.selection==='seleccionar');
   const reviewButton=pending?`<button type="button" class="estudio-dock-button" data-estudio-review="true" onclick="estudioAction('review')">${estudioIcon('triangle')}<span>revisar candidato</span></button>`:'';
-  app.innerHTML=`<div class="estudio-subtitle">curaduría · contexto · decisión</div><div class="estudio-layout"><nav class="estudio-left-rail" aria-label="herramientas del estudio"><button type="button" class="estudio-rail-button" data-active="true" title="pieza activa" onclick="estudioRail('focus')">${estudioIcon('focus')}</button><button type="button" class="estudio-rail-button" title="pendientes de revisión" onclick="estudioRail('pending')">${estudioIcon('triangle')}</button><button type="button" class="estudio-rail-button" title="archivo visual" onclick="estudioRail('archive')">${estudioIcon('square')}</button><button type="button" class="estudio-rail-button" title="capas" onclick="estudioRail('layers')">${estudioIcon('layers')}</button><button type="button" class="estudio-rail-button" title="relaciones" onclick="estudioRail('relate')">${estudioIcon('link')}</button><button type="button" class="estudio-rail-button" title="mesa" onclick="estudioRail('table')">${estudioIcon('star')}</button><button type="button" class="estudio-rail-button" title="organización" onclick="estudioRail('organize')">${estudioIcon('settings')}</button></nav><main class="estudio-center">${estudioReviewQueue()}${estudioLearningSummary()}${estudioArchivePanel()}<div class="estudio-center-header"><div><div class="estudio-kicker">pieza activa · ${esc(item.tipo_contenido||'registro')}</div><div class="estudio-current-label" title="${esc(item.id)}">${esc(item.id)} · ${esc(item.fecha||'sin fecha')}</div></div><div class="estudio-view-controls"><button type="button" onclick="estudioZoom(-5)" aria-label="alejar">−</button><input id="estudio-zoom" type="range" min="45" max="90" value="${ESTUDIO_ZOOM}" oninput="estudioZoom(this.value,true)"><output id="estudio-zoom-value">${ESTUDIO_ZOOM}%</output><button type="button" onclick="estudioZoom(5)" aria-label="acercar">+</button><button type="button" onclick="estudioFullscreen()" aria-label="pantalla completa">${estudioIcon('expand')}</button></div></div><div class="estudio-visual-legend"><span class="estudio-visual-key estudio-visual-key-active">pieza activa</span><span class="estudio-visual-key estudio-visual-key-candidate">candidato pendiente</span><span class="estudio-visual-key estudio-visual-key-context">contexto visual</span><strong>${neighbors.length+1} medios visibles · ${candidateCount} candidatos</strong></div><div class="estudio-canvas" id="estudio-canvas"><div class="estudio-media-main"><span class="estudio-main-role" data-role="${pending?'candidate':'active'}">${pending?'candidato pendiente':'pieza activa'}</span>${estudioMedia(item,true)}</div>${orbit}</div><div class="estudio-media-caption"><span class="estudio-chip">${esc(item.tipo_contenido||'registro')}</span><span class="estudio-chip">${esc(item.fecha||'sin fecha')}</span><span class="estudio-chip">${esc(item.publicacion_id||'sin publicación')}</span><span class="estudio-chip ${selected?'estudio-chip-amber':'estudio-chip-violet'}">${selected?'en mesa':'selección pendiente'}</span><span class="estudio-chip ${pending?'estudio-chip-violet':'estudio-chip-amber'}">${pending?'candidato · revisión humana':'contexto · no pendiente'}</span></div><div class="estudio-suggestion"><div class="estudio-suggestion-head"><span>sugerencia de triangulación</span><button type="button" onclick="estudioAction('triangulate')">${estudioIcon('spark')} abrir lectura</button></div><div class="estudio-suggestion-grid">${suggestions||'<span class="estudio-action-panel">sin vecinos visuales todavía</span>'}</div></div><div id="estudio-action-panel" class="estudio-action-panel"></div><div class="estudio-dock"><button type="button" class="estudio-dock-button" onclick="estudioAction('classify')">${estudioIcon('tag')}<span>clasificar</span></button><button type="button" class="estudio-dock-button" data-primary="true" onclick="estudioAction('triangulate')">${estudioIcon('triangle')}<span>triangular</span></button>${reviewButton}<button type="button" class="estudio-dock-button" onclick="estudioAction('relate')">${estudioIcon('relation')}<span>relacionar</span></button><button type="button" class="estudio-dock-button" onclick="estudioAction('send')">${estudioIcon('send')}<span>enviar</span></button><button type="button" class="estudio-dock-button" data-active="${selected}" onclick="estudioAction('table')">${estudioIcon('tray')}<span>${selected?'quitar de mesa':'mesa'}</span></button></div></main>${estudioDecisionPanel(item)}</div>`;
+  app.innerHTML=`<div class="estudio-subtitle">curaduría · contexto · decisión</div><div class="estudio-layout"><nav class="estudio-left-rail" aria-label="herramientas del estudio"><button type="button" class="estudio-rail-button" data-active="true" title="pieza activa" onclick="estudioRail('focus')">${estudioIcon('focus')}</button><button type="button" class="estudio-rail-button" title="portafolio general del archivo" aria-label="abrir tres lecturas del archivo" onclick="estudioRail('portfolio')">${estudioIcon('book')}</button><button type="button" class="estudio-rail-button" title="pendientes de revisión" onclick="estudioRail('pending')">${estudioIcon('triangle')}</button><button type="button" class="estudio-rail-button" title="archivo visual" onclick="estudioRail('archive')">${estudioIcon('square')}</button><button type="button" class="estudio-rail-button" title="capas" onclick="estudioRail('layers')">${estudioIcon('layers')}</button><button type="button" class="estudio-rail-button" title="relaciones" onclick="estudioRail('relate')">${estudioIcon('link')}</button><button type="button" class="estudio-rail-button" title="mesa" onclick="estudioRail('table')">${estudioIcon('star')}</button><button type="button" class="estudio-rail-button" title="organización" onclick="estudioRail('organize')">${estudioIcon('settings')}</button></nav><main class="estudio-center">${estudioReviewQueue()}${estudioLearningSummary()}${estudioArchivePanel()}<div class="estudio-center-header"><div><div class="estudio-kicker">pieza activa · ${esc(item.tipo_contenido||'registro')}</div><div class="estudio-current-label" title="${esc(item.id)}">${esc(item.id)} · ${esc(item.fecha||'sin fecha')}</div></div><div class="estudio-view-controls"><button type="button" onclick="estudioZoom(-5)" aria-label="alejar">−</button><input id="estudio-zoom" type="range" min="45" max="90" value="${ESTUDIO_ZOOM}" oninput="estudioZoom(this.value,true)"><output id="estudio-zoom-value">${ESTUDIO_ZOOM}%</output><button type="button" onclick="estudioZoom(5)" aria-label="acercar">+</button><button type="button" onclick="estudioFullscreen()" aria-label="pantalla completa">${estudioIcon('expand')}</button></div></div><div class="estudio-visual-legend"><span class="estudio-visual-key estudio-visual-key-active">pieza activa</span><span class="estudio-visual-key estudio-visual-key-candidate">candidato pendiente</span><span class="estudio-visual-key estudio-visual-key-context">contexto visual</span><strong>${neighbors.length+1} medios visibles · ${candidateCount} candidatos</strong></div><div class="estudio-canvas" id="estudio-canvas"><div class="estudio-media-main"><span class="estudio-main-role" data-role="${pending?'candidate':'active'}">${pending?'candidato pendiente':'pieza activa'}</span>${estudioMedia(item,true)}</div>${orbit}</div><div class="estudio-media-caption"><span class="estudio-chip">${esc(item.tipo_contenido||'registro')}</span><span class="estudio-chip">${esc(item.fecha||'sin fecha')}</span><span class="estudio-chip">${esc(item.publicacion_id||'sin publicación')}</span><span class="estudio-chip ${selected?'estudio-chip-amber':'estudio-chip-violet'}">${selected?'en mesa':'selección pendiente'}</span><span class="estudio-chip ${pending?'estudio-chip-violet':'estudio-chip-amber'}">${pending?'candidato · revisión humana':'contexto · no pendiente'}</span></div><div class="estudio-suggestion"><div class="estudio-suggestion-head"><span>sugerencia de triangulación</span><button type="button" onclick="estudioAction('triangulate')">${estudioIcon('spark')} abrir lectura</button></div><div class="estudio-suggestion-grid">${suggestions||'<span class="estudio-action-panel">sin vecinos visuales todavía</span>'}</div></div><div id="estudio-action-panel" class="estudio-action-panel"></div><div class="estudio-dock"><button type="button" class="estudio-dock-button" onclick="estudioAction('classify')">${estudioIcon('tag')}<span>clasificar</span></button><button type="button" class="estudio-dock-button" data-primary="true" onclick="estudioAction('triangulate')">${estudioIcon('triangle')}<span>triangular</span></button>${reviewButton}<button type="button" class="estudio-dock-button" onclick="estudioAction('relate')">${estudioIcon('relation')}<span>relacionar</span></button><button type="button" class="estudio-dock-button" onclick="estudioAction('send')">${estudioIcon('send')}<span>enviar</span></button><button type="button" class="estudio-dock-button" data-active="${selected}" onclick="estudioAction('table')">${estudioIcon('tray')}<span>${selected?'quitar de mesa':'mesa'}</span></button></div></main>${estudioDecisionPanel(item)}</div>`;
   const canvas=document.getElementById('estudio-canvas');
   if(canvas){
     const layer=document.createElement('div');
@@ -1422,6 +1761,12 @@ function estudioFullscreen(){document.getElementById('estudio-canvas')?.requestF
 function estudioMapRadius(value){ESTUDIO_MAP_RADIUS=Math.max(.08,Math.min(.8,Number(value)||.28));estudioLoadMap();}
 
 function estudioRail(action){
+  if(action==='portfolio'){
+    const panel=document.getElementById('archive-portfolio-view');
+    panel?.scrollIntoView({behavior:'smooth',block:'start'});
+    if(ARCHIVE_PORTFOLIO_STATE==='idle'||ARCHIVE_PORTFOLIO_STATE==='unavailable')cargarArchivePortfolioView();
+    return;
+  }
   if(action==='pending'){const queue=document.querySelector('.estudio-review-queue');if(queue){queue.open=true;queue.scrollIntoView({behavior:'smooth',block:'start'});}return;}
   if(action==='archive'){document.getElementById('estudio-action-panel').innerHTML='<div class="estudio-action-title">Archivo visual</div><div>La galería completa permanece en el Hub. Esta pieza sigue enfocada para no perder contexto.</div>';return;}
   if(action==='relate')return estudioAction('relate');
@@ -1513,7 +1858,7 @@ async function estudioSend(depto){const item=ESTUDIO_ITEMS.find(candidate=>candi
 
 async function cargarEstudioHub(){
   const app=document.getElementById('estudio-app');if(!app)return;app.hidden=false;
-  try{const response=await fetch('/api/portfolio/inbox',{cache:'no-store'});if(!response.ok)throw new Error(`HTTP ${response.status}`);const data=await response.json();ESTUDIO_ITEMS=data.items||[];INBOX=ESTUDIO_ITEMS;await cargarPendientesRevision();ESTUDIO_ACTIVE_ID=estudioSortedItems()[0]?.id||null;estudioRender();}catch(error){app.innerHTML='<div class="estudio-loading">No se pudo cargar el archivo visual del Hub MAK.</div>';}
+  try{const response=await fetch('/api/portfolio/inbox',{cache:'no-store'});if(!response.ok)throw new Error(`HTTP ${response.status}`);const data=await response.json();ESTUDIO_ITEMS=data.items||[];INBOX=ESTUDIO_ITEMS;await cargarPendientesRevision();ESTUDIO_ACTIVE_ID=estudioSortedItems()[0]?.id||null;estudioRender();void cargarArchivePortfolioView();}catch(error){app.innerHTML='<div class="estudio-loading">No se pudo cargar el archivo visual del Hub MAK.</div>';}
 }
 
 async function estudioLoadMap(){
@@ -2656,6 +3001,7 @@ function medirCabecera(){
 }
 
 cargar().then(medirCabecera);
+void cargarArchivePortfolioView();
 </script>
 <script src="mesa_montaje.js?v=20260811-atlas-context-map"></script>
 </body>

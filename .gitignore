@@ -274,3 +274,22 @@ web/venues/index.html
 # Tambien es derivada, y su generador esta al lado:
 # `py tools/venue_geometria_scd.py`.
 !data/venues/scd-plaza-egana.json
+
+# Orden 2026-08-28. `data/*.json` (linea 60) ignora todo el nivel superior de
+# data/, lo que dejaba fuera de git los insumos DECLARADOS que la cadena de
+# portafolio necesita: sin ellos `tools/compile_portfolio.py` no corre en un
+# checkout limpio. Son entradas escritas a mano con esquema propio, no salidas.
+!data/portfolio_practices.json
+!data/portfolio_attestations.json
+!data/demand_source_assessment.json
+!data/evidence_surface_assessments.json
+
+# Los retiros de MAK NO viven en el repo. La convencion de la casa, medida
+# contra la historia de git el 2026-08-28: `.archive/` existio en el repo del
+# 2026-06-30 al 07-03, se renombro a `_archive/legacy_historico_previo/` el
+# 07-27 y `_archive/` se borro entero el 07-30 (458 archivos, dos commits).
+# Desde entonces los retiros van a `/home/mak/_archive/<que>-<por que>-<fecha>/`,
+# fuera del repo, junto a faro_sync_20260809, watsonx-retired-20260820,
+# provider-retirement-20260820, group4-reverted-20260821 y
+# shadow-copies-20260821. El de esta sesion:
+# /home/mak/_archive/orden-limpieza-20260828/ (935 MB + su MANIFEST.md).

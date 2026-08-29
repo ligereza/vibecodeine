@@ -4,7 +4,7 @@
 
 This is a self-contained synthetic experiment for the native endpoint. It
 uses the fixed fixture value `archive_id=artist-001`; authorship is not
-inferred. The extractor reads only `fixtures/cases.json`, does not open native
+inferred. The extractor reads only `experiments/cycles/C01/native_endpoint/fixtures/cases.json`, does not open native
 source files, does not call Blender or After Effects, does not use the real
 database, and has no production consumer or write path.
 
@@ -19,7 +19,7 @@ All files are inside this endpoint directory:
 
 - `native_endpoint.py` — typed nodes, contract edges, read-only fixture
   extraction, direct baseline, and activity-mediated comparison.
-- `fixtures/cases.json` — synthetic cases 6, 7, and 8.
+- `experiments/cycles/C01/native_endpoint/fixtures/cases.json` — synthetic cases 6, 7, and 8.
 - `test_native_endpoint.py` — executable standard-library tests.
 - `run_experiment.py` — JSON evidence runner for the fixture bundle.
 - `REPORT.md` — this report.

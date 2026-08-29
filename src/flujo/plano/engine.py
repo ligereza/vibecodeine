@@ -429,7 +429,7 @@ def validate_evento(ev: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def render_validation_report(ev: Dict[str, Any]) -> str:
-    """Renderiza validate_evento como texto legible para CLI/airdrop."""
+    """Renderiza validate_evento como texto legible para el CLI."""
     report = validate_evento(ev)
     summary = report["summary"]
     lines = [

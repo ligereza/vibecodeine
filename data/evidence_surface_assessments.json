@@ -1,0 +1,108 @@
+{
+ "schema": "mak-evidence-surface-assessment-index-v1",
+ "purpose": "Registro de superficies de evidencia medidas y su veredicto. Existe para que un agente siguiente no vuelva a declarar un hueco sobre algo ya medido, ni conecte una superficie que ningun formato pide.",
+ "surfaces": [
+  {
+   "schema": "mak-evidence-surface-assessment-v1",
+   "surface": "research_corpus",
+   "assessed_at": "2026-08-28",
+   "path": "/home/mak/research/corpus",
+   "measured": {
+    "file_count": 1599,
+    "source": {
+     "iskvw": 1599
+    },
+    "kind": {
+     "imagen": 1366,
+     "video": 233
+    },
+    "texto_autor": {
+     "false": 1598,
+     "none": 1
+    },
+    "with_publication_date": 0,
+    "fields": {
+     "Conceptos": 1598,
+     "Tecnica": 1598,
+     "Linea de investigacion": 1592,
+     "Oportunidad de codigo": 1563,
+     "Colores": 1503,
+     "Materiales": 1046
+    },
+    "with_ocr_text": 461,
+    "ocr_mean_chars": 26
+   },
+   "verdict": "machine_observation_layer_not_wired",
+   "state": "candidate",
+   "attesting": false,
+   "what_it_can_support": [
+    "enriquecer el epigrafe de una pieza observada, marcado como observacion de maquina",
+    "el texto visible dentro de la obra en 461 piezas: es un hecho de fuente sobre la imagen, y pertenece a la capa de texto de portada, distinta del titulo de plataforma, del filename y de la identidad de obra"
+   ],
+   "what_it_cannot_support": [
+    "titulo: el corpus declara texto_autor=false en 1598 de 1599 archivos",
+    "autoria: es descripcion de lo visible, no declaracion de quien lo hizo",
+    "fecha: cero archivos traen fecha_publicacion, asi que no aporta ninguna ruta de fechado",
+    "lectura curatorial: 'Linea de investigacion' y 'Oportunidad de codigo' son sugerencias de maquina, de la misma clase que copilot_external.jsonl"
+   ],
+   "why_not_wired": "ningun formato declarado lo pide. Conectar 1599 observaciones candidatas porque existen seria el error de oferta que este rediseno corrige: la forma consulta al archivo, nunca al reves. Queda medido y localizado para cuando una ranura lo requiera.",
+   "would_be_wired_when": "un formato declare una ranura con evidence_kinds que incluya observacion visual de maquina o texto visible en la obra, con min_state=candidate y el epigrafe marcando el proveedor",
+   "note_on_the_ocr_text": "26 caracteres de promedio: son fragmentos, no textos. Un fragmento OCR no es un titulo ni una declaracion, y su ruido es visible en los ejemplos."
+  },
+  {
+   "schema": "mak-evidence-surface-assessment-v1",
+   "surface": "vision_features",
+   "assessed_at": "2026-08-28",
+   "path": "/home/mak/plataforma/director_runs/portfolio-editor-20260808/vision_features.jsonl",
+   "measured": {
+    "row_count": 33,
+    "schema": "faro-portfolio-vision-v1",
+    "providers": {
+     "aws": 33
+    },
+    "fields": [
+     "visual_terms",
+     "dominant_colors",
+     "composition",
+     "motion_or_medium"
+    ],
+    "carries": [
+     "confidence",
+     "unknowns",
+     "promotion",
+     "status"
+    ]
+   },
+   "verdict": "machine_observation_layer_not_wired",
+   "state": "candidate",
+   "attesting": false,
+   "what_it_can_support": [
+    "describir lo visible en una pieza, marcando el proveedor"
+   ],
+   "what_it_cannot_support": [
+    "autoria, titulo ni identidad de obra",
+    "lectura curatorial: es observacion de maquina, misma clase que copilot_external.jsonl",
+    "una serie: terminos visuales compartidos no son una intencion"
+   ],
+   "why_not_wired": "ningun formato declarado pide observacion visual de maquina"
+  },
+  {
+   "schema": "mak-evidence-surface-assessment-v1",
+   "surface": "rd_institutional_format",
+   "assessed_at": "2026-08-28",
+   "path": "docs/becas/postulacion_base.md + docs/becas/caso_mak_rd.md",
+   "verdict": "format_not_written_because_the_artifact_already_exists",
+   "state": "observed",
+   "attesting": false,
+   "finding": "docs/becas/caso_mak_rd.md ya ES un producto del tipo correcto: anexo tecnico para evaluadores con una seccion 5 de limites declarados que nombra lo presuntivo, lo pendiente de validacion legal y lo ficticio de los datos demo. Escribirlo de nuevo como formato seria peor que el original y duplicaria autoridad.",
+   "what_the_template_already_says": "el checklist de postulacion_base.md instruye cotejar monto y fechas con la fuente OFICIAL del fondo y NO con el calendario auto-generado. Esa advertencia, escrita antes de esta sesion, corrobora de forma independiente el veredicto de data/demand_source_assessment.json.",
+   "what_is_missing_and_is_not_archive_derivable": [
+    "identificacion legal: razon social, RUT, personalidad juridica, representante",
+    "presupuesto y cofinanciamiento",
+    "equipo y cartas de compromiso",
+    "cifras de campo reales: no existen todavia"
+   ],
+   "why_not_wired": "el formato no se escribe: el artefacto humano es mejor y ya cumple. Lo que MAK puede aportar a una postulacion de RD es capacidad tecnica y trayectoria de la plataforma, y eso ya esta escrito en el anexo."
+  }
+ ]
+}

@@ -1,0 +1,94 @@
+{
+ "schema": "mak-portfolio-attestation-v1",
+ "policy": {
+  "what_an_attestation_is": "Una afirmacion de una autoridad nombrada. Es la unica ruta que levanta hice_esta_parte y es_mio por encima de candidate, porque el archivo no puede probarlos solo.",
+  "who_can_attest_what": "El operador puede atestiguar presencia, rol, encargo y contexto de su propio trabajo, y puede atestiguar que algo NO es suyo. No puede atestiguar que el trabajo de un tercero sea suyo.",
+  "negative_attestations_are_stronger": "Una atestacion negativa (esto no lo hice yo) se acepta sin corroboracion: reduce lo que el sistema afirma.",
+  "positive_attestations_are_scoped": "Una atestacion positiva se limita exactamente a lo que declara, y no se extiende por adyacencia a otros archivos, contenedores ni fechas.",
+  "revocable": "Corregir o borrar una entrada baja el estado de las afirmaciones que dependian de ella en la siguiente compilacion. Ninguna se usa como etiqueta de entrenamiento."
+ },
+ "attestations": [
+  {
+   "attestation_id": "att:operator:harry-chillan-show",
+   "attested_by": "operator",
+   "attestor_role": "dueno del archivo y ejecutor del trabajo",
+   "recorded": "2026-08-28",
+   "statement": "Con Harry si fui a Chillan.",
+   "verbatim": true,
+   "establishes": {
+    "verb": "ocurrio",
+    "layer": "context",
+    "subjects": [
+     "screen_setup:CHILLAN",
+     "practice:production:HARRY#context",
+     "practice:delivery:HARRY CHILLAN#context"
+    ],
+    "state_granted": "externally_attested",
+    "context_label": "show con Harry en Chillan",
+    "role": "produccion visual en vivo",
+    "presence": "el operador estuvo presente"
+   },
+   "does_not_establish": [
+    "autoria de ninguna visual concreta usada en ese show",
+    "que CHILLAN.xml y harry.xml sean el mismo show",
+    "que todo el contenedor HARRY corresponda a ese viaje",
+    "una fecha exacta del show"
+   ],
+   "corroborating_evidence": [
+    "/media/mak/PortableSSD/CHILLAN.xml declara internamente el nombre 'harry' y contiene un mapeo de 11 slices",
+    "el indice SSD registra un contenedor 'HARRY CHILLAN' con 13 archivos de video",
+    "data/artist_discographies.json liga HARRY a una autoridad externa con URLs"
+   ],
+   "reliability_note": "El nombre interno de un ScreenSetup puede quedar obsoleto tras un guardar-como; la atestacion es lo que sostiene la relacion, no el nombre."
+  },
+  {
+   "attestation_id": "att:operator:escarlata-visual-tercero",
+   "attested_by": "operator",
+   "attestor_role": "dueno del archivo",
+   "recorded": "2026-08-28",
+   "statement": "La visual de Escarlata la realizo un tercero; esta en el archivo por contexto profesional.",
+   "verbatim": false,
+   "establishes": {
+    "verb": "hice_esta_parte",
+    "layer": "role",
+    "subjects": ["external_locator:ESCARLATA.mp4"],
+    "state_granted": "externally_attested",
+    "negative": true,
+    "not_authored_by_operator": true
+   },
+   "does_not_establish": [
+    "quien si la realizo",
+    "que el resto del contenedor sea de un tercero",
+    "que no exista una relacion de contexto con DREFGIRA, DrefQuila o HARRY"
+   ],
+   "corroborating_evidence": [
+    "ESCARLATA.mp4 aparece como contenido byte-identico en DREFGIRA, DrefQuila y HARRY",
+    "ningun contenedor declara un proyecto nativo que la produzca"
+   ],
+   "reliability_note": "Atestacion negativa: se acepta sin corroboracion porque reduce lo que el sistema afirma. La red de contexto Dref-Harry-BAH se conserva; solo se excluye la autoria de esta pieza."
+  },
+  {
+   "attestation_id": "att:operator:pantalla-antesala-logo",
+   "attested_by": "operator",
+   "attestor_role": "dueno del archivo",
+   "recorded": "2026-08-27",
+   "statement": "El PSD de ARICA llego solo para extraer un logo; no es proceso propio.",
+   "verbatim": false,
+   "establishes": {
+    "verb": "hice_esta_parte",
+    "layer": "role",
+    "subjects": ["artifact:pantalla antesala.psd"],
+    "state_granted": "externally_attested",
+    "negative": true,
+    "not_authored_by_operator": true
+   },
+   "does_not_establish": [
+    "que el resto del trabajo de ARICA no sea propio"
+   ],
+   "corroborating_evidence": [
+    "documento nativo recibido sin cadena de exportacion asociada"
+   ],
+   "reliability_note": "Fija la regla general: archivo nativo no implica proceso propio."
+  }
+ ]
+}

@@ -1,0 +1,74 @@
+born,path,type,category,owner_measured,notes
+2026-07-14,/home/mak/Descargas,d,sistema,sin medir,sin medir
+2026-07-14,/home/mak/Documentos,d,sistema,sin medir,sin medir
+2026-07-14,/home/mak/Escritorio,d,sistema,sin medir,sin medir
+2026-07-14,/home/mak/Imágenes,d,sistema,sin medir,sin medir
+2026-07-14,/home/mak/Modelfile,f,sin clasificar,sin medir,sin medir
+2026-07-14,/home/mak/Música,d,sistema,sin medir,sin medir
+2026-07-14,/home/mak/Plantillas,d,sistema,sin medir,sin medir
+2026-07-14,/home/mak/Público,d,sistema,sin medir,sin medir
+2026-07-14,/home/mak/Vídeos,d,sistema,sin medir,sin medir
+2026-07-14,/home/mak/model-config,d,sistema,sin medir,sin medir
+2026-07-15,/home/mak/WhiteSur-icon-theme,d,sistema,sin medir,sin medir
+2026-07-15,/home/mak/__pycache__,d,sistema,sin medir,sin medir
+2026-07-15,/home/mak/antigravity.launch.log,f,sin clasificar,sin medir,sin medir
+2026-07-15,/home/mak/apps,d,vendor,aplicaciones,"duplica con Apps/ por mayuscula, sin medir"
+2026-07-15,/home/mak/diag-barrier-now.sh,f,sin clasificar,sin medir,sin medir
+2026-07-15,/home/mak/diag-kvm-linux.sh,f,sin clasificar,sin medir,sin medir
+2026-07-15,/home/mak/diag-red-linux.sh,f,sin clasificar,sin medir,sin medir
+2026-07-15,/home/mak/documentos,d,sistema,sin medir,sin medir
+2026-07-15,/home/mak/oi-qwen.py,f,sin clasificar,sin medir,sin medir
+2026-07-15,/home/mak/research,d,departamento,"jardines_interpretativos.sqlite, corpus/, intake/","23 tablas/276 filas medidas; 12 sqlite en corpus, 2 en intake; cron pausado"
+2026-07-15,/home/mak/venvs,d,runtime,5 entornos Python 3.11.2,ninguno referenciado por ruta; PATH/alias no descartado. No retirado
+2026-07-15,/home/mak/vscode.launch.log,f,sin clasificar,sin medir,sin medir
+2026-07-16,/home/mak/Apps,d,vendor,aplicaciones,"duplica con apps/ por mayuscula, sin medir"
+2026-07-16,/home/mak/GENESIS.md,f,sin clasificar,sin medir,sin medir
+2026-07-16,/home/mak/PENDIENTES_SUDO.md,f,sin clasificar,sin medir,sin medir
+2026-07-16,/home/mak/backups,d,snapshot,mak-20260809..20260814.tar.gz,el ultimo tar es del dia de la pausa
+2026-07-16,/home/mak/codex,d,departamento,agente_libre.py,"objetivo de cron MAK-AGENTE-LIBRE, importa ok, pausado"
+2026-07-16,/home/mak/descargas,d,sistema,sin medir,sin medir
+2026-07-16,/home/mak/lenguaje,d,departamento,"corregir.py, medir.py, cron_lexicon.sh",docs/GLOSSARY.md lo cita como 'box lenguaje/'; symlink sin bit x
+2026-07-16,/home/mak/plataforma,d,organismo,shims de cron + logs + director_runs,"46 shims que delegan al repo, los 46 resuelven; 23 cron PAUSADOS 2026-08-14 19:03"
+2026-07-16,/home/mak/xio_puente,d,departamento,monitor.py,sin medir consumidor
+2026-07-18,/home/mak/bucle,d,produccion,SVG/PNG,sin medir consumidor
+2026-07-18,/home/mak/rclone.log,f,sin clasificar,sin medir,sin medir
+2026-07-20,/home/mak/blender-4.5.3-viejo,d,sin clasificar,sin medir,sin medir
+2026-07-20,/home/mak/flujo,d,baseline,repo: baseline de autoria e integracion,agents.md lo declara baseline; 3799 tests; unico proceso vivo corre desde aca
+2026-07-20,/home/mak/searxng,d,sistema,sin medir,sin medir
+2026-07-22,/home/mak/RD,d,produccion,"material Reduciendo Dano: PSD, flyers, AE","58 GB de trabajo de cliente, no maquinaria"
+2026-07-22,/home/mak/actions-runner,d,runtime,runner self-hosted de GitHub,sin medir si esta registrado
+2026-07-22,/home/mak/curatoria,d,departamento,curatoria_guardia.sh -> repo,symlink al repo; el destino no tiene bit de ejecucion
+2026-07-22,/home/mak/curatoria_test,d,sin clasificar,sin medir,sin medir
+2026-07-22,/home/mak/portfolio_media,d,produccion,media,sin medir
+2026-07-22,/home/mak/render_rd_1080.log,f,sin clasificar,sin medir,sin medir
+2026-07-22,/home/mak/renders,d,sistema,sin medir,sin medir
+2026-07-23,/home/mak/bin,d,sistema,sin medir,sin medir
+2026-07-23,/home/mak/curatoria_inbox,d,fuera de alcance,staging migracion Windows->Linux,181 GB; instruccion del operador: MAK debe funcionar antes de migrar
+2026-07-27,/home/mak/blender,d,vendor,Blender vendorizado,sin medir version
+2026-07-27,/home/mak/crontab.bak-20260727,f,sin clasificar,sin medir,sin medir
+2026-07-27,/home/mak/trazos,d,produccion,trazos,sin medir
+2026-07-30,/home/mak/n8n-local,d,sistema,sin medir,sin medir
+2026-08-03,/home/mak/cli_watsonx.py,f,sin clasificar,sin medir,sin medir
+2026-08-04,/home/mak/vigia,d,departamento,vigia_guardia.sh -> repo,"symlink al repo, destino ejecutable, pausado"
+2026-08-06,/home/mak/quarantine,d,snapshot,cuarentenas flujo-* 20260806-09,congelado antes de la pausa
+2026-08-07,/home/mak/venv-providers,d,sistema,sin medir,sin medir
+2026-08-09,/home/mak/_archive,d,retiro,"faro_sync, group4-reverted, watsonx-retired",retiros fechados 2026-08-09..21
+2026-08-10,/home/mak/labs,d,evidencia,6 archivo_index.sqlite en 7 laboratorios,confirmado exacto contra lo que CAPACIDADES.md afirmaba
+2026-08-10,/home/mak/models,d,vendor,pesos de modelos,sin medir
+2026-08-10,/home/mak/src,d,sistema,sin medir,sin medir
+2026-08-11,/home/mak/rollback,d,snapshot,puntos atlas-* 20260811,congelado antes de la pausa
+2026-08-12,/home/mak/tmp,d,sin clasificar,sin medir,sin medir
+2026-08-13,/home/mak/Documents,d,sistema,sin medir,sin medir
+2026-08-13,/home/mak/WIN,d,legado,arbol Windows historico,"agents.md: evidencia historica, no modificar. 4 runbooks xio recuperados de aca"
+2026-08-13,/home/mak/indexes,d,mapa,mak-reality/archivo_index.sqlite,"1904 assets con sha256, 431 proyectos, 1877 familias. El mapa que ya existia"
+2026-08-13,/home/mak/state,d,snapshot,2 snapshots 20260813,congelado antes de la pausa
+2026-08-17,/home/mak/global.yml,f,sin clasificar,sin medir,sin medir
+2026-08-21,/home/mak/2026-08-21-022101-clone-httpsgithubcomligerezamat-sigit.txt,f,sin clasificar,sin medir,sin medir
+2026-08-23,/home/mak/gpu_fix_report.txt,f,sin clasificar,sin medir,sin medir
+2026-08-24,/home/mak/barrierc-xtest-debug.log,f,sin clasificar,sin medir,sin medir
+2026-08-24,/home/mak/go,d,sistema,sin medir,sin medir
+2026-08-24,/home/mak/opt,d,sistema,sin medir,sin medir
+2026-08-27,/home/mak/tools,d,sistema,sin medir,sin medir
+2026-08-28,/home/mak/WINDOWS---,f,sin clasificar,sin medir,sin medir
+,/home/mak/GoogleDrive,d,sistema,sin medir,sin medir
+,/home/mak/OneDrive,d,sistema,sin medir,sin medir

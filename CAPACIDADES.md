@@ -3,6 +3,15 @@
 > Current entry point: read `agents.md`, `docs/MAK_CURRENT_STATE.md` and
 > `context/LAST_HANDOFF.md` first. The current-state document is the compact
 > synthesis of the historical phase work; this file is a capability index.
+>
+> **Cómo se escribe una fila aquí** (regla del 2026-08-28, ver
+> `docs/AUTORIDAD.md`): toda referencia a un archivo lleva su ruta desde la raíz
+> del repo, y todo estado (`VIVO`, `activo`, `integridad OK`) declara al lado
+> cómo se comprobó. Medido el 2026-08-28, este documento tenía 253 referencias a
+> archivos de las cuales **143 eran nombres pelados sin ruta** y 116 estados en
+> prosa sin método. Por eso la auditoría de `auditar_capacidades_mak` terminó
+> apuntando a números de línea de este archivo, y por eso su lista de candidatos
+> a retiro ya no resuelve. No es un problema de contenido: es de direccionamiento.
 > This inventory describes reusable machinery; it is not a task queue.
 
 Inventario de arranque rapido. Objetivo: empezar un proyecto nuevo (dentro o
@@ -71,61 +80,103 @@ catálogo de bases en `database_registry`. La regla
 operativa es una autoridad por dominio y conexiones por contratos, hashes y
 refs; “consolidar” no significa copiar tablas ni borrar snapshots.
 
-| Superficie | Autoridad/uso | Estado medido |
+**Metodo de medicion** (regla del 2026-08-28: todo estado declara como se
+comprobo): la autoridad es `tools/repo_audit.py`, que corre en `ci.yml`. Cuenta
+tablas con `select name from sqlite_master where type='table' and name not like
+'sqlite_%'` -- o sea **excluye las tablas internas de SQLite** -- suma `count(*)`
+por tabla y cierra con `pragma integrity_check`. Reproducir:
+`.venv/bin/python tools/repo_audit.py`.
+
+Este metodo importa. Una primera correccion de esta tabla, el 2026-08-28, conto
+`sqlite_sequence` y reporto 49 tablas y 387.108 filas para `mak_knowledge.db`;
+`repo_audit.py` dice 48 y 387.104. La diferencia es exactamente esa tabla
+interna y sus 4 filas. Dos mediciones honestas del mismo archivo dan numeros
+distintos si no declaran su metodo, y entonces ninguna se puede verificar.
+
+| Superficie | Autoridad/uso | Medido por `tools/repo_audit.py` el 2026-08-28 |
 |---|---|---|
-| `data/mak_knowledge.db` | memoria MAK, Project IR, contexto, episodios y aprendizaje | activa, 35 tablas, 387.089 filas, integridad OK |
-| `data/rd.db` | proyección regenerable del catálogo RD | activa, 20 tablas, 7.585 filas, integridad OK |
+| `data/mak_knowledge.db` | memoria MAK, Project IR, contexto, episodios y aprendizaje | activa, 48 tablas, 387.104 filas, integridad OK |
+| `data/rd.db` | proyeccion regenerable del catalogo RD | activa, 20 tablas, 7.585 filas, integridad OK |
 | `data/rd_datos.db` | frontera privada de datos de campo RD | activa, 3 tablas, 0 filas, integridad OK |
-| `data/flujo.db` | índice operativo de flyers | activa, 1 tabla, 6 filas, integridad OK |
-| `research/jardines_interpretativos/jardines_interpretativos.sqlite` | registro de jobs, fuentes, claims y resultados Research | activo, 23 tablas, 276 filas, integridad OK |
-| `research/corpus/**/sources.sqlite` | capturas versionadas de Research/Fondart | 14 snapshots, todos íntegros y no intercambiables |
-| `research/intake/**/intake.sqlite` | proyecciones de intake derivadas de Project IR | 2 snapshots, uno vacío y uno poblado, ambos íntegros |
-| `labs/**/archivo_index.sqlite` | índices y pruebas históricas de reconstrucción | 6 snapshots íntegros, no runtime único |
-| `experiments/pilots/**/sources.sqlite` | evidencia acotada por piloto | 2 stores íntegros, alcance de caso |
-| `out/archaeology/*.sqlite` | arqueología histórica de sesiones/repositorio | evidencia histórica, no runtime |
+| `data/flujo.db` | indice operativo de flyers | activa, 1 tabla, 6 filas, integridad OK; congelada el 2026-06-30 y con rutas `C:\IA\flujo\`. Consumida por `tools/repo_audit.py` (CI) y `tests/test_portfolio_gen.py`, asi que no se retira |
+| `experiments/pilots/ARICA-FONDART-2027/source_corpus/sources.sqlite` | evidencia acotada por piloto | presente, alcance de caso |
+| `experiments/pilots/DREFQUILA/runs/cross-archive-escarlata-20260826/research-capture/sources.sqlite` | evidencia acotada por piloto | presente, alcance de caso |
+| `out/archaeology/claude-codex-mak-20260815.sqlite` | arqueologia historica de sesiones/repositorio | evidencia historica, no runtime |
+
+### Las otras cuatro filas viven fuera del repo, en `/home/mak/`
+
+Estas cuatro superficies **existen y estaban bien medidas**. Lo unico que les
+faltaba era la raiz: se citaban en relativo, y en relativo desde `flujo/` no
+resuelven. Reverificadas el 2026-08-28 con el metodo de CI:
+
+| Superficie | Lo que afirmaba | Medicion 2026-08-28 |
+|---|---|---|
+| `/home/mak/research/jardines_interpretativos/jardines_interpretativos.sqlite` | "activo, 23 tablas, 276 filas, integridad OK" | **exacto: 23 tablas, 276 filas, integridad OK** |
+| `/home/mak/research/corpus/**/sources.sqlite` | "14 snapshots, todos integros" | **12 snapshots** (unica deriva real de esta tabla) |
+| `/home/mak/research/intake/**/intake.sqlite` | "2 snapshots, uno vacio y uno poblado" | **exacto: 2** |
+| `/home/mak/labs/**/archivo_index.sqlite` | "6 snapshots integros, no runtime unico" | **exacto: 6**, en 7 directorios de laboratorio |
+
+**Correccion de una correccion.** Una primera pasada de esta sesion declaro que
+`research/` y `labs/` "no existen" y retiro las cuatro filas. Era falso: se
+busco solo dentro de `/home/mak/flujo` y estos arboles cuelgan de `/home/mak`.
+`agents.md` advierte exactamente contra ese error -- *"The absence of a file in
+`/home/mak/flujo` does not prove that it is absent from MAK"* -- y la pasada lo
+cometio igual.
+
+El defecto real no era la ausencia sino **la raiz ambigua**: una ruta relativa
+en un documento que vive en `flujo/` se lee como relativa a `flujo/`. Por eso
+las cuatro filas de arriba llevan ahora ruta absoluta desde `/home/mak`.
+
+MAK es la maquina, no el repositorio. `/home/mak/flujo` es la base de autoria
+dentro del organismo `/home/mak`; `research/`, `labs/`, `curatoria/`,
+`plataforma/` y `WIN/` son superficies hermanas, no ausencias.
+
+La fila que sobrevivio con cifra corregida: `mak_knowledge.db` decia 35 tablas y
+387.089 filas; `repo_audit.py` mide 48 y 387.104. `rd_datos.db` decia 3 tablas y
+3 es correcto por el metodo de CI.
 
 Todas las rutas anteriores tienen hash SHA-256 y conexiones declaradas en el
-master. La medición completa fuera de `WIN` encontró 270 archivos con
-extensiones SQLite: 85 pertenecen a superficies MAK y 185 son cachés del
-host/aplicaciones. Los 85 pasaron `integrity_check`; los 185 están registrados
-como contexto físico, pero no son memoria MAK ni fuente semántica.
+master. La medicion completa fuera de `WIN` encontro 270 archivos con
+extensiones SQLite: 85 pertenecen a superficies MAK y 185 son caches del
+host/aplicaciones. Los 85 pasaron `integrity_check`; los 185 estan registrados
+como contexto fisico, pero no son memoria MAK ni fuente semantica.
 
-La clasificación completa y reproducible es:
+La clasificacion completa y reproducible es:
 
-| Clase física | Archivos | Regla |
+| Clase fisica | Archivos | Regla |
 |---|---:|---|
-| memoria, Research, labs, índices, pilotos, Curatoria y outputs | 46 | stores de dominio o snapshots; autoridad declarada por ruta |
-| arqueología, runner, agentes y caches de crawler | 39 | evidencia/soporte no autoritativo; no se fusionan con MAK memory |
-| caché host/aplicaciones | 185 | detectados, excluidos del conocimiento MAK |
+| memoria, Research, labs, indices, pilotos, Curatoria y outputs | 46 | stores de dominio o snapshots; autoridad declarada por ruta |
+| arqueologia, runner, agentes y caches de crawler | 39 | evidencia/soporte no autoritativo; no se fusionan con MAK memory |
+| cache host/aplicaciones | 185 | detectados, excluidos del conocimiento MAK |
 
-No hay una “base duplicada” que deba eliminarse: los nombres parecidos
-representan snapshots, privacidad, dominios, réplicas u outputs distintos.
+No hay una "base duplicada" que deba eliminarse: los nombres parecidos
+representan snapshots, privacidad, dominios, replicas u outputs distintos.
 `WIN`, media, artwork, credenciales y bases no listadas no se tocan
-automáticamente. El inventario usa `/home/mak` como raíz, excluye
+automaticamente. El inventario usa `/home/mak` como raiz, excluye
 `/home/mak/WIN` y no recorre los montajes `GoogleDrive`/`OneDrive`.
 
-### Organismo físico MAK fuera de WIN — 2026-08-27
+### Organismo fisico MAK fuera de WIN -- 2026-08-27
 
 La autoridad operativa no termina en `flujo`. El registro maestro enumera las
 114 entradas de primer nivel y las clasifica sin moverlas:
 
-| Superficie | Función | Estado |
+| Superficie | Funcion | Estado |
 |---|---|---|
-| `flujo` | autoría, contratos, tests, docs, CLI | baseline activo |
+| `flujo` | autoria, contratos, tests, docs, CLI | baseline activo |
 | `plataforma` | runtime proyectado del Hub | proceso observado |
-| `research`, `vigia` | corpus, jobs, capturas, vigencia y triangulación | activos |
-| `curatoria`, `curatoria_inbox`, `RD` | órganos, inputs artísticos y fuente RD | protegidos/separados |
-| `portfolio_media`, `indexes` | media y catálogos transversales | referencias derivadas |
-| `labs`, `experiments`, `state`, `out` | pruebas, pilotos, arqueología | no autoritativos |
+| `research`, `vigia` | corpus, jobs, capturas, vigencia y triangulacion | activos |
+| `curatoria`, `curatoria_inbox`, `RD` | organos, inputs artisticos y fuente RD | protegidos/separados |
+| `portfolio_media`, `indexes` | media y catalogos transversales | referencias derivadas |
+| `labs`, `experiments`, `state`, `out` | pruebas, pilotos, arqueologia | no autoritativos |
 | `actions-runner`, `tools`, `src`, `apps` | transporte y herramientas auxiliares | fuera de autoridad de producto |
 | `models`, `model-config`, `blender*` | proveedores y runtimes creativos | capacidad condicionada |
-| `xio_puente`, `n8n-local`, `searxng` | puentes/runtimes específicos | aislados; no core |
+| `xio_puente`, `n8n-local`, `searxng` | puentes/runtimes especificos | aislados; no core |
 
 Runtimes observados: Hub `127.0.0.1:8900`, Research `127.0.0.1:8890`, Codex
 `127.0.0.1:8891`, Ollama `127.0.0.1:11434`, Open WebUI `:8080` y el runner de
 Actions. La escucha prueba presencia del proceso, no salud del servicio,
 capacidad del proveedor ni validez de sus datos. `GoogleDrive` y `OneDrive`
-son montajes externos no escaneados; `WIN` es histórico protegido y queda
+son montajes externos no escaneados; `WIN` es historico protegido y queda
 fuera de este mapa.
 
 ## 1. Mapa index del repo
@@ -146,7 +197,7 @@ CLI real (`py -m flujo --help`, v0.56.1), comandos principales:
 - `tapiz` -- pipeline generativo Tapiz<->Psicosis<->Fungi (`tools/compete_engine.py`).
 - `datadrop`, `index`, `flyer-import`, `flyer-list`, `ig-redownload` -- ingesta y catalogo de material real.
 - `daily`, `handoff`, `portal`, `doctor`, `health`, `verify`, `version` -- operacion y diagnostico del repo.
-- `airdrop`, `github-sync` -- entrega sin push directo / sync simple con GitHub.
+- `github-sync` -- sync simple con GitHub. (`airdrop` se retiro el 2026-08-28; la cadena estaba muerta desde el 2026-08-14, ver `docs/SCRIPTS_INVENTORY.md`.)
 - `delegate`, `ai-prompt`, `privacy`, `knowledge`, `package`, `init`, `clean`, `brand` (legacy) -- utilidades de soporte.
 
 `tools/` (ejecutables sueltos, 1 linea cada uno):
@@ -202,9 +253,22 @@ CLI real (`py -m flujo --help`, v0.56.1), comandos principales:
 `xio/` (server telefono + show kit): server Flask (`xio/actual/server.py`,
 `xio/new/server.py`) corre ON-DEVICE en Termux (Shizuku/rish) en el Xiaomi,
 puerto 5000 (`XIO_PORT`), 63 archivos de plugins (controlador Xiaomi, hotspot
-router activo con auto-heal, FOH monitor). Runbook: `xio/RUNBOOK.md`,
-`xio/FACES.md` (Face A hogar vs Face B show telefono-solo),
-`xio/HOTSPOT_SHOW_RUNBOOK.md`, `xio/show_kit/`.
+router activo con auto-heal, FOH monitor). Documentación en este árbol:
+`xio/RUNBOOK.md` (23 KB, operación completa), `xio/HOTSPOT_SHOW_RUNBOOK.md`,
+`xio/CAPACIDADES.md`, `xio/PLAN_SERVICIOS_SIN_ROOT.md`, `xio/FACES.md` (Face A
+hogar vs Face B show telefono-solo), `xio/show_kit/DIA_DEL_SHOW.md` y
+`xio/show_kit/ANOTACIONES_SHOW_20260724.md`.
+
+**Restaurados el 2026-08-28.** Los cuatro primeros faltaban en
+`/home/mak/flujo` y sólo estaban en `/home/mak/WIN/flujo/xio/`, mientras cuatro
+documentos activos los citaban — nueve referencias colgando, incluido el runbook
+del día de show. No estaban obsoletos, estaban ausentes: `xio/FACES.md` es
+byte-idéntico en ambos árboles, o sea que WIN no divergió. Se copiaron con
+`cp -p` desde el árbol legado, que no se modificó.
+
+Los scripts que estos runbooks nombran (`run_server.sh`, `hotspot_watch.sh`,
+`reboot_recover.sh`, `server_supervisor.sh`, `flujo_ondevice.sh`) viven todos en
+`xio/new/`; los runbooks los citan sin prefijo.
 
 `cultura/mak_plataforma/` (organismo MAK, corre en el runner self-hosted
 `mak`, Linux): `capataz.py` (capataz LOCAL-first con escalada por riesgo),
@@ -396,7 +460,7 @@ su material queda como referencia historica separada.
 5. Elegir el modelo mas barato que resuelva la tarea (tabla seccion 2 + `CLAUDE.md` "Regulacion de gasto"); escala solo si aplica un trigger.
 6. Si es pieza cultural nueva: aplicar motor-omega (Omega11 declarada + fracaso no se reinterpreta) antes de exponer.
 7. Cambios minimos, completos, verificables -- nada a medias, nada de TODO/placeholder.
-8. Verificacion minima segun area tocada (Python: compileall+pytest+`flujo verify`; Web: typecheck+build:context; Airdrop: validate_airdrop+run_airdrop_checks).
+8. Verificacion minima segun area tocada (Python: compileall+pytest+`flujo verify`; Web: typecheck+build:context; 
 9. Entregables (datos/docs/piezas) en espanol correcto UTF-8; `CLAUDE.md`/`context/*.md` operativos en ASCII.
 10. PR siempre contra `main`, CI verde obligatorio; el director hace la
     promoción curada al dominio o superficie correspondiente.
@@ -421,6 +485,11 @@ tabla; archivo sin entrada = ratchet rojo.
 | `arica01_portfolio.py` | VIVO | bounded read-only ARICA/Fondart end-to-end pilot; consumes the accepted MAK contracts and writes only to an explicit output directory | 2026-08-25 |
 | `build_evidence_return.py` | VIVO | CLI for additive research evidence proposals; consumed by the Piso 3 contract tests | 2026-08-25 |
 | `build_possibility_field.py` | VIVO | CLI for strategic possibility aggregation; consumed by the Piso 2 contract tests | 2026-08-25 |
+| `compile_contracurator.py` | VIVO | compila la exposicion falsable del Contracurador sobre la vista de archivo ya proyectada; consumidor `tests/test_contracurator.py` y el Hub en `/api/portfolio/archive-view` | 2026-08-28 |
+| `medir_organismo.py` | VIVO | mide el organismo MAK y lo imprime: lineas de cron activas/pausadas, cuales de los cinco organos de `/home/mak/GENESIS.md` responden, si `main` tiene proteccion de rama (hay un cron que mergea), cuantas lineas arrancarian al reanudar, y los entornos Python. Solo lectura: no toca crontab, servicios ni archivos. Existe para que `docs/MAK_ORGANISMO.md` no vuelva a cargar esas cifras en prosa -- la regla 3 de `docs/AUTORIDAD.md` dice que lo medido se mide, no se escribe. Consumidor: una persona, a mano | 2026-08-28 |
+| `medir_tests.py` | VIVO | mapea la suite por el commit que agrego cada archivo de test: separa las areas que llegaron enteras en un commit (un diseno) de las que crecieron en commits sueltos a lo largo de semanas (acrecion, donde una propiedad puede quedar verificada dos veces). El proposito de cada test ya esta escrito en el mensaje de su commit de alta, asi que no abre ningun test para saberlo: corre un solo `git log` y solo cuenta lineas `def test_`. `--cronologia` lista los 164 commits de alta del mas viejo al mas nuevo. Solo lectura. Consumidor: una persona, a mano | 2026-08-29 |
+| `compile_portfolio.py` | VIVO | compila la base de afirmaciones `mak-portfolio-claims-v1` y renderiza cada formato declarado de `data/portfolio_formats/`; consumidor `tests/test_portfolio_production.py` y los documentos en `out/portfolio/` | 2026-08-28 |
+| `compile_ssd_order_foundation.py` | VIVO | compila `mak-ssd-order-foundation-v1` desde el indice SSD, la proyeccion de orden, intake, reconstrucciones y autoridad de research en solo lectura; consumidor `tests/test_ssd_order_operator_frontier.py` y el Hub | 2026-08-28 |
 | `compile_application_research_package.py` | VIVO | compiles application and research products from the common plan; consumed by Piso 4 tests | 2026-08-25 |
 | `compile_autonomy_plan.py` | VIVO | compiles bounded plan-only next actions; consumed by Piso 5 tests | 2026-08-25 |
 | `compile_opportunity_constraints.py` | VIVO | compiles local opportunity evidence into fail-closed constraints; consumed by Piso 1 tests | 2026-08-25 |
@@ -446,7 +515,7 @@ tabla; archivo sin entrada = ratchet rojo.
 | `evaluate_product_learning.py` | VIVO | evaluates verified external outcomes as bounded shadow-learning signals; consumed by Piso 5 tests | 2026-08-25 |
 | `generate_artistic_program_hypotheses.py` | VIVO | generates provisional artistic-program hypotheses without truth promotion; consumed by Piso 2 tests | 2026-08-25 |
 | `triangulate_research_evidence.py` | VIVO | triangulates captured claims across independent source groups; consumed by Piso 3 tests | 2026-08-25 |
-| `cultura/mak_vigia/vigia.py` | LIVE | Measured 2026-08-05: the box crontab has `MAK-VIGIA`, `MAK-REPO-SYNC` copies `cultura/mak_vigia` -> `/home/mak/vigia`, and `/home/mak/vigia/estado/` exists. First live seed was run with `--sin-notificar` to avoid initial phone spam: 425 items observed. After the first seed absorbed late `fondos_de_cultura` items, three immediate follow-up runs returned `fondos_de_cultura nuevos=0`. It notifies through ntfy to `VIGIA_NTFY_TOPIC` and, for `tipo: enfermeria` sources, to `VIGIA_NTFY_TOPIC_ENFERMERIA`. It is a DIFF, not an LLM: download -> normalize -> sha256 -> compare against `estado/vistos.jsonl` -> notify only new items; zero tokens, zero GPU, no model. Golden rule: a source that starts parsing ZERO items, or has 4 days with nothing new, sends a high-priority ERROR notification; silence must not look like "it works". `tests/test_vigia.py` | 2026-08-05 |
+| `cultura/mak_vigia/vigia.py` | LIVE | Measured 2026-08-05: the box crontab has `MAK-VIGIA`, `MAK-REPO-SYNC` copies `cultura/mak_vigia` -> `/home/mak/vigia`, and `/home/mak/vigia/estado/` exists. First live seed was run with `--sin-notificar` to avoid initial phone spam: 425 items observed. After the first seed absorbed late `fondos_de_cultura` items, three immediate follow-up runs returned `fondos_de_cultura nuevos=0`. It notifies through ntfy to `VIGIA_NTFY_TOPIC` and, for `tipo: enfermeria` sources, to `VIGIA_NTFY_TOPIC_ENFERMERIA`. It is a DIFF, not an LLM: download -> normalize -> sha256 -> compare against `cultura/mak_vigia/estado/vistos.jsonl` -> notify only new items; zero tokens, zero GPU, no model. Golden rule: a source that starts parsing ZERO items, or has 4 days with nothing new, sends a high-priority ERROR notification; silence must not look like "it works". `tests/test_vigia.py` | 2026-08-05 |
 | `order_projection.py` | VIVO | proyecta la identidad certificada a un orden accionable SIN mover un archivo. Existe porque dos consumidores que ya existian se habian detenido en el mismo hecho faltante y ambos lo decian con sus propias palabras: `cross_root_relations` pedia 'compute full_sha256 for the overlapping assets' y `show_asset_usage` declaraba en sus limites que 'la verificacion por contenido no esta disponible para el 99,75 %'. Tres tiers y solo uno es seguro: T1 copia suelta en la raiz del disco (24 clases, 6.44 GB, no requiere decision porque cual de las dos es la extraviada es un hecho del filesystem), T2 cruza raices (458 clases, 30.09 GB, bytes identicos tienen DOS lecturas -- una obra archivada dos veces, o un output reusado en otro encargo -- y el contenido no puede elegir), T3 dentro de un proyecto (865 clases, 24.51 GB, se deja en paz). Cada propuesta T1 se prueba contra los `.usage.json` de Resolume y **3 de 24 quedaron en HOLD** porque la composicion `sampier` nombra `2.mov`, `3.mov` y `4.mov`: el chequeo por basename puede dar un HOLD falso pero nunca un SAFE falso, y esa es la direccion en que la asimetria tiene que apuntar. La puerta corta por palanca: 50 preguntas -> **6 que cubren el 93,2%** de los bytes en disputa, y las 44 diferidas llevan `reopen_when` observable sin conocer la respuesta. `tests/test_certified_identity.py` | 2026-08-24 |
 | `resolve_identity_ties.py` | VIVO | resuelve los empates de identidad que el indice se NIEGA a decidir por diseno. `archivo_index.sqlite` trae `hash_state='pending'` en 45424 de 45536 assets y un `full_sha256` real en 112 (0.25%), y `project_reconstruction` lo declara en su propio docstring: 'a shared sample hash never decides project identity here; it produces an explicit tie'. Habia 1348 empates sobre 4104 assets, y el mismo codigo nombra el remedio: 'compute full_sha256 for the overlapping assets'. Resultado: 1347 de 1348 grupos resueltos, 4097 CERTIFIED_SAME, 7 CERTIFIED_DISTINCT, **0 sin resolver**, 56.85 GiB de duplicacion exacta probada. Los 7 distintos son frames consecutivos de un cache de fluidos (`LYON/3/123_flip_fluid_cache`): mismo tamano, mismo prefijo, contenido distinto -- exactamente donde un sample hash miente. La escalada tiene DOS etapas, no tres: una tercera etapa intermedia (cola de 64 KiB) se midio sobre estos mismos 4104 assets, resolvio CERO distinciones y costo 197 MB leidos para nada -- se BORRO, y la razon es general, no un ajuste de parametro: un test sublineal solo puede RECHAZAR (hallar un byte distinto), nunca CERTIFICAR coincidencia sobre contenido no acotado, y un sample hash selecciona justo los casi-duplicados que ese test esta construido para no poder ver. Quedan tamano (gratis, resolvio 0 aqui) y lectura completa (la unica etapa que paga). Nunca escribe en el indice: sale a un sidecar por `asset_id`. `tests/test_identity_ties.py` | 2026-08-24 |
 | `show_asset_usage.py` | VIVO | lee una composicion `.avc` de Resolume (read-only), extrae sus referencias de clip y las resuelve contra el indice del SSD por basename CON ABSTENCION: un nombre que llevan varios assets queda `ambiguous` y no cuenta como uso. Reporta la tasa por composicion porque varia de verdad -- medido sobre las 4 del indice: `TALCA DREF` 1/1, `SHOWCAUPOLICAN` 28/52 (tocando dos contenedores, `DREFGIRA` y `descargas hasta RDFLYER 2050`), `sampier` 0/81 y `Perrys 2025 V2` 0/1. `--orphans <contenedor>` lista candidatos sin referencia conocida, nunca una lista de borrado. Anonimiza el usuario Windows de cada ruta antes de escribir, porque `tests/test_privacidad_repo.py` prohibe ese patron. `tests/test_resolume_composition.py` | 2026-08-21 |
@@ -484,7 +553,7 @@ tabla; archivo sin entrada = ratchet rojo.
 | `gen_presentacion_db.py` | VIVO | genera `docs/rd/presentacion_db.html`, la pieza formal para la directiva RD; documentado en `docs/rd/DB_PRODUCTORAS_ESTADO.md` | 2026-07-25 (llega a main con la promocion de `rd`, PR #303) |
 | `gen_propuesta_directiva.py` | VIVO | genera `docs/rd/propuesta_directiva.html`, la propuesta a la directiva (que ofrece RD, con que cuenta, como protege los datos y que necesita aprobar); lee `data/rd.db`, asi que ninguna cifra se escribe a mano | 2026-07-26 |
 | `vendorizar_iskvw.py` | VIVO | empaqueta librerias npm como modulos ESM autocontenidos + su README al lado, para paginas estaticas que no pueden depender de un CDN ni de un build. DOS manifiestos: `data/iskvw_librerias.json` -> `iskvw/piel/lib/` (4 de thi.ng) y `data/motor_librerias.json` -> `docs/cultura/lib/` (hiccup, hiccup-svg, color, para el compilador de navegador del motor semantico). `tests/test_iskvw_librerias.py` las importa en node y les pide trabajo; `tests/test_thing_registro.py` cruza los manifiestos con la seccion 6. Dos arreglos 2026-07-30: `--destino` se resuelve absoluto (esbuild corre en un temporal y perdia el bundle) y el chequeo de huerfanos solo mira bundles vendorizados (los `.js` escritos a mano en el destino se reportaban como sobrantes) | 2026-07-30 |
-| `iskvw_piel_smoke.mjs` | VIVO | ejecuta el JS real de la piel del campo en node con stubs de DOM, recorre el campo para que el codigo por-nodo corra de verdad, y sale distinto de cero ante cualquier error (incluidos los async); existe porque #403 dejo `destino`/`dy` fuera de scope y todo pytest siguio verde con el portafolio muerto en el primer frame; consumido por `tests/test_iskvw_piel_smoke.py`. Desde el patch de efectos tambien lo MIDE: arranca la piel tres veces -- sin `datos/tablero.json`, con el tablero publicado (llave maestra apagada) y con la llave encendida -- y exige que las dos primeras dibujen marca por marca lo mismo y que la tercera deforme de verdad (posiciones desplazadas, colores corridos, la lectura arrastrada por la gravedad). Ademas corre cada llave por-efecto A SOLAS y exige la firma que solo ese efecto deja, y verifica que la capa de sala (`mejoras.venue3d`, mismo fetch del tablero) aparezca exactamente cuando la llave lo dice. Una llave que se publica apagada es codigo que nadie mira: por eso se mide en CI y no se declara | 2026-07-31 |
+| `iskvw_piel_smoke.mjs` | VIVO | ejecuta el JS real de la piel del campo en node con stubs de DOM, recorre el campo para que el codigo por-nodo corra de verdad, y sale distinto de cero ante cualquier error (incluidos los async); existe porque #403 dejo `destino`/`dy` fuera de scope y todo pytest siguio verde con el portafolio muerto en el primer frame; consumido por `tests/test_iskvw_piel_smoke.py`. Desde el patch de efectos tambien lo MIDE: arranca la piel tres veces -- sin `iskvw/datos/tablero.json`, con el tablero publicado (llave maestra apagada) y con la llave encendida -- y exige que las dos primeras dibujen marca por marca lo mismo y que la tercera deforme de verdad (posiciones desplazadas, colores corridos, la lectura arrastrada por la gravedad). Ademas corre cada llave por-efecto A SOLAS y exige la firma que solo ese efecto deja, y verifica que la capa de sala (`mejoras.venue3d`, mismo fetch del tablero) aparezca exactamente cuando la llave lo dice. Una llave que se publica apagada es codigo que nadie mira: por eso se mide en CI y no se declara | 2026-07-31 |
 | `validar_curaduria.py` | VIVO | valida `iskvw/datos/curaduria.json` (y `tablero.json`) contra el esquema que lee `aplicar_curaduria()` y contra el archivo real en disco: ids desconocidos o duplicados, campos invalidos, svg firmado ausente, diacriticos mutilados (la clase de defecto "reduciendo ano") -- todo lo que el consumidor traga en silencio, dicho en voz alta antes de commitear. Salida medida (ERROR/AVISO), exit 1 con errores: sirve en CI. Consumido por `tests/test_validar_curaduria.py` (que ademas corre el CLI sobre los archivos reales del repo) y `tests/test_curaduria_roundtrip.py` | 2026-07-31 |
 | `gen_vinculos_iskvw.py` | VIVO | vinculos entre obras CON EL MOTIVO adentro, sacados de los conceptos que la percepcion extrajo y que nadie usaba (7.985 menciones). `gen_archivo_iskvw.py` vincula por etiqueta compartida y lo declara: "nadie midio que se parezcan, comparten una palabra"; esto declara `clase: concepto` y lista los conceptos compartidos en `porque`, asi que el vinculo se puede refutar. Medido antes de escribirlo: 1 concepto compartido da 31.992 pares sobre 1.359 obras (una maraña), 2 dan 1.851 vinculos que alcanzan 863 obras (64%). Tres exclusiones, todas CONTADAS y reportadas -- conceptos en una sola obra (819, no vinculan nada), los mas frecuentes (uno en 305 obras es una CATEGORIA) y los que pasan `--tope-obras`. El pliegue de plural/tilde es para AGRUPAR: `porque` muestra la grafia que el modelo escribio, porque `patrone geometrico` es una llave y no una palabra. `tests/test_vinculos_iskvw.py` | 2026-08-01 |
 | `route_idea.py` | VIVO | CLI que convierte una idea o incidente en un packet minimo por area; consume `flujo.diagnostics.route_idea` y evita que un agente externo tenga que leer todo el repo; `tests/test_diagnostics.py` | 2026-08-16 |
@@ -514,6 +583,174 @@ Nota: el director listo tambien `render_flyer_mak.py` (VIVO, mak_ops) en
 su mensaje de spec, pero ese archivo NO existe en `tools/` de este
 worktree (ni en ninguna ruta del repo, verificado con busqueda global) --
 omitido de la tabla, ver desvio reportado en el cierre de sesion.
+
+## 5-bis. El mismo registro, medido (2026-08-28)
+
+La tabla de arriba declara el consumidor en prosa. Esta lo mide. La regla del
+2026-07-25 puso como condicion de retiro del registro "cuando exista chequeo
+automatico de consumidores"; esta seccion es ese chequeo, y se regenera con
+`.venv/bin/python` + el script de medicion descrito abajo.
+
+**Como se mide cada columna**
+
+- `existe`: `tools/<archivo>` esta en el arbol.
+- `refs produccion`: archivos fuera de `tests/` que mencionan la herramienta en
+  `src`, `tools`, `cultura`, `scripts`, `Makefile`, `.github`, `iskvw`, `xio`.
+- `refs test`: idem dentro de `tests/`.
+- `disparador`: workflow de `.github/workflows/` que la nombra.
+
+Se buscan **tres formas** por herramienta, no una: `<nombre>.py` (invocacion por
+ruta), `tools.<stem>` (import de modulo) y `import <stem>` (import con `sys.path`
+insertado). Buscar solo la primera fue un error medido en esta misma sesion:
+daba 0 referencias para `agent_bootstrap.py`, que si tiene test, porque
+`tests/test_agent_bootstrap.py` hace `from tools.agent_bootstrap import SCHEMA`.
+La primera medicion de esta seccion reporto 24 herramientas sin referencia; con
+las tres formas son 13.
+
+**Que NO prueba esta tabla**
+
+Cero referencias no es muerte. Varias de las 13 son CLI que una persona corre a
+mano y que ningun automatismo va a ejercitar nunca: eso es exactamente lo que la
+columna dice y nada mas. Lo que la tabla si prueba es que **4 de 92 herramientas
+tienen disparador**, o sea que 88 solo corren si alguien tipea el comando.
+
+**Resumen medido**
+
+| | de 92 |
+|---|---:|
+| existen en `tools/` | 92 |
+| con referencia en produccion | 46 |
+| solo referenciadas por un test | 33 |
+| sin ninguna referencia | 13 |
+| **con disparador de workflow** | **4** |
+
+Los 4 con disparador:
+
+| herramienta | workflow | evento |
+|---|---|---|
+| `tools/render_flyer_mak.py` | `issue_descarga_ig.yml` | `issues` |
+| `tools/render_video_sequence_mak.py` | `issue_descarga_ig.yml` | `issues` |
+| `tools/gen_archivo_iskvw.py` | `ci.yml`, `publicar_iskvw.yml` | `push`/`pull_request`, `workflow_dispatch` |
+| `tools/repo_audit.py` | `ci.yml` | `push`/`pull_request` |
+
+Solo dos responden a la accion de una persona (abrir un issue), y son las dos del
+render de flyers. Las otras dos son higiene de CI.
+
+Las 13 sin ninguna referencia: `arica01_portfolio.py`,
+`compile_contracurator.py`, `compile_ssd_order_foundation.py`,
+`run_vision_feedback.py`, `show_asset_usage.py`, `substrate_experiment.py`,
+`certified_query.py`, `classification_review.py`, `venue_screen_setup.py`,
+`aep_reference_scan.py`, `execute_research_job.py`,
+`render_archaeology_deliverables.py`, `gen_iskvw_prototipo.py`.
+
+| archivo | existe | refs produccion | refs test | disparador |
+|---|:-:|---:|---:|---|
+| `tools/agent_bootstrap.py` | si | 0 | 1 | -- |
+| `tools/archive_observer.py` | si | 0 | 1 | -- |
+| `tools/arica01_portfolio.py` | si | 0 | 0 | -- |
+| `tools/build_evidence_return.py` | si | 1 | 2 | -- |
+| `tools/build_possibility_field.py` | si | 1 | 3 | -- |
+| `tools/compile_contracurator.py` | si | 0 | 0 | -- |
+| `tools/compile_portfolio.py` | si | 1 | 2 | -- |
+| `tools/compile_ssd_order_foundation.py` | si | 0 | 0 | -- |
+| `tools/compile_application_research_package.py` | si | 1 | 3 | -- |
+| `tools/compile_autonomy_plan.py` | si | 1 | 1 | -- |
+| `tools/compile_opportunity_constraints.py` | si | 1 | 5 | -- |
+| `tools/compile_portfolio_dossier.py` | si | 1 | 3 | -- |
+| `tools/compile_practice_evidence_state.py` | si | 0 | 1 | -- |
+| `tools/compile_product_episode.py` | si | 1 | 1 | -- |
+| `tools/compile_product_plan.py` | si | 1 | 3 | -- |
+| `tools/adapt_practice_receipts.py` | si | 0 | 1 | -- |
+| `tools/capture_opportunity_validity.py` | si | 0 | 1 | -- |
+| `tools/compile_cross_archive_relations.py` | si | 0 | 1 | -- |
+| `tools/compile_cross_archive_research_frontier.py` | si | 0 | 1 | -- |
+| `tools/compile_opportunity_delta.py` | si | 0 | 1 | -- |
+| `tools/compile_selective_recompute_receipt.py` | si | 0 | 1 | -- |
+| `tools/compile_vigia_capture_plans.py` | si | 0 | 1 | -- |
+| `tools/inspect_operational_memberships.py` | si | 0 | 1 | -- |
+| `tools/materialize_pilot_run.py` | si | 0 | 1 | -- |
+| `tools/render_product_view.py` | si | 0 | 1 | -- |
+| `tools/run_archive_toolchain.py` | si | 0 | 1 | -- |
+| `tools/run_vision_feedback.py` | si | 0 | 0 | -- |
+| `tools/compile_research_frontier.py` | si | 1 | 2 | -- |
+| `tools/evaluate_artistic_program_hypotheses.py` | si | 0 | 1 | -- |
+| `tools/evaluate_opportunity_fit.py` | si | 1 | 3 | -- |
+| `tools/evaluate_product_learning.py` | si | 2 | 1 | -- |
+| `tools/generate_artistic_program_hypotheses.py` | si | 1 | 5 | -- |
+| `tools/triangulate_research_evidence.py` | si | 2 | 4 | -- |
+| `tools/order_projection.py` | si | 0 | 1 | -- |
+| `tools/resolve_identity_ties.py` | si | 1 | 1 | -- |
+| `tools/show_asset_usage.py` | si | 0 | 0 | -- |
+| `tools/substrate_experiment.py` | si | 0 | 0 | -- |
+| `tools/substrate_scan.py` | si | 2 | 0 | -- |
+| `tools/png_xmp_witness.py` | si | 0 | 1 | -- |
+| `tools/certified_query.py` | si | 0 | 0 | -- |
+| `tools/reconcile_iskvw_media.py` | si | 0 | 1 | -- |
+| `tools/classification_review.py` | si | 0 | 0 | -- |
+| `tools/project_review.py` | si | 0 | 1 | -- |
+| `tools/env_baseline.py` | si | 0 | 2 | -- |
+| `tools/venue_screen_setup.py` | si | 0 | 0 | -- |
+| `tools/update_readme_svg.py` | si | 1 | 1 | -- |
+| `tools/becas_calendario.py` | si | 1 | 2 | -- |
+| `tools/idioma.py` | si | 0 | 3 | -- |
+| `tools/render_flyer_mak.py` | si | 2 | 2 | issue_descarga_ig.yml |
+| `tools/render_video_sequence_mak.py` | si | 1 | 1 | issue_descarga_ig.yml |
+| `tools/render_output_edges.py` | si | 0 | 1 | -- |
+| `tools/aep_reference_scan.py` | si | 0 | 0 | -- |
+| `tools/blender_scene_probe.py` | si | 1 | 2 | -- |
+| `tools/compete_engine.py` | si | 13 | 2 | -- |
+| `tools/context_pack.py` | si | 1 | 1 | -- |
+| `tools/comparar_cobertura_fichas.py` | si | 1 | 1 | -- |
+| `tools/consolidar_fichas.py` | si | 3 | 2 | -- |
+| `tools/ig_metadatos.py` | si | 3 | 0 | -- |
+| `tools/conversacion.py` | si | 0 | 1 | -- |
+| `tools/inferential_archaeology.py` | si | 1 | 1 | -- |
+| `tools/drenar_material.py` | si | 0 | 1 | -- |
+| `tools/gen_archivo_iskvw.py` | si | 11 | 8 | ci.yml, publicar_iskvw.yml |
+| `tools/gen_propuestas_rd.py` | si | 2 | 3 | -- |
+| `tools/gen_rd_standalone.py` | si | 0 | 1 | -- |
+| `tools/repo_audit.py` | si | 2 | 1 | ci.yml |
+| `tools/gen_dashboard_productoras.py` | si | 0 | 1 | -- |
+| `tools/gen_presentacion_db.py` | si | 0 | 1 | -- |
+| `tools/gen_propuesta_directiva.py` | si | 2 | 0 | -- |
+| `tools/vendorizar_iskvw.py` | si | 0 | 4 | -- |
+| `tools/validar_curaduria.py` | si | 3 | 2 | -- |
+| `tools/gen_vinculos_iskvw.py` | si | 0 | 1 | -- |
+| `tools/route_idea.py` | si | 0 | 1 | -- |
+| `tools/interpretive_garden_workflow.py` | si | 4 | 0 | -- |
+| `tools/research_job_router.py` | si | 7 | 0 | -- |
+| `tools/execute_research_job.py` | si | 0 | 0 | -- |
+| `tools/render_archaeology_deliverables.py` | si | 0 | 0 | -- |
+| `tools/gen_capas_iskvw.py` | si | 0 | 2 | -- |
+| `tools/gen_campo_iskvw.py` | si | 1 | 4 | -- |
+| `tools/gen_iskvw_prototipo.py` | si | 0 | 0 | -- |
+| `tools/triangular_fichas.py` | si | 3 | 1 | -- |
+| `tools/gen_mapa_comandos.py` | si | 1 | 4 | -- |
+| `tools/construir_mapa_visual.py` | si | 1 | 1 | -- |
+| `tools/iconos_conjunto.py` | si | 4 | 2 | -- |
+| `tools/gen_vocabulario_motor.py` | si | 0 | 2 | -- |
+| `tools/render_video_rd.py` | si | 1 | 2 | -- |
+| `tools/system_map.py` | si | 6 | 2 | -- |
+| `tools/tapiz_live_loop.py` | si | 1 | 0 | -- |
+| `tools/tapiz_telemetry.py` | si | 2 | 1 | -- |
+| `tools/tilde_meter.py` | si | 5 | 6 | -- |
+| `tools/token_budget.py` | si | 1 | 1 | -- |
+| `tools/venue_geometria_scd.py` | si | 1 | 2 | -- |
+| `tools/verify_all.py` | si | 0 | 1 | -- |
+
+### Reproducir esta medicion
+
+Desde `/home/mak/flujo`, para una herramienta:
+
+```bash
+grep -rIl --exclude-dir=__pycache__ -e 'agent_bootstrap.py' \
+     -e 'tools.agent_bootstrap' src tools cultura scripts tests .github
+grep -l 'agent_bootstrap' .github/workflows/*.yml
+```
+
+Si la fila de la seccion 5 dice VIVO y estas dos consultas devuelven vacio, la
+fila afirma un consumidor que no existe. Esa es la contradiccion que esta
+seccion hace visible sin que nadie tenga que leer 92 lineas de prosa.
 
 ## 6. thi.ng / umbrella: LEER ANTES de escribir un generador, un pipeline o un grafo
 

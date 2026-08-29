@@ -130,7 +130,7 @@ def data_dir() -> Path:
 
 
 def datadrops_dir(create: bool = True) -> Path:
-    """Writable user dir for datadrops (inverse airdrop): uploaded real photos of finished work.
+    """Writable user dir for datadrops: uploaded real photos of finished work.
     Date-subdir structure inside. Used by hub UI + future AI review for styles/patterns.
     """
     p = workspace_root(create=create) / "datadrops"
