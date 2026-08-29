@@ -32,8 +32,19 @@ ORDER = Path("/home/mak/curatoria_inbox/order/2026-08-24/order_projection.json")
 INTAKE = Path("/home/mak/research/intake/portable-ssd-20260813-scd-r4/intake.sqlite")
 RECONSTRUCTION = Path("/home/mak/curatoria_inbox/project_reconstruction/2026-08-21")
 CORPUS = Path("/home/mak/research/corpus")
+KNOWLEDGE_DB = ROOT / "data" / "mak_knowledge.db"
 
-_REQUIRED = (INDEX, ORDER, INTAKE, DEFAULT_TIE_DB)
+# Every test in this file goes through _compile(), and _compile() always
+# passes knowledge_db, reconstruction_dir and research_corpus_dir -- even the
+# tmp_path tests below only override one narrow, unrelated argument. KNOWLEDGE_DB
+# is *.db and gitignored; RECONSTRUCTION and CORPUS live under /home/mak
+# entirely outside the repository. On a clean checkout (and on CI's
+# ubuntu-latest, which has no /home/mak at all) compile_ssd_order_foundation
+# raises SSDOrderFoundationError("source_missing:...") from inside the
+# module-scoped `foundation` fixture's setup, which is why the failure showed
+# up as 24 ERRORs rather than 24 FAILEDs: the INDEX/ORDER/INTAKE/DEFAULT_TIE_DB
+# check here did not cover these three sources.
+_REQUIRED = (INDEX, ORDER, INTAKE, RECONSTRUCTION, CORPUS, KNOWLEDGE_DB, DEFAULT_TIE_DB)
 
 
 def _sources_present() -> bool:
