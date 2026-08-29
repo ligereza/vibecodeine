@@ -22,8 +22,17 @@ from typing import Any, Iterable
 SCHEMA = "mak-operational-bridge-v1"
 DEFAULT_TARGET = Path(__file__).resolve().parents[3] / "data" / "mak_knowledge.db"
 DEFAULT_RD = Path(__file__).resolve().parents[3] / "data" / "rd.db"
-DEFAULT_INTAKE = Path(__file__).resolve().parents[3] / "research" / "intake" / "portable-ssd-20260813-scd-r4" / "intake.sqlite"
-DEFAULT_FONDART = Path(__file__).resolve().parents[3] / "research" / "corpus" / "fondart_annual_2015_2025_20260813_v5" / "sources.sqlite"
+# `parents[3]` is the repository root, which is right for `data/` above. It is
+# WRONG for these two: `research/` is not in the repository, it is a sibling of
+# it under MAK's home. Written with [3] on 2026-08-20, both paths resolved to
+# `flujo/research/...`, a directory that has never existed, so the bridge has
+# been silently reading nothing since it was written. `parents[4]` is MAK.
+MAK_HOME = Path(__file__).resolve().parents[4]
+DEFAULT_INTAKE = MAK_HOME / "research" / "intake" / "portable-ssd-20260813-scd-r4" / "intake.sqlite"
+# The run was `..._v5`, retired on 2026-08-29 for being byte-identical to a
+# surviving one (it kept 0 captures of its own). `_v3` is the richest run still
+# live in the corpus: 5215 rows in `fondart_applications` against v5's copy.
+DEFAULT_FONDART = MAK_HOME / "research" / "corpus" / "fondart_annual_2015_2025_20260813_v3" / "sources.sqlite"
 
 
 def _now() -> str:
