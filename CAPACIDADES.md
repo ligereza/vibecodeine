@@ -681,7 +681,7 @@ tienen disparador**, o sea que 88 solo corren si alguien tipea el comando.
 | existen en `tools/` | 92 |
 | con referencia en produccion | 46 |
 | solo referenciadas por un test | 33 |
-| sin ninguna referencia | 13 |
+| sin ninguna referencia | 12 (13 medidos 2026-08-28; uno, `render_archaeology_deliverables.py`, fue retirado 2026-08-29) |
 | **con disparador de workflow** | **4** |
 
 Los 4 con disparador:
@@ -696,12 +696,16 @@ Los 4 con disparador:
 Solo dos responden a la accion de una persona (abrir un issue), y son las dos del
 render de flyers. Las otras dos son higiene de CI.
 
-Las 13 sin ninguna referencia: `arica01_portfolio.py`,
+Las 12 sin ninguna referencia: `arica01_portfolio.py`,
 `compile_contracurator.py`, `compile_ssd_order_foundation.py`,
 `run_vision_feedback.py`, `show_asset_usage.py`, `substrate_experiment.py`,
 `certified_query.py`, `classification_review.py`, `venue_screen_setup.py`,
-`aep_reference_scan.py`, `execute_research_job.py`,
-`render_archaeology_deliverables.py`, `gen_iskvw_prototipo.py`.
+`aep_reference_scan.py`, `execute_research_job.py`, `gen_iskvw_prototipo.py`.
+`render_archaeology_deliverables.py` was one of the original 13 but was
+retired 2026-08-29 (commit `1957d846`, moved to
+`_archive/orden-limpieza-20260828/`); it no longer exists in `tools/` and the
+detailed table below was already corrected (commit `3850ea74`) -- this prose
+count was the one line that commit missed.
 
 | archivo | existe | refs produccion | refs test | disparador |
 |---|:-:|---:|---:|---|
