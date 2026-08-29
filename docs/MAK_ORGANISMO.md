@@ -346,6 +346,92 @@ literally named "old") is referenced by
 `src/flujo/knowledge/runtime_tools.py:41` as an explicit fallback beside
 `/home/mak/blender` (4.5.4). Kept.
 
+## Before resuming: what the 23 jobs would actually do
+
+Five of the 23 paused lines carry authority outside this machine. Measured by
+reading what each module calls, not by name:
+
+| Job | Cadence | External calls |
+|---|---|---|
+| `entregar.py --limit 1` | every 6 h | `gh pr create --draft` |
+| `revisor.py --enforce` | every 6 h | `gh pr ready`, `gh pr comment`, **`gh pr merge`** |
+| `puente_issues.py` | every 10 min | `gh issue list` and issue writes |
+| `agente_libre.py` | daily 07:15 | no `gh`/`git` calls found |
+| `backup.sh` | daily 04:30 | local tarballs into `/home/mak/backups/` |
+
+`revisor.py`'s own docstring: *"with `--enforce`: ACTS. `enforce_pr` marks ready,
+comments and MERGES"*, and it records that this code *"lived on ONE disk for ten
+days merging PRs by itself"*. The cron line invokes it with `--enforce`.
+
+**So resuming means one bot opening draft PRs and another merging them, every
+six hours, unattended.**
+
+### The backstop does not exist
+
+```
+gh api repos/:owner/:repo/branches/main/protection   ->  404 Not Found
+gh api repos/:owner/:repo/rules/branches/main        ->  0 rules
+gh auth status                                       ->  scopes: gist, read:org, repo, workflow
+```
+
+The token holds `repo` scope, so it would see protection if there were any.
+**`main` has no branch protection and no rulesets.** Nothing outside
+`revisor.py`'s own two guards (`--enforce` present, CI fully green) stands
+between the box and a merge to `main`.
+
+A line in `plataforma/logs/revisor.log` reading `PR #7 merge fallo: protected
+branch` looks like evidence to the contrary. It is not: that line was written by
+`tests/test_revisor_gates.py` into the production log, alongside `PR #7 MERGEADO
+autonomo por el box`, while `git log --merges` and `gh pr list` show neither
+event happened. Both test suites that did this are fixed as of 2026-08-28 and a
+full-suite sweep confirms no test writes to `/home/mak/plataforma/logs/` any
+more.
+
+### How to resume, verified command by command
+
+`cultura/mak_plataforma/crontab.mak` (2026-08-13, versioned in the repo) is the
+un-paused crontab. Compared command by command against the live one:
+
+| | |
+|---|---:|
+| commands identical in both | **23** |
+| present live and missing from the repo file (would be lost) | **0** |
+| present in the repo file and not live | 1 |
+
+That one extra is `MAK-REPO-SYNC`, and **it is already marked `# PAUSED-FARO` in
+the versioned file** -- the `git fetch && checkout -B main && reset --hard
+origin/main && cp -ru ...` line that used to overwrite the repo every ten
+minutes. It stays off.
+
+So the resume is one command and it cannot lose a job or revive the destructive
+sync:
+
+```bash
+crontab /home/mak/flujo/cultura/mak_plataforma/crontab.mak
+```
+
+To resume without merge authority, comment the `MAK-REVISOR` line first, or drop
+its `--enforce` flag: `revisor.py` without it is observational by design and
+writes its verdict instead of acting.
+
+**One stray in that file, line 21.** The `MAK-PUENTE-ISSUES` line carries
+`FLUJO_GPU_BACKEND=CUDA`, but `cultura/mak_plataforma/puente_issues.py` contains
+no reference to torch, cuda or that variable; the only consumers of
+`FLUJO_GPU_BACKEND` are `src/flujo/eventos/blender_gpu.py` and this crontab. The
+variable is inert there, and misleading: it makes a GitHub-issues job look
+GPU-dependent. Worth removing when the file is next edited.
+
+### Therefore
+
+Resuming MAK is a crontab edit and all 23 jobs would start. Whether they
+*should* is a decision with a measured consequence attached, and it is the
+operator's. Three ways to bound it, in increasing order of trust:
+
+1. Resume everything except `MAK-REVISOR`, leaving observation without merge
+   authority. `revisor.py` without `--enforce` is observational by design.
+2. Enable branch protection on `main` first, then resume everything.
+3. Resume everything as it was. This is what ran until 2026-08-14.
+
 ## What ordering MAK actually requires
 
 Files are the small part and are handled: see
