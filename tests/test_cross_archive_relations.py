@@ -21,6 +21,16 @@ ROOT = Path(__file__).resolve().parents[1]
 DREF_PRACTICE = ROOT / "experiments/pilots/DREFQUILA/runs/portable-sample-20260826/drefgira-reconstructed-practice.json"
 HARRY_PRACTICE = ROOT / "experiments/pilots/HARRY-NACH-2026/runs/fondart-enriched-opportunity-20260826/practice.json"
 CATALOG = ROOT / "data/artist_discographies.json"
+
+# Every test here is about relations BETWEEN pilots, and all four sources above
+# live under experiments/pilots/, which .gitignore keeps out of the repository
+# on purpose: it is real pilot evidence. On MAK they are present; in a clean
+# checkout they are not. Reading them unguarded is exactly why CI went red for
+# six runs while this suite stayed green locally -- the suite was measuring a
+# machine, not a repository.
+pytestmark = pytest.mark.skipif(
+    not all(p.is_file() for p in (DREF_PRACTICE, HARRY_PRACTICE)),
+    reason="experiments/pilots/ is not in this clone")
 DREF_CONTEXT = ROOT / "experiments/pilots/DREFQUILA/runs/metadata-federation-20260826/dref_context_federation.json"
 HARRY_PROFILE = ROOT / "experiments/pilots/HARRY-NACH-2026/input/archive_profile.json"
 
