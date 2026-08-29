@@ -112,6 +112,10 @@ def test_tampered_frontier_and_duplicate_archive_fail_validation():
 
 
 def test_cli_materializes_frontier_without_db_or_dispatch(tmp_path: Path):
+    # This one builds the command from RELATIONS directly instead of going
+    # through the guarded loader, so guarding the loader did not cover it.
+    if not RELATIONS.is_file():
+        pytest.skip("experiments/pilots/DREFQUILA is not in this clone")
     output = tmp_path / "research-frontier.json"
     command = [
         sys.executable,  # no `.venv/bin/python`: en CI ese archivo no existe
