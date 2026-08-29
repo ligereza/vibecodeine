@@ -31,9 +31,19 @@ físicas. Las decisiones detalladas están en
 `/home/mak/indexes/mak-consolidation-20260829/MAK-DIRECTIVE-REGISTRY.md` y
 `CONSOLIDATION-DECISIONS.md`.
 
-El archivo de retiros tiene 231 filas, todas con destino existente y sin
+El archivo de retiros tiene 234 filas, todas con destino existente y sin
 duplicados de origen o destino. La suite completa termina con exit 0 y Git se
 usó sólo en modo lectura para procedencia y validación.
+
+La continuación del 2026-08-29 amplió el paquete actual con la reproducción de
+CI en un entorno de dependencias declarado, pruebas directas de
+`ingesta_archivo.py`, detalle estático de las 23 líneas de cron y el pulso JSON
+`mak-organism-heartbeat-v1`. El mapa de retiros ahora tiene 234 filas; la
+descripción precisa y los cambios pendientes de commit están en
+`/home/mak/MAK_CODEX_HANDOFF.md` secciones 9 y 10. Esa apertura también
+confirmó que `actions-runner` es runtime vivo de sistema; las raíces locales
+restantes quedaron clasificadas sin crear inventarios paralelos ni tocar los
+montajes externos.
 
 ## Reconciliación de autoridad y bases — 2026-08-27
 

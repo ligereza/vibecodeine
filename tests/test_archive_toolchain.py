@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import builtins
 from pathlib import Path
 import shutil
 import subprocess
@@ -167,6 +168,23 @@ def test_native_surface_component_matches_explicit_raster_candidate(tmp_path: Pa
     assert all(row["metadata"]["truth_promotion"] is False for row in context["relations"])
 
 
+def test_native_psd_degrades_explicitly_when_optional_package_is_missing(
+        tmp_path: Path, monkeypatch):
+    from flujo.knowledge import archive_toolchain
+
+    original_import = builtins.__import__
+
+    def blocked_import(name, *args, **kwargs):
+        if name == "psd_tools" or name.startswith("psd_tools."):
+            raise ImportError("optional package absent")
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", blocked_import)
+    result = archive_toolchain._psd(tmp_path / "source.psd", {}, 10)
+    assert result["status"] == "unavailable"
+    assert result["facts"] == {"format": "psd", "reason": "package_missing"}
+
+
 def test_numbered_same_family_siblings_do_not_create_weak_media_edges(tmp_path: Path):
     from PIL import Image
 
@@ -310,6 +328,7 @@ def test_czkawka_video_signature_without_numeric_score_stays_candidate(tmp_path:
 
 @pytest.mark.skipif(shutil.which("ffmpeg") is None, reason="ffmpeg is required for the real media pair")
 def test_real_tool_observations_reach_existing_context_consumer(tmp_path: Path):
+    pytest.importorskip("imagehash", reason="ImageHash is optional and not installed here")
     from PIL import Image
 
     image_path = tmp_path / "MISIONAR (1-14-00-10).png"

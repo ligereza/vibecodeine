@@ -60,7 +60,7 @@ six are independent contracts. Active directives now have one root
 `agents.md`, one root `CAPACIDADES.md`, and department contracts where needed.
 
 Retired material was moved reversibly under
-`/home/mak/_archive/orden-limpieza-20260828/`, with 231 map rows and no missing
+`/home/mak/_archive/orden-limpieza-20260828/`, with 234 map rows and no missing
 destinations. One hundred forty-one rows correspond to duplicate, projection
 or placeholder consolidation. Fifty-one compatibility aliases are symlinks to
 canonical physical files. The complete measurements are in:
@@ -74,6 +74,30 @@ canonical physical files. The complete measurements are in:
 The full test suite exited 0 with five skips and warnings only; `git diff
 --check` also passed. Git was used read-only as provenance and validation, not
 as the source of truth for the local filesystem.
+
+### Continuation — 2026-08-29 — CI, cron and coverage
+
+Claude's local commit `c94e5776` guards optional `psd_tools`; its failed remote
+CI run was for the preceding SHA `72bd5cd`. This continuation reproduced the
+workflow dependencies in a temporary environment, generated `archivo.json`,
+and ran `python -m flujo verify` successfully. `psd_tools` and `imagehash` are
+optional in that environment, so the dependent tests now skip with explicit
+reasons and the absence branch of `_psd` has direct coverage.
+
+Current uncommitted worktree changes are `tests/test_archive_toolchain.py`,
+`tests/test_ingesta_archivo.py`, and `tools/medir_organismo.py`; no Git command
+changed history, branch or remote state. The organism measurement now offers
+`--cron-detail` for 23 static cron preflights and `--json` for
+`mak-organism-heartbeat-v1`. The valid test-overlap evidence is in
+`/home/mak/indexes/mak-solape-tests-20260829/`; see
+`/home/mak/MAK_CODEX_HANDOFF.md` for its counts and limits.
+
+The first opening of all previously uninspected local roots is complete. The
+system-level GitHub runner is enabled and active; `actions-runner` is therefore
+live runtime, not an orphan. Local installation roots (`bin`, `opt`, `go`,
+`apps`, `models`, `src`, `tools`), dated evidence roots (`indexes`, `state`,
+`labs`, `renders`) and personal/XDG roots were each classified without moving
+them. `GoogleDrive` and `OneDrive` remain untouched rclone mount boundaries.
 
 ### Before resuming, one measured fact
 

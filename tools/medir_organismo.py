@@ -24,9 +24,12 @@ caught the first version of this file.
 """
 from __future__ import annotations
 
+import argparse
+from datetime import datetime, timezone
 import json
 import re
 import shlex
+import shutil
 import socket
 import subprocess
 from pathlib import Path
@@ -92,27 +95,117 @@ def target(line: str):
 
 
 def would_start(interpreter: str, script: str) -> bool:
+    return static_readiness(interpreter, script)[0]
+
+
+def script_path(script: str) -> Path:
     path = Path(script.replace("~", str(HOME)))
-    if not path.is_absolute():
-        path = HOME / "plataforma" / path
-    if not path.exists():
-        return False
+    return path if path.is_absolute() else HOME / "plataforma" / path
+
+
+def static_readiness(interpreter: str, script: str) -> tuple[bool, str]:
+    """Check a cron target without importing or executing its module."""
+    path = script_path(script)
+    if not path.is_file():
+        return False, "script_missing"
+    if interpreter.startswith("/"):
+        if not Path(interpreter).is_file():
+            return False, "interpreter_missing"
+    elif not shutil.which(interpreter):
+        return False, "interpreter_missing"
     if path.suffix == ".sh":
-        # follow the symlink: several of these point into the repo, and the
-        # execute bit that matters is the target's, not the link's.
-        return bool(path.resolve().stat().st_mode & 0o111)
-    probe = subprocess.run(
-        [interpreter, "-c",
-         f"import importlib.util as u;s=u.spec_from_file_location('x','{path}');"
-         f"m=u.module_from_spec(s);s.loader.exec_module(m)"],
-        capture_output=True, timeout=60)
-    return probe.returncode == 0
+        if not bool(path.resolve().stat().st_mode & 0o111):
+            return False, "shell_not_executable"
+        probe = subprocess.run(["/bin/bash", "-n", str(path)], capture_output=True,
+                               text=True, timeout=30)
+        return probe.returncode == 0, "ready" if probe.returncode == 0 else "shell_syntax"
+    if path.suffix == ".py":
+        try:
+            compile(path.read_bytes(), str(path), "exec")
+        except (OSError, SyntaxError):
+            return False, "python_syntax"
+    return True, "ready"
 
 
-def main() -> int:
-    print("MAK, medido ahora. Solo lectura.\n")
+def cron_details(paused_lines: list[str]) -> list[dict[str, str | int | bool | None]]:
+    """Return one static preflight record per paused cron line."""
+    details: list[dict[str, str | int | bool | None]] = []
+    for number, line in enumerate(paused_lines, 1):
+        match = re.match(r"^#\s*(?P<marker>PAUSED[^\s]*)\s+(?P<body>.*)$", line)
+        body = match.group("body") if match else line.lstrip("# ")
+        fields = body.split(maxsplit=5)
+        schedule = " ".join(fields[:5]) if len(fields) >= 5 else ""
+        command = fields[5].strip() if len(fields) == 6 else ""
+        found = target(line)
+        interpreter = found[0] if found else None
+        script = found[1] if found else None
+        ready, reason = static_readiness(interpreter, script) if found else (False, "target_unparsed")
+        details.append({
+            "number": number,
+            "marker": match.group("marker") if match else "",
+            "schedule": schedule,
+            "command": command,
+            "interpreter": interpreter,
+            "script": str(script_path(script)) if script else None,
+            "static_ready": ready,
+            "reason": reason,
+        })
+    return details
+
+
+def heartbeat_snapshot(active: int, paused_lines: list[str]) -> dict[str, object]:
+    """Emit a machine-readable organism pulse without changing the machine."""
+    protection = sh("gh", "api", "repos/:owner/:repo/branches/main/protection")
+    rules = sh("gh", "api", "repos/:owner/:repo/rules/branches/main")
+    try:
+        rule_count = len(json.loads(rules)) if rules.strip() else 0
+    except json.JSONDecodeError:
+        rule_count = 0
+    organs = []
+    for name, port in ORGANS:
+        organs.append({"name": name, "port": port, "alive": port_open(port),
+                       "process": process_on(port)})
+    organs.extend([
+        {"name": "lenguaje", "port": None, "alive": bool(active),
+         "process": "cron" if active else "cron_paused"},
+        {"name": "xio_puente", "port": None,
+         "alive": sh("systemctl", "--user", "is-active", "mak-xio").strip() == "active",
+         "process": sh("systemctl", "--user", "is-active", "mak-xio").strip() or "unknown"},
+    ])
+    details = cron_details(paused_lines)
+    return {
+        "schema": "mak-organism-heartbeat-v1",
+        "measured_at": datetime.now(timezone.utc).isoformat(),
+        "cron": {
+            "active_lines": active,
+            "paused_lines": len(paused_lines),
+            "static_ready_lines": sum(bool(row["static_ready"]) for row in details),
+            "details": details,
+        },
+        "organs": organs,
+        "branch_protection": {
+            "classic_present": bool(protection.strip()) and "Not Found" not in protection,
+            "ruleset_count": rule_count,
+        },
+    }
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--cron-detail", action="store_true",
+                        help="mostrar preflight estatico de cada linea pausada")
+    parser.add_argument("--json", action="store_true",
+                        help="emitir el pulso del organismo como JSON")
+    args = parser.parse_args(argv)
 
     active, paused_count, paused_lines = cron_state()
+    if args.json:
+        print(json.dumps(heartbeat_snapshot(active, paused_lines), ensure_ascii=False,
+                         indent=2, sort_keys=True))
+        return 0
+
+    print("MAK, medido ahora. Solo lectura.\n")
+
     print(f"1. capa de cron: {'CORRIENDO' if active else 'PAUSADA'}"
           f"   ({active} activas, {paused_count} pausadas)")
     for mark in sorted({m for x in paused_lines
@@ -146,24 +239,24 @@ def main() -> int:
     else:
         print("     proteccion presente")
 
-    print("\n4. reanudacion: cuantas lineas arrancarian")
-    ok = 0
-    failing: list[str] = []
-    for line in paused_lines:
-        found = target(line)
-        if not found:
-            continue
-        if would_start(*found):
-            ok += 1
-        else:
-            failing.append(found[1])
-    print(f"     {ok} arrancarian, {len(failing)} no")
+    print("\n4. reanudacion: preflight estatico de lineas")
+    details = cron_details(paused_lines)
+    ok = sum(bool(row["static_ready"]) for row in details)
+    failing = [str(row["script"] or row["command"]) for row in details
+               if not row["static_ready"]]
+    print(f"     {ok} listas, {len(failing)} con fallo estatico")
     for path in failing:
         print(f"       FALLA {path}")
     versioned = REPO / "cultura" / "mak_plataforma" / "crontab.mak"
     if versioned.exists():
         print(f"     el crontab sin pausar esta versionado: "
               f"{versioned.relative_to(REPO)}")
+    if args.cron_detail:
+        print("\n4b. detalle de reanudacion")
+        for row in details:
+            status = "LISTA" if row["static_ready"] else "FALLA"
+            print(f"     {int(row['number']):02d} {status:<5} {row['marker']:<36} "
+                  f"{row['schedule']:<14} {row['reason']:<20} {row['script'] or row['command']}")
 
     print("\n5. entornos Python")
     for env in sorted(HOME.glob("venvs/*")) + [HOME / "plataforma/.venv",
