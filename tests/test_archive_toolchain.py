@@ -88,6 +88,12 @@ def test_ocr_is_explicit_and_read_only(tmp_path: Path):
 
 
 def test_native_psd_and_kra_structure_is_observed_without_render_or_mutation(tmp_path: Path):
+    # psd-tools is an OPTIONAL capability: archive_toolchain.py and
+    # diagnostico_proyectos.py both gate on `find_spec("psd_tools")` and
+    # degrade when it is absent. It is present on MAK and absent in CI, so
+    # importing it unguarded here is what turned a green local suite into a
+    # red CI right after the 2026-08-29 push. Skip naming what is missing.
+    pytest.importorskip("psd_tools", reason="psd-tools is optional and not installed here")
     from PIL import Image
     from psd_tools import PSDImage
 
@@ -128,6 +134,7 @@ def test_native_psd_and_kra_structure_is_observed_without_render_or_mutation(tmp
 
 
 def test_native_surface_component_matches_explicit_raster_candidate(tmp_path: Path):
+    pytest.importorskip("psd_tools", reason="psd-tools is optional and not installed here")
     from PIL import Image, ImageDraw
     from psd_tools import PSDImage
 
