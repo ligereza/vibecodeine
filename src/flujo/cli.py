@@ -679,7 +679,7 @@ def rd_datos_informe(
 def tapiz(modo: str = typer.Argument("demo", help="demo | stress | live")):
     """Ecosistema Tapiz<->Psicosis<->Fungi: pipeline generativo (tools/compete_engine.py).
 
-    Cablea el cluster (compete_engine + tapiz_live_loop + telemetry + system_map)
+    Cablea el cluster (compete_engine + telemetry + system_map)
     al CLI para que sea reachable/usable, no codigo suelto. Exporta a tools/dist/.
     """
     from .paths import repo_root

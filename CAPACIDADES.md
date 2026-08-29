@@ -736,7 +736,6 @@ Las 13 sin ninguna referencia: `arica01_portfolio.py`,
 | `tools/interpretive_garden_workflow.py` | si | 4 | 0 | -- |
 | `tools/research_job_router.py` | si | 7 | 0 | -- |
 | `tools/execute_research_job.py` | si | 0 | 0 | -- |
-| `tools/render_archaeology_deliverables.py` | si | 0 | 0 | -- |
 | `tools/gen_capas_iskvw.py` | si | 0 | 2 | -- |
 | `tools/gen_campo_iskvw.py` | si | 1 | 4 | -- |
 | `tools/gen_iskvw_prototipo.py` | si | 0 | 0 | -- |
