@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import zipfile
 
 import pytest
@@ -338,7 +339,7 @@ def test_cli_can_emit_existing_context_projection(tmp_path: Path):
     context_path = tmp_path / "context.json"
     result = subprocess.run(
         [
-            str(Path(__file__).parents[1] / ".venv/bin/python"),
+            sys.executable,  # no `.venv/bin/python`: en CI ese archivo no existe
             "tools/run_archive_toolchain.py",
             str(projection_path),
             "--root", str(tmp_path),
