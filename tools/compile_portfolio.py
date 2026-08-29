@@ -47,11 +47,58 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--external-proposals", type=Path, default=None)
     parser.add_argument("--project-id", default="mak-portfolio-production-20260828")
     parser.add_argument("--out", type=Path, default=ROOT / "out" / "portfolio")
+    parser.add_argument("--mak", action="store_true",
+                        help="fill every optional input from MAK's canonical evidence paths")
     args = parser.parse_args(argv)
 
     decision = None
     relations: list = []
     log = None
+    # MAK's evidence lives outside the repo, so seven of these default to None
+    # and the compiler runs happily degraded: it renders fewer formats from a
+    # smaller claim base and says nothing about it. Measured 2026-08-29 on this
+    # machine: without them, 256 claims and F7-lectura-curatorial infeasible;
+    # with them, 287 claims and F7 rendered with 13 items. Absence read as
+    # health, which is the same defect `flujo doctor` had with `_airdrop/`.
+    #
+    # `--mak` fills them from the paths that docs/PORTAFOLIO_PRODUCCION.md
+    # declares, and only when they actually exist. The default stays untouched
+    # so no caller changes behaviour without asking for it.
+    MAK_EVIDENCE = Path("/home/mak/plataforma/director_runs/portfolio-editor-20260808")
+    if args.mak:
+        for attr, candidate in (
+            ("selections", MAK_EVIDENCE / "selections.jsonl"),
+            ("classifications", MAK_EVIDENCE / "classifications.jsonl"),
+            ("connections", MAK_EVIDENCE / "connections.jsonl"),
+            ("feedback", MAK_EVIDENCE / "copilot_feedback.jsonl"),
+            ("external_proposals", MAK_EVIDENCE / "copilot_external.jsonl"),
+            ("declared_inputs", ROOT / "data" / "ssd_evidence" / "declared_inputs.json"),
+            ("blend_targets", ROOT / "data" / "ssd_evidence" / "blend_dependency_targets.json"),
+            ("screen_setup_root", Path("/media/mak/PortableSSD")),
+        ):
+            if getattr(args, attr) is None and candidate.exists():
+                setattr(args, attr, candidate)
+
+    # Whatever the caller asked for, say out loud what is missing. A compiler
+    # that degrades in silence teaches the reader that the smaller result is
+    # the whole result.
+    absent = [name for name, value in (
+        ("decisiones humanas: selections", args.selections),
+        ("decisiones humanas: classifications", args.classifications),
+        ("decisiones humanas: connections", args.connections),
+        ("decisiones humanas: feedback", args.feedback),
+        ("propuestas externas", args.external_proposals),
+        ("ScreenSetups de Resolume", args.screen_setup_root),
+        ("insumos declarados del SSD", args.declared_inputs),
+        ("objetivos de dependencia .blend", args.blend_targets),
+    ) if value is None or not Path(value).exists()]
+    if absent:
+        print("AVISO: se compila SIN esta evidencia, el resultado sera menor:",
+              file=sys.stderr)
+        for name in absent:
+            print(f"  falta  {name}", file=sys.stderr)
+        print("  para la corrida completa en MAK: --mak", file=sys.stderr)
+
     if any((args.selections, args.classifications, args.connections,
             args.feedback, args.external_proposals)):
         log = read_human_decisions(
