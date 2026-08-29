@@ -12,7 +12,7 @@ Every row declares its invoker so the claim is checkable: if the column says
 Language: English ASCII, per the Language section of `agents.md` for operational
 metadata.
 
-## The 29 scripts, measured
+## The 24 scripts, measured
 
 A script with NO INVOKER is not dead: it may be a utility a person runs by hand.
 What the column asserts is that no `Makefile`, workflow or module calls it --
@@ -21,22 +21,17 @@ that nothing will exercise it on its own.
 | Script | Measured invoker |
 |---|---|
 | `piezas_generar.py` | `render_piezas_vectoriales.yml`, `Makefile`, `brief_to_project.py` |
-| `flujo.py` | `src/flujo/version.py`, `flujo_health.py`, `run_airdrop_checks.py`, `generar_catalogo_rd.py` |
+| `flujo.py` | `src/flujo/version.py`, `flujo_health.py`, `generar_catalogo_rd.py` |
 | `flujo_daily.py` | `Makefile`, `abrir_dashboard.sh`, `nuevo_pedido.sh` |
-| `hub_smoke.py` | `src/flujo/cli.py`, `run_airdrop_checks.py` |
-| `validate_airdrop.py` | `src/flujo/cli.py`, `run_airdrop_checks.py` |
+| `hub_smoke.py` | `src/flujo/cli.py` |
 | `abrir_dashboard.sh` | `Makefile`, `nuevo_pedido.sh` |
 | `flujo_pipeline.py` | `Makefile`, `nuevo_pedido.sh` |
 | `flujo_health.py` | `render_piezas_vectoriales.yml` |
 | `piezas_check_outputs.py` | `render_piezas_vectoriales.yml` |
-| `run_airdrop_checks.py` | `airdrop_gate.yml` |
 | `flyer_create_project.py` | `Makefile` (`make new-flyer`) |
 | `limpiar_basura.sh` | `Makefile` (`make clean`) |
 | `setup.sh` | `Makefile` (`make install`) |
-| `checkpoint.sh` | `src/flujo/airdrop.py` |
 | `_common.py` | `flujo_health.py` |
-| `apply_airdrop.sh` | NO INVOKER |
-| `finish_airdrop.sh` | NO INVOKER |
 | `backlog_list.py` | NO INVOKER |
 | `brief_to_project.py` | NO INVOKER |
 | `export_propuesta_pdf.py` | NO INVOKER |
@@ -50,34 +45,37 @@ that nothing will exercise it on its own.
 | `sanitize_sensitive.py` | NO INVOKER |
 | `suggest_repo_hygiene.py` | NO INVOKER |
 
-15 with an invoker, 14 with none.
+12 with an invoker, 12 with none. Five airdrop scripts and `checkpoint.sh` were retired 2026-08-28.
 
-## Airdrop: the chain is complete and its input does not exist
+## Airdrop: retired 2026-08-28
 
-`_airdrop/` **is not in the tree**. Neither is `docs/AGENT_AIRDROP_PROTOCOL.md`,
-which the previous version of this inventory cited as its protocol. What does
-exist is the whole apparatus that serves it:
+The chain is gone. It had been dead since **2026-08-14**: at 12:41-12:44 that
+day thirteen Codex commits ("chore: remove legacy instruction docs") deleted
+`docs/AGENT_AIRDROP_PROTOCOL.md`, and at 13:10 `032822b61` ("chore: remove
+obsolete agent routes") cleaned the routes. The purge only touched `docs/`, so
+the module, six scripts, a workflow, a CLI sub-app and 42 tests were left
+standing for fourteen days. `_airdrop/` itself has **zero events in the whole
+Git history**: it was a gitignored staging directory.
 
-- `scripts/apply_airdrop.sh`, `finish_airdrop.sh`, `validate_airdrop.py`,
-  `run_airdrop_checks.py`
-- `src/flujo/airdrop.py` (494 lines) and the `flujo airdrop` command
-- `.github/workflows/airdrop_gate.yml`, triggered by `release: published`
-- 42 tests in `tests/test_airdrop.py`, `test_airdrop_signing.py`,
-  `test_validate_airdrop.py`, `test_run_airdrop_checks.py`
+Removed on 2026-08-28 to
+`/home/mak/_archive/orden-limpieza-20260828/por-razon/subsistema-retirado-20260814/`:
+`src/flujo/airdrop.py`, `src/flujo/intake/reception.py` (the email channel,
+called by nothing but its own tests), four `scripts/*airdrop*`,
+`scripts/checkpoint.sh`, `.github/workflows/airdrop_gate.yml` and five test
+files. 194 lines came out of `src/flujo/cli.py`: the Typer sub-app, eight
+subcommands, `_validate_airdrop_or_exit` and the `flujo doctor` check that
+reported `airdrop pendiente: OK -- no` while looking at a directory that does
+not exist.
 
-The 42 tests pass today. They pass because they work over `tmp_path`, not over
-`_airdrop/`. And `flujo doctor` reports `airdrop pendiente: OK -- no`, so the
-absence of the subsystem reads as health.
-
-Retiring that chain touches code, tests and a workflow -- not files -- so it is
-declared here and not executed. See `docs/AUTORIDAD.md`.
+`datadrop` was never part of this: `grep airdrop src/flujo/datadrops.py` is
+empty. Its "inverse airdrop" phrasing was an analogy and was reworded.
 
 ## Corrections against the previous version (2026-07-18)
 
 | Previous claim | Measurement 2026-08-28 |
 |---|---|
 | version pinned four minors behind | real version is `0.56.1`, per `pyproject.toml` |
-| "`finish_airdrop.sh` mentions checkpoint.sh, **already nonexistent**" | `scripts/checkpoint.sh` **exists** and `src/flujo/airdrop.py` invokes it |
+| "`finish_airdrop.sh` mentions checkpoint.sh, **already nonexistent**" | it existed and had **no invoker**. The first correction in this session claimed `src/flujo/airdrop.py` invoked it; that was a grep matching a docstring which says the opposite (`airdrop.py:380`: *"No depende de `bash` ni de `scripts/checkpoint.sh`"*). Retired 2026-08-28 |
 | `scripts/app.py` listed as an active Web/dashboard script | **does not exist** |
 | legacy archived in `_archive/legacy_20260703_1413/` | `_archive/` **does not exist**; the cited destination cannot be inspected |
 | legacy archived in `_archive/legacy_20260718_0110/scripts_oneshot/` | same |

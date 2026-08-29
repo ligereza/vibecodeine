@@ -59,6 +59,14 @@ DEPARTMENTS: dict[str, dict[str, Any]] = {
         "tool_links": [
             {"label": "Portfolio editor", "path": "/portafolio/"},
             {"label": "ISKVW editor", "path": "/static/iskvw/editor"},
+            {
+                "label": "Archive portfolio view",
+                "path": "/api/portfolio/archive-view",
+                "mode": "read_only",
+                "status": "draft",
+                "publication": False,
+                "authorship": False,
+            },
         ],
         "contract_dir": "contracts/departments/iskvw",
         "handoff": "context/handoffs/iskvw.md",

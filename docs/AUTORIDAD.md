@@ -156,11 +156,10 @@ Copied with `cp -p`; the legacy tree was not modified.
 
 All of the following requires touching code, tests or workflows, not files:
 
-- **Airdrop chain.** `_airdrop/` does not exist. Sustained by
-  `src/flujo/airdrop.py` (494 lines), 4 scripts,
-  `.github/workflows/airdrop_gate.yml`, the `flujo airdrop` command and **42
-  passing tests**. `flujo doctor` reports `airdrop pendiente: OK -- no`: absence
-  reads as health.
+- ~~Airdrop chain~~ **done 2026-08-28.** Retired whole: the module, the email
+  channel in `intake/reception.py`, six scripts, the workflow, the Typer sub-app
+  and 194 lines of `cli.py`, plus five test files. It had been dead since
+  2026-08-14 12:44. Detail in `docs/SCRIPTS_INVENTORY.md`.
 - **Three independent portfolio implementations.**
   `cultura/mak_plataforma/contrato_archivo.py`,
   `tools/portfolio/generar_works.py`, `src/flujo/knowledge/portfolio_*.py`. They
