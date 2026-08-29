@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import json
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -113,7 +114,7 @@ def test_tampered_frontier_and_duplicate_archive_fail_validation():
 def test_cli_materializes_frontier_without_db_or_dispatch(tmp_path: Path):
     output = tmp_path / "research-frontier.json"
     command = [
-        str(ROOT / ".venv/bin/python"),
+        sys.executable,  # no `.venv/bin/python`: en CI ese archivo no existe
         str(ROOT / "tools/compile_cross_archive_research_frontier.py"),
         "--relations", str(RELATIONS),
         "--output", str(output),
