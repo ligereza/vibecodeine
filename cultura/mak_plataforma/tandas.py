@@ -223,9 +223,11 @@ AREAS = {
     "tool_archaeology": {
         "purpose": "find duplicated or unused tools before creating new code",
         "default_paths": ["tools", "src/flujo", "cultura"],
-        "evidence_paths": ["tools/context_pack.py",
-                           "tools/token_budget.py",
-                           "tools/system_map.py",
+        # context_pack.py and token_budget.py were retired on 2026-08-29 with no
+        # measured consumer. An allowlist that still names them authorises a
+        # citation that can never resolve, which reads as a valid path until a
+        # tanda tries it.
+        "evidence_paths": ["tools/system_map.py",
                            "tools/arqueologia.py",
                            "tools/esfuerzo.py"],
         "actions": ["reuse", "merge", "retire", "test", "reject"],
