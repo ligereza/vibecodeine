@@ -181,6 +181,86 @@ measured example attached.
 from `/home/mak`. A repo-internal reference carries its path from the repo
 root. No relative form crosses that boundary.
 
+## Why the organism was paused: the specification nobody executed
+
+`context/GIT_HISTORY_STRATEGIC_REVIEW.md` was written on **2026-08-14 at 19:16**
+-- thirteen minutes after the cron pause at 19:03 -- by an agent identifying as
+LUNA. It reads a source document, `/home/mak/Descargas/historia git.odt`, whose
+sha256 was recorded and **verifies exactly today**:
+`510ca28cb0bc1222a659b0077704344a77c8fa3438298a35f18b1e6f562e6a56`.
+
+That ODT is a `git-history-mega-summary-v1`: 44781 paragraphs that reconstruct
+as valid JSON of 1382307 characters, exactly the count LUNA declared. It holds
+403 decision events, 39 activity days, 450 key path journeys, 6 local refs, 12
+remote refs and 5 duplicate-tip groups. The 1347 omitted journeys point at
+`git_history_context.full.json`, which does not exist in any tree.
+
+The review closes with **Direction for the house-ordering work**:
+
+1. Complete semantic triage of physical departments first.
+2. Assign each path a current owner, consumer, dependency contract, platform
+   role and verification result.
+3. Classify historical material as live/adoptable, superseded, Windows-legacy,
+   obsolete, undeveloped, blocked or evidence-only.
+4. Use Git history only to explain how a candidate came to exist.
+5. Do not merge, delete, revive or rename anything because a branch or
+   historical commit appears authoritative.
+
+**MAK is not broken. It was stopped on purpose to do this work, and the work was
+never done.** Fourteen days.
+
+Step 2 is now executed for the repo's 26 top-level paths in
+`context/MAK_TRIAGE_20260828.md`, crossing the history's journeys with inode
+birth time and this session's measurements. Zero paths remain unmeasured.
+
+## Where things actually were
+
+Every "it does not exist" in this session that got checked against three places
+turned out to be "it exists and I looked in one place".
+
+| Looked for | Concluded | Actually |
+|---|---|---|
+| `research/`, `labs/` | do not exist | exist at `/home/mak/`, figures exact |
+| `lenguaje/corregir.py` | broken reference | exists at `/home/mak/lenguaje/` |
+| 735 missing `PHASE*` files | "whatever removed them" | **749 of them sit in the Trash**, recoverable |
+| `PHASE1_INVENTORY.csv` | never seen | in the Trash; recovered to `context/recuperado_20260818/` |
+| the hash map | had to be built | `docs/*_learning/*/hashmap.json` carried `source_hashes` all along; 15 of 19 sources unchanged since 2026-08-25 |
+| the reality index | had to be built | `indexes/mak-reality-20260813/archivo_index.sqlite`: 1904 assets with sha256, 431 projects, 1877 families |
+
+**Three surfaces to check before concluding absence**: the Trash
+(`/home/mak/.local/share/Trash/files/`, 628 MB, 14065 files), the sibling
+directories under `/home/mak`, and the Codex session summaries under
+`/home/mak/.codex/memories/rollout_summaries/`.
+
+## Resume readiness, measured 2026-08-28
+
+Each paused cron line was resolved to its executable and checked: `.sh` for the
+execute bit, `.py` by importing it with **the same interpreter the cron line
+declares** (`/usr/bin/python3`, not a venv). No job was run.
+
+First pass: **19 of 23 would start, 4 would fail.** All four failed for the same
+reason. They are symlinks from `/home/mak/` into the repo, and the repo files
+were mode `100644` while their sibling `cultura/mak_vigia/vigia_guardia.sh` was
+`100755`:
+
+- `cultura/mak_research/watchdog.sh`
+- `cultura/mak_lenguaje/cron_lexicon.sh`
+- `cultura/mak_curatoria/curatoria_guardia.sh`
+- `cultura/mak_research/micelio_guardia.sh`
+
+Cron invokes them directly, not through `bash`, so the execute bit is required.
+Fixed with `chmod +x` plus `git update-index --chmod=+x`, which makes the fix
+travel. Re-verified: **23 of 23 would start, 0 would fail.**
+
+The other machinery was already intact. All 46 shims under `/home/mak/plataforma`
+resolve to a canonical module in the repo, and the ten critical ones import
+cleanly under `/usr/bin/python3`. Resuming MAK is a crontab edit, not a repair.
+
+One duplicate: `MAK-RETENCION` appears twice, pointing at
+`/home/mak/research/retencion.py` with different `--dir` arguments
+(`research/informes` and `research/paneles`). Both are valid; noted so a future
+reader does not treat it as an accident.
+
 ## What ordering MAK actually requires
 
 Files are the small part and are handled: see

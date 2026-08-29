@@ -174,6 +174,47 @@ Both verified, both left alone because closing them edits a test:
 5. **Fix `docs/MAK_CURRENT_STATE.md`.** It is second in the read order and cites
    4 dead paths, including 2 PHASE files that no longer exist.
 
+### Resume readiness: 23 of 23, after fixing 4 file modes
+
+Each paused cron line was resolved and checked with the interpreter the line
+declares. First pass: 19 would start, **4 would fail** -- all four symlinks from
+`/home/mak/` into repo files that were mode `100644` while their sibling
+`cultura/mak_vigia/vigia_guardia.sh` was `100755`. Cron runs them directly, so
+the bit is required. Fixed with `chmod +x` and `git update-index --chmod=+x` so
+it travels. **Re-verified: 23 of 23 would start.**
+
+All 46 shims under `/home/mak/plataforma` resolve to a canonical module in the
+repo and the ten critical ones import cleanly. **Resuming MAK is a crontab edit,
+not a repair.** The decision to resume is the operator's.
+
+### Why it was stopped, and the three places to look before saying "it does not exist"
+
+`context/GIT_HISTORY_STRATEGIC_REVIEW.md`, written 2026-08-14 19:16 -- thirteen
+minutes after the pause -- carries the specification for exactly this work
+("Direction for the house-ordering work", 5 steps). **MAK was stopped on purpose
+to be ordered, and the ordering never happened.** Step 2 is now executed in
+`context/MAK_TRIAGE_20260828.md`: 26 top-level paths, zero unmeasured, ordered
+by first touch in Git history.
+
+It reads `/home/mak/Descargas/historia git.odt`, sha256 verified today against
+the one LUNA recorded. 403 decision events, 39 activity days, 450 key path
+journeys. Full detail in `docs/MAK_ORGANISMO.md`.
+
+Every "it does not exist" in this session that was checked against three places
+turned out to be "it exists and I looked in one place":
+
+- `research/` and `labs/` -> exist at `/home/mak/`, original figures exact
+- the 735 missing `PHASE*` files -> **749 sit in the Trash**, recoverable
+- `PHASE1_INVENTORY.csv` -> in the Trash, recovered to `context/recuperado_20260818/`
+- the hash map -> `docs/*_learning/*/hashmap.json` had `source_hashes` all along
+- the reality index -> `indexes/mak-reality-20260813/archivo_index.sqlite`,
+  1904 assets with sha256, 431 projects
+
+**Check these three before concluding absence**: the Trash
+(`/home/mak/.local/share/Trash/files/`, 628 MB, 14065 files), the sibling
+directories under `/home/mak`, and
+`/home/mak/.codex/memories/rollout_summaries/`.
+
 ### The finding that outranks everything else: MAK is stopped
 
 **MAK is `/home/mak`, not `/home/mak/flujo`.** Full measurement in
