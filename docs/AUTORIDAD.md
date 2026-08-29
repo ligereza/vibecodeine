@@ -149,7 +149,7 @@ runbook. They existed only in `/home/mak/WIN/flujo/xio/`, and they were not
 stale: `xio/FACES.md` is byte-identical in both trees, so WIN never diverged.
 Copied with `cp -p`; the legacy tree was not modified.
 
-`xio/RUNBOOK.md` (23 KB), `xio/HOTSPOT_SHOW_RUNBOOK.md`, `xio/CAPACIDADES.md`,
+`xio/RUNBOOK.md` (23 KB), `xio/HOTSPOT_SHOW_RUNBOOK.md`, `xio/XIO_CAPABILITIES.md`,
 `xio/PLAN_SERVICIOS_SIN_ROOT.md`.
 
 ## Declared and not executed
@@ -166,10 +166,13 @@ All of the following requires touching code, tests or workflows, not files:
   share no data path. 14 suites, ~200 tests, three incompatible definitions of
   "obra".
 - **Ten endpoint names implemented twice.** `cultura/mak_plataforma/hub.py` (:8900) is a frame that embeds the other in an iframe and proxies research and codex; `src/flujo/web/hub.py` (:8765) is the workspace app. They are not duplicates -- an earlier version of this file said they were, from counting endpoints without opening either. What is duplicated is ten endpoint names implemented separately in both: `/api/status`, `/api/organismo`, `/api/research/{job,jobs,catalog}`, `/api/project/{context,learning,probe,route}`, `/api/rd/topics`. Two implementations of one contract, free to diverge.
-- **Two skill trees that diverged.** `.claude/skills/` (3, cited by
-  `src/flujo/comercial/suplementos_config.py` and
-  `src/flujo/export/illustrator.py`) and `.agents/skills/` (17, cited by
-  `scripts/suggest_repo_hygiene.py`). Neither is a clean copy of the other.
+- **Two skill trees with different owners.** `.claude/skills/` is the
+  versioned/runtime skill tree and is the canon for the shared RD generators;
+  `.agents/skills/` contains additional local skills. The 8 byte-identical
+  skill assets formerly under `.agents/skills/` were consolidated into the
+  `.claude/skills/` paths, and the remaining `.agents` skill documents now
+  point there. The two trees still exist because their unique skill sets are
+  different; they are not two copies of one implementation.
 - **`xio/new-plugins/` vs `xio/new/plugins/`.** `xio/new/server.py` does
   `from plugins import PluginRegistry` and its comment declares the priority
   `PLUGINS_DIR` -> `xio/new-plugins`. Runtime resolution, not a file problem.

@@ -226,6 +226,7 @@ CLI real (`py -m flujo --help`, v0.56.1), comandos principales:
 | `project_context.py` / `triangulate_project_context.py` | Reutiliza `entities` del LearningStore para enlazar operador VJ, artista, album, proyecto visual, gira candidata, shows y venues con fuentes, grupos de independencia y estados verificables; actualiza Project IR sin promover `review_required` ni crear postulaciones. El grafo se consulta read-only en ambos hubs por `/api/project/context?context_id=...` o `project_id=...`. |
 | `build_effort_consumer_crosswalk.py` | Cruza esfuerzo, consumidor y procedencia para priorizar slices de MAK Research y Curatoria. |
 | `build_mak_knowledge_db.py` | Inicializa o migra el ledger SQLite de conocimiento MAK; conserva contratos y evidencia sin copiar arboles. |
+| `build_mak_canonical_map.py` | Construye el único mapa físico actual de MAK con rutas, metadatos y SHA-256; registra explícitamente las zonas fuera de alcance. |
 | `compute_effort_residuals.py` | Calcula residuales de esfuerzo para el backlog y la trazabilidad de entregas. |
 | `optimize_blend_scene.py` | Diagnostico/preparacion de optimizacion de escenas Blender; queda gated si no hay runtime Blender. |
 | `profile_blender_animation.py` | Perfil read-only de animacion Blender para el consumidor de secuencia/render. |
@@ -251,7 +252,7 @@ CLI real (`py -m flujo --help`, v0.56.1), comandos principales:
 puerto 5000 (`XIO_PORT`), 63 archivos de plugins (controlador Xiaomi, hotspot
 router activo con auto-heal, FOH monitor). Documentación en este árbol:
 `xio/RUNBOOK.md` (23 KB, operación completa), `xio/HOTSPOT_SHOW_RUNBOOK.md`,
-`xio/CAPACIDADES.md`, `xio/PLAN_SERVICIOS_SIN_ROOT.md`, `xio/FACES.md` (Face A
+`xio/XIO_CAPABILITIES.md`, `xio/PLAN_SERVICIOS_SIN_ROOT.md`, `xio/FACES.md` (Face A
 hogar vs Face B show telefono-solo), `xio/show_kit/DIA_DEL_SHOW.md` y
 `xio/show_kit/ANOTACIONES_SHOW_20260724.md`.
 
@@ -574,6 +575,7 @@ tabla; archivo sin entrada = ratchet rojo.
 | `build_application_intake.py` | VIVO | registered in `src/flujo/knowledge/project_router.py` TOOL_CATALOG as `project_intake`; imported directly by `tests/test_project_reconstruction.py` (`from tools.build_application_intake import select_candidates`); listed as a `data/mak_knowledge.db` consumer in the CI-checked graph of `tools/repo_audit.py` | 2026-08-29 |
 | `build_effort_consumer_crosswalk.py` | VIVO | executed against a temporary SQLite database 2026-08-19 (`context/LAST_HANDOFF.md` Phase 595): exit 0, `database_mutated=0` | 2026-08-29 |
 | `build_mak_knowledge_db.py` | VIVO | dynamically loaded via `importlib.util.spec_from_file_location` in `tests/test_knowledge_scanner_skips.py` to test `is_virtual_environment`/`should_skip_dir`; also executed 2026-08-19 against a fixture database (`context/LAST_HANDOFF.md` Phase 595: exit 0, 2 fixture files indexed) | 2026-08-29 |
+| `build_mak_canonical_map.py` | VIVO | operator-run filesystem measurement; writes only `/home/mak/indexes/mak-canonical-20260829/mak-canonical-map.json`, with protected and runtime-only roots explicitly recorded | 2026-08-29 |
 | `compute_effort_residuals.py` | VIVO | executed 2026-08-19 against a temporary knowledge database (`context/LAST_HANDOFF.md` Phase 595): exit 0, valid empty reports with `integrity=ok` | 2026-08-29 |
 | `deep_learning_gate.py` | VIVO | registered in `src/flujo/knowledge/project_router.py` TOOL_CATALOG as `deep_learning_gate` (mode read_only); the module it wraps, `flujo.knowledge.deep_learning_gate`, is exercised by `tests/test_deep_learning_gate.py` | 2026-08-29 |
 | `gen_animadas_obras.py` | VIVO | imported directly by `tests/test_gen_animadas_obras.py` (`sys.path.insert` + `from gen_animadas_obras import TONO_POR_COLOR, derivar_spec`); its output feeds `contrato_archivo.desde_animadas` | 2026-08-29 |
@@ -599,6 +601,48 @@ Nota: el director listo tambien `render_flyer_mak.py` (VIVO, mak_ops) en
 su mensaje de spec, pero ese archivo NO existe en `tools/` de este
 worktree (ni en ninguna ruta del repo, verificado con busqueda global) --
 omitido de la tabla, ver desvio reportado en el cierre de sesion.
+
+## 5-ter. Current consumer classification (2026-08-29)
+
+The current MAK consumer graph searched these top-level tools by filename, bare
+module name, and dynamic-loading context across `flujo/` and the seven organ
+roots. It does not recurse into remote rclone mounts, archive/history, or
+`curatoria_inbox`. For the 25 rows below it found no in-tree caller of the
+top-level CLI file in that measured scope. That is not tool death: the consumer
+is an operator-run command, or Blender invoked by an operator. The wrapped
+library may still have tests, Hub consumers, or Project IR consumers; those are
+consumers of the library contract, not callers of this CLI file. `manual-only`
+is therefore the accurate registration for the file and is not permission to
+retire it.
+
+| file | consumer kind | measured interpretation |
+|---|---|---|
+| `aep_reference_scan.py` | manual-only | operator CLI; tests exercise the RIFX reader contract |
+| `build_mak_canonical_map.py` | manual-only | operator measurement; current output is the canonical physical MAK map |
+| `arica01_portfolio.py` | manual-only | bounded pilot CLI; no automatic dispatch |
+| `bake_static_materials.py` | manual-only | operator invokes the Blender CLI; no in-tree caller |
+| `build_effort_consumer_crosswalk.py` | manual-only | operator report CLI; temporary database run |
+| `classification_review.py` | manual-only | operator chooses propose/apply/classify actions |
+| `compile_contracurator.py` | manual-only | CLI wrapper; Hub/tests consume the wrapped contract |
+| `compile_portfolio.py` | manual-only | CLI wrapper; tests/docs consume the wrapped contract |
+| `compile_ssd_order_foundation.py` | manual-only | CLI wrapper; Hub/tests consume the wrapped contract |
+| `compute_effort_residuals.py` | manual-only | operator report CLI; temporary database run |
+| `execute_research_job.py` | manual-only | operator discovery/capture CLI; no automatic dispatch |
+| `gen_dashboard_productoras.py` | manual-only | operator static-document generator |
+| `gen_iskvw_prototipo.py` | manual-only | operator static-prototype generator |
+| `gen_presentacion_db.py` | manual-only | operator static-document generator |
+| `gen_rd_standalone.py` | manual-only | operator RD bundle generator |
+| `import_project_reconstruction.py` | manual-only | operator Project IR adapter CLI |
+| `optimize_blend_scene.py` | manual-only | operator invokes the Blender CLI; no in-tree caller |
+| `profile_blender_animation.py` | manual-only | operator invokes the Blender CLI; no in-tree caller |
+| `project_gate.py` | manual-only | operator route/probe CLI; Hub consumes the underlying API |
+| `project_learning.py` | manual-only | operator learning CLI; result recording is explicit |
+| `reconcile_garden_knowledge.py` | manual-only | operator reconciliation report CLI |
+| `run_vision_feedback.py` | manual-only | operator feedback projection CLI |
+| `show_asset_usage.py` | manual-only | operator Resolume analysis CLI |
+| `substrate_experiment.py` | manual-only | operator-run preregistered experiment |
+| `tennis_mcp_ingest.py` | manual-only | operator data projection CLI; tests consume the wrapped module |
+| `triangulate_project_context.py` | manual-only | operator context CLI; Hub consumes the underlying graph |
 
 ## 5-bis. El mismo registro, medido (2026-08-28)
 

@@ -5,7 +5,7 @@
 ### Comando ejecutado
 
 ```bash
-cd /home/mak/research && python3 indice.py && python3 digest.py
+cd /home/mak/flujo/cultura/mak_research && python3 indice.py && python3 digest.py
 ```
 
 ### Salida real
@@ -70,7 +70,7 @@ wrote paneles/20260715-215251-el-sample-y-la-cita-como-gesto-estetico-.html
 ### Comando ejecutado
 
 ```bash
-cd /home/mak/research && python3 estadisticas.py
+cd /home/mak/flujo/cultura/mak_research && python3 estadisticas.py
 ```
 
 ### Salida real

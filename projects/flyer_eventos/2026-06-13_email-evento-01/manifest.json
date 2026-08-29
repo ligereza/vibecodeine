@@ -18,10 +18,17 @@
   "outputs": [],
   "source": {
     "type": "email",
-    "instagram_url": "https://www.instagram.com/p/ABC123test",
-    "email_imported_at": "2026-06-13T02:48:53",
+    "email_imported_at": "2026-06-13T03:29:41",
     "link_index": 1,
     "link_total": 2
+  },
+  "instagram": {
+    "url": "https://www.instagram.com/p/ABC123test",
+    "type": "p",
+    "shortcode": "ABC123test",
+    "media_guess": "image_or_carousel_possible",
+    "download_status": "pending",
+    "manual_download_possible": true
   },
   "extracted_info": {
     "event_name": "",
@@ -30,14 +37,14 @@
     "event_date": "",
     "needs_manual_review": true
   },
-  "download": {
-    "status": "pending",
-    "possible_types": [
-      "image",
-      "video",
-      "private_or_unavailable"
-    ],
-    "manual_download_needed": false
+  "manual_review": {
+    "required": true,
+    "reason": "metadata_pending",
+    "notes": [
+      "Revisar si el post es imagen, carrusel o video.",
+      "Si el perfil es privado, shadowban o requiere login, descargar manualmente.",
+      "Completar nombre evento, productora, lugar y fecha desde el flyer."
+    ]
   },
   "notes": [
     "Creado desde correo. Falta descargar/analizar flyer."

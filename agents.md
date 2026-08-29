@@ -7,10 +7,16 @@ case-sensitive. This lowercase file is canonical:
 ## Authority and physical migration
 
 The physical Windows and MAK files are authoritative. Git is transport and
-reproducibility only. Do not inspect Git history, branches or remote status to
-decide what exists, what is current or what must be integrated. Do not reset,
-clean, checkout, pull, merge, commit or push unless the user explicitly asks
-for that operation in the current task.
+reproducibility only. Do not use Git as the inventory authority for what exists,
+what is current or what must be integrated. A bounded consolidation task may
+inspect local Git history read-only to establish provenance, prior contracts
+and whether two sources evolved together; current filesystem and runtime
+evidence still wins. Do not reset, clean, checkout, pull, merge, commit or push
+unless the user explicitly asks for that operation in the current task.
+
+For host-wide duplicate resolution, use the measured routing registry at
+`/home/mak/indexes/mak-consolidation-20260829/MAK-DIRECTIVE-REGISTRY.md`.
+It is a scope map, not a second handoff or a replacement for this contract.
 
 The migration model is:
 

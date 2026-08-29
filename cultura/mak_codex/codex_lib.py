@@ -49,6 +49,11 @@ import sys
 import tempfile
 import time
 
+# Keep the canonical helper importable when this module is loaded through a
+# flat deployment projection such as /home/mak/codex/codex_lib.py.
+_CODEX_DIR = os.path.dirname(os.path.abspath(__file__))
+if _CODEX_DIR not in sys.path:
+    sys.path.insert(0, _CODEX_DIR)
 sys.path.insert(0, "/home/mak/research")
 from research_lib import (LLM, MODELO_CAPAZ, _http_json, escala_tok,  # noqa: E402
                           load_env, red_ok, slug, stamp)

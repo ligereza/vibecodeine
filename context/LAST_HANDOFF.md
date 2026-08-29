@@ -1,9 +1,12 @@
 # Operational Handoff
 
-## Agent bootstrap — CURRENT — 2026-08-28 — MAK ordered, not started
+## Agent bootstrap — CURRENT — 2026-08-29 — MAK consolidado y verificado
 
 This is the only current operational packet. The material below the marked
 historical boundary is retained evidence and must not override this packet.
+
+Detailed current handoff for this consolidation:
+`/home/mak/MAK_CODEX_HANDOFF.md`.
 
 ### Standing contract, carried forward unchanged
 
@@ -17,10 +20,11 @@ part of the three-file read order (see `docs/AUTORIDAD.md`).
 `tests/test_agent_bootstrap.py` enforces that those four statements stay here. A
 cleanup that loses a standing contract is a regression, not tidying.
 
-### State: MAK is ordered and still paused
+### State: MAK is ordered, consolidated and still paused
 
-**Nothing was started.** The crontab has 0 active lines and 23 paused, exactly
-as it was found. Resuming is the operator's decision.
+**No MAK runtime was started or resumed.** The crontab has 0 active lines and
+23 paused. Resuming cron, `mak-xio.service`, or any operator-controlled organ
+is still an operator decision.
 
 ```bash
 python3 tools/medir_organismo.py     # current state, read-only
@@ -37,20 +41,39 @@ hold what does not rot:
 
 ### What this session did
 
-Ordered MAK at file level and measured the organism. Retired 935 MB to
-`/home/mak/_archive/orden-limpieza-20260828/` following the convention read out
-of the Git history, deduplicated 187 MB by hardlink with byte-identical
-verification, corrected the documents that carried false figures, applied the
-English-ASCII rule to everything authored, and executed the semantic triage that
-`context/GIT_HISTORY_STRATEGIC_REVIEW.md` specified on the day of the pause and
-nobody ran.
+Consolidated the local MAK filesystem across `/home/mak`, not only `flujo`.
+`WIN`, `curatoria_inbox`, Git mutation, GoogleDrive/OneDrive and the separate
+XIO repository remained outside the write boundary. No commit, push, reset or
+checkout was performed.
 
-Two real fixes beyond documents: four `.sh` in `cultura/mak_*/` regained their
-execute bit, taking resume readiness from 19 of 23 to **23 of 23**; and two test
-suites stopped writing into `/home/mak/plataforma/logs/`, so the production logs
-are evidence again.
+The current exact-duplicate scan found 112 groups, 300 regular-file rows and
+188 extra regular paths. The groups are classified and decisioned: 44 live
+runtime groups are deferred because path and run identity matter; 35 RD groups
+and 29 `trazos` groups retain semantic/evidence paths; 3 tool fixtures retain
+their test roles; 1 Git artifact is out of scope. There are zero exact duplicate
+Python groups.
 
-Full record: `/home/mak/_archive/orden-limpieza-20260828/MANIFEST.md`.
+The 100 external `.py` paths are compatibility projections to canonical
+`flujo/cultura` modules, not second implementations. Eleven same-basename
+groups inside `flujo` were reviewed: five are declared entrypoint wrappers and
+six are independent contracts. Active directives now have one root
+`agents.md`, one root `CAPACIDADES.md`, and department contracts where needed.
+
+Retired material was moved reversibly under
+`/home/mak/_archive/orden-limpieza-20260828/`, with 231 map rows and no missing
+destinations. One hundred forty-one rows correspond to duplicate, projection
+or placeholder consolidation. Fifty-one compatibility aliases are symlinks to
+canonical physical files. The complete measurements are in:
+
+- `/home/mak/indexes/mak-canonical-20260829/mak-canonical-map.json`
+- `/home/mak/indexes/mak-consolidation-20260829/exact-duplicate-candidates-v2.csv`
+- `/home/mak/indexes/mak-consolidation-20260829/MAK-DIRECTIVE-REGISTRY.md`
+- `/home/mak/indexes/mak-consolidation-20260829/CONSOLIDATION-DECISIONS.md`
+- `/home/mak/_archive/orden-limpieza-20260828/mapa-de-retiro.csv`
+
+The full test suite exited 0 with five skips and warnings only; `git diff
+--check` also passed. Git was used read-only as provenance and validation, not
+as the source of truth for the local filesystem.
 
 ### Before resuming, one measured fact
 
@@ -87,18 +110,21 @@ carries its origin in a `.trashinfo`), the sibling directories under
 
 ### Versioning
 
-`docs/AUTORIDAD.md` and `docs/PORTAFOLIO_PRODUCCION.md` were untracked and are
-now committed. `PLAN.md` is gitignored at `.gitignore:230`, so its retitle stays
-local. Retirements are outside the repo by convention and do not enter history;
-their manifest travels with them.
+This session made no Git mutation: no commit, push, reset, checkout or branch
+change. Git history, status and diff were consulted read-only for provenance and
+validation. Filesystem consolidation is recorded outside Git in the archive map,
+manifest and decision dossier; do not treat Git state as the physical inventory.
 
 ### Standing constraints
 
 Do not modify `/home/mak/WIN`, SSD physical files, `archivo_index.sqlite`,
 `order_projection.json`, `questions.json`, `ties_full.db`, `intake.sqlite`,
 `artist_discographies.json`, `archivo.json`, media/artwork/historical sources,
-or external wrappers. No physical rescan of the SSD. `curatoria_inbox/` (181 GB)
-and `RD/` (58 GB) are out of scope by operator instruction.
+or external wrappers without an exact write-set. No physical rescan of the SSD.
+`curatoria_inbox/` is protected by operator instruction. Leave GoogleDrive and
+OneDrive mounts untouched. Treat `/home/mak/indexes/mak-canonical-20260829/
+mak-canonical-map.json` as the current physical inventory and regenerate it
+only when the filesystem has materially changed.
 
 ## Agent bootstrap — HISTORICAL — 2026-08-27 — general archive portfolio view
 
