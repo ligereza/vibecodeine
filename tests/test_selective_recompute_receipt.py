@@ -97,6 +97,11 @@ def test_tampering_and_invalid_hashes_fail_closed() -> None:
 
 def test_real_arica_manifests_expose_mixed_direct_enrichments() -> None:
     root = Path(__file__).parents[1] / "experiments/pilots/ARICA-FONDART-2027/runs"
+    # experiments/pilots/ is gitignored on purpose: it holds real pilot
+    # evidence. On MAK it is present, in a clean checkout it is not, and
+    # reading it unguarded is why CI went red while this suite stayed green.
+    if not (root / "full-baseline/opportunity.json").is_file():
+        pytest.skip("experiments/pilots/ARICA-FONDART-2027 is not in this clone")
     previous = json.loads((root / "full-baseline/opportunity.json").read_text(encoding="utf-8"))
     current = json.loads((root / "enriched/opportunity.json").read_text(encoding="utf-8"))
     delta = compare_opportunity_constraints(previous, current)

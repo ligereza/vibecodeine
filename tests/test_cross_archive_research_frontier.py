@@ -22,6 +22,8 @@ RELATIONS = ROOT / "experiments/pilots/DREFQUILA/runs/cross-archive-escarlata-20
 
 
 def _payload() -> dict:
+    if not RELATIONS.is_file():
+        pytest.skip("experiments/pilots/DREFQUILA is not in this clone")
     return json.loads(RELATIONS.read_text(encoding="utf-8"))
 
 
