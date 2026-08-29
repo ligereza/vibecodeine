@@ -224,22 +224,16 @@ class TestIntegracionLLMCall:
 
 
 # ---------------------------------------------------------------------------
-# Drift ratchet: mak_research/fallback_util.py debe ser espejo byte-a-byte
-# de mak_codex/fallback_util.py (fuente de verdad).
+# Single implementation ratchet: Research imports the CODEX helper module.
 # ---------------------------------------------------------------------------
-class TestEspejoFallbackUtil:
-    def test_fallback_util_es_espejo_byte_a_byte_de_mak_codex(self):
+class TestSingleFallbackImplementation:
+    def test_research_uses_the_single_codex_fallback_module(self):
         base = os.path.join(os.path.dirname(__file__), "..", "cultura")
         ruta_codex = os.path.join(base, "mak_codex", "fallback_util.py")
         ruta_research = os.path.join(base, "mak_research", "fallback_util.py")
-        with open(ruta_codex, "rb") as f:
-            contenido_codex = f.read()
-        with open(ruta_research, "rb") as f:
-            contenido_research = f.read()
-        assert contenido_codex == contenido_research, (
-            "drift detectado: cultura/mak_research/fallback_util.py se "
-            "desincronizo de cultura/mak_codex/fallback_util.py (fuente "
-            "de verdad); volver a copiar byte a byte"
+        assert os.path.isfile(ruta_codex)
+        assert not os.path.lexists(ruta_research), (
+            "mak_research must import the single CODEX fallback implementation"
         )
 
 
