@@ -165,8 +165,7 @@ All of the following requires touching code, tests or workflows, not files:
   `tools/portfolio/generar_works.py`, `src/flujo/knowledge/portfolio_*.py`. They
   share no data path. 14 suites, ~200 tests, three incompatible definitions of
   "obra".
-- **Two hubs.** `cultura/mak_plataforma/hub.py` (5391 lines, 121 endpoints) and
-  `src/flujo/web/hub.py` (50 endpoints). Ten endpoint names in common.
+- **Ten endpoint names implemented twice.** `cultura/mak_plataforma/hub.py` (:8900) is a frame that embeds the other in an iframe and proxies research and codex; `src/flujo/web/hub.py` (:8765) is the workspace app. They are not duplicates -- an earlier version of this file said they were, from counting endpoints without opening either. What is duplicated is ten endpoint names implemented separately in both: `/api/status`, `/api/organismo`, `/api/research/{job,jobs,catalog}`, `/api/project/{context,learning,probe,route}`, `/api/rd/topics`. Two implementations of one contract, free to diverge.
 - **Two skill trees that diverged.** `.claude/skills/` (3, cited by
   `src/flujo/comercial/suplementos_config.py` and
   `src/flujo/export/illustrator.py`) and `.agents/skills/` (17, cited by

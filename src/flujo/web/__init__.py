@@ -6,7 +6,5 @@
 - Editor Gradio legacy (catálogo de formatos + preview).
 """
 
-from .svg_preview import render_svg
 from .hub import launch as launch_hub
 
-__all__ = ["render_svg", "launch_hub"]

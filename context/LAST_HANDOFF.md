@@ -80,7 +80,7 @@ carries its origin in a `.trashinfo`), the sibling directories under
 3. **Three portfolio implementations** (`cultura/mak_plataforma/contrato_archivo.py`,
    `tools/portfolio/generar_works.py`, `src/flujo/knowledge/portfolio_*.py`) share
    no data path: 14 suites, ~200 tests, three definitions of "obra".
-4. **Two hubs**, 121 and 50 endpoints, ten names in common.
+4. **Ten endpoint names implemented twice** across the two hubs. They are not duplicate products: `:8900` frames and proxies, `:8765` is the workspace app.
 5. **The airdrop chain**: `_airdrop/` does not exist, 42 tests pass on it,
    `flujo doctor` reads its absence as health.
 6. 42 broken references in tracked `.md`, classified in `docs/AUTORIDAD.md`.
