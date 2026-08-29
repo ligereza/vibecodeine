@@ -1,26 +1,11 @@
 # Operational Handoff
 
-## Agent bootstrap — CURRENT — 2026-08-28 — file ordering and cleanup
+## Agent bootstrap — CURRENT — 2026-08-28 — MAK ordered, not started
 
 This is the only current operational packet. The material below the marked
 historical boundary is retained evidence and must not override this packet.
 
-### What this session did
-
-File-level ordering and cleanup of the whole repo. **No process, service, code,
-test or workflow was touched** -- that boundary was set by the operator and holds.
-Everything that needed a code edit is declared in `docs/AUTORIDAD.md` under "Lo
-que queda declarado y no ejecutado" and was left alone.
-
-Full record with per-item consumer evidence:
-`/home/mak/_archive/orden-limpieza-20260828/MANIFEST.md`.
-
 ### Standing contract, carried forward unchanged
-
-A new current packet must not silently drop an accepted boundary. These remain
-in force exactly as the 2026-08-27 packet stated them, and
-`tests/test_agent_bootstrap.py::test_current_packet_stops_before_historical_heading`
-enforces that they stay in the current packet:
 
 Stage 2D accepted: the archive-to-Project-IR boundary remains in force:
 `mak-archive-observation-batch-v1` is the physical evidence contract, and the
@@ -29,393 +14,91 @@ by the test command, not maintained in this packet. The governing operational
 directive is `docs/MAK_SYSTEM_DIRECTIVE.md` -- mission doctrine, dated, and not
 part of the three-file read order (see `docs/AUTORIDAD.md`).
 
-That test caught a real regression in this session: the first version of this
-packet dropped all four statements, and the suite went red for it. The gate is
-correct -- a cleanup that loses a standing contract is a regression, not tidying.
+`tests/test_agent_bootstrap.py` enforces that those four statements stay here. A
+cleanup that loses a standing contract is a regression, not tidying.
 
-### The one thing to read first
+### State: MAK is ordered and still paused
 
-**`docs/AUTORIDAD.md`** (new). Nine documents in this repo declared themselves
-canonical and `tools/agent_bootstrap.py` loads three. That file resolves which is
-which, states the four writing rules that keep a document verifiable, and lists
-what is still broken and why it was not fixed here.
-
-Read order, unchanged and now stated identically everywhere:
-`agents.md` -> `docs/MAK_CURRENT_STATE.md` -> `context/LAST_HANDOFF.md`.
-
-### The diagnosis, in one line
-
-The problem was never which tool to delete. It is that **4 of 92 registered
-tools have a trigger**: 88 only run if a person types the command. That is why
-the flyer render is the only chain that feels alive -- an issue calls it.
-
-### Method: nothing retired without a measured consumer
-
-Three obvious candidates survived the check and stayed in place, which is the
-point of doing the check:
-
-| Candidate | Why it stayed |
-|---|---|
-| `checkpoints/` (only `.gitkeep`) | consumed by `src/flujo/airdrop.py`, `src/flujo/knowledge/project_ir.py`, `src/flujo/knowledge/director.py` and 3 test suites |
-| `inbox/` (2 txt from June) | consumed by `src/flujo/cli.py`, `src/flujo/intake/reception.py` and tests |
-| `data/flujo.db` (frozen 2026-06-30, Windows paths) | consumed by `tools/repo_audit.py`, which runs in CI, and `tests/test_portfolio_gen.py` |
-
-### Retired to `/home/mak/_archive/orden-limpieza-20260828/retirado/` -- 9.4 MB
-
-`.aider.chat.history.md`, `.aider.input.history`, `.aider.conf.example.yml`,
-`.playwright-mcp/`, `.remember/`, `proyectos/`, `dist_compartir/`. All measured
-with zero code consumer. `.archive/` is the repo's own retirement zone --
-`tests/test_higiene_docs.py` lists it in `ZONA_MUERTA`.
-
-Two of them were tracked in Git (`.aider.conf.example.yml`,
-`proyectos/flujo/OptimizerGen/prompt_optimizado.txt`), so `git status` shows them
-as deleted. **No commit was made**; versioning the retirement is the operator's
-call. Reverting one is `mv /home/mak/_archive/orden-limpieza-20260828/retirado/<ruta> <ruta>`.
-
-### Deduplicated by hardlink -- 187.2 MB, zero paths lost
-
-76 byte-identical copies now share an inode. Verified by `md5sum` over the 895
-files of the affected trees before and after: **empty diff**. `experiments/`
-went 420 MB -> 237 MB.
-
-Hardlink, not retirement, because **9 test suites read `experiments/pilots/` as a
-live fixture**. Moving a file there breaks tests; linking it changes nothing
-observable.
-
-Deliberate exclusions, each for a reason: editable source (a hardlink over code
-turns a future edit into a silent change of its twin), `web/` (`public/` is build
-input and `dist*/` its output), and `experiments/pilots/*/input/` (a run could
-otherwise overwrite the input it started from).
-
-**Residual risk**: `open(path, 'w')` on one of the 76 changes its twin. To
-diverge on purpose: `cp --remove-destination <origen> <destino>`.
-
-### Two findings from the dedup worth more than the megabytes
-
-1. `runs/*/observation.json` in three ARICA runs is **byte-identical to
-   `input/archive_observation.json`**: the pilot's "observation" output is a copy
-   of its own input.
-2. `enriched` and `enriched-technical-surface-20260827` share **24 of 29 files,
-   117.4 MB identical**. The "technical surface" run differs in 5 files, not 30.
-
-### Documents corrected, none retired
-
-| Document | Asserted | Measured 2026-08-28 |
-|---|---|---|
-| `context/PHASE_REPORTS_INDEX.md` | 748 PHASE files, "untracked", plus its own list of truth sources omitting `docs/MAK_CURRENT_STATE.md` | 13 files, all tracked; now repeats the bootstrap order |
-| `docs/SCRIPTS_INVENTORY.md` | four minor versions behind; `checkpoint.sh` "inexistente"; `scripts/app.py` active; legacy in `_archive/**`; protocol in `docs/AGENT_AIRDROP_PROTOCOL.md` | version matches `pyproject.toml`; `checkpoint.sh` exists and `src/flujo/airdrop.py` invokes it; `app.py` does not exist; `_archive/` did not exist; neither did the protocol. Rewritten with a measured invoker column: 15 with an invoker, 14 with none |
-| `CAPACIDADES.md` | 4 databases with "integridad OK" under `research/**` and `labs/**`; `mak_knowledge.db` 35 tables; runbooks at `xio/RUNBOOK.md` | neither tree exists; 49 tables; the runbooks exist only in `/home/mak/WIN/flujo/xio/`, the legacy surface. New section 5-bis holds the measured registry |
-| `README.md` | 113 bytes, an ASCII image and nothing else | real entry point with the read order and a minimal map |
-
-Headers demoted so they stop competing with the read order:
-`docs/MAK_SYSTEM_DIRECTIVE.md`, `docs/system_learning/master/action_plan.md`,
-`docs/INFLECTION_POINT_ARTISTIC_ARCHIVE_2026-08-24.md`,
-`docs/PORTAFOLIO_PRODUCCION.md`, `PLAN.md`, `context/MD_CONTEXT_MASTER.md`.
-
-### `CAPACIDADES.md` section 5-bis: the registry, measured
-
-The 2026-07-25 rule set the registry's retirement condition as *"cuando exista
-chequeo automatico de consumidores"*. Section 5-bis is that check, regenerable,
-with per-tool reference counts and workflow trigger.
-
-**A measurement bug was found and fixed inside this session.** Searching for
-`<name>.py` alone reported 24 tools with zero references, including
-`tools/agent_bootstrap.py`, which does have a test -- because
-`tests/test_agent_bootstrap.py` does `from tools.agent_bootstrap import SCHEMA`,
-the module form, not the filename. Searching three forms (`<name>.py`,
-`tools.<stem>`, `import <stem>`) gives **13**, not 24. Any consumer audit of this
-repo must search the module form or it will condemn live tools.
-
-### Post-cleanup verification, against a baseline captured before touching anything
-
-| Surface | Before | After |
-|---|---|---|
-| test ids collected | 3799 | **identical set -- 0 disappeared, 0 new** |
-| `flujo.*` modules that import | 196 | **196, identical set** |
-| endpoints in `cultura/mak_plataforma/hub.py` | 121 | **identical** |
-| endpoints in `src/flujo/web/hub.py` | 50 | **identical** |
-| `mak-*-v1` schema identifiers | 209 | **identical** |
-| product hashes under `out/` | 41 | **none changed** |
-| hashes of the deduplicated trees | 895 | **empty diff** |
-
-Comparing **test ids**, not the total, is deliberate: a total stays green when a
-test is deleted along with the code it guarded. Disappearance is the failure mode
-a cleanup produces, and only the id set sees it.
-
-The suite caught one real regression mid-work:
-`test_higiene_docs.py::test_la_version_afirmada_coincide_con_pyproject` went red
-because `docs/AUTORIDAD.md`, while documenting the gate's blind spot, wrote the
-exact pattern the gate matches. Fixed by rewording the row.
-
-### Two measured blind spots in `tests/test_higiene_docs.py`
-
-Both verified, both left alone because closing them edits a test:
-
-- the version gate misses a claim written as `Version:` + `v` + number. That is
-  how `docs/SCRIPTS_INVENTORY.md` held a stale version for 41 days with CI green.
-- the suite-total gate only fires when the line also carries a scope word
-  (`suite`, `green tests`, `0 rojos`). A bare "N tests" passes unseen.
-
-### Next, in order of what it costs against what it returns
-
-1. **Retire the airdrop chain.** `_airdrop/` does not exist. Sustained by
-   `src/flujo/airdrop.py` (494 lines), 4 scripts,
-   `.github/workflows/airdrop_gate.yml`, the `flujo airdrop` command and 42
-   passing tests. `flujo doctor` reports `airdrop pendiente: OK -- no`: absence
-   reads as health. Nothing consumes it. Cleanest block to remove.
-2. **Pick one of the three portfolio implementations.**
-   `cultura/mak_plataforma/contrato_archivo.py`,
-   `tools/portfolio/generar_works.py`, `src/flujo/knowledge/portfolio_*.py`. No
-   shared data path. 14 suites, ~200 tests, three incompatible definitions of
-   "obra".
-3. **Resolve the two hubs.** 121 endpoints and 50, sharing 10 endpoint names.
-4. **Give the 88 triggerless tools a trigger, or accept they are manual.** This
-   is the actual problem; the rest is tidying.
-5. **Fix `docs/MAK_CURRENT_STATE.md`.** It is second in the read order and cites
-   4 dead paths, including 2 PHASE files that no longer exist.
-
-### Resume is one command, verified
-
-`cultura/mak_plataforma/crontab.mak` is the un-paused crontab, versioned in the
-repo. Compared command by command with the live one: **23 identical, 0 would be
-lost, 1 extra** -- and that extra is `MAK-REPO-SYNC`, already marked
-`# PAUSED-FARO` there. The destructive `git reset --hard origin/main` stays off.
+**Nothing was started.** The crontab has 0 active lines and 23 paused, exactly
+as it was found. Resuming is the operator's decision.
 
 ```bash
-crontab /home/mak/flujo/cultura/mak_plataforma/crontab.mak
+python3 tools/medir_organismo.py     # current state, read-only
 ```
 
-To resume without merge authority, drop `--enforce` from the `MAK-REVISOR` line.
+That command replaces the numbers this packet used to carry. Three documents
+hold what does not rot:
 
-### Before resuming: `main` has no branch protection
+| Document | Answers |
+|---|---|
+| `docs/AUTORIDAD.md` | which document governs, and the five writing rules |
+| `docs/MAK_ORGANISMO.md` | MAK is `/home/mak`; why it is paused; how to resume; where to look before saying something does not exist |
+| `context/MAK_TRIAGE_20260828.md` | the repo's 26 top-level paths, zero unmeasured, ordered by first touch in Git |
 
-Five of the 23 paused jobs write outside this machine. `entregar.py` runs
-`gh pr create --draft` every 6 h; **`revisor.py --enforce` runs `gh pr ready`,
-`gh pr comment` and `gh pr merge`** every 6 h. Its own docstring says it "lived
-on ONE disk for ten days merging PRs by itself".
+### What this session did
 
-Measured 2026-08-28: `gh api .../branches/main/protection` returns **404** and
-`gh api .../rules/branches/main` returns **0 rules**, with a token that holds
-`repo` scope. **There is no branch protection and no ruleset on `main`.**
+Ordered MAK at file level and measured the organism. Retired 935 MB to
+`/home/mak/_archive/orden-limpieza-20260828/` following the convention read out
+of the Git history, deduplicated 187 MB by hardlink with byte-identical
+verification, corrected the documents that carried false figures, applied the
+English-ASCII rule to everything authored, and executed the semantic triage that
+`context/GIT_HISTORY_STRATEGIC_REVIEW.md` specified on the day of the pause and
+nobody ran.
 
-The log line `PR #7 merge fallo: protected branch` is not evidence otherwise: it
-was written by `tests/test_revisor_gates.py` into the production log, next to a
-fabricated `PR #7 MERGEADO autonomo por el box`, while no merge happened. Both
-polluting suites are fixed and a full-suite sweep confirms the production logs
-are clean again.
+Two real fixes beyond documents: four `.sh` in `cultura/mak_*/` regained their
+execute bit, taking resume readiness from 19 of 23 to **23 of 23**; and two test
+suites stopped writing into `/home/mak/plataforma/logs/`, so the production logs
+are evidence again.
 
-Bounded options for the operator, in increasing order of trust: resume all but
-`MAK-REVISOR`; or enable branch protection first and then resume; or resume as
-it was, which is what ran until 2026-08-14.
+Full record: `/home/mak/_archive/orden-limpieza-20260828/MANIFEST.md`.
 
-### Triangulation, not investigation
+### Before resuming, one measured fact
 
-Five sources already held the answers this session spent hours scanning for.
-Full table in `docs/MAK_ORGANISMO.md`; the order they pay off:
-`/home/mak/GENESIS.md` (what MAK is: five organs and their ports),
-`/home/mak/Descargas/historia git.odt` (403 decisions, 450 path journeys),
-`out/archaeology/claude-codex-mak-20260815.sqlite` (1028 commits, 9054 file
-events, 83835 turns), `indexes/mak-reality-20260813/archivo_index.sqlite` (1904
-assets with sha256) and `.codex/memories/rollout_summaries/`.
+`revisor.py --enforce` runs `gh pr merge` every six hours, and **`main` has no
+branch protection and no rulesets** (`gh api .../branches/main/protection` ->
+404; `.../rules/branches/main` -> 0 rules, with a token holding `repo` scope).
+Detail and options in `docs/MAK_ORGANISMO.md`.
 
-**The retirement convention, found by querying the archaeology.** `.archive/`
-lived in the repo 2026-06-30 to 07-03, was renamed into
-`_archive/legacy_historico_previo/` on 07-27, and `_archive/` was **deleted
-whole on 2026-07-30** (458 files, two commits). Since then retirements live at
-`/home/mak/_archive/<what>-<why>-<yyyymmdd>/`, outside the repo, alongside five
-existing ones. This session created `.archive/2026-08-28-orden/` in the repo
-against that convention and moved it to
-`/home/mak/_archive/orden-limpieza-20260828/` (935 MB) once the history was
-queried. **This repo has done this cleanup twice before and both times the
-in-repo archive was later deleted.**
+### The error pattern this session kept repeating
 
-Also retired this round, each resolved by crossing sources rather than guessing:
-`Modelfile`, `oi-qwen.py` and `venvs/oi` (707 MB) all depend on
-`huihui_ai/qwen2.5-abliterate`, which `ollama list` does not have;
-`cli_watsonx.py` outlived `_archive/watsonx-retired-20260820`; plus
-`curatoria_test/` (28 MB), seven stray logs and an empty `tmp/`.
+Search one form, conclude absence. It produced five published claims that had to
+be corrected: `research/` and `labs/` "do not exist" (they are at `/home/mak/`),
+24 tools "without consumer" (13, after searching the module form too), 49
+database tables (48, by the CI method), "one live process" (three organs are
+up), and the `PHASE*` corpus "in the Trash" (a Codex worktree copy; read the
+`.trashinfo`).
 
-Kept despite appearances: `/home/mak/blender-4.5.3-viejo` (1.2 GB, named "old")
-is an explicit fallback in `src/flujo/knowledge/runtime_tools.py:41`.
+Three surfaces answer most of it: `/home/mak/.local/share/Trash/` (every file
+carries its origin in a `.trashinfo`), the sibling directories under
+`/home/mak`, and `/home/mak/.codex/memories/rollout_summaries/`.
 
-### Resume readiness: 23 of 23, after fixing 4 file modes
+### Open, in order of consequence
 
-Each paused cron line was resolved and checked with the interpreter the line
-declares. First pass: 19 would start, **4 would fail** -- all four symlinks from
-`/home/mak/` into repo files that were mode `100644` while their sibling
-`cultura/mak_vigia/vigia_guardia.sh` was `100755`. Cron runs them directly, so
-the bit is required. Fixed with `chmod +x` and `git update-index --chmod=+x` so
-it travels. **Re-verified: 23 of 23 would start.**
+1. **Resume or retire the 23 cron lines.** Fourteen days paused, undocumented
+   until now. Operator decision.
+2. **Branch protection on `main`** before anything with merge authority resumes.
+3. **Three portfolio implementations** (`cultura/mak_plataforma/contrato_archivo.py`,
+   `tools/portfolio/generar_works.py`, `src/flujo/knowledge/portfolio_*.py`) share
+   no data path: 14 suites, ~200 tests, three definitions of "obra".
+4. **Two hubs**, 121 and 50 endpoints, ten names in common.
+5. **The airdrop chain**: `_airdrop/` does not exist, 42 tests pass on it,
+   `flujo doctor` reads its absence as health.
+6. 42 broken references in tracked `.md`, classified in `docs/AUTORIDAD.md`.
 
-All 46 shims under `/home/mak/plataforma` resolve to a canonical module in the
-repo and the ten critical ones import cleanly. **Resuming MAK is a crontab edit,
-not a repair.** The decision to resume is the operator's.
+### Versioning
 
-### Why it was stopped, and the three places to look before saying "it does not exist"
+`docs/AUTORIDAD.md` and `docs/PORTAFOLIO_PRODUCCION.md` were untracked and are
+now committed. `PLAN.md` is gitignored at `.gitignore:230`, so its retitle stays
+local. Retirements are outside the repo by convention and do not enter history;
+their manifest travels with them.
 
-`context/GIT_HISTORY_STRATEGIC_REVIEW.md`, written 2026-08-14 19:16 -- thirteen
-minutes after the pause -- carries the specification for exactly this work
-("Direction for the house-ordering work", 5 steps). **MAK was stopped on purpose
-to be ordered, and the ordering never happened.** Step 2 is now executed in
-`context/MAK_TRIAGE_20260828.md`: 26 top-level paths, zero unmeasured, ordered
-by first touch in Git history.
-
-It reads `/home/mak/Descargas/historia git.odt`, sha256 verified today against
-the one LUNA recorded. 403 decision events, 39 activity days, 450 key path
-journeys. Full detail in `docs/MAK_ORGANISMO.md`.
-
-Every "it does not exist" in this session that was checked against three places
-turned out to be "it exists and I looked in one place":
-
-- `research/` and `labs/` -> exist at `/home/mak/`, original figures exact
-- the 735 missing `PHASE*` files -> **749 sit in the Trash**, recoverable
-- `PHASE1_INVENTORY.csv` -> in the Trash, recovered to `context/recuperado_20260818/`
-- the hash map -> `docs/*_learning/*/hashmap.json` had `source_hashes` all along
-- the reality index -> `indexes/mak-reality-20260813/archivo_index.sqlite`,
-  1904 assets with sha256, 431 projects
-
-**Check these three before concluding absence**: the Trash
-(`/home/mak/.local/share/Trash/files/`, 628 MB, 14065 files), the sibling
-directories under `/home/mak`, and
-`/home/mak/.codex/memories/rollout_summaries/`.
-
-### The finding that outranks everything else: MAK's cron layer is stopped
-
-**MAK is `/home/mak`, not `/home/mak/flujo`.** Full measurement in
-`docs/MAK_ORGANISMO.md`. The headline:
-
-```
-crontab -l | grep -v '^#' | grep -c .    ->   0
-crontab -l | grep -c '^# PAUSED'         ->  23
-```
-
-Twenty-three scheduled jobs, none active, paused **2026-08-14 19:03** by the
-markers `PAUSED-DOCTOR-RENOVATION-20260814-1903` (16),
-`PAUSED-DOCTOR-20260814-1903` (6) and `PAUSED-FARO` (1). Every process log
-under `/home/mak/plataforma/logs/` stops that same day. Every `mak-*` systemd
-unit is inactive; the only active units are cloud sync.
-
-**Correction.** The first version of this packet said one process runs. Wrong:
-**three of the five organs `/home/mak/GENESIS.md` declares are alive** --
-`research` on :8890 (pid 976, up 1d13h), `codex` on :8891 (pid 969, up 1d13h) and
-`plataforma` on :8900. The `ps` filter behind the first claim searched words that
-`interfaz.py` and `interfaz_codex.py` do not contain. The check that found them
-was `ss -ltnp` against the ports GENESIS.md already listed. The accurate
-statement: **MAK's cron layer is paused; its service layer runs three of five
-organs.**
-
-**No document in this repo said so.** For fourteen days the documentation has
-described a running system. This is why only the flyer chain feels alive: it
-runs on GitHub Actions, not on this box.
-
-**The logs were not trustworthy evidence.** `tests/test_entregar_micelio.py`
-wrote into `/home/mak/plataforma/logs/`; fixed 2026-08-28 and verified.
-Measured: running one suite appended 361 bytes to
-`logs/entregar_micelio.log`, and the lines it wrote read `simulated: box
-unreachable`. `tests/test_entregar_smoke_gate.py:89` already carries a comment
-saying not to do this.
-
-### The scope error, made twice in this session
-
-Documents that live in `flujo/` cite sibling surfaces in relative form, so from
-inside the repo they read as missing. An earlier pass declared
-`research/**` and `labs/**` nonexistent and removed four rows from
-`CAPACIDADES.md`. They exist under `/home/mak/`, and the original figures were
-exact: 23 tables / 276 rows in `jardines_interpretativos.sqlite`, 6 snapshots in
-`labs/`, 2 in `research/intake/`. Only `research/corpus/` drifted, 14 to 12.
-Reverted and rewritten with absolute paths.
-
-`agents.md` warns about exactly this and the warning did not prevent it.
-
-**Rule.** A reference to a surface outside the repo carries its absolute path
-from `/home/mak`. A repo-internal reference carries its path from the repo
-root. No relative form crosses that boundary.
-
-### Language: the rule this session almost broke
-
-`agents.md`, Language section: machine-facing code, identifiers, filenames,
-configuration keys, tests, technical logs and **operational metadata are English
-ASCII**. Human-facing RD and Portfolio material keeps correct Spanish with
-diacritics.
-
-The first version of every document authored in this session was Spanish with
-diacritics -- including `docs/AUTORIDAD.md`, the file that states the rule.
-Corrected: `docs/AUTORIDAD.md`, `README.md`, `docs/SCRIPTS_INVENTORY.md`,
-`docs/GLOSSARY.md`, `/home/mak/_archive/orden-limpieza-20260828/MANIFEST.md`,
-`context/PHASE_REPORTS_INDEX.md`, `context/MD_CONTEXT_MASTER.md`,
-`docs/MAK_SYSTEM_DIRECTIVE.md` and this packet now measure **zero non-ASCII**.
-
-The house convention was learned by measurement, not assumed:
-`docs/admissibility.md`, `context/OBJECTIVE_AUDIT.md`,
-`context/OWNER_MANIFEST.md` and `context/DEPENDENCY_SURFACE.md` are all English
-with zero non-ASCII. That is the target shape.
-
-**`context/*.md` cannot be mass-converted.** `tools/agent_bootstrap.py:18`
-defines `CURRENT_PACKET_START` with an em-dash, and
-`tests/test_agent_bootstrap.py` asserts a heading carrying an accent. Those
-characters are load-bearing; converting them breaks the loader.
-
-The language ratchet `tests/test_idioma_ratchet.py` (measured by
-`tools/idioma.py`, pinned in `tests/fixtures/idioma_baseline.txt`) was
-**tightened by hand from 406 to 405** after `cultura/mak_plataforma/hub.py` left
-the Spanish-carrying set. Its docstring says the pin only tightens by hand.
-
-`docs/GLOSSARY.md` carried an inverted premise: it claimed Spanish comments
-outnumbered English several times over, measured 2026-07-30. `tools/idioma.py`
-now measures 405 carrying Spanish against 435 English over 1039 tracked files,
-and inside `src/` English is the majority. The document's rule survives; its
-justifying figure did not.
-
-An emoji in `context/VIDEO_WORKFLOW_MAK_20260817.md:86` was left alone: it is
-part of a real media filename, so it is data, not decoration.
-
-### Restored from the legacy tree -- 4 documents
-
-Four operational documents were missing from `/home/mak/flujo` while four active
-documents cited them: nine dangling references, including the show-day runbook.
-They lived only in `/home/mak/WIN/flujo/xio/` and were **not stale** --
-`xio/FACES.md` is byte-identical in both trees, so WIN never diverged. Copied
-with `cp -p`; the legacy tree was not modified.
-
-`xio/RUNBOOK.md` (23 KB), `xio/HOTSPOT_SHOW_RUNBOOK.md`, `xio/CAPACIDADES.md`,
-`xio/PLAN_SERVICIOS_SIN_ROOT.md`.
-
-### A third measurement error of my own
-
-An earlier version of this packet reported 59.1 MB of duplication remaining.
-That figure counted a group of 4 paths as 3 recoverable copies when 3 of them
-already shared an inode. Counting distinct inodes instead of paths gives
-**29.7 MB**, and every remaining group is a deliberate exclusion with a stated
-cause (pilot input vs run output, live data vs preserved evidence, build
-projections, source code). The dedup work is complete.
-
-### One decision left to the operator: versioning
-
-No commit was made -- forbidden this session. That leaves a dangling dependency:
-**`docs/AUTORIDAD.md` is untracked**, and nine tracked documents now reference
-it. In a clean checkout those nine references point at nothing. It is not
-gitignored; it only needs `git add`.
-
-Also untracked and worth deciding: `docs/PORTAFOLIO_PRODUCCION.md` (created in a
-prior session, never versioned) and `/home/mak/_archive/orden-limpieza-20260828/` (versioning it
-preserves the retirement record). `PLAN.md` is gitignored at `.gitignore:230`, so
-this session's retitle stays local by design.
-
-Two files show as deleted in `git status` because they were tracked and are now
-under `.archive/`: `.aider.conf.example.yml` and
-`proyectos/flujo/OptimizerGen/prompt_optimizado.txt`.
-
-Three files were already modified before this session and are not from it:
-`cultura/mak_plataforma/hub.py`, `iskvw/editor.html`, `src/flujo/departments.py`.
-
-### Standing constraints, unchanged
+### Standing constraints
 
 Do not modify `/home/mak/WIN`, SSD physical files, `archivo_index.sqlite`,
 `order_projection.json`, `questions.json`, `ties_full.db`, `intake.sqlite`,
-`artist_discographies.json`, `archivo.json`, media/artwork/historical sources, or
-external wrappers. No `git reset`, `checkout`, `clean`, `commit` or `push`. No
-physical rescan of the SSD.
-
+`artist_discographies.json`, `archivo.json`, media/artwork/historical sources,
+or external wrappers. No physical rescan of the SSD. `curatoria_inbox/` (181 GB)
+and `RD/` (58 GB) are out of scope by operator instruction.
 
 ## Agent bootstrap — HISTORICAL — 2026-08-27 — general archive portfolio view
 
