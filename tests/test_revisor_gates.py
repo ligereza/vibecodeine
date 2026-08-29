@@ -31,6 +31,28 @@ def _cargar():
 revisor = _cargar()
 
 
+@pytest.fixture(autouse=True)
+def _isolated_log(tmp_path, monkeypatch):
+    """Point LOG at tmp_path so the suite never writes MAK's production log.
+
+    Without it the three enforce_pr tests append to
+    /home/mak/plataforma/logs/revisor.log. Measured 2026-08-28: one run of this
+    file added 540 bytes there, and among the lines it left was
+
+        PR #7 MERGEADO autonomo por el box
+
+    while no merge happened -- `git log --merges` and `gh pr list` both show
+    nothing. That is worse than noise: this module's own docstring says it
+    "lived on ONE disk for ten days merging PRs by itself", so a fabricated
+    merge line in the production log is indistinguishable from the incident the
+    file exists to prevent.
+
+    One test below already patches LOG by hand; this makes it unconditional.
+    See docs/MAK_ORGANISMO.md, section on log contamination.
+    """
+    monkeypatch.setattr(revisor, "LOG", str(tmp_path / "revisor.log"))
+
+
 class FakeSh:
     """Replaces revisor.sh: answers by predicate, records every argv."""
 

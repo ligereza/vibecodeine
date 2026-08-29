@@ -174,6 +174,40 @@ Both verified, both left alone because closing them edits a test:
 5. **Fix `docs/MAK_CURRENT_STATE.md`.** It is second in the read order and cites
    4 dead paths, including 2 PHASE files that no longer exist.
 
+### Resume is one command, verified
+
+`cultura/mak_plataforma/crontab.mak` is the un-paused crontab, versioned in the
+repo. Compared command by command with the live one: **23 identical, 0 would be
+lost, 1 extra** -- and that extra is `MAK-REPO-SYNC`, already marked
+`# PAUSED-FARO` there. The destructive `git reset --hard origin/main` stays off.
+
+```bash
+crontab /home/mak/flujo/cultura/mak_plataforma/crontab.mak
+```
+
+To resume without merge authority, drop `--enforce` from the `MAK-REVISOR` line.
+
+### Before resuming: `main` has no branch protection
+
+Five of the 23 paused jobs write outside this machine. `entregar.py` runs
+`gh pr create --draft` every 6 h; **`revisor.py --enforce` runs `gh pr ready`,
+`gh pr comment` and `gh pr merge`** every 6 h. Its own docstring says it "lived
+on ONE disk for ten days merging PRs by itself".
+
+Measured 2026-08-28: `gh api .../branches/main/protection` returns **404** and
+`gh api .../rules/branches/main` returns **0 rules**, with a token that holds
+`repo` scope. **There is no branch protection and no ruleset on `main`.**
+
+The log line `PR #7 merge fallo: protected branch` is not evidence otherwise: it
+was written by `tests/test_revisor_gates.py` into the production log, next to a
+fabricated `PR #7 MERGEADO autonomo por el box`, while no merge happened. Both
+polluting suites are fixed and a full-suite sweep confirms the production logs
+are clean again.
+
+Bounded options for the operator, in increasing order of trust: resume all but
+`MAK-REVISOR`; or enable branch protection first and then resume; or resume as
+it was, which is what ran until 2026-08-14.
+
 ### Triangulation, not investigation
 
 Five sources already held the answers this session spent hours scanning for.
