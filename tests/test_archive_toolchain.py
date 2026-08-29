@@ -339,7 +339,7 @@ def test_cli_can_emit_existing_context_projection(tmp_path: Path):
     context_path = tmp_path / "context.json"
     result = subprocess.run(
         [
-            sys.executable,  # no `.venv/bin/python`: en CI ese archivo no existe
+            sys.executable,  # not `.venv/bin/python`: that file does not exist in CI
             "tools/run_archive_toolchain.py",
             str(projection_path),
             "--root", str(tmp_path),

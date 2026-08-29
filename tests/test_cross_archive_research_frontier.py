@@ -118,7 +118,7 @@ def test_cli_materializes_frontier_without_db_or_dispatch(tmp_path: Path):
         pytest.skip("experiments/pilots/DREFQUILA is not in this clone")
     output = tmp_path / "research-frontier.json"
     command = [
-        sys.executable,  # no `.venv/bin/python`: en CI ese archivo no existe
+        sys.executable,  # not `.venv/bin/python`: that file does not exist in CI
         str(ROOT / "tools/compile_cross_archive_research_frontier.py"),
         "--relations", str(RELATIONS),
         "--output", str(output),
