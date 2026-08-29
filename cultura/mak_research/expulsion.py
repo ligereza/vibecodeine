@@ -29,8 +29,11 @@ REFLEXIONES_DIR = os.path.expanduser("~/plataforma/reflexiones")
 REPORTE_RUTA = os.path.join(REFLEXIONES_DIR, "expulsion_shadow.json")
 
 sys.path.insert(0, RESEARCH_DIR)
+_CULTURA_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _CULTURA_ROOT not in sys.path:
+    sys.path.insert(0, _CULTURA_ROOT)
 try:
-    from fallback_util import score_provider_health
+    from mak_codex.fallback_util import score_provider_health
 except ImportError:
     score_provider_health = None
 

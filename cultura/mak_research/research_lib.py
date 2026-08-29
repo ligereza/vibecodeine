@@ -22,11 +22,12 @@ import unicodedata
 import urllib.error
 import urllib.request
 
-try:
-    from fallback_util import score_provider_health, parse_provider_error
-except ImportError:
-    score_provider_health = None
-    parse_provider_error = None
+# Fallback helpers have one physical implementation in the CODEX component.
+# Research imports that shared component so the two departments cannot drift.
+_CULTURA_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _CULTURA_ROOT not in sys.path:
+    sys.path.insert(0, _CULTURA_ROOT)
+from mak_codex.fallback_util import score_provider_health, parse_provider_error
 
 try:
     from cultura.mak_conductor.runtime import (external_budget_limit,
@@ -1154,8 +1155,8 @@ def mint_job_id():
 
 def emitir_evento(depto, job_id, tipo, **campos):
     """Evento estructurado a ~/<depto>/eventos.jsonl (append-only). Best-effort:
-    nunca lanza -- perder un evento no debe tumbar un job. Contrato en
-    ~/plataforma/diseno/eventos_y_backlog.md."""
+    nunca lanza -- perder un evento no debe tumbar un job. Contrato canonico en
+    `cultura/mak_plataforma/diseno/eventos_y_backlog.md`."""
     if not job_id:
         return
     ruta = os.path.join(os.path.expanduser("~"), depto, "eventos.jsonl")

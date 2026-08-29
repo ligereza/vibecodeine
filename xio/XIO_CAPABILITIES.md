@@ -1,4 +1,7 @@
-# XIO - matriz de capacidades
+# XIO Component Capability Matrix
+
+This file belongs to the separate XIO component. The MAK capability inventory
+is `/home/mak/flujo/CAPACIDADES.md`; do not merge the two inventories.
 
 Esta matriz separa lo que existe en el repositorio de lo que esta verificado en
 el Xiaomi. La palabra `operativo` no se usa sin una prueba en el dispositivo.

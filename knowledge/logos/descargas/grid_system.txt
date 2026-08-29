@@ -4,4 +4,4 @@ URL directa: https://cdn.prod.website-files.com/677d7d17da5fa87c599529a2/6819305
 Como se encontro: WebSearch "Grid System" Chile -> the-grid.club/santiago (sitio oficial) -> WebFetch extrajo logo SVG del header (ya vectorial, no requiere vtracer).
 Fecha: 2026-07-24
 Tier: sitio oficial
-Nota: descargado directo como SVG (fuente ya vectorial); vector/grid_system.svg es copia identica.
+Nota: descargado directo como SVG (fuente ya vectorial); el registro usa la única copia canónica en knowledge/logos/vector/grid_system.svg.

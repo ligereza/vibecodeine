@@ -20,8 +20,8 @@ Regla: sin fuente primaria del dominio, el informe NO AFIRMA. Registra que
 busco, que encontro, y se marca. Un informe marcado es util; un informe que
 inventa jurisprudencia es un pasivo.
 
-Sin dependencias: solo stdlib. Se copia igual que `fallback_util.py` a
-`cultura/mak_codex/` si codex lo necesita.
+Sin dependencias: solo stdlib. Los helpers de fallback compartidos viven en
+`cultura/mak_codex/fallback_util.py`; este modulo no mantiene una copia.
 """
 from __future__ import annotations
 

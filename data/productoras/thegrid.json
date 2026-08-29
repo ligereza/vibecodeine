@@ -6,7 +6,7 @@
   "logos": [
     {"id": "thegrid_primary", "knowledge": "knowledge/logos/thegrid.yaml", "estado": "encontrado",
      "archivo": "knowledge/logos/vector/grid_system.svg",
-     "raster": "knowledge/logos/descargas/grid_system.svg",
+     "raster": "knowledge/logos/vector/grid_system.svg",
      "fuente": "https://the-grid.club/santiago (sitio oficial The Grid, logo SVG del header)",
      "obtenido": "2026-07-24",
      "notas": "Logo oficial via web anonima (PR #254): fuente ya vectorial (SVG del header), sin necesidad de vtracer. Reemplaza el estado source_needed previo."}

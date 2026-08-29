@@ -4,18 +4,44 @@
 > `/home/mak/flujo/agents.md`, ejecutar `tools/agent_bootstrap.py`, luego este
 > archivo y únicamente el paquete `Agent bootstrap — CURRENT` que emite el
 > bootstrap. No recorrer el cuerpo histórico de `context/LAST_HANDOFF.md` para
-> decidir el estado actual. Verificado el 2026-08-27.
+> decidir el estado actual. Verificado el 2026-08-29.
 
 Este documento consolida decisiones durables. No reemplaza la evidencia
 histórica, no convierte cada experimento en una obligación y no afirma que una
 credencial funcione solo porque existe en un archivo de entorno.
 
+El traspaso estructurado de la consolidación local está en
+`/home/mak/MAK_CODEX_HANDOFF.md`. Léelo junto con este estado; no crees otro
+inventario paralelo.
+
+## Consolidación local completada — 2026-08-29
+
+MAK local significa `/home/mak`, no sólo `/home/mak/flujo`. En esta sesión se
+consolidaron duplicados, proyecciones y placeholders con movimientos
+reversibles bajo `/home/mak/_archive/orden-limpieza-20260828/`. `WIN`,
+`curatoria_inbox`, Git como sistema de cambios, GoogleDrive/OneDrive y el repo
+independiente XIO quedaron fuera del write-set.
+
+El mapa físico actual es
+`/home/mak/indexes/mak-canonical-20260829/mak-canonical-map.json`. El reporte
+exacto registra 112 grupos, 300 filas y 188 rutas excedentes; no quedan grupos
+de Python byte-identical. Los 100 `.py` externos son bridges de compatibilidad
+hacia módulos canónicos y los 51 aliases activos son symlinks, no copias
+físicas. Las decisiones detalladas están en
+`/home/mak/indexes/mak-consolidation-20260829/MAK-DIRECTIVE-REGISTRY.md` y
+`CONSOLIDATION-DECISIONS.md`.
+
+El archivo de retiros tiene 231 filas, todas con destino existente y sin
+duplicados de origen o destino. La suite completa termina con exit 0 y Git se
+usó sólo en modo lectura para procedencia y validación.
+
 ## Reconciliación de autoridad y bases — 2026-08-27
 
-La topología física medida y sus hashes están en
-`docs/system_learning/master/inventory.json:physical_organism_registry` y
-`database_registry`; el mapa causal de conexiones está en
-`docs/system_learning/master/hashmap.json`. La autoridad
+La topología física actual y sus hashes están en
+`/home/mak/indexes/mak-canonical-20260829/mak-canonical-map.json`.
+`docs/system_learning/master/inventory.json:physical_organism_registry` queda
+como registro de aprendizaje y evidencia histórica; el mapa causal de
+conexiones está en `docs/system_learning/master/hashmap.json`. La autoridad
 operativa queda fijada así:
 
 ```text
@@ -39,18 +65,26 @@ visible; no significa eliminarla ni copiarla a una base universal.
 
 La frontera operativa de MAK es `/home/mak`, no sólo `/home/mak/flujo`.
 `/home/mak/WIN` queda expresamente fuera por ser archivo histórico protegido;
-`GoogleDrive` y `OneDrive` son montajes externos y no fueron recorridos. El
-registro físico canónico es
-`docs/system_learning/master/inventory.json:physical_organism_registry` y
-su mapa causal es `docs/system_learning/master/hashmap.json`.
+`GoogleDrive` y `OneDrive` son montajes externos y no fueron recorridos. `WIN`
+y `curatoria_inbox` son superficies protegidas. El registro físico canónico
+actual es `/home/mak/indexes/mak-canonical-20260829/mak-canonical-map.json`;
+su mapa causal especializado sigue siendo
+`docs/system_learning/master/hashmap.json`.
 
-La medición encontró 114 entradas de primer nivel fuera de `WIN`, 17
-repositorios anidados y 7 superficies de runtime/proceso observadas. La
-clasificación funcional quedó así: `flujo` autoría e integración; `plataforma`
-runtime; `research`/`vigia` mundo externo; `curatoria`/`curatoria_inbox` y `RD`
-fuentes y órganos protegidos; `portfolio_media`/`indexes` referencias; `labs`,
-`experiments`, `state` y `out` snapshots o evidencia; `actions-runner`, `tools`,
-`src`, `apps`, modelos y runtimes creativos como soporte.
+El resumen del JSON contiene el conteo actual de entradas, archivos hashados,
+bytes medidos y errores de lectura. Se regenera con
+`python3 ~/flujo/tools/build_mak_canonical_map.py` y no sustituye las
+mediciones de procesos o servicios.
+
+La clasificación funcional por raíz queda así: `flujo` autoría e integración;
+`plataforma`, `research`, `codex`, `lenguaje`, `curatoria`, `vigia` y
+`xio_puente` órganos/runtime; `RD`, `portfolio_media`, `bucle` y `trazos`
+producción; `indexes`, `labs`, `state`, `backups`, `_archive` y `renders`
+referencias, snapshots o evidencia; `actions-runner`, `tools`, `src`, `apps`,
+`models`, `blender`, `opt`, `go`, `venvs` y `venv-providers` soporte/vendor.
+Las carpetas XDG (`Descargas`, `Documentos`, `Documents`, `Escritorio`,
+`Imágenes`, `Música`, `Plantillas`, `Público` y `Vídeos`) se conservan como
+espacio del usuario, no como almacenamiento MAK sin una clasificación interna.
 
 La búsqueda SQLite acotada, con `-xdev`, encontró 270 archivos fuera de `WIN`:
 85 pertenecen a superficies MAK y 185 son cachés del host/aplicaciones. Los
