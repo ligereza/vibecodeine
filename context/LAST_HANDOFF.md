@@ -13,7 +13,7 @@ Everything that needed a code edit is declared in `docs/AUTORIDAD.md` under "Lo
 que queda declarado y no ejecutado" and was left alone.
 
 Full record with per-item consumer evidence:
-`.archive/2026-08-28-orden/MANIFEST.md`.
+`/home/mak/_archive/orden-limpieza-20260828/MANIFEST.md`.
 
 ### Standing contract, carried forward unchanged
 
@@ -60,7 +60,7 @@ point of doing the check:
 | `inbox/` (2 txt from June) | consumed by `src/flujo/cli.py`, `src/flujo/intake/reception.py` and tests |
 | `data/flujo.db` (frozen 2026-06-30, Windows paths) | consumed by `tools/repo_audit.py`, which runs in CI, and `tests/test_portfolio_gen.py` |
 
-### Retired to `.archive/2026-08-28-orden/retirado/` -- 9.4 MB
+### Retired to `/home/mak/_archive/orden-limpieza-20260828/retirado/` -- 9.4 MB
 
 `.aider.chat.history.md`, `.aider.input.history`, `.aider.conf.example.yml`,
 `.playwright-mcp/`, `.remember/`, `proyectos/`, `dist_compartir/`. All measured
@@ -70,7 +70,7 @@ with zero code consumer. `.archive/` is the repo's own retirement zone --
 Two of them were tracked in Git (`.aider.conf.example.yml`,
 `proyectos/flujo/OptimizerGen/prompt_optimizado.txt`), so `git status` shows them
 as deleted. **No commit was made**; versioning the retirement is the operator's
-call. Reverting one is `mv .archive/2026-08-28-orden/retirado/<ruta> <ruta>`.
+call. Reverting one is `mv /home/mak/_archive/orden-limpieza-20260828/retirado/<ruta> <ruta>`.
 
 ### Deduplicated by hardlink -- 187.2 MB, zero paths lost
 
@@ -174,6 +174,36 @@ Both verified, both left alone because closing them edits a test:
 5. **Fix `docs/MAK_CURRENT_STATE.md`.** It is second in the read order and cites
    4 dead paths, including 2 PHASE files that no longer exist.
 
+### Triangulation, not investigation
+
+Five sources already held the answers this session spent hours scanning for.
+Full table in `docs/MAK_ORGANISMO.md`; the order they pay off:
+`/home/mak/GENESIS.md` (what MAK is: five organs and their ports),
+`/home/mak/Descargas/historia git.odt` (403 decisions, 450 path journeys),
+`out/archaeology/claude-codex-mak-20260815.sqlite` (1028 commits, 9054 file
+events, 83835 turns), `indexes/mak-reality-20260813/archivo_index.sqlite` (1904
+assets with sha256) and `.codex/memories/rollout_summaries/`.
+
+**The retirement convention, found by querying the archaeology.** `.archive/`
+lived in the repo 2026-06-30 to 07-03, was renamed into
+`_archive/legacy_historico_previo/` on 07-27, and `_archive/` was **deleted
+whole on 2026-07-30** (458 files, two commits). Since then retirements live at
+`/home/mak/_archive/<what>-<why>-<yyyymmdd>/`, outside the repo, alongside five
+existing ones. This session created `.archive/2026-08-28-orden/` in the repo
+against that convention and moved it to
+`/home/mak/_archive/orden-limpieza-20260828/` (935 MB) once the history was
+queried. **This repo has done this cleanup twice before and both times the
+in-repo archive was later deleted.**
+
+Also retired this round, each resolved by crossing sources rather than guessing:
+`Modelfile`, `oi-qwen.py` and `venvs/oi` (707 MB) all depend on
+`huihui_ai/qwen2.5-abliterate`, which `ollama list` does not have;
+`cli_watsonx.py` outlived `_archive/watsonx-retired-20260820`; plus
+`curatoria_test/` (28 MB), seven stray logs and an empty `tmp/`.
+
+Kept despite appearances: `/home/mak/blender-4.5.3-viejo` (1.2 GB, named "old")
+is an explicit fallback in `src/flujo/knowledge/runtime_tools.py:41`.
+
 ### Resume readiness: 23 of 23, after fixing 4 file modes
 
 Each paused cron line was resolved and checked with the interpreter the line
@@ -215,7 +245,7 @@ turned out to be "it exists and I looked in one place":
 directories under `/home/mak`, and
 `/home/mak/.codex/memories/rollout_summaries/`.
 
-### The finding that outranks everything else: MAK is stopped
+### The finding that outranks everything else: MAK's cron layer is stopped
 
 **MAK is `/home/mak`, not `/home/mak/flujo`.** Full measurement in
 `docs/MAK_ORGANISMO.md`. The headline:
@@ -229,8 +259,16 @@ Twenty-three scheduled jobs, none active, paused **2026-08-14 19:03** by the
 markers `PAUSED-DOCTOR-RENOVATION-20260814-1903` (16),
 `PAUSED-DOCTOR-20260814-1903` (6) and `PAUSED-FARO` (1). Every process log
 under `/home/mak/plataforma/logs/` stops that same day. Every `mak-*` systemd
-unit is inactive; the only active units are cloud sync. One process runs:
-`hub.py`, from `plataforma/.venv`.
+unit is inactive; the only active units are cloud sync.
+
+**Correction.** The first version of this packet said one process runs. Wrong:
+**three of the five organs `/home/mak/GENESIS.md` declares are alive** --
+`research` on :8890 (pid 976, up 1d13h), `codex` on :8891 (pid 969, up 1d13h) and
+`plataforma` on :8900. The `ps` filter behind the first claim searched words that
+`interfaz.py` and `interfaz_codex.py` do not contain. The check that found them
+was `ss -ltnp` against the ports GENESIS.md already listed. The accurate
+statement: **MAK's cron layer is paused; its service layer runs three of five
+organs.**
 
 **No document in this repo said so.** For fourteen days the documentation has
 described a running system. This is why only the flyer chain feels alive: it
@@ -269,7 +307,7 @@ diacritics.
 The first version of every document authored in this session was Spanish with
 diacritics -- including `docs/AUTORIDAD.md`, the file that states the rule.
 Corrected: `docs/AUTORIDAD.md`, `README.md`, `docs/SCRIPTS_INVENTORY.md`,
-`docs/GLOSSARY.md`, `.archive/2026-08-28-orden/MANIFEST.md`,
+`docs/GLOSSARY.md`, `/home/mak/_archive/orden-limpieza-20260828/MANIFEST.md`,
 `context/PHASE_REPORTS_INDEX.md`, `context/MD_CONTEXT_MASTER.md`,
 `docs/MAK_SYSTEM_DIRECTIVE.md` and this packet now measure **zero non-ASCII**.
 
@@ -325,7 +363,7 @@ it. In a clean checkout those nine references point at nothing. It is not
 gitignored; it only needs `git add`.
 
 Also untracked and worth deciding: `docs/PORTAFOLIO_PRODUCCION.md` (created in a
-prior session, never versioned) and `.archive/2026-08-28-orden/` (versioning it
+prior session, never versioned) and `/home/mak/_archive/orden-limpieza-20260828/` (versioning it
 preserves the retirement record). `PLAN.md` is gitignored at `.gitignore:230`, so
 this session's retitle stays local by design.
 

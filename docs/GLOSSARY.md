@@ -108,7 +108,7 @@ either column.
 - `.remember/` was invisible to ripgrep (its `.gitignore` was `*`), and the
   advice here was a PowerShell command on a box that runs Linux. The directory
   was retired on 2026-08-28 to
-  `.archive/2026-08-28-orden/retirado/.remember/`; its last entry was from
+  `/home/mak/_archive/orden-limpieza-20260828/retirado/.remember/`; its last entry was from
   2026-08-01. The lesson outlives it: **a Grep that returns nothing over an
   ignored path is not evidence of absence.** On this box, force it:
   `grep -r --no-ignore <patron> <ruta>` or `rg -uu`.

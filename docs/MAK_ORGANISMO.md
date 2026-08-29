@@ -67,13 +67,43 @@ still sit in `/home/mak/.config/systemd/user/`:
 
 The two active units are cloud sync, not MAK.
 
-## The one live process
+## The five organs, measured against their own founding document
 
-```
-/home/mak/plataforma/.venv/bin/python /home/mak/flujo/cultura/mak_plataforma/hub.py
-```
+`/home/mak/GENESIS.md`, written 2026-07-16, is MAK's founding document and names
+five organs with their ports. It also states the scope rule this session took two
+days to learn: *"El repositorio `flujo` vive en otra maquina; este organismo
+respira fuera del repo. Aqui no hay commits: hay organos que corren y piezas que
+nacen."*
 
-Uptime 7h34m at measurement. It is the whole of MAK's running surface.
+| Organ | Port | State 2026-08-28 |
+|---|---|---|
+| `research` | :8890 | **running**, pid 976, uptime 1d13h, `research/.venv/bin/python flujo/cultura/mak_research/interfaz.py` |
+| `codex` | :8891 | **running**, pid 969, uptime 1d13h, `/usr/bin/python3 flujo/cultura/mak_codex/interfaz_codex.py` |
+| `plataforma` | :8900 | **running**, pid 299493, `plataforma/.venv/bin/python flujo/cultura/mak_plataforma/hub.py` |
+| `lenguaje` | cli/cron | 2 cron lines, both paused |
+| `xio_puente` | daemon | `mak-xio.service` inactive and disabled |
+
+**Three of five organs are alive.** All three serve on `127.0.0.1` only.
+
+### Correction to the first version of this section
+
+The first version of this document claimed *"one live process ... It is the whole
+of MAK's running surface."* That was wrong. The `ps` filter behind it searched for
+`plataforma|revisor|micelio|entregar|capataz|trabajo`, and neither `interfaz.py`
+nor `interfaz_codex.py` contains any of those words. Both had been up for over a
+day.
+
+Same failure mode as the rest of this session: search one form, conclude absence.
+The check that found them was `ss -ltnp` against the ports **GENESIS.md already
+declared** -- the founding document had the answer and was never opened.
+
+So the accurate statement is narrower than the headline: **MAK's cron layer is
+paused. Its service layer is running three of five organs.** The two that are not
+running are exactly the two that depend on the paused cron and on a disabled
+systemd unit.
+
+`PENDIENTES_SUDO.md` (2026-07-16) asked for `loginctl enable-linger mak` so user
+units survive logout. Measured: `Linger=yes`. That pending item is done.
 
 ## The logs were being contaminated by the test suite
 
@@ -132,7 +162,7 @@ desktop directories.
 `rollback/`, `quarantine/`, `state/` and `indexes/` together are 839 MB, all
 frozen at 2026-08-06..13, i.e. before the pause.
 
-## Seven Python environments, ~17 GB
+## Eight Python environments, ~17.5 GB
 
 All CPython 3.11.2.
 
@@ -143,10 +173,12 @@ All CPython 3.11.2.
 | `venvs/mak-gpu` | 4.8 GB | last modified 2026-08-23 |
 | `venvs/oi` | 707 MB | last modified 2026-07-15 |
 | `venvs/flujo` | 203 MB | last modified 2026-08-06 |
-| `plataforma/.venv` | 60 MB | **runs the only live process** |
+| `research/.venv` | 549 MB | **runs the research organ** (:8890) |
+| `plataforma/.venv` | 60 MB | **runs the plataforma organ** (:8900) |
 | `venvs/knowledge-migration` | 46 MB | last modified 2026-08-13 |
 
-The smallest environment runs the only thing that runs. Nothing was found that
+The codex organ (:8891) uses the system `/usr/bin/python3`, no venv at all. The
+two smallest environments run two of the three live organs. Nothing was found that
 references `venvs/visual-index-pilot`, `venvs/mak-gpu`, `venvs/oi` or
 `venvs/knowledge-migration` by path, but a venv is also reachable through
 `PATH`, an alias or an interactive shell, so absence of a textual reference is
@@ -261,10 +293,63 @@ One duplicate: `MAK-RETENCION` appears twice, pointing at
 (`research/informes` and `research/paneles`). Both are valid; noted so a future
 reader does not treat it as an accident.
 
+## Triangulation sources: stop investigating, cross-reference
+
+Everything in this document that took hours of scanning was already recorded
+somewhere. The five sources, in the order they pay off:
+
+| Source | What it answers | Size |
+|---|---|---|
+| `/home/mak/GENESIS.md` (2026-07-16) | what MAK **is**: five organs, their ports, the model chain, the rules | 4 KB |
+| `/home/mak/Descargas/historia git.odt` | 403 decision events, 39 activity days, 450 key path journeys, 6 local refs | 168 KB, sha256 verified |
+| `out/archaeology/claude-codex-mak-20260815.sqlite` | 1028 commits, 9054 file events, 83835 turns, 14224 rule events | 102 MB |
+| `indexes/mak-reality-20260813/archivo_index.sqlite` | 1904 assets with sha256, 431 projects, 1877 families | 3.3 MB |
+| `.codex/memories/rollout_summaries/` | 11 dated session summaries naming their own artifacts by path | 11 files |
+
+`tools/conversacion.py` reads `~/.claude/projects/` transcripts as a corpus. Its
+two siblings named in `CAPACIDADES.md:543` -- `arqueologia.py` and `esfuerzo.py`
+-- do not exist as files, but the archaeology function survives as
+`tools/inferential_archaeology.py` plus the sqlite above.
+
+### What triangulation found that scanning did not
+
+**The retirement convention.** Querying `git_files` joined to `git_commits` for
+`.archive/` and `_archive/`:
+
+- `.archive/` in the repo: 283 events, 2026-06-30 to 07-03, ending with
+  *"chore: limpieza extrema de raiz"*.
+- Renamed into `_archive/legacy_historico_previo/` on 2026-07-27.
+- `_archive/` in the repo: **deleted whole on 2026-07-30**, 458 files in two
+  commits.
+- `/home/mak/_archive/` survives outside the repo and is still in use:
+  `faro_sync_20260809`, `watsonx-retired-20260820`,
+  `provider-retirement-20260820`, `group4-reverted-20260821`,
+  `shadow-copies-20260821`.
+
+**This repo has done this cleanup twice before and both times the in-repo
+archive was later deleted.** The house convention since 2026-07-30 is
+`/home/mak/_archive/<what>-<why>-<yyyymmdd>/`, outside the repo. This session's
+retirement was created at `.archive/2026-08-28-orden/` in the repo, against that
+convention, and moved to `/home/mak/_archive/orden-limpieza-20260828/` once the
+history was queried.
+
+**A dead chain resolved by three facts at once.** `ollama list` returns three
+models. `GENESIS.md` declares five; `aya-expanse:8b`, `nemo-exec:12b` and
+`qwen2.5-coder:3b` are gone, and `deepseek-coder:6.7b` is installed but
+undeclared. `/home/mak/Modelfile` and `/home/mak/oi-qwen.py` both target
+`huihui_ai/qwen2.5-abliterate`, which is not installed, and `venvs/oi` (707 MB)
+exists only to run `oi-qwen.py`. Three artifacts, one missing dependency, all
+retired together.
+
+**A survivor that looked like garbage.** `/home/mak/blender-4.5.3-viejo` (1.2 GB,
+literally named "old") is referenced by
+`src/flujo/knowledge/runtime_tools.py:41` as an explicit fallback beside
+`/home/mak/blender` (4.5.4). Kept.
+
 ## What ordering MAK actually requires
 
 Files are the small part and are handled: see
-`.archive/2026-08-28-orden/MANIFEST.md`. What remains is not disorder, it is
+`/home/mak/_archive/orden-limpieza-20260828/MANIFEST.md`. What remains is not disorder, it is
 that the machine is off.
 
 1. **Decide the pause.** Resume the 23 cron lines, or retire the ones that
