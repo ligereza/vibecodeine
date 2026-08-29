@@ -142,6 +142,24 @@ item its original path so a single one can be put back.
 Its first pass was a flat dump mirroring the original layout -- 30207 files in
 one box. Moving a mess into a box is not ordering it.
 
+## Hardlink dedup: what is safe and what was undone
+
+86.1 MB deduplicated across `quarantine/`, `rollback/` and `state/`. Verified
+safe: nothing in the repo or in `/home/mak/plataforma` writes to those three,
+and `backup.sh` creates a new tarball per day rather than rewriting one, so
+`backups/` holds zero links.
+
+**37.6 MB in `research/corpus/` was linked and then undone.** The justification
+was the run-directory naming convention (`_v2`, `_v3`) plus mtime -- evidence
+about the past, not about what writes. `cultura/mak_research/source_pipeline.py`
+lines 425 and 433 use `write_text` and `write_bytes` on
+`captures/<capture_id>.txt`, which truncate in place, and its `mkdir(exist_ok=True)`
+allows writing into an existing run root. The research organ on :8890 is
+running. One re-capture would have silently changed up to twelve copies.
+
+The check that mattered was never mtime. It was: **what code writes here, and
+does it truncate or create?**
+
 ## The logs are evidence again
 
 `tests/test_entregar_micelio.py` and `tests/test_revisor_gates.py` wrote into
