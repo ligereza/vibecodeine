@@ -131,6 +131,17 @@ alongside `faro_sync_20260809`, `watsonx-retired-20260820`,
 `provider-retirement-20260820`, `group4-reverted-20260821`,
 `shadow-copies-20260821` and `orden-limpieza-20260828`.
 
+**An archive is organised by reason, not by original path.** It gets read with
+one question -- *why was this taken out?* -- never *where did it sit?*. The
+2026-08-28 retirement holds seven categories (`herramienta-abandonada`,
+`dependencia-ausente`, `proveedor-retirado`, `salida-regenerable`,
+`evidencia-de-corrida`, `entregado-a-cliente`, `sin-consumidor`), each with a
+one-line rule in its own `POR-QUE.txt`, plus `mapa-de-retiro.csv` giving every
+item its original path so a single one can be put back.
+
+Its first pass was a flat dump mirroring the original layout -- 30207 files in
+one box. Moving a mess into a box is not ordering it.
+
 ## The logs are evidence again
 
 `tests/test_entregar_micelio.py` and `tests/test_revisor_gates.py` wrote into
