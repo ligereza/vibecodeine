@@ -35,12 +35,17 @@ Not by searching the repo. The trail was:
 1. `/home/mak/.codex/memories/rollout_summaries/2026-08-18T07-35-37-ivVb-mak_inventory_reconciliation_luna_checkpoints.md`
    -- a Codex session summary naming these files by path.
 2. The paths did not exist in `context/`.
-3. `/home/mak/.local/share/Trash/files/flujo/context/` holds **749 `PHASE*`
-   files**, which is the corpus `context/PHASE_REPORTS_INDEX.md` claimed to be
-   keeping. The index was right about the count and wrong about the location.
+3. `/home/mak/.local/share/Trash/files/flujo/context/` holds them. But read the
+   `.trashinfo`: that `flujo` tree is `/home/mak/.codex/worktrees/31af/flujo`,
+   a **Codex worktree** deleted 2026-08-24, not `/home/mak/flujo`. The
+   2026-08-18 session ran with that worktree as its `cwd`, so these files were
+   **written there and never reached the repo**. They went to the Trash with
+   the worktree six days later.
 
-The Trash holds 628 MB and 14065 files, including a 440 MB
-`vibecodeine-legacy-20260824` tree. It is a surface, not an absence.
+The Trash holds 628 MB, 14065 files and 232 `.trashinfo` records. By original
+location: 81 from `actions-runner/`, 59 from `plataforma/`, 29 from `research/`,
+13 from `codex/`, 9 from `WIN/`. It is a surface, not an absence -- and every
+file in it carries its origin and deletion date in a `.trashinfo` beside it.
 
 ## Rule this establishes
 
