@@ -15,7 +15,6 @@ en el documento, codificados, hasta que alguien los exhuma con un click).
 | `tools/tapiz_renderer.html` | Frontend: consume el JSON y lo vuelve visual (mesh, mascara, tears, esporas, sigil) |
 | `tools/tapiz_telemetry.py` | (modo live) construye el ecosistema desde el estado REAL del repo |
 | `tools/tapiz_three.html` | Frontend 3D (Three.js r160 via CDN): mismo contrato, grilla instanciada, fog por mascara, esporas raycasteables |
-| `tools/tapiz_live_loop.py` | Daemon del autorretrato: corre --live en loop (`--interval`, `--once`), nunca muere por un tick malo |
 | `tools/TAPIZ_RESOLUME_SPEC.md` | Spec de mapping OSC para Resolume Arena 7 (campo -> direccion -> rango -> curva), para operador VJ |
 | `tests/test_compete_engine.py` | Tests del engine y sus modos |
 
@@ -77,7 +76,10 @@ cortos de git. Nunca: `.env*`, keys/secrets/tokens, `*.local.md`, contenido de
   (implementacion en Resolume = trabajo de operador, la spec basta).
 - Escena Three.js: `tools/tapiz_three.html` (mismo contrato, file-picker +
   fetch de `tools/dist/system_status.json`; falta solo embeberla en el hub web).
-- Autorretrato continuo: `py tools/tapiz_live_loop.py --interval 300`.
+- Autorretrato continuo: retirado 2026-08-29 (`tapiz_live_loop.py` no tenia
+  consumidor medido; ver `/home/mak/_archive/orden-limpieza-20260828/por-razon/
+  herramienta-abandonada/POR-QUE.txt`). `py tools/compete_engine.py --live`
+  sigue disponible para correr un tick a mano.
 
 ## Puentes construidos (2026-07-11, segunda tanda)
 
