@@ -1,0 +1,122 @@
+{
+ "schema": "mak-demand-source-assessment-v1",
+ "assessed_at": "2026-08-28",
+ "purpose": "Registrar por que estos informes NO son demandas capturadas y no pueden fundar un formato de portafolio. Existe exactamente una demanda capturada de verdad, y la diferencia entre ambas es la que la arquitectura codifica.",
+ "verdict": "not_usable_as_a_demand",
+ "state": "candidate",
+ "attesting": false,
+ "why": [
+  "las fuentes citadas son en su mayoria documentos de metodologia en scribd o scholar, no portales de fondos",
+  "cada ejecucion registra errores de proveedor: HTTP 429 y timeouts, de modo que el run quedo degradado",
+  "un informe declara en su cuerpo la fecha 26 de octubre de 2023 dentro de un archivo de 2026-07-22",
+  "el mismo informe titula convocatoria 2027 y lista lineas abiertas en 2026 con plazo ya vencido",
+  "cita a DIBAM, organismo reemplazado por el Servicio Nacional del Patrimonio Cultural en 2018",
+  "los montos por linea no corresponden a la estructura real de lineas Fondart",
+  "el propio texto admite que no accedio a las bases completas"
+ ],
+ "what_a_real_demand_looks_like": {
+  "example": "experiments/pilots/ARICA-FONDART-2027/runs/enriched/opportunity.json",
+  "schema": "mak-opportunity-constraints-v1",
+  "opportunity_id": "fondart-nacional-investigacion-2027",
+  "has": [
+   "bases PDF hasheadas",
+   "localizadores de pagina con cita textual",
+   "criterios con peso",
+   "compuertas duras tipadas",
+   "documentos requeridos",
+   "unknowns declarados como constraint_status_unknown"
+  ],
+  "note": "solo un documento asi puede fundar un formato; una prosa plausible no."
+ },
+ "same_class_as": [
+  "copilot_external.jsonl: propuestas de maquina que pueden nombrar unknowns y nunca atestiguan"
+ ],
+ "reopen_when": "se capture la base oficial de una de estas convocatorias con su PDF hasheado y localizadores",
+ "reports": [
+  {
+   "report": "20260722-170613-senda-chile-fondos-concursables-2026-pre.md",
+   "sha256": "39263cd2192927f579513b46212013b2bca0229821978e8bcd7e4b04aa0e9b5c",
+   "source_count": 6,
+   "official_source_count": 1,
+   "methodology_or_scholar_source_count": 0,
+   "run_error_count": 1,
+   "declared_body_date": null,
+   "file_date": "20260722",
+   "official_urls": [
+    "https://www.dipres.gob.cl/597/articles-363446_doc_pdf.pdf"
+   ]
+  },
+  {
+   "report": "20260722-170712-fondos-de-salud-regionales-y-municipales.md",
+   "sha256": "789371bd5ddfecaed5ef782d934dcb4da8da36a63f8ea0f589bb005253d4e346",
+   "source_count": 3,
+   "official_source_count": 0,
+   "methodology_or_scholar_source_count": 3,
+   "run_error_count": 3,
+   "declared_body_date": null,
+   "file_date": "20260722",
+   "official_urls": []
+  },
+  {
+   "report": "20260722-171151-fondos-de-cultura-chile-convocatoria-202.md",
+   "sha256": "a8ea225f642f947190c1af4a21eb162667a85a1ab8e058b48f6f667040142f0f",
+   "source_count": 6,
+   "official_source_count": 3,
+   "methodology_or_scholar_source_count": 2,
+   "run_error_count": 4,
+   "declared_body_date": "26 de octubre de 2023",
+   "file_date": "20260722",
+   "official_urls": [
+    "https://archivos.fondosdecultura.cl/",
+    "https://www.fondosdecultura.cl/",
+    "https://www.fondosdecultura.cl/fondos/"
+   ]
+  },
+  {
+   "report": "20260722-171229-fosis-chile-2026-programas-para-organiza.md",
+   "sha256": "8da0ec40d9246b677397d7473e23589e6446b2364c1f2f3a6370c32f0d310d27",
+   "source_count": 6,
+   "official_source_count": 1,
+   "methodology_or_scholar_source_count": 4,
+   "run_error_count": 1,
+   "declared_body_date": null,
+   "file_date": "20260722",
+   "official_urls": [
+    "https://www.fosis.gob.cl/es/"
+   ]
+  },
+  {
+   "report": "20260722-171354-cloudflare-project-galileo-y-programas-g.md",
+   "sha256": "ff240fd324e2635472de0d189d2d8c8908fc36fe0e168604d1bd951f1c666ddd",
+   "source_count": 6,
+   "official_source_count": 0,
+   "methodology_or_scholar_source_count": 1,
+   "run_error_count": 4,
+   "declared_body_date": null,
+   "file_date": "20260722",
+   "official_urls": []
+  },
+  {
+   "report": "20260722-171515-google-for-nonprofits-y-github-for-nonpr.md",
+   "sha256": "df23ed160b8a75cd6740208e26f8086cab997c616c8a2be4faac1c8f80695b1e",
+   "source_count": 6,
+   "official_source_count": 0,
+   "methodology_or_scholar_source_count": 2,
+   "run_error_count": 3,
+   "declared_body_date": null,
+   "file_date": "20260722",
+   "official_urls": []
+  },
+  {
+   "report": "20260722-171629-fundaciones-internacionales-que-financia.md",
+   "sha256": "6fa2b4b4faefd940987fffd4d87e0ef2dd7dc9884a849a5f0c35693f815e6a86",
+   "source_count": 6,
+   "official_source_count": 0,
+   "methodology_or_scholar_source_count": 1,
+   "run_error_count": 3,
+   "declared_body_date": null,
+   "file_date": "20260722",
+   "official_urls": []
+  }
+ ]
+}

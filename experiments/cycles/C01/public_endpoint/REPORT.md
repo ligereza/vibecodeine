@@ -17,9 +17,9 @@ helper and writes beneath the endpoint's temporary test directory.
   optional precomputed-vector retrieval, contract edges, and CLI.
 - `__init__.py` — public package exports.
 - `fixtures.py` — synthetic fixture builder.
-- `tests/test_public_endpoint.py` — executable tests and clean temporary
+- `experiments/cycles/C01/public_endpoint/tests/test_public_endpoint.py` — executable tests and clean temporary
   fixture lifecycle.
-- `tests/__init__.py` — test package marker.
+- `experiments/cycles/C01/public_endpoint/tests/__init__.py` — test package marker.
 - `REPORT.md` — this report.
 
 ## Commands and exit codes

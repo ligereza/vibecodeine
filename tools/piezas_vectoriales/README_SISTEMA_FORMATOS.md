@@ -378,7 +378,7 @@ Exportar PDF/SVG final
 
 Si necesitas continuar en otro chat, comparte este resumen:
 
-> Tengo un workspace con un sistema genérico en `00_sistema_generico/`. El archivo principal es `scripts/generar_desde_json.py`. Cada proyecto tiene un `config.json` con canvas, palette, global_elements y documents. El script genera SVG editables y SVG vectorizados en `salida_generada/`. Quiero crear/adaptar un nuevo formato manteniendo este flujo.
+> Tengo un workspace con un sistema genérico en `00_sistema_generico/`. El archivo principal es `tools/piezas_vectoriales/scripts/generar_desde_json.py`. Cada proyecto tiene un `config.json` con canvas, palette, global_elements y documents. El script genera SVG editables y SVG vectorizados en `salida_generada/`. Quiero crear/adaptar un nuevo formato manteniendo este flujo.
 
 También puedes adjuntar:
 

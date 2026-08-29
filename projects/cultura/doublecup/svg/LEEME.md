@@ -39,7 +39,7 @@ Abrir el `.svg` directo en el navegador. No necesita servidor.
 | `oclusion.py` | la misma sombra comprimida por rotacion ciclica (k-means con distancia ciclica). 7.8 KB. Es la version que se usa. |
 | `cableado.py` | el netlist PPMI ruteado con A* ortogonal sobre la grilla de caracteres. |
 | `polos.py` | define el 0 y el 255: error (persistencia) menos placer. `H = max(E - P, 0)`. |
-| `sintesis.py` | primera reintegracion. **Tiene tres mentiras conocidas**, ver `doc/auditoria.md`. Se conserva como registro. |
+| `sintesis.py` | primera reintegracion. **Tiene tres mentiras conocidas**, ver `projects/cultura/doublecup/svg/doc/auditoria.md`. Se conserva como registro. |
 | `union.py` | **la pieza actual.** Las tres mentiras corregidas. |
 
 ## Parametros que valen la pena tocar

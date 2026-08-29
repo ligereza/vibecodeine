@@ -14,8 +14,23 @@ Las **contraportadas** (10×14 cm) son tarjetas de presentación diseñadas para
 
 ## Estructura de Archivos
 
+> **Medido el 2026-08-28.** El bloque de abajo describe la estructura pretendida,
+> no la del disco. Lo que existe realmente:
+>
+> - `svg/suplementos_rd/09_contraportadas_dark/` -- 7 SVG por producto
+>   (`01_linea_suplementos_rd.svg`, `02_impulso.svg`, `03_hongos_adaptogenos.svg`,
+>   `04_pre_fiesta.svg`, `05_magnesio.svg`, `06_creatina_monohidratada.svg`,
+>   `contraportada_cambios.svg`). La ruta que este documento declaraba,
+>   `04_contraportadas/`, nunca existio.
+> - `svg/suplementos_rd/_plantilla/` -- plantillas
+> - `svg/suplementos_rd/_master_contraportadas.json` -- el master
+>
+> No existe `01_contraportada_base_10x14cm.svg`: el archivo base por linea es
+> `01_linea_suplementos_rd.svg`.
+
+
 ```
-svg/suplementos_rd/04_contraportadas/
+svg/suplementos_rd/09_contraportadas_dark/
 ├── 01_contraportada_base_10x14cm.svg     # Base template SVG (DO NOT EDIT manually)
 ├── suplementos_rd_illustrator_spec.json  # Specs Illustrator
 ├── suplementos_rd_illustrator_artboards.jsx  # Script Illustrator
@@ -45,7 +60,7 @@ py -m flujo suplementos list
 
 ### Abrir la Base
 
-1. Abrir `svg/suplementos_rd/04_contraportadas/01_contraportada_base_10x14cm.svg` en Adobe Illustrator
+1. Abrir `svg/suplementos_rd/09_contraportadas_dark/01_contraportada_base_10x14cm.svg` en Adobe Illustrator
 2. Archivo → Documentar propiedades → Confirmar que sea 10×14 cm (1181×1654 px a 300dpi)
 3. Ver → Mesas de trabajo → Asegurar que esté visible
 
@@ -144,12 +159,12 @@ Radio redondeo (rounding): 40px (bloques) o 28–30px (cajas)
    - Estilos: Internal CSS
    - Decimal places: 2
    - Responsive: ✓ (auto-scale)
-5. Guardar en `svg/suplementos_rd/04_contraportadas/[generadas]/`
+5. Guardar en `svg/suplementos_rd/09_contraportadas_dark/[generadas]/`
 
 ### Desde CLI
 
 ```bash
-py -m flujo suplementos contraportada "Impulso" --output svg/suplementos_rd/04_contraportadas/generadas/impulso_final.svg
+py -m flujo suplementos contraportada "Impulso" --output svg/suplementos_rd/09_contraportadas_dark/generadas/impulso_final.svg
 ```
 
 ## Integración con Hub / Datadrop

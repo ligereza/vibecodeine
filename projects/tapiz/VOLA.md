@@ -129,8 +129,8 @@ resultado.
   (arriba) a absorbido (abajo); condensacion y vapor desincronizados; opacidades
   0.03-0.10, al umbral de percepcion. `<desc>` que le narra al agente lo que solo
   existe en el tiempo. SMIL+CSS, sin JS. NO toca el vaso original (git-verificado).
-- B -- HECHO. VOLÁ-void: `vibecode/void_shapes.py` (3 motores) + demo
-  `piezas_curadas/void_animado.svg` (3 paneles, sin JS). Modos nuevos en el motor
+- B -- HECHO. VOLÁ-void: `projects/tapiz/vibecode/void_shapes.py` (3 motores) + demo
+  `projects/tapiz/piezas_curadas/void_animado.svg` (3 paneles, sin JS). Modos nuevos en el motor
   spaces (aditivo, no reemplaza): `espaciado` (los espacios respiran, se abren y
   contraen desincronizados), `zigzag_vertical` (hilos quebrados bajan por el
   negativo, el color fluye por ellos), `raices` (raices rectangulares ancladas en

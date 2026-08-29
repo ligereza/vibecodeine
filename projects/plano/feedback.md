@@ -12,7 +12,7 @@
 - **Layout** (`solve_layout`): coloca stands en fila con pasillo; mesas y sillas
   dentro de cada stand (n.º sillas ≈ n.º voluntarios).
 - **Render SVG** a escala (1 m = N px) + **rider de texto** derivado por reglas.
-- Probado con `ejemplos/evento_ejemplo.json` (6h, 7 voluntarios, masivo, testeo).
+- Probado con `projects/plano/ejemplos/evento_ejemplo.json` (6h, 7 voluntarios, masivo, testeo).
 
 ## Qué refinar (próxima IA / dueño)
 

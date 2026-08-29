@@ -481,7 +481,13 @@ acotada del área son suficientes.
 - `context/VIDEO_WORKFLOW_MAK_20260817.md`
 - `CAPACIDADES.md`
 - `MAPA.md`
-- `context/PHASE209_FINAL_MAK_ARCHITECTURE_DISPOSITION.md`
-- `context/PHASE413_CROSS_DOMAIN_SERVICE_ARCHITECTURE.md`
+- `docs/AUTORIDAD.md` (qué documento manda sobre cuál, y por qué)
 - sección `Historical checkpoint — Phase 495` y fases posteriores en
   `context/LAST_HANDOFF.md`
+
+Dos archivos que esta lista citaba fueron retirados de ella el 2026-08-28
+porque **ya no existen**: PHASE209 (retirado)
+y PHASE413 (retirado). De los 748 archivos
+`PHASE*` que `context/PHASE_REPORTS_INDEX.md` contaba en agosto quedan 13, y
+esos dos no están entre ellos. Este documento es el segundo del orden de
+lectura, así que una cita colgando acá le cuesta una sesión a quien la siga.

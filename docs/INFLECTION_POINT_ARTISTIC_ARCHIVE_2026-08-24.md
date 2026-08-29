@@ -1,7 +1,9 @@
 # Punto de inflexión: archivo artístico, publicaciones y aprendizaje
 
 **Fecha:** 2026-08-24
-**Estado:** decisión arquitectónica vigente
+**Estado:** registro fechado de un cambio de dirección. **No está en el orden de
+lectura** (`agents.md` → `docs/MAK_CURRENT_STATE.md` → `context/LAST_HANDOFF.md`).
+Vale como historia del *por qué*, no como estado actual. Ver `docs/AUTORIDAD.md`.
 **Alcance:** MAK / `flujo`; no modifica producción, `WIN` ni la base viva
 
 Este documento congela el aprendizaje que cambia la dirección del proyecto.

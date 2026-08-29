@@ -46,7 +46,6 @@ render          render run, illustrator, bridge, validate, formats, rescale
 suplementos     suplementos list, contraportada, validate, illustrator
 eventos         eventos flyer-auto
 resolume        resolume automatizar
-airdrop         airdrop list, dry-run, apply, rollback, status, finish
 datadrop        datadrop scan, list, ingest, prepare
 knowledge       knowledge list, show, classify, ingest-example, logo-source, logo-lab
 hub (addon)     hub serve, index, route  (registrado via cli_addons.py, ver INTEGRACION_CLI.md)
@@ -145,29 +144,20 @@ py -m flujo hub index agent-brief "etiqueta creatina"
 py -m flujo hub route where --area eventos --pieza flyer
 ```
 
-## Airdrops
+## Airdrops -- retirado 2026-08-28
 
-```bash
-flujo airdrop list
-flujo airdrop dry-run
-flujo airdrop apply "mensaje"
-flujo airdrop rollback
-flujo airdrop status
-```
+El subcomando `flujo airdrop` ya no existe. La cadena entera se retiro a
+`/home/mak/_archive/orden-limpieza-20260828/por-razon/subsistema-retirado-20260814/`
+tras verificar que estaba muerta desde el 2026-08-14: `_airdrop/`, el
+directorio de staging sobre el que operaba, tiene **cero eventos en toda la
+historia de git**, y `docs/AGENT_AIRDROP_PROTOCOL.md` se borro ese mismo dia
+en la purga de las 12:44.
 
-`flujo airdrop apply` valida `_airdrop/` antes de aplicar. Si el airdrop modifica `src/flujo/airdrop.py`, hay que autorizarlo explicitamente:
+Con la cadena se fueron `src/flujo/airdrop.py`, `src/flujo/intake/reception.py`
+(el canal de correo, que segun su propio test no llamaba nadie), cinco scripts,
+`.github/workflows/airdrop_gate.yml` y cinco archivos de test.
 
-```bash
-flujo airdrop apply "mensaje" --allow-airdrop-engine
-```
-
-Runner recomendado para aplicar y probar en una pasada (ver `docs/AGENT_AIRDROP_PROTOCOL.md`):
-
-```bash
-py scripts/run_airdrop_checks.py "mensaje"
-py scripts/run_airdrop_checks.py "mensaje" --allow-airdrop-engine
-py scripts/run_airdrop_checks.py --resume "mensaje"
-```
+Para entregar cambios: rama, PR y CI, como cualquier otro trabajo.
 
 ## Estados de job
 

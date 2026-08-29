@@ -19,7 +19,7 @@ absoluta se reemplaza por `<artifact>` dentro del comando emitido.
 
 - `media_observer.py` — hash, consulta `ffprobe`, sanitización y contrato JSON.
 - `runner.py` — CLI sin archivo de destino ni operaciones de escritura.
-- `tests/test_media_observer.py` — seis pruebas stdlib `unittest`, incluyendo
+- `experiments/cycles/C04/media_observer/tests/test_media_observer.py` — seis pruebas stdlib `unittest`, incluyendo
   la observación real y fallos explícitos.
 
 ## Evidencia real

@@ -112,7 +112,7 @@ mentira, aunque se vea bien. Se encontraron cinco.
 
 Las cinco estan corregidas en `union.py`. `sintesis.py` se conserva sin
 arreglar, como registro de las tres primeras. El informe completo esta en
-`doc/auditoria.md`.
+`projects/cultura/doublecup/svg/doc/auditoria.md`.
 
 ---
 

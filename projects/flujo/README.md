@@ -24,7 +24,7 @@ projects/flujo/
 - Tú cargas trabajos terminados en `ejemplos/`
 - El agente que entre analiza y genera (o usa) los JSON descriptivos en `json/`
 - Si ya existen JSONs dentro de esta estructura, la carpeta `json/` ya existirá.
-- Ver `ejemplos/README.md` y `json/README.md` para instrucciones detalladas + schema.
+- Ver `projects/flujo/ejemplos/README.md` y `projects/flujo/json/README.md` para instrucciones detalladas + schema.
 
 ## Cómo se usa (visión)
 

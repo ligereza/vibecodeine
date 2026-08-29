@@ -7,7 +7,7 @@
 > deja nada que se pueda mirar.
 >
 > El ejemplo canónico, y el que fijó el nivel, es
-> [`ensayos/rave/ensayo.md`](ensayos/rave/ensayo.md) con su anexo de 16 íconos
+> [`docs/cultura/ensayos/rave/ensayo.md`](ensayos/rave/ensayo.md) con su anexo de 16 íconos
 > animados.
 
 ## Las siete exigencias
@@ -64,7 +64,7 @@ El manifiesto es `iconos.json`, un objeto por concepto:
 texto es el órgano que justifica el contenido que sustenta la forma. Un ícono sin
 ancla reclama un significado que el ensayo no le dio, y eso es exactamente lo que
 la tesis doublecup prohíbe: *ningún elemento reclama un dato que no codifica*.
-`tests/test_ensayo_rave.py` exige que cada `ancla` sea un título real del ensayo.
+`tests/test_archivo_ensayos.py` y `tests/test_formato_ensayo.py` exige que cada `ancla` sea un título real del ensayo.
 
 ### El estilo NO se unifica
 

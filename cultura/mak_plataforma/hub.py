@@ -153,6 +153,8 @@ SERVICE_PROXY_MAX_BYTES = 2_000_000
 # diagnostics package lives in this repository's src/ tree. Add only the
 # canonical source roots so the existing external projection stays intact.
 _REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+_SSD_ORDER_FOUNDATION_PATH = os.path.join(
+    _REPO_ROOT, "out", "contracurator", "ssd_order_foundation.json")
 _SRC_ROOT = os.path.join(_REPO_ROOT, "src")
 for _import_root in (_REPO_ROOT, _SRC_ROOT):
     if _import_root not in sys.path:
@@ -220,6 +222,27 @@ except Exception as _portfolio_evidence_exc:  # noqa: BLE001 - queue is additive
     _PORTFOLIO_EVIDENCE_IMPORT_ERROR = type(_portfolio_evidence_exc).__name__
 else:
     _PORTFOLIO_EVIDENCE_IMPORT_ERROR = ""
+
+try:
+    from flujo.knowledge.product_view import (  # noqa: E402
+        project_archive_portfolio_view as _project_archive_portfolio_view,
+    )
+except Exception as _archive_portfolio_view_exc:  # noqa: BLE001 - view is additive
+    _project_archive_portfolio_view = None
+    _ARCHIVE_PORTFOLIO_VIEW_IMPORT_ERROR = type(
+        _archive_portfolio_view_exc).__name__
+else:
+    _ARCHIVE_PORTFOLIO_VIEW_IMPORT_ERROR = ""
+
+try:
+    from flujo.knowledge.contracurator import (  # noqa: E402
+        compile_contracurator_exhibition as _compile_contracurator_exhibition,
+    )
+except Exception as _contracurator_exc:  # noqa: BLE001 - the consumer fails closed
+    _compile_contracurator_exhibition = None
+    _CONTRACURATOR_IMPORT_ERROR = type(_contracurator_exc).__name__
+else:
+    _CONTRACURATOR_IMPORT_ERROR = ""
 
 
 def _research_registry_path():
@@ -1301,6 +1324,38 @@ def _portfolio_item(item_id):
 def _portfolio_metadata_index():
     return contrato_archivo.portfolio_metadata_index(
         _portfolio_inbox().get("items", []))
+
+
+def _archive_portfolio_view_read_only():
+    """Render the existing bounded archive view from its canonical input."""
+    if _project_archive_portfolio_view is None or _compile_contracurator_exhibition is None:
+        return {
+            "ok": False,
+            "error": "archive_portfolio_view_unavailable",
+            "detail": _ARCHIVE_PORTFOLIO_VIEW_IMPORT_ERROR or _CONTRACURATOR_IMPORT_ERROR,
+        }, 503
+    archive_path = Path(PORTFOLIO_ROOT) / "datos" / "archivo.json"
+    try:
+        archive = json.loads(archive_path.read_text(encoding="utf-8"))
+        view = _project_archive_portfolio_view(archive, max_items_per_format=24)
+        order_basis = None
+        order_basis_path = Path(_SSD_ORDER_FOUNDATION_PATH)
+        if order_basis_path.is_file():
+            order_basis = json.loads(order_basis_path.read_text(encoding="utf-8"))
+        # The established archive route remains the sole Hub consumer.  The
+        # contracurator receives its already-bounded 56-row projection; it
+        # never rescans the archive or writes the learning store on a GET.  The
+        # SSD order is attached only as an evidence boundary; an unresolved
+        # crosswalk cannot influence the ISKVW selection.
+        view["contracurator"] = _compile_contracurator_exhibition(
+            view, ssd_order_foundation=order_basis)
+        return view, 200
+    except Exception as exc:  # noqa: BLE001 - malformed evidence fails closed
+        return {
+            "ok": False,
+            "error": "archive_portfolio_view_invalid",
+            "detail": type(exc).__name__,
+        }, 503
 
 
 def _portfolio_gtm_map(items, **kwargs):
@@ -4825,6 +4880,9 @@ class H(BaseHTTPRequestHandler):
             return self._json(_diagnostic_payload(body))
         if p == "/api/director/capabilities":
             return self._json(_director_capabilities())
+        if p == "/api/portfolio/archive-view":
+            payload, code = _archive_portfolio_view_read_only()
+            return self._json(payload, code)
         if p == "/api/portfolio/identity-graph":
             return self._json(_portfolio_identity_graph())
         if p == "/revision":

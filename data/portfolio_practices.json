@@ -1,0 +1,241 @@
+{
+ "schema": "mak-portfolio-practice-partition-v1",
+ "declared_at": "2026-08-28",
+ "declared_by": "mak-agent",
+ "policy": {
+  "decide_do_not_ask": "Cada entrada es una decision provisional con base escrita. Reversible: corregir una linea reconfigura todas las afirmaciones de ese contenedor.",
+  "scope_of_propagation": "Solo afecta la proyeccion de afirmaciones y los documentos renderizados. No modifica identidad fisica, evidencia, ni ninguna fuente.",
+  "not_a_training_label": "Ninguna entrada se usa como etiqueta de entrenamiento.",
+  "role_absent_means_no_claim": "Si role queda vacio, no se emite ninguna afirmacion hice_esta_parte para ese contenedor. La ausencia de declaracion no se rellena con una inferencia.",
+  "permission_is_conservative": "Donde equivocarse es irreversible y lo paga un tercero, se declara el permiso mas restrictivo que la evidencia justifica."
+ },
+ "practices": {
+  "TABLA_RD": {
+   "kind": "production",
+   "practice_id": "practice:rd:piezas-graficas",
+   "permission": "aggregate_only",
+   "property_regime": "institucional",
+   "context_label": "ONG de reduccion de danos",
+   "role": "",
+   "note": "Sin rol declarado. Correccion 2026-08-28 leyendo docs/becas/caso_mak_rd.md seccion 5: los datos de campo mostrados son FICTICIOS, generados con semilla fija, y los reportes reales solo existiran con operacion en terreno. data/rd_datos.db tiene 0 filas, lo que lo corrobora. El marco legal de actuacion esta en proceso de validacion profesional. El analisis con reactivos colorimetricos es PRESUNTIVO por diseno.",
+   "basis": "tres archivos .ai mas subdirectorio ENVIAR/, ENTREGA.png y CODIGO.QR.png, coherente con docs/CATALOGO_FORMATOS.md; /home/mak/RD es raiz declarada en agents.md. Permiso restrictivo por la frontera rd_private_runtime_boundary, y ademas porque no existe todavia dato de campo real que mostrar.",
+   "not_mine": "la operacion en terreno, la validacion legal y la confirmacion de laboratorio"
+  },
+  "descargas hasta RDFLYER 2050": {
+   "kind": "production",
+   "practice_id": "practice:rd:flyer-descargas",
+   "permission": "aggregate_only",
+   "property_regime": "institucional",
+   "context_label": "material de flyer descargado",
+   "role": "",
+   "note": "Contenedor mixto: 79 proyectos nativos y 553 imagenes. No se declara rol; el nombre no prueba pertenencia a RD.",
+   "basis": "el nombre incluye RDFLYER y el sistema declara una autoridad flyer_index separada, pero no hay ruta independiente que ligue este contenedor a la ONG. Permiso conservador por precaucion, no por evidencia."
+  },
+  "GRABACIONESVHS": {
+   "kind": "source_footage",
+   "practice_id": "practice:material-fuente:vhs",
+   "permission": "unnamed",
+   "property_regime": "desconocido",
+   "context_label": "material de archivo en cinta y tarjeta",
+   "role": "",
+   "note": "Volcados de tarjeta de camara. No hay evidencia de que este material se haya producido aqui.",
+   "basis": "estructura DCIM/ y MSAMSUNG/SSMOV/ sin ningun archivo de proyecto nativo; 86 archivos de video de 2018 a 2024."
+  },
+  "NestDropV23": {
+   "kind": "installed_tool",
+   "practice_id": "practice:herramienta:nestdrop",
+   "permission": "public",
+   "property_regime": "software_de_terceros",
+   "context_label": "software de proyeccion en vivo instalado",
+   "role": "",
+   "note": "Inventario de herramienta. Su presencia es evidencia de la practica en vivo; su contenido no es obra.",
+   "basis": "4187 de 4193 assets bajo Plugins/ con manual de usuario y perfil por defecto; cero proyectos nativos y cero video."
+  },
+  "Loopback.app": {
+   "kind": "installed_tool",
+   "practice_id": "practice:herramienta:loopback",
+   "permission": "public",
+   "property_regime": "software_de_terceros",
+   "context_label": "enrutamiento de audio instalado",
+   "role": "",
+   "note": "Inventario de herramienta, no obra.",
+   "basis": "459 assets bajo Contents/ con estructura de bundle de aplicacion macOS."
+  },
+  "WIDE": {
+   "kind": "render_output",
+   "practice_id": "practice:salida:secuencia-wide",
+   "permission": "unnamed",
+   "property_regime": "desconocido",
+   "context_label": "secuencia de frames renderizada",
+   "role": "",
+   "note": "Salida, no practica. 2338 .exr mas 1308 .png con contador de cuatro digitos.",
+   "basis": "3646 de 3649 nombres son un contador numerico corto con extension de frame, sin proyecto nativo."
+  },
+  "abril2026post": {
+   "kind": "published_export",
+   "practice_id": "practice:manifestacion:posts-2026-04",
+   "permission": "public",
+   "property_regime": "publicado",
+   "context_label": "exportacion de publicaciones",
+   "role": "",
+   "note": "2443 de 2458 nombres son un id de medio de plataforma de 17 digitos: son manifestaciones ya publicas, con 32 archivos .srt de subtitulos. Evidencia de la ranura publicaciones de F1, no de autoria.",
+   "basis": "identificadores de plataforma como filename; los mismos identificadores aparecen en iskvw/datos/archivo.json como piezas con estado publicada."
+  },
+  "LYON": {
+   "kind": "production",
+   "practice_id": "practice:artista:lyon-la-f",
+   "permission": "unnamed",
+   "property_regime": "cliente",
+   "context_label": "Lyon La F",
+   "role": "produccion visual para artista",
+   "note": "No incluye autoria de la musica ni de material recibido de terceros.",
+   "basis": "data/artist_discographies.json declara este contenedor con kind y canonical_name confirmados y URLs de respaldo; el indice SSD registra proyectos nativos y salidas de video en el mismo contenedor. Dos rutas independientes: autoridad externa + indice. 559 proyectos nativos y 15.055 archivos entre 2016 y 2026: es la practica mas profunda del archivo.",
+   "not_mine": "la musica, y cualquier material recibido de terceros"
+  },
+  "HARRY": {
+   "kind": "production",
+   "practice_id": "practice:artista:harry-nach",
+   "permission": "unnamed",
+   "property_regime": "cliente",
+   "context_label": "Harry Nach",
+   "role": "produccion visual para artista y show en vivo",
+   "note": "La visual de Escarlata la hizo un tercero (ver atestacion att:operator:escarlata-visual-tercero).",
+   "basis": "data/artist_discographies.json declara este contenedor con kind y canonical_name confirmados y URLs de respaldo; el indice SSD registra proyectos nativos y salidas de video en el mismo contenedor. Dos rutas independientes: autoridad externa + indice. Atestacion del operador confirma un show con Harry en Chillan.",
+   "not_mine": "la visual de Escarlata, hecha por un tercero (att:operator:escarlata-visual-tercero), y la musica"
+  },
+  "DREFGIRA": {
+   "kind": "production",
+   "practice_id": "practice:artista:drefquila",
+   "permission": "unnamed",
+   "property_regime": "cliente",
+   "context_label": "DrefQuila",
+   "role": "produccion visual para artista",
+   "note": "La autoridad declara canonical_name=DrefQuila para el contenedor DREFGIRA: ambos contenedores refieren al mismo artista. Eso no decide si DREFGIRA y DrefQuila son el mismo encargo.",
+   "basis": "data/artist_discographies.json declara este contenedor con kind y canonical_name confirmados y URLs de respaldo; el indice SSD registra proyectos nativos y salidas de video en el mismo contenedor. Dos rutas independientes: autoridad externa + indice. Subcarpetas BLOQUE 01/02 y archivos numerados indican armado de set por bloques.",
+   "not_mine": "la musica, y el material entregado ya terminado por el cliente"
+  },
+  "DrefQuila": {
+   "kind": "delivery",
+   "practice_id": "practice:entrega:drefquila-set",
+   "permission": "unnamed",
+   "property_regime": "cliente",
+   "context_label": "DrefQuila — entrega de set",
+   "role": "",
+   "note": "Solo 4 proyectos nativos frente a 40 videos: contenedor de entrega, no de produccion. Sin rol declarado.",
+   "basis": "el indice registra archivos numerados con titulos de tema en la raiz y subcarpetas herramientas/ y subtitulos/; hay autosave de After Effects, asi que la herramienta se uso, pero la proporcion nativo/salida indica entrega."
+  },
+  "DREFMOVISTAR": {
+   "kind": "production",
+   "practice_id": "practice:evento:drefquila-movistar",
+   "permission": "unnamed",
+   "property_regime": "cliente",
+   "context_label": "DrefQuila — evento en recinto",
+   "role": "produccion visual para show",
+   "note": "La autoridad clasifica este contenedor como kind=event, no como artista.",
+   "basis": "data/artist_discographies.json declara este contenedor con kind y canonical_name confirmados y URLs de respaldo; el indice SSD registra proyectos nativos y salidas de video en el mismo contenedor. Dos rutas independientes: autoridad externa + indice. 51 proyectos nativos y 6 objetivos de dependencia declarados resueltos aqui.",
+   "not_mine": "la produccion del evento, el sonido y la musica"
+  },
+  "MARLONLOLLA": {
+   "kind": "production",
+   "practice_id": "practice:artista:marlon-breeze",
+   "permission": "unnamed",
+   "property_regime": "cliente",
+   "context_label": "Marlon Breeze",
+   "role": "produccion visual para artista",
+   "note": "El sufijo del contenedor sugiere un festival; la autoridad solo confirma al artista.",
+   "basis": "data/artist_discographies.json declara este contenedor con kind y canonical_name confirmados y URLs de respaldo; el indice SSD registra proyectos nativos y salidas de video en el mismo contenedor. Dos rutas independientes: autoridad externa + indice. 34 proyectos nativos, mayoria After Effects, y 2 objetivos de dependencia declarados.",
+   "not_mine": "la musica, y la produccion del festival"
+  },
+  "SCD": {
+   "kind": "production",
+   "practice_id": "practice:venue:salas-scd",
+   "permission": "unnamed",
+   "property_regime": "cliente",
+   "context_label": "Salas SCD",
+   "role": "produccion visual para sala",
+   "note": "La autoridad lo declara kind=venue con confianza probable, no confirmada.",
+   "basis": "data/artist_discographies.json declara este contenedor con kind y canonical_name declarados y URLs de respaldo; el indice SSD registra proyectos nativos y salidas de video en el mismo contenedor. Dos rutas independientes: autoridad externa + indice. 176 proyectos nativos, 163 de Blender, todos en 2026.",
+   "not_mine": "la programacion de la sala y el contenido de los artistas"
+  },
+  "FELINA": {
+   "kind": "production",
+   "practice_id": "practice:cliente:felina",
+   "permission": "unnamed",
+   "property_regime": "cliente",
+   "context_label": "FELINA",
+   "role": "diseno de identidad y logo",
+   "note": "La autoridad no tiene URLs para este contenedor: kind y confianza son unknown. Rol declarado solo por estructura interna.",
+   "basis": "374 de 400 assets muestreados estan bajo LOGO/, con 35 proyectos nativos incluyendo Illustrator y Photoshop. Ruta unica: solo el indice.",
+   "not_mine": "cualquier pieza recibida ya terminada; el rol declarado es solo identidad y logo"
+  },
+  "BAHPARTY": {
+   "kind": "production",
+   "practice_id": "practice:fiesta:bahparty",
+   "permission": "unnamed",
+   "property_regime": "cliente",
+   "context_label": "BAHPARTY",
+   "role": "produccion visual para fiesta",
+   "note": "Se ha referido a esta fiesta como Bees and Honey, pero ninguna fuente independiente lo respalda todavia: el context_label se mantiene como el contenedor.",
+   "basis": "52 proyectos Blender y 21 videos; el contenedor 'bah' es una copia espejo con el mismo recuento nativo, lo que indica dos volcados de un mismo set de trabajo.",
+   "not_mine": "la produccion de la fiesta, el sonido y la musica"
+  },
+  "bah": {
+   "kind": "production",
+   "practice_id": "practice:fiesta:bahparty-copia",
+   "permission": "unnamed",
+   "property_regime": "cliente",
+   "context_label": "BAHPARTY — segunda copia",
+   "role": "",
+   "note": "Espejo de BAHPARTY: 52 proyectos Blender y recuentos casi identicos. Sin rol propio declarado para no contar el mismo trabajo dos veces.",
+   "basis": "recuento nativo identico (52 .blend) y 85 clases de contenido byte-identicas compartidas con BAHPARTY segun el registro de identidad."
+  },
+  "3D JJJ": {
+   "kind": "production",
+   "practice_id": "practice:3d:proyectos-jjj",
+   "permission": "unnamed",
+   "property_regime": "desconocido",
+   "context_label": "proyectos 3D",
+   "role": "produccion 3d por proyecto",
+   "note": "Subproyectos observados: CUFFED, BEES, 20 BOCAS. No se afirma vinculo con BAHPARTY aunque exista una subcarpeta BEES.",
+   "basis": "34 proyectos Blender mas 1.321 imagenes organizadas en subcarpetas con nombre de proyecto; una relacion tipada contains_scene del indice apunta a una escena interna de un .blend de este contenedor.",
+   "not_mine": "los materiales y texturas de terceros usados como insumo declarado"
+  }
+ },
+ "unresolved_evidence_classes": [
+  {
+   "class": "loose_root_xml_named_by_place",
+   "count": 9,
+   "examples": [
+    "ANDACOLLO.xml",
+    "CHILLAN.xml",
+    "BERLIN 1.xml",
+    "cobquecura.xml",
+    "harry.xml",
+    "la.xml",
+    "Black Boss Estandar TEMUCO.xml",
+    "KAYAKAZE 2025 2.xml",
+    "berlin 2.xml"
+   ],
+   "observed": "archivos XML de 34 KB a 385 KB en la raiz del volumen, fechados entre 2025-07 y 2026-06, media_kind=other",
+   "why_unresolved": "el indice no conserva contenido, solo metadata, y el SSD no esta montado: no se puede leer el elemento raiz para identificar la aplicacion productora. El nombre sugiere lugares, pero un nombre no es evidencia.",
+   "would_resolve_it": "leer el elemento raiz de un solo archivo con el SSD montado, en modo lectura",
+   "state": "indexed_only",
+   "selection_effect": "none"
+  },
+  {
+   "class": "loose_root_media_numbered",
+   "count": 40,
+   "examples": [
+    "01 CDR.mov",
+    "2.mov",
+    "3.mov",
+    "4.mov"
+   ],
+   "observed": "archivos de media sueltos en la raiz del volumen, algunos con prefijo numerico de bloque",
+   "why_unresolved": "un archivo en la raiz no es un contenedor de proyecto; su pertenencia a un set concreto no esta declarada por ninguna ruta independiente",
+   "would_resolve_it": "una declaracion de pertenencia, o un hash de contenido compartido con un contenedor de produccion",
+   "state": "loose_root_file",
+   "selection_effect": "none"
+  }
+ ]
+}

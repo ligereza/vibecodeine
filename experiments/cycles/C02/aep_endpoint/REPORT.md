@@ -96,4 +96,4 @@ Salida exacta del runner:
 
 El JSON completo de observación está en `observation.json`. El adaptador y el
 wrapper aislado son `aep_endpoint.py` y `run_observation.py`; las pruebas están
-en `tests/test_aep_endpoint.py`.
+en `experiments/cycles/C02/aep_endpoint/tests/test_aep_endpoint.py`.
