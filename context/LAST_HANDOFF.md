@@ -1,6 +1,114 @@
 # Operational Handoff
 
-## Agent bootstrap — CURRENT — 2026-08-29 — MAK consolidado y verificado
+## Agent bootstrap — CURRENT — 2026-08-31 — CI en verde, siete defectos de la misma familia, MAK listo para reanudar
+
+Lee esto y `docs/MAK_CURRENT_STATE.md` seccion 12. Lo de abajo, fechado
+2026-08-29 y anterior, es evidencia historica: no se corrige, se supera.
+
+**Antes de tocar la maquina**, carga `~/PATRONES.CLAUDE.json`: 24 formas medidas
+de equivocarse aqui, con sintoma y metodo correcto en cada una. Son cinco
+minutos y ahorran el dia. El orden de lectura completo esta en `~/GENESIS.md`.
+
+### Contrato permanente que este bloque arrastra
+
+No son adornos: `tests/test_agent_bootstrap.py` exige cada una de estas lineas
+en el bloque CURRENT, y por eso un CURRENT nuevo no puede perderlas. La
+compuerta atajo exactamente eso al escribir este bloque -- se redacto sin ellas
+y fallo, que es su trabajo. **El rastro entre una sesion y la siguiente no puede
+tener huecos, y esto es lo que lo garantiza.**
+
+- Orden de lectura, sin excepcion: `agents.md=` primero, luego
+  `docs/MAK_CURRENT_STATE.md=`, luego `context/LAST_HANDOFF.md=` **solo este
+  bloque**: `historical sections are excluded`.
+- `docs/MAK_SYSTEM_DIRECTIVE.md` sigue vigente.
+- `write_set=experiments/cycles/C04/media_observer/` -- el write-set declarado
+  del ciclo C04.
+- `Stage 2D accepted`: la etapa 2D quedo aceptada y no se reabre.
+- `171 focused tests` fue la medicion de aquella etapa. Hoy la suite completa
+  esta en **4174 passed**, que no la contradice: aquella cifra era de un
+  subconjunto enfocado, no del total.
+- `mak-archive-observation-batch-v1` sigue siendo el esquema de los lotes de
+  observacion del archivo.
+
+### Lo que cambio de estado
+
+- **CI volvia a verde en `origin/main`.** Llevaba seis corridas rojas. La causa
+  no era una regresion: `experiments/pilots/` esta gitignoreado a proposito y
+  varias suites lo leian sin guarda, asi que **la suite certificaba la maquina y
+  no el repositorio**. Guardas puestas con el patron que salta NOMBRANDO lo que
+  falta.
+- **Suite: 4174 passed, 0 failed** (empezo la jornada en 3741).
+- **Verificacion en entorno CI-equivalente real**: worktree + venv nuevo con
+  `pip install -e ".[dev,render]"`. Un worktree da los archivos limpios, **no el
+  entorno limpio**: el `.venv` de MAK arrastra lo instalado y no declarado.
+- **Cobertura**: `cli.py` 29→45%, `web/hub.py` 29→38%,
+  `cultura/mak_plataforma/hub.py` 62→73%. Total del repo 71%.
+- **`~/state/reanudacion-20260830/` esta preparado y verificado.** Reanudar es
+  un comando del operador; un agente no puede instalar un crontab.
+
+### La familia de defecto que hay que reconocer
+
+`subprocess.run(...).stdout.strip()` **pliega "el comando fallo" y "no hay nada"
+en el mismo vacio**. Se encontraron **siete** casos en sitios sin relacion:
+`flujo doctor`, `github-sync --status`, dos rutas del hub de plataforma,
+`autonomia.py`, `runrecord.py`, `check_mak_trabajo.py`, `png_xmp_witness.py` y
+`substrate_scan.py`.
+
+La distincion que lo resuelve: **`None` cuando no se midio, `False` cuando se
+midio y no esta sucio.** Un arbol sin medir no es un arbol limpio. Si escribes
+codigo que mide algo, esta es la trampa que te va a tocar.
+
+### Dos practicas que salieron de esta jornada y conviene repetir
+
+1. **Si encuentras un defecto y no lo vas a arreglar, fijalo con un test que lo
+   documente sin bendecirlo**, y dilo en el docstring. Dos agentes lo hicieron y
+   las dos veces impidio que el arreglo pasara en silencio: el arreglo tuvo que
+   romper su test primero.
+2. **Antes de reportar cero, demuestra que tu metodo puede encontrar algo.**
+   Fabrica el caso, compruebalo, revierte. Un cero sin esa prueba no vale.
+
+### Cifras que estaban mal y ya no
+
+- `ingesta_archivo.py` **no estaba al 9%**: estaba al 72%. La causa es de
+  instrumento: `--cov=paquete.modulo` devuelve "No data to report" porque
+  pytest-cov importa el modulo antes de que arranque el rastreador. **Usa la
+  ruta real.**
+- "24 modulos bajo 40%" eran 32. "119 herramientas en tools/" son 116. "122
+  puentes" son 130.
+
+### El instrumento unico
+
+    ~/bin/mak    estado | listar | medir | consolidar | reanudar
+
+`mak consolidar` reune lo que cada instrumento persistio **con la edad de cada
+dato**, para que una cifra vieja se vea vieja. No mide nada nuevo.
+
+### Lo retirado, y donde consta
+
+`~/_archive/orden-limpieza-20260828/mapa-de-retiro.csv`, **253 filas**, ninguna
+apuntando al vacio. Se borro de verdad solo lo re-obtenible y con su comando de
+recuperacion escrito: clones publicos, un instalador, una descarga incompleta,
+una version vieja de Blender, un venv sin consumidor, y 602 MB de papelera
+**tras comprobar los 2012 blobs de su HEAD uno por uno contra `flujo/.git`**.
+Los 4 que no estaban en ningun commit se preservaron.
+
+Un retiro se revirtio por error propio: `venvs/knowledge-migration`. Se afirmo
+"no hay PostgreSQL en MAK" y si lo hay. **Cero coincidencias en un grep no
+prueba ausencia**: preguntale a `systemctl`, `docker ps`, `ss`.
+
+### Lo que sigue siendo del operador
+
+- `crontab ~/state/reanudacion-20260830/crontab.reanudar` -- y refijar la linea
+  base del latido justo despues: `tools/mak_heartbeat.py --capture`.
+- El ruleset de proteccion de `main`: `MAK-REVISOR` queda pausado hasta
+  entonces, porque llama a `gh pr merge` cada 6 horas.
+- `NTFY_TOPIC_OUT` no esta configurado: el canal saliente de MAK esta mudo. El
+  nombre de un tema de ntfy es su contrasena, asi que elegirlo no es de un
+  agente.
+
+---
+
+## Agent bootstrap — HISTORICAL — 2026-08-29 — MAK consolidado y verificado
 
 This is the only current operational packet. The material below the marked
 historical boundary is retained evidence and must not override this packet.
