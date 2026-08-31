@@ -78,6 +78,31 @@ def test_system_status_is_read_only_and_redacts_provider_values(tmp_path: Path, 
     assert before == after
 
 
+def test_service_status_checks_canonical_runtime_source_candidates(tmp_path: Path, monkeypatch) -> None:
+    wrapper = tmp_path / "research" / "interfaz.py"
+    canonical = tmp_path / "flujo" / "cultura" / "mak_research" / "interfaz.py"
+    _touch(wrapper, "wrapper")
+    _touch(canonical, "canonical")
+    seen: dict[str, tuple[Path, ...]] = {}
+
+    monkeypatch.setattr(status_module, "_listener", lambda port: {"host": "127.0.0.1", "port": port, "reachable": True})
+    monkeypatch.setattr(status_module, "_process_snapshot", lambda tokens: {"running": True, "count": 1})
+
+    def capture(tokens, candidates):
+        seen["candidates"] = tuple(candidates)
+        return {"observed": True, "path": str(canonical.resolve())}
+
+    monkeypatch.setattr(status_module, "_runtime_source", capture)
+    result = status_module._service_component(
+        "research", "Research 8890", wrapper, 8890, ("research/interfaz.py",),
+        source_candidates=(canonical,),
+    )
+
+    assert result["status"] == "ready"
+    assert canonical.resolve() in seen["candidates"]
+    assert result["evidence"]["runtime_source"]["observed"] is True
+
+
 def test_lane_registry_is_reported_without_promotion() -> None:
     repo = Path(__file__).resolve().parents[1]
     result = status_module._lane_registry_component(repo)

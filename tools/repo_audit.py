@@ -1,11 +1,20 @@
 #!/usr/bin/env python3
-"""Compact read-only audit for the web surface and local database contracts."""
+"""Compact read-only audit for web, database and tool-consumer contracts.
+
+The tool inventory deliberately reports evidence instead of deciding whether a
+zero-reference CLI is dead: operator-run commands have no in-tree caller by
+design.  Historical ``WIN`` and external mounts are outside the scan.
+"""
 from __future__ import annotations
 
 import argparse
+import ast
+import io
 import json
+import os
 import re
 import sqlite3
+import tokenize
 from pathlib import Path
 from typing import Any
 
@@ -50,6 +59,164 @@ DB_CONSUMERS = {
     ),
     "data/flujo.db": ("src/flujo/index/db.py", "src/flujo/cli.py"),
 }
+
+TOOL_SEARCH_ROOTS = (
+    "src", "tools", "cultura", "scripts", ".github", "iskvw", "xio",
+)
+TOOL_TEXT_SUFFIXES = {
+    ".css", ".html", ".js", ".json", ".mjs", ".md", ".py", ".sh",
+    ".toml", ".ts", ".tsx", ".txt", ".yml", ".yaml",
+}
+TOOL_SKIP_DIRS = {
+    ".git", ".venv", "__pycache__", "_archive", "build", "cache", "dist",
+    "fixtures", "logs", "node_modules", "state", "venv",
+}
+
+
+def _text_files(root: Path, relative_roots: tuple[str, ...]) -> list[Path]:
+    """Return bounded text surfaces, excluding caches and history."""
+    files: list[Path] = []
+    for relative in relative_roots:
+        base = root / relative
+        if not base.is_dir():
+            continue
+        for directory, dirnames, filenames in os.walk(base):
+            dirnames[:] = sorted(name for name in dirnames
+                                  if name not in TOOL_SKIP_DIRS)
+            for filename in sorted(filenames):
+                path = Path(directory) / filename
+                if path.suffix.lower() in TOOL_TEXT_SUFFIXES:
+                    files.append(path)
+    return sorted(set(files))
+
+
+def _searchable_text(path: Path, text: str) -> str:
+    """Remove Python comments/docstrings before looking for consumers.
+
+    A mention in a comment or module documentation explains a tool but does
+    not invoke it.  Keeping executable string literals preserves subprocess
+    command lists and dynamic imports while avoiding those false positives.
+    """
+    if path.suffix.lower() != ".py":
+        return text
+    lines = text.splitlines(keepends=True)
+    try:
+        tree = ast.parse(text)
+        docstring_lines: set[int] = set()
+        for node in ast.walk(tree):
+            body = getattr(node, "body", None)
+            if not body or not isinstance(body, list):
+                continue
+            first = body[0]
+            value = getattr(first, "value", None)
+            if (isinstance(first, ast.Expr) and isinstance(value, ast.Constant)
+                    and isinstance(value.value, str)):
+                docstring_lines.update(range(first.lineno - 1, first.end_lineno))
+        for index in docstring_lines:
+            lines[index] = "\n" if lines[index].endswith("\n") else ""
+        masked = "".join(lines)
+        chars = list(masked)
+        for token in tokenize.generate_tokens(io.StringIO(masked).readline):
+            if token.type != tokenize.COMMENT:
+                continue
+            start_line, start_col = token.start
+            end_line, end_col = token.end
+            if start_line == end_line:
+                offset = sum(len(line) for line in lines[:start_line - 1])
+                for index in range(offset + start_col, offset + end_col):
+                    chars[index] = " "
+        return "".join(chars)
+    except (SyntaxError, tokenize.TokenError, IndentationError):
+        # An unparsable source file is still searchable, but this function must
+        # never turn an audit into a crash or silently discard evidence.
+        return text
+
+
+def _tool_inventory(root: Path = ROOT) -> dict[str, Any]:
+    """Measure top-level ``tools/*.py`` references without mutating files.
+
+    A production/test reference is returned as a path list so a count can be
+    audited.  The target file itself is excluded: its own name in a docstring
+    is not a consumer.  Workflow hits are limited to ``.github/workflows``.
+    """
+    tools_dir = root / "tools"
+    tool_paths = sorted(path for path in tools_dir.glob("*.py") if path.is_file())
+    production_files = [
+        path for path in _text_files(root, TOOL_SEARCH_ROOTS)
+        if path.suffix.lower() not in {".md", ".txt"}
+    ]
+    test_files = [
+        path for path in _text_files(root, ("tests",))
+        if path.suffix.lower() == ".py"
+    ]
+    workflow_files = [
+        path for path in _text_files(root, (".github/workflows",))
+        if path.suffix.lower() in {".yml", ".yaml"}
+    ]
+
+    def load(paths: list[Path]) -> dict[Path, str]:
+        loaded: dict[Path, str] = {}
+        for path in paths:
+            try:
+                loaded[path] = _searchable_text(
+                    path, path.read_text(encoding="utf-8", errors="replace")
+                )
+            except OSError:
+                continue
+        return loaded
+
+    production_text = load(production_files)
+    test_text = load(test_files)
+    workflow_text = load(workflow_files)
+    rows: list[dict[str, Any]] = []
+    for tool_path in tool_paths:
+        name = tool_path.name
+        stem = tool_path.stem
+        import_pattern = re.compile(
+            rf"\b(?:from\s+|import\s+){re.escape(stem)}\b"
+        )
+
+        def hits(texts: dict[Path, str]) -> list[str]:
+            found: list[str] = []
+            for path, text in texts.items():
+                if path.resolve() == tool_path.resolve():
+                    continue
+                if (name in text or f"tools.{stem}" in text
+                        or import_pattern.search(text)):
+                    found.append(path.relative_to(root).as_posix())
+            return found
+
+        production = hits(production_text)
+        tests = hits(test_text)
+        workflows = hits(workflow_text)
+        rows.append({
+            "path": f"tools/{name}",
+            "exists": True,
+            "refs_production": production,
+            "refs_test": tests,
+            "workflows": workflows,
+            "consumer_evidence": bool(production or tests or workflows),
+        })
+
+    with_production = sum(bool(row["refs_production"]) for row in rows)
+    with_tests_only = sum(
+        bool(row["refs_test"]) and not row["refs_production"] for row in rows
+    )
+    without_refs = sum(not row["consumer_evidence"] for row in rows)
+    with_workflow = sum(bool(row["workflows"]) for row in rows)
+    return {
+        "schema": "mak-tool-consumer-inventory-v1",
+        "scope": list(TOOL_SEARCH_ROOTS),
+        "historical_win_excluded": True,
+        "count": len(rows),
+        "files": rows,
+        "summary": {
+            "with_production_reference": with_production,
+            "tests_only": with_tests_only,
+            "without_any_reference": without_refs,
+            "with_workflow_trigger": with_workflow,
+        },
+    }
 
 
 def _module_id(path: Path) -> str:
@@ -164,6 +331,7 @@ def audit() -> dict[str, Any]:
         "web": web,
         "stale_active_references": stale,
         "databases": databases,
+        "tools": _tool_inventory(),
         "ok": not web["dead_modules"] and not stale and not db_errors and not missing_consumers,
         "policy": {
             "read_only": True,
@@ -174,13 +342,53 @@ def audit() -> dict[str, Any]:
     }
 
 
+def _tools_markdown(tools: dict[str, Any]) -> str:
+    """Render the generated tool inventory without adding a second data source."""
+    summary = tools["summary"]
+    lines = [
+        "# MAK tool consumer inventory",
+        "",
+        "Generated by `tools/repo_audit.py --format markdown`; this is a",
+        "read-only projection of `mak-tool-consumer-inventory-v1`, not a hand-",
+        "maintained registry. Historical `WIN` and `curatoria_inbox` are out of",
+        "scope. A missing reference is evidence for classification, not proof of",
+        "death.",
+        "",
+        f"- schema: `{tools['schema']}`",
+        f"- count: **{tools['count']}**",
+        f"- production references: **{summary['with_production_reference']}**",
+        f"- tests only: **{summary['tests_only']}**",
+        f"- no direct reference: **{summary['without_any_reference']}**",
+        f"- workflow triggers: **{summary['with_workflow_trigger']}**",
+        "",
+        "| tool | production refs | test refs | workflow refs | evidence |",
+        "|---|---|---|---|---|",
+    ]
+    def fmt(values: list[str]) -> str:
+        return "<br>".join(f"`{value}`" for value in values) or "—"
+
+    for row in tools["files"]:
+        lines.append("| %s | %s | %s | %s | %s |" % (
+            f"`{row['path']}`",
+            fmt(row["refs_production"]),
+            fmt(row["refs_test"]),
+            fmt(row["workflows"]),
+            "yes" if row["consumer_evidence"] else "no",
+        ))
+    return "\n".join(lines) + "\n"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--format", choices=("json", "text"), default="text")
+    parser.add_argument(
+        "--format", choices=("json", "text", "markdown"), default="text"
+    )
     args = parser.parse_args()
     result = audit()
     if args.format == "json":
         print(json.dumps(result, ensure_ascii=True, indent=2))
+    elif args.format == "markdown":
+        print(_tools_markdown(result["tools"]), end="")
     else:
         web = result["web"]
         print("repo-audit: %s" % ("OK" if result["ok"] else "ATTENTION"))
@@ -194,6 +402,12 @@ def main() -> int:
             if item.get("missing_consumers"):
                 print("db_missing_consumers=%s:%s" % (
                     item["path"], ",".join(item["missing_consumers"])))
+        tools = result["tools"]
+        summary = tools["summary"]
+        print("tools=%d production_refs=%d tests_only=%d no_refs=%d workflows=%d" % (
+            tools["count"], summary["with_production_reference"],
+            summary["tests_only"], summary["without_any_reference"],
+            summary["with_workflow_trigger"]))
     return 0 if result["ok"] else 1
 
 

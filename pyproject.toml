@@ -74,6 +74,28 @@ target-version = ["py310"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+strict_config = true
+strict_markers = true
+markers = [
+    "size_small: conservative small-test routing label",
+    "size_medium: conservative medium-test routing label",
+    "size_large: conservative large-test routing label",
+    "size_unknown: test size has not been classified yet",
+    "scope_unit: conservative single-component scope label",
+    "scope_integration: conservative multi-component scope label",
+    "scope_system: conservative end-to-end or system scope label",
+    "scope_unknown: test scope has not been classified yet",
+    "environment_physical: requires a physical MAK or attached device",
+    "environment_external: reaches an external service or provider",
+    "environment_machine_bound: refers to a machine-specific path or runtime",
+    "environment_optional: depends on an optional executable or package",
+    "environment_unknown: test environment has not been classified yet",
+    "lane_fast: high-confidence small candidate for per-change runs",
+    "lane_contract: contract-focused run candidate",
+    "lane_machine: physical, external, or machine-bound run candidate",
+    "lane_optional: optional-dependency run candidate",
+    "lane_review: classification incomplete; review before changing its lane",
+]
 
 [tool.coverage.run]
 source = ["src/flujo"]

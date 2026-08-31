@@ -36,6 +36,29 @@ make audit          # read-only audit: web, references, local databases
 python -m flujo --help
 ```
 
+## Test lanes
+
+The suite is collected once and routed with metadata; tests are not moved or
+deleted to create a lane. Automatic labels are deliberately conservative and
+use `unknown` when a filename cannot prove its size, scope, or environment.
+Unknown cases remain visible in `lane_review`.
+
+```bash
+make test-fast                  # high-confidence small candidates
+make test-contract              # contract-focused cases
+make test-machine               # physical, external, or machine-bound cases
+make test-optional              # optional executables and packages
+make test-area AREA=research    # one overlapping domain slice
+make test-full                  # all collected cases
+make test-lanes                 # collection report, no execution
+```
+
+The axes are independent: a test can be small but integration-scoped, or a
+contract test can still require a physical environment. `test-optional` keeps
+missing `psd_tools`, `ffmpeg`, and similar dependencies visible as an
+environment lane. A lane is an execution recommendation, not a claim that the
+selected tests cover an entire area.
+
 ## Minimal map
 
 | Path | What it is |

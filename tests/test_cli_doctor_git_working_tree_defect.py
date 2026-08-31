@@ -1,32 +1,16 @@
-"""KNOWN DEFECT, documented not endorsed: `flujo doctor`'s "git working tree"
-row reads a FAILED `git status --short` as a clean tree.
+"""`flujo doctor` must fail closed when `git status --short` cannot run.
 
-`doctor` runs three git calls to build its report. Two of them --
-"git branch" and "git origin" -- correctly check `returncode == 0` and show
-AVISO when git fails. The third does not:
+`doctor` runs three git calls to build its report. All three now check
+`returncode == 0` and show AVISO when git fails. The regression below points
+`repo_root()` at a directory with no `.git` and ensures the working-tree row
+names the failed measurement rather than claiming "limpio".
 
-    dirty = bool(status.stdout.strip())
-    add("git working tree", not dirty, "limpio" if not dirty else "hay cambios locales")
+This is the same class of bug fixed in `flujo github-sync --status`: an empty
+stdout from a failed command must never be treated as a successful empty
+measurement.
 
-Empty stdout from a git call that FAILED (not a repository, git missing,
-timeout: `returncode != 0`) reads identically to empty stdout from a git call
-that succeeded with a genuinely clean tree. Reproduced below by pointing
-`repo_root()` at a directory with no `.git`: "git branch" and "git origin"
-correctly show AVISO for the *same* failed git invocation, while "git working
-tree" shows OK / "limpio".
-
-This is the same class of bug already fixed elsewhere in this repo: `flujo
-doctor` reporting `airdrop pendiente: OK` for a directory that did not exist,
-and `flujo github-sync --status` (a sibling command in the same file)
-printing "Working tree limpio" when every git call failed outside a
-repository. That second one was fixed 2026-08-31 in `github_sync()`; this row
-in `doctor()` was missed by that fix because it is a separate code path in
-the same command file.
-
-`cli.py` is out of this agent's zone (see task scope), so the defect is
-pinned here rather than fixed: doing so makes a future fix a visible behavior
-change instead of a silent one, per this repo's own doctrine (a defect found
-and not fixed must be named with a test, not swept past).
+The regression test keeps the failure mode visible: a missing repository must
+be named as an unmeasured working tree, never reported as clean.
 """
 from __future__ import annotations
 
@@ -40,7 +24,7 @@ import flujo.paths as paths
 runner = CliRunner()
 
 
-def test_doctor_falsely_reports_a_clean_working_tree_when_git_status_fails(
+def test_doctor_names_an_unmeasured_working_tree_when_git_status_fails(
         tmp_path: Path, monkeypatch):
     monkeypatch.setattr(paths, "repo_root", lambda: tmp_path)
 
@@ -51,10 +35,9 @@ def test_doctor_falsely_reports_a_clean_working_tree_when_git_status_fails(
     # name the failure:
     assert "git branch" in result.output
     assert "git origin" in result.output
-    # ...but "git working tree" claims OK / limpio instead of naming that the
-    # measurement never ran. THIS is the defect, pinned as it stands today:
+    # The working-tree row must name the failed measurement rather than claim
+    # that an unmeasured tree is clean.
     assert "git working tree" in result.output
-    assert "limpio" in result.output, (
-        "pinned: an unmeasured tree is currently reported as clean -- "
-        "fixing this (naming the failed `git status` instead of asserting "
-        "'limpio') should break this assertion")
+    assert "AVISO" in result.output
+    assert "No se pudo medir" in result.output
+    assert "limpio" not in result.output

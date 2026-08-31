@@ -485,6 +485,7 @@ tabla; archivo sin entrada = ratchet rojo.
 | `compile_contracurator.py` | VIVO | compila la exposicion falsable del Contracurador sobre la vista de archivo ya proyectada; consumidor `tests/test_contracurator.py` y el Hub en `/api/portfolio/archive-view` | 2026-08-28 |
 | `medir_organismo.py` | VIVO | mide el organismo MAK y lo imprime: lineas de cron activas/pausadas, cuales de los cinco organos de `/home/mak/GENESIS.md` responden, si `main` tiene proteccion de rama (hay un cron que mergea), cuantas lineas arrancarian al reanudar, y los entornos Python. Solo lectura: no toca crontab, servicios ni archivos. Existe para que `docs/MAK_ORGANISMO.md` no vuelva a cargar esas cifras en prosa -- la regla 3 de `docs/AUTORIDAD.md` dice que lo medido se mide, no se escribe. Consumidor: una persona, a mano | 2026-08-28 |
 | `medir_tests.py` | VIVO | mapea la suite por el commit que agrego cada archivo de test: separa las areas que llegaron enteras en un commit (un diseno) de las que crecieron en commits sueltos a lo largo de semanas (acrecion, donde una propiedad puede quedar verificada dos veces). El proposito de cada test ya esta escrito en el mensaje de su commit de alta, asi que no abre ningun test para saberlo: corre un solo `git log` y solo cuenta lineas `def test_`. `--cronologia` lista los 164 commits de alta del mas viejo al mas nuevo. Solo lectura. Consumidor: una persona, a mano | 2026-08-29 |
+| `medir_test_overlap.py` | VIVO | medidor read-only de solapamiento estructural: agrupa funciones test por forma AST normalizada, conserva nombres/operaciones y produce candidatos de revision; consumidor: una persona, a mano | 2026-08-31 |
 | `mak_heartbeat.py` | VIVO | compara el estado medido de MAK contra `data/mak_expected_state.json` (cron activas, organos, unidades systemd de usuario Y de sistema -- ollama, postgresql, docker, el runner de Actions --, frenos de archivo y contenedores docker) y solo habla cuando difieren, en cualquiera de las dos direcciones (algo que debia responder y no responde, o algo que debia estar apagado y arranco). Sale 0 en silencio si todo calza. Si hay deriva, la imprime y avisa por ntfy reutilizando `ntfy_publish`/`load_env` de `cultura/mak_research/research_lib.py`; sin tema configurado, o si el envio falla, degrada a log y lo dice (nunca falla en silencio). `--capture` mide el estado actual y lo guarda como nueva linea base, para fijarla despues de reanudar. Solo lectura sobre MAK: no toca crontab, servicios ni contenedores. Existe porque el crontab estuvo pausado dos semanas sin que nadie se enterara mientras la suite y el hub seguian verdes. Consumidor: linea de cron `MAK-HEARTBEAT` en `cultura/mak_plataforma/crontab.mak` (pausada, la reanudacion es decision del operador) y `tests/test_mak_heartbeat.py`; a mano: `python3 tools/mak_heartbeat.py` | 2026-08-30 |
 | `compile_portfolio.py` | VIVO | compila la base de afirmaciones `mak-portfolio-claims-v1` y renderiza cada formato declarado de `data/portfolio_formats/`; consumidor `tests/test_portfolio_production.py` y los documentos en `out/portfolio/` | 2026-08-28 |
 | `compile_ssd_order_foundation.py` | VIVO | compila `mak-ssd-order-foundation-v1` desde el indice SSD, la proyeccion de orden, intake, reconstrucciones y autoridad de research en solo lectura; consumidor `tests/test_ssd_order_operator_frontier.py` y el Hub | 2026-08-28 |
@@ -603,22 +604,27 @@ su mensaje de spec, pero ese archivo NO existe en `tools/` de este
 worktree (ni en ninguna ruta del repo, verificado con busqueda global) --
 omitido de la tabla, ver desvio reportado en el cierre de sesion.
 
-## 5-ter. Current consumer classification (2026-08-29)
+## 5-ter. Manual-only overlay (reconciled with generated measurement 2026-08-31)
 
 The current MAK consumer graph searched these top-level tools by filename, bare
 module name, and dynamic-loading context across `flujo/` and the seven organ
 roots. It does not recurse into remote rclone mounts, archive/history, or
-`curatoria_inbox`. For the 25 rows below it found no in-tree caller of the
-top-level CLI file in that measured scope. That is not tool death: the consumer
-is an operator-run command, or Blender invoked by an operator. The wrapped
-library may still have tests, Hub consumers, or Project IR consumers; those are
-consumers of the library contract, not callers of this CLI file. `manual-only`
-is therefore the accurate registration for the file and is not permission to
-retire it.
+`curatoria_inbox`. This is an interpretation overlay, not a second inventory.
+The generated `mak-tool-consumer-inventory-v1` output is the measurable source;
+this table keeps the operator explanation for the 32 entries without a direct
+reference. No-reference is not tool death: the
+consumer may be an operator-run command, Blender invoked by an operator, or a
+wrapper contract. The overlay never grants permission to retire a file by name
+alone.
 
 | file | consumer kind | measured interpretation |
 |---|---|---|
 | `aep_reference_scan.py` | manual-only | operator CLI; tests exercise the RIFX reader contract |
+| `certified_query.py` | manual-only | operator query CLI; read-only typed answer over the declared corpus contracts |
+| `drenar_material.py` | manual-only | operator-only bounded queue drain; writes only to its explicit output and queue paths |
+| `ig_metadatos.py` | manual-only | operator metadata report over a published Instagram export; optional explicit output |
+| `medir_test_overlap.py` | manual-only | read-only AST-shape overlap report; never edits tests or production files |
+| `medir_tests.py` | manual-only | read-only test chronology/count report from Git history |
 | `build_mak_canonical_map.py` | manual-only | operator measurement; current output is the canonical physical MAK map |
 | `arica01_portfolio.py` | manual-only | bounded pilot CLI; no automatic dispatch |
 | `bake_static_materials.py` | manual-only | operator invokes the Blender CLI; no in-tree caller |
@@ -644,13 +650,18 @@ retire it.
 | `substrate_experiment.py` | manual-only | operator-run preregistered experiment |
 | `tennis_mcp_ingest.py` | manual-only | operator data projection CLI; tests consume the wrapped module |
 | `triangulate_project_context.py` | manual-only | operator context CLI; Hub consumes the underlying graph |
+| `venue_screen_setup.py` | manual-only | operator Resolume ScreenSetup projection; writes only to an explicit output directory |
 
-## 5-bis. El mismo registro, medido (2026-08-28)
+## 5-bis. Snapshot histórico del registro medido (2026-08-28; superado)
 
-La tabla de arriba declara el consumidor en prosa. Esta lo mide. La regla del
-2026-07-25 puso como condicion de retiro del registro "cuando exista chequeo
-automatico de consumidores"; esta seccion es ese chequeo, y se regenera con
-`.venv/bin/python` + el script de medicion descrito abajo.
+La tabla de arriba declara el consumidor en prosa. Esta fue el primer chequeo
+automático y se conserva como evidencia fechada, no como estado actual. La
+salida vigente es el inventario generado `mak-tool-consumer-inventory-v1` de
+`tools/repo_audit.py`; su proyección completa se guarda en
+`/home/mak/state/codex-retomar-20260831/evidence/repo-audit-tools-20260831.md`
+y se regenera con `.venv/bin/python tools/repo_audit.py --format markdown`.
+La regla del 2026-07-25 sigue vigente: no se retira una herramienta sólo por
+carecer de una referencia automática.
 
 **Como se mide cada columna**
 
@@ -660,9 +671,10 @@ automatico de consumidores"; esta seccion es ese chequeo, y se regenera con
 - `refs test`: idem dentro de `tests/`.
 - `disparador`: workflow de `.github/workflows/` que la nombra.
 
-Se buscan **tres formas** por herramienta, no una: `<nombre>.py` (invocacion por
-ruta), `tools.<stem>` (import de modulo) y `import <stem>` (import con `sys.path`
-insertado). Buscar solo la primera fue un error medido en esta misma sesion:
+Se buscan formas explícitas por herramienta: `<nombre>.py` (invocación por ruta),
+`tools.<stem>` y `import/from <stem>` (import de módulo). Se excluyen fixtures y
+documentación; en Python se ignoran comentarios y docstrings, conservando
+strings ejecutables de comandos. Buscar solo la primera fue un error medido en esta misma sesion:
 daba 0 referencias para `agent_bootstrap.py`, que si tiene test, porque
 `tests/test_agent_bootstrap.py` hace `from tools.agent_bootstrap import SCHEMA`.
 La primera medicion de esta seccion reporto 24 herramientas sin referencia; con
@@ -675,7 +687,7 @@ mano y que ningun automatismo va a ejercitar nunca: eso es exactamente lo que la
 columna dice y nada mas. Lo que la tabla si prueba es que **4 de 92 herramientas
 tienen disparador**, o sea que 88 solo corren si alguien tipea el comando.
 
-**Resumen medido**
+**Resumen histórico (no usar para el estado actual)**
 
 | | de 92 |
 |---|---:|
@@ -823,24 +835,24 @@ que declara la seccion "Reproducir esta medicion", tres dias despues.
 
 | | 2026-08-28 | 2026-08-31 |
 |---|---:|---:|
-| herramientas en `tools/` | 92 | **116** |
-| con referencia en produccion | 46 | **52** |
+| herramientas en `tools/` | 92 | **117** |
+| con referencia en produccion | 46 | **46** |
 | solo referenciadas por un test | 33 | **39** |
-| sin ninguna referencia | 13 | **25** |
-| con disparador de workflow | 4 | **5** |
+| sin ninguna referencia | 13 | **32** |
+| con disparador de workflow | 4 | **4** |
 
-Los 5 con disparador: `gen_archivo_iskvw.py`, `render_flyer_mak.py`,
-`render_video_sequence_mak.py`, `repo_audit.py`, `venue.py`.
+Los 4 con disparador: `gen_archivo_iskvw.py`, `render_flyer_mak.py`,
+`render_video_sequence_mak.py`, `repo_audit.py`.
 
-**Lo que el salto de 13 a 25 NO significa.** No es podredumbre: son 25
-herramientas cuyo consumidor es una persona que las corre a mano, y la seccion
-5-ter las clasifico una por una como `manual-only` el 2026-08-29 con evidencia
-por fila. El numero crecio porque se escribieron mas CLI de uso manual --
-`medir_tests.py` y `build_mak_canonical_map.py` estan entre ellas, y las dos son
-instrumentos de medicion que existen para invocarse a mano.
+**Lo que el salto de 13 a 32 NO significa.** No es podredumbre: las 32
+herramientas tienen explicación `manual-only` en la sección 5-ter. El número
+también creció porque se escribieron más CLI
+de uso manual —`medir_tests.py` y `build_mak_canonical_map.py` están entre ellas—
+y porque la medición endurecida ya no cuenta comentarios, docstrings o fixtures
+como consumidores.
 
 Cero referencias no es muerte, y esta tabla lo dice desde el 28. Lo que hoy
-confirma es lo mismo con otras cifras: **5 de 116 tienen disparador**, o sea 111
+confirma es lo mismo con otras cifras: **4 de 117 tienen disparador**, o sea 113
 solo corren si alguien tipea el comando. Eso no es un defecto de MAK; es lo que
 MAK es.
 
