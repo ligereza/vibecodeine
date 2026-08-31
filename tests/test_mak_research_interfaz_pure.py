@@ -65,7 +65,7 @@ def test_resolver_modo_unknown_mode_never_falls_back_silently():
 
 
 # ---------------------------------------------------------------------------
-# _guardia_contenido: fail-open cuando el filtro no esta disponible
+# _guardia_contenido: fails open when the content filter is unavailable
 # ---------------------------------------------------------------------------
 
 def test_guardia_contenido_fails_open_when_filtro_module_missing(monkeypatch):
@@ -129,7 +129,7 @@ def test_verify_result_contract_passes_when_format_matches(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# _aplicar_resultado_job: un "ok=True" del worker no siempre es exito
+# _aplicar_resultado_job: an "ok=True" from the worker is not always success
 # ---------------------------------------------------------------------------
 
 def test_aplicar_resultado_job_pausado():
@@ -191,7 +191,7 @@ def test_diagnosticar_returns_llm_text(monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# _memoria_stats: cuenta chunks sin tocar el index real de produccion
+# _memoria_stats: counts chunks without touching the real production index
 # ---------------------------------------------------------------------------
 
 def _patch_expanduser_for(monkeypatch, mapping):
@@ -273,7 +273,7 @@ def test_reindexar_async_runs_indexer_in_background(monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# _orden_canvas: el orden de ejecucion sigue la prioridad dibujada
+# _orden_canvas: execution order follows the priority drawn on the canvas
 # ---------------------------------------------------------------------------
 
 def test_orden_canvas_sorts_active_nodes_by_priority(monkeypatch):
@@ -341,7 +341,7 @@ def test_save_then_load_workflow_roundtrip(tmp_path, monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# _load_jobs: lineas corruptas no tumban la carga; solo se conservan 15
+# _load_jobs: corrupt lines do not break the load, and only 15 are kept
 # ---------------------------------------------------------------------------
 
 def test_load_jobs_skips_corrupt_lines_and_caps_at_fifteen(tmp_path, monkeypatch):
@@ -364,7 +364,7 @@ def test_load_jobs_missing_file_leaves_jobs_untouched(tmp_path, monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# _lanzar: el guardia de contenido bloquea antes de correr nada
+# _lanzar: the content guard blocks before anything runs
 # ---------------------------------------------------------------------------
 
 def test_lanzar_blocks_on_content_guard_verdict(monkeypatch):
@@ -630,7 +630,7 @@ def test_organos_survives_missing_platform_files(tmp_path, monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# _path_is_under: un enlace circular no debe tumbar el chequeo de raiz
+# _path_is_under: a symlink loop must not break the root check
 # ---------------------------------------------------------------------------
 
 def test_path_is_under_raises_on_symlink_loop_instead_of_returning_false(tmp_path):
@@ -662,7 +662,7 @@ def test_path_is_under_returns_false_on_oserror_from_resolve(monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# _lanzar: el work_contract declarado viaja con el job
+# _lanzar: the declared work_contract travels with the job
 # ---------------------------------------------------------------------------
 
 def test_lanzar_attaches_work_contract_to_the_job(monkeypatch):
@@ -689,7 +689,7 @@ def test_append_job_record_swallows_oserror(tmp_path, monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# _load_workflow: un nodo del canvas que no existe en el default se conserva
+# _load_workflow: a canvas node absent from the default is preserved
 # ---------------------------------------------------------------------------
 
 def test_load_workflow_keeps_unknown_custom_node_verbatim(tmp_path, monkeypatch):
@@ -724,7 +724,7 @@ def test_reindexar_async_logs_indexer_failure_without_raising(monkeypatch, capsy
 
 
 # ---------------------------------------------------------------------------
-# _cerrar_job: el reindex-tras-job es opt-in y best-effort
+# _cerrar_job: the post-job reindex is opt-in and best-effort
 # ---------------------------------------------------------------------------
 
 def test_cerrar_job_reindex_after_job_failure_does_not_propagate(

@@ -184,7 +184,7 @@ def test_get_api_memoria_grafo_failure_degrades_to_empty_graph_not_an_error_stat
 
 
 # ---------------------------------------------------------------------------
-# GET /status: un status file con un PID muerto no debe leerse como vivo
+# GET /status: a status file naming a dead PID must not read as alive
 # ---------------------------------------------------------------------------
 
 def test_get_status_idle_when_no_status_file(server, tmp_path, monkeypatch):
@@ -221,7 +221,7 @@ def test_get_status_keeps_reported_status_for_live_pid(server, tmp_path, monkeyp
 
 
 # ---------------------------------------------------------------------------
-# GET /f: visor de archivos, nunca fuera de DIRS ni con nombres raros
+# GET /f: the file viewer, never outside DIRS and never with odd names
 # ---------------------------------------------------------------------------
 
 def test_get_file_viewer_rejects_unknown_dir_key(server, isolated_dirs):
@@ -250,7 +250,7 @@ def test_get_file_viewer_missing_file_is_404(server, isolated_dirs):
 
 
 # ---------------------------------------------------------------------------
-# GET /: el render completo con jobs en cada estado y productos en disco
+# GET /: the full render, with jobs in every state and products on disk
 # ---------------------------------------------------------------------------
 
 def test_get_root_renders_jobs_and_file_cards(
@@ -491,7 +491,7 @@ def test_post_fusion_creates_primordio_and_launches_panel(server, monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# POST /api/intake: solo el enrutamiento; la validacion ya se prueba aparte
+# POST /api/intake: routing only -- validation is already covered elsewhere
 # ---------------------------------------------------------------------------
 
 def test_post_intake_invalid_json_body(server):
@@ -594,7 +594,7 @@ def test_upstream_error_falls_back_to_raw_text_on_non_json_body(server, monkeypa
 
 
 # ---------------------------------------------------------------------------
-# huecos adicionales: rutas de fallo dentro de las mismas rutas ya probadas
+# remaining gaps: failure paths inside routes already covered above
 # ---------------------------------------------------------------------------
 
 def test_get_root_skips_directory_that_cannot_be_listed(
