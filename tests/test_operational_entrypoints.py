@@ -56,9 +56,25 @@ def test_mak_mirror_check_covers_curatoria_and_fails_on_mismatch(tmp_path, monke
     }
 
     monkeypatch.chdir(ROOT)
-    monkeypatch.setattr(module, "remote_hashes", lambda: ({}, 0, ""))
     monkeypatch.setattr("sys.argv", ["check_mak_mirror.py", "--output", str(tmp_path / "report.md")])
-    assert module.main() == 1
+
+    # Until 2026-08-29 this asserted `main() == 1` while mocking `remote_hashes`
+    # empty, because the checker asked two of its three hashes over SSH to a
+    # machine that no longer answers: with the remote leg dead every row read
+    # MISMATCH and the exit was always 1. It "passed" by pinning the broken
+    # behaviour. The checker is now local, so silence means agreement -- and a
+    # detector that only ever returns 0 has to prove it can return 1.
+    assert module.main() == 0, "sin deriva, la salida es 0"
+
+    organ = Path("/home/mak/xio_puente/monitor.py")
+    if organ.is_file() and not organ.is_symlink():
+        original = organ.read_bytes()
+        try:
+            organ.write_bytes(original + b"\n# drift injected by this test\n")
+            assert module.main() == 1, "con deriva inyectada, la salida debe ser 1"
+        finally:
+            organ.write_bytes(original)
+        assert module.main() == 0, "y vuelve a 0 al revertirla"
 
 
 def test_legacy_repair_script_is_not_an_active_entrypoint():
