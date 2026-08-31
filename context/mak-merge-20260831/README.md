@@ -18,7 +18,8 @@ El material preservado está en `/home/mak/_archive/merge-20260831/`:
 `sources/` contiene archivos únicos y `variants/` contiene divergencias. El
 checkout histórico completo de Windows vive en `checkouts/win-flujo-full/` y
 `/home/mak/WIN/flujo` apunta a él. El checkout del runner queda en su ruta
-original mientras `Runner.Listener` esté activo.
+original como symlink hacia `checkouts/runner-vibecodeine-full/`; se movió cuando
+no había `Runner.Worker` activo y el listener siguió sin reiniciarse.
 
 La suite local posterior a la limpieza del árbol activo: `4208 passed, 5
 skipped`.
