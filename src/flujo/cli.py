@@ -906,8 +906,14 @@ def doctor():
         remote = subprocess.run(["git", "remote", "get-url", "origin"], cwd=root, capture_output=True, text=True, encoding="utf-8", errors="replace")
         add("git origin", remote.returncode == 0, (remote.stdout or remote.stderr).strip())
         status = subprocess.run(["git", "status", "--short"], cwd=root, capture_output=True, text=True, encoding="utf-8", errors="replace")
-        dirty = bool(status.stdout.strip())
-        add("git working tree", not dirty, "limpio" if not dirty else "hay cambios locales")
+        if status.returncode != 0:
+            detail = status.stderr.strip() or status.stdout.strip() or "sin mensaje de git"
+            add("git working tree", False,
+                f"No se pudo medir (codigo {status.returncode}): {detail}")
+        else:
+            dirty = bool(status.stdout.strip())
+            add("git working tree", not dirty,
+                "limpio" if not dirty else "hay cambios locales")
     except Exception as e:
         add("git", False, str(e))
 
@@ -1063,15 +1069,20 @@ def _run_verify_subprocess(label: str, cmd: list[str], cwd: Path) -> None:
     import subprocess
 
     console.print(f"\n[cyan]> {label}[/] {' '.join(cmd)}")
-    proc = subprocess.run(
-        cmd,
-        cwd=str(cwd),
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-    )
+    try:
+        proc = subprocess.run(
+            cmd,
+            cwd=str(cwd),
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+    except OSError as exc:
+        _err(f"verify falló en {label}: no se pudo ejecutar ({exc})")
+        raise typer.Exit(code=1) from exc
     if proc.returncode != 0:
         _err(f"verify falló en {label} (código {proc.returncode})")
+        raise typer.Exit(code=1)
 
 
 @app.command("verify")

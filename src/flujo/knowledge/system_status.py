@@ -414,10 +414,12 @@ def system_status(
         "research": _service_component(
             "research", "Research 8890", physical / "research" / "interfaz.py", _PORTS["research"],
             ("research/interfaz.py",),
+            source_candidates=(repo / "cultura" / "mak_research" / "interfaz.py",),
         ),
         "codex": _service_component(
             "codex", "Codex bridge 8891", physical / "codex" / "interfaz_codex.py", _PORTS["codex"],
             ("codex/interfaz_codex.py",),
+            source_candidates=(repo / "cultura" / "mak_codex" / "interfaz_codex.py",),
         ),
         "search": _service_component(
             "search", "SearXNG 8888", physical / "searxng" / "settings.yml", _PORTS["search"],

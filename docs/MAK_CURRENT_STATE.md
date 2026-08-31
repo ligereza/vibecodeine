@@ -4,7 +4,7 @@
 > `/home/mak/flujo/agents.md`, ejecutar `tools/agent_bootstrap.py`, luego este
 > archivo y únicamente el paquete `Agent bootstrap — CURRENT` que emite el
 > bootstrap. No recorrer el cuerpo histórico de `context/LAST_HANDOFF.md` para
-> decidir el estado actual. Verificado el 2026-08-29.
+> decidir el estado actual. Verificado el 2026-08-31.
 
 Este documento consolida decisiones durables. No reemplaza la evidencia
 histórica, no convierte cada experimento en una obligación y no afirma que una
@@ -31,14 +31,17 @@ físicas. Las decisiones detalladas están en
 `/home/mak/indexes/mak-consolidation-20260829/MAK-DIRECTIVE-REGISTRY.md` y
 `CONSOLIDATION-DECISIONS.md`.
 
-El archivo de retiros tiene 234 filas, todas con destino existente y sin
+El archivo de retiros tiene 252 filas de datos (253 líneas con cabecera), todas con destino existente y sin
 duplicados de origen o destino. La suite completa termina con exit 0 y Git se
 usó sólo en modo lectura para procedencia y validación.
+El resumen JSON de la consolidación del 2026-08-29 conserva 231 filas como
+snapshot histórico; no se mezcla con el CSV físico actual de 252 filas.
 
 La continuación del 2026-08-29 amplió el paquete actual con la reproducción de
 CI en un entorno de dependencias declarado, pruebas directas de
 `ingesta_archivo.py`, detalle estático de las 23 líneas de cron y el pulso JSON
-`mak-organism-heartbeat-v1`. El mapa de retiros ahora tiene 234 filas; la
+`mak-organism-heartbeat-v1`. El mapa de retiros ahora tiene 252 filas de datos;
+la
 descripción precisa y los cambios pendientes de commit están en
 `/home/mak/MAK_CODEX_HANDOFF.md` secciones 9 y 10. Esa apertura también
 confirmó que `actions-runner` es runtime vivo de sistema; las raíces locales
@@ -510,6 +513,18 @@ handoff. Sus conclusiones durables se pueden entender por familias:
    demuestra que no tienen consumidores legítimos.
 5. Revisar dominio/hosting del Portfolio en una tarea aparte; no mezclarlo con
    el runtime local ni con el catálogo RD.
+6. **Deuda estructural de `CAPACIDADES.md`**: la sección 5 sigue siendo el
+   registro declarativo y 5-ter el overlay interpretativo; 5-bis queda marcado
+   como snapshot histórico. `repo_audit` emite la medición read-only
+   `mak-tool-consumer-inventory-v1` (117 herramientas) y ahora puede proyectarla
+   como tabla reproducible con `--format markdown`; la salida fechada está en
+   `/home/mak/state/codex-retomar-20260831/evidence/repo-audit-tools-20260831.md`.
+   La medición actual devuelve 46 con referencia de producción, 39 sólo en tests
+   y 32 sin referencia directa. El overlay manual de `CAPACIDADES.md` cubre los
+   32 casos tras clasificar también `certified_query.py`, `drenar_material.py`,
+   `ig_metadatos.py`, `medir_test_overlap.py`, `medir_tests.py` y
+   `venue_screen_setup.py`. No se debe llamar a esto una fuente única ni retirar
+   una herramienta por nombre o ausencia de referencia.
 
 El siguiente trabajo seguro por defecto es el punto 1 o un nuevo packet de
 idea generado por `tools/route_idea.py`. No hay que volver a leer las 600
@@ -539,7 +554,20 @@ nuevo instalado con `pip install -e ".[dev,render]"`, no el `.venv` de MAK:
 limpios, **no el entorno limpio**; creer lo contrario fue lo que me hizo decir
 que no había riesgo de pushear cuando lo había.
 
-Suite hoy: **4174 passed, 0 failed** (empezó la jornada en 3741).
+Suite hoy, medida por Codex: **4200 passed, 5 skipped, 0 failed** (4205
+recolectados; empezó la jornada documentada en 3741). El SSD estaba montado
+durante esta corrida, por lo que los casos Resolume/Portfolio sí se ejercieron.
+El recibo está en
+`/home/mak/state/codex-retomar-20260831/BASELINE.md`; el conteo heredado de
+4174 queda superado por esta medición.
+
+La descomposición de la recolección evita vender ese número como 4.205
+propiedades independientes: son 372 archivos, 4.076 nodos base y 129 casos
+adicionales producidos por parametrización (163 nodos parametrizados). El
+detalle reproducible está en
+`/home/mak/state/codex-retomar-20260831/evidence/mak-pytest-collection-final-20260831.txt`.
+La cantidad demuestra ejecución de casos; no demuestra cobertura suficiente,
+independencia entre tests ni salud del organismo MAK.
 
 ### Cobertura: la deuda estaba donde no se decía
 
@@ -572,7 +600,7 @@ constructor y afirman propiedades distintas. Verificado abriéndolos.
 El hallazgo útil es el inverso: **11 310 de 52 228 líneas cubiertas las toca un
 solo test.** La pregunta no era qué sobra, era qué cuelga de un hilo.
 
-### "La ausencia leída como salud": siete sitios, no uno
+### "La ausencia leída como salud": inventario corregido
 
 Un patrón del código, no accidentes:
 
@@ -580,24 +608,74 @@ Un patrón del código, no accidentes:
 |---|---|
 | `flujo doctor` | `airdrop pendiente: OK` comprobando un directorio inexistente |
 | `github-sync --status` | árbol limpio con las tres llamadas a git en 128 |
-| `hub.py` `/api/project/{learning,context}` | 200 con `available:false` en el cuerpo |
 | `src/flujo/autonomia.py` | un `git status` FALLIDO leído como "nada" |
 | `src/flujo/runrecord.py` | `tree_dirty = bool("")` plegando fallo y limpieza |
 | `tools/mak_ops/check_mak_trabajo.py` | salía siempre 0; `&&` no distinguía |
 | `tools/png_xmp_witness.py`, `substrate_scan.py` | el mismo pliegue |
+| `src/flujo/diagnostics.py` | `dirty=False` y `changed_entries=0` aunque Git no corriera |
 
 El idioma culpable es siempre `subprocess.run(...).stdout.strip()`. La
 distinción que lo resuelve: **`None` cuando no se midió, `False` cuando se midió
-y no está sucio.** Un árbol sin medir no es un árbol limpio.
+y no está sucio.** Un árbol sin medir no es un árbol limpio. La tabla anterior
+de "siete sitios" mezclaba un endpoint que ya expresa `available:false` con
+call-sites Git que no existen en el `hub.py` actual; por eso no se conserva ese
+conteo.
+
+La toma Codex corrigió `flujo doctor` y `diagnostics`, convirtió la prueba de
+doctor en una regresión fail-closed y verificó los medidores compartidos. La
+corrida anterior quedó en **4181 passed, 22 skipped, 0 failed** antes de que el
+SSD apareciera montado; la medición final posterior queda en el recibo más
+reciente (**4200/5/0**). No se hizo
+commit, push, activación de cron ni reanudación de XIO. El write-set local
+permanece deliberadamente sin commit hasta cerrar la revisión: `src/flujo/cli.py`,
+`src/flujo/diagnostics.py`, `src/flujo/knowledge/system_status.py`,
+`tools/repo_audit.py`, `CAPACIDADES.md` y sus pruebas asociadas, incluidas `tests/test_cli_smoke.py`
+y `tests/test_repo_audit.py`.
+
+La cadena `flujo verify` también quedó fail-closed: cada subproceso fallido
+termina con exit `1` y no puede llegar a `verify OK`.
+
+`tools/medir_organismo.py` también quedó fail-closed en sus probes de cron,
+GitHub y systemd: si el comando no se puede medir, el JSON marca
+`available=false` y el valor queda `null` en vez de convertirse en `0`,
+`inactivo` o `sin protección`. Un estado explícito `inactive` de systemd sí se
+conserva como falso medido. Sus regresiones viven en
+`tests/test_medir_organismo.py`.
 
 Y `ntfy_publish` devolvía `False` con tema vacío **sin decir nada**, con cuatro
 módulos publicando por ahí: el canal saliente entero de MAK estaba mudo.
 `NTFY_TOPIC_OUT` sigue sin configurar -- elegir el tema es del operador, porque
 el nombre de un tema es su contraseña -- pero ahora avisa una vez por proceso.
 
+### Carriles de tests — 2026-08-31
+
+La colección conserva todos los casos, pero `tests/conftest.py` añade un índice
+conservador de `size`, `scope` y `environment`, además de los ejes existentes
+de área y rol. El clasificador también inspecciona señales literales del cuerpo
+(por ejemplo rutas físicas), para no confiar ciegamente en el nombre del
+archivo. Cuando no basta para demostrar una propiedad, el eje queda en
+`unknown` y el caso entra en `lane_review`; no se interpreta ese marcador como
+una afirmación semántica.
+
+Los carriles reproducibles son:
+
+    make test-fast
+    make test-contract
+    make test-machine
+    make test-area AREA=research
+    make test-full
+    make test-lanes
+
+`test-fast` sólo incluye candidatos pequeños sin dependencia física o externa;
+`test-machine` se reserva para SSD, red, proveedores y rutas de máquina;
+`test-optional` separa ejecutables y paquetes opcionales como `psd_tools` o
+`ffmpeg`; `test-full` sigue siendo la regresión completa. Los conteos se
+obtienen con `make test-lanes` y no se escriben a mano en este documento.
+
 ### Retirado, con su reversión
 
-Todo en `~/_archive/orden-limpieza-20260828/`, **253 filas** en
+Todo en `~/_archive/orden-limpieza-20260828/`, **252 filas de datos (253 líneas
+con cabecera)** en
 `mapa-de-retiro.csv` (`razon,ahora_en,ruta_original,por_que`). Ninguna apunta al
 vacío y nada archivado quedó sin fila.
 

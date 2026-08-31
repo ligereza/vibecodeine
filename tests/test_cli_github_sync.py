@@ -1,14 +1,8 @@
 """Tests for `flujo github-sync`.
 
-Includes a documented defect (see
-test_status_on_a_broken_git_falsely_claims_a_clean_tree below): the doctrine
-in this repo is that absence must be named, never read as health -- `flujo
-doctor` had exactly this shape of bug with a directory check that always said
-OK. `--status` has the same shape: when `git status --short` itself fails,
-its empty stdout is indistinguishable from "no changes" and the command prints
-"Working tree limpio" -- claiming a clean tree when the check never ran. This
-test pins the CURRENT behavior as a known defect, not as something desired;
-fixing it belongs to src/, which is out of scope for this suite.
+The status path must name an unavailable git measurement, never read an empty
+stdout from a failed command as a clean tree. The regression below keeps that
+contract visible.
 """
 from __future__ import annotations
 

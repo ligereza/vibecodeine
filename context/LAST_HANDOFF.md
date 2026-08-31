@@ -1,6 +1,6 @@
 # Operational Handoff
 
-## Agent bootstrap — CURRENT — 2026-08-31 — CI en verde, siete defectos de la misma familia, MAK listo para reanudar
+## Agent bootstrap — CURRENT — 2026-08-31 — estado medido, familia fail-closed y MAK pausado bajo control
 
 Lee esto y `docs/MAK_CURRENT_STATE.md` seccion 12. Lo de abajo, fechado
 2026-08-29 y anterior, es evidencia historica: no se corrige, se supera.
@@ -24,9 +24,9 @@ tener huecos, y esto es lo que lo garantiza.**
 - `write_set=experiments/cycles/C04/media_observer/` -- el write-set declarado
   del ciclo C04.
 - `Stage 2D accepted`: la etapa 2D quedo aceptada y no se reabre.
-- `171 focused tests` fue la medicion de aquella etapa. Hoy la suite completa
-  esta en **4174 passed**, que no la contradice: aquella cifra era de un
-  subconjunto enfocado, no del total.
+- `171 focused tests` fue la medicion de aquella etapa. La medicion completa
+  actual es **4204 pasadas, 5 skips, 0 fallos** (4209 recolectados), que no la
+  contradice: aquella cifra era de un subconjunto enfocado, no del total.
 - `mak-archive-observation-batch-v1` sigue siendo el esquema de los lotes de
   observacion del archivo.
 
@@ -37,26 +37,67 @@ tener huecos, y esto es lo que lo garantiza.**
   varias suites lo leian sin guarda, asi que **la suite certificaba la maquina y
   no el repositorio**. Guardas puestas con el patron que salta NOMBRANDO lo que
   falta.
-- **Suite: 4174 passed, 0 failed** (empezo la jornada en 3741).
+- **Suite medida por Codex: 4204 pasadas, 5 skips, 0 fallos** (4209
+  recolectados; empezó la jornada documentada en 3741). El SSD estaba montado
+  durante esta corrida. El recibo completo y su hash están en el dossier
+  `/home/mak/state/codex-retomar-20260831/BASELINE.md`.
+  Son 373 archivos y 4080 nodos base; 129 casos adicionales provienen de
+  parametrización. Este conteo de casos no equivale a 4209 propiedades
+  independientes ni a salud de la caja MAK completa.
+- `./.venv/bin/python -m flujo verify` también salió con exit `0`; ejecutó su
+  cadena de pytest/compilación y un Hub smoke que devolvió `OK` con versión
+  `0.56.1`. `_run_verify_subprocess` ahora corta con exit `1` ante cualquier
+  fallo de compileall, pytest, health, version o smoke; antes sólo imprimía el
+  error y terminaba en `verify OK`. El recibo está en el dossier; esto no
+  convierte una salida verde en prueba de entrega externa ni remide cobertura.
+- El write-set de esta toma permanece **sin commit y sin push** hasta terminar
+  la revisión: `src/flujo/cli.py`, `src/flujo/diagnostics.py`,
+  `src/flujo/knowledge/system_status.py`, `tools/repo_audit.py`,
+  `CAPACIDADES.md` y sus pruebas asociadas, incluidas `tests/test_cli_smoke.py`
+  y `tests/test_repo_audit.py`.
+  Un `git
+  status` limpio no es una afirmación válida mientras este write-set exista.
 - **Verificacion en entorno CI-equivalente real**: worktree + venv nuevo con
   `pip install -e ".[dev,render]"`. Un worktree da los archivos limpios, **no el
   entorno limpio**: el `.venv` de MAK arrastra lo instalado y no declarado.
-- **Cobertura**: `cli.py` 29→45%, `web/hub.py` 29→38%,
-  `cultura/mak_plataforma/hub.py` 62→73%. Total del repo 71%.
+- **Cobertura heredada, no re-medida en esta toma**: `cli.py` 29→45%,
+  `web/hub.py` 29→38%, `cultura/mak_plataforma/hub.py` 62→73%. Total del repo
+  71%. Es contexto histórico hasta que un comando nuevo lo confirme.
 - **`~/state/reanudacion-20260830/` esta preparado y verificado.** Reanudar es
   un comando del operador; un agente no puede instalar un crontab.
 
 ### La familia de defecto que hay que reconocer
 
 `subprocess.run(...).stdout.strip()` **pliega "el comando fallo" y "no hay nada"
-en el mismo vacio**. Se encontraron **siete** casos en sitios sin relacion:
-`flujo doctor`, `github-sync --status`, dos rutas del hub de plataforma,
-`autonomia.py`, `runrecord.py`, `check_mak_trabajo.py`, `png_xmp_witness.py` y
-`substrate_scan.py`.
+en el mismo vacio**. El conteo anterior de "siete" no es fiable: la inspección
+actual localiza **ocho puntos en siete archivos** (`flujo doctor` y
+`github-sync --status` en `src/flujo/cli.py`, más `autonomia.py`, `runrecord.py`,
+`check_mak_trabajo.py`, `png_xmp_witness.py`, `substrate_scan.py`), y añade
+`src/flujo/diagnostics.py` como un noveno punto confirmado por una prueba nueva.
+No se mantiene la afirmación de "dos rutas del hub de plataforma" sin un
+call-site local que la respalde.
 
 La distincion que lo resuelve: **`None` cuando no se midio, `False` cuando se
 midio y no esta sucio.** Un arbol sin medir no es un arbol limpio. Si escribes
 codigo que mide algo, esta es la trampa que te va a tocar.
+
+### Verificación Codex de continuidad — 2026-08-31
+
+- `flujo doctor` ahora nombra el fallo de `git status` como `AVISO` y nunca como
+  `limpio`; `diagnostics` conserva `dirty=None`/`changed_entries=None` si no
+  pudo medir. Las pruebas de caracterización ya no bendicen el defecto.
+- `tools/medir_organismo.py` conserva `available=false` y valores `null` cuando
+  fallan sus probes de `crontab`, GitHub o systemd; ya no lee un vacío como
+  cero, inactivo o sin protección. Un `inactive` explícito de systemd sí es un
+  estado medido. Las regresiones están en `tests/test_medir_organismo.py`.
+- Los wrappers físicos de Research/Codex y sus fuentes canónicas son
+  candidatos explícitos. Tras un reinicio controlado del servicio existente,
+  `/api/status` observó las tres fuentes realmente ejecutadas y devolvió HTTP
+  200; el estado `attention` restante corresponde a evidencia ledger pendiente,
+  no a un fallo del runtime.
+- El proceso Claude que estaba reinyectando el job interno `56bfb309` y sus
+  hijos quedaron `SIGSTOP` (reversible, no eliminados) para mantener un solo
+  escritor durante esta toma. No se activó cron, XIO ni un worker permanente.
 
 ### Dos practicas que salieron de esta jornada y conviene repetir
 
@@ -73,7 +114,7 @@ codigo que mide algo, esta es la trampa que te va a tocar.
   instrumento: `--cov=paquete.modulo` devuelve "No data to report" porque
   pytest-cov importa el modulo antes de que arranque el rastreador. **Usa la
   ruta real.**
-- "24 modulos bajo 40%" eran 32. "119 herramientas en tools/" son 116. "122
+- "24 modulos bajo 40%" eran 32. "119 herramientas en tools/" son 117. "122
   puentes" son 130.
 
 ### El instrumento unico
@@ -85,12 +126,15 @@ dato**, para que una cifra vieja se vea vieja. No mide nada nuevo.
 
 ### Lo retirado, y donde consta
 
-`~/_archive/orden-limpieza-20260828/mapa-de-retiro.csv`, **253 filas**, ninguna
-apuntando al vacio. Se borro de verdad solo lo re-obtenible y con su comando de
+`~/_archive/orden-limpieza-20260828/mapa-de-retiro.csv`, **252 filas de datos
+(253 líneas con cabecera)**, ninguna apuntando al vacío. Se borró de verdad
+solo lo re-obtenible y con su comando de
 recuperacion escrito: clones publicos, un instalador, una descarga incompleta,
 una version vieja de Blender, un venv sin consumidor, y 602 MB de papelera
 **tras comprobar los 2012 blobs de su HEAD uno por uno contra `flujo/.git`**.
 Los 4 que no estaban en ningun commit se preservaron.
+El resumen `exact-duplicate-decision-summary-v2.json` conserva el snapshot
+anterior de 231 retiros; no se debe mezclar con este CSV físico más reciente.
 
 Un retiro se revirtio por error propio: `venvs/knowledge-migration`. Se afirmo
 "no hay PostgreSQL en MAK" y si lo hay. **Cero coincidencias en un grep no
@@ -105,6 +149,21 @@ prueba ausencia**: preguntale a `systemctl`, `docker ps`, `ss`.
 - `NTFY_TOPIC_OUT` no esta configurado: el canal saliente de MAK esta mudo. El
   nombre de un tema de ntfy es su contrasena, asi que elegirlo no es de un
   agente.
+- **Índice de tests no secuencial**: `tests/conftest.py` asigna marcadores
+  automáticos `topic_*` (tema exacto), `area_*` (área solapable) y `role_*`
+  (rol transversal). `tools/medir_test_overlap.py` mide candidatos de
+  solapamiento AST sin borrar ni fusionar tests; el recibo está en
+  `/home/mak/state/codex-retomar-20260831/evidence/mak-test-overlap-20260831.txt`.
+- **Deuda estructural abierta**: `CAPACIDADES.md` conserva el registro
+  declarativo y un overlay manual; su 5-bis queda explicitamente como snapshot
+  historico. `repo_audit.py --format json` emite el resultado read-only
+  `mak-tool-consumer-inventory-v1` (117 herramientas), y `--format markdown`
+  genera la tabla reproducible conservada en
+  `/home/mak/state/codex-retomar-20260831/evidence/repo-audit-tools-20260831.md`.
+  El medidor endurecido devuelve 46 referencias de produccion, 39 solo en tests
+  y 32 sin referencia directa; el overlay manual de `CAPACIDADES.md` cubre los
+  32 tras clasificar los seis casos que faltaban. No se debe llamar a esto
+  "fuente unica" ni retirar una herramienta por nombre o ausencia de referencia.
 
 ---
 
