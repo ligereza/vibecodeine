@@ -818,7 +818,20 @@ def github_sync(
 
     console.print(f"[cyan]Branch:[/] {branch_name}")
     status_proc = run_git("status", "--short")
-    if status_proc.stdout.strip():
+    # An empty stdout from a FAILED `git status` reads exactly like a clean
+    # tree, and until 2026-08-31 this branch printed "Working tree limpio." and
+    # exited 0 when run outside a repository -- the check failing looked
+    # identical to the check passing. Same family as the `airdrop pendiente: OK`
+    # that `flujo doctor` reported by testing a directory that did not exist.
+    # An unmeasured tree is not a clean tree, so say which one it is.
+    status_failed = status_proc.returncode != 0
+    if status_failed:
+        _warn("No se pudo medir el working tree: `git status --short` salio con "
+              f"codigo {status_proc.returncode}. "
+              + (status_proc.stderr.strip().splitlines()[-1]
+                 if status_proc.stderr.strip() else "sin mensaje de git")
+              + ". NO se afirma que este limpio.")
+    elif status_proc.stdout.strip():
         console.print("[yellow]Cambios locales:[/]")
         for line in status_proc.stdout.strip().splitlines():
             console.print(f"  {line}")
@@ -826,6 +839,9 @@ def github_sync(
         _ok("Working tree limpio.")
 
     if not push:
+        if status_failed:
+            _warn("Estado de GitHub NO verificado: la medicion del working tree fallo.")
+            raise typer.Exit(1)
         _ok("Estado de GitHub preparado. Usa --push para sincronizar con GitHub.")
         return
 
