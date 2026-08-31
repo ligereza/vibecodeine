@@ -74,6 +74,10 @@ data/*.json
 !data/motor_librerias.json
 !data/ordering_features.json
 !data/artist_discographies.json
+# The expected-state baseline for tools/mak_heartbeat.py is a versioned
+# declaration, not generated cache: it must travel with the repo or a fresh
+# checkout has nothing to compare against.
+!data/mak_expected_state.json
 !data/certified_queries.json
 context/DAILY.md
 context/PIPELINE_RESULT.md

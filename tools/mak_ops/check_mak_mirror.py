@@ -27,6 +27,13 @@ FILES = {
     "mak_codex": ["agente_libre.py", "interfaz_codex.py"],
     "mak_vigia": ["vigia.py", "vigia_guardia.sh"],
     "mak_curatoria": ["percepcion.py", "curatoria_guardia.sh", "extraccion_db.py"],
+    # xio_puente is the only organ whose live files are plain copies rather
+    # than bridges: `mak-xio.service` declares the organ copy as its runtime
+    # source on purpose, so a phone incident can be patched without going
+    # through commit, CI and merge. A copy CAN drift where a shim cannot, and
+    # until 2026-08-29 this was the one organ with no drift check at all.
+    # Measured that day: the three files were still byte-identical.
+    "mak_xio_puente": ["monitor.py"],
 }
 # Service units are installed outside the component mirrors. Keep their source
 # and live destination explicit so a bind or restart contract cannot drift.
@@ -49,6 +56,7 @@ LIVE_DIRS = {
     "mak_codex": "codex",
     "mak_vigia": "vigia",
     "mak_curatoria": "curatoria",
+    "mak_xio_puente": "xio_puente",
 }
 CONDUCTOR_FILES = [
     "__init__.py", "conductor.py", "gpu_arbiter.py", "idempotency.py",
@@ -62,8 +70,20 @@ CONDUCTOR_TOOL_FILES = [
     "mak-conductor-shadow.timer",
 ]
 ROOT = Path(__file__).resolve().parents[2]
+MAK_HOME = Path("/home/mak")
 HOST = "%s@%s" % (os.environ.get("MAK_USER", "mak"),
                   os.environ.get("MAK_HOST", "192.168.50.2"))
+
+# Measured 2026-08-29: 192.168.50.2 is the old Windows machine on the old LAN.
+# It does not answer, and this box now lives on 10.75.122.x. With the SSH leg
+# dead, `remote_hashes()` returned {} and EVERY row printed MISMATCH/MISSING --
+# including files that plainly exist. A drift detector that always cries drift
+# is worse than none: it trains the reader to ignore it.
+#
+# So the local comparison is now the default and the only one that runs unless
+# `--remoto` is passed: does each organ copy under /home/mak still match its
+# canonical file in flujo/cultura/? That is the question MAK has today, and it
+# is the only one that can be answered without a machine that is gone.
 
 
 def sha(path: Path) -> str:
@@ -94,10 +114,81 @@ def remote_hashes() -> tuple[dict[str, str], int, str]:
     return values, r.returncode, r.stderr.strip()
 
 
+def local_rows() -> tuple[list[tuple[str, str, str, str, str]], int]:
+    """Organ copy versus canonical file, on this machine. No network."""
+    rows: list[tuple[str, str, str, str, str]] = []
+    drifted = 0
+    for component, names in FILES.items():
+        live_dir = LIVE_DIRS.get(component)
+        if not live_dir:
+            continue
+        for name in names:
+            canonical = ROOT / "cultura" / component / name
+            live = MAK_HOME / live_dir / name
+            c_hash, l_hash = sha(canonical), sha(live)
+            if l_hash == "MISSING":
+                state = "AUSENTE en el organo"
+            elif c_hash == "MISSING":
+                state = "AUSENTE en el repo"
+            elif c_hash == l_hash:
+                state = "IGUAL"
+            elif _is_bridge(live, canonical):
+                state = "PUENTE"          # a bridge is not expected to match
+            else:
+                state = "DERIVO"
+                drifted += 1
+            rows.append((f"{component}/{name}", state, c_hash[:12], l_hash[:12],
+                         "symlink" if live.is_symlink() else ""))
+    return rows, drifted
+
+
+def _is_bridge(live: Path, canonical: Path) -> bool:
+    """Does this organ file delegate to the canonical instead of copying it?
+
+    Three shapes, and missing one of them is how a healthy bridge gets reported
+    as drift: a symlink, a Python shim loading the canonical with
+    `spec_from_file_location` or `runpy`, and -- the one this check missed at
+    first -- a shell bridge that `exec`s the canonical path directly, which is
+    what `backup.sh` and `watchdog_mak.sh` do.
+    """
+    if live.is_symlink():
+        return True
+    body = _head(live, 4000)
+    if "spec_from_file_location" in body or "runpy" in body:
+        return True
+    return "exec" in body and (canonical.name in body or str(canonical) in body)
+
+
+def _head(path: Path, limit: int = 2000) -> str:
+    try:
+        return path.read_text(encoding="utf-8", errors="replace")[:limit]
+    except OSError:
+        return ""
+
+
 def main() -> int:
-    ap = argparse.ArgumentParser()
+    ap = argparse.ArgumentParser(
+        description="Deriva entre las copias de organo y el canonico del repo.")
     ap.add_argument("--output", default="mak_mirror_check.md")
+    ap.add_argument("--remoto", action="store_true",
+                    help="ademas compara por SSH contra MAK_HOST (la maquina "
+                         "de la arquitectura anterior; hoy no responde)")
     a = ap.parse_args()
+
+    rows_local, drifted = local_rows()
+    print(f"deriva local: {drifted} archivo(s) divergen del canonico")
+    for name, state, c, l, note in rows_local:
+        if state not in ("IGUAL", "PUENTE"):
+            print(f"  {state:22} {name} {note}")
+    if not drifted:
+        print("  ninguno: cada copia de organo coincide con su canonico")
+    if not a.remoto:
+        md = ["| archivo | estado | canonico | organo |", "|---|---|---|---|"]
+        md += [f"| {n} | {s} | `{c}` | `{l}` |" for n, s, c, l, _ in rows_local]
+        Path(a.output).write_text("\n".join(md) + "\n", encoding="utf-8")
+        print(f"\nEscrito: {Path(a.output).resolve()}")
+        return 1 if drifted else 0
+
     remote, code, error = remote_hashes()
     rows = []
     for component, names in FILES.items():
