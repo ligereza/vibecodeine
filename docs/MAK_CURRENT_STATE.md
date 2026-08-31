@@ -516,6 +516,158 @@ idea generado por `tools/route_idea.py`. No hay que volver a leer las 600
 fases para cada cambio: esta síntesis, el owner manifest y la evidencia
 acotada del área son suficientes.
 
+## 12. Jornada del 2026-08-30/31: lo medido, lo arreglado y lo retirado
+
+Fechada y superable. Las cifras de arriba que esta sección contradiga están
+viejas; donde haya un comando, gana el comando.
+
+### La suite pasó a certificar el repositorio, no esta máquina
+
+`experiments/pilots/` está en `.gitignore` a propósito -- es evidencia real de
+pilotos -- y varias suites lo leían sin comprobar que existiera. Resultado: CI
+llevaba **seis corridas rojas en `main`** mientras la suite local daba verde. La
+suite certificaba **la máquina**, no el código.
+
+Corregido con guardas que **saltan nombrando lo que falta**, el patrón que el
+repo ya usaba en `tests/test_open_episode_state.py:91`. Y dos tests lanzaban
+`ROOT/.venv/bin/python`, un archivo que en CI no existe: ahora `sys.executable`,
+como los otros 48.
+
+Verificado en un entorno **CI-equivalente de verdad** -- worktree más venv
+nuevo instalado con `pip install -e ".[dev,render]"`, no el `.venv` de MAK:
+`3744 passed, 0 failed` y `flujo verify` ✓. Un worktree da los archivos
+limpios, **no el entorno limpio**; creer lo contrario fue lo que me hizo decir
+que no había riesgo de pushear cuando lo había.
+
+Suite hoy: **4174 passed, 0 failed** (empezó la jornada en 3741).
+
+### Cobertura: la deuda estaba donde no se decía
+
+Medido con la suite completa y la forma correcta de `--cov` (ver más abajo):
+**249 módulos, 59 359 sentencias, 71%**. 32 módulos bajo 40%, no 24.
+
+| antes | después | módulo |
+|---:|---:|---|
+| 29% | **45%** | `src/flujo/cli.py` |
+| 29% | **38%** | `src/flujo/web/hub.py` |
+| 62% | **73%** | `cultura/mak_plataforma/hub.py` |
+| 72% | **73%** | `cultura/mak_curatoria/ingesta_archivo.py` |
+
+`cultura/mak_plataforma/hub.py` es el órgano que corre en `:8900` y encabezaba
+las dos listas: más sentencias sin cubrir y **más líneas colgando de un solo
+test (773, ahora 711)**.
+
+**Cifra falsa corregida**: se repitió toda una sesión que `ingesta_archivo.py`
+estaba "al 9%". Estaba al 72%. La causa es de instrumento y quedó en
+`~/PATRONES.CLAUDE.json` como patrón 24: **`--cov=paquete.modulo` devuelve "No
+data to report"** porque pytest-cov importa el módulo antes de que arranque el
+rastreador. Hay que usar la ruta real.
+
+### El solape entre tests, contestado
+
+`~/indexes/mak-solape-tests-20260829/RESPUESTA.md`. **245 grupos comparten
+cobertura idéntica (636 tests) y ninguno es redundante**: comparten un
+constructor y afirman propiedades distintas. Verificado abriéndolos.
+
+El hallazgo útil es el inverso: **11 310 de 52 228 líneas cubiertas las toca un
+solo test.** La pregunta no era qué sobra, era qué cuelga de un hilo.
+
+### "La ausencia leída como salud": siete sitios, no uno
+
+Un patrón del código, no accidentes:
+
+| dónde | qué afirmaba |
+|---|---|
+| `flujo doctor` | `airdrop pendiente: OK` comprobando un directorio inexistente |
+| `github-sync --status` | árbol limpio con las tres llamadas a git en 128 |
+| `hub.py` `/api/project/{learning,context}` | 200 con `available:false` en el cuerpo |
+| `src/flujo/autonomia.py` | un `git status` FALLIDO leído como "nada" |
+| `src/flujo/runrecord.py` | `tree_dirty = bool("")` plegando fallo y limpieza |
+| `tools/mak_ops/check_mak_trabajo.py` | salía siempre 0; `&&` no distinguía |
+| `tools/png_xmp_witness.py`, `substrate_scan.py` | el mismo pliegue |
+
+El idioma culpable es siempre `subprocess.run(...).stdout.strip()`. La
+distinción que lo resuelve: **`None` cuando no se midió, `False` cuando se midió
+y no está sucio.** Un árbol sin medir no es un árbol limpio.
+
+Y `ntfy_publish` devolvía `False` con tema vacío **sin decir nada**, con cuatro
+módulos publicando por ahí: el canal saliente entero de MAK estaba mudo.
+`NTFY_TOPIC_OUT` sigue sin configurar -- elegir el tema es del operador, porque
+el nombre de un tema es su contraseña -- pero ahora avisa una vez por proceso.
+
+### Retirado, con su reversión
+
+Todo en `~/_archive/orden-limpieza-20260828/`, **253 filas** en
+`mapa-de-retiro.csv` (`razon,ahora_en,ruta_original,por_que`). Ninguna apunta al
+vacío y nada archivado quedó sin fila.
+
+**Borrado de verdad**, sólo lo re-obtenible y sólo con su comando escrito:
+`WhiteSur-icon-theme` (119 MB, `git clone`), `apps/llama.cpp` (576 MB,
+`git clone`), `models/SmolVLM-500M-Instruct` (descarga incompleta, cero pesos),
+`blender-4.5.3-viejo` (1,2 GB, una versión detrás del 4.5.4 que vive en
+`~/blender`), `venvs/mak-gpu` (4,8 GB), los instaladores de `Descargas`
+(1,58 GB) y 602 MB de papelera **tras comprobar los 2012 blobs de su `HEAD` uno
+por uno contra `flujo/.git`** -- 2012 de 2012 presentes, y los 4 archivos que no
+estaban en ningún commit se preservaron.
+
+**Movido, no borrado**: `opt/input-leap/3.0.3` (superado por `barrier`, que
+corre en el pid 997), `renders/` (tres mp4 de prueba, uno de 48 bytes), 13
+respaldos manuales `.bak` de los órganos, y los archivos sueltos de la raíz.
+
+**Restaurado tras un error propio**: `venvs/knowledge-migration`. Se retiró
+afirmando "no hay PostgreSQL en MAK" y **sí lo hay**: `postgresql@15-main`
+activo, base `wachuma`, credenciales del 27. El error fue de alcance -- se
+grepeó texto y nunca se preguntó a `systemctl`.
+
+Disco: **92 GB libres**.
+
+### Lo que NO se retiró, y por qué importa saberlo
+
+- Las entregas de RD **no se deduplican** aunque su contenido esté en otro
+  lado: su ruta es parte de la entrega. 35 grupos medidos, 0 movidos.
+- Los 44 grupos `live_runtime`: 0 sin resolver, 0 consolidados.
+- `venvs/visual-index-pilot` es el **único** entorno con torch + mobileclip +
+  faiss: sin él el índice visual no tiene runtime.
+- `~/kvm-linux.sh` es la herramienta de uso diario del KVM, no residuo.
+- `src/mwb-linux` es código del operador y no se re-obtiene de ninguna parte.
+
+### Los puentes
+
+**130 clasificados, 0 con destino ausente.** 12 usaban `runpy.run_path` sobre un
+destino sin `__main__`: arrancaban y no hacían nada. Corregidos. `copilot.py`
+prometía un `main()` que su canónico nunca definió -- ni la copia
+pre-proyección del 21 lo tenía: **el CLI no se perdió, nunca existió**.
+
+`tools/mak_ops/check_mak_mirror.py` pedía dos de sus tres hashes **por SSH a una
+máquina que ya no responde** y estampaba `MISMATCH` en todo. Reescrito para
+comparar local; distingue IGUAL / PUENTE / DERIVÓ / AUSENTE. **0 derivas
+reales**, y probado capaz de encontrar una.
+
+### Instrumentos: una puerta, y por qué es una lista
+
+    ~/bin/mak                estado | listar | medir | consolidar | reanudar
+
+`mak consolidar` lee lo que cada instrumento persistió y lo reporta **con la
+edad de cada dato**. No mide nada nuevo: una cifra vieja se ve vieja.
+
+Su catálogo es una **lista explícita de ocho**, y las dos alternativas
+automáticas fallaron por razones que vale conservar. Descubrir por nombre
+(`medir_*`) dejaba fuera el mapa canónico. Ampliar a `build_mak_*` metió
+`build_mak_knowledge_db.py`, que escribe la base que producción lee. Descubrir
+por contrato declarado también falló: ese archivo dice *"Read-only scanner"* **y
+es verdad** -- no modifica lo que escanea -- pero *"no modifica lo que lee"* no
+es *"seguro de correr desatendido"*. Dos frases honestas, dos preguntas.
+
+### Reanudar
+
+`~/state/reanudacion-20260830/` -- preparado, verificado, con rollback. Las 23
+líneas arrancan; `MAK-REVISOR` queda fuera hasta que `main` tenga protección
+(llama a `gh pr merge` cada 6 h) y `MAK-REPO-SYNC` queda fuera para siempre.
+El latido (`tools/mak_heartbeat.py`) va **activo**: es lo que faltó el
+2026-08-14, cuando MAK se detuvo dos semanas y nadie se enteró. Verificado que
+grita con deriva y calla sin ella. **Refijar su línea base justo después de
+reanudar** o gritará que esperaba 0 activas y hay 23.
+
 ## Referencias canónicas
 
 - `agents.md`
