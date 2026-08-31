@@ -32,8 +32,10 @@ Todo cambio nuevo entra en `/home/mak/flujo`. La corrida física
 
 La raíz histórica `/home/mak/WIN/flujo` ya fue retirada de su ubicación original
 con un symlink transparente hacia
-`/home/mak/_archive/merge-20260831/checkouts/win-flujo-full`; el checkout del runner no se
-mueve mientras `Runner.Listener` esté activo. Los cachés rclone, la papelera y
+`/home/mak/_archive/merge-20260831/checkouts/win-flujo-full`. El checkout del
+runner también fue reubicado mientras estaba idle (sólo `Runner.Listener` activo)
+hacia `/home/mak/_archive/merge-20260831/checkouts/runner-vibecodeine-full` y
+conserva su symlink original. Los cachés rclone, la papelera y
 los snapshots bajo `state/` conservan su ubicación administrada y quedan
 registrados, no reinterpretados como autoría.
 

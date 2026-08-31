@@ -1,6 +1,6 @@
 {
   "schema": "mak-root-triangulation-v1",
-  "generated_at": "2026-08-31T21:07:17+00:00",
+  "generated_at": "2026-08-31T21:16:14+00:00",
   "method": [
     "inode_birth",
     "mtime",
@@ -34,7 +34,7 @@
       "git_head": "",
       "git_remote": "",
       "git_dirty": false,
-      "file_count": 11,
+      "file_count": 0,
       "python_file_count": 0
     },
     {
@@ -62,7 +62,7 @@
       "git_head": "",
       "git_remote": "",
       "git_dirty": false,
-      "file_count": 11,
+      "file_count": 0,
       "python_file_count": 0
     },
     {
@@ -80,6 +80,20 @@
       "python_file_count": 0
     },
     {
+      "path": "/home/mak/_archive/merge-20260831/checkouts/runner-vibecodeine-full",
+      "source_id": "_archive-merge-20260831-checkouts-runner-vibecodeine-full",
+      "source_mode": "snapshot",
+      "has_git": true,
+      "birth_epoch": 1784771931,
+      "mtime_epoch": 1787603297550134704,
+      "git_first_commit": "2026-08-24T13:53:59-04:00",
+      "git_head": "23d6152fe9219fd8080ca71d71c3d04cc9fe7dc9",
+      "git_remote": "https://github.com/ligereza/vibecodeine",
+      "git_dirty": false,
+      "file_count": 2355,
+      "python_file_count": 863
+    },
+    {
       "path": "/home/mak/actions-runner/_work/_PipelineMapping/ligereza/vibecodeine",
       "source_id": "actions-runner-_work-_pipelinemapping-ligereza-vibecodeine",
       "source_mode": "snapshot",
@@ -94,18 +108,18 @@
       "python_file_count": 0
     },
     {
-      "path": "/home/mak/actions-runner/_work/vibecodeine/vibecodeine",
-      "source_id": "actions-runner-_work-vibecodeine-vibecodeine",
+      "path": "/home/mak/actions-runner/_work/vibecodeine",
+      "source_id": "actions-runner-_work-vibecodeine",
       "source_mode": "repo",
-      "has_git": true,
+      "has_git": false,
       "birth_epoch": 1784771931,
-      "mtime_epoch": 1787603297550134704,
-      "git_first_commit": "2026-08-24T13:53:59-04:00",
-      "git_head": "23d6152fe9219fd8080ca71d71c3d04cc9fe7dc9",
-      "git_remote": "https://github.com/ligereza/vibecodeine",
+      "mtime_epoch": 1788210952457835889,
+      "git_first_commit": "",
+      "git_head": "",
+      "git_remote": "",
       "git_dirty": false,
-      "file_count": 2355,
-      "python_file_count": 863
+      "file_count": 0,
+      "python_file_count": 0
     },
     {
       "path": "/home/mak/state/knowledge-migration-20260813/runner/src/flujo",
@@ -124,9 +138,9 @@
   ],
   "candidates": [
     {
-      "path": "/home/mak/actions-runner/_work/vibecodeine/vibecodeine/scripts/validate_airdrop.py",
-      "root": "/home/mak/actions-runner/_work/vibecodeine/vibecodeine",
-      "source_id": "actions-runner-_work-vibecodeine-vibecodeine",
+      "path": "/home/mak/_archive/merge-20260831/checkouts/runner-vibecodeine-full/scripts/validate_airdrop.py",
+      "root": "/home/mak/_archive/merge-20260831/checkouts/runner-vibecodeine-full",
+      "source_id": "_archive-merge-20260831-checkouts-runner-vibecodeine-full",
       "relative": "scripts/validate_airdrop.py",
       "role": "historical-family-candidate",
       "size_bytes": 4604,
@@ -137,9 +151,9 @@
       "last": "2026-08-24T13:53:59-04:00"
     },
     {
-      "path": "/home/mak/actions-runner/_work/vibecodeine/vibecodeine/scripts/run_airdrop_checks.py",
-      "root": "/home/mak/actions-runner/_work/vibecodeine/vibecodeine",
-      "source_id": "actions-runner-_work-vibecodeine-vibecodeine",
+      "path": "/home/mak/_archive/merge-20260831/checkouts/runner-vibecodeine-full/scripts/run_airdrop_checks.py",
+      "root": "/home/mak/_archive/merge-20260831/checkouts/runner-vibecodeine-full",
+      "source_id": "_archive-merge-20260831-checkouts-runner-vibecodeine-full",
       "relative": "scripts/run_airdrop_checks.py",
       "role": "historical-family-candidate",
       "size_bytes": 11295,
@@ -150,9 +164,9 @@
       "last": "2026-08-24T13:53:59-04:00"
     },
     {
-      "path": "/home/mak/actions-runner/_work/vibecodeine/vibecodeine/src/flujo/airdrop.py",
-      "root": "/home/mak/actions-runner/_work/vibecodeine/vibecodeine",
-      "source_id": "actions-runner-_work-vibecodeine-vibecodeine",
+      "path": "/home/mak/_archive/merge-20260831/checkouts/runner-vibecodeine-full/src/flujo/airdrop.py",
+      "root": "/home/mak/_archive/merge-20260831/checkouts/runner-vibecodeine-full",
+      "source_id": "_archive-merge-20260831-checkouts-runner-vibecodeine-full",
       "relative": "src/flujo/airdrop.py",
       "role": "historical-family-candidate",
       "size_bytes": 18491,
@@ -163,9 +177,9 @@
       "last": "2026-08-24T13:53:59-04:00"
     },
     {
-      "path": "/home/mak/actions-runner/_work/vibecodeine/vibecodeine/src/flujo/intake/reception.py",
-      "root": "/home/mak/actions-runner/_work/vibecodeine/vibecodeine",
-      "source_id": "actions-runner-_work-vibecodeine-vibecodeine",
+      "path": "/home/mak/_archive/merge-20260831/checkouts/runner-vibecodeine-full/src/flujo/intake/reception.py",
+      "root": "/home/mak/_archive/merge-20260831/checkouts/runner-vibecodeine-full",
+      "source_id": "_archive-merge-20260831-checkouts-runner-vibecodeine-full",
       "relative": "src/flujo/intake/reception.py",
       "role": "historical-family-candidate",
       "size_bytes": 8866,
@@ -176,9 +190,9 @@
       "last": "2026-08-24T13:53:59-04:00"
     },
     {
-      "path": "/home/mak/actions-runner/_work/vibecodeine/vibecodeine/tests/test_run_airdrop_checks.py",
-      "root": "/home/mak/actions-runner/_work/vibecodeine/vibecodeine",
-      "source_id": "actions-runner-_work-vibecodeine-vibecodeine",
+      "path": "/home/mak/_archive/merge-20260831/checkouts/runner-vibecodeine-full/tests/test_run_airdrop_checks.py",
+      "root": "/home/mak/_archive/merge-20260831/checkouts/runner-vibecodeine-full",
+      "source_id": "_archive-merge-20260831-checkouts-runner-vibecodeine-full",
       "relative": "tests/test_run_airdrop_checks.py",
       "role": "historical-family-candidate",
       "size_bytes": 2697,
@@ -189,9 +203,9 @@
       "last": "2026-08-24T13:53:59-04:00"
     },
     {
-      "path": "/home/mak/actions-runner/_work/vibecodeine/vibecodeine/tests/test_airdrop.py",
-      "root": "/home/mak/actions-runner/_work/vibecodeine/vibecodeine",
-      "source_id": "actions-runner-_work-vibecodeine-vibecodeine",
+      "path": "/home/mak/_archive/merge-20260831/checkouts/runner-vibecodeine-full/tests/test_airdrop.py",
+      "root": "/home/mak/_archive/merge-20260831/checkouts/runner-vibecodeine-full",
+      "source_id": "_archive-merge-20260831-checkouts-runner-vibecodeine-full",
       "relative": "tests/test_airdrop.py",
       "role": "historical-family-candidate",
       "size_bytes": 5782,
@@ -202,9 +216,9 @@
       "last": "2026-08-24T13:53:59-04:00"
     },
     {
-      "path": "/home/mak/actions-runner/_work/vibecodeine/vibecodeine/tests/test_airdrop_checkpoint.py",
-      "root": "/home/mak/actions-runner/_work/vibecodeine/vibecodeine",
-      "source_id": "actions-runner-_work-vibecodeine-vibecodeine",
+      "path": "/home/mak/_archive/merge-20260831/checkouts/runner-vibecodeine-full/tests/test_airdrop_checkpoint.py",
+      "root": "/home/mak/_archive/merge-20260831/checkouts/runner-vibecodeine-full",
+      "source_id": "_archive-merge-20260831-checkouts-runner-vibecodeine-full",
       "relative": "tests/test_airdrop_checkpoint.py",
       "role": "historical-family-candidate",
       "size_bytes": 5428,
@@ -215,9 +229,9 @@
       "last": "2026-08-24T13:53:59-04:00"
     },
     {
-      "path": "/home/mak/actions-runner/_work/vibecodeine/vibecodeine/tests/test_reception.py",
-      "root": "/home/mak/actions-runner/_work/vibecodeine/vibecodeine",
-      "source_id": "actions-runner-_work-vibecodeine-vibecodeine",
+      "path": "/home/mak/_archive/merge-20260831/checkouts/runner-vibecodeine-full/tests/test_reception.py",
+      "root": "/home/mak/_archive/merge-20260831/checkouts/runner-vibecodeine-full",
+      "source_id": "_archive-merge-20260831-checkouts-runner-vibecodeine-full",
       "relative": "tests/test_reception.py",
       "role": "historical-family-candidate",
       "size_bytes": 1410,
@@ -228,9 +242,9 @@
       "last": "2026-08-24T13:53:59-04:00"
     },
     {
-      "path": "/home/mak/actions-runner/_work/vibecodeine/vibecodeine/tests/test_airdrop_signing.py",
-      "root": "/home/mak/actions-runner/_work/vibecodeine/vibecodeine",
-      "source_id": "actions-runner-_work-vibecodeine-vibecodeine",
+      "path": "/home/mak/_archive/merge-20260831/checkouts/runner-vibecodeine-full/tests/test_airdrop_signing.py",
+      "root": "/home/mak/_archive/merge-20260831/checkouts/runner-vibecodeine-full",
+      "source_id": "_archive-merge-20260831-checkouts-runner-vibecodeine-full",
       "relative": "tests/test_airdrop_signing.py",
       "role": "historical-family-candidate",
       "size_bytes": 10397,
@@ -241,9 +255,9 @@
       "last": "2026-08-24T13:53:59-04:00"
     },
     {
-      "path": "/home/mak/actions-runner/_work/vibecodeine/vibecodeine/tests/test_validate_airdrop.py",
-      "root": "/home/mak/actions-runner/_work/vibecodeine/vibecodeine",
-      "source_id": "actions-runner-_work-vibecodeine-vibecodeine",
+      "path": "/home/mak/_archive/merge-20260831/checkouts/runner-vibecodeine-full/tests/test_validate_airdrop.py",
+      "root": "/home/mak/_archive/merge-20260831/checkouts/runner-vibecodeine-full",
+      "source_id": "_archive-merge-20260831-checkouts-runner-vibecodeine-full",
       "relative": "tests/test_validate_airdrop.py",
       "role": "historical-family-candidate",
       "size_bytes": 3165,
@@ -254,9 +268,9 @@
       "last": "2026-08-24T13:53:59-04:00"
     },
     {
-      "path": "/home/mak/actions-runner/_work/vibecodeine/vibecodeine/tools/recovered/import_claude_sessions.py",
-      "root": "/home/mak/actions-runner/_work/vibecodeine/vibecodeine",
-      "source_id": "actions-runner-_work-vibecodeine-vibecodeine",
+      "path": "/home/mak/_archive/merge-20260831/checkouts/runner-vibecodeine-full/tools/recovered/import_claude_sessions.py",
+      "root": "/home/mak/_archive/merge-20260831/checkouts/runner-vibecodeine-full",
+      "source_id": "_archive-merge-20260831-checkouts-runner-vibecodeine-full",
       "relative": "tools/recovered/import_claude_sessions.py",
       "role": "historical-family-candidate",
       "size_bytes": 3231,
@@ -797,7 +811,7 @@
   ],
   "duplicate_candidate_hashes": {},
   "counts": {
-    "roots": 8,
+    "roots": 9,
     "candidates": 59,
     "temporary_python": 48,
     "historical_family_candidates": 11,
