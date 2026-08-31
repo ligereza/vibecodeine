@@ -1,0 +1,7 @@
+surface,consumer_or_owner,classification,decision
+web/dist,copy-context.mjs and FLUJO static hub,build projection,preserve
+web/dist-plano,copy-plano-share.mjs and plano share,build projection,preserve
+web/dist-rd,copy-rd-share.mjs and RD share,build projection,preserve
+web/node_modules,web package scripts,declared build dependency,preserve
+labs/*,dated experiments and indexes,LAB_EVIDENCE_OR_EXPERIMENT,preserve and classify
+src/ml-mobileclip,optional model/library source,external dependency,defer

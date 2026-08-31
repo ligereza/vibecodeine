@@ -1,0 +1,6 @@
+Identity: LUNA principal
+route,method,source_consumer,input_fixture,expected_output,mutation_boundary,static_fixture_status,http_status,final_status
+/api/cotizacion-servicios,GET,src/flujo/web/hub.py -> data/cotizacion_servicios.json,service JSON,items and presets,read-only local file,PASS,200,INTEGRATED
+/api/rd-packs,GET,src/flujo/web/hub.py -> src/flujo/plano/packs.py -> data/rd_packs.json,tariff JSON,packs order default,read-only local file,PASS Phase 28,200,INTEGRATED
+/api/cotizacion/render,POST,src/flujo/web/hub.py -> src/flujo/cotizaciones_base.py,under/base/mainstream,event items totals Markdown,in-memory response only,PASS,200,INTEGRATED
+/api/plano/render,POST,src/flujo/web/hub.py -> src/flujo/serve/server.py -> plano engine/costs/packs,INFO/TESTEO/COMPLETO,event layout rider costs validation,in-memory response plus module tariff reload,PASS,200,INTEGRATED

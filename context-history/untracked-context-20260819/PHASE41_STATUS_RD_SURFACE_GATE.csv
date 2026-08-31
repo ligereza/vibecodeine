@@ -1,0 +1,3 @@
+route,method,source,target,inputs,expected_output,validation,result,write_observation,decision
+/api/status,GET,src/flujo/web/hub.py -> _get_status,/home/mak/flujo hub runtime,local root and asset existence checks,status/version/root/has_svg/has_projects/connected/time,AST/import + direct schema + temporary localhost HTTP,HTTP 200; version 0.56.1; root MAK; schema valid,writes_detected=false; no service/worker/provider,PASS_READ_ONLY
+MAK-wide RD asset surface,SCAN,/home/mak/RD,/home/mak/RD,creative asset files and directories,physical counts and extension classification without copying,bounded metadata scan from /home/mak/*,1743 files; 192 dirs; mostly binary creative assets,writes_detected=false; no dedup/copy/artwork rewrite,EVIDENCE_ASSET_SURFACE

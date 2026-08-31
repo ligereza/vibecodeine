@@ -1,0 +1,16 @@
+phase,root,classification,observed,decision
+189,flujo,authoring,72 immediate entries,source owner
+189,RD,active creative corpus,148 immediate entries,keep and classify by consumer
+189,research,active runtime,94 immediate entries,keep canonical runtime
+189,codex,active runtime,25 immediate entries,keep projection
+189,curatoria,active runtime,33 immediate entries,keep projection
+189,plataforma,active plus legacy,129 immediate entries,audit candidates
+189,vigia,active runtime,7 immediate entries,keep parity-gated runtime
+189,labs,derived evidence,14 immediate directories,preserve provenance
+189,apps,external apps,2 immediate directories,do not merge into source
+189,src,external source,ml-mobileclip child,declared consumer only
+189,WIN,historical,11 immediate entries,archive only
+189,n8n-local,discarded department,3 immediate files,preserve until cleanup ledger
+189,xio_puente,excluded by user,9 immediate entries,no current work
+189,OneDrive,external mount,Errno 107 disconnected,no repair attempted
+189,architecture_roots,state/evidence,selected roots,consumer label before move

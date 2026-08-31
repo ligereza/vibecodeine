@@ -1,0 +1,7 @@
+family,path,role,decision
+REFERENCIA_VALORES.pdf,/home/mak/RD/REFERENCIA_VALORES.pdf,RD human source,KEEP_CANONICAL_RD_REFERENCE
+REFERENCIA_VALORES.pdf,/home/mak/flujo/REFERENCIA_VALORES.pdf,FLUJO integration mirror,KEEP_RUNTIME_MIRROR
+REFERENCIA_VALORES.pdf,/home/mak/flujo-deploy/REFERENCIA_VALORES.pdf,deployment snapshot,KEEP_UNTIL_DEPLOY_AUDIT
+REFERENCIA_VALORES.pdf,/home/mak/vibecodeine/REFERENCIA_VALORES.pdf,separate project,OUT_OF_SCOPE_PRESERVE
+REFERENCIA_VALORES.pdf,/home/mak/WIN,Windows historical evidence,PROTECTED
+brief_packs_plano_dark.pdf,/home/mak/flujo/jobs and /home/mak/RD/New Folder/assets,source/output/delivery family,MAP_CONSUMER_BEFORE_MERGE

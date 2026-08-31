@@ -1,0 +1,15 @@
+root,disposition,consumer_evidence,action
+/home/mak/flujo,canonical_authoring_integration,cli_hub_rd_intake_render_index,retain
+/home/mak/RD,protected_rd_data_media,rd_assets_blender_provenance,preserve
+/home/mak/research,active_research_credential_owner,provider_parser_units_reports,retain
+/home/mak/plataforma,active_platform_runtime,provider_projection_consumers,retain
+/home/mak/curatoria,active_cultural_state_evidence,ledgers_reports_fixtures,preserve
+/home/mak/codex,active_local_orchestration,local_contracts_reports,retain
+/home/mak/xio_puente,user_excluded_external_bridge,no_migration_authority,preserve_no_test
+/home/mak/n8n-local,discarded_label_protected_credentials,no_active_n8n_unit_or_process,retain_no_execute
+/home/mak/WIN,historical_archive,migration_provenance,read_only
+/home/mak/blender,active_creative_runtime,blender_rd_refs,retain
+/home/mak/blender-4.5.3-viejo,older_runtime,no_active_path_ref,preserve_pending_provenance
+/home/mak/post,absent,no_physical_root,no_action
+/home/mak/workspace,quarantined_empty,phase228_zero_file_proof,retain_quarantine
+/home/mak/OneDrive,disconnected_mount,metadata_lookup_failed,do_not_mutate

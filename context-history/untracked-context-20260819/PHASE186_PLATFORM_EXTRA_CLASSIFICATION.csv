@@ -1,0 +1,7 @@
+phase,path,status,consumer,decision
+186,/home/mak/plataforma/agente_real.py,optional dependency gated,local qwen agent,preserve and defer install
+186,/home/mak/plataforma/interfaz.py,legacy candidate,research UI,compare routes before merge
+186,/home/mak/plataforma/memoria.py,legacy candidate,research memory,canonical owner elsewhere
+186,/home/mak/plataforma/panel_directivo.py,AST blocked line 145,none verified,preserve incomplete evidence
+186,/home/mak/plataforma/vigia.py,older runtime candidate,watch department,canonical owner mak_vigia
+186,platform_import_gate,13 of 14 passed,static only,no service/provider action

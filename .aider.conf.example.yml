@@ -1,0 +1,42 @@
+# .aider.conf.example.yml - flujo
+# Copia a .aider.conf.yml (gitignored) y descomenta UN perfil.
+# Claves por variable de entorno (.env), NUNCA aqui. Ver docs/AIDER_API_SETUP.md.
+# Los ids de modelo son ejemplos: ajusta al id real de tu cuenta/proveedor.
+
+# ---------------------------------------------------------------------------
+# Perfil A - Claude architect + Qwen editor (recomendado: barato con buen plan)
+# Requiere: ANTHROPIC_API_KEY, DASHSCOPE_API_KEY
+# ---------------------------------------------------------------------------
+architect: true
+model: anthropic/claude-opus-4-8
+editor-model: dashscope/qwen2.5-coder-32b-instruct
+auto-commits: true
+gitignore: true
+# no pushear a main automaticamente; usar rama + PR
+# git: true
+
+# ---------------------------------------------------------------------------
+# Perfil B - Claude architect + NVIDIA NIM editor (alternativa barata a Qwen)
+# Requiere: ANTHROPIC_API_KEY, NVIDIA_API_KEY
+# ---------------------------------------------------------------------------
+# architect: true
+# model: anthropic/claude-opus-4-8
+# editor-model: nvidia_nim/qwen/qwen2.5-coder-32b-instruct
+# auto-commits: true
+# gitignore: true
+
+# ---------------------------------------------------------------------------
+# Perfil C - Qwen-only barato (tareas mecanicas, sin Claude)
+# Requiere: DASHSCOPE_API_KEY
+# ---------------------------------------------------------------------------
+# model: dashscope/qwen2.5-coder-32b-instruct
+# auto-commits: true
+# gitignore: true
+
+# ---------------------------------------------------------------------------
+# Perfil D - OpenRouter fallback (router/backup de modelos)
+# Requiere: OPENROUTER_API_KEY
+# ---------------------------------------------------------------------------
+# model: openrouter/qwen/qwen-2.5-coder-32b-instruct
+# auto-commits: true
+# gitignore: true

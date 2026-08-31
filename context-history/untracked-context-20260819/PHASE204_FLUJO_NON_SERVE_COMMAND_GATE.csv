@@ -1,0 +1,13 @@
+command,exit,result,mutation_class,notes
+"python -m flujo --help",1,PASS,read-only,"help rendered; head closed pipe"
+"python -m flujo version",0,PASS,read-only,"version 0.56.1"
+"python -m flujo rd-db --help",0,PASS,read-only,"actual RD namespace"
+"python -m flujo rd-db packs",0,PASS,read-only,"three packs"
+"python -m flujo rd-db eventos",0,PASS,read-only,"two events"
+"python -m flujo rd-db testeos",0,PASS,read-only,"evidence summary pending human review"
+"python -m flujo rd-db venues",0,PASS,read-only,"three venues"
+"python -m flujo health",0,PASS,read-only,"workspace health"
+"python -m flujo render formats",1,PASS,read-only,"formats rendered; head closed pipe"
+"python -m flujo rd-db build",DEFERRED,DEFERRED,write,"database rebuild not called"
+"python -m flujo rd-datos ingest",DEFERRED,DEFERRED,write,"field DB ingest not called"
+"python -m flujo serve",DEFERRED,DEFERRED,service,"no service start"

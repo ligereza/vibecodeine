@@ -1,0 +1,7 @@
+surface,evidence,decision
+/home/mak/flujo-deploy,"498 bounded filesystem diff records; consumed by /home/mak/bin/mak_sync_safe.py",KEEP_EXTERNAL_DEPLOY_OWNER
+/home/mak/lenguaje,"references from paused crontab plus roles and mak_lenguaje; executable lexicon tools",KEEP_DEPARTMENT_SURFACE
+/home/mak/bucle,"no bounded runtime reference; own .git and artwork",KEEP_SOURCE_UNRESOLVED
+/home/mak/workspace,"doc_parser and simple_doc_parser; no bounded runtime reference",REVIEW_SOURCE_TOOLS
+/home/mak/curatoria_encolado,"empty at depth 1; no bounded consumer reference",EMPTY_STAGING_CANDIDATE
+/home/mak/plataforma,"active references to ledgers, ideas, memory and state",KEEP_MIXED_SURFACE

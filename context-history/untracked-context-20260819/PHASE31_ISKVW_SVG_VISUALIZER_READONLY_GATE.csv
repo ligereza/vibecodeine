@@ -1,0 +1,6 @@
+Identity: LUNA principal
+route,method,source_consumer,input_surface,expected_output,mutation_boundary,static_fixture_status,http_status,write_check,final_status
+/api/list-svg-works,GET,src/flujo/web/hub.py -> _list_svg_works -> svg/,existing MAK SVG root with groups eventos_rd and suplementos_rd,JSON groups root svg count 11 and item status metadata,filesystem reads only; no artwork writes,PASS,200,writes_detected=0,INTEGRATED_READ_ONLY
+/api/svg-index,GET,src/flujo/web/hub.py alias -> _list_svg_works -> svg/,same existing SVG root and state rules,JSON payload equal to /api/list-svg-works,filesystem reads only; no artwork writes,PASS,200,writes_detected=0,INTEGRATED_READ_ONLY
+svg_preview.render_svg,IN_MEMORY,src/flujo/web/svg_preview.py,320x180 config with text fixture,parseable SVG string with responsive viewBox,in-memory pure render; no filesystem output,PASS,N/A,no filesystem output,INTEGRATED_LIBRARY
+svg root crosswalk,READ_ONLY,MAK svg/ versus WIN/flujo/svg/,existing 11 relative asset paths,relative path and normalized-content match,no copy or regeneration,PASS,N/A,no changes,INTEGRATED_EVIDENCE

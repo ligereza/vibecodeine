@@ -1,0 +1,4 @@
+set,quarantine_source,preflight,action,postcheck,disposition
+"Finder metadata","context/quarantine/phase124_ds_store",92 files / 668016 bytes / 0 symlinks,"unlink exact 92 files",0 remaining,removed confirmed junk
+"Shell residue","context/quarantine/phase126_stray_shell_artifacts",7 objects / 6 empty dirs / 1 file,"unlink file and rmdir exact empty dirs",0 remaining,removed confirmed junk
+"Other quarantines","context/quarantine/* excluding phases 124 and 126","not targeted","no change","preserved","contains evidence/code/products/rollback"

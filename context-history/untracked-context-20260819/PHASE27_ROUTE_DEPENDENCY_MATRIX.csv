@@ -1,0 +1,26 @@
+id,class,package_or_local_module,source_file,route_domain,current_mak_counterpart,windows_evidence,pyproject_requirements_status,platform_assumption,verification
+core-cli,core,flujo.cli,WIN/flujo/src/flujo/cli.py,flujo app; flujo serve,src/flujo/cli.py,hash 0cc6...b23871; local import,entry point; no separate req,Python >=3.10 Linux/Windows,MAK help; source/hash
+core-hub,core,flujo.web.hub,WIN/flujo/src/flujo/web/hub.py,/; /hub; /api/*,src/flujo/web/hub.py,hash 0cb0...6181d9; 48 tokens,no extra; local plus optional UI,stdlib HTTP; localhost,AST/import; crosswalk
+core-html,core,hub HTML bundle,WIN/flujo/context/flujo_hub.html,RD ISKVW CULTURA,context/flujo_hub.html,20 tokens; WIN hash,static; no Python req,browser JS; file fallback,static extraction
+core-stdlib,core,http.server pathlib json urllib threading,src/flujo/web/hub.py,GET/POST dispatch,same stdlib,sprobe stdlib imports,implicit stdlib,Linux/Windows,AST imports
+core-typer,core,typer,src/flujo/cli.py,CLI dispatch,package dependency,typer 0.27 candidate,declared >=0.27,Python package,declared; help
+core-rich,core,rich,src/flujo/cli.py,CLI output,package dependency,rich 15 candidate,declared >=15,terminal independent,declared; help
+route-desktop,route-optional,webview pywebview,hub.py; cli.py,flujo app --desktop,same source; web extra,pywebview 6.2.1,pyproject web extra,GUI backend differs,static option
+route-tray,route-optional,pystray,hub.py,desktop tray,same source,pystray 0.19.5,desktop-extras only,Linux vs Windows tray,dynamic; unexecuted
+route-image,route-optional,PIL Pillow,hub.py,uploads palette previews,same source,Pillow 12.3,render/desktop extras,native wheels possible,static sites
+rd-plano,route-optional,flujo.plano,hub.py; serve/server.py,/plano; /api/plano/render,src/flujo/plano,WIN plano modules/route,local package,SVG filesystem,paths/crosswalk
+rd-packs,route-optional,flujo.plano.packs plus data,hub.py,/api/rd-packs,same module/data,WIN rd_packs.json; route,local data,filesystem read,source/data/route
+rd-database,route-optional,flujo.rd.panel/informe,hub.py,/api/rd-db; /api/rd-datos-summary,src/flujo/rd,WIN RD package/handlers,local; no extra,local DB may absent,static map
+rd-quotes,route-optional,cotizaciones_base quote project,hub.py,cotizacion routes,cotizaciones_base.py; projects/cotizaciones,WIN route/data,local no dedicated req,stateful writes,read-only inspection
+rd-assets,route-optional,flujo.export.illustrator,hub.py,RD supplement assets,same MAK module,WIN handler,local; Pillow optional,filesystem/Illustrator,static import
+rd-analysis,route-optional,analyze.colors/ocr,hub.py,upload palette text,same MAK modules,probe PIL pytesseract fitz,Pillow optional; OCR not base,native uncertain,static no upload
+iskvw-portfolio,route-optional,portfolio catalog/static docs,hub.py; flujo_hub.html,/api/portafolio,MAK docs/assets,WIN iskvw/docs,none; static data,local roots,crosswalk no HTTP
+iskvw-show,route-optional,show-kit records,hub.py,/api/show-kit,unresolved MAK counterpart,WIN xio/show_kit JSON,none,hardware/OSC external,route/source only
+iskvw-svg,route-optional,SVG preview/index,hub.py; svg_visualizer.html,/visualizer and SVG APIs,web/svg_preview.py; SVG roots,WIN roots/tokens,cairo/vtracer candidates,filesystem/native optional,static inventory
+cultura-view,dynamic,CULTURA view key,flujo_hub.html,cultura UI; no API,MAK cultura projects/docs,tapiz tilde psicosis precursor,none,static not service,crosswalk genealogy
+shared-intake,dynamic,intake email_parser/pipeline,hub.py,parse pedido/upload,same MAK modules,WIN imports/handlers,local; requests not needed,local files; mutation,AST no POST
+shared-jobs,dynamic,jobs dashboard eventos.presets,hub.py,dashboard/job/preset,same MAK modules,WIN source/imports,local no extra,local workspace,import map
+shared-serve,MAK-local,flujo.serve.server,src/flujo/serve/server.py,shared plano helper,byte-identical source,WIN/MAK SHA 8d38...6f13,local no extra,stdlib; 8777 separate,hash; not launched
+windows-launcher,Windows-only,abrir_hub.bat launch-flujo.bat,WIN/flujo/abrir_hub.bat,double click,same-named MAK files not Linux,CRLF cd /d sibling,not in requirements,Windows cmd,diff/metadata
+unresolved-render,unresolved,cairosvg vtracer pypdf PyMuPDF fitz,probe/render modules,possible SVG PDF OCR,no MAK counterpart,candidates absent base,no route proof,native unknown,linkage unresolved
+unresolved-heavy,unresolved,numpy torch bpy mathutils crawl4ai psycopg,broad WIN scan,none proven,no bounded counterpart,tree-wide imports,not base route deps,GPU Blender DB network,excluded from slice

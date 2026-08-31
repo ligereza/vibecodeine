@@ -1,0 +1,9 @@
+phase,role_group,relations,decision
+199,delivery_or_label_to_delivery_or_label,13,consumer crosswalk before any cleanup
+199,named_source_to_named_source,11,semantic review required
+199,asset_library_to_named_source,10,preserve library/source roles
+199,workspace_to_workspace,7,preserve editable/export distinction
+199,render_to_render,3,preserve delivery evidence
+199,delivery_to_named_source,3,consumer crosswalk required
+199,asset_library_to_asset_library,2,preserve 3D/material lineage
+199,total_exact_duplicate_relations,49,ledger only

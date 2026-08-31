@@ -1,0 +1,2 @@
+path,precondition,action,result,rollback
+/home/mak/curatoria_encolado,"empty; no bounded consumer; mode 0755","move to phase219 quarantine",PASS,"mv quarantine/phase219_empty_staging/curatoria_encolado back to original"

@@ -1,0 +1,3 @@
+gate,command,exit_code,result
+mak_verify,/home/mak/venvs/flujo/bin/flujo verify --no-pytest,0,compile health version and temporary hub smoke passed
+process_gate,ps filtered runtime scan,0,no prohibited process found

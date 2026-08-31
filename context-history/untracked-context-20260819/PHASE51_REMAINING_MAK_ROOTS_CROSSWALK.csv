@@ -1,0 +1,9 @@
+root,file_count,role,win_relation,status,decision
+/home/mak/apps,1301,host_application_surface,none,EVIDENCE_OR_HOST_SURFACE,no_migration
+/home/mak/labs,99,dated_experiment_and_index_evidence,none,EVIDENCE_ONLY,no_migration
+/home/mak/lenguaje,12,lexicon_and_measurement_utility,none,LIVE_LOCAL_CANDIDATE,named_consumer_gate
+/home/mak/src,148,ml_mobileclip_source_and_model_scripts,/home/mak/WIN/flujo/src,OPTIONAL_TOOL,external_download_gate
+/home/mak/vigia,8,local_guard_and_telemetry,none,LIVE_LOCAL_CANDIDATE,named_consumer_gate
+/home/mak/workspace,0,empty_workspace_container,none,EMPTY_CONTAINER,no_action
+/home/mak/curatoria_inbox,35533,incoming_evidence_and_windows_probe,evidence_source,EVIDENCE_INBOX,preserve_no_merge
+/home/mak/RD,1739,creative_automation_and_render_surface,not_hub_source,CREATIVE_EVIDENCE_SURFACE,no_copy

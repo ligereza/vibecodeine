@@ -1,0 +1,4 @@
+path,role,action,result
+/home/mak/flujo/cultura/mak_plataforma/tandas.py,canonical active owner,unchanged,imports fixtures and CLI pass
+/home/mak/plataforma/tandas.py,MAK root compatibility surface,replaced with canonical projection,compile import and areas CLI pass
+/home/mak/WIN/flujo/cultura/mak_plataforma/tandas.py,historical Windows evidence,unchanged,external dispatch variant preserved

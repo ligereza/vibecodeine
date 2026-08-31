@@ -29,7 +29,7 @@ def test_tool_consumer_inventory_is_explicit_and_bounded():
 
     assert result["schema"] == "mak-tool-consumer-inventory-v1"
     assert result["historical_win_excluded"] is True
-    assert result["count"] == 119
+    assert result["count"] == 137
     assert len(result["files"]) == result["count"]
     summary = result["summary"]
     assert summary["with_production_reference"] + summary["tests_only"] \

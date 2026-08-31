@@ -1,0 +1,4 @@
+gate,command,exit_code,result
+health,flujo health,0,jobs and index health passed
+verify,flujo verify --no-pytest,0,compile health version and hub smoke passed
+processes,filtered ps scan,0,no prohibited process found

@@ -1,0 +1,8 @@
+item,status,path_or_command,result
+full_verify,blocked_dev_dependency,venvs/flujo/bin/flujo verify,exit 1 pytest missing
+runtime_verify,verified,flujo verify --no-pytest,exit 0
+compileall,verified,verify substep,pass
+health_version,verified,verify substeps,pass
+hub_smoke,verified,temporary foreground,pass version 0.56.1
+persistent_process,none,post-check,no FLUJO process
+package_install,not_performed,canonical venv,no authorization used

@@ -1,0 +1,2 @@
+source,target,consumer,action,status,verification,decision,next_action
+/home/mak/flujo/cultura/mak_research/estadisticas.py,/home/mak/research/estadisticas.py,research usage summary,compile and isolated fixture,VERIFIED,"py_compile=0; source/runtime fixture output equal; exit=0; process gate=0",keep data-bound copies separate,inspect next read-only research consumer

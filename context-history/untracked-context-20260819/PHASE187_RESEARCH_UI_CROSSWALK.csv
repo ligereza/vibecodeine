@@ -1,0 +1,4 @@
+phase,candidate,port,import_gate,owner,decision
+187,/home/mak/research/interfaz.py,8890,service-backed current boundary,mak_research,canonical
+187,/home/mak/plataforma/interfaz.py,8890,exit 1 missing pausa,legacy duplicate-shaped candidate,preserve and compare launchers
+187,parallel_start,8890,not attempted,none,avoid collision

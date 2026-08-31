@@ -1,0 +1,3 @@
+phase,surface,evidence,disposition,real_mutation
+347,flujo.index.indexer._basekey,temporary grouping/hash fixture,FIXED_MINIMAL_GROUPING_BUG,source only
+348,flujo.index.db,temporary SQLite read/list/duplicate fixture,VERIFIED_READONLY_INDEX_CONSUMER,temporary DB only

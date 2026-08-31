@@ -1,0 +1,2 @@
+route,method,source,target,inputs,expected_output,validation,result,write_observation,decision
+/api/dashboard-summary,GET,src/flujo/web/hub.py -> src/flujo/dashboard/scoring.py,/home/mak/flujo dashboard consumer,"jobs briefs; flyer manifests; vector configs",summary envelope with totals by priority and up to four top items,AST/import + direct scoring + temporary localhost HTTP,HTTP 200; 19 items; 10 alta/7 media/2 baja; HTTP/direct equal,writes_detected=false; no renderer/mutator/provider/worker,INTEGRATED_READ_ONLY

@@ -1,0 +1,2 @@
+target_scope,file_pattern,classification,status,protected
+active FLUJO source and department roots,__pycache__/*.pyc,regenerable interpreter cache,CLEANED_REGENERABLE_CACHE,source data evidence WIN

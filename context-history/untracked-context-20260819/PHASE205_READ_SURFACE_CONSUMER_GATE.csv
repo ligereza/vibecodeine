@@ -1,0 +1,13 @@
+surface,command,exit,result,consumer_or_authority,mutation_class,notes
+knowledge_productoras,"python -m flujo knowledge list productoras",0,PASS,knowledge/store.py,read-only,"3 entities"
+knowledge_venues,"python -m flujo knowledge list venues",0,PASS,knowledge/store.py,read-only,"3 entities"
+knowledge_logos,"python -m flujo knowledge list logos",0,PASS,knowledge/store.py,read-only,"10 entities"
+knowledge_classifier,"python -m flujo knowledge classify EVENTO...",0,PASS,knowledge/store.py,read-only,"local classifier; no provider"
+jobs_inventory,"python -m flujo job list",0,PASS,jobs/job.py,read-only,"8 jobs"
+jobs_next,"python -m flujo job next",0,PASS,jobs/lifecycle.py,read-only,"8 suggestions"
+rd_producer,"python -m flujo rd-db productora thegrid",0,PASS,data/rd.db,read-only,"producer profile"
+rd_lookup,"python -m flujo rd-db lookup MDMA",0,PASS,data/rd.db,read-only,"reactives plus pack join"
+datadrop_inventory,"python -m flujo datadrop list",0,PASS,workspace/datadrops,read-only,"5 drops/collections"
+job_report,"python -m flujo job report PATH",DEFERRED,DEFERRED,jobs/lifecycle.py,write,"writes reporte_job.md"
+datadrop_scan,"python -m flujo datadrop scan",DEFERRED,DEFERRED,web/hub.py,write,"processes incoming evidence"
+knowledge_ingest,"python -m flujo knowledge ingest-example PATH",DEFERRED,DEFERRED,knowledge/store.py,write,"creates manifest and copies evidence"

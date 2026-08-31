@@ -1,0 +1,14 @@
+id,objective,evidence,status,next_action
+1,RD field data,empty rd_datos.db read gate,DEFERRED_EMPTY_DATA_SOURCE,approved real data authority
+2,rd.db merge,additive merge integrity and HTTP 200,VERIFIED,preserve provenance
+3,RD mutators,disposable fixtures and rollback,FIXTURE_VERIFIED,production authority
+4,FLUJO automation,user-confirmed issue URL contract,CONTRACT_ACCEPTED,provider runtime boundary
+5,non-serve CLI,help diagnostics and readers,READ_SURFACE_VERIFIED,mutating families bounded
+6,RD assets,Phase62 crosswalk,CLASSIFIED,path contract manifest
+7,dependencies,per-slice dependency notes,CLASSIFIED,optional runtime slices
+8,folder architecture,Phase63 policy,DESIGNED,consumer-tested moves
+9,duplicates,Phase64 hash inventory,CLASSIFIED_PARTIAL,semantic decisions
+10,equivalent tools,Phases66-68 parity and manifest,PARTIAL_VERIFIED,launcher audit
+11,full MAK audit,Phase70 checks,PARTIAL_VERIFIED,external/department audit
+12,cleanup and WIN,485 pyc removed; WIN preserved,PARTIAL_VERIFIED,generated artifact audit
+13,Git branches,no branch proposal yet,OPEN,post-cleanup branch design

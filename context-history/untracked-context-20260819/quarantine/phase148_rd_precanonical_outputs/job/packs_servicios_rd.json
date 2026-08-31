@@ -1,0 +1,128 @@
+{
+  "titulo": "Reduciendo Daño - 3 packs de servicio (general, sin lugar ni fecha)",
+  "moneda": "CLP",
+  "unidad": "por dia de evento",
+  "fuente_tarifas": "jefe area eventos, 2026-07-02",
+  "packs": [
+    {
+      "n": "1",
+      "nombre": "Informativo",
+      "voluntarios": 6,
+      "valor_dia": 250000,
+      "valor_dia_fmt": "$250.000",
+      "valor_por_voluntario": 41700,
+      "espacio_m2": 9,
+      "incluye": [
+        "Stand informativo atendido",
+        "Material educativo + insumos preventivos",
+        "Protectores auditivos, abanicos, suplementos",
+        "Tests de un solo uso (opcional)"
+      ]
+    },
+    {
+      "n": "2",
+      "nombre": "Informativo + Testeo",
+      "voluntarios": 6,
+      "valor_dia": 300000,
+      "valor_dia_fmt": "$300.000",
+      "valor_por_voluntario": 50000,
+      "espacio_m2": 18,
+      "incluye": [
+        "Todo lo del pack Informativo",
+        "Módulo de testeo de sustancias",
+        "Análisis colorimétrico gratuito",
+        "Reactivos incluidos"
+      ]
+    },
+    {
+      "n": "3",
+      "nombre": "Servicio Completo",
+      "voluntarios": 15,
+      "valor_dia": 500000,
+      "valor_dia_fmt": "$500.000",
+      "valor_por_voluntario": 33300,
+      "espacio_m2": 27,
+      "incluye": [
+        "Informativo + testeo",
+        "Intervención y contención psicológica",
+        "Zona de descanso baja estimulación",
+        "Coordinación operativa en terreno"
+      ],
+      "escenario": "evento masivo"
+    }
+  ],
+  "desglose_servicio_completo": {
+    "total": 500000,
+    "total_fmt": "$500.000",
+    "items": [
+      {
+        "item": "Equipo en terreno",
+        "valor": 300000,
+        "valor_fmt": "$300.000",
+        "pct": 60.0
+      },
+      {
+        "item": "Módulo de testeo",
+        "valor": 70000,
+        "valor_fmt": "$70.000",
+        "pct": 14.0
+      },
+      {
+        "item": "Stand informativo",
+        "valor": 50000,
+        "valor_fmt": "$50.000",
+        "pct": 10.0
+      },
+      {
+        "item": "Intervención y contención",
+        "valor": 45000,
+        "valor_fmt": "$45.000",
+        "pct": 9.0
+      },
+      {
+        "item": "Coordinación operativa",
+        "valor": 35000,
+        "valor_fmt": "$35.000",
+        "pct": 7.0
+      }
+    ]
+  },
+  "add_ons": {
+    "testeo": 50000,
+    "completo_vs_testeo": 200000
+  },
+  "rider_17_items": {
+    "ESPACIO": [
+      "Medidas disponibles del recinto (int/ext)",
+      "Tipo de terreno (nivelado, estable)",
+      "Circulación pública segura",
+      "Zona con menor estimulación sensorial para descanso"
+    ],
+    "INFRAESTRUCTURA": [
+      "Toldo/carpa (minimo 3x3 m)",
+      "Mesas: 1 base + 1 por cada 5 vol (+1 de reactivos con testeo)",
+      "Sillas (4-6 por stand)",
+      "Rack o caja de almacenamiento",
+      "Basureros, senaletica"
+    ],
+    "SERVICIOS": [
+      "Punto electrico disponible",
+      "Iluminacion adecuada",
+      "Agua/hidratación si aplica",
+      "Calefacción si exterior nocturno"
+    ],
+    "COORDINACIÓN": [
+      "Contacto directo con producción",
+      "Coordinación con seguridad privada",
+      "Acceso a equipo médico del evento",
+      "Alimentación si jornada > 5 horas"
+    ]
+  },
+  "rider_notas": [
+    "Jornada > 5 h: alimentación para el equipo (producción o costo extra).",
+    "Testeo: +1 stand contiguo y ventilación obligatoria para reactivos.",
+    "Evento masivo: zona de contención/descanso de baja estimulación sensorial.",
+    "Coordinación previa con producción, seguridad y equipo médico. Acceso carga/descarga."
+  ],
+  "condiciones": "Valores CLP por dia. Aforo, duracion y traslados ajustan el valor final."
+}

@@ -1,0 +1,7 @@
+gate,command,result,status
+pip_check,python -m pip check,No broken requirements found,VERIFIED
+core_imports,import six canonical modules,all OK,VERIFIED
+web_typecheck,npm run typecheck,tsc noEmit exit 0,VERIFIED
+pytest,python -m pytest,missing module,ENVIRONMENT_GATE
+qwen_agent,import probe,missing module,ENVIRONMENT_GATE
+web_build,Node and Rollup check,unsupported runtime/native module missing,ENVIRONMENT_GATE

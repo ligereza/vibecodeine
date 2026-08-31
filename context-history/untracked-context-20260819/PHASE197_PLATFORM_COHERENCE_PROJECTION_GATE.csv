@@ -1,0 +1,6 @@
+phase,check,result,decision
+197,equal_file,source/runtime match,pass
+197,different_file,source/runtime same winner classification,pass
+197,box_only_file,source/runtime same box-only classification,pass
+197,invoked_predicate,true only with exact launcher reference,pass
+197,process_gate,empty,no persistent process

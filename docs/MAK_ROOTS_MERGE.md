@@ -5,17 +5,21 @@ de runner o de caché sea confundida con el árbol de autoría.
 
 ## Fuente canónica
 
-`/home/mak/flujo` es la única raíz de autoría y de verificación local. Su rama
-actual es `main`, con base `ab9afa13`; el checkpoint de este estado debe quedar
-en Git antes de que otro agente continúe.
+`/home/mak` es ahora la única raíz física de autoría y verificación local. El
+antiguo `/home/mak/flujo` se conserva sólo como symlink de compatibilidad hacia
+`.`; no hay un segundo checkout activo. El Git de la raíz sigue en `main` y el
+checkpoint anterior era `ab9afa13`.
 
 ## Copias no canónicas y archivo de fusión
 
-- `/home/mak/WIN/flujo`: copia histórica de Windows; rama
-  `codex/three-plane-consolidation`, base `f588ecf8`. Es evidencia, no fuente de
-  merge ni destino de borrado.
-- `/home/mak/actions-runner/_work/vibecodeine/vibecodeine`: checkout efímero del
-  runner, base `23d6152`. No es un árbol de trabajo del operador.
+- `/home/mak/WIN/flujo`: symlink a
+  `/home/mak/_archive/merge-20260831/fused/origins/win-flujo`, rama histórica
+  `codex/three-plane-consolidation`, base `f588ecf8`.
+- `/home/mak/actions-runner/_work/vibecodeine/vibecodeine`: symlink a
+  `/home/mak/_archive/merge-20260831/fused/origins/runner-vibecodeine`, checkout
+  efímero con base `23d6152`.
+- El checkout activo que estaba en `/home/mak/flujo` fue trasladado completo a
+  `/home/mak/_archive/merge-20260831/fused/origins/active-flujo`; no se borró.
 - `/home/mak/state/**`, `/home/mak/_archive/**`, papelera y
   `/home/mak/.cache/rclone/**`: snapshots, retiros o cachés. Se incorporan al
   expediente de fusión por hash y procedencia, nunca como código activo.
@@ -24,18 +28,20 @@ en Git antes de que otro agente continúe.
 
 ## Regla
 
-Todo cambio nuevo entra en `/home/mak/flujo`. La corrida física
-`mak-merge-20260831` dejó las copias no activas en
-`/home/mak/_archive/merge-20260831/sources/` y las divergencias en
-`/home/mak/_archive/merge-20260831/variants/`; cada operación tiene hash y verificación en
+Todo cambio nuevo entra en `/home/mak` (el alias `/home/mak/flujo` resuelve ahí).
+La fusión lossless de las tres raíces está materializada en el propio árbol:
+`/home/mak/_archive/merge-20260831/fused/projection3/MANIFEST.json` registra
+5.426 rutas iguales, 813 rutas divergentes y 2.366 variantes. El expediente
+completo conserva los tres orígenes bajo `fused/origins/`; la proyección pone
+una sola ruta activa por entrada, sin sobrescribir archivos preexistentes, y el
+informe de materialización está en `fused/root-materialization.json`.
+Cada operación tiene hash y verificación en
 `context/mak-merge-20260831/actions.jsonl`. No se borró ninguna fuente.
 
-La raíz histórica `/home/mak/WIN/flujo` ya fue retirada de su ubicación original
-con un symlink transparente hacia
-`/home/mak/_archive/merge-20260831/checkouts/win-flujo-full`. El checkout del
-runner también fue reubicado mientras estaba idle (sólo `Runner.Listener` activo)
-hacia `/home/mak/_archive/merge-20260831/checkouts/runner-vibecodeine-full` y
-conserva su symlink original. Los cachés rclone, la papelera y
+La raíz histórica `/home/mak/WIN/flujo` y el checkout del runner fueron
+reubicados como orígenes de la fusión mientras el runner estaba idle (sólo
+`Runner.Listener` activo) y conservan sus symlinks originales. Los cachés rclone,
+la papelera y
 los snapshots bajo `state/` conservan su ubicación administrada y quedan
 registrados, no reinterpretados como autoría.
 

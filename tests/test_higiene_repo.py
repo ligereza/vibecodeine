@@ -40,13 +40,25 @@ UTILIDADES = REPO_ROOT / "cultura" / "mak_plataforma" / "utilidades"
 # ejecuta. Este numero es el termometro de ese defecto.
 MAX_UTILIDADES_INERTES = 28
 
+# When MAK is also the Linux home, REPO_ROOT contains unrelated checkouts and
+# user data.  The hygiene assertion concerns the active code surfaces only;
+# walking the entire home would be both slow and semantically wrong.
+PROJECT_PYTHON_ZONES = ("src", "tools", "cultura", "scripts", "tests", "iskvw", "xio")
+
 
 def test_utilidades_inertes_no_aumentan():
     if not UTILIDADES.is_dir():
         return
     archivos = sorted(p for p in UTILIDADES.glob("*.py") if p.is_file())
-    otros = [p for p in REPO_ROOT.rglob("*.py")
-             if UTILIDADES not in p.parents and ".git" not in p.parts]
+    otros = []
+    for zone in PROJECT_PYTHON_ZONES:
+        base = REPO_ROOT / zone
+        if not base.is_dir():
+            continue
+        otros.extend(
+            p for p in base.rglob("*.py")
+            if UTILIDADES not in p.parents and ".git" not in p.parts
+        )
     cuerpo = "\n".join(
         p.read_text(encoding="utf-8", errors="replace") for p in otros)
     inertes = [p.name for p in archivos if p.stem not in cuerpo]

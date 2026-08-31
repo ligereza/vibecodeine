@@ -1,0 +1,7 @@
+path,role,integrity,rows_or_content,consumer,action,risk
+/home/mak/flujo/data/rd.db,canonical regenerable RD projection,ok,20 tables; populated baseline,flujo.rd.database readers,preserve as active source,source rebuild can replace projection
+/home/mak/flujo/data/rd_datos.db,privacy-first field accumulator,ok,4 tables; 0 data rows,flujo.rd.datos and rd.informe,preserve empty until real handoff,never invent or merge field data
+/home/mak/WIN/flujo/data/rd.db,historical WIN database copy,ok,same table-level content as canonical,none found in MAK runtime,preserve historical only,do not activate historical copy
+/home/mak/state/windows-director-20260813/rd/rd.db,state snapshot exact-content duplicate,ok,same table-level content as WIN copy,none found in MAK runtime,preserve evidence,do not delete protected state
+/home/mak/WIN/flujo/tmp_rd_integration_check.db,temporary integration-check evidence,ok,same counts but 5 testeo tables differ,none,preserve WIN historical record,do not use as canonical input
+/home/mak/WIN/flujo/_logs/local_reconciliation_20260813/mak_rd.db,older partial reconciliation evidence,ok,12 base tables; no testeo projection,none,preserve log evidence,do not merge partial snapshot

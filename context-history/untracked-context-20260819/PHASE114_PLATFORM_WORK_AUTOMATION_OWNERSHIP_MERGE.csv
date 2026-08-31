@@ -1,0 +1,2 @@
+phase,scope,action,result,exit_code,changed_files,risk,next_action
+114,platform work/backlog automation ownership,replace active root exact duplicates with canonical projections,imports and compile passed; no automation entrypoint executed,0,/home/mak/plataforma/trabajo.py|/home/mak/plataforma/backlog_codex.py,state/backlog/dispatch boundaries remain gated; capataz/chat variants open,continue platform variant audit

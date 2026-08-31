@@ -1,0 +1,2 @@
+roots,pattern,before,after,excluded,result
+plataforma;research;codex;curatoria;lenguaje;vigia,__pycache__/*.pyc,250,0,.venv;venv;rollback;logs;state;data;evidence;WIN,CLEANED_REGENERABLE_CACHE

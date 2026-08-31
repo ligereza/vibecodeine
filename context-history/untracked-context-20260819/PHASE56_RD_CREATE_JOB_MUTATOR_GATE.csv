@@ -1,0 +1,2 @@
+consumer,real_target,fixture_result,rollback,source_ast,status
+/api/create-job-draft,/home/mak/flujo/jobs,PASS,PASS,PASS,PASS_WITH_ROLLBACK_FIXTURE

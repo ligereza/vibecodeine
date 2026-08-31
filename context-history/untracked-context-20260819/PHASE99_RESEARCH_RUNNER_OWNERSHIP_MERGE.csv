@@ -1,0 +1,2 @@
+phase,scope,action,result,exit_code,changed_files,risk,next_action
+99,research runner ownership,replace active root duplicate with canonical compatibility projection,verified import help compile and no external execution,0,/home/mak/research/research.py,module metadata callers untested; external-capable paths remain gated,continue bounded ownership merge audit

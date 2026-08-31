@@ -1,0 +1,12 @@
+branch_pattern,write_set,purpose,merge_gate
+main,stable integration,protected MAK baseline,review only
+codex/mak/architecture,flujo/context architecture ledgers,ownership maps,no runtime mutation
+codex/mak/rd-catalog,src/flujo/rd and catalog data,regenerable RD catalog,read/fixture gate
+codex/mak/rd-field,rd/datos.py and privacy tests,field data,real authority required
+codex/mak/rd-routes,web RD route handlers,mutator contracts,authority plus rollback
+codex/mak/flujo-cli,cli.py and CLI tests,non-serve commands,foreground gate
+codex/mak/automation,issue bridge and paused automation,workflow,external-call gate
+codex/mak/deps,pyproject requirements slice manifests,dependencies,pip check
+codex/mak/departments/<name>,canonical culture module plus projection tests,department fusion,consumer crosswalk
+codex/mak/cleanup/<phase>,one path-specific quarantine manifest,confirmed junk/reversible cleanup,hash rollback validation
+codex/mak/release/<version>,release notes and snapshots,stable assembly,all predecessor gates

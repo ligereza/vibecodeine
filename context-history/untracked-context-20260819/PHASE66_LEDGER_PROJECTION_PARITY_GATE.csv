@@ -1,0 +1,2 @@
+source,projection,consumer,parity,validation,side_effects,decision
+cultura/mak_plataforma/ledger.py,/home/mak/plataforma/ledger.py,flujo autonomia and curatoria diagnostico,exact,AST/cmp/help/pure fixtures,none,PROJECTION_PARITY_VERIFIED

@@ -88,6 +88,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DEAD_ZONE = (
     ".archive/",
     "_archive/",
+    "context-history/",
     "projects/cultura/corpus_olvido/",
 )
 FOREIGN_ZONE = (

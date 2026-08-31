@@ -1,0 +1,5 @@
+phase,family,count,canonical_owner,runtime_projection,status,consumer_evidence,next
+238,shared_direct_files,56,/home/mak/flujo/cultura/mak_plataforma,/home/mak/plataforma,ledger verified,32 canonical import consumers,per-file divergence review
+238,exact_copies,36,/home/mak/flujo/cultura/mak_plataforma,/home/mak/plataforma,owner fused projection preserved,systemd/manifest path dependency,do not delete projection
+238,divergent_files,20,/home/mak/flujo/cultura/mak_plataforma,/home/mak/plataforma,unresolved variants,content/size differ and runtime manifest refs,consumer gate per file
+238,mirror_checker,1,/home/mak/flujo/tools/mak_ops/check_mak_mirror.py,external SSH target,not executed,script calls SSH 192.168.50.2,local-only checks only

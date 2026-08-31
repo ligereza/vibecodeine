@@ -1,0 +1,5 @@
+path,source,role,status,observed,decision,next_action
+/home/mak/labs/rd-auto-index-20260813,/home/mak/RD,derived RD index,DERIVED_EVIDENCE,"1742 assets; 47 duplicate relations; 164 pending hashes; perception 0",protect and do not promote,read-only RD metadata crosswalk
+/home/mak/labs/portable-ssd-index-20260813,/media/mak/PortableSSD,derived external index,DERIVED_EVIDENCE,"45536 assets; 111 duplicate relations; 45424 pending hashes; perception 0",protect and do not merge,keep external evidence separate
+/home/mak/labs/triple-cartel-20260813,/home/mak/RD,derived candidate/manifest experiment,DERIVED_EVIDENCE,candidate outputs and manifests,preserve provenance,read-only crosswalk
+/home/mak/labs/visual-index-pilot,portfolio media,model experiment,DERIVED_EVIDENCE,MobileCLIP sample index,preserve experiment,do not activate service
