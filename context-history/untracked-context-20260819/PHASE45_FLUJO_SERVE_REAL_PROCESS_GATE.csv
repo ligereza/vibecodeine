@@ -1,0 +1,2 @@
+surface,method,source,target,inputs,expected_output,validation,result,write_observation,decision
+flujo serve,PROCESS,/home/mak/venvs/flujo/bin/flujo,/home/mak/flujo,MAK venv and hub source,temporary local HTTP server,ephemeral process + GET /api/ping + GET /api/status + explicit terminate,HTTP 200 both; version 0.56.1; connected true; process_alive=false,writes_detected=false; no jobs processed; no permanent service,PASS_TEMPORARY_PROCESS

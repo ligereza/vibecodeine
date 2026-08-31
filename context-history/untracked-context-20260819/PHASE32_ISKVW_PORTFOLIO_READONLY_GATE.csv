@@ -1,0 +1,5 @@
+Identity: LUNA principal
+route,method,source_consumer,input_surface,expected_output,mutation_boundary,static_fixture_status,http_status,write_check,final_status
+/api/portafolio,GET,src/flujo/web/hub.py -> tools/portfolio/proyectos.json,curated 10-project catalog plus docs/iskvw/prototipo.html,allowlisted 8-field projects and prototype metadata,read-only JSON/prototype existence check; generators excluded,PASS,200,writes_detected=0,INTEGRATED_READ_ONLY
+portfolio catalog,READ_ONLY,MAK tools/portfolio/proyectos.json versus WIN/flujo/tools/portfolio/proyectos.json,10 project IDs and route-or-URL schema,MAK/WIN IDs equal; 8 local paths exist and 2 external URLs explicit,no copy or publication,PASS,N/A,no changes,INTEGRATED_EVIDENCE
+prototype,STATIC_EXISTING,docs/iskvw/prototipo.html,embedded PROYECTOS JSON,10 embedded IDs equal curated source,no regeneration or write,PASS,N/A,no changes,INTEGRATED_STATIC_CONSUMER

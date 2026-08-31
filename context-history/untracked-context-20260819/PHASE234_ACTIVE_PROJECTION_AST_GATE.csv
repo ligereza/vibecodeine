@@ -1,0 +1,2 @@
+phase,scope,total,parsed,failed,failure,decision,next
+234,"active roots excluding generated evidence/venvs",445,444,1,"/home/mak/plataforma/panel_directivo.py line 145",preserve incomplete evidence,run final health matrix

@@ -1,0 +1,14 @@
+id,area,owner_or_evidence,state,next_gate
+1,RD field data,flujo/data/rd_datos.db + fixtures,PARTIAL,human field date privacy authority
+2,RD catalog DB,flujo/data/rd.db 20 tables 7587 rows,COMPLETE_CATALOG,keep privacy store separate
+3,RD mutating routes,src/flujo/rd 16 POST paths,PARTIAL,live authority input output rollback
+4,FLUJO automation,EVENTO issue URL bridge + cron paused,PARTIAL,explicit operational re-enable
+5,Non-serve CLI,CLI matrix read-only checks,VERIFIED_LOCAL,provider mutator gates
+6,RD assets,RD index render export gates,VERIFIED_FIXTURE,optional live delivery authority
+7,Slice dependencies,runtime and dependency reports,VERIFIED_LOCAL,named consumer dispositions
+8,Folder architecture,PHASE188 PHASE269 layered map,BASELINE,path-specific consumer decisions
+9,Duplicate documents,PHASE203 ledger hash groups,CLASSIFIED,consumer proof per family
+10,Equivalent tools,PHASE302 PHASE308 PHASE314 PHASE315 PHASE318,CLASSIFIED,launcher proof before merge
+11,MAK operation,health rc0 local gates no persistent process,PARTIAL,residual pure risk batches
+12,Cleanup WIN,reversible quarantine pyc cleanup WIN untouched,PARTIAL,confirmed candidate gates
+13,Git branches,PHASE218 proposal,PROPOSAL_ONLY,explicit Git authorization

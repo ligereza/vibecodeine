@@ -1,0 +1,4 @@
+Identity: LUNA principal
+route,method,source_consumer,input_surface,expected_output,mutation_boundary,static_fixture_status,http_status,write_check,final_status
+/api/automatizaciones,GET,src/flujo/web/hub.py -> gh issue list,external GitHub issue queue with Gmail/bridge chain,normalized queue or unavailable fallback,external provider command; no real gh execution,SAFE_FALLBACK_VERIFIED,200,writes_detected=0,DEFERRED_EXTERNAL_RUNTIME
+automation runner,LOCAL_CODE,src/flujo/automation.py -> run_pending_flyers,local jobs directory and brief lifecycle,prepare/activate job results,write-capable job preparation/activation excluded,AST_ONLY,N/A,no execution,DEFERRED_MUTATING

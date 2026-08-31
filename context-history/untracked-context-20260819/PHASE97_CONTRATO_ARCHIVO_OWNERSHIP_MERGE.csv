@@ -1,0 +1,2 @@
+phase,scope,action,result,exit_code,changed_files,risk,next_action
+97,contrato_archivo ownership,replace active root duplicate with canonical compatibility projection,verified root and canonical imports plus compile; no persistent process,0,/home/mak/plataforma/contrato_archivo.py,callers depending on module metadata are untested; public API re-exported,continue bounded ownership merge and external/mutator gates

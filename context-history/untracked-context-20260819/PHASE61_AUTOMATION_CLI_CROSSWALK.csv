@@ -1,0 +1,7 @@
+surface,command_or_contract,result,status
+automation,email_EVENTO_to_issue_to_url_to_processing,user_confirmed,ACCEPTED_EXTERNAL_CONTRACT
+cli,python_-m_flujo_help,exit_0_34_top_level_groups,ENTRYPOINT_PASS
+cli,version_health_doctor,exit_0,DIAGNOSTIC_PASS
+cli,rd-db_testeos,42_sheets_1831_rows_5394_observations,READONLY_PASS
+cli,rd-db_build,not_run_destructive_projection,EXPLICIT_MUTATOR
+cli,rd-datos_ingest_informe,not_run_field_data_mutator,EXPLICIT_MUTATOR

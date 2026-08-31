@@ -1,0 +1,9 @@
+phase,path,role,write_behavior,consumer,status
+232,/home/mak/flujo/data/rd.db,catalog projection,"build may rewrite; readers use connect",rd database/CLI/hub/curatoria,verified
+232,/home/mak/flujo/data/rd_datos.db,privacy field store,"ingest creates/inserts after scan; summary read-only",rd datos/CLI/hub,verified empty
+232,/home/mak/flujo/src/flujo/rd/database.py,owner,"build_rd_db writes; query helpers read",catalog lifecycle,verified
+232,/home/mak/flujo/src/flujo/rd/datos.py,owner,"conectar/ingest writes; privacy gate",field lifecycle,verified
+232,/home/mak/flujo/src/flujo/rd/informe.py,reader,read-only URI,field summary,verified
+232,/home/mak/flujo/src/flujo/web/hub.py,router,"GET reads; named POST mutators",catalog/field routes,verified
+232,/home/mak/flujo/src/flujo/cli.py,entrypoint,"read and named mutators",rd-db/rd-datos commands,verified
+232,/home/mak/flujo/cultura/mak_curatoria/ingesta_archivo.py,reader,read-only URI,catalog snapshot,verified

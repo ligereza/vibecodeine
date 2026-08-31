@@ -1,0 +1,2 @@
+phase,scope,action,result,exit_code,changed_files,risk,next_action
+102,research runner family ownership,replace active root refutar/grafo/cola/worker duplicates with canonical projections,imports/help/compile passed; queue and external execution not run,0,/home/mak/research/refutar.py|/home/mak/research/grafo.py|/home/mak/research/cola.py|/home/mak/research/worker.py,WIN grafo semantic divergence and stateful queue boundary remain open,move to next department slice and reconcile research family in full audit

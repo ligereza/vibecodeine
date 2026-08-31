@@ -1,0 +1,2 @@
+phase,scope,action,result,exit_code,changed_files,risk,next_action
+104,CODEX consumer family ownership,replace active root revisar/testear/worker_codex duplicates with canonical projections,imports/help/compile passed; no external execution,0,/home/mak/codex/revisar.py|/home/mak/codex/testear.py|/home/mak/codex/worker_codex.py,agente_libre.py semantic divergence remains open,compare agente_libre semantics and then leave CODEX for next department

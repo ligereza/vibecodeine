@@ -1,0 +1,2 @@
+route,method,source,target,inputs,expected_output,validation,result,write_observation,decision
+/api/list-jobs,GET,src/flujo/web/hub.py -> src/flujo/jobs/job.py -> jobs/*/brief.yaml,/home/mak/flujo/jobs,existing MAK briefs and WIN bounded crosswalk,"JSON jobs,count,connected,source; six item keys",AST/import + direct reader + temporary localhost HTTP,HTTP 200; 8 jobs; direct/http equal; WIN common briefs equal after line ending normalization,writes_detected=false; no POST/create/prepare/activate/renderer/worker,INTEGRATED_READ_ONLY

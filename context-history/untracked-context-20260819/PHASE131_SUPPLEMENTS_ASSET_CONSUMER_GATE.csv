@@ -1,0 +1,4 @@
+consumer,input,result,status
+flujo suplementos list,approved content JSON,8 supplements listed,VERIFIED
+flujo suplementos validate,svg/suplementos_rd/09_contraportadas_dark/02_impulso.svg,2000x2800 OK,VERIFIED
+suplementos template,svg/suplementos_rd/_plantilla/contraportada_cambios.svg,referenced as editable source,PROTECTED_LIVE_SOURCE

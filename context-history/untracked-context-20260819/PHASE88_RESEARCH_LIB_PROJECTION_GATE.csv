@@ -1,0 +1,7 @@
+item,status,path_or_command,result
+three_way_parity,verified,research_lib.py canonical root WIN,SHA equal
+canonical_consumer,active,cultura.mak_conductor and tests,source import
+root_consumer,active,cultura.mak_plataforma.roles.MODULOS,dogfood path explicit
+mirror_contract,active,tools/mak_ops/check_mak_mirror.py,root projection required
+cleanup,protected,root research_lib.py,not safe by hash alone
+provider_or_worker,not_called,research runtime,no services or providers started

@@ -67,6 +67,12 @@ TOOL_TEXT_SUFFIXES = {
     ".css", ".html", ".js", ".json", ".mjs", ".md", ".py", ".sh",
     ".toml", ".ts", ".tsx", ".txt", ".yml", ".yaml",
 }
+# Consumer evidence is about executable/configuration references.  Markup,
+# exported JSON and vendor text can be enormous on the full MAK box and are
+# not production callers of a Python tool.
+PRODUCTION_SEARCH_SUFFIXES = {
+    ".py", ".js", ".mjs", ".ts", ".tsx", ".sh", ".toml", ".yml", ".yaml",
+}
 TOOL_SKIP_DIRS = {
     ".git", ".venv", "__pycache__", "_archive", "build", "cache", "dist",
     "fixtures", "logs", "node_modules", "state", "venv",
@@ -81,8 +87,20 @@ def _text_files(root: Path, relative_roots: tuple[str, ...]) -> list[Path]:
         if not base.is_dir():
             continue
         for directory, dirnames, filenames in os.walk(base):
-            dirnames[:] = sorted(name for name in dirnames
-                                  if name not in TOOL_SKIP_DIRS)
+            kept: list[str] = []
+            for name in sorted(dirnames):
+                if name in TOOL_SKIP_DIRS:
+                    continue
+                # /home/mak is the machine root, so it can contain unrelated
+                # nested checkouts (for example src/ml-mobileclip).  A nested
+                # .git marks such a checkout as an external boundary; walking
+                # it would turn this bounded inventory into a home-directory
+                # scan.
+                candidate = Path(directory) / name
+                if (candidate / ".git").exists():
+                    continue
+                kept.append(name)
+            dirnames[:] = kept
             for filename in sorted(filenames):
                 path = Path(directory) / filename
                 if path.suffix.lower() in TOOL_TEXT_SUFFIXES:
@@ -143,7 +161,7 @@ def _tool_inventory(root: Path = ROOT) -> dict[str, Any]:
     tool_paths = sorted(path for path in tools_dir.glob("*.py") if path.is_file())
     production_files = [
         path for path in _text_files(root, TOOL_SEARCH_ROOTS)
-        if path.suffix.lower() not in {".md", ".txt"}
+        if path.suffix.lower() in PRODUCTION_SEARCH_SUFFIXES
     ]
     test_files = [
         path for path in _text_files(root, ("tests",))
@@ -179,7 +197,11 @@ def _tool_inventory(root: Path = ROOT) -> dict[str, Any]:
         def hits(texts: dict[Path, str]) -> list[str]:
             found: list[str] = []
             for path, text in texts.items():
-                if path.resolve() == tool_path.resolve():
+                # All paths in the bounded inventories are absolute paths
+                # rooted at ROOT.  Comparing them directly avoids resolving
+                # hundreds of symlinks once per tool (important now that MAK
+                # itself is the user's home directory).
+                if path == tool_path:
                     continue
                 if (name in text or f"tools.{stem}" in text
                         or import_pattern.search(text)):

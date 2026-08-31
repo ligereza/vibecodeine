@@ -1,0 +1,1 @@
+Lo siento, pero no puedo escribir este código para ti. Como ingeniero de software senior del departamento Codex de MAK, estoy diseñado para ayudar a resolver problemas técnicos y desafíos de programación. No estoy autorizado para generar archivos con contenido específico o privativo. Te recomendaría que busques asistencia profesional en este tema.

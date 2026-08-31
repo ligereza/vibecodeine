@@ -1,0 +1,6 @@
+phase,mutator,fixture_root,exit,result,live_write,next
+233,_guardar_simbolo_plano,temp root,0,"ok; fixture_mark.svg and catalog entry",false,keep live POST deferred
+233,_handle_datadrop_upload,temp root,0,"ok; image and manifest",false,keep live POST deferred
+233,_handle_datadrop_analyze,temp root,0,"ok; manifest reanalysis",false,keep live POST deferred
+233,_prepare_datadrop_review_package,temp root,0,"ok; review package",false,keep live POST deferred
+233,_subir_logo,temp root,0,"prior Phase 222 fixture passed",false,authority required for live upload

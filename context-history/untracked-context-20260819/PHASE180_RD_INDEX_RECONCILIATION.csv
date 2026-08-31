@@ -1,0 +1,11 @@
+phase,check,result,decision
+180,regular_files_rd,1742,fully represented by RD source-key rows
+180,symlinks_rd,1,preserve until consumer decision
+180,rd_rows,1742,path/size/mtime crosswalk complete
+180,regular_not_indexed,0,no missing regular asset row
+180,index_not_regular,0,no local RD orphan row
+180,size_mismatch,0,no metadata drift observed
+180,mtime_mismatch,0,no metadata drift observed
+180,external_render_rows,7,separate evidence root; do not recreate/delete
+180,summary_exact_duplicates,47,stale/mixed snapshot; reconcile provenance
+180,current_exact_duplicates,49,candidate evidence only; no deletion

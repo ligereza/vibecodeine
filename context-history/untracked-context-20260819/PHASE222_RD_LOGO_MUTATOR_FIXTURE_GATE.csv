@@ -1,0 +1,7 @@
+check,result,scope
+valid producer slug,PASS,temporary productora fixture
+valid SVG and source,PASS,temporary root only
+logo output,PASS,temporary knowledge/logos/descargas
+source sidecar,PASS,temporary knowledge/logos/descargas
+live POST,DEFERRED,not called
+real MAK target,UNTOUCHED,confirmed

@@ -1,0 +1,2 @@
+source,target,consumer,inputs,output,status,verification,decision,next_action
+/home/mak/flujo/cultura/mak_plataforma/calidad_loop.py,/home/mak/plataforma/calidad_loop.py,Codex operator quality report,jobs.jsonl delivery JSON backlog text,CALIDAD_LOOP.md,VERIFIED,"py_compile=0; source/runtime fixture output equal; exit=0; process gate=0",keep projection,inspect testear.py local validation

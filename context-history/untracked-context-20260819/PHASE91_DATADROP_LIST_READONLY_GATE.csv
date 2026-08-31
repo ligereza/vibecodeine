@@ -1,0 +1,6 @@
+item,status,path_or_command,result
+datadrop_list_empty_root,verified,FLUJO_WORKSPACE_ROOT=temp flujo datadrop list,exit 0 and no directory created
+datadrop_list_real,verified,venvs/flujo/bin/flujo datadrop list,exit 0 existing items listed
+path_helpers,verified,paths.py create=False,missing root remains absent
+writers,preserved,datadrop scan/ingest/prepare,explicit create behavior retained
+source_compile,verified,py_compile paths.py cli.py,exit 0

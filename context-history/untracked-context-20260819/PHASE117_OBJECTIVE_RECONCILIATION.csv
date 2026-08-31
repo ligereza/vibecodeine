@@ -1,0 +1,14 @@
+objective,status,evidence,next_action
+1,DEFERRED_EMPTY_DATA,data/rd_datos.db empty and truthful report,Authorize real field dataset and acta
+2,VERIFIED,Additive rd.db merge backup integrity and read-only API gate,Preserve provenance
+3,FIXTURE_VERIFIED_WITH_ROLLBACK,Disposable mutator fixtures and rollback gates,Authorized foreground production run only
+4,DRYRUN_VERIFIED_CONTRACT_ACCEPTED,EVENTO issue URL processing contract and local dry-run,Provider-backed run with explicit authorization
+5,RUNTIME_VERIFIED_PARTIAL,Venv CLI verify no-pytest and autonomy dry-run,Re-run full test gate if pytest becomes available
+6,CLASSIFIED_PARTIAL,RD asset crosswalk route adapter and temporary indexer,Assign human deliverable ownership
+7,CORE_VERIFIED_WEB_BLOCKED,Core imports pip check and web Node/Rollup gate,Use supported Node and native Rollup dependency
+8,DESIGNED_PROJECTION_OWNERSHIP,Canonical ownership and projection policy,Finish ownership map before moves
+9,PARTIAL_CONSOLIDATED,Exact crosswalk and safe POST duplicate removal,Inspect semantic candidates by consumer and provenance
+10,PARTIAL_VERIFIED,Consumer-backed projections across MAK departments,Reconcile tandas evidence and payload fork
+11,RUNTIME_PARTIAL,Department slices plus health verify and static gates,Close remaining department and dependency gates
+12,PARTIAL_CONFIRMED,485 cache files and one confirmed duplicate removed,Re-audit only path-level confirmed junk
+13,PROPOSED_NOT_APPLIED,Git branch proposal only,Apply after ownership and cleanup closure

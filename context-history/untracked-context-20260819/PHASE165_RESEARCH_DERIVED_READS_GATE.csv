@@ -1,0 +1,3 @@
+source,target,consumer,action,status,verification,decision,next_action
+/home/mak/flujo/cultura/mak_research/indice.py,/home/mak/research/indice.py,research indexes,isolated fixture,VERIFIED,"py_compile=0; source/runtime output equal; exit=0; process gate=0",keep data-bound copies separate,inspect path-independent consumer
+/home/mak/flujo/cultura/mak_research/digest.py,/home/mak/research/digest.py,research digest,isolated fixture,VERIFIED,"py_compile=0; source/runtime output equal; exit=0; process gate=0",keep data-bound copies separate,inspect path-independent consumer

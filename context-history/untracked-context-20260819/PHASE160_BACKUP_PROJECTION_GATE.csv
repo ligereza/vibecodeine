@@ -1,0 +1,2 @@
+source,target,consumer,mutation_boundary,decision,status,verification
+/home/mak/flujo/cultura/mak_plataforma/backup.sh,/home/mak/plataforma/backup.sh,MAK-ORGANISMO backup paused cron,creates tarball and deletes archives older than seven days,wrapper projection,VERIFIED,"bash -n=0; isolated temporary-HOME direct/wrapper tar fixture matched; target mode=0755; process gate=0"

@@ -1,0 +1,2 @@
+source,target,consumer,action,status,verification,changed_files,decision,next_action
+/home/mak/flujo/cultura/mak_vigia/vigia.py,/home/mak/vigia/vigia.py,MAK-VIGIA paused guard,align stale documentation and fixture parity,VERIFIED,"py_compile=0; bash -n=0; source/runtime first+second fixture equal; 2 then 0 new; process gate=0","/home/mak/vigia/vigia.py",keep data/state owner separate,inspect post/apps/labs/RD surfaces

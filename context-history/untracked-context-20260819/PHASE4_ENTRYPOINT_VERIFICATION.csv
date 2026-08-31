@@ -1,0 +1,6 @@
+runtime,command,exit_code,import_path,version,consumer,status,notes
+venv,"stat/readlink Python binaries and launcher; inspect launcher shebang",0,,,entrypoint,pass,"venv python resolves through python3 to /usr/bin/python3.11; launcher shebang targets /home/mak/venvs/flujo/bin/python3"
+venv,"/home/mak/venvs/flujo/bin/python -c 'import flujo, inspect; ...'",0,/home/mak/flujo/src/flujo/__init__.py,0.56.1,import flujo,pass,"active source imported and inspect.getfile agrees"
+venv,"/home/mak/venvs/flujo/bin/flujo --help",0,/home/mak/flujo/src/flujo/cli.py,0.56.1,CLI help,pass,"help rendered with operational command list"
+venv,"/home/mak/venvs/flujo/bin/flujo version",0,/home/mak/flujo/src/flujo/cli.py,0.56.1,version,pass,"version and changelog rendered"
+system,"/usr/bin/python3 -m flujo --help",1,,,module import,fail,"No module named flujo; system Python is contrast only"

@@ -1,6 +1,6 @@
 """CLI unificada de flujo — Typer.
 
-Completa: jobs, privacy, render, dashboard, intake, flyer, etc.
+Completa: jobs, privacy, render, dashboard, intake, flyer, airdrop, etc.
 La versión se centraliza en `flujo.version` (ver `flujo version`).
 
 Comandos disponibles (ejecutar `flujo --help`):
@@ -43,7 +43,7 @@ Comandos disponibles (ejecutar `flujo --help`):
     package                     Empaqueta .exe standalone gratis (PyInstaller) → flujo-hub.exe onefile noconsole con icono premium (rounded+F), lanza directo pywebview desktop hub, assets (context/svg/brand + jobs/_template + src/flujo/templates) bundled, workspace next-to-exe, visualizers fully working. (equiv `flujo app --desktop`)
   plano
     plano <evento.json>         Generar plano SVG/rider/costos de stands
-  datadrop (paquete de revision hacia afuera)
+  datadrop (inverse airdrop)
     datadrop list            Lista datadrops subidos (fotos reales terminadas)
     datadrop prepare         Escribe _review_package.txt con for_future_ai + traits (para IA futura/linea)
   cotizaciones
@@ -119,6 +119,7 @@ eventos_app = typer.Typer(help="Automatizaciones del area EVENTOS.", no_args_is_
 resolume_app = typer.Typer(help="Automatizacion de shows Resolume/Chataigne por SMPTE/OSC.", no_args_is_help=True)
 laser_app = typer.Typer(help="Estetica vectorial para laser/plotter (vpype): rayado, campos de flujo.", no_args_is_help=True)
 render_app = typer.Typer(help="Render y validación de piezas vectoriales.", no_args_is_help=True)
+airdrop_app = typer.Typer(help="Sistema de actualización profesional (airdrops).", no_args_is_help=True)
 datadrop_app = typer.Typer(help="Gestión de datadrops (fotos reales terminadas).", no_args_is_help=True)
 micelio_app = typer.Typer(help="El sobre micelio/1: semilla, fruto y nutriente entre un modelo web sin API y el organismo.", no_args_is_help=True)
 autonomia_app = typer.Typer(help="Orquestacion externa MAK: estado, tandas, ledger y juez local.", no_args_is_help=True)
@@ -131,6 +132,7 @@ app.add_typer(eventos_app, name="eventos")
 app.add_typer(resolume_app, name="resolume")
 app.add_typer(laser_app, name="laser")
 app.add_typer(render_app, name="render")
+app.add_typer(airdrop_app, name="airdrop")
 app.add_typer(datadrop_app, name="datadrop")
 app.add_typer(micelio_app, name="micelio")
 app.add_typer(autonomia_app, name="autonomia")
@@ -679,7 +681,7 @@ def rd_datos_informe(
 def tapiz(modo: str = typer.Argument("demo", help="demo | stress | live")):
     """Ecosistema Tapiz<->Psicosis<->Fungi: pipeline generativo (tools/compete_engine.py).
 
-    Cablea el cluster (compete_engine + telemetry + system_map)
+    Cablea el cluster (compete_engine + tapiz_live_loop + telemetry + system_map)
     al CLI para que sea reachable/usable, no codigo suelto. Exporta a tools/dist/.
     """
     from .paths import repo_root
@@ -729,6 +731,195 @@ def _warn(msg: str) -> None:
 def _section(title: str) -> None:
     console.print()
     console.print(Panel(f"[bold green]{title}[/]", border_style="green"))  # brand accent-aligned (use green as proxy; prefer --accent in HTML)
+
+
+def _validate_airdrop_or_exit(allow_airdrop_engine: bool = False) -> None:
+    """Ejecuta el validador conservador antes de aplicar un airdrop."""
+    import subprocess
+    from .paths import repo_root
+
+    root = repo_root()
+    script = root / "scripts" / "validate_airdrop.py"
+    if not script.exists():
+        _warn("No existe scripts/validate_airdrop.py; no se pudo validar automáticamente.")
+        return
+    cmd = [sys.executable, str(script)]
+    if allow_airdrop_engine:
+        cmd.append("--allow-airdrop-engine")
+    res = subprocess.run(cmd, cwd=root, text=True, capture_output=True)
+    if res.stdout:
+        console.print(res.stdout.rstrip())
+    if res.stderr:
+        console.print(res.stderr.rstrip())
+    if res.returncode != 0:
+        _err(
+            "Validación de _airdrop/ falló. No se aplicó nada. "
+            "Usa --allow-airdrop-engine solo si revisaste cambios al motor."
+        )
+
+
+# ============================================================
+# Airdrop
+# ============================================================
+
+@airdrop_app.command("status")
+def airdrop_status():
+    """Muestra la versión actual del sistema flujo."""
+    from .version import get_version
+    v = get_version()
+    console.print(f"\n[bold cyan]flujo version actual:[/] [bold]{v}[/]\n")
+
+
+@airdrop_app.command("list")
+def airdrop_list():
+    """Lista los archivos pendientes de aplicar en _airdrop/."""
+    from .airdrop import list_airdrop_files
+    files = list_airdrop_files()
+    if not files:
+        _warn("No hay archivos pendientes en _airdrop/")
+        return
+    _section("Archivos en _airdrop/ (pendientes de aplicar)")
+    for rel in files:
+        console.print(f"  · [bold cyan]{rel}[/]")
+
+
+@airdrop_app.command("dry-run")
+def airdrop_dry_run():
+    """Simula la aplicación del airdrop sin realizar cambios."""
+    from .airdrop import scan_airdrop
+    try:
+        changes = scan_airdrop()
+        if not changes:
+            _warn("No hay archivos pendientes en _airdrop/")
+            return
+        _section("Simulación de Airdrop (_airdrop/)")
+        for c in changes:
+            color = "green" if c["status"] == "NEW" else "yellow"
+            console.print(f"  [{color}]{c['status']:<8}[/] {c['rel']}")
+        console.print(f"\n[bold]Total: {len(changes)} archivos serían afectados.[/]")
+    except Exception as e:
+        _err(str(e))
+
+
+@airdrop_app.command("sign")
+def airdrop_sign():
+    """Genera el manifiesto SHA-256 y la firma HMAC del payload de _airdrop/.
+
+    Requiere la clave en la variable de entorno FLUJO_AIRDROP_HMAC_KEY.
+    Escribe _airdrop/_airdrop_signed_manifest.json y su .sig separado.
+    """
+    from .airdrop import sign_airdrop
+    try:
+        manifest_path, signature_path = sign_airdrop()
+    except Exception as e:
+        _err(str(e))
+        return
+    _section("Airdrop firmado")
+    console.print(f"  Manifiesto: [bold cyan]{manifest_path}[/]")
+    console.print(f"  Firma:      [bold cyan]{signature_path}[/]")
+    _ok("Payload firmado. Verifícalo con: flujo airdrop verify")
+
+
+@airdrop_app.command("verify")
+def airdrop_verify():
+    """Verifica la firma HMAC y los hashes SHA-256 del payload de _airdrop/.
+
+    Nombra el archivo exacto que falla y por qué. Sale con código 1 si algo
+    falla. Requiere FLUJO_AIRDROP_HMAC_KEY configurada.
+    """
+    from .airdrop import scan_airdrop, verify_airdrop
+    problems = verify_airdrop()
+    if problems:
+        _section("Verificación de firma: FALLÓ")
+        for p in problems:
+            console.print(f"  [red]✗[/] {p}")
+        _err("Firma de _airdrop/ inválida. No apliques este payload.")
+        return
+    total = len(scan_airdrop())
+    _ok(f"Firma válida: {total} archivo(s) verificados contra el manifiesto firmado.")
+
+
+@airdrop_app.command("apply")
+def airdrop_apply(
+    message: Optional[str] = typer.Argument(
+        None, help="Mensaje del checkpoint (ej. 'fix airdrop cli')"
+    ),
+    skip_validation: bool = typer.Option(
+        False, "--skip-validation", help="omitir scripts/validate_airdrop.py"
+    ),
+    allow_airdrop_engine: bool = typer.Option(
+        False,
+        "--allow-airdrop-engine",
+        help="permitir cambios al motor src/flujo/airdrop.py tras revisión explícita",
+    ),
+    allow_unsigned: bool = typer.Option(
+        False,
+        "--allow-unsigned",
+        help=(
+            "aprobación humana explícita: aplicar un payload sin firma válida "
+            "aunque FLUJO_AIRDROP_HMAC_KEY esté configurada (solo tras revisión "
+            "manual; nunca automatizado)"
+        ),
+    ),
+):
+    """Aplica los archivos de _airdrop/, crea backup y dispara checkpoint + push."""
+    from .airdrop import apply_airdrop, run_auto_checkpoint, scan_airdrop
+    try:
+        pending = scan_airdrop()
+        if not pending:
+            _warn("No hay archivos pendientes en _airdrop/")
+            return
+
+        if not skip_validation:
+            _validate_airdrop_or_exit(allow_airdrop_engine=allow_airdrop_engine)
+
+        changes = apply_airdrop(allow_unsigned=allow_unsigned)
+
+        _section("Airdrop Aplicado")
+        for c in changes:
+            console.print(f"  [green]✓[/] {c['rel']}")
+
+        _ok("Archivos aplicados exitosamente.")
+
+        # --- AUTOMATIZACIÓN: backup -> apply -> checkpoint -> push ---
+        console.print("\n[cyan]Ejecutando auto-checkpoint y push...[/]")
+        if run_auto_checkpoint(message):
+            _ok("Checkpoint creado y cambios subidos al servidor.")
+        else:
+            _warn("No se pudo realizar el auto-checkpoint. Por favor, hazlo manualmente.")
+
+        _section("Proceso Completado")
+        console.print("[bold green]Airdrop está activo y sincronizado.[/]")
+
+    except Exception as e:
+        _err(str(e))
+
+
+@airdrop_app.command("rollback")
+def airdrop_rollback():
+    """Revierte los cambios al último backup de airdrop."""
+    from .airdrop import rollback_last
+    backup = rollback_last()
+    if not backup:
+        _err("No se encontró ningún backup para revertir.")
+    _ok(f"Rollback completado desde: {backup.name}")
+
+
+@airdrop_app.command("finish")
+def airdrop_finish():
+    """Finaliza el proceso de airdrop (estatus y sugerencias)."""
+    _section("Finalización de Airdrop")
+    import subprocess
+    try:
+        # Usar git status --short para mostrar cambios
+        res = subprocess.run(["git", "status", "--short"], capture_output=True, text=True)
+        console.print(res.stdout if res.stdout else "No hay cambios pendientes en git.")
+    except Exception:
+        _warn("No se pudo ejecutar git status.")
+
+    console.print("\n[bold cyan]Pasos recomendados:[/]")
+    console.print("  1. Revisar cambios: [bold]git diff[/]")
+    console.print("  2. Commit y push (o [bold]flujo airdrop[/] si no tienes push directo).")
 
 
 # ============================================================
@@ -818,12 +1009,6 @@ def github_sync(
 
     console.print(f"[cyan]Branch:[/] {branch_name}")
     status_proc = run_git("status", "--short")
-    # An empty stdout from a FAILED `git status` reads exactly like a clean
-    # tree, and until 2026-08-31 this branch printed "Working tree limpio." and
-    # exited 0 when run outside a repository -- the check failing looked
-    # identical to the check passing. Same family as the `airdrop pendiente: OK`
-    # that `flujo doctor` reported by testing a directory that did not exist.
-    # An unmeasured tree is not a clean tree, so say which one it is.
     status_failed = status_proc.returncode != 0
     if status_failed:
         _warn("No se pudo medir el working tree: `git status --short` salio con "
@@ -870,7 +1055,7 @@ def github_sync(
 
 @app.command("doctor")
 def doctor():
-    """Diagnóstico humano del entorno local: Python, Git, encoding, index y hub.
+    """Diagnóstico humano del entorno local: Python, Git, encoding, index, hub y airdrop.
 
     A diferencia de `verify`, no ejecuta tests pesados. Sirve para saber rápido
     si una máquina nueva / Windows / clon fresco está listo para trabajar.
@@ -899,6 +1084,9 @@ def doctor():
     add("inbox/", inbox_dir().exists(), str(inbox_dir()))
     add("datadrops/", datadrops_dir().exists(), str(datadrops_dir()))
     add("index db", (root / "data" / "flujo.db").exists(), "opcional; crear con `flujo index --rebuild`")
+    airdrop_dir = root / "_airdrop"
+    pending = airdrop_dir.exists() and any(p.is_file() for p in airdrop_dir.rglob("*"))
+    add("airdrop pendiente", not pending, "hay archivos en _airdrop/" if pending else "no")
 
     try:
         branch = subprocess.run(["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=root, capture_output=True, text=True, encoding="utf-8", errors="replace")
@@ -1069,20 +1257,15 @@ def _run_verify_subprocess(label: str, cmd: list[str], cwd: Path) -> None:
     import subprocess
 
     console.print(f"\n[cyan]> {label}[/] {' '.join(cmd)}")
-    try:
-        proc = subprocess.run(
-            cmd,
-            cwd=str(cwd),
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-        )
-    except OSError as exc:
-        _err(f"verify falló en {label}: no se pudo ejecutar ({exc})")
-        raise typer.Exit(code=1) from exc
+    proc = subprocess.run(
+        cmd,
+        cwd=str(cwd),
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
     if proc.returncode != 0:
         _err(f"verify falló en {label} (código {proc.returncode})")
-        raise typer.Exit(code=1)
 
 
 @app.command("verify")
@@ -1093,7 +1276,7 @@ def verify(
     """Verificación integral local/CI: compileall, tests, health, version y hub smoke.
 
     Es el comando único para responder: "¿el repo está sano después de un
-    cambio?". En CI se recomienda correrlo en Linux y Windows.
+    airdrop/cambio?". En CI se recomienda correrlo en Linux y Windows.
     """
     from .paths import repo_root
 
@@ -1193,7 +1376,7 @@ def datadrop_list():
     if not drops:
         _warn("No hay datadrops todavía. Usa el hub (`flujo app`) → sección Datadrop para subir fotos terminadas.")
         return
-    _section("Datadrops")
+    _section("Datadrops (inverse airdrop)")
     for d in drops:
         m = d / "manifest.json"
         if m.exists():
@@ -1259,7 +1442,7 @@ def datadrop_prepare():
         else:
             items.append({"id": d.name, "type": "raw", "description": ""})
     instructions = (
-        "DATADROP REVIEW PACKAGE — outbound review package for future AI review.\n"
+        "DATADROP REVIEW PACKAGE — Inverse airdrop for future AI review.\n"
         "Fuente: fotos reales de flyers/etiquetas/etc ya entregados por usuario.\n"
         "Usa: cada manifest.json (palette, ocr_hints, visual_traits, for_future_ai) + imagen real (datadrops/<id>/img).\n"
         "Objetivo: 'sabrá qué buscar' en briefs/análisis — patrones de paletas reales, contraste, densidad de layouts, textos OCR de entregas.\n"

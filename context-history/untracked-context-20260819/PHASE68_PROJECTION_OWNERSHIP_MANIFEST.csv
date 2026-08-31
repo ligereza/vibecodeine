@@ -1,0 +1,5 @@
+domain,canonical_source,protected_projection,verified_slices,remaining_risk,refresh_policy
+plataforma,flujo/cultura/mak_plataforma,/home/mak/plataforma,ledger.py;contrato_archivo.py,state launchers broken panel,bounded files only
+curatoria,flujo/cultura/mak_curatoria,/home/mak/curatoria,parity inventory,state logs guards,bounded files only
+research,flujo/cultura/mak_research,/home/mak/research,parity inventory,corpus queues locks providers,bounded files only
+codex,flujo/cultura/mak_codex,/home/mak/codex,parity inventory,malformed pieces job state,bounded files only

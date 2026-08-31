@@ -1,0 +1,2 @@
+source,target,consumer,input,output,status,verification,decision
+/home/mak/flujo/cultura/mak_curatoria/triangular.py,/home/mak/curatoria/triangular.py,research question queue,fichas.jsonl,triangulacion.jsonl,VERIFIED,"py_compile=0; isolated fixture source/runtime equal; exit=0; process gate=0",keep data-bound copies separate

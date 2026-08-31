@@ -1,0 +1,3 @@
+phase,path,precondition,action,exit,postcondition,rollback,risk
+228,/home/mak/workspace,"3 empty dirs; 0 files; 0 symlinks; no bounded consumer","mv to context/quarantine/phase228_empty_workspace/workspace",0,"original absent; quarantine present; 0 files/symlinks","mv quarantine path back to /home/mak/workspace","future undocumented consumer could expect empty path; restore if found"
+228,/home/mak/plataforma/interfaz.py,"legacy UI; historical tests/import refs; incomplete runtime","preserved at original path",0,"unchanged","none","do not classify incomplete evidence as junk"

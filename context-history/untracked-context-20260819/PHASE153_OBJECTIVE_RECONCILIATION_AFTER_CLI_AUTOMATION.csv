@@ -1,0 +1,14 @@
+objective,status,open_gate
+1,DEFERRED_EMPTY_DATA,authorized real dataset
+2,VERIFIED_READONLY_SOURCE_RECONCILED,provenance preservation
+3,FIXTURE_VERIFIED_WITH_ROLLBACK,authorized production run
+4,FIXTURE_VERIFIED_LOCAL_PARTIAL,provider-backed Gmail issue chain
+5,RUNTIME_VERIFIED_READONLY_PARTIAL,pytest absent
+6,CANONICAL_GENERATOR_VERIFIED_PARTIAL,human PDF delivery manifest and renderer
+7,CORE_VERIFIED_WEB_TYPECHECK,Node Rollup build pytest qwen-agent
+8,DESIGNED_AND_MAPPED,final path placement
+9,PARTIAL_CLASSIFIED,semantic human-output decisions
+10,CANONICAL_TARIFF_GENERATOR_MERGED_PARTIAL,remaining external and RD tool boundaries
+11,RUNTIME_PARTIAL,pytest and gated writers
+12,PARTIAL_CONFIRMED,exact consumer-backed candidates only
+13,PROPOSED_NOT_APPLIED,explicit Git operation after closure

@@ -1,0 +1,8 @@
+entrypoint,consumer,exit,result,mutation,open_gate
+/home/mak/venvs/flujo/bin/flujo version,version,0,0.56.1,none,pytest absent
+/home/mak/venvs/flujo/bin/flujo health,workspace health,0,all core dirs OK,none,pytest absent
+/home/mak/venvs/flujo/bin/flujo doctor,local runtime diagnosis,0,python/repo/workspace/index OK,none,pytest absent
+/home/mak/venvs/flujo/bin/flujo suplementos list,RD supplements,0,8 approved items,none,human asset delivery
+/home/mak/venvs/flujo/bin/flujo rd-db packs,RD canonical DB,0,3 canonical packs,rd.db unchanged,provenance preservation
+/home/mak/venvs/flujo/bin/flujo rd-db eventos,RD event templates,0,2 templates,rd.db unchanged,provenance preservation
+/home/mak/flujo/scripts/flujo.py,legacy dispatcher,not run as runtime,retired boundary preserved,none,do not promote retired commands

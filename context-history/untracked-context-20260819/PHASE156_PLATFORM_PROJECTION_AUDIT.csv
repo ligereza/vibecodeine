@@ -1,0 +1,4 @@
+item,source,target,status,consumer,verification,risk,next_action
+exact_code_projection,/home/mak/flujo/cultura/mak_plataforma/material.py,/home/mak/plataforma/material.py,selected,trabajo.py,sha256_equal_and_cron_template_points_to_target,normal_mode_writes_queue; cron_paused,wrap_and_run_contar
+platform_code_surface,/home/mak/flujo/cultura/mak_plataforma,/home/mak/plataforma,classified,platform runtime,46 exact and 15 divergent code files; state excluded,bulk replacement could overwrite state or evidence,per-file gates
+root_runtime_state,/home/mak/plataforma/.venv-state-logs,/home/mak/plataforma,protected,platform runtime,excluded from code comparison,destructive cleanup forbidden,leave in place

@@ -1,0 +1,10 @@
+branch,scope,write_set,gate,operation_status
+main,stable MAK FLUJO baseline,integrated approved surfaces,health doctor AST runtime,existing baseline
+codex/integration/rd-data,RD field data,rd data reader ingestion manifest,schema read write rollback,proposed
+codex/integration/rd-runtime,RD routes mutators,hub rd tests,fixture authorized foreground,proposed
+codex/integration/flujo-automation,EVENTO issue URL adapter,automation adapter config tests,provider fixture contract,proposed
+codex/integration/rd-assets,RD assets path contract,route resolver manifests consumers,path fixture output,proposed
+codex/architecture/mak-ownership,folder ownership,manifests launchers adapters,import launcher parity,proposed
+codex/consolidation/tools,equivalent tools,selected source adapters,contract rollback,proposed
+codex/cleanup/confirmed-junk,confirmed junk only,exact manifest quarantine ledger,pre post health,proposed
+codex/release/verification,final audit,objective matrix handoff,all gates,proposed

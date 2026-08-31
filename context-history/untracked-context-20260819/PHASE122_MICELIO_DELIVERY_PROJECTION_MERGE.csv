@@ -1,0 +1,4 @@
+path,role,action,result
+/home/mak/flujo/cultura/mak_plataforma/entregar_micelio.py,canonical external delivery owner,unchanged,AST import fixture and help gates pass
+/home/mak/plataforma/entregar_micelio.py,MAK root compatibility surface,replaced with canonical projection,compile import fixture and help pass
+/home/mak/WIN,historical evidence,unchanged,no HTTP log data Git or PR action

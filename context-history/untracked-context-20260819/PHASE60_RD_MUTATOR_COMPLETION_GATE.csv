@@ -1,0 +1,4 @@
+consumer,fixture,rollback,production_write,status
+/api/datadrop-prepare-package,PASS,PASS,NO,FIXTURE_VERIFIED
+/api/datadrop-scan-incoming,PASS,PASS,NO,FIXTURE_VERIFIED
+run_pending_flyers,disposable_job_dispatch,PASS,NO,FIXTURE_VERIFIED

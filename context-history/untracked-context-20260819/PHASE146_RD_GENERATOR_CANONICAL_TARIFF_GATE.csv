@@ -1,0 +1,7 @@
+surface,role,canonical_source,comparison,decision,next_gate
+/home/mak/flujo/data/rd_packs.json,active tariff source,self,three packs and complete proportions,keep canonical,verify all consumers
+/home/mak/flujo/jobs/2026-07-04_eventos-brief/flows/gen_packs.py,active RD delivery generator,/home/mak/flujo/data/rd_packs.json,hardcoded tariff removed and isolated generation passes,integrated source consumer,promote outputs only after review
+/home/mak/flujo/jobs/2026-07-04_eventos-brief/packs_servicios_rd.json,existing job delivery snapshot,/home/mak/flujo/data/rd_packs.json,old wording/shape; not exact canonical JSON,preserve until promotion gate,review replacement
+/home/mak/RD/New Folder/assets/packs_servicios_rd.json,RD delivery snapshot,/home/mak/flujo/data/rd_packs.json,old wording/shape; not exact canonical JSON,preserve human delivery,review replacement
+/home/mak/flujo/jobs/2026-07-04_eventos-brief/plano_rider_dark.pdf,job output,/home/mak/flujo/datadrops/cotizacion_general_eventos/plano_servicio_completo_generico_dark.svg,exact content match with RD dark plan/rider PDF,preserve as output/delivery pair,no cleanup by hash
+/home/mak/RD/New Folder/assets/brief_packs_plano_dark.pdf,RD combined delivery,/home/mak/flujo/jobs/2026-07-04_eventos-brief,not byte-identical to job combined PDF,preserve as human delivery,review provenance

@@ -1,0 +1,9 @@
+phase,family,role,consumer,status,action
+192,research.py,canonical plus runtime wrapper,manual/UI/worker,service inactive,keep both roles
+192,worker.py,canonical plus runtime wrapper,queue/UI,service inactive,keep both roles
+192,interfaz.py,canonical UI,mak-research.service,inactive,keep canonical runtime
+192,exact_helpers,paused/manual,crontab/manual,paused,preserve pending redirect
+192,docs,source/runtime exact,operator reading,not runtime,owner decision later
+192,state_evidence,outputs/logs/locks/checkpoints,history/state,durable,preserve
+192,platform_interfaz_legacy,competing candidate,no launcher,import blocked,preserve
+192,runtime_units,service state,mak-* units,all inactive,no background process

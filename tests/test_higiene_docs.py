@@ -34,6 +34,7 @@ RAIZ = Path(__file__).resolve().parent.parent
 ZONA_MUERTA = (
     ".archive/",
     "_archive/",
+    "context-history/",
     "projects/cultura/corpus_olvido/",
 )
 

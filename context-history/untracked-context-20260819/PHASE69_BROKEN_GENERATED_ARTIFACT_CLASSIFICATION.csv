@@ -1,0 +1,3 @@
+artifact,count,consumer,status,cleanup_decision
+/home/mak/plataforma/panel_directivo.py,1,none found,EVIDENCE_BROKEN_GENERATED,preserve and classify
+/home/mak/codex/piezas/*.py,7,writer/log only,EVIDENCE_BROKEN_GENERATED,preserve and classify

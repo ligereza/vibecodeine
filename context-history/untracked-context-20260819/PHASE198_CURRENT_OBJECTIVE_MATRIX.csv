@@ -1,0 +1,14 @@
+phase,objective,status,next_gate
+198,RD_field_data,DEFERRED_EMPTY_DATA,real field authority
+198,RD_database_relation,SEPARATED_BY_ROLE,keep rd.db and rd_datos.db separate
+198,RD_mutating_routes,DEFERRED_MUTATION,explicit bounded authority
+198,FLUJO_automations,PAUSED_AND_CLASSIFIED,do not enable cron
+198,nonserve_commands,PARTIAL_PASS,consumer-specific checks
+198,RD_assets,INDEX_GATE_PASS,duplicate role ledger
+198,dependencies,SLICE_SCOPED,per-slice runtime gate
+198,folder_architecture,PROPOSED,reversible implementation later
+198,duplicate_documents,LEDGER_STARTED,platform/RD ledgers
+198,equivalent_tools,OWNER_FUSED_PARTIAL,remaining platform extras
+198,full_MAK_audit,IN_PROGRESS,complete remaining top-level consumers
+198,junk_removal,NOT_STARTED_BY_DESIGN,rollback ledger first
+198,git_branch_system,DEFERRED,after stable cleanup

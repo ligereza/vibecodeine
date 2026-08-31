@@ -1,0 +1,10 @@
+phase,original_path,target_path,files_or_symlinks,move_exit,decision,rollback
+229,"/home/mak/ ;",context/quarantine/phase229_empty_shell_residue/root_semicolon,0,0,quarantine,move back to original path
+229,/home/mak/cd,context/quarantine/phase229_empty_shell_residue/cd,0,0,quarantine,move back to original path
+229,/home/mak/cp,context/quarantine/phase229_empty_shell_residue/cp,0,0,quarantine,move back to original path
+229,/home/mak/sha256sum,context/quarantine/phase229_empty_shell_residue/sha256sum,0,0,quarantine,move back to original path
+229,/home/mak/flujo/.githubworkflows,context/quarantine/phase229_empty_shell_residue/flujo_.githubworkflows,0,0,quarantine,move back to original path
+229,/home/mak/flujo/schemasknowledge,context/quarantine/phase229_empty_shell_residue/flujo_schemasknowledge,0,0,quarantine,move back to original path
+229,/home/mak/flujo/srcflujo,context/quarantine/phase229_empty_shell_residue/flujo_srcflujo,0,0,quarantine,move back to original path
+229,/home/mak/flujo/srcflujoknowledge,context/quarantine/phase229_empty_shell_residue/flujo_srcflujoknowledge,0,0,quarantine,move back to original path
+229,/home/mak/flujo/toolsmak_ops,context/quarantine/phase229_empty_shell_residue/flujo_toolsmak_ops,0,0,quarantine,move back to original path

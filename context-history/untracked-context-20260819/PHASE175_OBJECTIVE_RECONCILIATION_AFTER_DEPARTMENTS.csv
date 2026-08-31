@@ -1,0 +1,14 @@
+objective,status,remaining_proof
+rd_field_data,DEFERRED_EMPTY_DATA,real field records and ingest authority
+rd_database,VERIFIED_READONLY_SOURCE_RECONCILED,mutating merge decision
+rd_mutators,DEFERRED_AUTHORITY,explicit write/provider gate
+flujo_automation,FIXTURE_VERIFIED_LOCAL_PARTIAL,external issue/email path
+nonserve_cli,VERIFIED_READONLY,pytest/runtime breadth
+rd_assets,CANONICAL_GENERATOR_VERIFIED_PARTIAL,PDF renderer/human delivery
+dependencies,RUNTIME_PARTIAL,consumer conflict resolution
+folder_architecture,PARTIAL_CLASSIFIED,remaining top-level departments
+duplicate_documents,PARTIAL_CLASSIFIED,human semantic variants
+equivalent_tools,PARTIAL_CONSOLIDATED,remaining surfaces
+mak_audit,IN_PROGRESS,vigia post apps labs src RD
+junk_removal,REVERSIBLE_ONLY,no destructive cleanup
+git_branches,PROPOSED_NOT_APPLIED,physical gates first

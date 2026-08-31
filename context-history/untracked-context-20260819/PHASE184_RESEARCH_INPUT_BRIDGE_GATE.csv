@@ -1,0 +1,6 @@
+phase,check,result,decision
+184,research_missing_topic,exit 2 before investigate,pass no provider
+184,bridge_existing_hash,non-empty deterministic hash,pass read-only helper
+184,bridge_missing_hash,empty result,pass safe missing input
+184,bridge_main_loop,not called,preserve; no permanent relay
+184,process_gate,empty,no worker/service started

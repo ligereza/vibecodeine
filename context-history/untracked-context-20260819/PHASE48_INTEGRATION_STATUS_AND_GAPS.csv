@@ -1,0 +1,9 @@
+area,consumer,status,evidence,next_gate
+RD local read-only,/api/rd-packs + /api/rd-db + event presets,INTEGRATED,real process safe GET matrix,maintain
+ISKVW local read-only,/api/list-svg-works + svg-index + portafolio + show-kit,INTEGRATED,real process safe GET matrix,maintain
+Hub operational,/api/ping + status + jobs + dashboard + roles,INTEGRATED_WITH_POLICY_BOUNDARY,real process safe GET matrix and AST,maintain LUNA-only delegation outside UI roles
+CULTURA static,tapiz allowlist,INTEGRATED_READ_ONLY,MAK/WIN 66-path crosswalk and 200/404 boundary,visual validation only for named future slice
+RD field data,/api/rd-datos-summary,DEFERRED_EMPTY_DATA_SOURCE,zero-byte DB and guarded fallback,authorized real source + privacy/rollback gate
+Automation,/api/automatizaciones,DEFERRED_EXTERNAL_RUNTIME,no-provider fallback; gh boundary,explicit provider authorization
+MAK status external branch,/api/mak,INTEGRATED_LOCAL_FALLBACK,external URL uncontacted,authorized external runtime if needed
+CLI non-serve,full cli.py diff,EVIDENCE_ONLY,serve/app AST equal,concrete non-serve mismatch before edit

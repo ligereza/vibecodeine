@@ -1,0 +1,5 @@
+path,role,pre_change,action,validation,rollback
+/home/mak/flujo/cultura/mak_plataforma/puente_issues.py,canonical source,sha256 e1bc8880...,preserved,compile and dry-run PASS,source remains
+/home/mak/plataforma/puente_issues.py,paused cron runtime projection,identical 28 KB copy,replaced by wrapper,help equal and compile PASS,context/quarantine/phase154_platform_bridge_projection/puente_issues.py.pre-wrapper
+/home/mak/flujo-deploy/cultura/mak_plataforma/puente_issues.py,deployment snapshot,identical pre-change copy,untouched,not invoked,WIN/deploy evidence
+/home/mak/flujo/tools/bridge_issue_render.py,Windows bridge,distinct Windows-specific consumer,untouched,not invoked,WIN/historical path

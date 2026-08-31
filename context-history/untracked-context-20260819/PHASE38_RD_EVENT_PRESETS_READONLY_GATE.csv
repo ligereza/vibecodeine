@@ -1,0 +1,2 @@
+route,method,source,target,inputs,expected_output,validation,result,write_observation,decision
+/api/event-presets,GET,src/flujo/web/hub.py -> src/flujo/eventos/presets.py,/home/mak/flujo RD event tools,local EVENT_PRESETS catalog with under/base/mainstream,JSON presets map plus connected flag,AST/import + schema/deepcopy + WIN/MAK normalized source check + temporary localhost HTTP,HTTP 200; 3 presets; direct/http equal; 14-key schema; normalized MAK/WIN source equal,writes_detected=false; no POST/render/database/provider/worker,INTEGRATED_READ_ONLY

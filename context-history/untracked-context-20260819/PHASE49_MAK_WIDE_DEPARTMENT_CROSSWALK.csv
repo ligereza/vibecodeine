@@ -1,0 +1,8 @@
+mak_root,file_count,code_config_doc_count,win_counterpart,status,decision
+/home/mak/plataforma,5024,2327,/home/mak/WIN/flujo/cultura/mak_plataforma,LIVE_MAK_CONTROL_AND_EVIDENCE,preserve_no_merge
+/home/mak/research,17756,9064,/home/mak/WIN/flujo/cultura/mak_research,LIVE_RESEARCH_STATE_AND_EVIDENCE,preserve_no_merge
+/home/mak/codex,618,388,/home/mak/WIN/flujo/cultura/mak_codex,LIVE_AND_EVIDENCE_MIXED,classify_consumers
+/home/mak/curatoria,175,155,/home/mak/WIN/flujo/cultura/mak_curatoria,LIVE_CURATORIA_QUEUE,classify_one_consumer
+/home/mak/post,3,2,/home/mak/WIN/flujo/cultura/mak_post,SMALL_ADOPTABLE_CANDIDATE,static_consumer_gate_next
+/home/mak/n8n-local,3,0,none,DISCARDED_BY_USER,do_not_integrate
+/home/mak/xio_puente,12,7,/home/mak/WIN/flujo/cultura/mak_xio_puente,OPTIONAL_PHONE_BRIDGE,final_adb_gate

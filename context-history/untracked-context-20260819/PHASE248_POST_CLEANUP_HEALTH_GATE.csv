@@ -1,0 +1,10 @@
+check,command,result
+"RD/database tests","research/.venv pytest selected RD and no-automerge tests","exit 0; all passed"
+"General health","venvs/flujo python -m flujo health","exit 0"
+"RD catalog read","venvs/flujo python -m flujo rd-db packs","exit 0"
+"Jobs read","venvs/flujo python -m flujo job list","exit 0; 8 jobs"
+"Jobs next read","venvs/flujo python -m flujo job next","exit 0"
+"Knowledge read","venvs/flujo python -m flujo knowledge list","exit 0"
+"Datadrop read","venvs/flujo python -m flujo datadrop list","exit 0"
+"SQLite integrity","read-only PRAGMA integrity_check","rd.db ok; rd_datos.db ok"
+"Scheduler/process safety","crontab and process scan","0 active cron; no MAK service process"

@@ -1,0 +1,8 @@
+path,role,evidence,decision,open_gate
+/home/mak/RD/REFERENCIA_VALORES.pdf,RD human reference,3-page A4 hash e0a458...a65321,KEEP_CANONICAL_RD_REFERENCE,human ownership
+/home/mak/RD/New Folder/assets/brief_packs_plano_dark.pdf,named human delivery,byte-identical to reference PDF,KEEP_NAMED_DELIVERY,human naming decision
+/home/mak/flujo/REFERENCIA_VALORES.pdf,FLUJO runtime/documentation mirror,same reference hash,KEEP_RUNTIME_MIRROR,deployment ownership
+/home/mak/RD/packs_servicios_rd_dark.pdf,RD pack delivery,exact with New Folder asset,KEEP_DELIVERY,no hash-only deletion
+/home/mak/RD/plano_rider_dark.pdf,RD plan/rider delivery,exact with New Folder asset; 2-page A4 landscape,KEEP_DELIVERY,no hash-only deletion
+/home/mak/flujo/jobs/2026-07-04_eventos-brief/brief_packs_plano_dark.pdf,job historical PDF,3-page A4; old wording,NO_PROMOTE,human delivery review plus renderer
+/home/mak/WIN/flujo/jobs/2026-07-04_eventos-brief/brief_packs_plano_dark.pdf,Windows historical evidence,exact inspected dark snapshot,PROTECTED,no mutation

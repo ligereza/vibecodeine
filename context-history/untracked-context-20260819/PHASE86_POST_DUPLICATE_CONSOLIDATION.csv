@@ -1,0 +1,7 @@
+item,status,path_or_command,result
+root_post_duplicate,removed,/home/mak/post,exact duplicate with canonical and WIN
+canonical_post,preserved,/home/mak/flujo/cultura/mak_post,consumer-backed implementation
+win_evidence,preserved,/home/mak/WIN/flujo/cultura/mak_post,historical copy unchanged
+post_fixture,verified,cultura.mak_post.pipeline,valid candidate human gate
+consumer_search,verified,active source cultura tests,no root post imports
+rollback,available,canonical or WIN copy,byte-for-byte recovery source

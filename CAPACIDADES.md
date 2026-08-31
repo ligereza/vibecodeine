@@ -477,6 +477,18 @@ tabla; archivo sin entrada = ratchet rojo.
 
 | archivo | estado | consumidor/evidencia | ultima senal |
 |---|---|---|---|
+| `bridge_issue_render.py` | REVISAR | utilidad operativa conservada al fusionar la caja; consumidor manual, sin caller de produccion medido | 2026-08-31 |
+| `build_duplicate_decision_report.py` | REVISAR | informe manual de duplicados; se conserva como herramienta de operador, sin caller automatico medido | 2026-08-31 |
+| `consolidate_static_duplicates.py` | REVISAR | consolidacion manual de artefactos estaticos; sin caller automatico medido | 2026-08-31 |
+| `enviar_a_mak.py` | REVISAR | puente manual de entrega; conservado durante la fusion, sin caller automatico medido | 2026-08-31 |
+| `handoff.py` | REVISAR | generador manual de continuidad; sin caller automatico medido | 2026-08-31 |
+| `instalar_enviar_a_mak.py` | REVISAR | instalacion/envio manual; conservado durante la fusion, sin caller automatico medido | 2026-08-31 |
+| `mak_materialize_fused_root.py` | VIVO | materializa una sola raiz fisica en `/home/mak` sin sobrescribir ni borrar; consumidor: operador, a mano | 2026-08-31 |
+| `mak_fuse_roots.py` | VIVO | construye la proyeccion lossless de las tres raices y registra igualdad/divergencia sin elegir fuente; consumidor: `mak_materialize_fused_root.py` y operador | 2026-08-31 |
+| `watsonx_coder_bench.py` | REVISAR | benchmark manual preservado como evidencia; sin caller automatico medido | 2026-08-31 |
+| `watsonx_smoke.py` | REVISAR | smoke manual preservado como evidencia; sin caller automatico medido | 2026-08-31 |
+| `watsonx_vision_bench.py` | REVISAR | benchmark manual preservado como evidencia; sin caller automatico medido | 2026-08-31 |
+| `watsonx_vision_smoke.py` | REVISAR | smoke manual preservado como evidencia; sin caller automatico medido | 2026-08-31 |
 | `agent_bootstrap.py` | VIVO | emits the bounded current-state packet required by `agents.md`; consumed by delegated MAK work and `tests/test_agent_bootstrap.py` | 2026-08-25 |
 | `archive_observer.py` | VIVO | read-only archive observation entrypoint consumed by the Stage 2 pipeline and observer tests | 2026-08-25 |
 | `arica01_portfolio.py` | VIVO | bounded read-only ARICA/Fondart end-to-end pilot; consumes the accepted MAK contracts and writes only to an explicit output directory | 2026-08-25 |
@@ -837,10 +849,10 @@ que declara la seccion "Reproducir esta medicion", tres dias despues.
 
 | | 2026-08-28 | 2026-08-31 |
 |---|---:|---:|
-| herramientas en `tools/` | 92 | **119** |
-| con referencia en produccion | 46 | **46** |
-| solo referenciadas por un test | 33 | **39** |
-| sin ninguna referencia | 13 | **34** |
+| herramientas en `tools/` | 92 | **137** |
+| con referencia en produccion | 46 | **48** |
+| solo referenciadas por un test | 33 | **41** |
+| sin ninguna referencia | 13 | **48** |
 | con disparador de workflow | 4 | **4** |
 
 Los 4 con disparador: `gen_archivo_iskvw.py`, `render_flyer_mak.py`,
@@ -854,7 +866,7 @@ y porque la medición endurecida ya no cuenta comentarios, docstrings o fixtures
 como consumidores.
 
 Cero referencias no es muerte, y esta tabla lo dice desde el 28. Lo que hoy
-confirma es lo mismo con otras cifras: **4 de 119 tienen disparador**, o sea 115
+confirma es lo mismo con otras cifras: **4 de 137 tienen disparador**, o sea 133
 solo corren si alguien tipea el comando. Eso no es un defecto de MAK; es lo que
 MAK es.
 

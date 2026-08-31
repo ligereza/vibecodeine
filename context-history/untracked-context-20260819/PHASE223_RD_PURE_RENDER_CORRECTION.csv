@@ -1,0 +1,6 @@
+route,old_classification,correct_classification,evidence
+POST /api/plano/render,output_mutator,transient_compute,"fixture payload + rd hashes unchanged"
+POST /api/cotizacion/render,output_mutator,transient_compute,"fixture payload + rd hashes unchanged"
+POST /api/rd-db/logo,mutator,mutator,"writes knowledge/logos/descargas"
+POST /api/plano-simbolos,mutator,mutator,"writes data/plano_simbolos.json and SVG"
+POST /api/datadrop-upload,mutator,mutator,"writes datadrop manifest/assets"

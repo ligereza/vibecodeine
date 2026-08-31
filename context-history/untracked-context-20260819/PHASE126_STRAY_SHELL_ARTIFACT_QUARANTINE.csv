@@ -1,0 +1,3 @@
+source,count,action,destination,status
+/home/mak/\;,1,moved exact stray file,context/quarantine/phase126_stray_shell_artifacts,JUNK_CONFIRMED_REVERSIBLE
+literal escaped empty directories,6,moved exact empty directories,context/quarantine/phase126_stray_shell_artifacts,JUNK_CONFIRMED_REVERSIBLE

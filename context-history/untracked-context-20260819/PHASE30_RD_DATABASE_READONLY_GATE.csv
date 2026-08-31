@@ -1,0 +1,5 @@
+Identity: LUNA principal
+route,method,source_consumer,input_surface,expected_output,mutation_boundary,static_status,http_status,write_check,final_status
+/api/rd-db,GET,src/flujo/web/hub.py -> src/flujo/rd/panel.py -> data/productoras + knowledge/venues + knowledge/logos,canonical JSON/YAML and logo existence metadata,JSON productoras venues resumen connected and privacy exclusions,temporary in-process server; read-only source/data/logo snapshot,PASS,200,writes_detected=0,INTEGRATED_READ_ONLY
+data/rd.db,READ_ONLY_PROJECTION,src/flujo/rd/database.py -> canonical JSON/YAML sources,SQLite projection with matching table counts,12 tables; source/projection counts 20/3/7/11/23/8/2,sqlite mode=ro only; build_rd_db excluded,PASS,N/A,no write connection,INTEGRATED_PROJECTION
+data/rd_datos.db,READ_ONLY_PHYSICAL_CHECK,src/flujo/rd/datos.py + src/flujo/rd/informe.py,field-data summary only after authorized ingestion,zero-byte file has no SQLite objects; no real field data claimed,conectar/resumen_json excluded because they create schema and commit,EMPTY_FIELD_DB,N/A,no mutation,DEFERRED_INGESTION

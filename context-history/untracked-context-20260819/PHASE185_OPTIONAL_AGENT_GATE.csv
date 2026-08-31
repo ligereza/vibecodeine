@@ -1,0 +1,5 @@
+phase,component,import,execution_without_dependency,decision
+185,chat_agente.py,exit 0,exit 2 controlled message,optional dependency deferred
+185,agente_real.py,exit 0,exit 2 controlled message,optional dependency deferred
+185,qwen-agent,absent,not installed,do not alter environment
+185,final_process_gate,empty,no persistent process

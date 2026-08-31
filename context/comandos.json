@@ -1,7 +1,8 @@
 {
  "formato": "comandos/1",
- "total": 90,
+ "total": 98,
  "grupos": [
+  "airdrop",
   "autonomia",
   "brief",
   "datadrop",
@@ -60,7 +61,7 @@
    "cmd": "doctor",
    "invocacion": "py -m flujo doctor",
    "grupo": "",
-   "desc": "Diagnóstico humano del entorno local: Python, Git, encoding, index y hub.",
+   "desc": "Diagnóstico humano del entorno local: Python, Git, encoding, index, hub y airdrop.",
    "requiere": "",
    "estado": "listo",
    "destructivo": null
@@ -502,6 +503,78 @@
    "invocacion": "py -m flujo render rescale",
    "grupo": "render",
    "desc": "Reescalar proporción (medida cm) o resolución (DPI) de un config.json.",
+   "requiere": "",
+   "estado": "listo",
+   "destructivo": null
+  },
+  {
+   "cmd": "airdrop status",
+   "invocacion": "py -m flujo airdrop status",
+   "grupo": "airdrop",
+   "desc": "Muestra la versión actual del sistema flujo.",
+   "requiere": "",
+   "estado": "listo",
+   "destructivo": null
+  },
+  {
+   "cmd": "airdrop list",
+   "invocacion": "py -m flujo airdrop list",
+   "grupo": "airdrop",
+   "desc": "Lista los archivos pendientes de aplicar en _airdrop/.",
+   "requiere": "",
+   "estado": "listo",
+   "destructivo": null
+  },
+  {
+   "cmd": "airdrop dry-run",
+   "invocacion": "py -m flujo airdrop dry-run",
+   "grupo": "airdrop",
+   "desc": "Simula la aplicación del airdrop sin realizar cambios.",
+   "requiere": "",
+   "estado": "listo",
+   "destructivo": null
+  },
+  {
+   "cmd": "airdrop sign",
+   "invocacion": "py -m flujo airdrop sign",
+   "grupo": "airdrop",
+   "desc": "Genera el manifiesto SHA-256 y la firma HMAC del payload de _airdrop/.",
+   "requiere": "",
+   "estado": "listo",
+   "destructivo": null
+  },
+  {
+   "cmd": "airdrop verify",
+   "invocacion": "py -m flujo airdrop verify",
+   "grupo": "airdrop",
+   "desc": "Verifica la firma HMAC y los hashes SHA-256 del payload de _airdrop/.",
+   "requiere": "",
+   "estado": "listo",
+   "destructivo": null
+  },
+  {
+   "cmd": "airdrop apply",
+   "invocacion": "py -m flujo airdrop apply",
+   "grupo": "airdrop",
+   "desc": "Aplica los archivos de _airdrop/, crea backup y dispara checkpoint + push.",
+   "requiere": "",
+   "estado": "listo",
+   "destructivo": null
+  },
+  {
+   "cmd": "airdrop rollback",
+   "invocacion": "py -m flujo airdrop rollback",
+   "grupo": "airdrop",
+   "desc": "Revierte los cambios al último backup de airdrop.",
+   "requiere": "",
+   "estado": "listo",
+   "destructivo": null
+  },
+  {
+   "cmd": "airdrop finish",
+   "invocacion": "py -m flujo airdrop finish",
+   "grupo": "airdrop",
+   "desc": "Finaliza el proceso de airdrop (estatus y sugerencias).",
    "requiere": "",
    "estado": "listo",
    "destructivo": null

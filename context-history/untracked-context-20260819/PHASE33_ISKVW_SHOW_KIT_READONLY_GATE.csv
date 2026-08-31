@@ -1,0 +1,5 @@
+Identity: LUNA principal
+route,method,source_consumer,input_surface,expected_output,mutation_boundary,static_fixture_status,http_status,write_check,final_status
+/api/show-kit,GET,src/flujo/web/hub.py -> xio/show_kit local reader,setlist durations cue map and saved JSONL records,21 setlist items 21 cues 1 record group 19 measured durations,local reads only; hardware OSC relay and network excluded,PASS,200,writes_detected=0,INTEGRATED_READ_ONLY
+show-kit read surface,READ_ONLY,MAK xio/show_kit versus WIN/flujo/xio/show_kit,6 normalized-equal input/evidence files including 2384 JSONL rows,MAK and WIN read surfaces match; records exposed as counts only,no copy and no hardware activation,PASS,N/A,no changes,INTEGRATED_EVIDENCE
+hardware boundary,DEFERRED,artnet_relay.py cue_engine.py map_dref.py and Windows BAT launchers,external OSC Art-Net Resolume Chataigne phone and venue network,not part of /api/show-kit contract,activation requires separate platform dry-run,STATIC_CLASSIFIED,N/A,no execution,DEFERRED_EXTERNAL_RUNTIME

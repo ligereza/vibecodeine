@@ -1,0 +1,5 @@
+path,role,evidence,status,next_gate
+"/home/mak/WIN/claude_sesiones/Testeo 2025.source.xlsx","historical source workbook","sha256 5b9e54c6...54c8055; 2096806 bytes","CANDIDATE_PRESERVED","human provenance and ingest authority"
+"/home/mak/state/windows-director-20260813/claude-recovered-artifacts/Testeo 2025.source.xlsx","recovered duplicate","same sha256 and size","RECOVERY_PRESERVED","none; keep evidence"
+"/home/mak/WIN/claude_sesiones/rd_testeos_eventos_2025_evidence_2026-08-12.json","historical derived evidence","42 events; 1831 test rows; 5394 observations; pending human review","CANDIDATE_PENDING_REVIEW","period, duplicates, labels and links review"
+"/home/mak/flujo/data/rd_fuentes/testeo_eventos_2025_evidence.json","active derived catalog source","42 events; 1831 test rows; 5394 observations; 84 link queue rows","CATALOG_PROJECTED_NOT_FIELD_INGEST","explicit privacy-store ingest authority"

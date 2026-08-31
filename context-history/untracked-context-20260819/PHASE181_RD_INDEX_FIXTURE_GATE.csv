@@ -1,0 +1,8 @@
+phase,check,result,decision
+181,regular_fixture_assets,3,indexed
+181,symlink_assets,1,excluded by policy
+181,full_hash_assets,3,complete under bounded limit
+181,exact_duplicate_relations,1,measured from full hash only
+181,perception_limit,0,no provider/vision call
+181,output_containment,guard passed,never project inside source
+181,fixture_process,exit 0 and no persistent process,pass

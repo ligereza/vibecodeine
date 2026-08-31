@@ -1,0 +1,15 @@
+command,status,result
+job-new,help_verified,exit 0
+job-prepare,help_verified,exit 0
+job-activate,help_verified,exit 0
+job-report,help_verified,exit 0
+datadrop-scan,help_verified,exit 0
+datadrop-ingest,help_verified,exit 0
+datadrop-prepare,help_verified,exit 0
+rd-datos-ingest,help_verified,exit 0
+rd-datos-informe,help_verified,exit 0
+eventos-flyer-auto,help_verified,exit 0
+render-run,help_verified,exit 0
+render-bridge,help_verified,exit 0
+autonomia-run,help_verified,exit 0
+production_execution,deferred,not_called,authority boundary preserved

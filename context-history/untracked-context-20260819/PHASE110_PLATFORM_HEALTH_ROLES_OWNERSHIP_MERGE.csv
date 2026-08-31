@@ -1,0 +1,2 @@
+phase,scope,action,result,exit_code,changed_files,risk,next_action
+110,platform health/roles ownership,replace active root exact duplicates with canonical projections,imports snapshot compile passed; no service or external execution,0,/home/mak/plataforma/salud.py|/home/mak/plataforma/roles.py,tandas/coherence semantic divergences remain open,continue platform read-only audit

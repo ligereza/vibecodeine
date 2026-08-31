@@ -1,0 +1,6 @@
+source,tables,rows,integrity,comparison,disposition
+"/home/mak/flujo/data/rd.db",20,7587,ok,canonical active,keep active
+"/home/mak/WIN/flujo/data/rd.db",20,7587,ok,identical table digests,preserve historical
+"/home/mak/state/windows-director-20260813/rd/rd.db",20,7587,ok,identical table digests,preserve evidence
+"/home/mak/flujo/data/rd.db.premerge-20260815",12,113,ok,older pre-merge source,keep rollback
+"/home/mak/flujo/data/rd_datos.db",4,0,ok,separate privacy store,do not merge silently
