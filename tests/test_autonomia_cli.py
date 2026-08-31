@@ -117,16 +117,65 @@ def test_branch_state_reports_source_copies_without_blocking_them(monkeypatch):
     }
     monkeypatch.setattr(
         autonomia, "_run_git",
-        lambda args: outputs.get(tuple(args), ""),
+        lambda args: (outputs.get(tuple(args), ""), True),
     )
 
     state = autonomia._branch_state()
 
+    assert state["git_measurable"] is True
     assert state["current_classification"] == "temporary_work"
     assert state["canonical_present"] == {"main": True}
     assert state["source_copy_branches"] == ["source/iskvw", "source/rd"]
     assert state["temporary_work_branches"] == ["work/portfolio-rebuild"]
     assert state["unclassified_remote_branches"] == ["feature/unknown"]
+
+
+def test_branch_state_names_a_git_call_that_could_not_be_measured(
+        monkeypatch, tmp_path):
+    """Real defect, fixed here: `_run_git` used to fold a FAILED git call
+    (not a repo, git missing, timeout) into the same empty string as a
+    successful call with no output. `_branch_state()["dirty"]` then read []
+    whether the tree was clean or the check never ran at all -- same family
+    as `flujo doctor` reporting `airdrop pendiente: OK` for a directory that
+    did not exist. Reproduced here with a real (non-mocked) subprocess call
+    against a directory that is genuinely not a git repository.
+    """
+    monkeypatch.setattr(autonomia, "_repo_root", lambda: tmp_path)
+
+    state = autonomia._branch_state()
+
+    assert state["dirty"] == [], "an unmeasured tree still looks empty"
+    assert state["git_measurable"] is False, (
+        "the failed measurement must be named, not silently absent")
+
+
+def test_autonomy_status_blocks_on_unmeasured_git_instead_of_reading_clean(
+        monkeypatch, tmp_path):
+    """`autonomy_status` must not let a failed `git status` pass as
+    'repo_dirty: no'. Before the fix, `branches["dirty"] == []` from a git
+    failure produced the exact same `blockers` list as a genuinely clean
+    repo -- the promotion gate could not tell the difference."""
+    monkeypatch.setattr(autonomia, "_branch_state", lambda: {
+        "current": "",
+        "dirty": [],
+        "git_measurable": False,
+        "remote_branches": [],
+        "canonical_present": {"main": True},
+        "legacy_transition_branches": [],
+        "source_copy_branches": [],
+        "temporary_work_branches": [],
+        "unclassified_remote_branches": [],
+    })
+    monkeypatch.setattr(autonomia, "_open_prs", lambda: [])
+    monkeypatch.setattr(autonomia, "_readme_svg_state", lambda: {"status": "clean"})
+
+    status = autonomia.autonomy_status(
+        common_path=str(tmp_path / "common.jsonl"),
+        batch_path=str(tmp_path / "batches.jsonl"),
+    )
+
+    assert status["ready"] is False
+    assert "git_status_unmeasured" in status["blockers"]
 
 
 def test_missing_main_blocks_but_source_copies_do_not(monkeypatch, tmp_path):

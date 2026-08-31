@@ -198,19 +198,31 @@ def _now() -> str:
 
 
 def _git_state() -> dict[str, Any]:
-    def run(*args: str) -> str:
+    # `run` used to fold a FAILED git call (not a repo, git missing, timeout)
+    # into the same empty string as "clean, no output" -- so `tree_dirty` read
+    # False and `commit` read "" for a check that never ran, indistinguishable
+    # from a genuinely clean tree. Same family as `flujo doctor` reporting
+    # `airdrop pendiente: OK` by testing a directory that did not exist.
+    def run(*args: str) -> tuple[str, bool]:
         try:
-            return subprocess.run(["git", *args], cwd=ROOT, capture_output=True,
-                                  text=True, timeout=30, check=False).stdout.strip()
+            out = subprocess.run(["git", *args], cwd=ROOT, capture_output=True,
+                                 text=True, timeout=30, check=False)
         except (OSError, subprocess.SubprocessError):
-            return ""
+            return "", False
+        return out.stdout.strip(), out.returncode == 0
 
-    dirty = run("status", "--porcelain=v1")
+    dirty, dirty_ok = run("status", "--porcelain=v1")
+    commit, commit_ok = run("rev-parse", "HEAD")
+    branch, branch_ok = run("rev-parse", "--abbrev-ref", "HEAD")
+    available = dirty_ok and commit_ok and branch_ok
     return {
-        "commit": run("rev-parse", "HEAD"),
-        "branch": run("rev-parse", "--abbrev-ref", "HEAD"),
-        "tree_dirty": bool(dirty),
-        "dirty_paths": dirty.splitlines()[:20],
+        "commit": commit,
+        "branch": branch,
+        "available": available,
+        # None (not False) when unavailable: an unmeasured tree must not be
+        # reported as a clean one.
+        "tree_dirty": bool(dirty) if available else None,
+        "dirty_paths": dirty.splitlines()[:20] if available else [],
     }
 
 

@@ -48,21 +48,39 @@ def source_version(modules: Iterable[Any]) -> dict[str, str]:
 
 
 def git_state(repo: Path) -> dict[str, Any]:
-    def run(*args: str) -> str:
+    # `run` used to fold "git failed" and "" into the same empty string, and
+    # `tree_dirty` was `bool(that string)` -- so a git call that failed
+    # outright (not a repo, git missing, timeout) produced `tree_dirty: False`
+    # and `commit: ""`, which reads exactly like a clean tree with no history,
+    # not like a check that never ran. Same family as `flujo doctor` reporting
+    # `airdrop pendiente: OK` for a directory it never found. This function's
+    # whole point is provenance ("a result without one of these is not a
+    # measurement, it is an anecdote"), so it must not itself measure nothing
+    # and call it clean.
+    def run(*args: str) -> tuple[str, bool]:
         try:
             out = subprocess.run(("git", "-C", str(repo)) + args,
                                  capture_output=True, text=True, timeout=20)
-            return out.stdout.strip()
         except Exception:                                    # noqa: BLE001
-            return ""
-    status = run("status", "--porcelain")
+            return "", False
+        return out.stdout.strip(), out.returncode == 0
+    status, status_ok = run("status", "--porcelain")
+    commit, commit_ok = run("rev-parse", "HEAD")
+    branch, branch_ok = run("rev-parse", "--abbrev-ref", "HEAD")
+    available = status_ok and commit_ok and branch_ok
     return {
-        "commit": run("rev-parse", "HEAD"),
-        "branch": run("rev-parse", "--abbrev-ref", "HEAD"),
+        "commit": commit,
+        "branch": branch,
+        # False when git could not be measured at all: an unmeasured tree is
+        # not a clean tree, so this is never asserted True by default.
+        "available": available,
         # A dirty tree means the commit does not describe what ran. Saying so is
         # the whole point; a clean-looking record over a dirty tree is a lie.
-        "tree_dirty": bool(status),
-        "dirty_paths": sorted(line[3:] for line in status.splitlines())[:40],
+        # None (not False) when unavailable, so a consumer cannot mistake "we
+        # could not tell" for "it was clean".
+        "tree_dirty": bool(status) if available else None,
+        "dirty_paths": sorted(line[3:] for line in status.splitlines())[:40]
+                       if available else [],
     }
 
 
