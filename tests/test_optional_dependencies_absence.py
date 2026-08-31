@@ -64,16 +64,52 @@ def test_mutagen_absence_is_named_not_raised(tmp_path: Path, monkeypatch: pytest
     assert result["facts"] == {"reason": "package_missing"}
 
 
-def test_imagehash_absence_degrades_image_features_observer(
+def test_imagehash_absence_only_costs_the_hashes_not_the_dimensions(
         tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    # PIL/Pillow is a required dependency of this repo and stays importable;
-    # only ImageHash is blocked, which is the actually-optional half of the
-    # "Pillow+ImageHash" pair used by _image().
+    """Losing an optional half must not cost the half that still works.
+
+    Until 2026-08-30 this pinned the opposite: Pillow and ImageHash were one
+    capability, so blocking ImageHash made the whole observation `unavailable`
+    -- width and height included, though they only ever needed Pillow. The
+    consequence was not cosmetic. `technical_media_match_candidate` is built by
+    comparing image dimensions against video dimensions, so on any clean
+    install (CI among them: `imagehash` is in neither the `dev` nor the
+    `render` extra) that relation could never be produced.
+    """
+    pytest.importorskip("PIL", reason="Pillow is required to observe an image")
+    from PIL import Image
+
+    poster = tmp_path / "poster.png"
+    Image.new("RGB", (48, 21), "black").save(poster)
+
     _block_import(monkeypatch, "imagehash")
-    result = archive_toolchain._image(tmp_path / "poster.png", {}, 10)
-    assert result["status"] == "unavailable"
+    result = archive_toolchain._image(poster, {}, 10)
+
+    assert result["status"] == "observed", "Pillow solo alcanza para observar"
+    assert result["method"] == {"tool": "Pillow"}, "el metodo nombra lo que si corrio"
+    assert result["facts"]["width"] == 48
+    assert result["facts"]["height"] == 21
+    assert result["facts"]["perceptual_hashes"] == "unavailable:imagehash_missing"
+    for absent in ("phash", "dhash", "ahash"):
+        assert absent not in result["facts"], "un hash ausente no se inventa"
+
+
+def test_imagehash_present_adds_the_hashes_on_top(tmp_path: Path):
+    """The other half of the contract: present, it contributes and says so."""
+    pytest.importorskip("PIL", reason="Pillow is required to observe an image")
+    pytest.importorskip("imagehash", reason="ImageHash is optional and absent here")
+    from PIL import Image
+
+    poster = tmp_path / "poster.png"
+    Image.new("RGB", (48, 21), "black").save(poster)
+    result = archive_toolchain._image(poster, {}, 10)
+
+    assert result["status"] == "observed"
     assert result["method"] == {"tool": "Pillow+ImageHash"}
-    assert result["facts"] == {"reason": "package_missing"}
+    assert result["facts"]["width"] == 48
+    assert "perceptual_hashes" not in result["facts"]
+    for present in ("phash", "dhash", "ahash"):
+        assert result["facts"][present]
 
 
 def test_pypdf_absence_is_named_not_raised(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):

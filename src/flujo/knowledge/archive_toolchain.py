@@ -413,27 +413,49 @@ def _mutagen(path: Path, tools: Mapping[str, Any], timeout: int) -> dict[str, An
 
 
 def _image(path: Path, tools: Mapping[str, Any], timeout: int) -> dict[str, Any] | None:
+    """Observe an image, degrading per capability instead of all at once.
+
+    Until 2026-08-30 Pillow and ImageHash were treated as one capability named
+    "Pillow+ImageHash": if `imagehash` was missing, the whole observation
+    returned `unavailable` -- including `width` and `height`, which only ever
+    needed Pillow. That mattered beyond tidiness: `technical_media_match_candidate`
+    is built by comparing image dimensions against video dimensions, so on any
+    clean install (CI included, where `imagehash` is in neither the `dev` nor the
+    `render` extra) that relation could never be produced at all.
+
+    Now the two degrade separately. Pillow alone yields dimensions, mode and
+    format; the perceptual hashes appear only when ImageHash is there, and the
+    tool string says which halves actually ran, so a reader can tell a partial
+    observation from a complete one instead of guessing.
+    """
     del timeout
     try:
         from PIL import Image
+    except ImportError:
+        return _observation_result("image_features", "unavailable", {"tool": "Pillow"}, {"reason": "package_missing"})
+    try:
         import imagehash
     except ImportError:
-        return _observation_result("image_features", "unavailable", {"tool": "Pillow+ImageHash"}, {"reason": "package_missing"})
+        imagehash = None
+    tool = "Pillow+ImageHash" if imagehash is not None else "Pillow"
     try:
         with Image.open(path) as image:
-            rgb = image.convert("RGB")
             facts: dict[str, Any] = {
                 "width": image.width,
                 "height": image.height,
                 "mode": image.mode,
                 "format": image.format,
-                "phash": str(imagehash.phash(rgb)),
-                "dhash": str(imagehash.dhash(rgb)),
-                "ahash": str(imagehash.average_hash(rgb)),
             }
+            if imagehash is not None:
+                rgb = image.convert("RGB")
+                facts["phash"] = str(imagehash.phash(rgb))
+                facts["dhash"] = str(imagehash.dhash(rgb))
+                facts["ahash"] = str(imagehash.average_hash(rgb))
+            else:
+                facts["perceptual_hashes"] = "unavailable:imagehash_missing"
     except Exception as exc:
-        return _observation_result("image_features", "error", {"tool": "Pillow+ImageHash"}, {"reason": type(exc).__name__})
-    return _observation_result("image_features", "observed", {"tool": "Pillow+ImageHash"}, facts)
+        return _observation_result("image_features", "error", {"tool": tool}, {"reason": type(exc).__name__})
+    return _observation_result("image_features", "observed", {"tool": tool}, facts)
 
 
 def _psd(path: Path, tools: Mapping[str, Any], timeout: int) -> dict[str, Any] | None:
