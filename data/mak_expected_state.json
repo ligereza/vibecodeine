@@ -1,0 +1,42 @@
+{
+  "captured_at": "2026-08-31T02:36:18.815083+00:00",
+  "cron": {
+    "active_lines": 0
+  },
+  "docker_containers": [
+    "open-webui",
+    "searxng"
+  ],
+  "file_gates": {
+    "/home/mak/codex/.token.disabled": true,
+    "/home/mak/curatoria/AUTONOMY_ENABLE": false,
+    "/home/mak/research/.cola.disabled.missing_ntfy": true
+  },
+  "organs": {
+    "codex": {
+      "alive": true,
+      "port": 8891
+    },
+    "plataforma": {
+      "alive": true,
+      "port": 8900
+    },
+    "research": {
+      "alive": true,
+      "port": 8890
+    }
+  },
+  "schema": "mak-expected-state-v1",
+  "systemd_system": {
+    "actions.runner.ligereza-vibecodeine.mak.service": "active",
+    "docker.service": "active",
+    "ollama.service": "active",
+    "postgresql@15-main.service": "active"
+  },
+  "systemd_user": {
+    "mak-codex.service": "active",
+    "mak-hub.service": "active",
+    "mak-research.service": "active",
+    "mak-xio.service": "inactive"
+  }
+}
