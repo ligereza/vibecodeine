@@ -269,6 +269,10 @@ repositorio. Las credenciales y tokens se mantienen fuera de Git.
 | `MAK_RESEARCH_REGISTRY` | Ruta opcional del registro SQLite de jobs de Research; por defecto usa `/home/mak/research/jardines_interpretativos/jardines_interpretativos.sqlite`. |
 | `MAK_LEARNING_DB` | Ruta opcional del ledger SQLite de Project IR y contratos; por defecto usa `data/mak_knowledge.db`. |
 | `MAK_HEARTBEAT_NTFY_TOPIC` | Tema ntfy opcional para `tools/mak_heartbeat.py`; si falta, cae a `NTFY_TOPIC_OUT` de `research.env`. |
+| `MAK_DEPLOY_REPO`, `MAK_USER_REPO` | Rutas opcionales del repositorio de despliegue/sincronizacion local. |
+| `MAK_SYNC_BACKUP_ROOT`, `MAK_SYNC_RECOVERY_ROOT`, `MAK_SYNC_STAGING_ROOT` | Directorios de backup, recuperacion y staging del puente de sincronizacion. |
+| `MAK_SYNC_LOCK`, `MAK_SYNC_MANIFEST` | Rutas de bloqueo y manifiesto de una corrida de sincronizacion. |
+| `WATSONX_MODEL`, `WATSONX_URL` | Configuracion opcional del backend WatsonX conservado para benchmarks/manual. |
 
 Every active topic branch must carry its own scoped contract and handoff,
 created from `contracts/BRANCH_AGENTS_TEMPLATE.md` and

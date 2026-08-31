@@ -49,6 +49,13 @@ La selección no usa sólo el nombre: `mak_triangulate_roots.py` cruza nacimient
 del inode, mtime, hash, primer/último commit del archivo y metadatos del checkout.
 Su salida durable es `context/mak-merge-20260831/triangulation.{json,md}`.
 
+"Una sola raíz" no significa que se haya declarado ganador una variante. Las
+rutas con bytes divergentes requieren un baseline operativo para que `/home/mak`
+sea ejecutable; los bytes de las demás fuentes siguen intactos en
+`fused/origins/` y cada relación está en `projection3/MANIFEST.json`. Esa
+decisión de ejecución es reversible y está registrada; no es una afirmación de
+que se haya resuelto semánticamente cada divergencia.
+
 El caso `airdrop` queda etiquetado como antecesor histórico, no como descarte:
 `WIN/flujo/src/flujo/airdrop.py` aparece añadido el 2026-06-28 y usado hasta el
 2026-07-31; el commit `a6fe4662` lo retiró explícitamente el 2026-08-28. Sus

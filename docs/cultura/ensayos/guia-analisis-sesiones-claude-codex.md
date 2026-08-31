@@ -30,7 +30,7 @@ diagnóstico psicológico ni una nueva regla universal.
 
 ### Claude
 
-- Origen Windows: `C:\Users\issvk\claude_sesiones_recuperadas`
+- Origen Windows: `C:\Users\<usuario>\claude_sesiones_recuperadas`
 - Archivo MAK: `/home/mak/WIN/claude_sesiones`
 - Corpus estructurado: `docs/recovered/claude_sessions_2026-08-12/`
 - Importador: `tools/recovered/import_claude_sessions.py`
@@ -39,7 +39,7 @@ diagnóstico psicológico ni una nueva regla universal.
 
 ### Codex
 
-- Memoria Windows: `C:\Users\issvk\.codex`
+- Memoria Windows: `C:\Users\<usuario>\.codex`
 - Archivo MAK: `/home/mak/WIN/codex`
 - Implementación del organismo: `cultura/mak_codex/`
 - Superficies relevantes: `agente_libre.py`, `codex_lib.py`,
@@ -48,9 +48,9 @@ diagnóstico psicológico ni una nueva regla universal.
 
 ### Arqueología y esfuerzo
 
-- `C:\Users\issvk\Downloads\arqueologia.py`
-- `C:\Users\issvk\Downloads\esfuerzo.py`
-- `C:\Users\issvk\Downloads\ultimochat.txt`
+- `C:\Users\<usuario>\Downloads\arqueologia.py`
+- `C:\Users\<usuario>\Downloads\esfuerzo.py`
+- `C:\Users\<usuario>\Downloads\ultimochat.txt`
 - `cultura/mak_plataforma/capataz.py`
 - `cultura/mak_plataforma/metricas_capataz.py`
 - `tools/inferential_archaeology.py`, si existe en el checkout activo
