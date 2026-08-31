@@ -55,6 +55,9 @@ sea ejecutable; los bytes de las demás fuentes siguen intactos en
 `fused/origins/` y cada relación está en `projection3/MANIFEST.json`. Esa
 decisión de ejecución es reversible y está registrada; no es una afirmación de
 que se haya resuelto semánticamente cada divergencia.
+De las 813 rutas divergentes, 805 ya tenían una variante en el checkout activo;
+8 sólo estaban en `win-flujo` y por eso son el único fallback operativo
+registrado. Sus alternativas completas permanecen en el expediente.
 
 El caso `airdrop` queda etiquetado como antecesor histórico, no como descarte:
 `WIN/flujo/src/flujo/airdrop.py` aparece añadido el 2026-06-28 y usado hasta el
