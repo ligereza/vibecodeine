@@ -24,6 +24,8 @@ preservó cada divergencia con su `source_id`. No se eliminó contenido.
   no se afirma que esas 813 diferencias sean una fusión semántica automática.
   Dos entradas históricas que no pueden ser entrypoints activos se trasladaron
   a `resolved-conflicts/` y quedaron registradas como tales.
+  En las 813 rutas divergentes, 805 conservan el baseline activo y sólo 8
+  requieren el fallback operativo de `win-flujo`; ninguna variante se descartó.
 
 El material preservado está en `/home/mak/_archive/merge-20260831/fused/`:
 `origins/` contiene los tres checkouts completos, `projection3/` el manifiesto
