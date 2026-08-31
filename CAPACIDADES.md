@@ -816,6 +816,34 @@ Si la fila de la seccion 5 dice VIVO y estas dos consultas devuelven vacio, la
 fila afirma un consumidor que no existe. Esa es la contradiccion que esta
 seccion hace visible sin que nadie tenga que leer 92 lineas de prosa.
 
+### La misma medicion, repetida el 2026-08-31
+
+No se corrige la de arriba: se fecha y se supera. Corrida con el mismo metodo
+que declara la seccion "Reproducir esta medicion", tres dias despues.
+
+| | 2026-08-28 | 2026-08-31 |
+|---|---:|---:|
+| herramientas en `tools/` | 92 | **116** |
+| con referencia en produccion | 46 | **52** |
+| solo referenciadas por un test | 33 | **39** |
+| sin ninguna referencia | 13 | **25** |
+| con disparador de workflow | 4 | **5** |
+
+Los 5 con disparador: `gen_archivo_iskvw.py`, `render_flyer_mak.py`,
+`render_video_sequence_mak.py`, `repo_audit.py`, `venue.py`.
+
+**Lo que el salto de 13 a 25 NO significa.** No es podredumbre: son 25
+herramientas cuyo consumidor es una persona que las corre a mano, y la seccion
+5-ter las clasifico una por una como `manual-only` el 2026-08-29 con evidencia
+por fila. El numero crecio porque se escribieron mas CLI de uso manual --
+`medir_tests.py` y `build_mak_canonical_map.py` estan entre ellas, y las dos son
+instrumentos de medicion que existen para invocarse a mano.
+
+Cero referencias no es muerte, y esta tabla lo dice desde el 28. Lo que hoy
+confirma es lo mismo con otras cifras: **5 de 116 tienen disparador**, o sea 111
+solo corren si alguien tipea el comando. Eso no es un defecto de MAK; es lo que
+MAK es.
+
 ## 6. thi.ng / umbrella: LEER ANTES de escribir un generador, un pipeline o un grafo
 
 Regla 2026-07-30 (causa: el usuario pidio thi.ng en varias sesiones seguidas y
