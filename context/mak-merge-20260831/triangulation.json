@@ -1,6 +1,6 @@
 {
   "schema": "mak-root-triangulation-v1",
-  "generated_at": "2026-08-31T21:16:14+00:00",
+  "generated_at": "2026-08-31T21:17:53+00:00",
   "method": [
     "inode_birth",
     "mtime",
@@ -92,6 +92,20 @@
       "git_dirty": false,
       "file_count": 2355,
       "python_file_count": 863
+    },
+    {
+      "path": "/home/mak/_archive/merge-20260831/checkouts/win-flujo-full",
+      "source_id": "_archive-merge-20260831-checkouts-win-flujo-full",
+      "source_mode": "snapshot",
+      "has_git": true,
+      "birth_epoch": 1786643952,
+      "mtime_epoch": 1787253768180195123,
+      "git_first_commit": "2026-08-13T13:30:34-04:00",
+      "git_head": "f588ecf88de43c035d48cc352cc03842ef53ac84",
+      "git_remote": "https://github.com/ligereza/vibecodeine.git",
+      "git_dirty": true,
+      "file_count": 4936,
+      "python_file_count": 934
     },
     {
       "path": "/home/mak/actions-runner/_work/_PipelineMapping/ligereza/vibecodeine",
@@ -279,6 +293,171 @@
       "sha256": "e39b430b6317147a9f53b8949f77282db6c4a1f50fe6069d701ac58ffcec836c",
       "first": "2026-08-24T13:53:59-04:00",
       "last": "2026-08-24T13:53:59-04:00"
+    },
+    {
+      "path": "/home/mak/_archive/merge-20260831/checkouts/win-flujo-full/_logs/local_reconciliation_20260813/tools__recovered__import_claude_sessions.py",
+      "root": "/home/mak/_archive/merge-20260831/checkouts/win-flujo-full",
+      "source_id": "_archive-merge-20260831-checkouts-win-flujo-full",
+      "relative": "_logs/local_reconciliation_20260813/tools__recovered__import_claude_sessions.py",
+      "role": "historical-family-candidate",
+      "size_bytes": 3712,
+      "birth_epoch": 1786643985,
+      "mtime_epoch": 1786641031000000000,
+      "sha256": "b3e53d7f65fccf5e609709ecb5e929ee4cc142668359a5187e9e1d411a768613"
+    },
+    {
+      "path": "/home/mak/_archive/merge-20260831/checkouts/win-flujo-full/_logs/local_reconciliation_20260813/win-before-mak-projection/tools__recovered__import_claude_sessions.py",
+      "root": "/home/mak/_archive/merge-20260831/checkouts/win-flujo-full",
+      "source_id": "_archive-merge-20260831-checkouts-win-flujo-full",
+      "relative": "_logs/local_reconciliation_20260813/win-before-mak-projection/tools__recovered__import_claude_sessions.py",
+      "role": "historical-family-candidate",
+      "size_bytes": 4462,
+      "birth_epoch": 1786643985,
+      "mtime_epoch": 1786580656000000000,
+      "sha256": "1ba5e06a7017668c3aeabb08a81c820fe8af847bee49a3bb1a1451379afedb10"
+    },
+    {
+      "path": "/home/mak/_archive/merge-20260831/checkouts/win-flujo-full/scripts/validate_airdrop.py",
+      "root": "/home/mak/_archive/merge-20260831/checkouts/win-flujo-full",
+      "source_id": "_archive-merge-20260831-checkouts-win-flujo-full",
+      "relative": "scripts/validate_airdrop.py",
+      "role": "historical-family-candidate",
+      "size_bytes": 4912,
+      "birth_epoch": 1786644014,
+      "mtime_epoch": 1782156826000000000,
+      "sha256": "de74116e28eada9e3e0acbf99d485c1e82a0e17d1ce16c599de96df4e5d66810",
+      "first": "2026-06-28T04:39:11-04:00",
+      "last": "2026-06-30T04:36:22-04:00"
+    },
+    {
+      "path": "/home/mak/_archive/merge-20260831/checkouts/win-flujo-full/scripts/run_airdrop_checks.py",
+      "root": "/home/mak/_archive/merge-20260831/checkouts/win-flujo-full",
+      "source_id": "_archive-merge-20260831-checkouts-win-flujo-full",
+      "relative": "scripts/run_airdrop_checks.py",
+      "role": "historical-family-candidate",
+      "size_bytes": 11295,
+      "birth_epoch": 1786644014,
+      "mtime_epoch": 1785591275000000000,
+      "sha256": "2cd80cc3dd947879595acb3eed5b66bd1ffd16525af63b504f3b8e3a10280a76",
+      "first": "2026-06-28T04:39:11-04:00",
+      "last": "2026-07-31T15:17:34-04:00"
+    },
+    {
+      "path": "/home/mak/_archive/merge-20260831/checkouts/win-flujo-full/src/flujo/airdrop.py",
+      "root": "/home/mak/_archive/merge-20260831/checkouts/win-flujo-full",
+      "source_id": "_archive-merge-20260831-checkouts-win-flujo-full",
+      "relative": "src/flujo/airdrop.py",
+      "role": "historical-family-candidate",
+      "size_bytes": 18627,
+      "birth_epoch": 1786644014,
+      "mtime_epoch": 1785591275000000000,
+      "sha256": "ec99bd5f87c8594b42c490022b521c2b03784361d9d85538cefd23960b70cdec",
+      "first": "2026-06-28T04:39:11-04:00",
+      "last": "2026-07-31T15:17:34-04:00"
+    },
+    {
+      "path": "/home/mak/_archive/merge-20260831/checkouts/win-flujo-full/src/flujo/intake/reception.py",
+      "root": "/home/mak/_archive/merge-20260831/checkouts/win-flujo-full",
+      "source_id": "_archive-merge-20260831-checkouts-win-flujo-full",
+      "relative": "src/flujo/intake/reception.py",
+      "role": "historical-family-candidate",
+      "size_bytes": 8866,
+      "birth_epoch": 1786644014,
+      "mtime_epoch": 1785591275000000000,
+      "sha256": "56ab0a32fbab074cb0a876f726daecf27a30135a6ed718317420f69986cc0a7f",
+      "first": "2026-06-28T04:39:11-04:00",
+      "last": "2026-07-31T15:17:34-04:00"
+    },
+    {
+      "path": "/home/mak/_archive/merge-20260831/checkouts/win-flujo-full/tests/test_run_airdrop_checks.py",
+      "root": "/home/mak/_archive/merge-20260831/checkouts/win-flujo-full",
+      "source_id": "_archive-merge-20260831-checkouts-win-flujo-full",
+      "relative": "tests/test_run_airdrop_checks.py",
+      "role": "historical-family-candidate",
+      "size_bytes": 2697,
+      "birth_epoch": 1786644009,
+      "mtime_epoch": 1784351905000000000,
+      "sha256": "fc9533ac31dffeb1a7ba5d9c03ff6cfe5f7d51ff73f0afb8774b4a8de405f111",
+      "first": "2026-06-28T04:39:11-04:00",
+      "last": "2026-07-18T01:19:15-04:00"
+    },
+    {
+      "path": "/home/mak/_archive/merge-20260831/checkouts/win-flujo-full/tests/test_airdrop.py",
+      "root": "/home/mak/_archive/merge-20260831/checkouts/win-flujo-full",
+      "source_id": "_archive-merge-20260831-checkouts-win-flujo-full",
+      "relative": "tests/test_airdrop.py",
+      "role": "historical-family-candidate",
+      "size_bytes": 5782,
+      "birth_epoch": 1786644009,
+      "mtime_epoch": 1785591275000000000,
+      "sha256": "8d425e66df27ca641f7372f9f5fd97719e125042f4f7a8c71c82f4f20afde0a5",
+      "first": "2026-06-28T04:39:11-04:00",
+      "last": "2026-07-31T15:17:34-04:00"
+    },
+    {
+      "path": "/home/mak/_archive/merge-20260831/checkouts/win-flujo-full/tests/test_airdrop_checkpoint.py",
+      "root": "/home/mak/_archive/merge-20260831/checkouts/win-flujo-full",
+      "source_id": "_archive-merge-20260831-checkouts-win-flujo-full",
+      "relative": "tests/test_airdrop_checkpoint.py",
+      "role": "historical-family-candidate",
+      "size_bytes": 5428,
+      "birth_epoch": 1786644009,
+      "mtime_epoch": 1782630027000000000,
+      "sha256": "2ec49caa09d393ee98a992768e738f46326c4aa40dbed2b989d6e3678e34d7fe",
+      "first": "2026-06-28T04:39:11-04:00",
+      "last": "2026-06-30T04:36:22-04:00"
+    },
+    {
+      "path": "/home/mak/_archive/merge-20260831/checkouts/win-flujo-full/tests/test_reception.py",
+      "root": "/home/mak/_archive/merge-20260831/checkouts/win-flujo-full",
+      "source_id": "_archive-merge-20260831-checkouts-win-flujo-full",
+      "relative": "tests/test_reception.py",
+      "role": "historical-family-candidate",
+      "size_bytes": 1410,
+      "birth_epoch": 1786644009,
+      "mtime_epoch": 1785204280000000000,
+      "sha256": "b2b3de542eb33e0acfaec603499ffcac9bd681c834949ad55fc5018640dfd9bd",
+      "first": "2026-06-28T04:39:11-04:00",
+      "last": "2026-07-27T22:00:39-04:00"
+    },
+    {
+      "path": "/home/mak/_archive/merge-20260831/checkouts/win-flujo-full/tests/test_airdrop_signing.py",
+      "root": "/home/mak/_archive/merge-20260831/checkouts/win-flujo-full",
+      "source_id": "_archive-merge-20260831-checkouts-win-flujo-full",
+      "relative": "tests/test_airdrop_signing.py",
+      "role": "historical-family-candidate",
+      "size_bytes": 10401,
+      "birth_epoch": 1786644009,
+      "mtime_epoch": 1785591275000000000,
+      "sha256": "1887c3b83e779bfad75f29c1d06ba34d7f24f1887a543f7fcac6a5d324e10020",
+      "first": "2026-07-31T15:17:34-04:00",
+      "last": "2026-07-31T15:17:34-04:00"
+    },
+    {
+      "path": "/home/mak/_archive/merge-20260831/checkouts/win-flujo-full/tests/test_validate_airdrop.py",
+      "root": "/home/mak/_archive/merge-20260831/checkouts/win-flujo-full",
+      "source_id": "_archive-merge-20260831-checkouts-win-flujo-full",
+      "relative": "tests/test_validate_airdrop.py",
+      "role": "historical-family-candidate",
+      "size_bytes": 3309,
+      "birth_epoch": 1786644009,
+      "mtime_epoch": 1782156826000000000,
+      "sha256": "33a459b6d1958694dd26c9b35082338d1e8ed95f274a042087108dd513dd0b3c",
+      "first": "2026-06-28T04:39:11-04:00",
+      "last": "2026-06-30T04:36:22-04:00"
+    },
+    {
+      "path": "/home/mak/_archive/merge-20260831/checkouts/win-flujo-full/tools/recovered/import_claude_sessions.py",
+      "root": "/home/mak/_archive/merge-20260831/checkouts/win-flujo-full",
+      "source_id": "_archive-merge-20260831-checkouts-win-flujo-full",
+      "relative": "tools/recovered/import_claude_sessions.py",
+      "role": "historical-family-candidate",
+      "size_bytes": 3712,
+      "birth_epoch": 1786644009,
+      "mtime_epoch": 1786641176000000000,
+      "sha256": "b3e53d7f65fccf5e609709ecb5e929ee4cc142668359a5187e9e1d411a768613",
+      "first": "2026-08-12T08:48:01-04:00",
+      "last": "2026-08-13T13:30:34-04:00"
     },
     {
       "path": "/home/mak/.claude/jobs/3428381a/tmp/prov_probe2.py",
@@ -809,12 +988,41 @@
       "sha256": "2d475f0aba66a6b1b1e8765e2e93a05d1633b9bd096dde574e4675b39bd0751d"
     }
   ],
-  "duplicate_candidate_hashes": {},
+  "duplicate_candidate_hashes": {
+    "2cd80cc3dd947879595acb3eed5b66bd1ffd16525af63b504f3b8e3a10280a76": [
+      "/home/mak/_archive/merge-20260831/checkouts/runner-vibecodeine-full/scripts/run_airdrop_checks.py",
+      "/home/mak/_archive/merge-20260831/checkouts/win-flujo-full/scripts/run_airdrop_checks.py"
+    ],
+    "56ab0a32fbab074cb0a876f726daecf27a30135a6ed718317420f69986cc0a7f": [
+      "/home/mak/_archive/merge-20260831/checkouts/runner-vibecodeine-full/src/flujo/intake/reception.py",
+      "/home/mak/_archive/merge-20260831/checkouts/win-flujo-full/src/flujo/intake/reception.py"
+    ],
+    "fc9533ac31dffeb1a7ba5d9c03ff6cfe5f7d51ff73f0afb8774b4a8de405f111": [
+      "/home/mak/_archive/merge-20260831/checkouts/runner-vibecodeine-full/tests/test_run_airdrop_checks.py",
+      "/home/mak/_archive/merge-20260831/checkouts/win-flujo-full/tests/test_run_airdrop_checks.py"
+    ],
+    "8d425e66df27ca641f7372f9f5fd97719e125042f4f7a8c71c82f4f20afde0a5": [
+      "/home/mak/_archive/merge-20260831/checkouts/runner-vibecodeine-full/tests/test_airdrop.py",
+      "/home/mak/_archive/merge-20260831/checkouts/win-flujo-full/tests/test_airdrop.py"
+    ],
+    "2ec49caa09d393ee98a992768e738f46326c4aa40dbed2b989d6e3678e34d7fe": [
+      "/home/mak/_archive/merge-20260831/checkouts/runner-vibecodeine-full/tests/test_airdrop_checkpoint.py",
+      "/home/mak/_archive/merge-20260831/checkouts/win-flujo-full/tests/test_airdrop_checkpoint.py"
+    ],
+    "b2b3de542eb33e0acfaec603499ffcac9bd681c834949ad55fc5018640dfd9bd": [
+      "/home/mak/_archive/merge-20260831/checkouts/runner-vibecodeine-full/tests/test_reception.py",
+      "/home/mak/_archive/merge-20260831/checkouts/win-flujo-full/tests/test_reception.py"
+    ],
+    "b3e53d7f65fccf5e609709ecb5e929ee4cc142668359a5187e9e1d411a768613": [
+      "/home/mak/_archive/merge-20260831/checkouts/win-flujo-full/_logs/local_reconciliation_20260813/tools__recovered__import_claude_sessions.py",
+      "/home/mak/_archive/merge-20260831/checkouts/win-flujo-full/tools/recovered/import_claude_sessions.py"
+    ]
+  },
   "counts": {
-    "roots": 9,
-    "candidates": 59,
+    "roots": 10,
+    "candidates": 72,
     "temporary_python": 48,
-    "historical_family_candidates": 11,
-    "duplicate_hash_groups": 0
+    "historical_family_candidates": 24,
+    "duplicate_hash_groups": 7
   }
 }
