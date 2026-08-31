@@ -1397,6 +1397,19 @@ def _learning_db_path():
     return Path(configured).expanduser() if configured else Path(_REPO_ROOT) / "data" / "mak_knowledge.db"
 
 
+def _status_for(payload) -> int:
+    """503 when a payload says its own dependency is absent, else 200.
+
+    A body that reads `{"available": false, "reason": "..."}` under a 200 is
+    honest to a human and invisible to a machine: a probe, a watchdog or a
+    proxy reads the status code. This keeps the named body and makes the code
+    agree with it.
+    """
+    if isinstance(payload, dict) and payload.get("available") is False:
+        return 503
+    return 200
+
+
 def _learning_read_only():
     if _learning_summary_api is None:
         return {"available": False, "reason": "project_router_unavailable", "database": _learning_db_path().name}
@@ -4761,14 +4774,22 @@ class H(BaseHTTPRequestHandler):
                 return self._json(_research_job(int(raw_id)))
             except Exception as exc:
                 return self._json({"available": False, "error": str(exc)[:200]}, 400)
+        # These two named their unavailability in the BODY and still answered
+        # 200, so a client that reads the status code -- which is what a probe,
+        # a watchdog or a proxy reads -- saw success while the dependency was
+        # missing. Their siblings `/api/project/route` and `/api/project/probe`
+        # already answer 503 for the same cause. Measured 2026-08-31: the
+        # inconsistency, not the message, was the defect.
         if p == "/api/project/learning":
-            return self._json(_learning_read_only())
+            payload = _learning_read_only()
+            return self._json(payload, _status_for(payload))
         if p == "/api/project/context":
             query = urllib.parse.parse_qs(u.query)
-            return self._json(_project_context_read_only(
+            payload = _project_context_read_only(
                 context_id=(query.get("context_id") or [None])[0],
                 project_id=(query.get("project_id") or [None])[0],
-            ))
+            )
+            return self._json(payload, _status_for(payload))
         if p == "/api/status":
             return self._json(_system_status_read_only())
         for prefix in SERVICE_PROXY_PREFIXES:

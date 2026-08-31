@@ -170,28 +170,47 @@ class TestProjectRouterSplitBehavior:
         assert payload["error"] == "project_router_unavailable"
 
 
-class TestProjectReadOnlySilentDegradation:
-    """/api/project/learning and /api/project/context share the same guard
-    as the router above, but neither route forwards a status code: both
-    always answer 200, degraded or not."""
+class TestProjectReadOnlyForwardsItsUnavailability:
+    """/api/project/learning and /api/project/context, now answering 503.
 
-    def test_learning_degrades_to_200_with_available_false(self, monkeypatch):
+    These two assertions used to be the other way round, and on purpose: they
+    pinned the defect. Both routes named their unavailability in the BODY --
+    `{"available": false, "reason": "..."}` -- and still answered 200, so a
+    probe, a watchdog or a proxy, all of which read the status code, saw
+    success while the dependency was missing. Their siblings
+    `/api/project/route` and `/api/project/probe` already answered 503 for the
+    same cause, so the defect was the inconsistency, not the message.
+
+    Pinning it was the right call: the fix of 2026-08-31 could not land
+    silently, it had to break these two first. The body is unchanged -- what
+    changed is that the code now agrees with it.
+    """
+
+    def test_learning_forwards_503_and_keeps_the_named_reason(self, monkeypatch):
         monkeypatch.setattr(hub, "_learning_summary_api", None)
 
         payload, code = _get("/api/project/learning")
 
-        assert code == 200, "silent degradation: no 503 even though the API is unavailable"
+        assert code == 503, "una dependencia ausente no se responde con 200"
         assert payload["available"] is False
         assert payload["reason"] == "project_router_unavailable"
 
-    def test_context_degrades_to_200_with_available_false(self, monkeypatch):
+    def test_context_forwards_503_and_keeps_the_named_reason(self, monkeypatch):
         monkeypatch.setattr(hub, "_project_context_api", None)
 
         payload, code = _get("/api/project/context?context_id=c1")
 
-        assert code == 200
+        assert code == 503
         assert payload == {"available": False, "read_only": True,
                            "reason": "project_context_unavailable", "contexts": []}
+
+    def test_a_healthy_payload_still_answers_200(self, monkeypatch):
+        """El arreglo no puede convertir en 503 una respuesta sana."""
+        monkeypatch.setattr(hub, "_learning_summary_api",
+                            lambda db: {"available": True, "entries": 0})
+        payload, code = _get("/api/project/learning")
+        assert code == 200
+        assert payload["available"] is True
 
 
 class TestPortfolioEvidenceNamedFailure:
