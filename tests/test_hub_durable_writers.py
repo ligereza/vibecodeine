@@ -126,3 +126,89 @@ def test_service_proxy_forwards_html_and_post_contract(monkeypatch):
         upstream_thread.join(timeout=3)
         hub_server.server_close()
         upstream.server_close()
+
+
+# The three tests below cover _proxy_service()'s error paths: a body over
+# the size cap, an unreachable upstream, and an upstream that answers with
+# an error status. Only the success path (200/204 relayed) had a witness
+# before this file; a grep across the suite for these signatures found none.
+
+
+class _RecordingHandler:
+    """Just enough of http.server's request handler for _proxy_service()."""
+
+    def __init__(self, path="/research/api/jobs"):
+        self.path = path
+        self.headers = {}
+        self.sent = None
+
+    def _send(self, body_text, ctype="text/plain; charset=utf-8", code=200):
+        self.sent = ("text", body_text, ctype, code)
+
+    def _send_bytes(self, data, ctype="application/octet-stream", code=200):
+        self.sent = ("bytes", data, ctype, code)
+
+
+def test_proxy_rejects_an_oversized_body_before_forwarding_it():
+    fake = _RecordingHandler()
+    oversized = b"x" * (hub.SERVICE_PROXY_MAX_BYTES + 1)
+
+    result = hub.H._proxy_service(fake, "research", "POST", body=oversized)
+
+    assert result is True
+    kind, body_text, _ctype, code = fake.sent
+    assert (kind, code) == ("text", 413)
+    assert body_text == "request too large"
+
+
+def test_proxy_reports_an_unreachable_upstream_as_502(monkeypatch):
+    # Port 1 is privileged and nothing listens there in a test sandbox, so
+    # the connection is refused immediately instead of timing out.
+    monkeypatch.setattr(hub, "SERVICE_PROXY_PREFIXES",
+                        {"research": "http://127.0.0.1:1", "codex": "http://127.0.0.1:1"})
+    fake = _RecordingHandler()
+
+    result = hub.H._proxy_service(fake, "research", "GET")
+
+    assert result is True
+    kind, body_text, _ctype, code = fake.sent
+    assert (kind, code) == ("text", 502)
+    assert body_text.startswith("service unavailable:")
+
+
+def test_proxy_passes_through_an_upstream_error_status_and_body(monkeypatch):
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+    class FailingUpstream(BaseHTTPRequestHandler):
+        def do_GET(self):
+            body = b'{"detail":"not found upstream"}'
+            self.send_response(404)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, *_args):
+            return
+
+    upstream = ThreadingHTTPServer(("127.0.0.1", 0), FailingUpstream)
+    thread = threading.Thread(target=upstream.serve_forever, daemon=True)
+    thread.start()
+    try:
+        monkeypatch.setattr(
+            hub, "SERVICE_PROXY_PREFIXES",
+            {"research": "http://127.0.0.1:%d" % upstream.server_port,
+             "codex": "http://127.0.0.1:%d" % upstream.server_port})
+        fake = _RecordingHandler()
+
+        result = hub.H._proxy_service(fake, "research", "GET")
+
+        assert result is True
+        kind, body_bytes, ctype, code = fake.sent
+        assert (kind, code) == ("bytes", 404)
+        assert ctype == "application/json"
+        assert json.loads(body_bytes) == {"detail": "not found upstream"}
+    finally:
+        upstream.shutdown()
+        thread.join(timeout=3)
+        upstream.server_close()
