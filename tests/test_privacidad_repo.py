@@ -60,7 +60,7 @@ def _archivos():
         # de por que se archivo algo. El ratchet protege el codigo VIVO, que es
         # donde un dato nuevo puede entrar. Los cuatro casos historicos con el
         # usuario de Windows quedan ahi, sabidos y no ignorados.
-        if (nombre.startswith(("_archive/", "docs/recovered/"))
+        if (nombre.startswith(("_archive/", "docs/recovered/", "context-history/"))
                 or "/legacy_" in nombre):
             continue
         # el sanitizador tiene el patron como dato, no como filtracion

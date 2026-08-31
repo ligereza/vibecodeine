@@ -75,7 +75,8 @@ PRODUCTION_SEARCH_SUFFIXES = {
 }
 TOOL_SKIP_DIRS = {
     ".git", ".venv", "__pycache__", "_archive", "build", "cache", "dist",
-    "fixtures", "logs", "node_modules", "state", "venv",
+    ".cache", "fixtures", "logs", "node_modules", "state", "venv",
+    "exiftool-13.59",
 }
 
 
@@ -89,7 +90,7 @@ def _text_files(root: Path, relative_roots: tuple[str, ...]) -> list[Path]:
         for directory, dirnames, filenames in os.walk(base):
             kept: list[str] = []
             for name in sorted(dirnames):
-                if name in TOOL_SKIP_DIRS:
+                if name in TOOL_SKIP_DIRS or name.startswith("."):
                     continue
                 # /home/mak is the machine root, so it can contain unrelated
                 # nested checkouts (for example src/ml-mobileclip).  A nested
@@ -186,31 +187,42 @@ def _tool_inventory(root: Path = ROOT) -> dict[str, Any]:
     production_text = load(production_files)
     test_text = load(test_files)
     workflow_text = load(workflow_files)
+    # Search every source file once with one alternation.  The old
+    # implementation ran one regex per tool over every file (137 x ~1,000),
+    # which became a multi-minute CPU loop after /home/mak became the physical
+    # project root.  This preserves the three match classes while making the
+    # cost proportional to the text corpus rather than tool count.
+    stems = sorted({path.stem for path in tool_paths}, key=lambda value: (-len(value), value))
+    names = sorted({path.name for path in tool_paths}, key=lambda value: (-len(value), value))
+    stem_alt = "|".join(re.escape(stem) for stem in stems)
+    name_alt = "|".join(re.escape(name) for name in names)
+    consumer_pattern = re.compile(
+        rf"(?P<file>{name_alt})|tools\.(?P<module>{stem_alt})\b|"
+        rf"(?:from\s+|import\s+)(?P<import>{stem_alt})\b"
+    )
+    by_stem = {path.stem: path for path in tool_paths}
+
+    def indexed_hits(texts: dict[Path, str]) -> dict[str, list[str]]:
+        found: dict[str, set[str]] = {stem: set() for stem in stems}
+        for path, text in texts.items():
+            for match in consumer_pattern.finditer(text):
+                token = match.group("file")
+                stem = token[:-3] if token else (match.group("module") or match.group("import"))
+                owner = by_stem.get(stem)
+                if owner is not None and path != owner:
+                    found[stem].add(path.relative_to(root).as_posix())
+        return {stem: sorted(paths) for stem, paths in found.items()}
+
+    production_hits = indexed_hits(production_text)
+    test_hits = indexed_hits(test_text)
+    workflow_hits = indexed_hits(workflow_text)
     rows: list[dict[str, Any]] = []
     for tool_path in tool_paths:
         name = tool_path.name
         stem = tool_path.stem
-        import_pattern = re.compile(
-            rf"\b(?:from\s+|import\s+){re.escape(stem)}\b"
-        )
-
-        def hits(texts: dict[Path, str]) -> list[str]:
-            found: list[str] = []
-            for path, text in texts.items():
-                # All paths in the bounded inventories are absolute paths
-                # rooted at ROOT.  Comparing them directly avoids resolving
-                # hundreds of symlinks once per tool (important now that MAK
-                # itself is the user's home directory).
-                if path == tool_path:
-                    continue
-                if (name in text or f"tools.{stem}" in text
-                        or import_pattern.search(text)):
-                    found.append(path.relative_to(root).as_posix())
-            return found
-
-        production = hits(production_text)
-        tests = hits(test_text)
-        workflows = hits(workflow_text)
+        production = production_hits[stem]
+        tests = test_hits[stem]
+        workflows = workflow_hits[stem]
         rows.append({
             "path": f"tools/{name}",
             "exists": True,

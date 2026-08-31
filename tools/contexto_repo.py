@@ -17,7 +17,11 @@ from pathlib import Path
 _REPO = Path(__file__).resolve().parents[1]
 _SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv", ".mypy_cache",
               ".pytest_cache", "dist", "build", "agentes", "estado", "buzon",
-              "checkpoints"}
+              "checkpoints", "state", "actions-runner", "WIN", "curatoria_inbox",
+              "RD", "OneDrive", "GoogleDrive", "Documents", "Documentos",
+              "Desktop", "Escritorio", "Downloads", "Descargas", "Pictures",
+              "Imágenes", "Videos", "Vídeos", "Music", "Música", "Público",
+              "portfolio_media", "n8n-local", "searxng"}
 
 
 def _skip(d: str) -> bool:
