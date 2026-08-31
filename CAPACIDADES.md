@@ -486,6 +486,8 @@ tabla; archivo sin entrada = ratchet rojo.
 | `medir_organismo.py` | VIVO | mide el organismo MAK y lo imprime: lineas de cron activas/pausadas, cuales de los cinco organos de `/home/mak/GENESIS.md` responden, si `main` tiene proteccion de rama (hay un cron que mergea), cuantas lineas arrancarian al reanudar, y los entornos Python. Solo lectura: no toca crontab, servicios ni archivos. Existe para que `docs/MAK_ORGANISMO.md` no vuelva a cargar esas cifras en prosa -- la regla 3 de `docs/AUTORIDAD.md` dice que lo medido se mide, no se escribe. Consumidor: una persona, a mano | 2026-08-28 |
 | `medir_tests.py` | VIVO | mapea la suite por el commit que agrego cada archivo de test: separa las areas que llegaron enteras en un commit (un diseno) de las que crecieron en commits sueltos a lo largo de semanas (acrecion, donde una propiedad puede quedar verificada dos veces). El proposito de cada test ya esta escrito en el mensaje de su commit de alta, asi que no abre ningun test para saberlo: corre un solo `git log` y solo cuenta lineas `def test_`. `--cronologia` lista los 164 commits de alta del mas viejo al mas nuevo. Solo lectura. Consumidor: una persona, a mano | 2026-08-29 |
 | `medir_test_overlap.py` | VIVO | medidor read-only de solapamiento estructural: agrupa funciones test por forma AST normalizada, conserva nombres/operaciones y produce candidatos de revision; consumidor: una persona, a mano | 2026-08-31 |
+| `mak_merge_roots.py` | VIVO | planifica y ejecuta la fusión física reversible de raíces `flujo`/`vibecodeine`: compara hashes, conserva variantes y registra cada copia o redirección; consumidor: operador, a mano | 2026-08-31 |
+| `mak_triangulate_roots.py` | VIVO | cruza fechas de inode, hashes y primera/última aparición en Git para distinguir antecesores, continuaciones y snapshots sin interpretar su contenido; consumidor: operador, a mano | 2026-08-31 |
 | `mak_heartbeat.py` | VIVO | compara el estado medido de MAK contra `data/mak_expected_state.json` (cron activas, organos, unidades systemd de usuario Y de sistema -- ollama, postgresql, docker, el runner de Actions --, frenos de archivo y contenedores docker) y solo habla cuando difieren, en cualquiera de las dos direcciones (algo que debia responder y no responde, o algo que debia estar apagado y arranco). Sale 0 en silencio si todo calza. Si hay deriva, la imprime y avisa por ntfy reutilizando `ntfy_publish`/`load_env` de `cultura/mak_research/research_lib.py`; sin tema configurado, o si el envio falla, degrada a log y lo dice (nunca falla en silencio). `--capture` mide el estado actual y lo guarda como nueva linea base, para fijarla despues de reanudar. Solo lectura sobre MAK: no toca crontab, servicios ni contenedores. Existe porque el crontab estuvo pausado dos semanas sin que nadie se enterara mientras la suite y el hub seguian verdes. Consumidor: linea de cron `MAK-HEARTBEAT` en `cultura/mak_plataforma/crontab.mak` (pausada, la reanudacion es decision del operador) y `tests/test_mak_heartbeat.py`; a mano: `python3 tools/mak_heartbeat.py` | 2026-08-30 |
 | `compile_portfolio.py` | VIVO | compila la base de afirmaciones `mak-portfolio-claims-v1` y renderiza cada formato declarado de `data/portfolio_formats/`; consumidor `tests/test_portfolio_production.py` y los documentos en `out/portfolio/` | 2026-08-28 |
 | `compile_ssd_order_foundation.py` | VIVO | compila `mak-ssd-order-foundation-v1` desde el indice SSD, la proyeccion de orden, intake, reconstrucciones y autoridad de research en solo lectura; consumidor `tests/test_ssd_order_operator_frontier.py` y el Hub | 2026-08-28 |
@@ -835,10 +837,10 @@ que declara la seccion "Reproducir esta medicion", tres dias despues.
 
 | | 2026-08-28 | 2026-08-31 |
 |---|---:|---:|
-| herramientas en `tools/` | 92 | **117** |
+| herramientas en `tools/` | 92 | **119** |
 | con referencia en produccion | 46 | **46** |
 | solo referenciadas por un test | 33 | **39** |
-| sin ninguna referencia | 13 | **32** |
+| sin ninguna referencia | 13 | **34** |
 | con disparador de workflow | 4 | **4** |
 
 Los 4 con disparador: `gen_archivo_iskvw.py`, `render_flyer_mak.py`,
@@ -852,7 +854,7 @@ y porque la medición endurecida ya no cuenta comentarios, docstrings o fixtures
 como consumidores.
 
 Cero referencias no es muerte, y esta tabla lo dice desde el 28. Lo que hoy
-confirma es lo mismo con otras cifras: **4 de 117 tienen disparador**, o sea 113
+confirma es lo mismo con otras cifras: **4 de 119 tienen disparador**, o sea 115
 solo corren si alguien tipea el comando. Eso no es un defecto de MAK; es lo que
 MAK es.
 
