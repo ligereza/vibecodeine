@@ -1172,9 +1172,28 @@ def emitir_evento(depto, job_id, tipo, **campos):
         pass
 
 
+_NTFY_SILENCE_REPORTED = False
+
+
 def ntfy_publish(topic, message, title="", priority="default", errors=None):
     """Publica a ntfy.sh. Header Title debe ser ASCII: se pliega."""
     if not topic:
+        # Measured 2026-08-30: NTFY_TOPIC_OUT is set nowhere on MAK -- not in
+        # research.env, not in any organ .env, not in the environment -- while
+        # four live modules publish through here (research.py, memoria.py,
+        # correlacionar_archivos.py and the heartbeat). Every one of them was
+        # calling into this silent `return False`, so MAK's entire outbound
+        # channel was off and nothing said so.
+        #
+        # The topic is not invented here on purpose: an ntfy topic name is
+        # effectively its password, so choosing one is the operator's call. What
+        # is fixed here is the silence. Once per process, on stderr, so a cron
+        # log carries the reason instead of an unexplained quiet.
+        global _NTFY_SILENCE_REPORTED
+        if not _NTFY_SILENCE_REPORTED:
+            _NTFY_SILENCE_REPORTED = True
+            print("ntfy: sin tema configurado (NTFY_TOPIC_OUT); no se envia "
+                  "ninguna notificacion desde este proceso", file=sys.stderr)
         return False
     try:
         ascii_title = unicodedata.normalize("NFKD", title).encode(
