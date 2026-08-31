@@ -187,10 +187,17 @@ def consolidar(informes_dir: str) -> List[Dict]:
     """
     Consolidaall .md files in directory que mencionen fondos/postulación/subvención.
     Dedup por nombre de fondo (conserva entrada con más campos llenos).
+
+    Raises FileNotFoundError si `informes_dir` no existe. A missing directory
+    used to return [] here, which flowed all the way to `main()` as "Fondos
+    procesados: 0" and exit code 0 -- indistinguishable from a directory that
+    genuinely had no matching informes this cycle. A wrong or unmounted path
+    must not read as "nothing to do".
     """
     dir_path = Path(informes_dir)
     if not dir_path.exists():
-        return []
+        raise FileNotFoundError(
+            "no existe el directorio de informes: %s" % dir_path)
 
     todos_candidatos = []
     for md_file in dir_path.glob('*.md'):
@@ -294,7 +301,11 @@ def main():
             out_file = sys.argv[idx + 1]
 
     # Consolidar
-    candidatos = consolidar(dir_informes)
+    try:
+        candidatos = consolidar(dir_informes)
+    except FileNotFoundError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(1)
 
     # Renderizar
     calendario = render_calendario(candidatos)

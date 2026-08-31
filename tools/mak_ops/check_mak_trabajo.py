@@ -17,5 +17,12 @@ def main() -> int:
     except Exception as e: out,err='',str(e); r=type('R',(),{'returncode':99})()
     md=f"# MAK trabajo check\n\nGenerated: `{dt.datetime.now().astimezone().isoformat(timespec='seconds')}`\nSSH exit: `{r.returncode}`\n\n```text\n{out.strip()}\n```\n\nSTDERR:\n```text\n{err.strip() or '(none)'}\n```\n"
     Path(a.output).write_text(md,encoding='utf-8'); print(f'Written: {Path(a.output).resolve()}')
-    return 0
+    # Fixed 2026-08-31: this used to `return 0` unconditionally, so a caller
+    # checking the exit code of this "check" tool saw success even when the
+    # SSH leg was completely dead (e.g. exit 255, "Connection timed out") --
+    # the same family of bug as `flujo doctor` reporting `airdrop pendiente:
+    # OK` for a directory that never existed. The markdown always named the
+    # SSH exit code, but the process exit code did not, so a script piping
+    # `check_mak_trabajo.py && something` could not tell measurement failed.
+    return 0 if r.returncode == 0 else 1
 if __name__=='__main__': raise SystemExit(main())

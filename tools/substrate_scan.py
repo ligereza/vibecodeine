@@ -76,17 +76,31 @@ def extractor_version() -> dict[str, str]:
 
 
 def git_state() -> dict[str, Any]:
-    def run(*args: str) -> str:
+    # `run` used to fold a FAILED git call (not a repo, git missing, timeout)
+    # into the same empty string as "no output" -- so `tree_dirty: bool(dirty)`
+    # read as False (clean) for a check that never ran at all, and `commit`
+    # came back "" indistinguishable from a repo with no history. This tool's
+    # own docstring is "refuses to produce a result without a run record"; a
+    # dirty flag that is silently wrong is not a run record, it is a guess
+    # wearing one.
+    def run(*args: str) -> tuple[str, bool]:
         try:
-            return subprocess.run(["git", *args], cwd=ROOT, capture_output=True,
-                                  text=True, timeout=30).stdout.strip()
+            out = subprocess.run(["git", *args], cwd=ROOT, capture_output=True,
+                                 text=True, timeout=30)
         except (OSError, subprocess.SubprocessError):
-            return ""
-    dirty = run("status", "--porcelain=v1")
-    return {"commit": run("rev-parse", "HEAD"),
-            "branch": run("rev-parse", "--abbrev-ref", "HEAD"),
-            "tree_dirty": bool(dirty),
-            "dirty_paths": dirty.splitlines()[:20]}
+            return "", False
+        return out.stdout.strip(), out.returncode == 0
+    dirty, dirty_ok = run("status", "--porcelain=v1")
+    commit, commit_ok = run("rev-parse", "HEAD")
+    branch, branch_ok = run("rev-parse", "--abbrev-ref", "HEAD")
+    available = dirty_ok and commit_ok and branch_ok
+    return {"commit": commit,
+            "branch": branch,
+            "available": available,
+            # None (not False) when unavailable: an unmeasured tree must not
+            # be reported as a clean one.
+            "tree_dirty": bool(dirty) if available else None,
+            "dirty_paths": dirty.splitlines()[:20] if available else []}
 
 
 def root_identity(root: Path) -> dict[str, Any]:
@@ -348,6 +362,7 @@ def main(argv: list[str] | None = None) -> int:
         "manifest_sha256": result["manifest_sha256"],
         "errors": result["error_count"],
         "commit": record["git"]["commit"][:12],
+        "git_available": record["git"]["available"],
         "tree_dirty": record["git"]["tree_dirty"],
         "extractor": record["extractor_version"]["combined"],
         "elapsed_seconds": result["elapsed_seconds"],

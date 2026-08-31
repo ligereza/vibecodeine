@@ -82,19 +82,31 @@ def _quarantine_summary(path: str) -> dict:
     }
 
 
-def _run_git(args: list[str]) -> str:
-    result = subprocess.run(
-        ["git", *args],
-        cwd=_repo_root(),
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        timeout=20,
-    )
+def _run_git(args: list[str]) -> tuple[str, bool]:
+    """Run one git subcommand. Returns (stdout, ok).
+
+    `ok` is False when the call could not be measured at all -- not a repo,
+    git missing, a timeout -- so a caller cannot mistake "git failed" for
+    "git ran and had nothing to say". Before this, both collapsed to the same
+    empty string, and `_branch_state` read a FAILED `git status` as "nothing
+    dirty": the same shape of bug already found in `flujo doctor` reporting
+    `airdrop pendiente: OK` for a directory that did not exist.
+    """
+    try:
+        result = subprocess.run(
+            ["git", *args],
+            cwd=_repo_root(),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=20,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return "", False
     if result.returncode != 0:
-        return ""
-    return result.stdout.strip()
+        return "", False
+    return result.stdout.strip(), True
 
 
 def _run_gh(args: list[str]) -> str:
@@ -139,13 +151,15 @@ def _classify_branch(branch: str) -> str:
 
 
 def _branch_state() -> dict:
-    current = _run_git(["branch", "--show-current"])
-    dirty = _run_git(["status", "--porcelain"]).splitlines()
-    raw_remote = _run_git([
+    current, _current_ok = _run_git(["branch", "--show-current"])
+    dirty_raw, git_measurable = _run_git(["status", "--porcelain"])
+    dirty = dirty_raw.splitlines()
+    raw_remote_raw, _remote_ok = _run_git([
         "for-each-ref",
         "--format=%(refname:short)",
         "refs/remotes/origin",
-    ]).splitlines()
+    ])
+    raw_remote = raw_remote_raw.splitlines()
     remote_branches = sorted(
         ref.replace("origin/", "", 1)
         for ref in raw_remote
@@ -176,6 +190,11 @@ def _branch_state() -> dict:
         "current": current,
         "current_classification": _classify_branch(current) if current else "unknown",
         "dirty": dirty,
+        # False when `git status` could not be measured at all: an empty
+        # `dirty` above then means "we could not tell", not "clean". See
+        # `autonomy_status`, which turns this into an explicit blocker
+        # instead of silently treating an unmeasured tree as clean.
+        "git_measurable": git_measurable,
         "remote_branches": remote_branches,
         "canonical_present": canonical_present,
         "legacy_transition_branches": classified["legacy_transition"],
@@ -254,6 +273,8 @@ def _operational_state(branches, prs, common, batches, quarantine, readme):
         if str(pr.get("mergeStateStatus") or "").upper() in {"BLOCKED", "DIRTY"}
     ]
     actions = []
+    if not branches.get("git_measurable", True):
+        actions.append("remeasure_git_status")
     if branches["dirty"]:
         actions.append("clean_repo_before_promotion")
     if branches["unclassified_remote_branches"]:
@@ -354,6 +375,10 @@ def autonomy_status(common_path: str = tandas.COMMON_LEDGER,
         else {"executor": "mak", "local_providers": "not_used"}
     )
     blockers = []
+    if not branches.get("git_measurable", True):
+        # `dirty` is [] here whether the tree is clean or the check never
+        # ran -- do not let a failed measurement pass as "repo_dirty: no".
+        blockers.append("git_status_unmeasured")
     if branches["dirty"]:
         blockers.append("repo_dirty")
     missing = [
