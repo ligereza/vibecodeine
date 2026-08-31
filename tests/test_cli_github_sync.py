@@ -46,13 +46,26 @@ def test_status_reports_dirty_tree_when_there_are_local_changes(monkeypatch):
     assert "M archivo.py" in result.output
 
 
-def test_status_on_a_broken_git_falsely_claims_a_clean_tree(monkeypatch, tmp_path: Path):
-    """KNOWN DEFECT, documented not endorsed: rev-parse and status both fail
-    (e.g. run from a directory that is not a git repo at all), and the
-    command still prints '(check) Working tree limpio' plus 'Estado de
-    GitHub preparado' with exit code 0 -- the failure of the check itself is
-    never named. This is the same class of bug already found in `flujo
-    doctor` (a directory-existence check that always read OK)."""
+def test_status_on_a_broken_git_says_so_instead_of_claiming_a_clean_tree(
+        monkeypatch, tmp_path: Path):
+    """The defect this test used to pin, now fixed and pinned the other way.
+
+    Until 2026-08-31 the assertions here were the opposite: they recorded that
+    `rev-parse`, `remote` and `status` could ALL fail -- running outside a git
+    repository, say -- and the command still printed "Working tree limpio" and
+    "Estado de GitHub preparado" with exit code 0. Empty stdout from a failed
+    `git status` reads exactly like a clean tree, so the failure of the check
+    was indistinguishable from the check passing. It was the same class of bug
+    as `flujo doctor` reporting `airdrop pendiente: OK` by testing a directory
+    that did not exist.
+
+    Pinning the defect was the right call: it made the fix a visible behaviour
+    change instead of a silent one, and this file is the proof it worked.
+
+    What the fixed command must do: name that the measurement failed, refuse to
+    call the tree clean, and exit non-zero -- an unmeasured tree is not a clean
+    tree.
+    """
     monkeypatch.setattr("flujo.paths.repo_root", lambda: tmp_path)
     monkeypatch.setattr("subprocess.run", _fake_run_factory({
         "rev-parse": _completed(128, "", "fatal: not a git repository\n"),
@@ -60,13 +73,12 @@ def test_status_on_a_broken_git_falsely_claims_a_clean_tree(monkeypatch, tmp_pat
         "status": _completed(128, "", "fatal: not a git repository\n"),
     }))
     result = runner.invoke(app, ["github-sync", "--status"])
-    assert result.exit_code == 0, (
-        "the command exits 0 even though every git call failed -- that is "
-        "the defect, pinned here so a fix is a visible behavior change")
-    assert "Working tree limpio" in result.output, (
-        "empty stdout from a FAILED `git status` reads as 'no changes'; a "
-        "fixed version should say the check could not run, not that the "
-        "tree is clean")
+    assert result.exit_code != 0, "una medicion que fallo no puede salir 0"
+    assert "Working tree limpio" not in result.output, \
+        "no se afirma limpio un arbol que no se pudo medir"
+    assert "No se pudo medir el working tree" in result.output
+    assert "128" in result.output, "el codigo de salida de git se reporta"
+    assert "NO verificado" in result.output
 
 
 def test_push_with_nothing_to_commit_still_attempts_the_push(monkeypatch):
