@@ -38,6 +38,7 @@ from typing import Iterable
 HOME = Path("/home/mak")
 DEFAULT_DEST = HOME / "flujo"
 RUN_ID = "mak-merge-20260831"
+ARCHIVE_ID = RUN_ID.removeprefix("mak-")
 PLAN_PATH = DEFAULT_DEST / "context" / RUN_ID / "plan.json"
 LOG_PATH = DEFAULT_DEST / "context" / RUN_ID / "actions.jsonl"
 ARCHIVE_ROOT_NAME = "_archive"
@@ -116,8 +117,8 @@ def is_under(path: Path, root: Path) -> bool:
 def archive_run(destination: Path) -> Path:
     """Return the durable archive outside the active checkout when possible."""
     if destination.resolve() == DEFAULT_DEST.resolve():
-        return ARCHIVE_BASE / RUN_ID
-    return destination / ARCHIVE_ROOT_NAME / RUN_ID
+        return ARCHIVE_BASE / ARCHIVE_ID
+    return destination / ARCHIVE_ROOT_NAME / ARCHIVE_ID
 
 
 def action_target(destination: Path, relative: str) -> Path:
@@ -305,6 +306,15 @@ def build_plan(roots: list[Path], destination: Path) -> dict:
             if item.sha256:
                 hash_groups[item.sha256].append(f"{item.source}:{item.source_rel}")
         unique_hashes = {item.sha256 for item in file_items}
+        archived_hashes: dict[tuple[str, str], str] = {}
+        for item in file_items:
+            archived = archive_run(destination) / "sources" / item.source_id / item.source_rel
+            if not archived.is_file():
+                continue
+            try:
+                archived_hashes[(item.source_id, item.source_rel)] = sha256(archived, cache)
+            except OSError:
+                continue
         if target_record and target_record["sha256"] in unique_hashes:
             actions.append({
                 "operation": "duplicate_exact_existing",
@@ -315,8 +325,17 @@ def build_plan(roots: list[Path], destination: Path) -> dict:
             })
         elif len(unique_hashes) <= 1 and file_items:
             winner = sorted(file_items, key=lambda item: (item.source_id, item.source_rel))[0]
+            already_archived = (
+                winner.source_mode == "repo"
+                and winner.sha256 is not None
+                and archived_hashes.get((winner.source_id, winner.source_rel)) == winner.sha256
+            )
             actions.append({
-                "operation": "record_snapshot" if winner.source_mode == "snapshot" else ("copy_unique" if not target.exists() else "conflict_existing_unhashed"),
+                "operation": (
+                    "record_snapshot" if winner.source_mode == "snapshot" else
+                    ("duplicate_exact_archived" if already_archived else
+                     ("copy_unique" if not target.exists() else "conflict_existing_unhashed"))
+                ),
                 "source": winner.source,
                 "source_id": winner.source_id,
                 "source_rel": winner.source_rel,

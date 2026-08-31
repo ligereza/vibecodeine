@@ -6,6 +6,8 @@ con su `source_id`. No se eliminó contenido.
 
 - `plan.json`: plan inicial de las 23 raíces detectadas.
 - `plan-post-redirect.json`: plan posterior a la redirección de `WIN`.
+- `plan-final.json`: plan idempotente; reconoce 29 archivos ya archivados y no
+  los vuelve a copiar.
 - `actions.jsonl`: una línea por copia, verificación, variante, traslado o
   redirección; incluye la reubicación del expediente pesado fuera del checkout.
 - `triangulation.json` / `triangulation.md`: nacimiento de inode, mtime, hash y
