@@ -85,7 +85,7 @@ presencia_probable != pureza_o_dosis
 
 El detalle máquina-legible está en:
 
-[rd_reactivos_auditoria_internacional_2026-08-11.json](C:/Users/issvk/claude_sesiones_recuperadas/rd_reactivos_auditoria_internacional_2026-08-11.json)
+[rd_reactivos_auditoria_internacional_2026-08-11.json](<local-user-home>/claude_sesiones_recuperadas/rd_reactivos_auditoria_internacional_2026-08-11.json)
 
 ## Decisión recomendada
 

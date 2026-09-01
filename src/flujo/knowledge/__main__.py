@@ -13,11 +13,17 @@ from __future__ import annotations
 
 import sys
 
+from .reconciliation import main as reconciliation_main
 from .store import ingest_dossiers, list_entities
+from .three_plane import main as three_plane_main
 
 
 def main(argv: list[str]) -> int:
     cmd = argv[0] if argv else ""
+    if cmd == "reconcile":
+        return reconciliation_main(argv)
+    if cmd == "three-plane":
+        return three_plane_main(argv[1:])
     if cmd == "ingest-dossiers":
         paths = ingest_dossiers()
         for p in paths:
