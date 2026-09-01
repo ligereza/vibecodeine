@@ -26,6 +26,22 @@ TEMP_PARTS = {"tmp", "temp", "temporary", "scratch", "tmpfiles"}
 CODE_SUFFIXES = {".py", ".pyi"}
 
 
+def _is_checkout(root: Path) -> bool:
+    """Return true only for a real checkout rooted here.
+
+    A compatibility adapter may expose a symlink named ``.git`` to its parent
+    repository, and an rclone snapshot may contain an empty placeholder
+    directory.  Neither is an independent checkout whose history belongs in
+    the root matrix.
+    """
+    marker = root / ".git"
+    if marker.is_symlink():
+        return False
+    if marker.is_file():
+        return True  # linked worktree: .git is a gitdir file
+    return marker.is_dir() and (marker / "HEAD").is_file()
+
+
 def _git(root: Path, *args: str) -> str:
     result = subprocess.run(
         ["git", "-C", str(root), *args],
@@ -57,7 +73,7 @@ def _hash(path: Path) -> str:
 
 def _git_file_history(root: Path) -> dict[str, dict[str, str]]:
     """Build first/last path dates with one log walk per checkout."""
-    if not (root / ".git").exists():
+    if not _is_checkout(root):
         return {}
     text = _git(root, "log", "--all", "--format=commit%x09%cI", "--name-only")
     current_date = ""
@@ -72,9 +88,18 @@ def _git_file_history(root: Path) -> dict[str, dict[str, str]]:
 
 def _root_meta(root: Path) -> dict[str, object]:
     stat_result = root.stat()
-    first = _git(root, "log", "--reverse", "--format=%cI", "--all", "-1")
-    head = _git(root, "rev-parse", "HEAD")
-    remote = _git(root, "remote", "get-url", "origin")
+    # Do not let Git walk up into /home/mak when a discovered snapshot is not
+    # itself a checkout.  A parent repository's HEAD/dirty state is not
+    # evidence about that snapshot and previously made the matrix misleading.
+    has_git = _is_checkout(root)
+    if has_git:
+        first = _git(root, "log", "--reverse", "--format=%cI", "--all", "-1")
+        head = _git(root, "rev-parse", "HEAD")
+        remote = _git(root, "remote", "get-url", "origin")
+        dirty = bool(_git(root, "status", "--porcelain"))
+    else:
+        first = head = remote = ""
+        dirty = None
     files = 0
     python_files = 0
     for current, dirs, names in os.walk(root, topdown=True, followlinks=False):
@@ -87,13 +112,13 @@ def _root_meta(root: Path) -> dict[str, object]:
         "path": str(root),
         "source_id": source_id(root),
         "source_mode": source_mode(root),
-        "has_git": (root / ".git").exists(),
+        "has_git": has_git,
         "birth_epoch": _birth(root),
         "mtime_epoch": stat_result.st_mtime_ns,
         "git_first_commit": first,
         "git_head": head,
         "git_remote": remote,
-        "git_dirty": bool(_git(root, "status", "--porcelain")),
+        "git_dirty": dirty,
         "file_count": files,
         "python_file_count": python_files,
     }
@@ -230,7 +255,8 @@ def main() -> int:
     for row in root_rows:
         lines.append(
             f"| `{row['path']}` | {row['source_mode']} | {row['git_first_commit'] or 'n/a'} | "
-            f"{row['birth_epoch'] or 'n/a'} | {row['python_file_count']} | {row['git_dirty']} |"
+            f"{row['birth_epoch'] or 'n/a'} | {row['python_file_count']} | "
+            f"{row['git_dirty'] if row['git_dirty'] is not None else 'n/a'} |"
         )
     (OUT_DIR / "triangulation.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(json.dumps({"output": str(OUT_DIR), "counts": result["counts"]}, ensure_ascii=True, sort_keys=True))

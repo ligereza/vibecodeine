@@ -1,6 +1,6 @@
 {
   "schema": "mak-root-triangulation-v1",
-  "generated_at": "2026-09-01T03:19:25+00:00",
+  "generated_at": "2026-09-01T20:31:48+00:00",
   "method": [
     "inode_birth",
     "mtime",
@@ -16,10 +16,10 @@
       "has_git": false,
       "birth_epoch": 1787843794,
       "mtime_epoch": 1788192935461289964,
-      "git_first_commit": "2026-08-31T19:40:36-04:00",
-      "git_head": "be35fc54499c14b97b00418e528a1d25db631ae2",
+      "git_first_commit": "",
+      "git_head": "",
       "git_remote": "",
-      "git_dirty": true,
+      "git_dirty": null,
       "file_count": 0,
       "python_file_count": 0
     },
@@ -27,13 +27,13 @@
       "path": "/home/mak/.cache/rclone/vfs/onedrive/MAK/IA/flujo",
       "source_id": "_cache-rclone-vfs-onedrive-mak-ia-flujo",
       "source_mode": "snapshot",
-      "has_git": true,
+      "has_git": false,
       "birth_epoch": 1787843710,
       "mtime_epoch": 1788192455530852492,
-      "git_first_commit": "2026-08-31T19:40:36-04:00",
-      "git_head": "be35fc54499c14b97b00418e528a1d25db631ae2",
+      "git_first_commit": "",
+      "git_head": "",
       "git_remote": "",
-      "git_dirty": true,
+      "git_dirty": null,
       "file_count": 0,
       "python_file_count": 0
     },
@@ -44,10 +44,10 @@
       "has_git": false,
       "birth_epoch": 1787843794,
       "mtime_epoch": 1788192935461289964,
-      "git_first_commit": "2026-08-31T19:40:36-04:00",
-      "git_head": "be35fc54499c14b97b00418e528a1d25db631ae2",
+      "git_first_commit": "",
+      "git_head": "",
       "git_remote": "",
-      "git_dirty": true,
+      "git_dirty": null,
       "file_count": 0,
       "python_file_count": 0
     },
@@ -55,13 +55,13 @@
       "path": "/home/mak/.cache/rclone/vfsMeta/onedrive/MAK/IA/flujo",
       "source_id": "_cache-rclone-vfsmeta-onedrive-mak-ia-flujo",
       "source_mode": "snapshot",
-      "has_git": true,
+      "has_git": false,
       "birth_epoch": 1787843710,
       "mtime_epoch": 1788192455530852492,
-      "git_first_commit": "2026-08-31T19:40:36-04:00",
-      "git_head": "be35fc54499c14b97b00418e528a1d25db631ae2",
+      "git_first_commit": "",
+      "git_head": "",
       "git_remote": "",
-      "git_dirty": true,
+      "git_dirty": null,
       "file_count": 0,
       "python_file_count": 0
     },
@@ -72,10 +72,10 @@
       "has_git": false,
       "birth_epoch": 1786454021,
       "mtime_epoch": 1786454021390508544,
-      "git_first_commit": "2026-08-31T19:40:36-04:00",
-      "git_head": "be35fc54499c14b97b00418e528a1d25db631ae2",
+      "git_first_commit": "",
+      "git_head": "",
       "git_remote": "",
-      "git_dirty": true,
+      "git_dirty": null,
       "file_count": 0,
       "python_file_count": 0
     },
@@ -99,12 +99,12 @@
       "source_mode": "snapshot",
       "has_git": true,
       "birth_epoch": 1786643952,
-      "mtime_epoch": 1787253768180195123,
+      "mtime_epoch": 1788293227938755213,
       "git_first_commit": "2026-08-13T13:30:34-04:00",
       "git_head": "f588ecf88de43c035d48cc352cc03842ef53ac84",
       "git_remote": "https://github.com/ligereza/vibecodeine.git",
       "git_dirty": true,
-      "file_count": 4936,
+      "file_count": 4899,
       "python_file_count": 934
     },
     {
@@ -114,10 +114,10 @@
       "has_git": false,
       "birth_epoch": 1784771931,
       "mtime_epoch": 1784771931125603809,
-      "git_first_commit": "2026-08-31T19:40:36-04:00",
-      "git_head": "be35fc54499c14b97b00418e528a1d25db631ae2",
+      "git_first_commit": "",
+      "git_head": "",
       "git_remote": "",
-      "git_dirty": true,
+      "git_dirty": null,
       "file_count": 1,
       "python_file_count": 0
     },
@@ -128,10 +128,10 @@
       "has_git": false,
       "birth_epoch": 1784771931,
       "mtime_epoch": 1788211284778310914,
-      "git_first_commit": "2026-08-31T19:40:36-04:00",
-      "git_head": "be35fc54499c14b97b00418e528a1d25db631ae2",
+      "git_first_commit": "",
+      "git_head": "",
       "git_remote": "",
-      "git_dirty": true,
+      "git_dirty": null,
       "file_count": 0,
       "python_file_count": 0
     },
@@ -142,25 +142,11 @@
       "has_git": false,
       "birth_epoch": 1788212086,
       "mtime_epoch": 1788230279410771339,
-      "git_first_commit": "2026-08-31T19:40:36-04:00",
-      "git_head": "be35fc54499c14b97b00418e528a1d25db631ae2",
+      "git_first_commit": "",
+      "git_head": "",
       "git_remote": "",
-      "git_dirty": true,
+      "git_dirty": null,
       "file_count": 9,
-      "python_file_count": 0
-    },
-    {
-      "path": "/home/mak/proyectos/flujo",
-      "source_id": "proyectos-flujo",
-      "source_mode": "repo",
-      "has_git": false,
-      "birth_epoch": 1788212086,
-      "mtime_epoch": 1788212086688605634,
-      "git_first_commit": "2026-08-31T19:40:36-04:00",
-      "git_head": "be35fc54499c14b97b00418e528a1d25db631ae2",
-      "git_remote": "",
-      "git_dirty": true,
-      "file_count": 1,
       "python_file_count": 0
     },
     {
@@ -169,11 +155,11 @@
       "source_mode": "repo",
       "has_git": false,
       "birth_epoch": 1788212086,
-      "mtime_epoch": 1788230267874476902,
-      "git_first_commit": "2026-08-31T19:40:36-04:00",
-      "git_head": "be35fc54499c14b97b00418e528a1d25db631ae2",
+      "mtime_epoch": 1788288313544540070,
+      "git_first_commit": "",
+      "git_head": "",
       "git_remote": "",
-      "git_dirty": true,
+      "git_dirty": null,
       "file_count": 207,
       "python_file_count": 200
     },
@@ -184,10 +170,10 @@
       "has_git": false,
       "birth_epoch": 1786628527,
       "mtime_epoch": 1786628527068799944,
-      "git_first_commit": "2026-08-31T19:40:36-04:00",
-      "git_head": "be35fc54499c14b97b00418e528a1d25db631ae2",
+      "git_first_commit": "",
+      "git_head": "",
       "git_remote": "",
-      "git_dirty": true,
+      "git_dirty": null,
       "file_count": 2,
       "python_file_count": 2
     }
@@ -507,10 +493,10 @@
       "source_id": "src-flujo",
       "relative": "airdrop.py",
       "role": "historical-family-candidate",
-      "size_bytes": 18627,
-      "birth_epoch": 1788230267,
-      "mtime_epoch": 1785591275000000000,
-      "sha256": "ec99bd5f87c8594b42c490022b521c2b03784361d9d85538cefd23960b70cdec"
+      "size_bytes": 18491,
+      "birth_epoch": 1788278796,
+      "mtime_epoch": 1788278796766674335,
+      "sha256": "6032531be6194da59b94cedd3feb80e81f1e6467720843aeec9dee1a2c91b0aa"
     },
     {
       "path": "/home/mak/src/flujo/intake/reception.py",
@@ -1057,6 +1043,10 @@
       "/home/mak/_archive/merge-20260831/fused/origins/runner-vibecodeine/scripts/run_airdrop_checks.py",
       "/home/mak/_archive/merge-20260831/fused/origins/win-flujo/scripts/run_airdrop_checks.py"
     ],
+    "6032531be6194da59b94cedd3feb80e81f1e6467720843aeec9dee1a2c91b0aa": [
+      "/home/mak/_archive/merge-20260831/fused/origins/runner-vibecodeine/src/flujo/airdrop.py",
+      "/home/mak/src/flujo/airdrop.py"
+    ],
     "56ab0a32fbab074cb0a876f726daecf27a30135a6ed718317420f69986cc0a7f": [
       "/home/mak/_archive/merge-20260831/fused/origins/runner-vibecodeine/src/flujo/intake/reception.py",
       "/home/mak/_archive/merge-20260831/fused/origins/win-flujo/src/flujo/intake/reception.py",
@@ -1081,14 +1071,10 @@
     "b3e53d7f65fccf5e609709ecb5e929ee4cc142668359a5187e9e1d411a768613": [
       "/home/mak/_archive/merge-20260831/fused/origins/win-flujo/_logs/local_reconciliation_20260813/tools__recovered__import_claude_sessions.py",
       "/home/mak/_archive/merge-20260831/fused/origins/win-flujo/tools/recovered/import_claude_sessions.py"
-    ],
-    "ec99bd5f87c8594b42c490022b521c2b03784361d9d85538cefd23960b70cdec": [
-      "/home/mak/_archive/merge-20260831/fused/origins/win-flujo/src/flujo/airdrop.py",
-      "/home/mak/src/flujo/airdrop.py"
     ]
   },
   "counts": {
-    "roots": 13,
+    "roots": 12,
     "candidates": 74,
     "temporary_python": 48,
     "historical_family_candidates": 26,
