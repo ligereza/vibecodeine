@@ -21,6 +21,8 @@ import sys
 from pathlib import Path
 
 import pytest
+from tools.test_lane_map import LANES as TEST_LANES
+from tools.test_lane_map import lane_for_test_path
 
 _REPO = Path(__file__).resolve().parents[1]
 _SRC = _REPO / "src"
@@ -268,6 +270,8 @@ def pytest_configure(config: pytest.Config) -> None:
             )
     for lane in ("fast", "contract", "machine", "optional", "review"):
         config.addinivalue_line("markers", f"lane_{lane}: execution lane recommendation")
+    for lane in TEST_LANES:
+        config.addinivalue_line("markers", f"{lane}: deterministic test execution lane")
     # Register exact filename topics so `pytest -m topic_research` is warning-free.
     for path in sorted((_REPO / "tests").glob("test_*.py")):
         config.addinivalue_line(
@@ -295,6 +299,9 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
         item.add_marker(f"scope_{scope}")
         item.add_marker(f"environment_{environment}")
         item.add_marker(f"topic_{topic_for_test_path(Path(str(item.fspath)))}")
+        # The exclusive execution lane comes from the persisted AST import map.
+        # An absent or stale entry returns ``review`` and cannot fail collection.
+        item.add_marker(lane_for_test_path(Path(str(item.fspath))))
 
         # Lanes overlap by design. ``lane_fast`` is only for high-confidence
         # small candidates; unknown tests remain visible in ``lane_review``.

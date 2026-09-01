@@ -95,6 +95,10 @@ markers = [
     "lane_machine: physical, external, or machine-bound run candidate",
     "lane_optional: optional-dependency run candidate",
     "lane_review: classification incomplete; review before changing its lane",
+    "flujo: imports the src/flujo motor according to tools/test_lane_map.py",
+    "mak: imports the MAK box layer according to tools/test_lane_map.py",
+    "integration: imports both motor and MAK box layer",
+    "repo_hygiene: tree, git, or docs-only test according to tools/test_lane_map.py",
 ]
 
 [tool.coverage.run]
