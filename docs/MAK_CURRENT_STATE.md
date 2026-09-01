@@ -693,8 +693,8 @@ vacío y nada archivado quedó sin fila.
 por uno contra `flujo/.git`** -- 2012 de 2012 presentes, y los 4 archivos que no
 estaban en ningún commit se preservaron.
 
-**Purgado tras comprobación**: `opt/input-leap/3.0.3` (servicio disabled,
-`barrier` activo en el pid 997), `renders/` (tres mp4 de prueba, uno de 48
+**Purgado tras comprobación**: `opt/input-leap/3.0.3` y su unidad de usuario
+obsoleta (Barrier activo en el pid 997), `renders/` (tres mp4 de prueba, uno de 48
 bytes), 13 respaldos manuales `.bak` sin consumidor, copias exactas de
 proyectos/artefactos y la proyección duplicada de variantes. Los bytes
 divergentes y los entregables únicos no se tocaron.
