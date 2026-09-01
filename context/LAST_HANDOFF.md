@@ -1,5 +1,109 @@
 # Operational Handoff
 
+## Agent bootstrap — CURRENT — 2026-08-31 — consolidación física posterior y límite documental abierto
+
+Este bloque supera el CURRENT anterior sólo para los hechos medidos el
+2026-08-31; las cifras y afirmaciones anteriores se conservan abajo como
+evidencia fechada, incluso cuando se contradicen.
+
+### Contrato heredado que no se puede perder
+
+- `Stage 2D accepted` permanece aceptado y no se reabre.
+- `171 focused tests` es la medición histórica de aquella etapa.
+- `docs/MAK_SYSTEM_DIRECTIVE.md` sigue vigente.
+- `mak-archive-observation-batch-v1` sigue siendo el esquema de los lotes de
+  observación del archivo.
+
+### Estado físico y Git medidos
+
+- La fusión física quedó registrada por el commit `cd8a9569` (2026-08-31
+  18:06:09-04:00, `fuse MAK project roots into single home root`). La evidencia
+  congelada es `/home/mak/_archive/merge-20260831/`: no es una conclusión de
+  cierre semántico ni una autorización para borrar o promover variantes.
+- `fused/projection3/MANIFEST.json` registra 5.426 rutas `tree_equal`, 813
+  rutas divergentes con `variants_all_preserved` y 2.366 rutas de variantes.
+  `fused/root-materialization.json` registra 6.214 `linked_file`, 22
+  `linked_symlink`, 1 colisión de raíz preservada y 2 conflictos reubicados.
+  `actions.jsonl` del origen activo tiene 5.496 líneas. Las cifras antiguas se
+  mantienen abajo; las discrepancias entre contadores de acciones y de
+  materialización no se resuelven con prosa.
+- El árbol vivo es `/home/mak`; `/home/mak/flujo` es ahora un adaptador de
+  directorio no recursivo con 170 enlaces a hermanos, porque el symlink físico
+  a `.` permitía recorridos cíclicos. La medición actual encontró cero enlaces
+  que resuelvan dentro de su propio ancestro. `/home/mak/WIN/flujo` redirige a
+  `../_archive/merge-20260831/fused/origins/win-flujo`. No hay otro directorio
+  `flujo` activo que deba inventarse o tratarse como raíz independiente.
+- El servicio de runner usa `/home/mak/actions-runner`; su checkout de trabajo
+  `/home/mak/actions-runner/_work/vibecodeine/vibecodeine` es un symlink a
+  `.../_archive/merge-20260831/fused/origins/runner-vibecodeine`. El servicio
+  y el alias de ruta no prueban por sí solos una entrega o un runtime sano.
+- El checkout local fue devuelto a `be35fc54499c14b97b00418e528a1d25db631ae2`:
+  `HEAD`, `main` y `flujo` coinciden allí; `MAK` queda en
+  `5f6af17e9d720461ad6bb7cf0217b17daad0cdbf` y `historia` en `ab9afa13`.
+  Los remotos observados son `ligereza-mak` y `vibecodeine-legacy`; sus refs
+  locales documentan transportes históricos, no autoridad física ni permiso
+  para push. Esta medición no hizo Git mutante.
+
+### Estado documental medido
+
+- El nodo aislado `./.venv/bin/python -m pytest -q
+  tests/test_un_solo_documento.py::test_un_solo_handoff_vivo` pasa (RC 0)
+  después de mover con `git mv` los nueve documentos no vivos a
+  `docs/handoffs/archive/`. `context/LAST_HANDOFF.md` queda como único handoff
+  global versionado. Los tres contratos departamentales siguen siendo
+  consumibles desde sus copias archivadas.
+
+### Revalidación física y carriles — 2026-08-31
+
+- El desacoplamiento dejó 5.018 archivos vivos con `nlink=1`; permanecen 1.270
+  enlaces compartidos únicamente en rutas protegidas (`tests/`, `context/`,
+  `context-history/`, `pyproject.toml`). Se restauró
+  `cultura/mak_research/fallback_util.py` como copia independiente y el legado
+  `tools/mak_ops/repair_mak_sync.py` se retiró porque su reemplazo seguro es
+  `tools/mak_ops/sync_mak_safe.py` y el test prohíbe reactivarlo.
+- Los markers `flujo`, `mak`, `integration` y `repo_hygiene` quedaron declarados
+  en `pyproject.toml`; `tests/conftest.py` aplica el mapa AST de
+  `tools/test_lane_map.py`. Carriles medidos: `flujo` 173 (159 s, RC 0),
+  `mak` 50 (105 s, RC 0), `integration` 10 (10 s, RC 0),
+  `repo_hygiene` 115 (124 s, RC 0), `review` 39 bajo demanda.
+
+### Revalidación documental previa al traslado — 2026-08-31
+
+- Línea base histórica estable, con el mismo comando literal ejecutado dos veces:
+  `./.venv/bin/python -m pytest -q tests/test_un_solo_documento.py::test_un_solo_handoff_vivo`.
+  ANTES histórico: `N=1` ruta exigida. En ese momento el árbol tenía `N=10`,
+  RC 1 en ambas corridas y la misma lista; la diferencia quedó explicada por
+  definición y alcance del test, no por una variación de la medición.
+- Clasificación literal de las diez rutas: vivo provisional único:
+  `context/LAST_HANDOFF.md`; histórico: `context-history/untracked-context-20260819/PHASE225_HANDOFF_CHECKPOINT_REPAIR.md`,
+  `context-history/untracked-context-20260819/PHASE268_RESIDUAL_BOUNDARY_AND_ARCHITECTURE_HANDOFF.md`,
+  `context-history/untracked-context-20260819/PHASE405_OWNER_CLEANUP_BRANCH_HANDOFF.md`
+  y `context-history/untracked-context-20260819/quarantine/LAST_HANDOFF.pre-803d2e5-20260818.md`;
+  plantilla: `context/BRANCH_HANDOFF_TEMPLATE.md`; paquete previo/duplicado:
+  `MAK_CODEX_HANDOFF.md`; departamentales no globales: `context/handoffs/cultura.md`,
+  `context/handoffs/iskvw.md` y `context/handoffs/rd.md`.
+- El contrato no distingue global de departamental: captura los tres estados
+  departamentales por contener `handoff` en sus rutas. Su política literal
+  exige que también salgan de la zona viva. En la ola posterior se trasladaron
+  los nueve no vivos con `git mv` a `docs/handoffs/archive/`; el test aislado
+  pasó con RC 0 y los bytes quedaron preservados.
+- Hardlinks comprobados antes de esta escritura: `context/LAST_HANDOFF.md`
+  tenía `nlink=1`, inode `30303228` y SHA-256
+  `b43b16e6852ecdd64124ddd40517c4ac0a896feb96d529dc8224245548880e42`;
+  por tanto no requirió desaliasado. Los otros documentos no se editaron
+  (varios conservan `nlink=4`). Esta pasada no ejecutó reset, push, commit ni
+  operación Git mutante.
+
+### Estado después de la ola
+
+El write-set ya incluyó `docs/handoffs/archive/`; no se modificó el test. La
+decisión aplicada fue un handoff global vivo más estados departamentales
+archivados, con los contratos departamentales apuntando a sus copias históricas.
+No inferir de la fusión que toda variante tenga ruta viva ni que sus diferencias
+estén cerradas.
+
+---
+
 ## Agent bootstrap — CURRENT — 2026-08-31 — estado medido, familia fail-closed y MAK pausado bajo control
 
 Lee esto y `docs/MAK_CURRENT_STATE.md` seccion 12. Lo de abajo, fechado
