@@ -10,9 +10,9 @@ Este documento consolida decisiones durables. No reemplaza la evidencia
 histórica, no convierte cada experimento en una obligación y no afirma que una
 credencial funcione solo porque existe en un archivo de entorno.
 
-El traspaso estructurado de la consolidación local está en
-`/home/mak/MAK_CODEX_HANDOFF.md`. Léelo junto con este estado; no crees otro
-inventario paralelo.
+El traspaso estructurado vigente está en
+`/home/mak/context/LAST_HANDOFF.md`. Léelo junto con este estado; el antiguo
+`MAK_CODEX_HANDOFF.md` quedó histórico en `docs/handoffs/archive/`.
 
 ## Consolidación local completada — 2026-08-29
 
@@ -31,9 +31,12 @@ físicas. Las decisiones detalladas están en
 `/home/mak/indexes/mak-consolidation-20260829/MAK-DIRECTIVE-REGISTRY.md` y
 `CONSOLIDATION-DECISIONS.md`.
 
-El archivo de retiros tiene 252 filas de datos (253 líneas con cabecera), todas con destino existente y sin
-duplicados de origen o destino. La suite completa termina con exit 0 y Git se
-usó sólo en modo lectura para procedencia y validación.
+El archivo de retiros conserva 252 filas de datos (253 líneas con cabecera)
+como registro histórico de las operaciones. El 2026-09-01 se purgaron los
+destinos que eran copias exactas o salidas regenerables; por tanto el CSV ya no
+es un índice de reversión completo. La suite completa no se vuelve a declarar
+verde por este documento: la verificación vigente es la de los carriles
+focalizados y sus salidas medibles.
 El resumen JSON de la consolidación del 2026-08-29 conserva 231 filas como
 snapshot histórico; no se mezcla con el CSV físico actual de 252 filas.
 
@@ -43,7 +46,7 @@ CI en un entorno de dependencias declarado, pruebas directas de
 `mak-organism-heartbeat-v1`. El mapa de retiros ahora tiene 252 filas de datos;
 la
 descripción precisa y los cambios pendientes de commit están en
-`/home/mak/MAK_CODEX_HANDOFF.md` secciones 9 y 10. Esa apertura también
+`/home/mak/context/LAST_HANDOFF.md` secciones vigentes. Esa apertura también
 confirmó que `actions-runner` es runtime vivo de sistema; las raíces locales
 restantes quedaron clasificadas sin crear inventarios paralelos ni tocar los
 montajes externos.
@@ -54,7 +57,9 @@ La topología física actual y sus hashes están en
 `/home/mak/indexes/mak-canonical-20260829/mak-canonical-map.json`.
 `docs/system_learning/master/inventory.json:physical_organism_registry` queda
 como registro de aprendizaje y evidencia histórica; el mapa causal de
-conexiones está en `docs/system_learning/master/hashmap.json`. La autoridad
+conexiones está en `docs/system_learning/master/hashmap.json`. Las filas del
+CSV describen el estado histórico; los destinos purgados el 2026-09-01 se
+eliminaron sólo tras comprobar su reemplazo vivo o su regenerabilidad. La autoridad
 operativa queda fijada así:
 
 ```text
@@ -688,9 +693,11 @@ vacío y nada archivado quedó sin fila.
 por uno contra `flujo/.git`** -- 2012 de 2012 presentes, y los 4 archivos que no
 estaban en ningún commit se preservaron.
 
-**Movido, no borrado**: `opt/input-leap/3.0.3` (superado por `barrier`, que
-corre en el pid 997), `renders/` (tres mp4 de prueba, uno de 48 bytes), 13
-respaldos manuales `.bak` de los órganos, y los archivos sueltos de la raíz.
+**Purgado tras comprobación**: `opt/input-leap/3.0.3` (servicio disabled,
+`barrier` activo en el pid 997), `renders/` (tres mp4 de prueba, uno de 48
+bytes), 13 respaldos manuales `.bak` sin consumidor, copias exactas de
+proyectos/artefactos y la proyección duplicada de variantes. Los bytes
+divergentes y los entregables únicos no se tocaron.
 
 **Restaurado tras un error propio**: `venvs/knowledge-migration`. Se retiró
 afirmando "no hay PostgreSQL en MAK" y **sí lo hay**: `postgresql@15-main`

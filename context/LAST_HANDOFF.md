@@ -22,6 +22,9 @@ evidencia fechada, incluso cuando se contradicen.
   cierre semántico ni una autorización para borrar o promover variantes.
 - `fused/projection3/MANIFEST.json` registra 5.426 rutas `tree_equal`, 813
   rutas divergentes con `variants_all_preserved` y 2.366 rutas de variantes.
+  La subcarpeta materializada `fused/projection3/variants/` era una segunda
+  copia de los orígenes y se purgó el 2026-09-01 tras verificar hashes; las
+  variantes reales siguen en `fused/origins/`.
   `fused/root-materialization.json` registra 6.214 `linked_file`, 22
   `linked_symlink`, 1 colisión de raíz preservada y 2 conflictos reubicados.
   `actions.jsonl` del origen activo tiene 5.496 líneas. Las cifras antiguas se
@@ -138,7 +141,7 @@ evidencia fechada, incluso cuando se contradicen.
   `context-history/untracked-context-20260819/PHASE405_OWNER_CLEANUP_BRANCH_HANDOFF.md`
   y `context-history/untracked-context-20260819/quarantine/LAST_HANDOFF.pre-803d2e5-20260818.md`;
   plantilla: `context/BRANCH_HANDOFF_TEMPLATE.md`; paquete previo/duplicado:
-  `MAK_CODEX_HANDOFF.md`; departamentales no globales: `context/handoffs/cultura.md`,
+  `docs/handoffs/archive/MAK_CODEX_HANDOFF.md`; departamentales no globales: `context/handoffs/cultura.md`,
   `context/handoffs/iskvw.md` y `context/handoffs/rd.md`.
 - El contrato no distingue global de departamental: captura los tres estados
   departamentales por contener `handoff` en sus rutas. Su política literal
@@ -335,7 +338,7 @@ This is the only current operational packet. The material below the marked
 historical boundary is retained evidence and must not override this packet.
 
 Detailed current handoff for this consolidation:
-`/home/mak/MAK_CODEX_HANDOFF.md`.
+`/home/mak/docs/handoffs/archive/MAK_CODEX_HANDOFF.md`.
 
 ### Standing contract, carried forward unchanged
 
@@ -419,7 +422,7 @@ changed history, branch or remote state. The organism measurement now offers
 `--cron-detail` for 23 static cron preflights and `--json` for
 `mak-organism-heartbeat-v1`. The valid test-overlap evidence is in
 `/home/mak/indexes/mak-solape-tests-20260829/`; see
-`/home/mak/MAK_CODEX_HANDOFF.md` for its counts and limits.
+`/home/mak/docs/handoffs/archive/MAK_CODEX_HANDOFF.md` for its historical counts and limits.
 
 The first opening of all previously uninspected local roots is complete. The
 system-level GitHub runner is enabled and active; `actions-runner` is therefore
