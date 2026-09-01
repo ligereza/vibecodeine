@@ -84,6 +84,63 @@ TOOL_SKIP_DIRS = {
 # consumer.
 TOOL_INVENTORY_EXCLUDE = {"test_lane_map.py"}
 
+# A missing in-tree reference is not a consumer decision.  The paths below are
+# the explicit disposition for every current zero-reference top-level tool.
+# ``manual_only`` is limited to entries documented in CAPACIDADES 5-ter or by
+# their own declared CLI; ``historical_support`` identifies completed migration
+# support.  Neither status asserts a consumer, retirement, or execution
+# permission.
+NO_REFERENCE_CLASSIFICATIONS = {
+    "aep_reference_scan": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "arica01_portfolio": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "bake_static_materials": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "build_duplicate_decision_report": {"status": "historical_support", "source": "cli_declared"},
+    "build_effort_consumer_crosswalk": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "build_mak_canonical_map": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "certified_query": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "classification_review": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "compile_contracurator": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "compile_portfolio": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "compile_ssd_order_foundation": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "compute_effort_residuals": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "consolidate_static_duplicates": {"status": "historical_support", "source": "cli_declared"},
+    "context_pack": {"status": "manual_only", "source": "cli_declared"},
+    "drenar_material": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "execute_research_job": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "gen_dashboard_productoras": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "gen_iskvw_prototipo": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "gen_presentacion_db": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "gen_rd_standalone": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "handoff": {"status": "manual_only", "source": "cli_declared"},
+    "import_project_reconstruction": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "instalar_enviar_a_mak": {"status": "historical_support", "source": "cli_declared"},
+    "mak_fuse_roots": {"status": "historical_support", "source": "cli_declared"},
+    "mak_materialize_fused_root": {"status": "historical_support", "source": "cli_declared"},
+    "mak_status": {"status": "manual_only", "source": "runtime_status_cli"},
+    "mak_triangulate_roots": {"status": "historical_support", "source": "cli_declared"},
+    "medir_test_overlap": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "medir_tests": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "optimize_blend_scene": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "profile_blender_animation": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "project_gate": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "project_learning": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "reconcile_garden_knowledge": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "render_archaeology_deliverables": {"status": "manual_only", "source": "cli_declared"},
+    "run_vision_feedback": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "show_asset_usage": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "substrate_experiment": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "tapiz_live_loop": {"status": "manual_only", "source": "cli_declared"},
+    "tennis_mcp_ingest": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "token_budget": {"status": "manual_only", "source": "cli_declared"},
+    "triangulate_project_context": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "venue_screen_setup": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "verify_all": {"status": "manual_only", "source": "cli_declared"},
+    "watsonx_coder_bench": {"status": "manual_only", "source": "cli_declared"},
+    "watsonx_smoke": {"status": "manual_only", "source": "cli_declared"},
+    "watsonx_vision_bench": {"status": "manual_only", "source": "cli_declared"},
+    "watsonx_vision_smoke": {"status": "manual_only", "source": "cli_declared"},
+}
+
 
 def _text_files(root: Path, relative_roots: tuple[str, ...]) -> list[Path]:
     """Return bounded text surfaces, excluding caches and history."""
@@ -171,6 +228,7 @@ def _tool_inventory(root: Path = ROOT) -> dict[str, Any]:
     production_files = [
         path for path in _text_files(root, TOOL_SEARCH_ROOTS)
         if path.suffix.lower() in PRODUCTION_SEARCH_SUFFIXES
+        and path != Path(__file__).resolve()
     ]
     test_files = [
         path for path in _text_files(root, ("tests",))
@@ -240,12 +298,31 @@ def _tool_inventory(root: Path = ROOT) -> dict[str, Any]:
             "consumer_evidence": bool(production or tests or workflows),
         })
 
+    no_reference_paths = {
+        Path(row["path"]).stem for row in rows if not row["consumer_evidence"]
+    }
+    classified_paths = {Path(path).stem for path in NO_REFERENCE_CLASSIFICATIONS}
+    if missing := no_reference_paths - classified_paths:
+        raise RuntimeError("missing no-reference classifications: " + ", ".join(sorted(missing)))
+    if stale := classified_paths - no_reference_paths:
+        raise RuntimeError("stale no-reference classifications: " + ", ".join(sorted(stale)))
+    for row in rows:
+        if not row["consumer_evidence"]:
+            row["no_reference_classification"] = NO_REFERENCE_CLASSIFICATIONS[Path(row["path"]).stem]
+
     with_production = sum(bool(row["refs_production"]) for row in rows)
     with_tests_only = sum(
         bool(row["refs_test"]) and not row["refs_production"] for row in rows
     )
     without_refs = sum(not row["consumer_evidence"] for row in rows)
     with_workflow = sum(bool(row["workflows"]) for row in rows)
+    classification_summary = {
+        status: sum(
+            1 for row in rows
+            if row.get("no_reference_classification", {}).get("status") == status
+        )
+        for status in ("manual_only", "historical_support")
+    }
     return {
         "schema": "mak-tool-consumer-inventory-v1",
         "scope": list(TOOL_SEARCH_ROOTS),
@@ -256,6 +333,8 @@ def _tool_inventory(root: Path = ROOT) -> dict[str, Any]:
             "with_production_reference": with_production,
             "tests_only": with_tests_only,
             "without_any_reference": without_refs,
+            "without_any_reference_classified": sum(classification_summary.values()),
+            "without_any_reference_by_classification": classification_summary,
             "with_workflow_trigger": with_workflow,
         },
     }

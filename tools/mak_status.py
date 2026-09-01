@@ -36,7 +36,7 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     root = Path(args.root).expanduser().resolve()
     result = system_status(
-        Path(args.db).expanduser(), repo_root=root, physical_root=root.parent
+        Path(args.db).expanduser(), repo_root=root, physical_root=root
     )
     if args.json:
         print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
