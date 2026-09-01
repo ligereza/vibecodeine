@@ -1,464 +1,697 @@
 {
   "schema": "recovered-session-import-v1",
-  "source": "C:\\Users\\issvk\\claude_sesiones_recuperadas",
-  "destination": "C:\\IA\\flujo\\docs\\recovered\\claude_sessions_2026-08-12\\raw",
-  "status": "evidence_preserved_candidate_material",
+  "source": "<recovered-session-root>",
+  "destination": "docs/recovered/claude_sessions_2026-08-12/raw",
+  "status": "evidence_sanitized_candidate_material",
+  "sanitization": {
+    "rule": "windows_user_home_to_local_user_home",
+    "placeholder": "<local-user-home>",
+    "source_hashes_preserved": true
+  },
   "files": [
     {
       "source": "83087cdd-3709-48de-ab41-62325e73d863_nombre-cauce.md",
       "target": "83087cdd-3709-48de-ab41-62325e73d863_nombre-cauce.md",
-      "bytes": 320829,
-      "sha256": "19c71e070a290d8593160dc661faed5b9e0fb8183575bdb69e608d99931c89bf"
+      "source_bytes": 320829,
+      "bytes": 320999,
+      "source_sha256": "19c71e070a290d8593160dc661faed5b9e0fb8183575bdb69e608d99931c89bf",
+      "sha256": "c9a54cacf88ef073b9a4997c9b9c9401ae3d9bc52f93b59ebcb57709c2c6a964",
+      "sanitized": true
     },
     {
       "source": "AX.html",
       "target": "AX.html",
+      "source_bytes": 25510,
       "bytes": 25510,
-      "sha256": "15b0e87d42f53eb8ab1ba2db0b4d57ad0e926b81abe81a7954c9501e5ebe4b02"
+      "source_sha256": "15b0e87d42f53eb8ab1ba2db0b4d57ad0e926b81abe81a7954c9501e5ebe4b02",
+      "sha256": "15b0e87d42f53eb8ab1ba2db0b4d57ad0e926b81abe81a7954c9501e5ebe4b02",
+      "sanitized": false
     },
     {
       "source": "bases-texto-fondos-fondart-2027.json",
       "target": "bases-texto-fondos-fondart-2027.json",
-      "bytes": 1131091,
-      "sha256": "b07ba9c3c714118a9c66716ff74ce32f30211d48651b3e8307bf6bfdd7c186ee"
+      "source_bytes": 1131091,
+      "bytes": 1131103,
+      "source_sha256": "b07ba9c3c714118a9c66716ff74ce32f30211d48651b3e8307bf6bfdd7c186ee",
+      "sha256": "8f2e3dbfd3ef1eb634cc18132176920fa9ed53c273580e4598fe04ed1d12a7fd",
+      "sanitized": true
     },
     {
       "source": "bases_pdf/fondart-nacional-barrios-creativos-2027.pdf",
       "target": "bases_pdf/fondart-nacional-barrios-creativos-2027.pdf",
+      "source_bytes": 486559,
       "bytes": 486559,
-      "sha256": "c7178bdedb2fcc7c90196343d863bc6e943c070a0c68ddc5c2c5e1916821121c"
+      "source_sha256": "c7178bdedb2fcc7c90196343d863bc6e943c070a0c68ddc5c2c5e1916821121c",
+      "sha256": "c7178bdedb2fcc7c90196343d863bc6e943c070a0c68ddc5c2c5e1916821121c",
+      "sanitized": false
     },
     {
       "source": "bases_pdf/fondart-nacional-becas-chile-crea-2027.pdf",
       "target": "bases_pdf/fondart-nacional-becas-chile-crea-2027.pdf",
+      "source_bytes": 512211,
       "bytes": 512211,
-      "sha256": "6fc69ec9f5dc30855de1136fcf2663e94bcf734dd32edcd1296bdc23df9a8969"
+      "source_sha256": "6fc69ec9f5dc30855de1136fcf2663e94bcf734dd32edcd1296bdc23df9a8969",
+      "sha256": "6fc69ec9f5dc30855de1136fcf2663e94bcf734dd32edcd1296bdc23df9a8969",
+      "sanitized": false
     },
     {
       "source": "bases_pdf/fondart-nacional-ferias-festivales-2026.pdf",
       "target": "bases_pdf/fondart-nacional-ferias-festivales-2026.pdf",
+      "source_bytes": 696917,
       "bytes": 696917,
-      "sha256": "a0d97324ab0f531ad42dd082cad1565429f3a554d1ec1445ba971f4bc18ad741"
+      "source_sha256": "a0d97324ab0f531ad42dd082cad1565429f3a554d1ec1445ba971f4bc18ad741",
+      "sha256": "a0d97324ab0f531ad42dd082cad1565429f3a554d1ec1445ba971f4bc18ad741",
+      "sanitized": false
     },
     {
       "source": "bases_pdf/fondart-nacional-infraestructura-2027.pdf",
       "target": "bases_pdf/fondart-nacional-infraestructura-2027.pdf",
+      "source_bytes": 515118,
       "bytes": 515118,
-      "sha256": "05298e2133e222cec42c601dc5a3862c59424944981d237c1f7cdb72180dc48a"
+      "source_sha256": "05298e2133e222cec42c601dc5a3862c59424944981d237c1f7cdb72180dc48a",
+      "sha256": "05298e2133e222cec42c601dc5a3862c59424944981d237c1f7cdb72180dc48a",
+      "sanitized": false
     },
     {
       "source": "bases_pdf/fondart-nacional-investigacion-2027.pdf",
       "target": "bases_pdf/fondart-nacional-investigacion-2027.pdf",
+      "source_bytes": 490331,
       "bytes": 490331,
-      "sha256": "9da0ab5f0850fdad354415448829fd88fa1e61beee5fd048c90a4a5b4c418af2"
+      "source_sha256": "9da0ab5f0850fdad354415448829fd88fa1e61beee5fd048c90a4a5b4c418af2",
+      "sha256": "9da0ab5f0850fdad354415448829fd88fa1e61beee5fd048c90a4a5b4c418af2",
+      "sanitized": false
     },
     {
       "source": "bases_pdf/fondart-nacional-muestras-ferias-encuentros-2027.pdf",
       "target": "bases_pdf/fondart-nacional-muestras-ferias-encuentros-2027.pdf",
+      "source_bytes": 558061,
       "bytes": 558061,
-      "sha256": "c5aadd7650348de4d07089b871e9ae5d2df6e88b969eebc5bfbf30c2a1f41d76"
+      "source_sha256": "c5aadd7650348de4d07089b871e9ae5d2df6e88b969eebc5bfbf30c2a1f41d76",
+      "sha256": "c5aadd7650348de4d07089b871e9ae5d2df6e88b969eebc5bfbf30c2a1f41d76",
+      "sanitized": false
     },
     {
       "source": "bases_pdf/fondart-regional-actividades-formativas-2027.pdf",
       "target": "bases_pdf/fondart-regional-actividades-formativas-2027.pdf",
+      "source_bytes": 524436,
       "bytes": 524436,
-      "sha256": "1c91847867a24a62a5b5419d40484dd603f7a87354273f5fbcbeb0309b04c227"
+      "source_sha256": "1c91847867a24a62a5b5419d40484dd603f7a87354273f5fbcbeb0309b04c227",
+      "sha256": "1c91847867a24a62a5b5419d40484dd603f7a87354273f5fbcbeb0309b04c227",
+      "sanitized": false
     },
     {
       "source": "bases_pdf/fondart-regional-creacion-artistica-2027.pdf",
       "target": "bases_pdf/fondart-regional-creacion-artistica-2027.pdf",
+      "source_bytes": 571863,
       "bytes": 571863,
-      "sha256": "55efacab049c0ba90fb2a59ddaed4ee5ee00eed7f4887bea57c237e736ddfb71"
+      "source_sha256": "55efacab049c0ba90fb2a59ddaed4ee5ee00eed7f4887bea57c237e736ddfb71",
+      "sha256": "55efacab049c0ba90fb2a59ddaed4ee5ee00eed7f4887bea57c237e736ddfb71",
+      "sanitized": false
     },
     {
       "source": "bases_pdf/fondart-regional-culturas-regionales-2027.pdf",
       "target": "bases_pdf/fondart-regional-culturas-regionales-2027.pdf",
+      "source_bytes": 776614,
       "bytes": 776614,
-      "sha256": "e30091c3fbe940e7265195d11e49340f4fb0f32bacbc020451282f6e2da2a175"
+      "source_sha256": "e30091c3fbe940e7265195d11e49340f4fb0f32bacbc020451282f6e2da2a175",
+      "sha256": "e30091c3fbe940e7265195d11e49340f4fb0f32bacbc020451282f6e2da2a175",
+      "sanitized": false
     },
     {
       "source": "bases_pdf/fondart-regional-culturas-tradicionales-2027.pdf",
       "target": "bases_pdf/fondart-regional-culturas-tradicionales-2027.pdf",
+      "source_bytes": 526062,
       "bytes": 526062,
-      "sha256": "c4e1959c53bf9eb27846142378b68148c3f13d5e3f7c020a6ff869c6f51dcfff"
+      "source_sha256": "c4e1959c53bf9eb27846142378b68148c3f13d5e3f7c020a6ff869c6f51dcfff",
+      "sha256": "c4e1959c53bf9eb27846142378b68148c3f13d5e3f7c020a6ff869c6f51dcfff",
+      "sanitized": false
     },
     {
       "source": "bases_pdf/fondart-regional-difusion-2027.pdf",
       "target": "bases_pdf/fondart-regional-difusion-2027.pdf",
+      "source_bytes": 532342,
       "bytes": 532342,
-      "sha256": "51cbb9fd0280adbb932b0f4605fa82f6a730ece2a0c9d0cf0f0244ead635748c"
+      "source_sha256": "51cbb9fd0280adbb932b0f4605fa82f6a730ece2a0c9d0cf0f0244ead635748c",
+      "sha256": "51cbb9fd0280adbb932b0f4605fa82f6a730ece2a0c9d0cf0f0244ead635748c",
+      "sanitized": false
     },
     {
       "source": "bases_pdf/municipal-fondos-concursables-2026.pdf",
       "target": "bases_pdf/municipal-fondos-concursables-2026.pdf",
+      "source_bytes": 34906073,
       "bytes": 34906073,
-      "sha256": "96c951c784b7cdc0be3224708bc5e6c382a34ece885ed898f335e015c9fd211d"
+      "source_sha256": "96c951c784b7cdc0be3224708bc5e6c382a34ece885ed898f335e015c9fd211d",
+      "sha256": "96c951c784b7cdc0be3224708bc5e6c382a34ece885ed898f335e015c9fd211d",
+      "sanitized": false
     },
     {
       "source": "CARRUSEL CHEMSEX RevCO.pdf",
       "target": "CARRUSEL CHEMSEX RevCO.pdf",
+      "source_bytes": 82004,
       "bytes": 82004,
-      "sha256": "32980f6e09df56f0773393868578694263cbfe78c3fc401734680a755ba3dd48"
+      "source_sha256": "32980f6e09df56f0773393868578694263cbfe78c3fc401734680a755ba3dd48",
+      "sha256": "32980f6e09df56f0773393868578694263cbfe78c3fc401734680a755ba3dd48",
+      "sanitized": false
     },
     {
       "source": "claude_sesiones_index.html",
       "target": "claude_sesiones_index.html",
-      "bytes": 757687,
-      "sha256": "bc2f8ea8552e8758cfd4c22959a992380c0274ca5ab3f7b520ede4ca647fe377"
+      "source_bytes": 757687,
+      "bytes": 758027,
+      "source_sha256": "bc2f8ea8552e8758cfd4c22959a992380c0274ca5ab3f7b520ede4ca647fe377",
+      "sha256": "1b4c92ec6b8c979947169fdc2ae05584ee5cdd07169a68fe568c5ca5694d39b2",
+      "sanitized": true
     },
     {
       "source": "claude_web_export_inventory.md",
       "target": "claude_web_export_inventory.md",
-      "bytes": 7615,
-      "sha256": "5f2561ec188bb428f0a64dd14491a186f8f1d6e08b08473e78a9f38e0a822074"
+      "source_bytes": 7615,
+      "bytes": 7621,
+      "source_sha256": "5f2561ec188bb428f0a64dd14491a186f8f1d6e08b08473e78a9f38e0a822074",
+      "sha256": "02a235411e0bd6ff78bdd23997d35678a8ca84b117b8f4c49bbbc8ff7770aab4",
+      "sanitized": true
     },
     {
       "source": "fondos-fondart-terminos-condiciones-requisitos-2027.md",
       "target": "fondos-fondart-terminos-condiciones-requisitos-2027.md",
+      "source_bytes": 146200,
       "bytes": 146200,
-      "sha256": "c2feb848e80ceb27f77c0fbc9caeea8d7a7a252fde006ec431d171fa2197914f"
+      "source_sha256": "c2feb848e80ceb27f77c0fbc9caeea8d7a7a252fde006ec431d171fa2197914f",
+      "sha256": "c2feb848e80ceb27f77c0fbc9caeea8d7a7a252fde006ec431d171fa2197914f",
+      "sanitized": false
     },
     {
       "source": "fondos-postulaciones-requisitos-visible-2027.md",
       "target": "fondos-postulaciones-requisitos-visible-2027.md",
+      "source_bytes": 37407,
       "bytes": 37407,
-      "sha256": "888f2b0d1cc3e3558fa3a3612167dea8f5b8f1017b80a84e0fcfaf4583a06088"
+      "source_sha256": "888f2b0d1cc3e3558fa3a3612167dea8f5b8f1017b80a84e0fcfaf4583a06088",
+      "sha256": "888f2b0d1cc3e3558fa3a3612167dea8f5b8f1017b80a84e0fcfaf4583a06088",
+      "sanitized": false
     },
     {
       "source": "fondos-postulaciones-santiago-fondart-2026-extracto.md",
       "target": "fondos-postulaciones-santiago-fondart-2026-extracto.md",
+      "source_bytes": 3918,
       "bytes": 3918,
-      "sha256": "30dfbe4701ce8ff8502a0c4371162f91acb313e3e88c61a9aab9caf7a9a1b0c9"
+      "source_sha256": "30dfbe4701ce8ff8502a0c4371162f91acb313e3e88c61a9aab9caf7a9a1b0c9",
+      "sha256": "30dfbe4701ce8ff8502a0c4371162f91acb313e3e88c61a9aab9caf7a9a1b0c9",
+      "sanitized": false
     },
     {
       "source": "fondos-postulaciones-santiago-fondart-2026.json",
       "target": "fondos-postulaciones-santiago-fondart-2026.json",
+      "source_bytes": 165356,
       "bytes": 165356,
-      "sha256": "c08a11c6bee78f7f393d308666d9c982d9d9512630a7a5b5bc473f916e891ae9"
+      "source_sha256": "c08a11c6bee78f7f393d308666d9c982d9d9512630a7a5b5bc473f916e891ae9",
+      "sha256": "c08a11c6bee78f7f393d308666d9c982d9d9512630a7a5b5bc473f916e891ae9",
+      "sanitized": false
     },
     {
       "source": "fondos-postulaciones-terminos-requisitos-2027.json",
       "target": "fondos-postulaciones-terminos-requisitos-2027.json",
+      "source_bytes": 396243,
       "bytes": 396243,
-      "sha256": "782993f81b4b94b69fdd4a6c5665e828ff9099d967201655fe8b7bf2e3960b45"
+      "source_sha256": "782993f81b4b94b69fdd4a6c5665e828ff9099d967201655fe8b7bf2e3960b45",
+      "sha256": "782993f81b4b94b69fdd4a6c5665e828ff9099d967201655fe8b7bf2e3960b45",
+      "sanitized": false
     },
     {
       "source": "lasertoolkit.html",
       "target": "lasertoolkit.html",
+      "source_bytes": 52248,
       "bytes": 52248,
-      "sha256": "937b196e6f94a507dda2c92a71633f034c1925be614c32769612c72f0f821e8b"
+      "source_sha256": "937b196e6f94a507dda2c92a71633f034c1925be614c32769612c72f0f821e8b",
+      "sha256": "937b196e6f94a507dda2c92a71633f034c1925be614c32769612c72f0f821e8b",
+      "sanitized": false
     },
     {
       "source": "MEMORIA_DIRECCION.md",
       "target": "MEMORIA_DIRECCION.md",
+      "source_bytes": 60162,
       "bytes": 60162,
-      "sha256": "8e5d432696d0bf0439c9f4648fde86c11d300c48db31b76a193dd39e0971b537"
+      "source_sha256": "8e5d432696d0bf0439c9f4648fde86c11d300c48db31b76a193dd39e0971b537",
+      "sha256": "8e5d432696d0bf0439c9f4648fde86c11d300c48db31b76a193dd39e0971b537",
+      "sanitized": false
     },
     {
       "source": "organismo.html",
       "target": "organismo.html",
+      "source_bytes": 15963,
       "bytes": 15963,
-      "sha256": "4d4b18435ee2fc22a0e0bfa7c2fc44b48bd5fcbcbab33d9fb6df1d9ea3690467"
+      "source_sha256": "4d4b18435ee2fc22a0e0bfa7c2fc44b48bd5fcbcbab33d9fb6df1d9ea3690467",
+      "sha256": "4d4b18435ee2fc22a0e0bfa7c2fc44b48bd5fcbcbab33d9fb6df1d9ea3690467",
+      "sanitized": false
     },
     {
       "source": "postulacionfondartborrador.md",
       "target": "postulacionfondartborrador.md",
+      "source_bytes": 14871,
       "bytes": 14871,
-      "sha256": "8ebb7a62285fe4c3dce8df7e2b231377e0f9d7be82cdd48b1e059ebc9b622166"
+      "source_sha256": "8ebb7a62285fe4c3dce8df7e2b231377e0f9d7be82cdd48b1e059ebc9b622166",
+      "sha256": "8ebb7a62285fe4c3dce8df7e2b231377e0f9d7be82cdd48b1e059ebc9b622166",
+      "sanitized": false
     },
     {
       "source": "protocolofase0.md",
       "target": "protocolofase0.md",
+      "source_bytes": 12253,
       "bytes": 12253,
-      "sha256": "ff9e8234d6e8c916545b831377361289d08dfd764312453733de2f2cf3a28890"
+      "source_sha256": "ff9e8234d6e8c916545b831377361289d08dfd764312453733de2f2cf3a28890",
+      "sha256": "ff9e8234d6e8c916545b831377361289d08dfd764312453733de2f2cf3a28890",
+      "sanitized": false
     },
     {
       "source": "rd_fichas_entidades_2026-08-11.html",
       "target": "rd_fichas_entidades_2026-08-11.html",
+      "source_bytes": 109483,
       "bytes": 109483,
-      "sha256": "0533f2d26376c2bff2080ee6cecca1b41121c66e10a35a4f8920f519ca61b20a"
+      "source_sha256": "0533f2d26376c2bff2080ee6cecca1b41121c66e10a35a4f8920f519ca61b20a",
+      "sha256": "0533f2d26376c2bff2080ee6cecca1b41121c66e10a35a4f8920f519ca61b20a",
+      "sanitized": false
     },
     {
       "source": "rd_fichas_entidades_2026-08-11.json",
       "target": "rd_fichas_entidades_2026-08-11.json",
+      "source_bytes": 146504,
       "bytes": 146504,
-      "sha256": "331a6b3b900606f355b20c7cce0439536606fe8861cade8e34c255951872b9cb"
+      "source_sha256": "331a6b3b900606f355b20c7cce0439536606fe8861cade8e34c255951872b9cb",
+      "sha256": "331a6b3b900606f355b20c7cce0439536606fe8861cade8e34c255951872b9cb",
+      "sanitized": false
     },
     {
       "source": "rd_fichas_entidades_build.py",
       "target": "rd_fichas_entidades_build.py",
+      "source_bytes": 19442,
       "bytes": 19442,
-      "sha256": "b889fd3d64cf136d39436d6e8b0cdc43949d03c730313d5ad83b3746b4601d55"
+      "source_sha256": "b889fd3d64cf136d39436d6e8b0cdc43949d03c730313d5ad83b3746b4601d55",
+      "sha256": "b889fd3d64cf136d39436d6e8b0cdc43949d03c730313d5ad83b3746b4601d55",
+      "sanitized": false
     },
     {
       "source": "rd_firecrawl_2026-08-11.json",
       "target": "rd_firecrawl_2026-08-11.json",
+      "source_bytes": 1686790,
       "bytes": 1686790,
-      "sha256": "06a8deaa08308f45c72a236dbd3f3d4bcac5bc697b28d8f7cb251d7bd2e47345"
+      "source_sha256": "06a8deaa08308f45c72a236dbd3f3d4bcac5bc697b28d8f7cb251d7bd2e47345",
+      "sha256": "06a8deaa08308f45c72a236dbd3f3d4bcac5bc697b28d8f7cb251d7bd2e47345",
+      "sanitized": false
     },
     {
       "source": "rd_firecrawl_matriz_2026-08-11.json",
       "target": "rd_firecrawl_matriz_2026-08-11.json",
+      "source_bytes": 1401188,
       "bytes": 1401188,
-      "sha256": "96e13b1fb07c96a9da370dad181937bd8e70a224634cff0596e0c40851eab995"
+      "source_sha256": "96e13b1fb07c96a9da370dad181937bd8e70a224634cff0596e0c40851eab995",
+      "sha256": "96e13b1fb07c96a9da370dad181937bd8e70a224634cff0596e0c40851eab995",
+      "sanitized": false
     },
     {
       "source": "rd_fuentes_catalogo_2026-08-11.json",
       "target": "rd_fuentes_catalogo_2026-08-11.json",
+      "source_bytes": 27634,
       "bytes": 27634,
-      "sha256": "250b59e6d2a7e09a04c7ba2a4f63a9fff5bd93fb6bdb3e2a63daeb46fdadf6bd"
+      "source_sha256": "250b59e6d2a7e09a04c7ba2a4f63a9fff5bd93fb6bdb3e2a63daeb46fdadf6bd",
+      "sha256": "250b59e6d2a7e09a04c7ba2a4f63a9fff5bd93fb6bdb3e2a63daeb46fdadf6bd",
+      "sanitized": false
     },
     {
       "source": "rd_fuentes_catalogo_build.py",
       "target": "rd_fuentes_catalogo_build.py",
+      "source_bytes": 4129,
       "bytes": 4129,
-      "sha256": "90e8aaf9b68ffd64405415f2649ae07d54cde5f45154c63e270b7285e13cf59f"
+      "source_sha256": "90e8aaf9b68ffd64405415f2649ae07d54cde5f45154c63e270b7285e13cf59f",
+      "sha256": "90e8aaf9b68ffd64405415f2649ae07d54cde5f45154c63e270b7285e13cf59f",
+      "sanitized": false
     },
     {
       "source": "rd_fuentes_catalogo_informe_2026-08-11.md",
       "target": "rd_fuentes_catalogo_informe_2026-08-11.md",
+      "source_bytes": 1963,
       "bytes": 1963,
-      "sha256": "fd95afc818ed4f51ab338891336342b7d8aba728c21b7b61542853da73da9c52"
+      "source_sha256": "fd95afc818ed4f51ab338891336342b7d8aba728c21b7b61542853da73da9c52",
+      "sha256": "fd95afc818ed4f51ab338891336342b7d8aba728c21b7b61542853da73da9c52",
+      "sanitized": false
     },
     {
       "source": "rd_grafo_relaciones_2026-08-11.json",
       "target": "rd_grafo_relaciones_2026-08-11.json",
+      "source_bytes": 38418,
       "bytes": 38418,
-      "sha256": "c48ca71a089dfed41a283313d0ee714260bc2c554ac88a905358679c7699e8b4"
+      "source_sha256": "c48ca71a089dfed41a283313d0ee714260bc2c554ac88a905358679c7699e8b4",
+      "sha256": "c48ca71a089dfed41a283313d0ee714260bc2c554ac88a905358679c7699e8b4",
+      "sanitized": false
     },
     {
       "source": "rd_grafo_relaciones_informe_2026-08-11.md",
       "target": "rd_grafo_relaciones_informe_2026-08-11.md",
+      "source_bytes": 7373,
       "bytes": 7373,
-      "sha256": "1aad2734d80e828500542eb456c5e2138cee024f251e9185686ec0a7328e455d"
+      "source_sha256": "1aad2734d80e828500542eb456c5e2138cee024f251e9185686ec0a7328e455d",
+      "sha256": "1aad2734d80e828500542eb456c5e2138cee024f251e9185686ec0a7328e455d",
+      "sanitized": false
     },
     {
       "source": "rd_indice_integracion_relaciones_2026-08-11.json",
       "target": "rd_indice_integracion_relaciones_2026-08-11.json",
+      "source_bytes": 42842,
       "bytes": 42842,
-      "sha256": "cf1330d3666ad33ae32649d3be7d16a48759f8b969f3557a7dfe229642bd896a"
+      "source_sha256": "cf1330d3666ad33ae32649d3be7d16a48759f8b969f3557a7dfe229642bd896a",
+      "sha256": "cf1330d3666ad33ae32649d3be7d16a48759f8b969f3557a7dfe229642bd896a",
+      "sanitized": false
     },
     {
       "source": "rd_indice_integracion_relaciones_build.py",
       "target": "rd_indice_integracion_relaciones_build.py",
+      "source_bytes": 3280,
       "bytes": 3280,
-      "sha256": "c3f35a4133d3c1e302721c040497b724c168651102952be758a3ca9bbc699245"
+      "source_sha256": "c3f35a4133d3c1e302721c040497b724c168651102952be758a3ca9bbc699245",
+      "sha256": "c3f35a4133d3c1e302721c040497b724c168651102952be758a3ca9bbc699245",
+      "sanitized": false
     },
     {
       "source": "rd_indice_integracion_relaciones_informe_2026-08-11.md",
       "target": "rd_indice_integracion_relaciones_informe_2026-08-11.md",
+      "source_bytes": 1135,
       "bytes": 1135,
-      "sha256": "d1d441a5435a00a607812cfba4e654a435a9549b449f90d9c59f3c2fbc529b17"
+      "source_sha256": "d1d441a5435a00a607812cfba4e654a435a9549b449f90d9c59f3c2fbc529b17",
+      "sha256": "d1d441a5435a00a607812cfba4e654a435a9549b449f90d9c59f3c2fbc529b17",
+      "sanitized": false
     },
     {
       "source": "rd_matriz_interactiva_2026-08-11.html",
       "target": "rd_matriz_interactiva_2026-08-11.html",
+      "source_bytes": 82984,
       "bytes": 82984,
-      "sha256": "196557527b9760bab4849cbe48eeab98800f8997fb952f67fd13606bf99ef3de"
+      "source_sha256": "196557527b9760bab4849cbe48eeab98800f8997fb952f67fd13606bf99ef3de",
+      "sha256": "196557527b9760bab4849cbe48eeab98800f8997fb952f67fd13606bf99ef3de",
+      "sanitized": false
     },
     {
       "source": "rd_matriz_interactiva_build.py",
       "target": "rd_matriz_interactiva_build.py",
+      "source_bytes": 17352,
       "bytes": 17352,
-      "sha256": "fb7b1b577cc9ebc8cd8f71ee389be129c39b6ab5e27526861255225417c1725a"
+      "source_sha256": "fb7b1b577cc9ebc8cd8f71ee389be129c39b6ab5e27526861255225417c1725a",
+      "sha256": "fb7b1b577cc9ebc8cd8f71ee389be129c39b6ab5e27526861255225417c1725a",
+      "sanitized": false
     },
     {
       "source": "rd_matriz_semantica_scraping_2026-08-11.md",
       "target": "rd_matriz_semantica_scraping_2026-08-11.md",
+      "source_bytes": 4591,
       "bytes": 4591,
-      "sha256": "b8d4aabd48c1e0fec6db5bd09b3d1c16c519d45f3db9a6bab2929b9516e18c9e"
+      "source_sha256": "b8d4aabd48c1e0fec6db5bd09b3d1c16c519d45f3db9a6bab2929b9516e18c9e",
+      "sha256": "b8d4aabd48c1e0fec6db5bd09b3d1c16c519d45f3db9a6bab2929b9516e18c9e",
+      "sanitized": false
     },
     {
       "source": "rd_post_chemsex_spec_2026-08-11.html",
       "target": "rd_post_chemsex_spec_2026-08-11.html",
+      "source_bytes": 15905,
       "bytes": 15905,
-      "sha256": "9329d4e9f70b6bb50dbc5f0c75547da446e94b234732f4f0b32bccc625406d0c"
+      "source_sha256": "9329d4e9f70b6bb50dbc5f0c75547da446e94b234732f4f0b32bccc625406d0c",
+      "sha256": "9329d4e9f70b6bb50dbc5f0c75547da446e94b234732f4f0b32bccc625406d0c",
+      "sanitized": false
     },
     {
       "source": "rd_post_chemsex_spec_2026-08-11.json",
       "target": "rd_post_chemsex_spec_2026-08-11.json",
+      "source_bytes": 13005,
       "bytes": 13005,
-      "sha256": "b7de5c64e0398200792537052ca2ad36049262fca7ec78dc171b7a48ff5457c5"
+      "source_sha256": "b7de5c64e0398200792537052ca2ad36049262fca7ec78dc171b7a48ff5457c5",
+      "sha256": "b7de5c64e0398200792537052ca2ad36049262fca7ec78dc171b7a48ff5457c5",
+      "sanitized": false
     },
     {
       "source": "rd_post_chemsex_spec_build.py",
       "target": "rd_post_chemsex_spec_build.py",
+      "source_bytes": 21709,
       "bytes": 21709,
-      "sha256": "f19e130b70e99eca9524e0a8fcecfa44784f0ea8164c51fc54052395136f4066"
+      "source_sha256": "f19e130b70e99eca9524e0a8fcecfa44784f0ea8164c51fc54052395136f4066",
+      "sha256": "f19e130b70e99eca9524e0a8fcecfa44784f0ea8164c51fc54052395136f4066",
+      "sanitized": false
     },
     {
       "source": "rd_post_chemsex_visual_brief_2026-08-11.json",
       "target": "rd_post_chemsex_visual_brief_2026-08-11.json",
+      "source_bytes": 7374,
       "bytes": 7374,
-      "sha256": "d9f7f632893d5f6d0da3c149bef224cabe67c4d6d675ee60f5de07211950bf07"
+      "source_sha256": "d9f7f632893d5f6d0da3c149bef224cabe67c4d6d675ee60f5de07211950bf07",
+      "sha256": "d9f7f632893d5f6d0da3c149bef224cabe67c4d6d675ee60f5de07211950bf07",
+      "sanitized": false
     },
     {
       "source": "rd_post_chemsex_visual_brief_build.py",
       "target": "rd_post_chemsex_visual_brief_build.py",
+      "source_bytes": 8305,
       "bytes": 8305,
-      "sha256": "a93b4f08c914089cb5f0b6818847f600477e46786a6c47a98b06a92334a6e73a"
+      "source_sha256": "a93b4f08c914089cb5f0b6818847f600477e46786a6c47a98b06a92334a6e73a",
+      "sha256": "a93b4f08c914089cb5f0b6818847f600477e46786a6c47a98b06a92334a6e73a",
+      "sanitized": false
     },
     {
       "source": "rd_post_chemsex_visual_brief_informe_2026-08-11.md",
       "target": "rd_post_chemsex_visual_brief_informe_2026-08-11.md",
+      "source_bytes": 3901,
       "bytes": 3901,
-      "sha256": "cd76dda4d52350c7ec423f30250ebc7ef4c372098f13e85c158bcbef9877bf8f"
+      "source_sha256": "cd76dda4d52350c7ec423f30250ebc7ef4c372098f13e85c158bcbef9877bf8f",
+      "sha256": "cd76dda4d52350c7ec423f30250ebc7ef4c372098f13e85c158bcbef9877bf8f",
+      "sanitized": false
     },
     {
       "source": "rd_post_cover_prototype_2026-08-11.html",
       "target": "rd_post_cover_prototype_2026-08-11.html",
+      "source_bytes": 2597,
       "bytes": 2597,
-      "sha256": "9f526062dd573e2d2e6172f18071aefa82cdc080f40685a388cd8672a213df7e"
+      "source_sha256": "9f526062dd573e2d2e6172f18071aefa82cdc080f40685a388cd8672a213df7e",
+      "sha256": "9f526062dd573e2d2e6172f18071aefa82cdc080f40685a388cd8672a213df7e",
+      "sanitized": false
     },
     {
       "source": "rd_post_cover_prototype_2026-08-11.png",
       "target": "rd_post_cover_prototype_2026-08-11.png",
+      "source_bytes": 95392,
       "bytes": 95392,
-      "sha256": "248f57cc2724986763321177b3cf6dab2fc2ddb5ddaea3bdfba3881b832629f2"
+      "source_sha256": "248f57cc2724986763321177b3cf6dab2fc2ddb5ddaea3bdfba3881b832629f2",
+      "sha256": "248f57cc2724986763321177b3cf6dab2fc2ddb5ddaea3bdfba3881b832629f2",
+      "sanitized": false
     },
     {
       "source": "rd_post_cover_prototype_2026-08-11.svg",
       "target": "rd_post_cover_prototype_2026-08-11.svg",
+      "source_bytes": 8734,
       "bytes": 8734,
-      "sha256": "ad0679df6f93d93666a1fb12afa56db2c59a2d8f3dea8261a45c9ea838cf4faa"
+      "source_sha256": "ad0679df6f93d93666a1fb12afa56db2c59a2d8f3dea8261a45c9ea838cf4faa",
+      "sha256": "ad0679df6f93d93666a1fb12afa56db2c59a2d8f3dea8261a45c9ea838cf4faa",
+      "sanitized": false
     },
     {
       "source": "rd_reactivos_auditoria_internacional_2026-08-11.json",
       "target": "rd_reactivos_auditoria_internacional_2026-08-11.json",
+      "source_bytes": 8442,
       "bytes": 8442,
-      "sha256": "5c8920371c6461803039f991856f2832d2c6cb5831ed71ef31d2c7f684f9c67b"
+      "source_sha256": "5c8920371c6461803039f991856f2832d2c6cb5831ed71ef31d2c7f684f9c67b",
+      "sha256": "5c8920371c6461803039f991856f2832d2c6cb5831ed71ef31d2c7f684f9c67b",
+      "sanitized": false
     },
     {
       "source": "rd_reactivos_auditoria_internacional_2026-08-11.md",
       "target": "rd_reactivos_auditoria_internacional_2026-08-11.md",
-      "bytes": 4697,
-      "sha256": "4f592fdeb99881b4916178ec5ff6a669d6646cc50d1ed3f51085a2fb8aeaa487"
+      "source_bytes": 4697,
+      "bytes": 4700,
+      "source_sha256": "4f592fdeb99881b4916178ec5ff6a669d6646cc50d1ed3f51085a2fb8aeaa487",
+      "sha256": "ad102b64b1c4a54e336f5b55125abebb9f96342d2fc44437b62f53e9fd25e33f",
+      "sanitized": true
     },
     {
       "source": "rd_reactivos_informe_2026-08-11.md",
       "target": "rd_reactivos_informe_2026-08-11.md",
-      "bytes": 3319,
-      "sha256": "90dbcb0c9dd98a2fdaad7e32f8631698ad7c022fa05aa3a42dd0377ba5437cbc"
+      "source_bytes": 3319,
+      "bytes": 3322,
+      "source_sha256": "90dbcb0c9dd98a2fdaad7e32f8631698ad7c022fa05aa3a42dd0377ba5437cbc",
+      "sha256": "4017b430dbbf3c475a0d05cc793cdead69d3ee8c14b61e762b959e3fc45df8e1",
+      "sanitized": true
     },
     {
       "source": "rd_reactivos_normalizados_2026-08-11.json",
       "target": "rd_reactivos_normalizados_2026-08-11.json",
+      "source_bytes": 13380,
       "bytes": 13380,
-      "sha256": "17e37317bdf462a8a93f1ccedc097017bc830aabc74121a83b093e33de18c59d"
+      "source_sha256": "17e37317bdf462a8a93f1ccedc097017bc830aabc74121a83b093e33de18c59d",
+      "sha256": "17e37317bdf462a8a93f1ccedc097017bc830aabc74121a83b093e33de18c59d",
+      "sanitized": false
     },
     {
       "source": "rd_testeos_eventos_2025_evidence_2026-08-12.json",
       "target": "rd_testeos_eventos_2025_evidence_2026-08-12.json",
+      "source_bytes": 5745417,
       "bytes": 5745417,
-      "sha256": "3b0e529a7b1283923f4a4665adbdbcd2aca8b47ae0840f500ba115469f660916"
+      "source_sha256": "3b0e529a7b1283923f4a4665adbdbcd2aca8b47ae0840f500ba115469f660916",
+      "sha256": "3b0e529a7b1283923f4a4665adbdbcd2aca8b47ae0840f500ba115469f660916",
+      "sanitized": false
     },
     {
       "source": "rd_testeos_eventos_2025_informe_2026-08-12.md",
       "target": "rd_testeos_eventos_2025_informe_2026-08-12.md",
+      "source_bytes": 2682,
       "bytes": 2682,
-      "sha256": "3f96a1f8a0656e42e14c2148ed51c8a18db41d7bd40857f3390560b6495da90c"
+      "source_sha256": "3f96a1f8a0656e42e14c2148ed51c8a18db41d7bd40857f3390560b6495da90c",
+      "sha256": "3f96a1f8a0656e42e14c2148ed51c8a18db41d7bd40857f3390560b6495da90c",
+      "sanitized": false
     },
     {
       "source": "rd_testeos_eventos_2025_integrated_2026-08-12.xlsx",
       "target": "rd_testeos_eventos_2025_integrated_2026-08-12.xlsx",
+      "source_bytes": 686272,
       "bytes": 686272,
-      "sha256": "4a05767cf833cfff47c9387e9cecfade00890ee8ba39b4a7d3b9359c47ee121b"
+      "source_sha256": "4a05767cf833cfff47c9387e9cecfade00890ee8ba39b4a7d3b9359c47ee121b",
+      "sha256": "4a05767cf833cfff47c9387e9cecfade00890ee8ba39b4a7d3b9359c47ee121b",
+      "sanitized": false
     },
     {
       "source": "rd_testings_2025_integration_build.py",
       "target": "rd_testings_2025_integration_build.py",
-      "bytes": 29158,
-      "sha256": "ce73f8a3c9e77072cab7dfb13095d3131fb1dff0e0291464b598ac22ff867f73"
+      "source_bytes": 29158,
+      "bytes": 29164,
+      "source_sha256": "ce73f8a3c9e77072cab7dfb13095d3131fb1dff0e0291464b598ac22ff867f73",
+      "sha256": "c3e698aa7149b8e02c1c4f66afb681ca24aa6341ae22b0c1851c514d9616782a",
+      "sanitized": true
     },
     {
       "source": "rd_universo_entidades_2026-08-11.json",
       "target": "rd_universo_entidades_2026-08-11.json",
+      "source_bytes": 20887,
       "bytes": 20887,
-      "sha256": "4e05f757e34f6ec152c09f7349d19266d7a00585862eef14bf4d99e73c533458"
+      "source_sha256": "4e05f757e34f6ec152c09f7349d19266d7a00585862eef14bf4d99e73c533458",
+      "sha256": "4e05f757e34f6ec152c09f7349d19266d7a00585862eef14bf4d99e73c533458",
+      "sanitized": false
     },
     {
       "source": "rd_universo_entidades_informe_2026-08-11.md",
       "target": "rd_universo_entidades_informe_2026-08-11.md",
-      "bytes": 4178,
-      "sha256": "ac5fd9cc0661268cc80f26d3b65e2adfc7a33b0891c7cb2a8423664948791168"
+      "source_bytes": 4178,
+      "bytes": 4181,
+      "source_sha256": "ac5fd9cc0661268cc80f26d3b65e2adfc7a33b0891c7cb2a8423664948791168",
+      "sha256": "762c7f740911493ebd3ae64ed0db42610dc8f4c5dd775b68b6df1bff6fd2ba07",
+      "sanitized": true
     },
     {
       "source": "recomendacion-thi-ng-vibecodeine.md",
       "target": "recomendacion-thi-ng-vibecodeine.md",
+      "source_bytes": 9801,
       "bytes": 9801,
-      "sha256": "e5bf445fe0cf01068a36721dd1dc34488cb72db8ea77b5ddda7acb166b981a6d"
+      "source_sha256": "e5bf445fe0cf01068a36721dd1dc34488cb72db8ea77b5ddda7acb166b981a6d",
+      "sha256": "e5bf445fe0cf01068a36721dd1dc34488cb72db8ea77b5ddda7acb166b981a6d",
+      "sanitized": false
     },
     {
       "source": "revision-sinreferencia-postulacionfondart.md",
       "target": "revision-sinreferencia-postulacionfondart.md",
+      "source_bytes": 5325,
       "bytes": 5325,
-      "sha256": "0f27fe8c461e39baf725c30bd459ef7617523e627eb8ff49b3f880ce4d5ff9dc"
+      "source_sha256": "0f27fe8c461e39baf725c30bd459ef7617523e627eb8ff49b3f880ce4d5ff9dc",
+      "sha256": "0f27fe8c461e39baf725c30bd459ef7617523e627eb8ff49b3f880ce4d5ff9dc",
+      "sanitized": false
     },
     {
       "source": "sinreferencia.html",
       "target": "sinreferencia.html",
+      "source_bytes": 16607,
       "bytes": 16607,
-      "sha256": "88832bfff60467edbeba2adf873ba0164d6e8eb47efbe47a4c13ecf4836fe1a4"
+      "source_sha256": "88832bfff60467edbeba2adf873ba0164d6e8eb47efbe47a4c13ecf4836fe1a4",
+      "sha256": "88832bfff60467edbeba2adf873ba0164d6e8eb47efbe47a4c13ecf4836fe1a4",
+      "sanitized": false
     },
     {
       "source": "solid_hpi_quantified_self/00-indice.md",
       "target": "solid_hpi_quantified_self/00-indice.md",
+      "source_bytes": 623,
       "bytes": 623,
-      "sha256": "c451424d3253807835c943bdd435c5d99eeedc09e7c0534724ac3e8b020316a1"
+      "source_sha256": "c451424d3253807835c943bdd435c5d99eeedc09e7c0534724ac3e8b020316a1",
+      "sha256": "c451424d3253807835c943bdd435c5d99eeedc09e7c0534724ac3e8b020316a1",
+      "sanitized": false
     },
     {
       "source": "solid_hpi_quantified_self/01-quantified-self-repositorios.md",
       "target": "solid_hpi_quantified_self/01-quantified-self-repositorios.md",
+      "source_bytes": 1385,
       "bytes": 1385,
-      "sha256": "aad7c22a8a5df9a991700c1be7ae86b98088726dca83e198275954ac0d23e464"
+      "source_sha256": "aad7c22a8a5df9a991700c1be7ae86b98088726dca83e198275954ac0d23e464",
+      "sha256": "aad7c22a8a5df9a991700c1be7ae86b98088726dca83e198275954ac0d23e464",
+      "sanitized": false
     },
     {
       "source": "solid_hpi_quantified_self/02-solid.md",
       "target": "solid_hpi_quantified_self/02-solid.md",
+      "source_bytes": 930,
       "bytes": 930,
-      "sha256": "917341016fc253a945e5f8ac7d61b9142d268fa2c0051e409d69a69e999b01b5"
+      "source_sha256": "917341016fc253a945e5f8ac7d61b9142d268fa2c0051e409d69a69e999b01b5",
+      "sha256": "917341016fc253a945e5f8ac7d61b9142d268fa2c0051e409d69a69e999b01b5",
+      "sanitized": false
     },
     {
       "source": "solid_hpi_quantified_self/03-revisiones-ong.md",
       "target": "solid_hpi_quantified_self/03-revisiones-ong.md",
+      "source_bytes": 1243,
       "bytes": 1243,
-      "sha256": "3dc5803b817b35a2df2123b7c35e438fc527eec42f07e2a937c3a645b8b0ad8c"
+      "source_sha256": "3dc5803b817b35a2df2123b7c35e438fc527eec42f07e2a937c3a645b8b0ad8c",
+      "sha256": "3dc5803b817b35a2df2123b7c35e438fc527eec42f07e2a937c3a645b8b0ad8c",
+      "sanitized": false
     },
     {
       "source": "solid_hpi_quantified_self/04-guia-ley-datos.md",
       "target": "solid_hpi_quantified_self/04-guia-ley-datos.md",
+      "source_bytes": 1212,
       "bytes": 1212,
-      "sha256": "20c1251620328a0476c0d4300cbe16168b89f9cb8352aed42614b02a1364b852"
+      "source_sha256": "20c1251620328a0476c0d4300cbe16168b89f9cb8352aed42614b02a1364b852",
+      "sha256": "20c1251620328a0476c0d4300cbe16168b89f9cb8352aed42614b02a1364b852",
+      "sanitized": false
     },
     {
       "source": "solid_hpi_quantified_self/05-auditoria-firecrawl.md",
       "target": "solid_hpi_quantified_self/05-auditoria-firecrawl.md",
+      "source_bytes": 1274,
       "bytes": 1274,
-      "sha256": "13c57dd25854454ef96b6df1ff3cb0db53a4b4893fdf2a17abefd82605d32fd8"
+      "source_sha256": "13c57dd25854454ef96b6df1ff3cb0db53a4b4893fdf2a17abefd82605d32fd8",
+      "sha256": "13c57dd25854454ef96b6df1ff3cb0db53a4b4893fdf2a17abefd82605d32fd8",
+      "sanitized": false
     },
     {
       "source": "solid_hpi_quantified_self/06-sintesis-populares.md",
       "target": "solid_hpi_quantified_self/06-sintesis-populares.md",
+      "source_bytes": 7234,
       "bytes": 7234,
-      "sha256": "0edc573b2f1acd4371391110d545364667040e077ec2f9614467a86d7dcf364a"
+      "source_sha256": "0edc573b2f1acd4371391110d545364667040e077ec2f9614467a86d7dcf364a",
+      "sha256": "0edc573b2f1acd4371391110d545364667040e077ec2f9614467a86d7dcf364a",
+      "sanitized": false
     },
     {
       "source": "solid_hpi_quantified_self/07-sintesis-trending.md",
       "target": "solid_hpi_quantified_self/07-sintesis-trending.md",
+      "source_bytes": 10212,
       "bytes": 10212,
-      "sha256": "a9f7f82a2d5f76ce3dae34e64d6005a0645b20ec629602d0e3bc2900820fe0da"
+      "source_sha256": "a9f7f82a2d5f76ce3dae34e64d6005a0645b20ec629602d0e3bc2900820fe0da",
+      "sha256": "a9f7f82a2d5f76ce3dae34e64d6005a0645b20ec629602d0e3bc2900820fe0da",
+      "sanitized": false
     },
     {
       "source": "solid_hpi_quantified_self/quantified-self-firecrawl.md",
       "target": "solid_hpi_quantified_self/quantified-self-firecrawl.md",
+      "source_bytes": 12949,
       "bytes": 12949,
-      "sha256": "c8c7a6a13ce85b4c88ba98aa9f42f9df504209a7fb6137642d1de3021b1be36d"
+      "source_sha256": "c8c7a6a13ce85b4c88ba98aa9f42f9df504209a7fb6137642d1de3021b1be36d",
+      "sha256": "c8c7a6a13ce85b4c88ba98aa9f42f9df504209a7fb6137642d1de3021b1be36d",
+      "sanitized": false
     },
     {
       "source": "Testeo 2025.source.xlsx",
       "target": "Testeo 2025.source.xlsx",
+      "source_bytes": 2096806,
       "bytes": 2096806,
-      "sha256": "5b9e54c6f189762f3e20ddcf5830f79ca1378f895488c161459fc95fb54c8055"
+      "source_sha256": "5b9e54c6f189762f3e20ddcf5830f79ca1378f895488c161459fc95fb54c8055",
+      "sha256": "5b9e54c6f189762f3e20ddcf5830f79ca1378f895488c161459fc95fb54c8055",
+      "sanitized": false
     }
   ],
   "excluded": [

@@ -96,6 +96,35 @@ evidencia fechada, incluso cuando se contradicen.
   base común de tres vías en el manifiesto; por eso el arreglo correcto es
   revisión manual por esos grupos, no elegir un ganador automáticamente.
 
+### Reconciliación de variantes — 2026-09-01
+
+- Se ejecutó una reconciliación real de tres vías contra la base común
+  `4b8453cbf17b25431e091a4a6fe3f09a819a0ffb`, usando las copias congeladas de
+  `active-flujo`, `win-flujo` y `runner-vibecodeine`. El resultado fue 482
+  archivos fusionados limpiamente, con reemplazo atómico y sin escribir bajo
+  `_archive/`.
+- La medición dejó explícitos los límites: 46 conflictos de contenido, 55
+  rutas sin base común, 22 conflictos de tipo (archivo/symlink) y 18 rutas cuyo
+  contenido vivo había cambiado desde el manifiesto. Esos 151 casos no se
+  declaran resueltos por prosa; siguen trazados en
+  `context/mak-merge-20260831/reconcile-20260901.json`.
+- En los conflictos donde `active-flujo` y `runner-vibecodeine` coincidían,
+  se aceptó ese consenso y se conservó `win-flujo` sólo como evidencia. Los 15
+  conflictos sin consenso (incluido el digest que requirió una integración
+  manual) permanecen deliberadamente para revisión manual;
+  incluyen `.gitignore`, `Makefile`, el crontab, los hubs, `src/flujo/autonomia.py`
+  y `src/flujo/paths.py`. No se inventaron ejecutables ni se editaron tests para
+  ocultar diferencias.
+- Se corrigió manualmente el digest de `tools/update_readme_svg.py` para que
+  filtre la declaración obsoleta de cuatro ramas y exprese la autoridad MAK/
+  runtime. Se mantuvieron los contratos existentes de cron pausado y de
+  automerge; una variante que refería `/home/mak/bin/mak_sync_safe.py` no se
+  adoptó porque ese archivo no existe en ningún origen.
+- Validación enfocada posterior: 87 tests pasaron en 62.89 s con
+  `pytest -o addopts=''`; no se ejecutó la suite completa. Los cambios
+  puramente de fin de línea de 134 rutas se descartaron para que el commit
+  sólo contenga deltas semánticos.
+
 ### Revalidación documental previa al traslado — 2026-08-31
 
 - Línea base histórica estable, con el mismo comando literal ejecutado dos veces:
