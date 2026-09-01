@@ -11,6 +11,7 @@ from dataclasses import dataclass
 import hashlib
 import json
 from pathlib import Path
+import re
 import sys
 from typing import Iterable
 
@@ -489,11 +490,132 @@ HYGIENE_CANONICAL_STEMS = frozenset({
     "test_un_solo_documento",
 })
 
+# The remaining former-review modules were inspected at their real import/path
+# boundary.  They are not hygiene checks: they exercise MAK departments,
+# tooling, or the cross-layer HTTP hubs.  Keeping the decisions explicit makes
+# the review bucket finite and auditable instead of another dumping ground.
+REVIEW_LANE_ASSIGNMENTS = {
+    "tests/test_adobe_panel.py": "mak",
+    "tests/test_archivo_iskvw_posicion.py": "mak",
+    "tests/test_becas_calendario_missing_dir.py": "mak",
+    "tests/test_busqueda_ciega.py": "mak",
+    "tests/test_capas_iskvw.py": "mak",
+    "tests/test_codex_no_es_sandbox.py": "mak",
+    "tests/test_coherence.py": "mak",
+    "tests/test_consolidar_fichas.py": "mak",
+    "tests/test_consulta_busqueda.py": "mak",
+    "tests/test_corpus_a_micelio.py": "mak",
+    "tests/test_debate_modelos.py": "mak",
+    "tests/test_entregar_iconos_guard.py": "mak",
+    "tests/test_entregar_smoke_gate.py": "mak",
+    "tests/test_formatos_mak.py": "mak",
+    "tests/test_fuentes.py": "mak",
+    "tests/test_hub_execution_routes.py": "integration",
+    "tests/test_hub_render_and_rescue_routes.py": "integration",
+    "tests/test_iconos_conjunto.py": "mak",
+    "tests/test_ig_metadatos.py": "mak",
+    "tests/test_informe_plantilla.py": "mak",
+    "tests/test_iskvw_editor_contract.py": "mak",
+    "tests/test_iskvw_vinculos.py": "mak",
+    "tests/test_knowledge_scanner_skips.py": "mak",
+    "tests/test_logo_clean_lab_dataset.py": "mak",
+    "tests/test_mak_backlog.py": "mak",
+    "tests/test_mak_codex_nodos.py": "mak",
+    "tests/test_mak_diagnostics.py": "integration",
+    "tests/test_mak_fallback.py": "mak",
+    "tests/test_mak_hub_salud.py": "integration",
+    "tests/test_mak_iconos.py": "mak",
+    "tests/test_mak_research_iconos_auto.py": "mak",
+    "tests/test_mak_research_interfaz_http.py": "mak",
+    "tests/test_mak_research_memoria_degradation.py": "mak",
+    "tests/test_mak_research_watchdog.py": "mak",
+    "tests/test_mak_sync_safe.py": "mak",
+    "tests/test_material_ocurrencias.py": "mak",
+    "tests/test_motor_semantico.py": "mak",
+    "tests/test_motor_semantico_rasterizador.py": "mak",
+    "tests/test_readme_svg.py": "repo_hygiene",
+    "tests/test_refutar_orden.py": "mak",
+    "tests/test_source_pipeline.py": "mak",
+    "tests/test_validate_airdrop.py": "flujo",
+    "tests/test_vinculos_iskvw.py": "mak",
+    "tests/test_wifi_intelligence_plugin.py": "mak",
+}
+
+
+def _module_locations() -> dict[str, tuple[Path, ...]]:
+    """Index importable project modules once for unresolved test modules."""
+    locations: dict[str, list[Path]] = {}
+    for root_name in ("src", "cultura", "tools", "iskvw", "scripts", "xio", "projects"):
+        root = REPO / root_name
+        if not root.is_dir():
+            continue
+        for candidate in root.rglob("*.py"):
+            if any(part in {"_archive", ".venv", "__pycache__", "node_modules"}
+                   for part in candidate.parts):
+                continue
+            locations.setdefault(candidate.stem, []).append(candidate)
+    return {stem: tuple(paths) for stem, paths in locations.items()}
+
+
+_MODULE_LOCATIONS = _module_locations()
+
+
+def _infer_review_lane(path: Path) -> str:
+    """Resolve an old broad hygiene assignment from executable evidence.
+
+    Imports and explicit source paths are stronger than a filename.  If they
+    do not identify one subject, the test remains in ``review`` rather than
+    being silently assigned to a functional lane.
+    """
+    imported, source = _imports_and_text(path)
+    lanes: set[str] = set()
+    for name in imported:
+        stem = name.rsplit(".", 1)[-1]
+        for candidate in _MODULE_LOCATIONS.get(stem, ()):
+            candidate_text = candidate.as_posix()
+            if candidate_text.startswith("src/flujo/"):
+                lanes.add("flujo")
+            elif candidate_text.startswith("projects/tapiz/"):
+                lanes.add("flujo")
+            elif candidate_text.startswith(("cultura/", "tools/", "iskvw/", "scripts/", "xio/", "projects/")):
+                lanes.add("mak")
+
+    if "src/flujo/" in source or "scripts/flujo.py" in source or "projects/tapiz/" in source:
+        lanes.add("flujo")
+    if any(token in source for token in ("cultura/", "tools/", "iskvw/", "xio/", "projects/cultura/", "projects/plano/")):
+        lanes.add("mak")
+
+    # Dynamic-import tests often name the module only in a docstring.  Resolve
+    # those explicit ``module.py`` mentions against the same index.
+    for stem in set(re.findall(r"(?<![\w-])([a-zA-Z_][\w-]*)\.py", source)):
+        for candidate in _MODULE_LOCATIONS.get(stem, ()):
+            candidate_text = candidate.as_posix()
+            if candidate_text.startswith("src/flujo/"):
+                lanes.add("flujo")
+            elif candidate_text.startswith("projects/tapiz/"):
+                lanes.add("flujo")
+            elif candidate_text.startswith(("cultura/", "tools/", "iskvw/", "scripts/", "xio/", "projects/")):
+                lanes.add("mak")
+
+    if len(lanes) > 1:
+        return "integration"
+    return next(iter(lanes), "review")
+
+
 TEST_LANE_MAP: dict[str, LaneRecord] = {}
 for key, lane in PERSISTED_LANE_DATA.items():
-    if lane == "repo_hygiene" and Path(key).stem not in HYGIENE_CANONICAL_STEMS:
+    if key in REVIEW_LANE_ASSIGNMENTS:
         TEST_LANE_MAP[key] = LaneRecord(
-            "review", (), "historical hygiene assignment; subject not canonical"
+            REVIEW_LANE_ASSIGNMENTS[key], (), "reviewed module/path assignment"
+        )
+        continue
+    if lane == "repo_hygiene" and Path(key).stem not in HYGIENE_CANONICAL_STEMS:
+        inferred = _infer_review_lane(REPO / key)
+        TEST_LANE_MAP[key] = LaneRecord(
+            inferred, (),
+            "resolved from imports/source paths"
+            if inferred != "review"
+            else "historical hygiene assignment; subject not canonical",
         )
     else:
         TEST_LANE_MAP[key] = LaneRecord(lane, (), "persisted AST assignment")
