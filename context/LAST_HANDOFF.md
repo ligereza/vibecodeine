@@ -42,7 +42,10 @@ evidencia fechada, incluso cuando se contradicen.
   `5f6af17e9d720461ad6bb7cf0217b17daad0cdbf` y `historia` en `ab9afa13`.
   Los remotos observados son `ligereza-mak` y `vibecodeine-legacy`; sus refs
   locales documentan transportes históricos, no autoridad física ni permiso
-  para push. Esta medición no hizo Git mutante.
+  para push. Ese era el baseline previo a esta ola. Después se crearon tres
+  commits locales, sin push: `32d929d8` (restauración física y archivo de
+  handoffs), `6166a8b8` (estado documental y contratos departamentales) y
+  `940d2324` (carriles y mapa AST).
 
 ### Estado documental medido
 
