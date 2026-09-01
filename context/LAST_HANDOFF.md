@@ -61,7 +61,9 @@ evidencia fechada, incluso cuando se contradicen.
 - El desacoplamiento dejó 5.018 archivos vivos con `nlink=1`; permanecen 1.270
   enlaces compartidos únicamente en rutas protegidas (`tests/`, `context/`,
   `context-history/`, `pyproject.toml`). Se restauró
-  `cultura/mak_research/fallback_util.py` como copia independiente y el legado
+  `cultura/mak_research/fallback_util.py` como copia independiente; ese estado
+  fue superado el 2026-09-01 al retirar la copia duplicada, porque el único
+  consumidor importa `cultura/mak_codex/fallback_util.py`. El legado
   `tools/mak_ops/repair_mak_sync.py` se retiró porque su reemplazo seguro es
   `tools/mak_ops/sync_mak_safe.py` y el test prohíbe reactivarlo.
 - Los markers `flujo`, `mak`, `integration` y `repo_hygiene` quedaron declarados
@@ -71,6 +73,28 @@ evidencia fechada, incluso cuando se contradicen.
   `repo_hygiene` 115 (124 s, RC 0), `review` 39 bajo demanda.
   El mapa de 387 rutas quedó persistido estáticamente en ese archivo para que
   la colección no recalcule AST en cada corrida (`ac789a31`).
+
+### Cierre de `review` y triage de divergencias — 2026-09-01
+
+- Los 39 módulos que estaban en `review` fueron clasificados por evidencia de
+  importación/ruta: `mak` absorbió 36 y `repo_hygiene` 3. El mapa persistido
+  queda en `review=0`, `mak=86`, `repo_hygiene=118`, `flujo=173` e
+  `integration=10`; SETHASH y la lista completa se obtienen con
+  `./.venv/bin/python tools/test_lane_map.py --format text`.
+- La corrida acotada de esos 39 módulos encontró un duplicado real:
+  `cultura/mak_research/fallback_util.py`. No tenía consumidores directos;
+  `research_lib.py` y `expulsion.py` importan el único
+  `cultura/mak_codex/fallback_util.py`. Se retiró sólo la copia viva y se
+  preservó la variante en `_archive/`; los contratos
+  `tests/test_mak_salud_proveedores.py` y `tests/test_mak_fallback.py` pasan
+  juntos (17 tests, RC 0). La suite completa no se volvió a ejecutar.
+- Las 813 divergencias quedaron triadas, sin fusión semántica inventada, en
+  `context/mak-merge-20260831/divergence-triage.json` y su resumen
+  `DIVERGENCE_TRIAGE.md`: 712 tienen consenso byte a byte de dos orígenes (653
+  ya coinciden con el baseline activo; 59 lo tienen como outlier), 73 son
+  conflictos de dos fuentes/tipo y 28 tienen tres contenidos únicos. No existe
+  base común de tres vías en el manifiesto; por eso el arreglo correcto es
+  revisión manual por esos grupos, no elegir un ganador automáticamente.
 
 ### Revalidación documental previa al traslado — 2026-08-31
 
