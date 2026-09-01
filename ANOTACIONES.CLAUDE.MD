@@ -296,7 +296,7 @@ mida; lo que quede aquí es el registro de una sesión, con fecha, y así hay qu
 leerlo. Si dentro de un mes contradicen a `medir_procesos.py`, gana el comando.
 
 **Resuelto 2026-08-31.** Ya no son cinco, son ocho (se sumaron `PATRONES.CLAUDE.json`
-y `MAK_CODEX_HANDOFF.md`, y este propio archivo se separó de los otros). El
+y `docs/handoffs/archive/MAK_CODEX_HANDOFF.md`, y este propio archivo se separó de los otros). El
 orden de lectura explícito, con la misma forma que `docs/AUTORIDAD.md` le dio
 al repo, quedó escrito en `~/GENESIS.md` — sección "Autoridad y orden de
 lectura". No se creó un noveno documento para resolverlo.
