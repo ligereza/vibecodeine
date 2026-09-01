@@ -37,15 +37,15 @@ evidencia fechada, incluso cuando se contradicen.
   `/home/mak/actions-runner/_work/vibecodeine/vibecodeine` es un symlink a
   `.../_archive/merge-20260831/fused/origins/runner-vibecodeine`. El servicio
   y el alias de ruta no prueban por sí solos una entrega o un runtime sano.
-- El checkout local fue devuelto a `be35fc54499c14b97b00418e528a1d25db631ae2`:
-  `HEAD`, `main` y `flujo` coinciden allí; `MAK` queda en
-  `5f6af17e9d720461ad6bb7cf0217b17daad0cdbf` y `historia` en `ab9afa13`.
-  Los remotos observados son `ligereza-mak` y `vibecodeine-legacy`; sus refs
-  locales documentan transportes históricos, no autoridad física ni permiso
-  para push. Ese era el baseline previo a esta ola. Después se crearon tres
-  commits locales, sin push: `32d929d8` (restauración física y archivo de
-  handoffs), `6166a8b8` (estado documental y contratos departamentales) y
-  `940d2324` (carriles y mapa AST).
+- El baseline previo de la caja fue `be35fc54499c14b97b00418e528a1d25db631ae2`;
+  la topología actual separa `MAK` en `ccb9b32d`, `FLUJO` en `fa0aede0` y
+  `main`/`historia` como histórico en `ab9afa13`. En
+  `vibecodeine-legacy` están publicados `MAK` y `FLUJO`; `main` permanece en
+  `ab9afa13`, la rama lowercase `flujo` fue retirada y sus tips antiguos se
+  preservan en tags `archive/vibecodeine-*`. `ligereza-mak` no se tocó.
+  La ola local que precedió esta topología está en `32d929d8`, `6166a8b8`,
+  `940d2324`, `111a52e6`, `ac789a31` y `29715450`; no se hizo push de esos
+  nombres a `ligereza-mak`.
 
 ### Estado documental medido
 
