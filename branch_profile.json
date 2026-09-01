@@ -1,0 +1,20 @@
+{
+  "schema": "vibecodeine-branch-profile-v1",
+  "branch": "FLUJO",
+  "role": "portable workflow engine",
+  "default_test_selector": "-m flujo",
+  "capabilities": "CAPACIDADES_FLUJO.md",
+  "requirements": "requirements-flujo.txt",
+  "hub": {
+    "module": "src/flujo/web/hub.py",
+    "default_port": 8765,
+    "surface": "workflow and workspace"
+  },
+  "shared_consumers": [
+    "src/flujo/knowledge/project_api.py",
+    "src/flujo/knowledge/system_status.py",
+    "src/flujo/departments.py",
+    "data/mak_knowledge.db"
+  ],
+  "transfer_contract": "exchange typed JSON contracts and source_ref values; do not import the MAK hub"
+}

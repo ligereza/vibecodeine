@@ -1,0 +1,9 @@
+# FLUJO engine profile. The base runtime remains shared and pinned by
+# requirements.txt; this file adds only the engine/test/render surface.
+-r requirements.txt
+pytest>=9.1.1
+pytest-cov>=7.1.0
+hypothesis>=6.165.10
+pyflakes>=3.4.0
+cairosvg>=2.9.0
+pywebview>=6.2.1
