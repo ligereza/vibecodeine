@@ -1,7 +1,7 @@
 ﻿# Inventario de exportación web de Claude
 
-- Source ZIP: `C:\Users\issvk\Downloads\data-7abea544-e8e1-4415-bd87-563ac64a3fd1-1786391983-c9e2de07-batch-0000.zip`
-- Extraído en: `C:\Users\issvk\claude_sesiones_recuperadas\claude_web_export_2026-08-11`
+- Source ZIP: `<local-user-home>\Downloads\data-7abea544-e8e1-4415-bd87-563ac64a3fd1-1786391983-c9e2de07-batch-0000.zip`
+- Extraído en: `<local-user-home>\claude_sesiones_recuperadas\claude_web_export_2026-08-11`
 - Fecha de extracción: 2026-08-11 09:57:10 -04:00
 - The original ZIP was not modified.
 - Esta extracción es independiente del catálogo local de Claude Code y del archivo `83087cdd-3709-48de-ab41-62325e73d863_nombre-cauce.md`.

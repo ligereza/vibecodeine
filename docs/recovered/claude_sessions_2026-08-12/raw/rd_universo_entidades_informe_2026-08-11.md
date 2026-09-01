@@ -15,7 +15,7 @@ La base ya no se limita a las filas y columnas de la matriz ni a las sustancias 
 
 El archivo máquina-legible es:
 
-[rd_universo_entidades_2026-08-11.json](C:/Users/issvk/claude_sesiones_recuperadas/rd_universo_entidades_2026-08-11.json)
+[rd_universo_entidades_2026-08-11.json](<local-user-home>/claude_sesiones_recuperadas/rd_universo_entidades_2026-08-11.json)
 
 ## Qué cambió
 

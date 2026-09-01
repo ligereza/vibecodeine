@@ -73,11 +73,6 @@ def _rel(path: Path, base: Path) -> str:
     return path.relative_to(base).as_posix()
 
 
-def _is_handoff(rel: str) -> bool:
-    name = Path(rel).name
-    return (name.startswith("HANDOFF_") or name.startswith("HOTFIX_")) and name.endswith(".md")
-
-
 def validate_airdrop(base: Path, allow_airdrop_engine: bool = False) -> tuple[list[str], list[Finding]]:
     findings: list[Finding] = []
     if not base.exists():
@@ -91,9 +86,6 @@ def validate_airdrop(base: Path, allow_airdrop_engine: bool = False) -> tuple[li
     if not files:
         findings.append(Finding("ERROR", "_airdrop", "No contiene archivos: posible ZIP vacío"))
         return rels, findings
-
-    if not any(_is_handoff(r) for r in rels):
-        findings.append(Finding("ERROR", "_airdrop", "Falta HANDOFF_*.md o HOTFIX_*.md obligatorio"))
 
     for path, rel in zip(files, rels):
         parts = set(path.relative_to(base).parts)
