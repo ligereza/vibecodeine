@@ -469,10 +469,34 @@ PERSISTED_LANE_DATA = {
   "tests/test_xio_superficie.py": "repo_hygiene",
   "tests/test_zipper.py": "flujo"
 }
-TEST_LANE_MAP = {
-    key: LaneRecord(lane, (), "persisted AST assignment")
-    for key, lane in PERSISTED_LANE_DATA.items()
-}
+# A file is not a hygiene test merely because it mentions ``repo`` or touches
+# a fixture.  Keep this lane deliberately small: these modules assert tree,
+# Git, manifest, privacy, handoff, or language invariants.  Other historical
+# assignments remain visible in ``review`` until their real subject is
+# assigned to ``flujo`` or ``mak``; they must not inflate the hygiene gate.
+HYGIENE_CANONICAL_STEMS = frozenset({
+    "test_comandos_manifiesto",
+    "test_git_web_contract",
+    "test_higiene_docs",
+    "test_higiene_repo",
+    "test_idioma_ratchet",
+    "test_operational_entrypoints",
+    "test_physical_projections",
+    "test_privacidad_repo",
+    "test_repo_audit",
+    "test_repo_scan",
+    "test_test_taxonomy",
+    "test_un_solo_documento",
+})
+
+TEST_LANE_MAP: dict[str, LaneRecord] = {}
+for key, lane in PERSISTED_LANE_DATA.items():
+    if lane == "repo_hygiene" and Path(key).stem not in HYGIENE_CANONICAL_STEMS:
+        TEST_LANE_MAP[key] = LaneRecord(
+            "review", (), "historical hygiene assignment; subject not canonical"
+        )
+    else:
+        TEST_LANE_MAP[key] = LaneRecord(lane, (), "persisted AST assignment")
 def lane_for_test_path(path: str | Path) -> str:
     """Return a declared lane or ``review``; do not raise during collection."""
     try:
