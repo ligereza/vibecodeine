@@ -69,6 +69,8 @@ evidencia fechada, incluso cuando se contradicen.
   `tools/test_lane_map.py`. Carriles medidos: `flujo` 173 (159 s, RC 0),
   `mak` 50 (105 s, RC 0), `integration` 10 (10 s, RC 0),
   `repo_hygiene` 115 (124 s, RC 0), `review` 39 bajo demanda.
+  El mapa de 387 rutas quedó persistido estáticamente en ese archivo para que
+  la colección no recalcule AST en cada corrida (`ac789a31`).
 
 ### Revalidación documental previa al traslado — 2026-08-31
 
