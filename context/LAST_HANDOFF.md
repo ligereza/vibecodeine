@@ -25,11 +25,13 @@ evidencia fechada, incluso cuando se contradicen.
   La subcarpeta materializada `fused/projection3/variants/` era una segunda
   copia de los orígenes y se purgó el 2026-09-01 tras verificar hashes; las
   variantes reales siguen en `fused/origins/`.
-  `fused/root-materialization.json` registra 6.214 `linked_file`, 22
-  `linked_symlink`, 1 colisión de raíz preservada y 2 conflictos reubicados.
-  `actions.jsonl` del origen activo tiene 5.496 líneas. Las cifras antiguas se
-  mantienen abajo; las discrepancias entre contadores de acciones y de
-  materialización no se resuelven con prosa.
+  `fused/root-materialization.json` registra históricamente 6.214
+  `linked_file`, 22 `linked_symlink`, 1 colisión de raíz preservada y 2
+  conflictos reubicados. Esa cifra describe la corrida del 31-08, no el estado
+  actual: el 01-09 se desacoplaron todos los inodos vivos que aún compartían
+  evidencia. La medición directa actual es `live_nlink_gt1=0` y
+  `live_archive_shared=0`; `actions.jsonl` conserva las 5.496 líneas de la
+  corrida original.
 - El árbol vivo es `/home/mak`; `/home/mak/flujo` es ahora un adaptador de
   directorio no recursivo con 170 enlaces a hermanos, porque el symlink físico
   a `.` permitía recorridos cíclicos. La medición actual encontró cero enlaces
@@ -61,9 +63,11 @@ evidencia fechada, incluso cuando se contradicen.
 
 ### Revalidación física y carriles — 2026-08-31
 
-- El desacoplamiento dejó 5.018 archivos vivos con `nlink=1`; permanecen 1.270
-  enlaces compartidos únicamente en rutas protegidas (`tests/`, `context/`,
-  `context-history/`, `pyproject.toml`). Se restauró
+- La medición histórica dejó 5.018 archivos vivos con `nlink=1` y 1.270 enlaces
+  compartidos protegidos. El 01-09 se revisaron y desacoplaron esos 1.257
+  archivos que seguían vinculados a `_archive` (22.526.816 bytes), con copia,
+  SHA-256 y reemplazo atómico; la re-medición actual da `nlink_gt1=0` y cero
+  inodos vivos compartidos con `_archive`. Se restauró
   `cultura/mak_research/fallback_util.py` como copia independiente; ese estado
   fue superado el 2026-09-01 al retirar la copia duplicada, porque el único
   consumidor importa `cultura/mak_codex/fallback_util.py`. El legado
