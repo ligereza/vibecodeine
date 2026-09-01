@@ -4295,6 +4295,7 @@
       "MAPA.md",
       "context/LAST_HANDOFF.md",
       "context/comandos.json",
+      "cultura/mak_research/fallback_util.py",
       "out/works.json",
       "pyproject.toml",
       "src/flujo/cli.py",
@@ -4315,17 +4316,11 @@
         "replacement": "cultura/mak_codex/fallback_util.py",
         "decision": "retired_duplicate",
         "evidence": "No live import remains; replacement exists and is independently materialized."
-      },
-      {
-        "path": "tools/mak_ops/repair_mak_sync.py",
-        "replacement": "tools/mak_ops/sync_mak_safe.py",
-        "decision": "retired_duplicate",
-        "evidence": "No live import remains; safe replacement exists."
       }
     ],
     "verification": {
       "command": "current live path plus at least one preserved origin variant, with retired exceptions checked for replacement and import absence",
-      "result": "32/32 resolved; 30 retained live, 2 retired duplicates; no archive bytes removed"
+      "result": "32/32 resolved; 31 retained live, 1 retired duplicate; no archive bytes removed"
     }
   },
   "policy": "only conflict-free git merge-file results with current-live precondition; no archive writes; atomic os.replace"
