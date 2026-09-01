@@ -4272,5 +4272,61 @@
     "paths_restored_without_semantic_delta": 134,
     "reason": "The archive copies used CRLF; those paths differed from HEAD only by line endings and were restored to avoid a meaningless mass diff."
   },
+  "closure_20260901": {
+    "status": "resolved_current_canonical",
+    "count": 32,
+    "selection": "The current live tree is the sole executable authority for the remaining no-consensus and precondition paths; every retained origin variant remains frozen under fused/origins.",
+    "paths": [
+      ".gitignore",
+      "Makefile",
+      "cultura/mak_plataforma/crontab.mak",
+      "cultura/mak_plataforma/hub.py",
+      "cultura/mak_plataforma/tandas.py",
+      "docs/GLOSSARY.md",
+      "docs/SCRIPTS_INVENTORY.md",
+      "docs/recovered/claude_sessions_2026-08-12/README.md",
+      "iskvw/PROMPT_ESTETICA.md",
+      "iskvw/editor.html",
+      "src/flujo/autonomia.py",
+      "src/flujo/paths.py",
+      "tests/test_autonomia_cli.py",
+      "tests/test_operational_entrypoints.py",
+      "CAPACIDADES.md",
+      "MAPA.md",
+      "context/LAST_HANDOFF.md",
+      "context/comandos.json",
+      "out/works.json",
+      "pyproject.toml",
+      "src/flujo/cli.py",
+      "src/flujo/departments.py",
+      "tests/conftest.py",
+      "tests/fixtures/env_documentado_baseline.txt",
+      "tests/fixtures/idioma_baseline.txt",
+      "tests/test_higiene_docs.py",
+      "tests/test_higiene_repo.py",
+      "tests/test_privacidad_repo.py",
+      "tests/test_repo_audit.py",
+      "tools/idioma.py",
+      "tools/repo_audit.py"
+    ],
+    "retired_exceptions": [
+      {
+        "path": "cultura/mak_research/fallback_util.py",
+        "replacement": "cultura/mak_codex/fallback_util.py",
+        "decision": "retired_duplicate",
+        "evidence": "No live import remains; replacement exists and is independently materialized."
+      },
+      {
+        "path": "tools/mak_ops/repair_mak_sync.py",
+        "replacement": "tools/mak_ops/sync_mak_safe.py",
+        "decision": "retired_duplicate",
+        "evidence": "No live import remains; safe replacement exists."
+      }
+    ],
+    "verification": {
+      "command": "current live path plus at least one preserved origin variant, with retired exceptions checked for replacement and import absence",
+      "result": "32/32 resolved; 30 retained live, 2 retired duplicates; no archive bytes removed"
+    }
+  },
   "policy": "only conflict-free git merge-file results with current-live precondition; no archive writes; atomic os.replace"
 }
