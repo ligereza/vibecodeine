@@ -78,6 +78,11 @@ TOOL_SKIP_DIRS = {
     ".cache", "fixtures", "logs", "node_modules", "state", "venv",
     "exiftool-13.59",
 }
+# Lane classification is an index consumed by pytest collection, not an
+# operator-facing MAK tool.  Keep it out of the consumer inventory so adding
+# a classifier does not change the inventory contract or count it as its own
+# consumer.
+TOOL_INVENTORY_EXCLUDE = {"test_lane_map.py"}
 
 
 def _text_files(root: Path, relative_roots: tuple[str, ...]) -> list[Path]:
@@ -159,7 +164,10 @@ def _tool_inventory(root: Path = ROOT) -> dict[str, Any]:
     is not a consumer.  Workflow hits are limited to ``.github/workflows``.
     """
     tools_dir = root / "tools"
-    tool_paths = sorted(path for path in tools_dir.glob("*.py") if path.is_file())
+    tool_paths = sorted(
+        path for path in tools_dir.glob("*.py")
+        if path.is_file() and path.name not in TOOL_INVENTORY_EXCLUDE
+    )
     production_files = [
         path for path in _text_files(root, TOOL_SEARCH_ROOTS)
         if path.suffix.lower() in PRODUCTION_SEARCH_SUFFIXES
