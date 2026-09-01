@@ -1,0 +1,21 @@
+{
+  "schema": "vibecodeine-branch-profile-v1",
+  "branch": "MAK",
+  "role": "Linux MAK box and department surface",
+  "default_test_selector": "-m mak",
+  "capabilities": "CAPACIDADES_MAK.md",
+  "requirements": "requirements-mak.txt",
+  "hub": {
+    "module": "cultura/mak_plataforma/hub.py",
+    "compatibility_module": "plataforma/hub.py",
+    "default_port": 8900,
+    "surface": "MAK departments and read-only machine projections"
+  },
+  "shared_consumers": [
+    "src/flujo/knowledge/project_api.py",
+    "src/flujo/knowledge/system_status.py",
+    "src/flujo/departments.py",
+    "data/mak_knowledge.db"
+  ],
+  "transfer_contract": "consume typed JSON contracts and source_ref values; do not import the FLUJO Hub implementation"
+}
