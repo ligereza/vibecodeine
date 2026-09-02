@@ -9,14 +9,21 @@ proyectos + herramientas + IAs + checkpoints
         conectados a un mismo punto de orden
 ```
 
-Hasta el 2026-09-02 este archivo tenia once lineas y el marco conceptual del
-proyecto vivia unicamente dentro de un log de sesion
-(`.codex/sessions/2026/08/24/rollout-2026-08-24T10-02-10-*.jsonl`), sin que
-ningun test, documento ni herramienta lo referenciara. El repo tiene una regla
-para eso: lo que se responde en una sesion se escribe en esa sesion o se
-pierde. El texto que sigue se recupero de ese log y se conserva aqui, en
-espanol, porque alimenta directamente material que leen personas (postulaciones
-y lectura curatorial).
+Este archivo tenia once lineas hasta el 2026-09-02. El marco conceptual del
+proyecto **no** estaba perdido: vive en prosa en
+`docs/INFLECTION_POINT_ARTISTIC_ARCHIVE_2026-08-24.md` (532 lineas) y su
+implementacion en `docs/PORTAFOLIO_PRODUCCION.md` (671 lineas), que son la
+autoridad. Declarar aqui un hueco antes de leerlos fue el mismo error que
+`PORTAFOLIO_PRODUCCION.md` seccion 16 ya tiene registrado con las palabras del
+operador: *todo lo que pides ya existe, solo que no buscaste*.
+
+Lo unico que este archivo agrega es la formalizacion matematica, que no estaba
+en ninguno de los dos y solo existia dentro de un log de sesion
+(`.codex/sessions/2026/08/24/rollout-2026-08-24T10-02-10-*.jsonl`), mas el mapa
+de cada termino al archivo que ya lo implementa. Se conserva en espanol porque
+alimenta material que leen personas.
+
+Para el marco completo, leer primero los dos documentos citados.
 
 ---
 
@@ -159,13 +166,30 @@ La formulacion anterior no es una metafora: cada termino tiene un archivo.
 que la teoria pide: no afirmar identidad ni significado desde evidencia de
 archivo.
 
-## El defecto que esto explica
+## El unknown que se cerro el 2026-09-02
+
+`experiments/pilots/ARICA-FONDART-2027/runs/enriched/opportunity.json` declara
+las 8 compuertas duras de `fondart-nacional-investigacion-2027` con las bases
+hasheadas y localizadores de pagina, y deja el plazo como
+`constraint_status_unknown`. Ese unknown ya estaba resuelto en el repo, en la
+ficha oficial capturada con Crawl4AI el 2026-08-11:
+
+**Investigacion Fondart Nacional 2027: jueves 10 de septiembre de 2026, 15:00
+hrs. Monto maximo $15.000.000.** Fuente:
+`docs/recovered/claude_sessions_2026-08-12/raw/fondos-postulaciones-requisitos-visible-2027.md`.
+
+Las lineas regionales (culturas tradicionales, actividades formativas, culturas
+regionales, creacion artistica) cierran el miercoles 9 de septiembre de 2026,
+15:00. Becas Chile Crea cerro el 31 de agosto.
+
+## Una pregunta abierta, no un diagnostico
 
 El piloto termina en `fit: abstain`, `dossier: draft_only`, `application:
-blocked`. No es un bug: es un sistema que se niega cuando la evidencia no
-alcanza, y esa negativa es correcta para la pregunta que se le hace.
+blocked`. Eso puede ser correcto: un sistema que se niega cuando la evidencia
+no alcanza esta haciendo su trabajo.
 
-El problema es la pregunta. `opportunity_fit` calcula si el archivo se ajusta a
+Lo que queda por medir, leyendo `opportunity_fit.py`, es si la abstencion
+responde a una pregunta que el propio formato pone fuera de alcance. `opportunity_fit` calcula si el archivo se ajusta a
 una linea de concurso, y el propio `F4` dice, transcrito de las bases: *el
 ajuste de una practica audiovisual a esta linea es una decision del postulante,
 no un resultado de este documento*. El sistema esta emitiendo veredicto sobre
