@@ -1,7 +1,7 @@
 [project]
-name = "flujo"
+name = "mak-box"
 version = "0.56.1"
-description = "Dimensiones del Orden — arte y automatización"
+description = "MAK Linux box: departments, services and Hub"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
@@ -60,8 +60,12 @@ build = [
 requires = ["setuptools>=84.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools.packages.find]
-where = ["src"]
+# The MAK box is not a distributable Python package: its departments are run
+# as scripts by systemd units, and it consumes the FLUJO motor from
+# /home/mak/flujo/src without copying src/flujo. Declaring a package root
+# here would name a tree this branch does not carry.
+[tool.setuptools]
+packages = []
 
 [tool.ruff]
 line-length = 100
