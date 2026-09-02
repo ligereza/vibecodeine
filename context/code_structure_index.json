@@ -1,6 +1,6 @@
 {
   "schema": "mak-code-structure-v1",
-  "generated_at_utc": "2026-09-02T04:50:31+00:00",
+  "generated_at_utc": "2026-09-02T05:08:43+00:00",
   "root": "/home/mak",
   "scope": {
     "mode": "mak_code_roots",
@@ -47,7 +47,7 @@
   ],
   "summary": {
     "python_files": 932,
-    "total_lines": 249626,
+    "total_lines": 249660,
     "symbols": 10962,
     "syntax_errors": 0,
     "effect_modules": {
@@ -74994,9 +74994,10 @@
     {
       "path": "tools/mak_triangulate_roots.py",
       "module": "tools.mak_triangulate_roots",
-      "sha256": "945422e617372cba788b525cf59d490113930f13cad03cb41907bd25d1aadf8e",
-      "lines": 325,
+      "sha256": "ad2f99575f367d6ba045c3a7683c8fd3c8fbe1d96db83d62a36e2cc5345ce8af",
+      "lines": 359,
       "imports": [
+        "argparse",
         "hashlib",
         "json",
         "os",
@@ -75025,90 +75026,89 @@
         {
           "name": "_is_checkout",
           "kind": "function",
-          "line": 46,
-          "end_line": 59,
+          "line": 47,
+          "end_line": 60,
           "decorators": []
         },
         {
           "name": "_git",
           "kind": "function",
-          "line": 62,
-          "end_line": 69,
+          "line": 63,
+          "end_line": 70,
           "decorators": []
         },
         {
           "name": "_birth",
           "kind": "function",
-          "line": 72,
-          "end_line": 80,
+          "line": 73,
+          "end_line": 81,
           "decorators": []
         },
         {
           "name": "_hash",
           "kind": "function",
-          "line": 83,
-          "end_line": 88,
+          "line": 84,
+          "end_line": 89,
           "decorators": []
         },
         {
           "name": "_git_file_history",
           "kind": "function",
-          "line": 91,
-          "end_line": 103,
+          "line": 92,
+          "end_line": 104,
           "decorators": []
         },
         {
           "name": "_root_meta",
           "kind": "function",
-          "line": 106,
-          "end_line": 141,
+          "line": 107,
+          "end_line": 142,
           "decorators": []
         },
         {
           "name": "_file_meta",
           "kind": "function",
-          "line": 144,
-          "end_line": 159,
+          "line": 145,
+          "end_line": 160,
           "decorators": []
         },
         {
           "name": "_candidate_files",
           "kind": "function",
-          "line": 162,
-          "end_line": 181,
+          "line": 163,
+          "end_line": 182,
           "decorators": []
         },
         {
           "name": "_live_status",
           "kind": "function",
-          "line": 184,
-          "end_line": 206,
+          "line": 185,
+          "end_line": 207,
           "decorators": []
         },
         {
           "name": "_temporary_files",
           "kind": "function",
-          "line": 209,
-          "end_line": 228,
+          "line": 210,
+          "end_line": 229,
           "decorators": []
         },
         {
           "name": "_redirect_targets",
           "kind": "function",
-          "line": 231,
-          "end_line": 242,
+          "line": 232,
+          "end_line": 243,
           "decorators": []
         },
         {
           "name": "main",
           "kind": "function",
-          "line": 245,
-          "end_line": 320,
+          "line": 246,
+          "end_line": 354,
           "decorators": []
         }
       ],
       "calls": [
-        "OUT_DIR.mkdir",
         "Path",
         "SystemExit",
         "_birth",
@@ -75124,6 +75124,8 @@
         "_temporary_files",
         "any",
         "append",
+        "argparse.ArgumentParser",
+        "args.output_dir.expanduser",
         "as_posix",
         "base.is_dir",
         "bool",
@@ -75162,8 +75164,11 @@
         "min",
         "name.lower",
         "os.walk",
+        "output_dir.mkdir",
         "parent.is_dir",
         "parent.iterdir",
+        "parser.add_argument",
+        "parser.parse_args",
         "part.lower",
         "path.open",
         "path.relative_to",
@@ -75171,6 +75176,7 @@
         "path.suffix.lower",
         "print",
         "replace",
+        "resolve",
         "result.stdout.strip",
         "root.stat",
         "roots.append",
