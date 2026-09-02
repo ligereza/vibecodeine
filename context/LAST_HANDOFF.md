@@ -902,6 +902,65 @@ authorized, the existing release/publish procedure; do not regenerate
   action is review and explicit authorization before any publication. IRIS,
   data, services and artistic outputs remain untouched.
 
+### Dependency ratchet published and CI green -- 2026-09-02
+
+- Published SHA: MAK `ff781183a6997000f80b74b4bd1b788cc670845c`,
+  `test(mak): enforce declared runtime dependencies`, two paths,
+  `602 insertions(+), 1 deletion(-)`. Push was a fast-forward without force:
+  `0b9880f9..ff781183 MAK -> MAK` on remote `vibecodeine-legacy`.
+- Local `MAK` and remote `refs/heads/MAK` both read
+  `ff781183a6997000f80b74b4bd1b788cc670845c`.
+- Committed paths, exactly two: `tests/test_test_taxonomy.py` and
+  `context/LAST_HANDOFF.md` (which carried the Fase 3A audit and the Fase 3B
+  hardening sections). Excluded and left unstaged, still modified:
+  `context/coordination/inbox/claude/phase2-publication-review-20260902.md`.
+  The staged set was compared against that list before committing and matched
+  exactly, with no leftovers and nothing missing.
+- CI matched by `headSha`, not by recency. `CI MAK` run 33681688304, job
+  `gate + mak lane`, **success** in 3m8s. `CI integration` run 33681688258,
+  job `integration lane (MAK + FLUJO)`, **success**. `CI FLUJO` did not run:
+  its latest remains 33670274140 on `50e453c2` from 18:56Z, which is correct
+  because FLUJO received no commit and no push.
+- Runner figures, with the comparison that shows the ratchet actually executed
+  on a clean checkout rather than being skipped there:
+  - `repo hygiene lane`: `88 passed, 8 skipped in 36.53s`, against
+    `83 passed, 8 skipped` on the previous tip `0b9880f9`. The skip count did
+    NOT change, so all five new tests ran and passed on the runner.
+  - `MAK lane`: `2172 passed, 8 skipped, 5 warnings, 5 subtests passed in
+    99.04s`, byte-identical in counts to the previous tip.
+  - `CI integration`: `341 passed, 32 skipped, 20 warnings in 19.14s`,
+    identical to the previous tip. The change touched no integration-lane
+    classification.
+  - Local totals reconcile as before: local `repo_hygiene` 96 equals the
+    runner's 88 passed + 8 skipped; local `mak` 2180 equals 2172 + 8; local
+    `integration` 373 equals 341 + 32. No test was lost and no new skip was
+    introduced by this change.
+- Pre-publication verification, all with `PYTHONDONTWRITEBYTECODE=1` and
+  `/home/mak/.venv/bin/python`: focal `tests/test_test_taxonomy.py`
+  `17 passed`; `repo_hygiene` `96 passed`; `mak` `2175 passed, 5 skipped`;
+  `integration` `373 passed`; `python -m pip check` `No broken requirements
+  found.` exit 0; `git diff --check` and `git diff --cached --check` exit 0;
+  `tools/release_gate.py --check` `BLOCKERS (0) UNKNOWNS (0) WARNINGS (0)`
+  exit 5, its documented deferred-tests code; `tools/runtime_preflight.py
+  --check` exit 0 with `ok=5` and zero error/unknown/warn/adapter conditions.
+- FLUJO: not modified, not committed, not pushed. Local and remote both remain
+  `50e453c2a6ee9837c73acda3cec6ff74d0598f7e`, and its checkout is clean.
+- The commit contains no requirements file, no workflow, no
+  `context/test_lane_map.json`, no pytest configuration and no runtime code.
+  IRIS and its reader, `iskvw/datos/*`, `campo.json`, `animadas.json`,
+  `iskvw/piel/*`, databases, artistic outputs, services and ports were not
+  touched; nothing was regenerated; no service was started, stopped or
+  restarted and no port changed. No merge, reset, clean, checkout, switch or
+  force push was performed, and only the `MAK` ref was pushed.
+- Next action for Faro/Codex: nothing is pending on the dependency contract.
+  The guarantee now exists and is green on a clean runner, and the two open
+  warnings are recorded in the hardening section above unchanged -- a clean
+  MAK-profile install still cannot run the RD vectorization generator
+  (the accepted consequence of `AGENT_TOOL_ONLY`), and `requests` reaches the
+  MAK profile through no declared package. Both are decisions, not defects,
+  and the ratchet now fails the day either becomes a real runtime import.
+  IRIS remains paused.
+
 # Operational Handoff
 
 ## Agent bootstrap -- CURRENT -- 2026-09-02 (later) -- the suites, and the boundary the operator corrected
