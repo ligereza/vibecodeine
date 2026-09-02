@@ -1,6 +1,6 @@
 {
   "schema": "mak-root-triangulation-v1",
-  "generated_at": "2026-09-01T20:31:48+00:00",
+  "generated_at": "2026-09-02T04:14:46+00:00",
   "method": [
     "inode_birth",
     "mtime",
@@ -9,76 +9,6 @@
     "root_git_metadata"
   ],
   "roots": [
-    {
-      "path": "/home/mak/.cache/rclone/vfs/onedrive/MAK/IA/_flujo_local/VIBECODEINE",
-      "source_id": "_cache-rclone-vfs-onedrive-mak-ia-_flujo_local-vibecodeine",
-      "source_mode": "snapshot",
-      "has_git": false,
-      "birth_epoch": 1787843794,
-      "mtime_epoch": 1788192935461289964,
-      "git_first_commit": "",
-      "git_head": "",
-      "git_remote": "",
-      "git_dirty": null,
-      "file_count": 0,
-      "python_file_count": 0
-    },
-    {
-      "path": "/home/mak/.cache/rclone/vfs/onedrive/MAK/IA/flujo",
-      "source_id": "_cache-rclone-vfs-onedrive-mak-ia-flujo",
-      "source_mode": "snapshot",
-      "has_git": false,
-      "birth_epoch": 1787843710,
-      "mtime_epoch": 1788192455530852492,
-      "git_first_commit": "",
-      "git_head": "",
-      "git_remote": "",
-      "git_dirty": null,
-      "file_count": 0,
-      "python_file_count": 0
-    },
-    {
-      "path": "/home/mak/.cache/rclone/vfsMeta/onedrive/MAK/IA/_flujo_local/VIBECODEINE",
-      "source_id": "_cache-rclone-vfsmeta-onedrive-mak-ia-_flujo_local-vibecodeine",
-      "source_mode": "snapshot",
-      "has_git": false,
-      "birth_epoch": 1787843794,
-      "mtime_epoch": 1788192935461289964,
-      "git_first_commit": "",
-      "git_head": "",
-      "git_remote": "",
-      "git_dirty": null,
-      "file_count": 0,
-      "python_file_count": 0
-    },
-    {
-      "path": "/home/mak/.cache/rclone/vfsMeta/onedrive/MAK/IA/flujo",
-      "source_id": "_cache-rclone-vfsmeta-onedrive-mak-ia-flujo",
-      "source_mode": "snapshot",
-      "has_git": false,
-      "birth_epoch": 1787843710,
-      "mtime_epoch": 1788192455530852492,
-      "git_first_commit": "",
-      "git_head": "",
-      "git_remote": "",
-      "git_dirty": null,
-      "file_count": 0,
-      "python_file_count": 0
-    },
-    {
-      "path": "/home/mak/.local/share/Trash/files/rollback.2/ /home/mak/flujo",
-      "source_id": "_local-share-trash-files-rollback_2-_-home-mak-flujo",
-      "source_mode": "snapshot",
-      "has_git": false,
-      "birth_epoch": 1786454021,
-      "mtime_epoch": 1786454021390508544,
-      "git_first_commit": "",
-      "git_head": "",
-      "git_remote": "",
-      "git_dirty": null,
-      "file_count": 0,
-      "python_file_count": 0
-    },
     {
       "path": "/home/mak/_archive/merge-20260831/fused/origins/runner-vibecodeine",
       "source_id": "_archive-merge-20260831-fused-origins-runner-vibecodeine",
@@ -90,8 +20,8 @@
       "git_head": "23d6152fe9219fd8080ca71d71c3d04cc9fe7dc9",
       "git_remote": "https://github.com/ligereza/vibecodeine",
       "git_dirty": true,
-      "file_count": 2355,
-      "python_file_count": 863
+      "file_count": 2338,
+      "python_file_count": 849
     },
     {
       "path": "/home/mak/_archive/merge-20260831/fused/origins/win-flujo",
@@ -104,8 +34,8 @@
       "git_head": "f588ecf88de43c035d48cc352cc03842ef53ac84",
       "git_remote": "https://github.com/ligereza/vibecodeine.git",
       "git_dirty": true,
-      "file_count": 4899,
-      "python_file_count": 934
+      "file_count": 4771,
+      "python_file_count": 892
     },
     {
       "path": "/home/mak/actions-runner/_work/_PipelineMapping/ligereza/vibecodeine",
@@ -122,23 +52,9 @@
       "python_file_count": 0
     },
     {
-      "path": "/home/mak/actions-runner/_work/vibecodeine",
-      "source_id": "actions-runner-_work-vibecodeine",
-      "source_mode": "repo",
-      "has_git": false,
-      "birth_epoch": 1784771931,
-      "mtime_epoch": 1788211284778310914,
-      "git_first_commit": "",
-      "git_head": "",
-      "git_remote": "",
-      "git_dirty": null,
-      "file_count": 0,
-      "python_file_count": 0
-    },
-    {
       "path": "/home/mak/projects/flujo",
       "source_id": "projects-flujo",
-      "source_mode": "repo",
+      "source_mode": "snapshot",
       "has_git": false,
       "birth_epoch": 1788212086,
       "mtime_epoch": 1788230279410771339,
@@ -152,10 +68,10 @@
     {
       "path": "/home/mak/src/flujo",
       "source_id": "src-flujo",
-      "source_mode": "repo",
+      "source_mode": "snapshot",
       "has_git": false,
       "birth_epoch": 1788212086,
-      "mtime_epoch": 1788288313544540070,
+      "mtime_epoch": 1788308599783814869,
       "git_first_commit": "",
       "git_head": "",
       "git_remote": "",
@@ -190,7 +106,8 @@
       "mtime_epoch": 1786948486902800494,
       "sha256": "3b42179a1a4481ac226d13c28b8a076fd650937d92b5c08b4b6599182c018426",
       "first": "2026-08-24T13:53:59-04:00",
-      "last": "2026-08-24T13:53:59-04:00"
+      "last": "2026-08-24T13:53:59-04:00",
+      "live_status": "equal"
     },
     {
       "path": "/home/mak/_archive/merge-20260831/fused/origins/runner-vibecodeine/scripts/run_airdrop_checks.py",
@@ -203,7 +120,8 @@
       "mtime_epoch": 1786948486902800494,
       "sha256": "2cd80cc3dd947879595acb3eed5b66bd1ffd16525af63b504f3b8e3a10280a76",
       "first": "2026-08-24T13:53:59-04:00",
-      "last": "2026-08-24T13:53:59-04:00"
+      "last": "2026-08-24T13:53:59-04:00",
+      "live_status": "equal"
     },
     {
       "path": "/home/mak/_archive/merge-20260831/fused/origins/runner-vibecodeine/src/flujo/airdrop.py",
@@ -216,7 +134,8 @@
       "mtime_epoch": 1786948486902800494,
       "sha256": "6032531be6194da59b94cedd3feb80e81f1e6467720843aeec9dee1a2c91b0aa",
       "first": "2026-08-24T13:53:59-04:00",
-      "last": "2026-08-24T13:53:59-04:00"
+      "last": "2026-08-24T13:53:59-04:00",
+      "live_status": "equal"
     },
     {
       "path": "/home/mak/_archive/merge-20260831/fused/origins/runner-vibecodeine/src/flujo/intake/reception.py",
@@ -229,7 +148,8 @@
       "mtime_epoch": 1786948486902800494,
       "sha256": "56ab0a32fbab074cb0a876f726daecf27a30135a6ed718317420f69986cc0a7f",
       "first": "2026-08-24T13:53:59-04:00",
-      "last": "2026-08-24T13:53:59-04:00"
+      "last": "2026-08-24T13:53:59-04:00",
+      "live_status": "equal"
     },
     {
       "path": "/home/mak/_archive/merge-20260831/fused/origins/runner-vibecodeine/tests/test_run_airdrop_checks.py",
@@ -242,7 +162,8 @@
       "mtime_epoch": 1784771940469604265,
       "sha256": "fc9533ac31dffeb1a7ba5d9c03ff6cfe5f7d51ff73f0afb8774b4a8de405f111",
       "first": "2026-08-24T13:53:59-04:00",
-      "last": "2026-08-24T13:53:59-04:00"
+      "last": "2026-08-24T13:53:59-04:00",
+      "live_status": "equal"
     },
     {
       "path": "/home/mak/_archive/merge-20260831/fused/origins/runner-vibecodeine/tests/test_airdrop.py",
@@ -255,7 +176,8 @@
       "mtime_epoch": 1786948486906800537,
       "sha256": "8d425e66df27ca641f7372f9f5fd97719e125042f4f7a8c71c82f4f20afde0a5",
       "first": "2026-08-24T13:53:59-04:00",
-      "last": "2026-08-24T13:53:59-04:00"
+      "last": "2026-08-24T13:53:59-04:00",
+      "live_status": "equal"
     },
     {
       "path": "/home/mak/_archive/merge-20260831/fused/origins/runner-vibecodeine/tests/test_airdrop_checkpoint.py",
@@ -268,7 +190,8 @@
       "mtime_epoch": 1784771940465604264,
       "sha256": "2ec49caa09d393ee98a992768e738f46326c4aa40dbed2b989d6e3678e34d7fe",
       "first": "2026-08-24T13:53:59-04:00",
-      "last": "2026-08-24T13:53:59-04:00"
+      "last": "2026-08-24T13:53:59-04:00",
+      "live_status": "equal"
     },
     {
       "path": "/home/mak/_archive/merge-20260831/fused/origins/runner-vibecodeine/tests/test_reception.py",
@@ -281,7 +204,8 @@
       "mtime_epoch": 1786948486914800623,
       "sha256": "b2b3de542eb33e0acfaec603499ffcac9bd681c834949ad55fc5018640dfd9bd",
       "first": "2026-08-24T13:53:59-04:00",
-      "last": "2026-08-24T13:53:59-04:00"
+      "last": "2026-08-24T13:53:59-04:00",
+      "live_status": "equal"
     },
     {
       "path": "/home/mak/_archive/merge-20260831/fused/origins/runner-vibecodeine/tests/test_airdrop_signing.py",
@@ -294,7 +218,8 @@
       "mtime_epoch": 1786948486906800537,
       "sha256": "9c076f72c1b5ca068c84de8af9fc33e09ae78028be31192d9d7f1d9c5e9756d6",
       "first": "2026-08-24T13:53:59-04:00",
-      "last": "2026-08-24T13:53:59-04:00"
+      "last": "2026-08-24T13:53:59-04:00",
+      "live_status": "equal"
     },
     {
       "path": "/home/mak/_archive/merge-20260831/fused/origins/runner-vibecodeine/tests/test_validate_airdrop.py",
@@ -307,7 +232,8 @@
       "mtime_epoch": 1786948486914800623,
       "sha256": "af94b52bb0490d3eed6032496545a8cb90a068281ce6d5085939b34af8c8c843",
       "first": "2026-08-24T13:53:59-04:00",
-      "last": "2026-08-24T13:53:59-04:00"
+      "last": "2026-08-24T13:53:59-04:00",
+      "live_status": "equal"
     },
     {
       "path": "/home/mak/_archive/merge-20260831/fused/origins/runner-vibecodeine/tools/recovered/import_claude_sessions.py",
@@ -320,7 +246,8 @@
       "mtime_epoch": 1786948486918800666,
       "sha256": "e39b430b6317147a9f53b8949f77282db6c4a1f50fe6069d701ac58ffcec836c",
       "first": "2026-08-24T13:53:59-04:00",
-      "last": "2026-08-24T13:53:59-04:00"
+      "last": "2026-08-24T13:53:59-04:00",
+      "live_status": "divergent"
     },
     {
       "path": "/home/mak/_archive/merge-20260831/fused/origins/win-flujo/_logs/local_reconciliation_20260813/tools__recovered__import_claude_sessions.py",
@@ -331,7 +258,8 @@
       "size_bytes": 3712,
       "birth_epoch": 1786643985,
       "mtime_epoch": 1786641031000000000,
-      "sha256": "b3e53d7f65fccf5e609709ecb5e929ee4cc142668359a5187e9e1d411a768613"
+      "sha256": "b3e53d7f65fccf5e609709ecb5e929ee4cc142668359a5187e9e1d411a768613",
+      "live_status": "equal"
     },
     {
       "path": "/home/mak/_archive/merge-20260831/fused/origins/win-flujo/_logs/local_reconciliation_20260813/win-before-mak-projection/tools__recovered__import_claude_sessions.py",
@@ -342,7 +270,8 @@
       "size_bytes": 4462,
       "birth_epoch": 1786643985,
       "mtime_epoch": 1786580656000000000,
-      "sha256": "1ba5e06a7017668c3aeabb08a81c820fe8af847bee49a3bb1a1451379afedb10"
+      "sha256": "1ba5e06a7017668c3aeabb08a81c820fe8af847bee49a3bb1a1451379afedb10",
+      "live_status": "equal"
     },
     {
       "path": "/home/mak/_archive/merge-20260831/fused/origins/win-flujo/scripts/validate_airdrop.py",
@@ -355,7 +284,8 @@
       "mtime_epoch": 1782156826000000000,
       "sha256": "de74116e28eada9e3e0acbf99d485c1e82a0e17d1ce16c599de96df4e5d66810",
       "first": "2026-06-28T04:39:11-04:00",
-      "last": "2026-06-30T04:36:22-04:00"
+      "last": "2026-06-30T04:36:22-04:00",
+      "live_status": "divergent"
     },
     {
       "path": "/home/mak/_archive/merge-20260831/fused/origins/win-flujo/scripts/run_airdrop_checks.py",
@@ -368,7 +298,8 @@
       "mtime_epoch": 1785591275000000000,
       "sha256": "2cd80cc3dd947879595acb3eed5b66bd1ffd16525af63b504f3b8e3a10280a76",
       "first": "2026-06-28T04:39:11-04:00",
-      "last": "2026-07-31T15:17:34-04:00"
+      "last": "2026-07-31T15:17:34-04:00",
+      "live_status": "equal"
     },
     {
       "path": "/home/mak/_archive/merge-20260831/fused/origins/win-flujo/src/flujo/airdrop.py",
@@ -381,7 +312,8 @@
       "mtime_epoch": 1785591275000000000,
       "sha256": "ec99bd5f87c8594b42c490022b521c2b03784361d9d85538cefd23960b70cdec",
       "first": "2026-06-28T04:39:11-04:00",
-      "last": "2026-07-31T15:17:34-04:00"
+      "last": "2026-07-31T15:17:34-04:00",
+      "live_status": "divergent"
     },
     {
       "path": "/home/mak/_archive/merge-20260831/fused/origins/win-flujo/src/flujo/intake/reception.py",
@@ -394,7 +326,8 @@
       "mtime_epoch": 1785591275000000000,
       "sha256": "56ab0a32fbab074cb0a876f726daecf27a30135a6ed718317420f69986cc0a7f",
       "first": "2026-06-28T04:39:11-04:00",
-      "last": "2026-07-31T15:17:34-04:00"
+      "last": "2026-07-31T15:17:34-04:00",
+      "live_status": "equal"
     },
     {
       "path": "/home/mak/_archive/merge-20260831/fused/origins/win-flujo/tests/test_run_airdrop_checks.py",
@@ -407,7 +340,8 @@
       "mtime_epoch": 1784351905000000000,
       "sha256": "fc9533ac31dffeb1a7ba5d9c03ff6cfe5f7d51ff73f0afb8774b4a8de405f111",
       "first": "2026-06-28T04:39:11-04:00",
-      "last": "2026-07-18T01:19:15-04:00"
+      "last": "2026-07-18T01:19:15-04:00",
+      "live_status": "equal"
     },
     {
       "path": "/home/mak/_archive/merge-20260831/fused/origins/win-flujo/tests/test_airdrop.py",
@@ -420,7 +354,8 @@
       "mtime_epoch": 1785591275000000000,
       "sha256": "8d425e66df27ca641f7372f9f5fd97719e125042f4f7a8c71c82f4f20afde0a5",
       "first": "2026-06-28T04:39:11-04:00",
-      "last": "2026-07-31T15:17:34-04:00"
+      "last": "2026-07-31T15:17:34-04:00",
+      "live_status": "equal"
     },
     {
       "path": "/home/mak/_archive/merge-20260831/fused/origins/win-flujo/tests/test_airdrop_checkpoint.py",
@@ -433,7 +368,8 @@
       "mtime_epoch": 1782630027000000000,
       "sha256": "2ec49caa09d393ee98a992768e738f46326c4aa40dbed2b989d6e3678e34d7fe",
       "first": "2026-06-28T04:39:11-04:00",
-      "last": "2026-06-30T04:36:22-04:00"
+      "last": "2026-06-30T04:36:22-04:00",
+      "live_status": "equal"
     },
     {
       "path": "/home/mak/_archive/merge-20260831/fused/origins/win-flujo/tests/test_reception.py",
@@ -446,7 +382,8 @@
       "mtime_epoch": 1785204280000000000,
       "sha256": "b2b3de542eb33e0acfaec603499ffcac9bd681c834949ad55fc5018640dfd9bd",
       "first": "2026-06-28T04:39:11-04:00",
-      "last": "2026-07-27T22:00:39-04:00"
+      "last": "2026-07-27T22:00:39-04:00",
+      "live_status": "equal"
     },
     {
       "path": "/home/mak/_archive/merge-20260831/fused/origins/win-flujo/tests/test_airdrop_signing.py",
@@ -459,7 +396,8 @@
       "mtime_epoch": 1785591275000000000,
       "sha256": "1887c3b83e779bfad75f29c1d06ba34d7f24f1887a543f7fcac6a5d324e10020",
       "first": "2026-07-31T15:17:34-04:00",
-      "last": "2026-07-31T15:17:34-04:00"
+      "last": "2026-07-31T15:17:34-04:00",
+      "live_status": "divergent"
     },
     {
       "path": "/home/mak/_archive/merge-20260831/fused/origins/win-flujo/tests/test_validate_airdrop.py",
@@ -472,7 +410,8 @@
       "mtime_epoch": 1782156826000000000,
       "sha256": "33a459b6d1958694dd26c9b35082338d1e8ed95f274a042087108dd513dd0b3c",
       "first": "2026-06-28T04:39:11-04:00",
-      "last": "2026-06-30T04:36:22-04:00"
+      "last": "2026-06-30T04:36:22-04:00",
+      "live_status": "divergent"
     },
     {
       "path": "/home/mak/_archive/merge-20260831/fused/origins/win-flujo/tools/recovered/import_claude_sessions.py",
@@ -485,7 +424,8 @@
       "mtime_epoch": 1786641176000000000,
       "sha256": "b3e53d7f65fccf5e609709ecb5e929ee4cc142668359a5187e9e1d411a768613",
       "first": "2026-08-12T08:48:01-04:00",
-      "last": "2026-08-13T13:30:34-04:00"
+      "last": "2026-08-13T13:30:34-04:00",
+      "live_status": "equal"
     },
     {
       "path": "/home/mak/src/flujo/airdrop.py",
@@ -1074,10 +1014,16 @@
     ]
   },
   "counts": {
-    "roots": 12,
+    "roots": 6,
     "candidates": 74,
     "temporary_python": 48,
     "historical_family_candidates": 26,
-    "duplicate_hash_groups": 8
+    "duplicate_hash_groups": 8,
+    "historical_live_status": {
+      "equal": 19,
+      "divergent": 5,
+      "absent": 0,
+      "unreadable": 0
+    }
   }
 }

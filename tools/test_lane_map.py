@@ -17,6 +17,7 @@ from typing import Iterable
 
 REPO = Path(__file__).resolve().parents[1]
 TESTS = REPO / "tests"
+LANE_MAP_CONTRACT = REPO / "context" / "test_lane_map.json"
 LANES = ("flujo", "mak", "integration", "repo_hygiene", "review")
 _TREE_ONLY_WORDS = ("git", "repo", "tree", "docs", "readme", "handoff")
 
@@ -495,7 +496,7 @@ HYGIENE_CANONICAL_STEMS = frozenset({
 # tooling, or the cross-layer HTTP hubs.  Keeping the decisions explicit makes
 # the review bucket finite and auditable instead of another dumping ground.
 REVIEW_LANE_ASSIGNMENTS = {
-    "tests/test_adobe_panel.py": "mak",
+    "tests/test_adobe_panel.py": "repo_hygiene",
     "tests/test_archivo_iskvw_posicion.py": "mak",
     "tests/test_becas_calendario_missing_dir.py": "mak",
     "tests/test_busqueda_ciega.py": "mak",
@@ -515,8 +516,8 @@ REVIEW_LANE_ASSIGNMENTS = {
     "tests/test_iconos_conjunto.py": "mak",
     "tests/test_ig_metadatos.py": "mak",
     "tests/test_informe_plantilla.py": "mak",
-    "tests/test_iskvw_editor_contract.py": "mak",
-    "tests/test_iskvw_vinculos.py": "mak",
+    "tests/test_iskvw_editor_contract.py": "repo_hygiene",
+    "tests/test_iskvw_vinculos.py": "repo_hygiene",
     "tests/test_knowledge_scanner_skips.py": "mak",
     "tests/test_logo_clean_lab_dataset.py": "mak",
     "tests/test_mak_backlog.py": "mak",
@@ -572,7 +573,7 @@ def _infer_review_lane(path: Path) -> str:
     for name in imported:
         stem = name.rsplit(".", 1)[-1]
         for candidate in _MODULE_LOCATIONS.get(stem, ()):
-            candidate_text = candidate.as_posix()
+            candidate_text = candidate.relative_to(REPO).as_posix()
             if candidate_text.startswith("src/flujo/"):
                 lanes.add("flujo")
             elif candidate_text.startswith("projects/tapiz/"):
@@ -589,7 +590,7 @@ def _infer_review_lane(path: Path) -> str:
     # those explicit ``module.py`` mentions against the same index.
     for stem in set(re.findall(r"(?<![\w-])([a-zA-Z_][\w-]*)\.py", source)):
         for candidate in _MODULE_LOCATIONS.get(stem, ()):
-            candidate_text = candidate.as_posix()
+            candidate_text = candidate.relative_to(REPO).as_posix()
             if candidate_text.startswith("src/flujo/"):
                 lanes.add("flujo")
             elif candidate_text.startswith("projects/tapiz/"):
@@ -602,23 +603,50 @@ def _infer_review_lane(path: Path) -> str:
     return next(iter(lanes), "review")
 
 
-TEST_LANE_MAP: dict[str, LaneRecord] = {}
-for key, lane in PERSISTED_LANE_DATA.items():
-    if key in REVIEW_LANE_ASSIGNMENTS:
-        TEST_LANE_MAP[key] = LaneRecord(
-            REVIEW_LANE_ASSIGNMENTS[key], (), "reviewed module/path assignment"
-        )
-        continue
-    if lane == "repo_hygiene" and Path(key).stem not in HYGIENE_CANONICAL_STEMS:
-        inferred = _infer_review_lane(REPO / key)
-        TEST_LANE_MAP[key] = LaneRecord(
-            inferred, (),
-            "resolved from imports/source paths"
-            if inferred != "review"
-            else "historical hygiene assignment; subject not canonical",
-        )
-    else:
-        TEST_LANE_MAP[key] = LaneRecord(lane, (), "persisted AST assignment")
+def _build_embedded_lane_map() -> dict[str, LaneRecord]:
+    """Fallback for checkouts created before the JSON contract existed."""
+    result: dict[str, LaneRecord] = {}
+    for key, lane in PERSISTED_LANE_DATA.items():
+        if key in REVIEW_LANE_ASSIGNMENTS:
+            result[key] = LaneRecord(
+                REVIEW_LANE_ASSIGNMENTS[key], (), "reviewed module/path assignment"
+            )
+            continue
+        if lane == "repo_hygiene" and Path(key).stem not in HYGIENE_CANONICAL_STEMS:
+            inferred = _infer_review_lane(REPO / key)
+            result[key] = LaneRecord(
+                inferred, (),
+                "resolved from imports/source paths"
+                if inferred != "review"
+                else "historical hygiene assignment; subject not canonical",
+            )
+        else:
+            result[key] = LaneRecord(lane, (), "persisted AST assignment")
+    return result
+
+
+def _load_lane_contract() -> dict[str, LaneRecord]:
+    """Load the machine-readable contract, falling back during bootstrap."""
+    try:
+        payload = json.loads(LANE_MAP_CONTRACT.read_text(encoding="utf-8"))
+        assignments = payload.get("assignments", {})
+        result: dict[str, LaneRecord] = {}
+        for key, value in assignments.items():
+            if not isinstance(value, dict) or value.get("lane") not in LANES:
+                continue
+            result[str(key)] = LaneRecord(
+                str(value["lane"]),
+                tuple(str(item) for item in value.get("imports", ())),
+                str(value.get("reason", "JSON lane contract")),
+            )
+        if result:
+            return result
+    except (OSError, json.JSONDecodeError, TypeError):
+        pass
+    return _build_embedded_lane_map()
+
+
+TEST_LANE_MAP: dict[str, LaneRecord] = _load_lane_contract()
 def lane_for_test_path(path: str | Path) -> str:
     """Return a declared lane or ``review``; do not raise during collection."""
     try:
@@ -639,28 +667,100 @@ def report() -> dict[str, object]:
         grouped[record.lane].append(path)
         if record.lane == "review":
             uncovered[path] = record.reason
-    return {"schema": "mak-test-lane-map-v1", "lanes": {
+    contract_summary: dict[str, object] = {}
+    try:
+        payload = json.loads(LANE_MAP_CONTRACT.read_text(encoding="utf-8"))
+        value = payload.get("summary", {})
+        if isinstance(value, dict):
+            contract_summary = value
+    except (OSError, json.JSONDecodeError, TypeError):
+        pass
+    return {"schema": "mak-test-lane-map-v3", "lanes": {
         lane: {"N": len(paths), "SETHASH": sethash(paths), "paths": sorted(paths)}
-        for lane, paths in grouped.items()}, "not_covered": uncovered, "total": len(TEST_LANE_MAP)}
+        for lane, paths in grouped.items()},
+        "not_covered": uncovered,
+        "total": len(TEST_LANE_MAP),
+        "contract_path": str(LANE_MAP_CONTRACT),
+        "contract_disagreements": int(contract_summary.get("disagreements", 0) or 0),
+    }
 
 
 def lanes_for_changed_paths(paths: Iterable[str]) -> tuple[str, ...]:
-    """Select conservative lanes from ``git diff --name-only`` input paths."""
+    """Select lanes from changed paths, following consumers when indexed."""
+    code_index: dict[str, object] | None = None
+
+    def load_code_index() -> dict[str, object]:
+        nonlocal code_index
+        if code_index is None:
+            try:
+                payload = json.loads(
+                    (REPO / "context" / "code_structure_index.json").read_text(
+                        encoding="utf-8"
+                    )
+                )
+                code_index = payload if isinstance(payload, dict) else {}
+            except (OSError, json.JSONDecodeError, TypeError):
+                code_index = {}
+        return code_index
+
+    def normalise(raw_path: str) -> str:
+        path = raw_path.strip().replace("\\", "/")
+        if path.startswith(("a/", "b/")):
+            path = path[2:]
+        try:
+            candidate = Path(path)
+            if candidate.is_absolute():
+                path = candidate.resolve().relative_to(REPO).as_posix()
+        except (OSError, ValueError):
+            pass
+        return path
+
+    def consumers_for(path: str) -> set[str]:
+        payload = load_code_index()
+        items = payload.get("files", []) if isinstance(payload, dict) else []
+        if not isinstance(items, list):
+            return set()
+        for item in items:
+            if not isinstance(item, dict) or item.get("path") != path:
+                continue
+            result: set[str] = set()
+            for module in item.get("imported_by", []):
+                if isinstance(module, str) and module.startswith("tests."):
+                    result.add("tests/" + module[len("tests."):].replace(".", "/") + ".py")
+            return result
+        return set()
+
     selected: set[str] = set()
     for raw in paths:
-        path = raw.strip().replace("\\", "/")
+        path = normalise(raw)
         if not path:
             continue
         if path in TEST_LANE_MAP:
             selected.add(TEST_LANE_MAP[path].lane)
-        elif path.startswith("src/flujo/"):
-            selected.add("flujo")
-        elif path.startswith(("tools/", "cultura/")) or path.endswith(".py"):
-            selected.add("mak")
-        elif any(word in path.lower() for word in _TREE_ONLY_WORDS):
-            selected.add("repo_hygiene")
+        elif path in {
+            "pyproject.toml",
+            "tests/conftest.py",
+            "tools/test_lane_map.py",
+            "context/code_structure_index.json",
+            str(LANE_MAP_CONTRACT.relative_to(REPO)),
+        }:
+            selected.update(LANES)
         else:
-            selected.add("review")
+            consumers = consumers_for(path)
+            for consumer in consumers:
+                selected.add(TEST_LANE_MAP.get(
+                    consumer, LaneRecord("review", (), "outside map")
+                ).lane)
+            if consumers:
+                continue
+            if path.startswith("src/flujo/"):
+                selected.add("flujo")
+            elif path.startswith(("tools/", "cultura/")) or path.endswith(".py"):
+                selected.add("mak")
+            elif any(word in path.lower() for word in _TREE_ONLY_WORDS):
+                selected.add("repo_hygiene")
+            else:
+                selected.add("review")
     return tuple(lane for lane in LANES if lane in selected)
 
 
@@ -681,6 +781,7 @@ def main() -> int:
     else:
         for lane, value in data["lanes"].items():
             print(f"{lane}: N={value['N']} SETHASH={value['SETHASH']}")
+        print("contract_disagreements=" + str(data["contract_disagreements"]))
         print("not_covered=" + ", ".join(sorted(data["not_covered"])))
     return 0
 

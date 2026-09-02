@@ -33,7 +33,7 @@ evidencia fechada, incluso cuando se contradicen.
   `live_archive_shared=0`; `actions.jsonl` conserva las 5.496 líneas de la
   corrida original.
 - El árbol vivo es `/home/mak`; `/home/mak/flujo` es ahora un adaptador de
-  directorio no recursivo con 170 enlaces a hermanos, porque el symlink físico
+  directorio no recursivo con 164 enlaces a hermanos, porque el symlink físico
   a `.` permitía recorridos cíclicos. La medición actual encontró cero enlaces
   que resuelvan dentro de su propio ancestro. `/home/mak/WIN/flujo` redirige a
   `../_archive/merge-20260831/fused/origins/win-flujo`. No hay otro directorio
@@ -80,6 +80,42 @@ evidencia fechada, incluso cuando se contradicen.
   `repo_hygiene` 115 (124 s, RC 0), `review` 39 bajo demanda.
   El mapa de 387 rutas quedó persistido estáticamente en ese archivo para que
   la colección no recalcule AST en cada corrida (`ac789a31`).
+
+### Revalidación de índice y carriles — 2026-09-01 — CURRENT
+
+Este bloque reemplaza únicamente las cifras operativas anteriores; las
+mediciones del 31-08 permanecen abajo como historia fechada.
+
+- `context/code_structure_index.json` es el índice del código operativo de
+  `/home/mak`, no un censo de toda la caja: 932 archivos Python, 249.626
+  líneas, 10.962 símbolos y 0 errores de sintaxis. Su alcance explícito incluye
+  sólo la raíz Python, `src/`, `cultura/`, `tools/`, `tests/` y `scripts/`.
+  Excluye `_archive`, `WIN`, montajes y árboles de material no-code. Su SHA-256
+  actual es `3af2d0c4abac5d3b9397d680452e206aefdd086b15358e7a8a41b4d8e27dc4f7`.
+- `context/test_lane_map.json` (`mak-test-lane-map-v3`) es el contrato vigente
+  y `tools/test_lane_map.py` lo carga. Conserva 243 acuerdos, 80 carriles
+  respaldados por imports/rutas, mueve 1 caso por import directo y resuelve 56
+  por ruta de módulo única. Los 7 casos que quedaban en `review` se resolvieron
+  por estructura dirigida (3 imports de MAK, 3 tests de activos ISKVW y 1 test
+  de taxonomía); `review=0`. La comparación original conserva 144
+  discrepancias visibles, no las presenta como consenso. SHA del contrato:
+  `984e26ecfb0d6890936156e1e7ed5d6d159e6ab08aa7ffbe6d11511f6a76e977`.
+- Colección actual de casos: `flujo=1.778`, `mak=2.229`,
+  `integration=239`, `repo_hygiene=87`, `review=0`; total `4.333`.
+  Los cuatro carriles operativos cubren todos los casos; los cambios de
+  clasificación sólo redistribuyeron casos, no crearon tests.
+- `lanes_for_changed_paths()` sigue consumidores desde el índice. Cambios en
+  `pyproject.toml`, `tests/conftest.py`, `tools/test_lane_map.py`,
+  `context/code_structure_index.json` o `context/test_lane_map.json` activan
+  todos los carriles; un cambio aislado en `src/flujo/*` activa solo `flujo`
+  cuando no tiene consumidores de otro carril.
+- `mak-hub.service` fue recargado tras resolver la raíz física: `/api/status`
+  devuelve ahora `repo_root=/home/mak` y `physical_root=/home/mak`; el alias
+  `/home/mak/flujo` queda sólo para compatibilidad de rutas heredadas.
+- Validación enfocada actual: `tests/test_code_index.py` (2 passed), los 7
+  archivos que cerraron `review` (49 passed), `tests/test_repo_audit.py` (5
+  passed en 33 s), `py_compile` RC 0 y `git diff --check` RC 0. No se ejecutó
+  la suite completa.
 
 ### Cierre de `review` y triage de divergencias — 2026-09-01
 

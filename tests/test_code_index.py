@@ -12,10 +12,12 @@ def test_code_index_extracts_structure_effects_and_consumers(tmp_path):
     package.mkdir()
     (package / "__init__.py").write_text("from .worker import run\n", encoding="utf-8")
     (package / "worker.py").write_text(
+        "import importlib\n"
         "import sqlite3\n"
         "from pathlib import Path\n\n"
         "def run():\n"
-        "    Path('out.txt').write_text('ok')\n"
+        "    importlib.import_module('flujo.paths')\n"
+        "    Path('/home/mak/out.txt').write_text('ok')\n"
         "    return sqlite3.connect('data.db')\n\n"
         "if __name__ == '__main__':\n"
         "    run()\n",
@@ -40,12 +42,19 @@ def test_code_index_extracts_structure_effects_and_consumers(tmp_path):
     assert "filesystem_write" in worker["effects"]
     assert "pkg" in worker["imported_by"]
     assert "pkg.consumer" in worker["imported_by"]
+    assert worker["dynamic_imports"] == [{
+        "callee": "importlib.import_module", "line": 6, "target": "flujo.paths",
+    }]
+    assert worker["module_string_refs"] == ["flujo.paths"]
+    assert worker["path_string_refs"] == ["/home/mak/out.txt"]
     assert "source" not in worker
 
-    brief = make_brief(index, "worker database")
+    brief = make_brief(index, "worker database flujo.paths")
     assert brief["schema"] == "mak-code-brief-v1"
     assert brief["source_text_included"] is False
     assert "pkg/worker.py" in brief["candidate_paths"]
+    brief_item = next(item for item in brief["matches"] if item["path"] == "pkg/worker.py")
+    assert brief_item["dynamic_imports"] == worker["dynamic_imports"]
 
 
 def test_code_index_reports_syntax_errors_without_stopping(tmp_path):

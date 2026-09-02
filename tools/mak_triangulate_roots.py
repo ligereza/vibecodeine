@@ -17,10 +17,27 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 
-from mak_merge_roots import DISCOVERY_PRUNE_DIRS, HOME, RUN_ID, discover_roots, source_id, source_mode
+try:  # package execution: ``python -m tools.mak_triangulate_roots``
+    from .mak_merge_roots import (
+        DISCOVERY_PRUNE_DIRS,
+        HOME,
+        RUN_ID,
+        discover_roots,
+        source_id,
+        source_mode,
+    )
+except ImportError:  # direct script execution from ``tools/``
+    from mak_merge_roots import (  # type: ignore[no-redef]
+        DISCOVERY_PRUNE_DIRS,
+        HOME,
+        RUN_ID,
+        discover_roots,
+        source_id,
+        source_mode,
+    )
 
 
-OUT_DIR = HOME / "flujo" / "context" / RUN_ID
+OUT_DIR = HOME / "context" / RUN_ID
 TEMP_BASES = (HOME / ".claude" / "jobs", HOME / "state")
 TEMP_PARTS = {"tmp", "temp", "temporary", "scratch", "tmpfiles"}
 CODE_SUFFIXES = {".py", ".pyi"}
@@ -164,6 +181,31 @@ def _candidate_files(root: Path, history: dict[str, dict[str, str]]) -> list[dic
     return rows
 
 
+def _live_status(row: dict[str, object], destination: Path = HOME) -> str | None:
+    """Compare a historical-origin candidate with the current live tree.
+
+    Only the frozen origins produced by the 2026-08-31 merge mirror the live
+    root directly.  Temporary worktrees and nested snapshot roots have a
+    different relative coordinate system and must remain ``None`` rather than
+    being compared to a misleading destination.
+    """
+    source = str(row.get("path", ""))
+    if "/_archive/merge-20260831/fused/origins/" not in source:
+        return None
+    relative = row.get("relative")
+    expected = row.get("sha256")
+    if not isinstance(relative, str) or not isinstance(expected, str):
+        return None
+    target = destination / relative
+    if not target.is_file():
+        return "absent"
+    try:
+        actual = _hash(target)
+    except OSError:
+        return "unreadable"
+    return "equal" if actual == expected else "divergent"
+
+
 def _temporary_files() -> list[dict[str, object]]:
     rows = []
     for base in TEMP_BASES:
@@ -201,7 +243,9 @@ def _redirect_targets() -> list[Path]:
 
 
 def main() -> int:
-    roots = discover_roots(destination=HOME / "flujo")
+    # The physical MAK checkout is /home/mak.  The /home/mak/flujo adapter is
+    # a compatibility path and must not become the scan destination again.
+    roots = discover_roots(destination=HOME)
     for target in _redirect_targets():
         if target not in roots:
             roots.append(target)
@@ -212,6 +256,10 @@ def main() -> int:
         history = _git_file_history(root)
         candidate_rows.extend(_candidate_files(root, history))
     candidate_rows.extend(_temporary_files())
+    for row in candidate_rows:
+        status = _live_status(row)
+        if status is not None:
+            row["live_status"] = status
     by_hash: dict[str, list[str]] = defaultdict(list)
     for row in candidate_rows:
         digest = row.get("sha256")
@@ -233,6 +281,10 @@ def main() -> int:
             "temporary_python": sum(row.get("role") == "temporary-python" for row in candidate_rows),
             "historical_family_candidates": sum(row.get("role") == "historical-family-candidate" for row in candidate_rows),
             "duplicate_hash_groups": len(duplicate_groups),
+            "historical_live_status": {
+                status: sum(row.get("live_status") == status for row in candidate_rows)
+                for status in ("equal", "divergent", "absent", "unreadable")
+            },
         },
     }
     OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -246,6 +298,11 @@ def main() -> int:
         f"- candidatos de familias históricas: {result['counts']['historical_family_candidates']}",
         f"- `.py` temporales: {result['counts']['temporary_python']}",
         f"- grupos de hash duplicado entre candidatos: {len(duplicate_groups)}",
+        "- estado de candidatos históricos frente a MAK: "
+        + ", ".join(
+            f"{status}={count}"
+            for status, count in result["counts"]["historical_live_status"].items()
+        ),
         "",
         "## Señales por raíz",
         "",

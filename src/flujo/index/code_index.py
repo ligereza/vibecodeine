@@ -9,6 +9,7 @@ from __future__ import annotations
 import ast
 import hashlib
 import json
+import os
 import re
 from datetime import datetime, timezone
 from pathlib import Path
@@ -21,7 +22,7 @@ DEFAULT_OUTPUT = "context/code_structure_index.json"
 SKIP_DIRS = frozenset({
     ".git", ".venv", ".agents", ".codex", ".claude", "__pycache__",
     ".pytest_cache", "node_modules", "dist", "build", ".mypy_cache",
-    ".ruff_cache", "WIN",
+    ".ruff_cache", "WIN", "_archive", "GoogleDrive", "OneDrive",
 })
 
 _EFFECT_IMPORTS = {
@@ -58,6 +59,13 @@ _EFFECT_CALLS = {
     "requests.post": "network",
 }
 
+# These are deliberately narrow.  They surface references that an import
+# graph cannot resolve statically, without pretending that every prose mention
+# of a package is an executable dependency.
+_MODULE_STRING_RE = re.compile(r"^(?:flujo|cultura|tools)(?:\.[A-Za-z_]\w*)*$")
+_PATH_HINTS = ("/home/mak/", "src/flujo/", "cultura/", "tools/", "flujo/")
+_MAK_CODE_ROOTS = ("src", "cultura", "tools", "tests", "scripts")
+
 
 def _call_name(node: ast.AST) -> str:
     if isinstance(node, ast.Name):
@@ -77,6 +85,11 @@ def _decorator_name(node: ast.AST) -> str:
 def _module_name(root: Path, path: Path) -> str:
     relative = path.relative_to(root)
     parts = list(relative.with_suffix("").parts)
+    # In a repository using the ``src/`` layout, ``src`` is packaging
+    # scaffolding, not part of the importable module name.  Normalising here
+    # lets absolute imports such as ``flujo.paths`` resolve to their files.
+    if parts and parts[0] == "src":
+        parts.pop(0)
     if parts and parts[-1] == "__init__":
         parts.pop()
     return ".".join(parts)
@@ -114,6 +127,9 @@ class _StructureVisitor(ast.NodeVisitor):
         self.calls: set[str] = set()
         self.effects: set[str] = set()
         self.entrypoints: set[str] = set()
+        self.dynamic_imports: list[dict[str, Any]] = []
+        self.module_string_refs: set[str] = set()
+        self.path_string_refs: set[str] = set()
 
     def visit_Import(self, node: ast.Import) -> None:
         for alias in node.names:
@@ -165,9 +181,32 @@ class _StructureVisitor(ast.NodeVisitor):
         name = _call_name(node.func)
         if name:
             self.calls.add(name)
+            if name in {"__import__", "import_module", "importlib.import_module"}:
+                target = None
+                if node.args and isinstance(node.args[0], ast.Constant):
+                    value = node.args[0].value
+                    if isinstance(value, str):
+                        target = value
+                self.dynamic_imports.append({
+                    "callee": name,
+                    "line": int(getattr(node, "lineno", 0) or 0),
+                    "target": target,
+                })
             for call, effect in _EFFECT_CALLS.items():
                 if name == call or name.endswith("." + call):
                     self.effects.add(effect)
+        self.generic_visit(node)
+
+    def visit_Constant(self, node: ast.Constant) -> None:
+        value = node.value
+        if isinstance(value, str):
+            if _MODULE_STRING_RE.fullmatch(value):
+                self.module_string_refs.add(value)
+            if (
+                value.startswith((".", "/", "~"))
+                or any(hint in value for hint in _PATH_HINTS)
+            ):
+                self.path_string_refs.add(value)
         self.generic_visit(node)
 
     def visit_If(self, node: ast.If) -> None:
@@ -177,10 +216,51 @@ class _StructureVisitor(ast.NodeVisitor):
 
 
 def _iter_python_files(root: Path) -> Iterable[Path]:
-    for path in sorted(root.rglob("*.py")):
-        if not path.is_file() or any(part in SKIP_DIRS for part in path.parts):
+    """Walk one filesystem without entering mounts or symlinked directories."""
+    root = root.resolve()
+    # A repository root can also contain media, mounted drives and historical
+    # material.  For MAK, code indexing is intentionally bounded to code roots;
+    # callers that need another tree can pass that directory explicitly.
+    if root.name == "mak" and (root / ".git").exists():
+        for path in sorted(root.glob("*.py")):
+            if path.is_file() and not path.is_symlink():
+                yield path
+        scan_roots = [root / name for name in _MAK_CODE_ROOTS if (root / name).is_dir()]
+    else:
+        scan_roots = [root]
+
+    for scan_root in scan_roots:
+        try:
+            root_device = os.stat(scan_root, follow_symlinks=False).st_dev
+        except OSError:
             continue
-        yield path
+        for current, dirs, filenames in os.walk(scan_root, topdown=True, followlinks=False):
+            current_path = Path(current)
+            kept_dirs: list[str] = []
+            for name in sorted(dirs):
+                if name in SKIP_DIRS or name.startswith("."):
+                    continue
+                candidate = current_path / name
+                try:
+                    stat_result = os.stat(candidate, follow_symlinks=False)
+                except OSError:
+                    continue
+                # A different device is an attached drive/FUSE mount, not part
+                # of the operational tree being indexed.  ismount catches bind
+                # mounts that happen to share the same device number.
+                if stat_result.st_dev != root_device or os.path.ismount(candidate):
+                    continue
+                kept_dirs.append(name)
+            dirs[:] = kept_dirs
+            for name in sorted(filenames):
+                path = current_path / name
+                if path.suffix != ".py" or path.is_symlink():
+                    continue
+                try:
+                    if path.is_file():
+                        yield path
+                except OSError:
+                    continue
 
 
 def inspect_file(root: Path, path: Path) -> dict[str, Any]:
@@ -196,6 +276,9 @@ def inspect_file(root: Path, path: Path) -> dict[str, Any]:
         "calls": [],
         "effects": [],
         "entrypoints": [],
+        "dynamic_imports": [],
+        "module_string_refs": [],
+        "path_string_refs": [],
         "syntax_error": None,
         "imported_by": [],
     }
@@ -222,6 +305,9 @@ def inspect_file(root: Path, path: Path) -> dict[str, Any]:
         "calls": sorted(visitor.calls)[:200],
         "effects": sorted(visitor.effects),
         "entrypoints": sorted(visitor.entrypoints),
+        "dynamic_imports": visitor.dynamic_imports,
+        "module_string_refs": sorted(visitor.module_string_refs),
+        "path_string_refs": sorted(visitor.path_string_refs)[:200],
     })
     return result
 
@@ -278,6 +364,22 @@ def build_index(root: str | Path, *, query: str = "") -> dict[str, Any]:
         "schema": SCHEMA,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "root": str(base),
+        "scope": {
+            "mode": "mak_code_roots",
+            "description": (
+                "Python files located in MAK code roots; presence here does "
+                "not prove runtime reachability or a consumer."
+            ),
+            "included_roots": ["<root-level .py>", *_MAK_CODE_ROOTS]
+            if base.name == "mak" and (base / ".git").exists()
+            else ["<entire-explicit-root>"],
+            "excluded_code_trees": [
+                "_archive", "WIN", "context-history", "xio", "projects",
+                "virtualenvs", "vendor", "mounts", "symlinked directories",
+            ],
+            "content_read": True,
+            "source_text_stored": False,
+        },
         "skip_dirs": sorted(SKIP_DIRS),
         "summary": {
             "python_files": len(files),
@@ -313,6 +415,13 @@ def make_brief(index: dict[str, Any], query: str, *, limit: int = 20) -> dict[st
             " ".join(symbol.get("name", "") for symbol in item.get("symbols", [])),
             " ".join(item.get("imports", [])), " ".join(item.get("calls", [])),
             " ".join(item.get("effects", [])),
+            " ".join(
+                str(ref.get("target", ""))
+                for ref in item.get("dynamic_imports", [])
+                if isinstance(ref, dict)
+            ),
+            " ".join(item.get("module_string_refs", [])),
+            " ".join(item.get("path_string_refs", [])),
         ]).lower()
         score = sum(1 for token in tokens if token in hay)
         if score:
@@ -327,6 +436,9 @@ def make_brief(index: dict[str, Any], query: str, *, limit: int = 20) -> dict[st
             "symbols": item.get("symbols", [])[:30],
             "effects": item.get("effects", []),
             "imported_by": item.get("imported_by", []),
+            "dynamic_imports": item.get("dynamic_imports", []),
+            "module_string_refs": item.get("module_string_refs", []),
+            "path_string_refs": item.get("path_string_refs", []),
             "syntax_error": item.get("syntax_error"),
         })
     return {
