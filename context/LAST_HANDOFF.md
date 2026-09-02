@@ -227,6 +227,366 @@ authorized, the existing release/publish procedure; do not regenerate
   and integration. IRIS remains paused; do not regenerate data or open the
   IRIS reader as part of CI follow-up.
 
+### Claude delegation packet — updated 2026-09-02
+
+- The prompt at
+  `context/coordination/inbox/claude/phase2-publication-review-20260902.md`
+  was rewritten for the post-publication state. It now asks a new Claude agent
+  to verify the published MAK/FLUJO SHAs, remote refs, matching CI runs and
+  live runtime, using only the current handoff block and targeted diffs.
+- The packet explicitly forbids full-repository reading, ODT/history/WIN
+  exploration, code or data edits, service changes, and any commit/push. Its
+  only permitted write for Claude is one brief dated result in this handoff.
+- This packet update and this pointer are local, uncommitted changes made for
+  operator delivery to Claude. The published code remains at MAK `fc8005c1`
+  and FLUJO `50e453c2`; no remote branch is changed by this update.
+- Next action: operator sends the packet to the new Claude agent. On return,
+  inspect its result here before authorizing any new implementation. IRIS
+  remains paused.
+
+### Claude packet resend — 2026-09-02
+
+- The operator reported that the previous delivery/context was lost. The
+  packet was made self-contained: it now explains the useful Claude work, the
+  data/CI/path inference errors, Faro/Codex's bounded diagnosis and repairs,
+  the published commits, and the exact post-publication verification task.
+- Current physical check: MAK is clean except for this handoff and the local
+  packet update; FLUJO is clean. Remote refs remain MAK `fc8005c1` and FLUJO
+  `50e453c2`. Ports `8900`, `8890`, `8891`, `8765` and `11434` are listening
+  on `127.0.0.1`.
+- No repair, commit, push, service change, IRIS edit or data regeneration was
+  made in this resend. The operator should send the complete contents of
+  `context/coordination/inbox/claude/phase2-publication-review-20260902.md`
+  to the new Claude agent.
+
+### Post-publication verification (Claude Fase 2) -- 2026-09-02 -- REVIEW_NEEDED
+
+- Publication is confirmed. MAK local HEAD equals remote `refs/heads/MAK` at
+  `fc8005c13e7aa91b6da7cbc40e7be0591b5ef8dc`; FLUJO local HEAD equals remote
+  `refs/heads/FLUJO` at `50e453c2a6ee9837c73acda3cec6ff74d0598f7e`. The
+  published diffs match this handoff: `9c2c4255` touches 57 paths (+702/-104),
+  `50e453c2` touches 3 paths (+27/-4). Both worktrees pass `git diff --check`
+  and the only modified paths are `context/LAST_HANDOFF.md` and the Fase 2
+  packet; FLUJO is fully clean. No unexpected path appeared.
+- Remote CI matched to the published SHAs: `CI FLUJO` success for `50e453c2`
+  (run 33670274140). `CI integration` success for `9c2c4255` (33670257289) and
+  for `fc8005c1` (33670334153). `CI MAK` FAILS for both `9c2c4255`
+  (33670257340) and the tip `fc8005c1` (33670334244). No workflow run is
+  pending or unverified.
+- The `CI MAK` failure is a single test in the hygiene lane, identical on both
+  runs: `tests/test_comandos_manifiesto.py::test_the_manifest_is_not_stale_against_the_real_cli`
+  -- `1 failed, 80 passed, 8 skipped`. The `mak` lane step itself passed.
+- Diagnosed cause, from the log and the published diff only. The ratchet runs
+  `tools/gen_mapa_comandos.py --check`, which interrogates the real CLI by
+  spawning `python -m flujo <path> --help` with `PYTHONPATH` pointed at
+  `RAIZ/flujo/src`. `flujo/src/flujo/cli.py` imports `typer` and `rich`, both
+  declared only in `requirements-flujo.txt`; the `CI MAK` job installs
+  `requirements-mak.txt`, whose shared base deliberately excludes the portable
+  motor's CLI stack. Refined by measurement on 2026-09-02 (see the
+  certification section below): run 33670334244's own install step shows
+  `rich`, `pydantic` and `requests` arriving transitively under the MAK
+  profile and `typer` never arriving, so `typer` alone is the missing import
+  in that runner. In that runner the help subprocess cannot import,
+  the parsed command tree comes back empty, and the committed
+  `context/comandos.json` is reported as stale. The same `--check` exits 0 on
+  the box (`MAPA.md y context/comandos.json al dia con el CLI`) because the box
+  venv has the FLUJO stack installed.
+- This is the same defect class already repaired in this session -- a MAK test
+  asserting substrate a clean MAK-profile checkout does not have -- not a
+  regression of the physical split and not evidence about IRIS, `iskvw/datos/*`
+  or the 219/871 decision. It was invisible before 2026-09-02 because the
+  hygiene lane ran in no CI job.
+- Local runtime, read-only: `tools/runtime_preflight.py --check` exit 0 with
+  all five surfaces OK and zero error/unknown/warn/adapter conditions; the
+  FLUJO App probe resolves inside the FLUJO checkout at
+  `/home/mak/flujo/src/flujo/web/hub.py`. Endpoints: `8900/health` 200,
+  `8890/` 200, `8891/` 200, `8765/` 200, `11434/api/version` 200.
+- Blockers: none for publication; `CI MAK` red at the published tip is the one
+  open item. Warnings: the manifest ratchet's green local result is not
+  portable, so the box cannot pre-detect this class of failure. Unverified:
+  nothing in the requested scope; no full-repository, ODT, WIN, `main` or
+  history reading was done, and no code, workflow, requirement, test, service,
+  data or IRIS surface was touched.
+- Next minimal action, for Faro/Codex to authorize and execute: decide whether
+  that ratchet belongs in the MAK hygiene lane at all, since it measures the
+  FLUJO CLI, and then apply exactly one bounded correction -- move the test to
+  the FLUJO/integration lane, or make it skip when the motor's CLI stack is not
+  importable. Do not add `typer`/`rich` to `requirements-mak.txt` merely to
+  make it pass: that reverses the measured profile separation. No commit,
+  push or regeneration was made by this verification. IRIS remains paused.
+
+### CI MAK manifest ownership correction — 2026-09-02
+
+- Cause. `tests/test_comandos_manifiesto.py::test_the_manifest_is_not_stale_against_the_real_cli`
+  ran `tools/gen_mapa_comandos.py --check`, which spawns
+  `python -m flujo <path> --help`; `flujo/src/flujo/cli.py` imports `typer` and
+  `rich`, and those live only in `requirements-flujo.txt`. The file is declared
+  `repo_hygiene`, a lane `CI MAK` runs after installing `requirements-mak.txt`
+  only, so the check failed on a clean runner while passing on the box. The
+  lane classifier could not see it: `tools/test_lane_map.py` records AST
+  imports, the file imported only `json`/`subprocess`/`sys`, and the real
+  dependency travels through `subprocess`. The failure text said the manifest
+  was stale, which is why it read as a data problem rather than an environment
+  one.
+- Ownership decision. The check belongs to `integration`, the lane that
+  composes both physical checkouts and installs `requirements-integration.txt`.
+  The precedent was already in the tree: `tests/test_mapa_completo.py` is the
+  twin ratchet over the same generator's MAPA.md table and is declared
+  `integration` with the reason `reaches both physical checkouts; runs with
+  PYTHONPATH=/home/mak:/home/mak/flujo/src`. The generator emits MAPA.md and
+  `context/comandos.json` from one tree, so the manifest half joined its twin
+  instead of getting a new file. That keeps `context/test_lane_map.json`
+  untouched: it is a generated contract carrying `classifier_sha256` and
+  `previous_contract_sha256`, and hand-adding an entry would have invalidated
+  its own provenance. The five remaining tests in
+  `tests/test_comandos_manifiesto.py` read the tracked JSON document and are
+  honestly `repo_hygiene`. `typer`/`rich` were NOT added to
+  `requirements-mak.txt`; nothing was skipped or disabled.
+- Files modified: `tests/test_mapa_completo.py` (+27), `tests/test_test_taxonomy.py`
+  (+95/-1), `tests/test_comandos_manifiesto.py` (+18/-5). The staleness
+  assertion moved verbatim as
+  `test_el_manifiesto_no_queda_desfasado_del_cli`; the vacated file keeps a
+  pointer comment so the check cannot be re-added to the wrong lane;
+  `subprocess`/`sys` became unused there and were removed.
+- Regression guard. `tests/test_test_taxonomy.py::test_a_hygiene_lane_test_never_spawns_the_flujo_cli`
+  walks every `repo_hygiene` file in the lane contract and fails if a
+  subprocess call reaches the FLUJO CLI. The first version of this guard was
+  refuted by measuring it: run against `git show HEAD:tests/test_comandos_manifiesto.py`
+  it returned clean, because the published call was
+  `subprocess.run([sys.executable, str(GENERADOR), "--check"])` and neither
+  `-m flujo` nor the generator name appears inside the call -- the path sits in
+  a module constant. `_module_constants()` now expands names the call
+  references. Verified afterwards: the pre-move file is detected
+  (`subprocess.run`), the post-move file, `tests/test_higiene_repo.py` (which
+  names the generator in a data table without running it) and the guard file
+  itself are clean.
+- Write-set, exact, local and uncommitted: `tests/test_comandos_manifiesto.py`,
+  `tests/test_mapa_completo.py`, `tests/test_test_taxonomy.py`,
+  `context/LAST_HANDOFF.md`, and the pre-existing
+  `context/coordination/inbox/claude/phase2-publication-review-20260902.md`,
+  which was preserved untouched. FLUJO's checkout is clean: no file changed
+  there, so `CI FLUJO` is unaffected by this correction.
+- Commands and exact results, all with `PYTHONDONTWRITEBYTECODE=1` and
+  `/home/mak/.venv/bin/python`:
+  - `ci-mak.yml` step `repo hygiene lane`, verbatim
+    (`-m repo_hygiene`, `PYTHONPATH=/home/mak:/home/mak/flujo/src`):
+    `89 passed in 28.11s` (was `1 failed, 80 passed, 8 skipped` in CI; the
+    count holds because one test left and the guard arrived).
+  - `ci-mak.yml` step `MAK lane` (`-m mak`): `2175 passed, 5 skipped,
+    5 warnings, 5 subtests passed in 99.10s`.
+  - `ci-integration.yml` step `Integration lane`, verbatim (`-m integration`,
+    `PYTHONPATH=/home/mak:/home/mak/flujo:/home/mak/flujo/src`):
+    `373 passed, 20 warnings in 50.75s`, one more than the published 372 --
+    the moved check. `--collect-only` confirms the file is selected by
+    `integration` and absent from `repo_hygiene`.
+  - Focal: `tests/test_mapa_completo.py` `7 passed in 7.52s`;
+    `tests/test_comandos_manifiesto.py` `5 passed in 0.13s`;
+    `tests/test_test_taxonomy.py` + `tests/test_idioma_ratchet.py`
+    `23 passed in 12.60s`.
+  - `git diff --check` exit 0 in both checkouts.
+  - `tools/release_gate.py --check`: `verdict_overall=IMPLEMENTATION_COMPLETE_TESTS_DEFERRED`,
+    `BLOCKERS (0)`, `UNKNOWNS (0)`, exit 5 (its documented deferred code); both
+    branches `ahead=0 fast_forwardable=True`.
+  - `tools/runtime_preflight.py --check`: exit 0, `ok=5`, `error=0 unknown=0
+    warn=0 adapter_dependency=0`.
+  - One intermediate failure is recorded rather than hidden: the first version
+    of the guard was written with Spanish identifiers and docstrings, and
+    `tests/test_idioma_ratchet.py::test_no_new_file_carries_spanish_comments`
+    flagged `tests/test_test_taxonomy.py` as a new Spanish-carrying file. The
+    additions were rewritten in English; the baseline pin was NOT lowered.
+- Sibling review, measured over the lane contract rather than asserted. Every
+  test that spawns the FLUJO CLI: `tests/test_laser.py`,
+  `tests/test_mapa_completo.py`, `tests/test_micelio_deposito.py` -- all three
+  already declared `integration`. The two lanes that run without the motor's
+  CLI stack carry none: `repo_hygiene` 14 files, 0 spawners; `mak` 173 files,
+  0 spawners. `tests/test_curaduria_roundtrip.py` (`mak`) only cites
+  `gen_mapa_comandos._help` in a comment, and `tests/test_higiene_repo.py`
+  (`repo_hygiene`) names the generator in a data table. Workflow scan:
+  `ci-mak.yml` and `ci-integration.yml` are the only workflows setting
+  `PYTHONPATH` to the sibling checkout, and their composition is correct;
+  `validar-piezas.yml` runs `python -m flujo suplementos validate` but is a
+  separate FLUJO-profile workflow, not a MAK lane. Exactly one ownership
+  defect existed and it is the one corrected here.
+- Protected surfaces: the diff touches no IRIS file, no `iskvw/datos/*`, no
+  `campo.json`, no `animadas.json`, no `iskvw/piel/*`, no database, no
+  artistic output, no requirements file and no service configuration -- checked
+  by pattern over `git diff --name-only`, which returned nothing. No service
+  was started, stopped or restarted; no port changed; no file was regenerated.
+  No branch operation of any kind was performed.
+- Next action for Faro. Review this write-set and, if authorized, publish it to
+  `MAK` by the existing procedure. The only remaining CI evidence gap is that
+  `CI MAK` has not yet run green on a clean runner for this correction; the
+  verdict is its matrix, not this local run. IRIS remains paused.
+
+### Faro verification of Claude correction -- 2026-09-02
+
+- The actual Claude write-set was independently reviewed and remains bounded
+  to `tests/test_comandos_manifiesto.py`, `tests/test_mapa_completo.py`,
+  `tests/test_test_taxonomy.py`, this handoff, and the pre-existing Claude
+  packet. FLUJO is clean. No protected IRIS/data/runtime path appears in the
+  diff; `git diff --check` passes in both checkouts.
+- Independent rerun with `PYTHONDONTWRITEBYTECODE=1` and the box venv:
+  focused manifest/map/taxonomy/idioma tests: `35 passed in 24.96s`;
+  `repo_hygiene`: `89 passed in 33.15s`; `integration`: `373 passed in
+  23.80s`.
+- The first focused invocation returned pytest code 5 with no collection
+  because `pyproject.toml` supplies `addopts = "-q -m mak"`; the authoritative
+  rerun used `-o addopts=` and collected all 35 tests. This is an invocation
+  quirk, not a code failure. The hygiene and integration reruns are green.
+- The new correction is local and uncommitted. Remote CI still reflects the
+  prior published MAK tip, so clean-runner evidence for this write-set remains
+  pending publication. Next action: operator review and explicit authorization
+  before commit/push. IRIS remains paused.
+
+### Faro pre-publication certification -- 2026-09-02
+
+- Verdict: `READY_FOR_PUBLICATION`, with one explicit limit -- clean-runner CI
+  evidence for THIS write-set cannot exist until it is pushed and the
+  workflows run. Zero blockers, zero unknowns, zero warnings from the gate.
+- Reconciliation with the Faro verification section immediately above, so the
+  two do not read as contradicting each other: that independent rerun measured
+  `35` focused tests and `repo_hygiene` `89` BEFORE this certification added
+  two detector pins to `tests/test_test_taxonomy.py`. The counts below are
+  `37` and `91` for that reason, and `integration` `373` agrees in both. No
+  earlier figure was wrong.
+- Write-set, exact, local and uncommitted, five paths and no others:
+  `tests/test_comandos_manifiesto.py`, `tests/test_mapa_completo.py`,
+  `tests/test_test_taxonomy.py`, `context/LAST_HANDOFF.md`, and the
+  pre-existing `context/coordination/inbox/claude/phase2-publication-review-20260902.md`,
+  which was not rewritten or extended. The FLUJO checkout is clean: no file,
+  branch or ref there was touched. `git diff --check` exits 0 in both.
+- Semantic review. The staleness check was MOVED, not duplicated: the old body
+  is deleted and exactly one definition exists in the tree
+  (`grep` finds `test_el_manifiesto_no_queda_desfasado_del_cli` once as a
+  `def`, plus two comment references). `tests/test_comandos_manifiesto.py`
+  keeps its five document checks, which are honestly `repo_hygiene`;
+  `subprocess`/`sys` were removed there because only the moved test used them.
+  `context/test_lane_map.json` is NOT in the diff -- the generated contract was
+  never hand-edited. No requirements file is in the diff, so no FLUJO
+  dependency was added to the MAK profile. No existing ratchet was lowered,
+  faked or deleted; no test was turned into a skip.
+- Cause refined by measurement, and this correction matters. The earlier
+  sections said the CLI needs "typer and rich". Run 33670334244's own
+  `Install the MAK profile` step shows `rich-15.0.0`, `pydantic-2.13.5` and
+  `requests-2.34.2` DO arrive transitively under `requirements-mak.txt`, and
+  `typer` never arrives. So `typer` alone is the missing import in that runner.
+  The distinction is load-bearing: `rich` being present there is an accident of
+  another package's dependency tree, not a contract, so nobody should rely on
+  it. The three code comments and the prior handoff sentence were corrected,
+  and a wrong run id (`33670334153`, which is the integration run) was replaced
+  by `33670334244` in all three files.
+- Property 1, MAK does not depend on the FLUJO CLI stack: certified by
+  execution, not by reading. A `sitecustomize.py` in the session scratchpad
+  models the runner by blocking exactly the genuinely absent packages
+  (`typer`, `pywebview`) while leaving the transitively present ones
+  importable. Under that model: `repo_hygiene` `91 passed in 28.04s` and `mak`
+  `2175 passed, 5 skipped, 5 warnings, 5 subtests passed in 102.95s`. The same
+  model reproduces the published failure exactly --
+  `python tools/gen_mapa_comandos.py --check` prints
+  `MAPA.md o context/comandos.json DESFASADO del CLI` and exits 1, the same
+  message and code CI MAK produced -- while the identical command without the
+  model exits 0. The diagnosis is therefore measured, not inferred.
+- Property 2, the check really runs in `integration` and is not vacuous: under
+  the CI MAK model `tests/test_mapa_completo.py::test_el_manifiesto_no_queda_desfasado_del_cli`
+  FAILS (`1 failed in 3.09s`), and in the integration environment it PASSES
+  (`1 passed in 6.74s`). A test that cannot fail when its dependency is absent
+  would be decoration; this one can. `--collect-only` confirms it is selected
+  by `-m integration` and returns zero occurrences under `-m repo_hygiene`.
+- Property 3, the guard. Its first version was refuted by measuring it against
+  `git show HEAD:tests/test_comandos_manifiesto.py`: it reported the real
+  offender clean, because the published call was
+  `subprocess.run([sys.executable, str(GENERADOR), "--check"])` and the path
+  lived in a module constant. `_module_constants()` fixed that. The behaviour
+  is now PINNED in two new tests rather than left to the tree being clean by
+  construction: `test_the_detector_finds_execution_including_indirect_paths`
+  covers a direct `-m flujo` argv pair, the module-constant indirection, a
+  `shell=True` string and `os.system`; `test_the_detector_does_not_accuse_a_mention`
+  covers a data table, a comment, an unspawned string and a file with no
+  subprocess at all. The guard scans the lane contract, not a test name, so
+  renaming any test cannot silently disarm it, and it does not flag itself.
+  Declared limit, stated rather than hidden: it reads direct subprocess calls
+  in the file it scans, so a spawn hidden inside an imported helper would
+  escape it. That hole was measured, not assumed -- see the sibling review.
+- Sibling review, measured: `no sibling ownership defect found`. Every test
+  that spawns the FLUJO CLI is `tests/test_laser.py`,
+  `tests/test_mapa_completo.py` and `tests/test_micelio_deposito.py`, all three
+  already declared `integration`. The two lanes that run without the CLI stack
+  carry none: `repo_hygiene` 16 declared files, 0 spawners; `mak` 173 files, 0
+  spawners. For the wrapper case, the local modules that themselves spawn the
+  CLI were enumerated -- `tools/gen_mapa_comandos.py` and
+  `tools/bridge_issue_render.py`, two of them -- and no `repo_hygiene` or `mak`
+  test imports either; `bridge_issue_render` has no test at all. Of the tests
+  naming `flujo/src`, `test_system_status.py` is `integration`, while
+  `test_compete_engine.py`, `test_runtime_preflight.py` and
+  `test_test_taxonomy.py` reference the path as data and stay green with
+  `typer` blocked. No test was pre-emptively skipped.
+- Tests executed with `PYTHONDONTWRITEBYTECODE=1`, `-o addopts=` and
+  `/home/mak/.venv/bin/python` (the generic `python` does not exist in this
+  shell and `/usr/bin/python3` has no pytest; that is the interpreter, not a
+  code fault):
+  - focal, four files: `37 passed in 19.11s`.
+  - `ci-mak.yml` `repo hygiene lane` verbatim: `91 passed in 28.64s`. It was 89
+    before this write-set: one test left for `integration` and two detector
+    pins arrived.
+  - `ci-mak.yml` `MAK lane` verbatim: `2175 passed, 5 skipped, 5 warnings,
+    5 subtests passed in 98.86s`.
+  - `ci-integration.yml` `Integration lane` verbatim: `373 passed, 20 warnings
+    in 18.75s`, one more than the published 372 -- the moved check.
+  - The `flujo` lane and its hygiene were NOT run: no file in the FLUJO
+    checkout changed, `ci-flujo.yml` triggers only on the FLUJO branch, and
+    nothing will be pushed there. The composition is still covered, by the
+    integration lane.
+- `python -m flujo verify`: `✓ verify OK`, exit 0, run from `/home/mak/flujo`
+  with `/home/mak/.venv/bin/python` and `PYTHONPATH=/home/mak/flujo/src`. Its
+  hub smoke reported `version=0.56.1 port=46581`.
+- `tools/release_gate.py --check`:
+  `verdict_overall=IMPLEMENTATION_COMPLETE_TESTS_DEFERRED`, `BLOCKERS (0)`,
+  `UNKNOWNS (0)`, `WARNINGS (0)`, exit 5 -- its documented deferred-tests code,
+  not a failure of this correction. Both operational branches read
+  `ahead=0 behind=0 fast_forwardable=True`, MAK at `fc8005c13e7a` and FLUJO at
+  `50e453c2a6ee`, matching the remote. The five write-set paths appear under
+  `needs attribution`, which is the gate naming an uncommitted checkout, not a
+  defect.
+- `tools/runtime_preflight.py --check`: exit 0, `ok=5`,
+  `error=0 unknown=0 warn=0 adapter_dependency=0`. No service was started,
+  stopped or restarted; no port was changed.
+- Protected surfaces confirmed by pattern over `git diff --name-only`, which
+  returns nothing for: IRIS and its reader, `iskvw/*` including
+  `iskvw/datos/*`, `campo.json`, `animadas.json`, `iskvw/piel/*`, any `.db` or
+  `.sqlite`, any `.json`, any `.svg`/`.png`/`.blend` artistic output, any
+  service or systemd configuration, and any requirements file. No data,
+  layer, animation or artistic file was regenerated. No FLUJO branch was
+  touched.
+- Generated residue from this session, registered rather than swept:
+  `/home/mak/flujo/_logs/hub_smoke_2026-09-02_15-44-39.log` (78 bytes), written
+  by `flujo verify`'s hub smoke. `_logs/` is gitignored
+  (`.gitignore:196`), so it is outside the write-set; it was left in place as
+  run evidence and no broad cleanup was performed. No `__pycache__` and no
+  untracked file was created. One honest note on instruments: a
+  `find -newermt '-25 minutes'` returned nothing for that log because more than
+  25 minutes had passed -- a false negative from the query, not evidence of no
+  residue, which is why the path was verified directly.
+- Warnings, separate from blockers. Blockers: none. Warnings: (1) the box venv
+  holds the full FLUJO CLI stack, so a green local `repo_hygiene` run cannot by
+  itself prove MAK-profile portability -- the scratchpad model closed that gap
+  for this write-set but is session-local and not a repo instrument; (2) `rich`,
+  `pydantic` and `requests` reach the MAK profile only transitively, so a
+  future dependency change could remove them without any declaration changing;
+  (3) `main` and `historia` read `ahead=1` against their remotes in the gate,
+  pre-existing and untouched here, and both are historical, not deployment
+  targets.
+- Remote CI, distinguishing the two things. For the PREVIOUSLY PUBLISHED code
+  (MAK `fc8005c1`, FLUJO `50e453c2`): `CI FLUJO` success (33670274140),
+  `CI integration` success (33670334153), `CI MAK` failure (33670334244) on the
+  single manifest test. For THIS write-set: no CI evidence exists and none is
+  claimed -- it is unpublished, so no workflow has ever seen it.
+- Next action for Faro: review these five paths and, if authorized, commit and
+  push the three test files plus this handoff to `MAK` only, by the existing
+  procedure; FLUJO needs no push. Then read `CI MAK` and `CI integration` for
+  the new tip: the expectation is `repo hygiene lane` green and the integration
+  lane at 373. The verdict is that matrix, not this local certification. IRIS
+  remains paused; do not open its decision-reader slice as CI follow-up.
+
 # Operational Handoff
 
 ## Agent bootstrap -- CURRENT -- 2026-09-02 (later) -- the suites, and the boundary the operator corrected
