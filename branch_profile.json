@@ -15,7 +15,11 @@
     "src/flujo/knowledge/project_api.py",
     "src/flujo/knowledge/system_status.py",
     "src/flujo/departments.py",
-    "data/mak_knowledge.db"
+    "data/mak_knowledge.db",
+    "src/flujo/diagnostics.py",
+    "src/flujo/knowledge/project_context.py",
+    "src/flujo/knowledge/product_view.py",
+    "src/flujo/knowledge/contracurator.py"
   ],
   "transfer_contract": "consume typed JSON contracts and source_ref values; do not import the FLUJO Hub implementation"
 }
