@@ -14,9 +14,10 @@ Two logs, two different roles:
   A declaration by a named authority is what lifts an ownership claim past
   ``candidate``.
 
-Both logs mark their rows ``status: human_draft`` and ``promotion: none``.  That
-is carried through: a draft declaration is real evidence of what the person
-said, and still not a promoted truth.
+The editor normally writes declarations as ``status: human_draft`` with
+``promotion: none``; an explicit confirmation may instead be
+``status: human_confirmed``.  Both are carried through without promotion: the
+status records what the person did, and never becomes an automatic truth claim.
 
 Read-only.  Later events win over earlier ones for the same item, so churn
 resolves without discarding history.
@@ -331,8 +332,8 @@ def read_human_decisions(
             "by_item": dict(sorted(declarations.items())),
             "note": (
                 "a declaration by a named person is what lifts an ownership claim "
-                "past candidate; the source keeps every row a human draft with "
-                "promotion=none, and that is carried through"
+                "past candidate; human_draft and human_confirmed are retained "
+                "with promotion=none, and neither is auto-promoted"
             ),
         },
         "relations": {
@@ -409,8 +410,8 @@ def read_human_decisions(
             "A relation drawn between two items is a curatorial statement, never "
             "evidence that they are one work.",
             "A machine proposal is never an attestation, whatever its confidence.",
-            "A human draft declaration is evidence of what the person said, not a "
-            "promoted truth.",
+            "A human draft or confirmed declaration is evidence of what the person "
+            "said, not an automatically promoted truth.",
             "An item absent from both logs is undecided, not rejected.",
         ],
     }
