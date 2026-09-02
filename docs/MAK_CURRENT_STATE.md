@@ -324,14 +324,18 @@ cuenta como éxito ni como bloqueo.
 |---|---|---|
 | `cultura/mak_plataforma/hub.py` | Activa | Interfaz única de MAK en `127.0.0.1:8900`. Agrupa departamentos y rutas. |
 | SearXNG local | Activa | Backend de búsqueda en `127.0.0.1:8888`; no es una interfaz adicional de usuario. |
-| `python3 -m flujo app/serve` | Portátil/temporal | FLUJO APP offline, con default histórico `8765`; no debe confundirse con el hub MAK ni dejarse como servicio permanente. |
+| `mak-research.service` | Activa | `cultura/mak_research/interfaz.py` en `127.0.0.1:8890`; servicio interno de Research consumido por el Hub. Comprobado el 2026-09-02. |
+| `mak-codex.service` | Activa | `cultura/mak_codex/interfaz_codex.py` en `127.0.0.1:8891`; puente interno de Codex consumido por el Hub. Comprobado el 2026-09-02. |
+| `python3 -m flujo app` | Portátil/temporal | FLUJO App completa (`src/flujo/web/hub.py`), default `8765` con auto-puerto si está ocupado; no debe confundirse con el Hub MAK ni dejarse como servicio permanente. |
+| `python3 -m flujo serve` | Bajo demanda/legado | Servidor liviano (`src/flujo/serve/server.py`), default `8777`; su parser no sustituye al backend completo de `flujo app`. |
 | GitHub Actions runner `mak` | Activo bajo evento | Ejecuta el workflow de eventos cuando llega una orden externa. |
 | `tools/route_idea.py` | Activo | Convierte una idea o incidente en un packet mínimo por área, para que un agente externo no tenga que leer todo el repo. |
 
 No hay que abrir puertos adicionales para las herramientas offline. El puerto
 8900 es la interfaz local agrupada; el 8888 es una dependencia interna de
-research. La ausencia de un listener en 8765 no implica que el código FLUJO
-esté roto: es una ruta portátil distinta y se valida bajo demanda.
+Research. La ausencia de un listener en 8765 (o 8777) no implica que el código
+FLUJO esté roto: son rutas portátiles distintas y se validan bajo demanda; la
+App puede usar el siguiente puerto libre (por ejemplo, 8766).
 
 ## 3. Mapa de departamentos y consumidores
 
