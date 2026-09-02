@@ -1,6 +1,6 @@
 {
   "schema": "mak-code-structure-v1",
-  "generated_at_utc": "2026-09-02T04:25:45+00:00",
+  "generated_at_utc": "2026-09-02T04:50:31+00:00",
   "root": "/home/mak",
   "scope": {
     "mode": "mak_code_roots",
@@ -40698,7 +40698,7 @@
     {
       "path": "cultura/mak_codex/interfaz_codex.py",
       "module": "cultura.mak_codex.interfaz_codex",
-      "sha256": "a2e1b9d0b8aa5b80afd7b128ce0c7292f702f20e3c38adda8d653313f3042073",
+      "sha256": "d581899b8d42ffb2acdcaabded91fe62ae74a73f794ec76b62bc464c279b6d2b",
       "lines": 629,
       "imports": [
         "fcntl",
