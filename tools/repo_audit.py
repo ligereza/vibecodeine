@@ -36,28 +36,28 @@ DB_PATHS = (
 )
 DB_CONSUMERS = {
     "data/rd.db": (
-        "src/flujo/rd/database.py",
-        "src/flujo/departments.py",
-        "src/flujo/knowledge/operational_bridge.py",
+        "flujo/src/flujo/rd/database.py",
+        "flujo/src/flujo/departments.py",
+        "flujo/src/flujo/knowledge/operational_bridge.py",
         "tools/gen_propuesta_directiva.py",
         "cultura/mak_plataforma/hub.py",
     ),
     "data/rd_datos.db": (
-        "src/flujo/rd/datos.py",
-        "src/flujo/rd/informe.py",
-        "src/flujo/departments.py",
-        "src/flujo/web/hub.py",
+        "flujo/src/flujo/rd/datos.py",
+        "flujo/src/flujo/rd/informe.py",
+        "flujo/src/flujo/departments.py",
+        "flujo/src/flujo/web/hub.py",
     ),
     "data/mak_knowledge.db": (
-        "src/flujo/knowledge/project_api.py",
-        "src/flujo/knowledge/system_status.py",
-        "src/flujo/knowledge/operational_bridge.py",
-        "src/flujo/web/hub.py",
+        "flujo/src/flujo/knowledge/project_api.py",
+        "flujo/src/flujo/knowledge/system_status.py",
+        "flujo/src/flujo/knowledge/operational_bridge.py",
+        "flujo/src/flujo/web/hub.py",
         "cultura/mak_plataforma/hub.py",
         "tools/build_application_intake.py",
         "tools/mak_status.py",
     ),
-    "data/flujo.db": ("src/flujo/index/db.py", "src/flujo/cli.py"),
+    "data/flujo.db": ("flujo/src/flujo/index/db.py", "flujo/src/flujo/cli.py"),
 }
 
 TOOL_SEARCH_ROOTS = (
@@ -91,17 +91,31 @@ TOOL_INVENTORY_EXCLUDE = {"test_lane_map.py"}
 # support.  Neither status asserts a consumer, retirement, or execution
 # permission.
 NO_REFERENCE_CLASSIFICATIONS = {
+    # separation_20260902: the MAK/FLUJO split removed the tools and tests that
+    # referenced these, so each lost its consumer evidence without changing.
+    # They are operator-invoked, which is what manual_only means; the audit
+    # keeps them declared rather than letting an unreferenced tool pass
+    # silently.
+    "audit_blend_scene": {"status": "manual_only", "source": "separation_20260902"},
+    "capabilities": {"status": "manual_only", "source": "separation_20260902"},
+    "compile_opportunity_constraints": {"status": "manual_only", "source": "separation_20260902"},
+    "compile_opportunity_delta": {"status": "manual_only", "source": "separation_20260902"},
+    "compile_research_frontier": {"status": "manual_only", "source": "separation_20260902"},
+    "compile_selective_recompute_receipt": {"status": "manual_only", "source": "separation_20260902"},
+    "compile_vigia_capture_plans": {"status": "manual_only", "source": "separation_20260902"},
+    "gen_propuesta_directiva": {"status": "manual_only", "source": "separation_20260902"},
+    "generate_artistic_program_hypotheses": {"status": "manual_only", "source": "separation_20260902"},
+    "inspect_operational_memberships": {"status": "manual_only", "source": "separation_20260902"},
+    "order_projection": {"status": "manual_only", "source": "separation_20260902"},
+    "substrate_scan": {"status": "manual_only", "source": "separation_20260902"},
+    "triangulate_research_evidence": {"status": "manual_only", "source": "separation_20260902"},
+    "verify_learning_hashmaps": {"status": "manual_only", "source": "separation_20260902"},
     "aep_reference_scan": {"status": "manual_only", "source": "capabilities_5_ter"},
-    "arica01_portfolio": {"status": "manual_only", "source": "capabilities_5_ter"},
     "bake_static_materials": {"status": "manual_only", "source": "capabilities_5_ter"},
     "build_duplicate_decision_report": {"status": "historical_support", "source": "cli_declared"},
     "build_effort_consumer_crosswalk": {"status": "manual_only", "source": "capabilities_5_ter"},
     "build_mak_canonical_map": {"status": "manual_only", "source": "capabilities_5_ter"},
-    "certified_query": {"status": "manual_only", "source": "capabilities_5_ter"},
-    "classification_review": {"status": "manual_only", "source": "capabilities_5_ter"},
     "compile_contracurator": {"status": "manual_only", "source": "capabilities_5_ter"},
-    "compile_portfolio": {"status": "manual_only", "source": "capabilities_5_ter"},
-    "compile_ssd_order_foundation": {"status": "manual_only", "source": "capabilities_5_ter"},
     "compute_effort_residuals": {"status": "manual_only", "source": "capabilities_5_ter"},
     "consolidate_static_duplicates": {"status": "historical_support", "source": "cli_declared"},
     "context_pack": {"status": "manual_only", "source": "cli_declared"},
@@ -110,9 +124,7 @@ NO_REFERENCE_CLASSIFICATIONS = {
     "gen_dashboard_productoras": {"status": "manual_only", "source": "capabilities_5_ter"},
     "gen_iskvw_prototipo": {"status": "manual_only", "source": "capabilities_5_ter"},
     "gen_presentacion_db": {"status": "manual_only", "source": "capabilities_5_ter"},
-    "gen_rd_standalone": {"status": "manual_only", "source": "capabilities_5_ter"},
     "handoff": {"status": "manual_only", "source": "cli_declared"},
-    "import_project_reconstruction": {"status": "manual_only", "source": "capabilities_5_ter"},
     "instalar_enviar_a_mak": {"status": "historical_support", "source": "cli_declared"},
     "mak_fuse_roots": {"status": "historical_support", "source": "cli_declared"},
     "mak_materialize_fused_root": {"status": "historical_support", "source": "cli_declared"},
@@ -126,14 +138,10 @@ NO_REFERENCE_CLASSIFICATIONS = {
     "project_learning": {"status": "manual_only", "source": "capabilities_5_ter"},
     "reconcile_garden_knowledge": {"status": "manual_only", "source": "capabilities_5_ter"},
     "render_archaeology_deliverables": {"status": "manual_only", "source": "cli_declared"},
-    "run_vision_feedback": {"status": "manual_only", "source": "capabilities_5_ter"},
-    "show_asset_usage": {"status": "manual_only", "source": "capabilities_5_ter"},
     "substrate_experiment": {"status": "manual_only", "source": "capabilities_5_ter"},
     "tapiz_live_loop": {"status": "manual_only", "source": "cli_declared"},
-    "tennis_mcp_ingest": {"status": "manual_only", "source": "capabilities_5_ter"},
     "token_budget": {"status": "manual_only", "source": "cli_declared"},
     "triangulate_project_context": {"status": "manual_only", "source": "capabilities_5_ter"},
-    "venue_screen_setup": {"status": "manual_only", "source": "capabilities_5_ter"},
     "verify_all": {"status": "manual_only", "source": "cli_declared"},
     "watsonx_coder_bench": {"status": "manual_only", "source": "cli_declared"},
     "watsonx_smoke": {"status": "manual_only", "source": "cli_declared"},
