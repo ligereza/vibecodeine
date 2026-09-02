@@ -1,6 +1,10 @@
 # MAP
 
-This is the generated command/route map for `/home/mak/flujo`.
+This is the generated command/route map for the `flujo` CLI, which lives in
+the FLUJO checkout at `/home/mak/flujo` (branch `FLUJO`). This branch is MAK:
+`/home/mak` carries the box departments, services and Hub on `8900`, and
+consumes the motor from `/home/mak/flujo/src`. Every `flujo ...` row below is
+run from the FLUJO checkout, not from here.
 `docs/MAK_CURRENT_STATE.md` is the compact current architecture, and
 `context/LAST_HANDOFF.md` is the continuity record; phase files are evidence
 and must not override either one. The installed CLI may still expose legacy

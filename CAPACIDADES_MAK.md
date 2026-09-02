@@ -2,6 +2,22 @@
 
 This branch owns the Linux MAK box surface and its department projections.
 
+Physical layout (2026-09-02): `/home/mak` is this checkout. The portable motor
+is the sibling checkout `/home/mak/flujo` (branch `FLUJO`); MAK consumes it
+from `/home/mak/flujo/src` and carries no copy of `src/flujo`. `main` and
+`historia` are historical and are never runtime.
+
+Lanes and their real commands:
+
+- `mak`: `PYTHONPATH=/home/mak:/home/mak/flujo/src python -m pytest -o addopts=''
+  -q -m mak` with `requirements-mak.txt`.
+- `integration`: the composition of both checkouts, declared by
+  `requirements-integration.txt`, run with
+  `PYTHONPATH=/home/mak:/home/mak/flujo:/home/mak/flujo/src python -m pytest
+  -o addopts='' -q -m integration`.
+- Structural gate: `python tools/release_gate.py --check`. Runtime evidence:
+  `python tools/runtime_preflight.py --check --strict`.
+
 ## Owned surfaces
 
 - `cultura/mak_plataforma/hub.py`: human-facing MAK Hub on port `8900`.
@@ -23,9 +39,10 @@ This branch owns the Linux MAK box surface and its department projections.
 | Optional ntfy queue | `/home/mak/.config/systemd/user/mak-research-queue.service` | No port; disabled until a topic exists | Notification transport only; not Research itself |
 
 The FLUJO surfaces are not owned by this MAK branch: `python -m flujo app`
-uses `src/flujo/web/hub.py` (default `8765`, with automatic fallback when the
+uses `flujo/src/flujo/web/hub.py` in the FLUJO checkout (contract port `8765`;
+auto-detection is opt-in, so an explicit `--port` binds or fails, and the
 port is occupied), while `python -m flujo serve` uses the lightweight
-`src/flujo/serve/server.py` (default `8777`). Neither is the MAK Hub on `8900`.
+`flujo/src/flujo/serve/server.py` (default `8777`). Neither is the MAK Hub on `8900`.
 Live state belongs in `docs/MAK_CURRENT_STATE.md`; this file records ownership
 and transfer boundaries.
 

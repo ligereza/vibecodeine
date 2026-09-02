@@ -94,14 +94,22 @@ bidirectional writes are prohibited until reconciliation defines a writer and
 versioned sync direction. Search and vector indexes are derived and
 rebuildable, never knowledge authority.
 
-Within Git only, `main` is the canonical reviewed history:
+Two operational branches, each a physical checkout (2026-09-02):
 
-- `main`: selected, reproducible code, contracts, tests, migrations, and
-  approved projections. It is not the complete organism.
-- `codex/*`: temporary worktree branches for bounded changes; they return
-  through a reviewed PR to `main`.
+- `MAK`: the Linux box. `/home/mak` is its checkout: departments, services,
+  Hub, box tooling, the `mak` lane and the `integration` lane. It consumes the
+  motor from `/home/mak/flujo/src` and carries no `src/flujo`.
+- `FLUJO`: the portable motor. `/home/mak/flujo` is its checkout: CLI, Hub,
+  packaging, the `flujo` lane. It installs and runs without the MAK tree; the
+  box layer is an optional peer (`MAK_BOX_AVAILABLE`).
+- `main` and `historia`: historical aggregates. Not runtime, not deployment
+  targets, no CI trigger.
+- `.claude/worktrees`: never runtime. `tools/release_gate.py` blocks on a live
+  process found there.
 - `dependabot/*`: temporary automated dependency-update branches using the
   same gate.
+
+Each operational branch pushes its own ref. Nothing returns through `main`.
 
 The old refs `mak`, `rd`, `iskvw`, `mejoras`, and `mak-svg` are
 transition/history refs. Preserve them until their contents are reconciled and
