@@ -79,9 +79,19 @@ DEPARTMENTS: dict[str, dict[str, Any]] = {
 def catalog(root: Path) -> dict[str, Any]:
     """Return bounded department metadata and physical existence checks."""
     root = Path(root).resolve()
+
+    def exists(relative: str) -> bool:
+        """Resolve motor-owned paths in the sibling FLUJO checkout too."""
+        direct = root / relative
+        if direct.exists():
+            return True
+        if relative.startswith("src/flujo/"):
+            return (root / "flujo" / relative).exists()
+        return False
+
     areas: dict[str, dict[str, Any]] = {}
     for key, raw in DEPARTMENTS.items():
-        checks = {path: (root / path).exists() for path in raw["root_paths"]}
+        checks = {path: exists(path) for path in raw["root_paths"]}
         contract_dir = root / raw["contract_dir"]
         handoff = root / raw["handoff"]
         areas[key] = {

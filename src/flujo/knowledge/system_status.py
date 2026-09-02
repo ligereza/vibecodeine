@@ -149,11 +149,25 @@ def _component(
     return result
 
 
+def _motor_root(repo: Path) -> Path:
+    """Locate the motor source in either supported physical checkout shape."""
+    candidates = (repo / "src" / "flujo", repo / "flujo" / "src" / "flujo")
+    for candidate in candidates:
+        # A stale legacy directory may survive as an ignored __pycache__ after
+        # a split. A directory alone is not an importable motor source.
+        if (candidate / "__init__.py").is_file() or (
+            candidate / "knowledge" / "project_api.py"
+        ).is_file():
+            return candidate
+    return candidates[0]
+
+
 def _repo_component(repo: Path) -> dict[str, Any]:
+    motor = _motor_root(repo)
     required = {
         "agents": repo / "agents.md",
         "hub_source": repo / "cultura" / "mak_plataforma" / "hub.py",
-        "knowledge_api": repo / "src" / "flujo" / "knowledge" / "project_api.py",
+        "knowledge_api": motor / "knowledge" / "project_api.py",
         "web_source": repo / "web" / "package.json",
     }
     evidence = {name: _path_status(path) for name, path in required.items()}

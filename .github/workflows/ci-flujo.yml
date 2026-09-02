@@ -10,7 +10,7 @@ on:
     branches: [FLUJO]
 jobs:
   flujo:
-    name: gate + flujo lane
+    name: flujo lane + hygiene
     runs-on: ubuntu-latest
     env:
       PYTHONIOENCODING: utf-8
@@ -26,7 +26,6 @@ jobs:
           fetch-depth: 0
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: FLUJO
           path: flujo
           fetch-depth: 0
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
