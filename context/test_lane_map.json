@@ -2126,11 +2126,6 @@
       "imports": [],
       "reason": "declared owner: the test exercises this branch's own surface"
     },
-    "tests/test_campo_filtro.py": {
-      "lane": "flujo",
-      "imports": [],
-      "reason": "subject is a FLUJO motor tool: gen_campo_iskvw imports flujo.plano, venue imports flujo.venues, vj_set/git_performance imports flujo.resolume"
-    },
     "tests/test_venue.py": {
       "lane": "flujo",
       "imports": [],
@@ -2158,7 +2153,7 @@
     }
   },
   "summary": {
-    "assignments": 182,
+    "assignments": 181,
     "note": "pruned to the tests this branch physically carries"
   },
   "reconciled_at_utc": "2026-09-02T00:00:00+00:00"
