@@ -31,6 +31,32 @@ except ImportError:  # the MAK departments are not present in this checkout
     tandas = None  # type: ignore[assignment]
     MAK_BOX_AVAILABLE = False
 
+# Dataclass field defaults and function signature defaults are evaluated when
+# the module is imported, so reading tandas.* there dereferenced None and made
+# `import flujo.autonomia` fail on any checkout without the MAK tree -- the
+# exact coupling the optional-peer guard was meant to remove. The ledger paths
+# and the area list become module constants resolved once, empty when the peer
+# is absent.
+COMMON_LEDGER_PATH: str = tandas.COMMON_LEDGER if MAK_BOX_AVAILABLE else ""
+BATCH_LEDGER_PATH: str = tandas.LEDGER if MAK_BOX_AVAILABLE else ""
+KNOWN_AREAS: tuple[str, ...] = tuple(tandas.AREAS) if MAK_BOX_AVAILABLE else ()
+
+
+class MakBoxUnavailable(RuntimeError):
+    """Raised when a MAK-only path runs on a checkout without cultura/.
+
+    Import stays possible so the portable motor can be installed anywhere;
+    only the operations that genuinely need the box refuse, by name.
+    """
+
+
+def _require_mak_box() -> None:
+    if not MAK_BOX_AVAILABLE:
+        raise MakBoxUnavailable(
+            "this operation needs the MAK box layer (cultura/mak_plataforma), "
+            "which this checkout does not carry"
+        )
+
 
 CANONICAL_BRANCHES = ("main",)
 LEGACY_TRANSITION_BRANCHES = ("mak", "rd", "iskvw", "mejoras", "mak-svg")
@@ -61,8 +87,8 @@ class RunOptions:
     providers: tuple[str, ...] = DEFAULT_REMOTE_PROVIDERS + DEFAULT_LOCAL_PROVIDERS
     round_id: str = ""
     out_dir: str = ""
-    common_ledger_path: str = tandas.COMMON_LEDGER
-    batch_ledger_path: str = tandas.LEDGER
+    common_ledger_path: str = COMMON_LEDGER_PATH
+    batch_ledger_path: str = BATCH_LEDGER_PATH
     max_tokens: int = 1800
     max_items: int = 5
     use_ollama: bool = True
@@ -377,9 +403,10 @@ def mak_status(target: str = MAK_SSH_TARGET, repo: str = MAK_REPO) -> dict:
     }
 
 
-def autonomy_status(common_path: str = tandas.COMMON_LEDGER,
-                    batch_path: str = tandas.LEDGER,
+def autonomy_status(common_path: str = COMMON_LEDGER_PATH,
+                    batch_path: str = BATCH_LEDGER_PATH,
                     include_local_providers: bool = False) -> dict:
+    _require_mak_box()
     branches = _branch_state()
     prs = _open_prs()
     provider_state = (
@@ -438,7 +465,7 @@ def build_run_options(areas=None, providers=None, **kwargs) -> RunOptions:
     selected_areas = _csv(areas, DEFAULT_AREAS)
     selected_providers = _csv(
         providers, DEFAULT_REMOTE_PROVIDERS + DEFAULT_LOCAL_PROVIDERS)
-    unknown_areas = [area for area in selected_areas if area not in tandas.AREAS]
+    unknown_areas = [area for area in selected_areas if area not in KNOWN_AREAS]
     if unknown_areas:
         raise ValueError("unknown_area:" + ",".join(unknown_areas))
     supported_providers = (DEFAULT_REMOTE_PROVIDERS +
