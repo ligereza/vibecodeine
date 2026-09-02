@@ -888,11 +888,13 @@ def check_runtime(gate: Gate, root: Path) -> dict[str, object]:
 
 
 def check_adapter_dependency(gate: Gate, root: Path, runtime: dict[str, object]) -> dict[str, object]:
-    """Record the adapter dependency explicitly; never let it read as OK.
+    """Record how the motor is consumed, and from where.
 
-    The dependency does not change the bytes a push would carry -- the `.pth`
-    lives outside the repository -- so it is reported at `dependency` severity
-    and does not block on its own.  What it must never do is disappear.
+    This used to report adapter indirection as debt. Under the layout decision
+    /home/mak/flujo IS the FLUJO checkout, so consuming the motor from
+    flujo/src is the contract and is reported as such. What must never
+    disappear is the location: check_physical_layout blocks when a hook or a
+    surface resolves the motor anywhere else.
     """
 
     row: dict[str, object] = {
@@ -908,12 +910,12 @@ def check_adapter_dependency(gate: Gate, root: Path, runtime: dict[str, object])
         except OSError:
             continue
         for line in lines:
-            if f"{root}/{ADAPTER_NAME}" in line:
+            if f"{root}/{FLUJO_SOURCE_ROOT}" in line:
                 row["pth_hooks"].append({"file": str(pth), "line": line.strip()})
 
     for surface in runtime.get("surfaces", []) or []:
         probe = surface.get("import_probe")
-        if isinstance(probe, str) and probe.startswith(f"{root}/{ADAPTER_NAME}/"):
+        if isinstance(probe, str) and probe.startswith(f"{root}/{FLUJO_SOURCE_ROOT}/"):
             row["surfaces_depending"].append(
                 {"surface_id": surface.get("surface_id"), "import_probe": probe}
             )
@@ -928,16 +930,16 @@ def check_adapter_dependency(gate: Gate, root: Path, runtime: dict[str, object])
 
     for hook in row["pth_hooks"]:
         gate.add(
-            "adapter_path_hook",
+            "motor_hook_in_flujo_checkout",
             SEV_DEPENDENCY,
-            f"editable install routes imports through the adapter: {hook['line']}",
+            f"the editable hook resolves the motor inside the FLUJO checkout: {hook['line']}",
             evidence=hook["file"],
         )
     for surface in row["surfaces_depending"]:
         gate.add(
-            "surface_depends_on_adapter",
+            "surface_consumes_flujo_checkout",
             SEV_DEPENDENCY,
-            f"{surface['surface_id']} resolves its source through {surface['import_probe']}",
+            f"{surface['surface_id']} consumes the motor from the FLUJO checkout: {surface['import_probe']}",
             evidence="python3 tools/runtime_preflight.py --check --check-adapter",
         )
     for fallback in row["port_fallbacks"]:
