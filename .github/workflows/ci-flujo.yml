@@ -50,6 +50,16 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}/flujo/src
         run: python -m pytest -o addopts='' -q -m flujo
+      # The hygiene lane ran in NO job until 2026-09-02. The separation created
+      # it and CI got one job per operational lane, so the files that guard the
+      # language rule, the repo scan and the test taxonomy were left ungated --
+      # and three of them sat red, each asserting on a file that had moved to
+      # the other branch.
+      - name: repo hygiene lane
+        working-directory: flujo
+        env:
+          PYTHONPATH: ${{ github.workspace }}/flujo/src
+        run: python -m pytest -o addopts='' -q -m repo_hygiene
       - name: Entrypoint resolves from the branch content
         working-directory: flujo
         env:
