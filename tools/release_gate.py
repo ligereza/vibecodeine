@@ -145,6 +145,34 @@ OPPOSITE_HUB = {MAK_HUB: FLUJO_HUB, FLUJO_HUB: MAK_HUB}
 # not a branch-coherence problem: they never reach a ref.
 OPERATOR_OWNED = ("inventario_mak.sh", "inventario_externo.sh")
 
+# Retired layout spellings. Six tools kept their own copy of the paths and
+# each was repointed by hand after a different failure: 30 files under
+# cultura/, 74 box shims, repo_audit's DB_CONSUMERS, rd/database.py,
+# branch_profile.json and capabilities.py. The defect is the copy, not any
+# one file, so the gate blocks the spelling itself.
+RETIRED_SPELLINGS = (
+    "/home/mak/src/flujo",
+    "/home/mak/flujo/cultura",
+    "/home/mak/flujo/tools",
+    '/ "flujo" / "cultura"',
+)
+SPELLING_SCAN_SUFFIXES = (".py", ".sh", ".service", ".timer", ".pth", ".yml")
+# Records are allowed to name the retired layout: that is what a record is
+# for. The scan covers executable surfaces only.
+SPELLING_SCAN_EXCLUDE = (
+    "context-history/",
+    "context/coordination/",
+    "context/code_structure_index.json",
+    "_archive/",
+    "WIN/",
+    "docs/recovered/",
+    "docs/handoffs/",
+    # Builds a synthetic adapter tree under tmp_path to prove the canonical
+    # resolution; it names the retired shape on purpose and touches no box
+    # path. The only declared exception.
+    "tests/test_system_status.py",
+)
+
 
 @dataclass
 class Finding:
@@ -783,7 +811,31 @@ def check_physical_layout(gate: Gate, root: Path) -> dict[str, object]:
             gate.add("motor_hook_outside_flujo_checkout", SEV_BLOCKER,
                      f"an editable hook resolves the motor from {hook}; expected {expected}",
                      evidence="site-packages/*.pth")
+
+    # One declared layout, not six copies of it.
+    offenders: list[dict[str, object]] = []
+    code, out, _ = git(root, "ls-files")
+    for rel in out.splitlines():
+        if not rel.endswith(SPELLING_SCAN_SUFFIXES):
+            continue
+        if rel.startswith(SPELLING_SCAN_EXCLUDE):
+            continue
+        path = root / rel
+        try:
+            text = path.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        for spelling in RETIRED_SPELLINGS:
+            if spelling in text and "RETIRED_SPELLINGS" not in text:
+                offenders.append({"path": rel, "spelling": spelling})
+    row["retired_spellings"] = offenders
+    for item in offenders:
+        gate.add("retired_layout_spelling", SEV_BLOCKER,
+                 f"{item['path']} names the retired path {item['spelling']!r}; "
+                 f"the motor lives at {root / FLUJO_SOURCE_ROOT} and MAK code at {root}",
+                 evidence="git ls-files | grep")
     return row
+
 
 
 def _proc_cmdline_gate(pid: int) -> list[str]:

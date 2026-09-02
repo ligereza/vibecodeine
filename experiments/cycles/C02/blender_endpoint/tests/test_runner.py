@@ -96,7 +96,7 @@ class RunnerTests(unittest.TestCase):
             self.assertIn("Unknown", report.read_text(encoding="utf-8"))
 
     def test_sanitised_command_removes_absolute_host_locators(self):
-        command = "/home/mak/blender/blender /home/mak/flujo/tools/blender_scene_probe.py /home/mak/curatoria_inbox/ARICA/RAYU.blend"
+        command = "/home/mak/blender/blender /home/mak/tools/blender_scene_probe.py /home/mak/curatoria_inbox/ARICA/RAYU.blend"
         sanitised = runner._sanitised_command(command)
         self.assertEqual(sanitised, "blender tools/blender_scene_probe.py ARICA/RAYU.blend")
 
