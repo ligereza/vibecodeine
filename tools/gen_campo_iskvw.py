@@ -18,7 +18,10 @@ donde estan los datos, y viaja el resultado -- unos 60 KB contra 2 MB.
 
 Corre EN MAK (ahi vive el indice del micelio):
 
-    python3 gen_campo_iskvw.py --salida ~/campo.json
+    python3 gen_campo_iskvw.py --salida iskvw/datos/campo.json
+
+    That is the path the MAK Hub portfolio tab serves as its campo de orden.
+    The default writes to the repository root, which this repo forbids.
 """
 from __future__ import annotations
 
