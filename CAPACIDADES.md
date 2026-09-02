@@ -239,7 +239,6 @@ activo.
 | `audit_blend_scene.py` | Auditoria AST/read-only de escenas Blender para el consumidor de render; si falta Blender queda `needs_evidence`. |
 | `bake_static_materials.py` | Preparacion acotada de bakes de materiales estaticos para el render RD; requiere Blender y no se ejecuta sin autoridad de mutacion. |
 | `build_application_intake.py` | Convierte un paquete de proyecto en entrada Project IR; consumidor `tools/project_gate.py` y los Hubs. |
-| `project_reconstruction.py` | Reconstruye unidades de proyecto desde un indice SSD real mediante reglas lexicograficas falsificables, separa bibliotecas/dependencias y conserva relaciones/unknowns; su salida `mak-project-reconstruction-v1` alimenta `build_application_intake.py`. |
 | `reconstruction_adapter.py` / `import_project_reconstruction.py` | Convierte una reconstruccion persistida en registros `mak-project-ir-v1`, enruta Curatoria/Portfolio con abstencion por evidencia y, solo con `--db`, persiste referencias indexadas en el LearningStore; nunca publica ni crea postulaciones. |
 | `project_context.py` / `triangulate_project_context.py` | Reutiliza `entities` del LearningStore para enlazar operador VJ, artista, album, proyecto visual, gira candidata, shows y venues con fuentes, grupos de independencia y estados verificables; actualiza Project IR sin promover `review_required` ni crear postulaciones. El grafo se consulta read-only en ambos hubs por `/api/project/context?context_id=...` o `project_id=...`. |
 | `build_effort_consumer_crosswalk.py` | Cruza esfuerzo, consumidor y procedencia para priorizar slices de MAK Research y Curatoria. |
@@ -251,16 +250,9 @@ activo.
 | `project_gate.py` | Gate CLI de Project IR: route/probe read-only y registro explicito de episodios; consumidor Hub/Research. |
 | `project_learning.py` | Compila episodios con resultado verificado, separa holdout por proyecto y prepara una politica candidata con abstencion; `--record-result` recibe paquetes de validadores; no convierte desconocidos en etiquetas ni entrena pesos de deep learning. |
 | `mak_status.py` | Estado operacional unificado y read-only de MAK: ledger, consumidores físicos, listeners, procesos, Blender/RD, portafolio, runtimes, configuración de proveedores y registro transversal de lanes; mismo contrato que `GET /api/status`. |
-| `source_learning_bridge.py` | Une memoria historica y paquetes de investigacion por referencias y hashes; conserva clases epistemicas, valida limites de afirmacion y solo registra aprendizaje cuando pasan fuentes, mensajes, contrato y ruta. |
-| `math_kernel.py` | Scheduler matematico metadata-only sobre el Project IR comun: target capsules, requests acotados y ResultCards sellados; no promueve teoremas sin fidelidad semantica y verificador confiable. |
 | `project_lanes.py` | Registro read-only de 19 lineas de MAK bajo la primera capa cultural-investigativa: P=NP, tenis, scraping, deep learning, simulacion, eventos, transpilacion, geometria y propuestas; cada lane conserva dialectos, evidencia, consumidor, guardrails y siguiente gate. |
-| `tennis_mcp_ingest.py` | Proyecta un CSV local del Match Charting Project a JSONL hash-linked, preservando fila cruda, tokens desconocidos y estado `ANNOTATED`; no adquiere fuentes ni entrena modelos. |
-| `tennis_shot_events.py` | Convierte el JSONL anotado de tenis a eventos `shot_event` con transform chain, incertidumbres explícitas y referencia opcional a Project IR; consumidor read-only. |
 | `research_source_capture.py` | Planifica o registra una sola captura pública con backend explícito, hash, licencia/procedencia y almacén local; el modo por defecto no hace red. |
-| `deep_learning_gate.py` | Verifica objetivo, labels, holdout independiente, agrupación anti-leakage y validador antes de cualquier modelo; nunca entrena ni promueve embeddings. |
-| `research_simulation.py` | Ejecuta una gramática simbólica declarada con límites de iteración/símbolos y procedencia; marca el resultado como `simulated` y `model_not_reality`. |
 | `reconcile_garden_knowledge.py` | Reconcilia conocimiento de jardines con el Research/Funding Lab, preservando desconocidos y fuentes. |
-| `venue.py` | Base abierta de venues para VJ/tecnica: `sembrar` (una linea por sala) -> JSON validado contra `schemas/venue.schema.json` con tier de `confianza` por dato, `validar`/`listar`/`sitio` (HTML autocontenido consultable desde telefono) y `geometria` (reporte numerico del bloque de polilineas: aristas por tier y por capa, bounding box, cierres, segmentos de largo cero, cota declarada vs dibujada). `tests/test_venue.py`. |
 | `venue_geometria_scd.py` | Sala DEMO en polilineas 3D (bloque `geometria` del esquema) derivada del modelo radial del teatro SCD Plaza Egana -> `data/venues/scd-plaza-egana.json`, material por defecto del visor `iskvw/piel/venue/`. |
 | `venue3d_smoke.mjs` | Corre el JS del visor de salas en node con stubs de DOM: geometria cargada, aristas realmente trazadas, la proyeccion se mueve al orbitar, el recorte por presupuesto se reporta en pantalla, la camara por URL llega, y la orbita de ejemplo (`data/orbitas/`, `schemas/orbita.schema.json`) reproduce la vuelta por defecto cuadro por cuadro. `tests/test_venue3d_smoke.py`. |
 | `venue_secuencia.mjs` | Exporta la orbita de una sala como N SVGs de puras lineas desde la MISMA proyeccion del visor; `--orbita <archivo.json>` toma el recorrido de camara como dato (keyframes giro/alto/dist, validados numericamente antes de cortar un solo cuadro). |
@@ -333,6 +325,68 @@ sintesis ejecutiva para directiva).
 | `teleport-sesion-web` | Trae sesion web de claude.ai al CLI local. |
 | `toma-de-decisiones` | Marco para decidir modelo/agente/riesgo por tarea. |
 | `verificar-antes-de-negar` | Verificar antes de negar existencia de algo. |
+
+### 1-ter. Carriles de test y compuertas de CI (medición 2026-09-02)
+
+Medido con un solo entorno, `/home/mak/.venv`, cuyo `.pth` resuelve el motor en
+`/home/mak/flujo/src`. El veredicto aislado lo sigue dando CI.
+
+| carril | checkout | archivos | tests | resultado |
+|---|---|---:|---:|---|
+| `mak` | MAK | 173 | 2175 | verde |
+| `integration` | MAK | 32 | 371 | verde |
+| `repo_hygiene` | MAK | 14 | 87 | verde |
+| `flujo` | FLUJO | 161 | 1611 | verde, 44 skip |
+| `repo_hygiene` | FLUJO | 9 | 55 | verde, 1 skip |
+
+`tests/` de MAK lleva físicamente 2633 tests: 2175 + 371 + 87.
+
+**Cómo selecciona el carril, y por qué importa.**
+`tests/conftest.py::pytest_ignore_collect` consulta el mapa persistido ANTES de
+coleccionar, pero **sólo si `-m` es exactamente un nombre de carril**. Entonces
+no importa los módulos ajenos: `-m mak` colecciona 2175 y no toca el resto.
+Cualquier expresión compuesta cae en la semántica normal de pytest e importa
+todo: `-m "mak and not integration"` colecciona 2633 y deselecciona 458 -- la
+misma selección, todos los módulos importados. Por eso un módulo ajeno con
+import roto es invisible bajo `-m mak` y se vuelve error de colección con
+cualquier expresión más rica, y por eso un test sin mapear no queda
+deseleccionado sino que su módulo se saltea entero.
+
+La autoridad del carril es `context/test_lane_map.json`.
+`tools/test_lane_map.py` es el clasificador y el respaldo de arranque, nunca la
+autoridad.
+
+**Compuertas de CI, una por carril.** `ci-mak.yml` (`-m mak`),
+`ci-integration.yml` (`-m integration`, dispara en MAK y FLUJO porque el
+carril es la composición) y `ci-flujo.yml` (`-m flujo`). El monolítico `ci.yml`
+se retiró el 2026-09-02.
+
+**El carril `repo_hygiene` no corría en ninguna compuerta hasta el 2026-09-02.**
+La separación lo creó y CI recibió un job por carril OPERATIVO, así que 14
+archivos en MAK y 9 en FLUJO quedaron sin gatear -- y por eso cuatro ratchets
+de MAK y tres de FLUJO estuvieron rojos sin que nadie se enterara. Los ratchets
+que detectan que la documentación miente eran justo los que no tenían
+compuerta. Sólo `seguridad.yml` en FLUJO corría uno, por ruta. Ya está gateado
+en las dos ramas, verificado verde antes de poner la compuerta.
+
+**Dos punteros medidos como obsoletos, sin resolver.**
+
+- `context/code_structure_index.json` declara 932 archivos Python e incluye
+  `src` en su alcance. De los 226 que indexa bajo `src/`, **200 ya no existen**:
+  se generó el 2026-09-02 05:08 UTC, antes de que el motor terminara de
+  moverse a `flujo/src`. Se regenera con `py -m flujo code-index`.
+- `context/test_lane_map.json` fija `source.code_index_sha256` en
+  `3d82ee64...`, y el sha real del índice hoy es `e8f49ec6...`. El contrato de
+  carriles apunta a una versión del índice que no está en disco.
+
+**Residuo físico sin limpiar:** `/home/mak/src/flujo` son 5,3 MB de
+`__pycache__` huérfano -- 200 `.pyc` y **0 `.py`**. No es importable (un
+`__pycache__` sin su `.py` no se importa en Python 3), Git no lo ve porque sólo
+contiene rutas ignoradas, y `tools/release_gate.py` no lo bloquea porque su
+regla mira el *tracking*, no la presencia física. Efecto lateral real:
+`tests/conftest.py` inserta `/home/mak/src` en `sys.path` porque `is_dir()` da
+verdadero por esos directorios; `import flujo` resuelve bien sólo porque
+`flujo/src` quedó antes en el orden.
 
 ## 2. Modelos, APIs e integraciones disponibles (sin llaves)
 
@@ -495,6 +549,8 @@ tabla; archivo sin entrada = ratchet rojo.
 
 | archivo | estado | consumidor/evidencia | ultima senal |
 |---|---|---|---|
+| `release_gate.py` | VIVO | gate local de coherencia de rama antes de push; consumido por `.github/workflows/ci-mak.yml` y `ci-flujo.yml` (`python tools/release_gate.py --check`) | 2026-09-02 |
+| `runtime_preflight.py` | VIVO | prueba que codigo ejecuta cada servicio; consumido por `tools/release_gate.py` (comprobacion de runtime) y por el operador | 2026-09-02 |
 | `bridge_issue_render.py` | REVISAR | utilidad operativa conservada al fusionar la caja; consumidor manual, sin caller de produccion medido | 2026-08-31 |
 | `build_duplicate_decision_report.py` | REVISAR | informe manual de duplicados; se conserva como herramienta de operador, sin caller automatico medido | 2026-08-31 |
 | `consolidate_static_duplicates.py` | REVISAR | consolidacion manual de artefactos estaticos; sin caller automatico medido | 2026-08-31 |
@@ -508,10 +564,6 @@ tabla; archivo sin entrada = ratchet rojo.
 | `watsonx_vision_bench.py` | REVISAR | benchmark manual preservado como evidencia; sin caller automatico medido | 2026-08-31 |
 | `watsonx_vision_smoke.py` | REVISAR | smoke manual preservado como evidencia; sin caller automatico medido | 2026-08-31 |
 | `agent_bootstrap.py` | VIVO | emits the bounded current-state packet required by `agents.md`; consumed by delegated MAK work and `tests/test_agent_bootstrap.py` | 2026-08-25 |
-| `archive_observer.py` | VIVO | read-only archive observation entrypoint consumed by the Stage 2 pipeline and observer tests | 2026-08-25 |
-| `arica01_portfolio.py` | VIVO | bounded read-only ARICA/Fondart end-to-end pilot; consumes the accepted MAK contracts and writes only to an explicit output directory | 2026-08-25 |
-| `build_evidence_return.py` | VIVO | CLI for additive research evidence proposals; consumed by the Piso 3 contract tests | 2026-08-25 |
-| `build_possibility_field.py` | VIVO | CLI for strategic possibility aggregation; consumed by the Piso 2 contract tests | 2026-08-25 |
 | `compile_contracurator.py` | VIVO | compila la exposicion falsable del Contracurador sobre la vista de archivo ya proyectada; consumidor `tests/test_contracurator.py` y el Hub en `/api/portfolio/archive-view` | 2026-08-28 |
 | `medir_organismo.py` | VIVO | mide el organismo MAK y lo imprime: lineas de cron activas/pausadas, cuales de los cinco organos de `/home/mak/GENESIS.md` responden, si `main` tiene proteccion de rama (hay un cron que mergea), cuantas lineas arrancarian al reanudar, y los entornos Python. Solo lectura: no toca crontab, servicios ni archivos. Existe para que `docs/MAK_ORGANISMO.md` no vuelva a cargar esas cifras en prosa -- la regla 3 de `docs/AUTORIDAD.md` dice que lo medido se mide, no se escribe. Consumidor: una persona, a mano | 2026-08-28 |
 | `capabilities.py` | VIVO | contrasta nueve superficies declaradas de MAK/FLUJO con sus fuentes, unidades systemd, listeners/endpoints locales, modelos Ollama y rutas consumidoras; emite `mak-capabilities-runtime-v1` en texto/JSON/Markdown y falla con `--check` si falta una fila, fuente, modelo, consumidor o servicio requerido. `--check-branch` contrasta además `branch_profile.json` con el checkout y el selector pytest (excepto perfiles históricos). No reescribe `CAPACIDADES.md`; consumidor: operador y CI acotado | 2026-09-02 |
@@ -521,53 +573,32 @@ tabla; archivo sin entrada = ratchet rojo.
 | `mak_triangulate_roots.py` | VIVO | cruza fechas de inode, hashes y primera/última aparición en Git para distinguir antecesores, continuaciones y snapshots sin interpretar su contenido; consumidor: operador, a mano | 2026-08-31 |
 | `test_lane_map.py` | VIVO | clasifica los tests por imports AST y aplica los carriles `flujo`, `mak`, `integration`, `repo_hygiene` o `review`; consumidor: `tests/conftest.py` y operador mediante `--select-changed` | 2026-08-31 |
 | `mak_heartbeat.py` | VIVO | compara el estado medido de MAK contra `data/mak_expected_state.json` (cron activas, organos, unidades systemd de usuario Y de sistema -- ollama, postgresql, docker, el runner de Actions --, frenos de archivo y contenedores docker) y solo habla cuando difieren, en cualquiera de las dos direcciones (algo que debia responder y no responde, o algo que debia estar apagado y arranco). Sale 0 en silencio si todo calza. Si hay deriva, la imprime y avisa por ntfy reutilizando `ntfy_publish`/`load_env` de `cultura/mak_research/research_lib.py`; sin tema configurado, o si el envio falla, degrada a log y lo dice (nunca falla en silencio). `--capture` mide el estado actual y lo guarda como nueva linea base, para fijarla despues de reanudar. Solo lectura sobre MAK: no toca crontab, servicios ni contenedores. Existe porque el crontab estuvo pausado dos semanas sin que nadie se enterara mientras la suite y el hub seguian verdes. Consumidor: linea de cron `MAK-HEARTBEAT` en `cultura/mak_plataforma/crontab.mak` (pausada, la reanudacion es decision del operador) y `tests/test_mak_heartbeat.py`; a mano: `python3 tools/mak_heartbeat.py` | 2026-08-30 |
-| `compile_portfolio.py` | VIVO | compila la base de afirmaciones `mak-portfolio-claims-v1` y renderiza cada formato declarado de `data/portfolio_formats/`; consumidor `tests/test_portfolio_production.py` y los documentos en `out/portfolio/` | 2026-08-28 |
-| `compile_ssd_order_foundation.py` | VIVO | compila `mak-ssd-order-foundation-v1` desde el indice SSD, la proyeccion de orden, intake, reconstrucciones y autoridad de research en solo lectura; consumidor `tests/test_ssd_order_operator_frontier.py` y el Hub | 2026-08-28 |
-| `compile_application_research_package.py` | VIVO | compiles application and research products from the common plan; consumed by Piso 4 tests | 2026-08-25 |
-| `compile_autonomy_plan.py` | VIVO | compiles bounded plan-only next actions; consumed by Piso 5 tests | 2026-08-25 |
 | `compile_opportunity_constraints.py` | VIVO | compiles local opportunity evidence into fail-closed constraints; consumed by Piso 1 tests | 2026-08-25 |
 | `compile_portfolio_dossier.py` | VIVO | compiles the evidence-governed internal portfolio dossier; consumed by Piso 4 tests | 2026-08-25 |
-| `compile_practice_evidence_state.py` | VIVO | projects accepted Project IR into practice evidence; consumed by Piso 1 tests | 2026-08-25 |
-| `compile_product_episode.py` | VIVO | compiles ledger-compatible product episode candidates; consumed by Piso 5 tests | 2026-08-25 |
 | `compile_product_plan.py` | VIVO | compiles the shared portfolio/application/research plan; consumed by Piso 4 tests | 2026-08-25 |
-| `adapt_practice_receipts.py` | VIVO | adapts explicit practice receipts into the accepted practice-evidence contract; consumed by practice receipt tests | 2026-08-27 |
 | `capture_opportunity_validity.py` | VIVO | captures a bounded local opportunity source with hash and validity state; consumed by opportunity validity tests | 2026-08-27 |
-| `compile_cross_archive_relations.py` | VIVO | compiles candidate-only relations across explicitly federated archive contexts; consumed by cross-archive relation tests | 2026-08-27 |
-| `compile_cross_archive_research_frontier.py` | VIVO | projects federated relation gaps into non-dispatched research frontier jobs; consumed by cross-archive frontier tests | 2026-08-27 |
 | `compile_opportunity_delta.py` | VIVO | computes an additive opportunity delta from versioned evidence returns; consumed by opportunity-delta tests | 2026-08-27 |
 | `compile_selective_recompute_receipt.py` | VIVO | compiles bounded recomputation receipts without mutating source evidence; consumed by selective-recompute tests | 2026-08-27 |
 | `compile_vigia_capture_plans.py` | VIVO | compiles read-only Vigia capture plans from declared source candidates; consumed by Vigia bridge tests | 2026-08-27 |
 | `inspect_operational_memberships.py` | VIVO | inspects archive-scoped operational membership projections without executing capabilities; consumed by membership tests | 2026-08-27 |
-| `materialize_pilot_run.py` | VIVO | materializes a durable manifest for an explicit pilot replay without copying media or writing the database; consumed by pilot manifest tests | 2026-08-27 |
 | `render_product_view.py` | VIVO | renders the common product view or the general ISKVW archive portfolio view as JSON/Markdown; consumed by product-view tests | 2026-08-27 |
-| `run_archive_toolchain.py` | VIVO | runs the bounded archive technical-surface projection into the existing project-context contract; consumed by archive-toolchain tests | 2026-08-27 |
-| `run_vision_feedback.py` | VIVO | compiles explicit vision feedback into a read-only memory projection; consumed by vision-feedback tests | 2026-08-27 |
 | `compile_research_frontier.py` | VIVO | compiles non-dispatched research jobs from prioritized gaps; consumed by Piso 3 tests | 2026-08-25 |
-| `evaluate_artistic_program_hypotheses.py` | VIVO | independently evaluates provisional artistic-program hypotheses; consumed by Piso 2 tests | 2026-08-25 |
-| `evaluate_opportunity_fit.py` | VIVO | evaluates opportunity-to-practice fit with explicit abstention; consumed by Piso 1 tests | 2026-08-25 |
-| `evaluate_product_learning.py` | VIVO | evaluates verified external outcomes as bounded shadow-learning signals; consumed by Piso 5 tests | 2026-08-25 |
 | `generate_artistic_program_hypotheses.py` | VIVO | generates provisional artistic-program hypotheses without truth promotion; consumed by Piso 2 tests | 2026-08-25 |
 | `triangulate_research_evidence.py` | VIVO | triangulates captured claims across independent source groups; consumed by Piso 3 tests | 2026-08-25 |
 | `cultura/mak_vigia/vigia.py` | LIVE | Measured 2026-08-05: the box crontab has `MAK-VIGIA`, `MAK-REPO-SYNC` copies `cultura/mak_vigia` -> `/home/mak/vigia`, and `/home/mak/vigia/estado/` exists. First live seed was run with `--sin-notificar` to avoid initial phone spam: 425 items observed. After the first seed absorbed late `fondos_de_cultura` items, three immediate follow-up runs returned `fondos_de_cultura nuevos=0`. It notifies through ntfy to `VIGIA_NTFY_TOPIC` and, for `tipo: enfermeria` sources, to `VIGIA_NTFY_TOPIC_ENFERMERIA`. It is a DIFF, not an LLM: download -> normalize -> sha256 -> compare against `cultura/mak_vigia/estado/vistos.jsonl` -> notify only new items; zero tokens, zero GPU, no model. Golden rule: a source that starts parsing ZERO items, or has 4 days with nothing new, sends a high-priority ERROR notification; silence must not look like "it works". `tests/test_vigia.py` | 2026-08-05 |
 | `order_projection.py` | VIVO | proyecta la identidad certificada a un orden accionable SIN mover un archivo. Existe porque dos consumidores que ya existian se habian detenido en el mismo hecho faltante y ambos lo decian con sus propias palabras: `cross_root_relations` pedia 'compute full_sha256 for the overlapping assets' y `show_asset_usage` declaraba en sus limites que 'la verificacion por contenido no esta disponible para el 99,75 %'. Tres tiers y solo uno es seguro: T1 copia suelta en la raiz del disco (24 clases, 6.44 GB, no requiere decision porque cual de las dos es la extraviada es un hecho del filesystem), T2 cruza raices (458 clases, 30.09 GB, bytes identicos tienen DOS lecturas -- una obra archivada dos veces, o un output reusado en otro encargo -- y el contenido no puede elegir), T3 dentro de un proyecto (865 clases, 24.51 GB, se deja en paz). Cada propuesta T1 se prueba contra los `.usage.json` de Resolume y **3 de 24 quedaron en HOLD** porque la composicion `sampier` nombra `2.mov`, `3.mov` y `4.mov`: el chequeo por basename puede dar un HOLD falso pero nunca un SAFE falso, y esa es la direccion en que la asimetria tiene que apuntar. La puerta corta por palanca: 50 preguntas -> **6 que cubren el 93,2%** de los bytes en disputa, y las 44 diferidas llevan `reopen_when` observable sin conocer la respuesta. `tests/test_certified_identity.py` | 2026-08-24 |
 | `resolve_identity_ties.py` | VIVO | resuelve los empates de identidad que el indice se NIEGA a decidir por diseno. `archivo_index.sqlite` trae `hash_state='pending'` en 45424 de 45536 assets y un `full_sha256` real en 112 (0.25%), y `project_reconstruction` lo declara en su propio docstring: 'a shared sample hash never decides project identity here; it produces an explicit tie'. Habia 1348 empates sobre 4104 assets, y el mismo codigo nombra el remedio: 'compute full_sha256 for the overlapping assets'. Resultado: 1347 de 1348 grupos resueltos, 4097 CERTIFIED_SAME, 7 CERTIFIED_DISTINCT, **0 sin resolver**, 56.85 GiB de duplicacion exacta probada. Los 7 distintos son frames consecutivos de un cache de fluidos (`LYON/3/123_flip_fluid_cache`): mismo tamano, mismo prefijo, contenido distinto -- exactamente donde un sample hash miente. La escalada tiene DOS etapas, no tres: una tercera etapa intermedia (cola de 64 KiB) se midio sobre estos mismos 4104 assets, resolvio CERO distinciones y costo 197 MB leidos para nada -- se BORRO, y la razon es general, no un ajuste de parametro: un test sublineal solo puede RECHAZAR (hallar un byte distinto), nunca CERTIFICAR coincidencia sobre contenido no acotado, y un sample hash selecciona justo los casi-duplicados que ese test esta construido para no poder ver. Quedan tamano (gratis, resolvio 0 aqui) y lectura completa (la unica etapa que paga). Nunca escribe en el indice: sale a un sidecar por `asset_id`. `tests/test_identity_ties.py` | 2026-08-24 |
-| `show_asset_usage.py` | VIVO | lee una composicion `.avc` de Resolume (read-only), extrae sus referencias de clip y las resuelve contra el indice del SSD por basename CON ABSTENCION: un nombre que llevan varios assets queda `ambiguous` y no cuenta como uso. Reporta la tasa por composicion porque varia de verdad -- medido sobre las 4 del indice: `TALCA DREF` 1/1, `SHOWCAUPOLICAN` 28/52 (tocando dos contenedores, `DREFGIRA` y `descargas hasta RDFLYER 2050`), `sampier` 0/81 y `Perrys 2025 V2` 0/1. `--orphans <contenedor>` lista candidatos sin referencia conocida, nunca una lista de borrado. Anonimiza el usuario Windows de cada ruta antes de escribir, porque `tests/test_privacidad_repo.py` prohibe ese patron. `tests/test_resolume_composition.py` | 2026-08-21 |
 | `substrate_experiment.py` | VIVO | el experimento adversarial PRE-REGISTRADO: las siete predicciones estan en el docstring, se enuncian antes de correr y no se editan despues. La cadena no es sintetica y el renombre no es mio -- `ICLODU5` es una carpeta de export donde una herramienta ya reemplazo cada nombre por uno aleatorio (`SUERTE/Comp 17.mp4` -> `ICLODU5/ROQX6471.MP4`, y 'Comp 17' es a su vez el nombre por defecto de After Effects, o sea ninguno de los dos lados carga significado autorado). La perturbacion destruye directorios, basenames, extensiones y mtimes, y mueve la mitad a un ZIP. Resultado: Content y Lineage sobreviven, **State NO** -- 4 se vuelven 8 porque la ruta del ZIP no lee XMP, asi que el mismo byte produce dos state_id segun el contenedor. Y la admision mayor: mis cadenas **no son source->export, son el mismo archivo en dos lugares**, porque 0 de 120 grupos con DocumentID compartido cruzan extension -- con XMP como autoridad esa cadena NO EXISTE en este corpus. El experimento que MAT-SI pidio no se puede correr aqui, y eso es el resultado. | 2026-08-23 |
 | `substrate_scan.py` | VIVO | escanea un corpus al sustrato de identidad y se NIEGA a producir un resultado sin registro de corrida. Existe porque la medicion anterior de este disco no se podia repetir: faltaban cinco de las nueve cosas que una repeticion necesita (commit, version del extractor, manifest, errores con su ruta, hash del output) y peor, la tabla reportada **empalmaba dos corridas con dos versiones del extractor**, asi que los totales no correspondian a ninguna ejecucion que hubiera existido. Ahora cada corrida guarda: commit y si el arbol estaba sucio, argv verbatim, la ruta raiz con su device y fstype, un **digest de las fuentes del extractor realmente importadas** (una version que alguien deba acordarse de subir es una version que deja de ser verdad), el manifest completo con tamano/mtime/sha256, cada error CON su ruta y su etapa, y un hash del resultado que excluye el wall time para que dos corridas se puedan comparar byte a byte. `--reuse-manifest` escanea exactamente los archivos que otra corrida registro, que es la unica forma de separar 'cambio el codigo' de 'cambio el disco'. `--manifest-only` produce la linea base sin extraer. `tests/test_substrate.py` | 2026-08-23 |
 | `png_xmp_witness.py` | VIVO | pasada adversarial read-only sobre el corpus PNG: valida firma, tabla de chunks, CRC e `IEND`, hashea cada archivo y busca marcadores XMP fuera de los chunks `iTXt`/`tEXt` con clave `XML:com.adobe.xmp`; devuelve `eligible_for_witness=false` si hay corrupción, sidecars inválidos o hits fuera del vocabulario. No escribe el SSD; el reporte va a `--out`. `tests/test_png_xmp_witness.py` | 2026-08-24 |
-| `certified_query.py` | VIVO | el motor de consulta certificada. Contesta una de las 14 preguntas reales usando la evidencia mas barata que exista, descarta regiones del corpus cuando un certificado lo permite, refina solo donde el certificado falla, y devuelve una respuesta tipada con procedencia **o UNKNOWN**. Nunca cambia sanidad por cobertura. Cada certificado dice si contesto la PREGUNTA humana o un predicado ESTRECHADO (`answers=Q` vs `answers=P`), porque contestar Q demostrando P fue el defecto que la auditoria adversarial encontro en casi todos. El veto de completeness vive en `certify()` y no en las reglas: un negativo por ausencia se convierte en UNKNOWN si la autoridad no cubrio a TODOS los miembros, asi que ninguna regla puede olvidarlo. Medido sobre el corpus real -- 917 proyectos del SSD y 7321 archivos de IG: `q2` poda 100% con 160 certificados visitando 170 nodos de 1001; `q4` poda 95,2% con **5** certificados; `q7` poda 90,3% mientras la raiz dice UNKNOWN por 710 miembros sin fecha -- que es exactamente el diseno: abstenerse arriba y certificar abajo. **FALSE_CERTIFIED_CLAIMS = 0** con 21.090 verificaciones miembro-por-miembro (`audit_soundness` abre todo lo que un certificado permitio saltar). `q11` poda 0% a proposito: su negativo murio en el endurecimiento y el motor lo respeta. `queue` pregunta al operador solo donde ninguna autoridad alcanza, mas somero primero, y nunca para vaciar la cola. El ratchet de formatos 3D encontro un hueco real en su primera corrida (`.3dm` sin declarar). `tests/test_certified_engine.py` (30 tests, incluido uno que construye un resumen NO conservador a proposito y exige que la auditoria lo cace) | 2026-08-23 |
 | `reconcile_iskvw_media.py` | VIVO | une el indice curado de iskvw con los archivos reales de IG por el ID numerico del medio, solo lectura. Existe porque `iskvw/datos/archivo.json` declara `medio.estado_fuente: "ausente"` en 219 piezas y no trae `medio.src` en 1807, mientras los archivos SI estan en `/home/mak/portfolio_media/media`: el vinculo existia en disco y el indice no lo sabia, porque los dos ordenes nunca se unieron. Medido sobre las 2034 piezas: 1818 registros traen ID numerico y dan **1599 IDs distintos** -- o sea 219 registros comparten ID con otro, que es duplicacion en el archivo y no en el disco; 1591 IDs resuelven a UNA superficie, **8 colisionan** y las 8 son el original junto a su contact sheet (verificado uno por uno), 0 huerfanos y 0 duplicados dentro de la misma superficie. Reparto por superficie: posts 775, other 329, stories 240, archived_posts 154, reels 88, igtv 5. Los 216 registros SIN ID numerico se abstienen a proposito: son justamente los nombrados a mano, los unicos que traen titulo humano, fecha y frase del autor, asi que adivinarles un ID pegaria los registros mas fuertes al archivo equivocado. La precedencia `medio.src` antes que el ID compuesto esta fijada por test, porque el primer intento devolvio cero al leer `piezas[].id` directo. `--output` escribe SOLO el reporte, nunca ninguna de las dos fuentes. `tests/test_reconcile_iskvw_media.py` | 2026-08-23 |
-| `classification_review.py` | VIVO | la segunda puerta que faltaba. La cola `classification_queue` tenia 8273 filas, todas `pending`, cuatro plantillas de pregunta y ningun codigo que escriba `status`. Pero 8273 es un numero de FILAS, no de preguntas: 4029 (48,7%) traen un chequeo que cualquiera puede repetir -- 1463 estan dentro de un virtualenv probado por su `pyvenv.cfg` y 2566 son byte-identicas a un archivo del repo vivo, con el sha256 y la ruta canonica adjuntos. Las 4244 restantes se doblan en la unidad en que la mitad gruesa de cada pregunta se hace de verdad -- el directorio -- y quedan **3 respuestas para la mitad de las filas, 64 para el 80%**. La pregunta original estaba mal formada y por eso nunca avanzo: 'purpose AND consumer' junta dos preguntas con unidades distintas, y el contraejemplo esta en los datos (44 `__init__.py` de 0 bytes: mismo contenido, mismo proposito, cinco arboles y por tanto consumidores distintos). `QUESTION_PARTS` declara ese corte. `propose` no escribe nada; `apply-rules` firma la REGLA en un acto y no 4029 juicios; `classify` responde un grupo y si solo cubre la mitad gruesa lo dice -- `fine_questions_still_open` cuenta lo que queda abierto en vez de dejarlo desaparecer. Reaplicar nunca pisa una respuesta. La causa raiz quedo arreglada en `build_mak_knowledge_db.py`: `should_skip_dir` probaba NOMBRES y ahora prueba la definicion de PEP 405. `tests/test_classification_queue.py`, `tests/test_knowledge_scanner_skips.py` | 2026-08-23 |
-| `project_review.py` | VIVO | la puerta que faltaba en la cola de revision. Medido antes de escribirla: 34 registros esperando en `review_required`, `project_transitions` con CERO filas y `transition_project()` llamada una sola vez en todo el repo -- dentro de su propio test. Cuatro productores escribian hacia una cola sin puerta. `list` ordena para el paso que el operador esta haciendo, porque son dos y quieren ordenes opuestos: `--pass prune` encabeza por cuantos registros liquidaria UN rechazo (la contencion lo propaga hacia abajo), `--pass recognize` por material, donde toda palanca vale 1. `show` imprime lo ya medido -- assets, bytes directos y de subarbol, mezcla de medios, evidencia, que contiene -- sin agregar nada. `decide` es lo unico que escribe y exige `--reason` y `--actor`: una decision que nadie firma no vale mas que ninguna. Nada se propaga solo; `--cascade` nombra la herencia y solo existe para el rechazo, porque una obra real SI contiene material de trabajo. Sin evidencia no hay `active` ni `verified`, y el rechazo lo dice el esquema, no un parche. `tests/test_review_queue.py` | 2026-08-23 |
 | `env_baseline.py` | VIVO | mide las variables de entorno que el codigo lee FUERA de `src/flujo` y que `MAPA.md` no documenta. La puerta `test_toda_variable_de_entorno_esta_documentada` escaneaba solo `src/flujo`, asi que `cultura/` y `tools/` -- donde viven Hub, Research y Codex -- escapaban a la regla: 82 variables medidas al ensanchar. Como documentar 82 de golpe no es verificar, las zonas anchas quedan con un pin que solo puede bajar (`tests/fixtures/env_documentado_baseline.txt`), el mismo patron que el ratchet de idioma. `--write` lo reescribe a proposito. Consumidor: `tests/test_mapa_completo.py` | 2026-08-21 |
-| `venue_screen_setup.py` | VIVO | lee un ScreenSetup de Resolume (read-only) y emite la topologia de proyeccion medida de una sala: superficies con el nombre que les puso el operador, pixeles de salida, warp decidido por aritmetica exacta contra el retículo bezier, y residuos que dicen lo que el archivo NO prueba (pixeles no son metros, el nombre del archivo no es la sala). `--index` relaciona shows por topologia: sobre los 9 archivos reales del SSD reconocio `CHILLAN.xml`/`harry.xml` como mismo rig (11/11 superficies) y descarto 3 falsos positivos por nombre por defecto de Resolume. Consumidor: `venue.py proyeccion` propone el bloque `proyeccion` de `schemas/venue.schema.json` y solo escribe con `--aplicar`, porque la identidad de la sala la firma un humano. `tests/test_resolume_screen_setup.py` | 2026-08-21 |
 | `update_readme_svg.py` | VIVO | deterministic README -> `arte-ascii-readme.svg` text-layer refresh; preserves the artwork shell, exposes `--check` for stale-cover detection, and is consumed by `tests/test_readme_svg.py` | 2026-08-06 |
 | `becas_calendario.py` | VIVO | RD becas, area operativa | 2026-07 |
 | (las 33 utilidades del buzon `mak`) | LEIDAS 2026-08-01, NO ENTRAN | Llevaban dias en la rama `mak` sin que nadie las abriera, porque el muro que las describia decia que main ya las habia rechazado y era falso (ver `context/LAST_HANDOFF.md`). Leidas una por una: **9 invocan `subprocess`** para ejecutar `backlog_codex`, tocar `/etc` o instalar cron jobs -- son ORDENES OPERATIVAS disfrazadas de utilidad, justo lo que el clasificador de rutas de #406 salio a frenar. **~10 son de sandbox** por debajo de 1 KB ("Script de ejemplo para el sandbox", 406 bytes). **3 traen surrogates invalidos** (\udc81, \udc8f): no son UTF-8 y revientan al leerlas, pero PASARON el gate de MAK porque `revisor.gate_compila` compila el texto ya decodificado en la caja -- ese gate es ciego al encoding, y ese es el hallazgo que deja la lectura. Y **4 sirven** (OSC 1.0 con `struct`, verificador de puertos TCP, estadistica de columna CSV, validador JSON), probadas corriendo. Se trajeron al repo y se devolvieron el mismo dia: renombrarlas rompio `test_capataz_enrutamiento`, que usa los NOMBRES de esa carpeta como fixture de los pedidos reales que causaron el defecto, y sus comentarios en castellano encienden el ratchet de idioma. Sin consumidor no compensaban ninguna de las dos cosas. Lo que valia era saber que hay adentro, y eso queda escrito aca | 2026-08-01 |
 | `idioma.py` | VIVO | measures the language of comments/docstrings in every tracked `*.py` (es/en/mixed/none, transparent stdlib heuristic, `git ls-files` only, archive and vendorized zones excluded); measured consumer: `tests/test_idioma_ratchet.py`, the ratchet that pins `tests/fixtures/idioma_baseline.txt` so no NEW file adds Spanish comments while renames are never demanded; real run 2026-07-31: 581 files = 388 es + 96 en + 38 mixed + 59 none; also prints a soft FYI of widespread Spanish identifiers missing from `docs/GLOSSARY.md` | 2026-07-31 |
 | `render_flyer_mak.py` | VIVO | workflow MAK image/poster -> `RD.blend` -> PNG | 2026-08-18 |
 | `render_video_sequence_mak.py` | VIVO | workflow MAK video -> `RD.blend` -> PNG sequence + manifest | 2026-08-18 |
-| `render_output_edges.py` | VIVO | reads `.blend` declarations and writes only the requested Substrate sidecar: project -> non-suspect declared render directory; consumed by `tests/test_render_output_edges.py` | 2026-08-24 |
 | `aep_reference_scan.py` | VIVO | read-only RIFX/After Effects reference inventory; project -> declared footage paths, never `RENDERS_TO`; consumed by `tests/test_aepfile.py` | 2026-08-24 |
 | `blender_scene_probe.py` | VIVO | read-only Blender background fallback for `.blend` decoder limits; scene -> declared render paths, never renders/saves/`RENDERS_TO`; consumed by `tests/test_blender_scene_probe.py` | 2026-08-24 |
 | `compete_engine.py` | VIVO | proyecto tapiz (cultura) | 2026-07 |
@@ -579,7 +610,6 @@ tabla; archivo sin entrada = ratchet rojo.
 | `drenar_material.py` | VIVO | vacia `~/plataforma/material.jsonl` en paralelo mientras dure la ventana pagada -- `trabajo.py` saca UNA tarea por invocacion y corre por cron, o sea meses para 2.730 tareas. Escribe a su propio directorio y NO a la base de RD: una productora identificada por un modelo es un candidato, no un cliente. Lo pausado o fallido VUELVE a pendiente (una cola que se vacia sin haber trabajado es la peor forma de decir que termino) y aborta el lote entero si se acumulan pausas por ceguera. Informa la DISTRIBUCION, no un total: "412 hechas" no dice nada, "412 hechas, 180 con productora y fuente, 190 NO SE ENCONTRO, 42 pausadas ciegas" si. Corrida real 2026-08-01: 8 tareas, 7,6 s cada una con 4 hilos | 2026-08-01 |
 | `gen_archivo_iskvw.py` | VIVO | genera `iskvw/datos/archivo.json`, el contrato piezas+vinculos; consumidor confirmado via `.github/workflows/publicar_iskvw.yml`. Desde 2026-08-05 `--fuente todo` es el sustrato publico limpio: 446 piezas y 237 vinculos en medicion local, sin mezclar los ensayos de research; `--fuente ensayos` o `--fuente todo --incluir-ensayos` trae deliberadamente la vista de research ilustrado (33 piezas y 32 vinculos adicionales: informe, conceptos e iconos). La conversion micelio->contrato vive en `cultura/mak_plataforma/contrato_archivo.py` desde 2026-07-29, compartida con `GET /api/archivo` del hub de MAK. Ese workflow corre en `ubuntu-latest` y nunca alcanza la caja (LAN privada), asi que los vinculos de micelio llegan solo por snapshot `iskvw/datos/micelio.json`, empujado por `cultura/mak_plataforma/entregar_micelio.py` corriendo EN la caja; hard-falla (exit 1, nada escrito, ningun PR) si el micelio no responde o devuelve 0 vinculos -- una ausencia nunca se vuelve un cero plausible. `tests/test_contrato_archivo.py`, `tests/test_gen_archivo_iskvw.py`, `tests/test_entregar_micelio.py` | 2026-08-05 |
 | `gen_propuestas_rd.py` | VIVO | el ultimo salto a la base RD: alimenta el escritor de borradores de `mineria_rd.py` desde `docs/rd/candidatos_curatoria/candidatos_db.jsonl` (ya digerido por `extraccion_db`), sin OCR ni GPU; re-matchea contra los catalogos ACTUALES, reporta dudosos sin proponerlos y exige evidencia >= 2; los borradores salen a una carpeta aparte y entran solo por PR humano; `tests/test_gen_propuestas_rd.py` | 2026-07-29 |
-| `gen_rd_standalone.py` | VIVO | hornea la base RD en `herramientas_rd.html` (bundle sin servidor), `npm run build:rd` | 2026-07-27 |
 | `repo_audit.py` | VIVO | gate read-only de grafo web, referencias activas obsoletas y contratos de las SQLite locales; consumidor `.github/workflows/ci.yml`, `Makefile audit` y `tests/test_repo_audit.py` | 2026-08-21 |
 | `verify_learning_hashmaps.py` | VIVO | verifica en solo lectura los mapas hash de aprendizaje contra el arbol MAK completo; distingue referencias con hash de referencias solo por ruta y nunca reescribe mapas ni fuentes. Consumidor: operador y validacion de continuidad | 2026-09-02 |
 | `gen_dashboard_productoras.py` | VIVO | genera `db_productoras.html`; documentado en `docs/rd/DB_PRODUCTORAS_ESTADO.md`; consume la salida de `triangular_fichas.py` | 2026-07-25 (llega a main con la promocion de `rd`, PR #303) |
@@ -614,25 +644,16 @@ tabla; archivo sin entrada = ratchet rojo.
 | `build_mak_knowledge_db.py` | VIVO | dynamically loaded via `importlib.util.spec_from_file_location` in `tests/test_knowledge_scanner_skips.py` to test `is_virtual_environment`/`should_skip_dir`; also executed 2026-08-19 against a fixture database (`context/LAST_HANDOFF.md` Phase 595: exit 0, 2 fixture files indexed) | 2026-08-29 |
 | `build_mak_canonical_map.py` | VIVO | operator-run filesystem measurement; writes only `/home/mak/indexes/mak-canonical-20260829/mak-canonical-map.json`, with protected and runtime-only roots explicitly recorded | 2026-08-29 |
 | `compute_effort_residuals.py` | VIVO | executed 2026-08-19 against a temporary knowledge database (`context/LAST_HANDOFF.md` Phase 595): exit 0, valid empty reports with `integrity=ok` | 2026-08-29 |
-| `deep_learning_gate.py` | VIVO | registered in `src/flujo/knowledge/project_router.py` TOOL_CATALOG as `deep_learning_gate` (mode read_only); the module it wraps, `flujo.knowledge.deep_learning_gate`, is exercised by `tests/test_deep_learning_gate.py` | 2026-08-29 |
 | `gen_animadas_obras.py` | VIVO | imported directly by `tests/test_gen_animadas_obras.py` (`sys.path.insert` + `from gen_animadas_obras import TONO_POR_COLOR, derivar_spec`); its output feeds `contrato_archivo.desde_animadas` | 2026-08-29 |
-| `import_project_reconstruction.py` | VIVO | operator CLI documented and run with `--db data/mak_knowledge.db` (`context/LAST_HANDOFF.md`, `docs/MAK_CURRENT_STATE.md`); converts a persisted reconstruction into `mak-project-ir-v1` records | 2026-08-29 |
 | `mak_status.py` | VIVO | listed as a `data/mak_knowledge.db` consumer in the CI-checked graph of `tools/repo_audit.py`; operator CLI `tools/mak_status.py --db data/mak_knowledge.db --json` run and measured (`context/LAST_HANDOFF.md`: 11 components, exit 0); same contract as `GET /api/status` | 2026-08-29 |
-| `math_kernel.py` | VIVO | registered in `src/flujo/knowledge/project_router.py` TOOL_CATALOG as `math_kernel`; thin CLI shim over `flujo.knowledge.math_kernel`, tested by `tests/test_math_kernel.py`; operator CLI cycle run and measured (`context/LAST_HANDOFF.md`: exit 0, one METADATA_ONLY request, truth promotion blocked); declared consumer in `knowledge/lane_registry/mak_cross_domain_registry_2026-08-20.json` | 2026-08-29 |
 | `optimize_blend_scene.py` | VIVO | part of the Blender-tools family, statically audited 2026-08-19 (`context/LAST_HANDOFF.md` Phase 594: no destructive save, writes only to `--output`); documented usage `blender -b RD.blend --python tools/optimize_blend_scene.py -- --output ...` | 2026-08-29 |
 | `profile_blender_animation.py` | VIVO | part of the Blender-tools family, statically audited 2026-08-19 (`context/LAST_HANDOFF.md` Phase 594); an earlier handoff entry, recovered at `/home/mak/.local/share/Trash/files/flujo/context/LAST_HANDOFF.md:13332`, records an actual run: `blender -b RD.blend --python tools/profile_blender_animation.py -- --frames 1 50 75` | 2026-08-29 |
 | `project_gate.py` | VIVO | the CLI that ties `flujo.knowledge.project_router`, `episode_runner` and `project_api` together; operator-run and measured (`context/LAST_HANDOFF.md`: "Tennis Project IR probe", route selects the tennis consumer, probe status `succeeded`) | 2026-08-29 |
 | `project_lanes.py` | VIVO | imported directly by `tests/test_project_lanes.py` (`from tools import project_lanes`); operator CLI `summary`/`validate` run and measured (`context/LAST_HANDOFF.md`, `knowledge/README.md`: 19 lanes, exit 0) | 2026-08-29 |
 | `project_learning.py` | VIVO | operator CLI run and measured against `data/mak_knowledge.db` (`context/LAST_HANDOFF.md`: 8 eligible in 4 projects, `status=abstain`, no independent holdout); `--record-result` path also documented | 2026-08-29 |
-| `project_reconstruction.py` | VIVO | operator CLI run and measured with `--scope LYON` (`context/LAST_HANDOFF.md`); wraps `flujo.knowledge.project_reconstruction`, whose output feeds `build_application_intake.py` | 2026-08-29 |
 | `reconcile_garden_knowledge.py` | VIVO | executed 2026-08-19 against the real garden and knowledge databases (`context/LAST_HANDOFF.md` Phase 595): exit 0, `hash_match=1`, both integrity checks `ok`, 40 URLs, 22 claims, 12 tools; report written to a temporary path only | 2026-08-29 |
-| `research_simulation.py` | VIVO | registered in `src/flujo/knowledge/project_router.py` TOOL_CATALOG as `research_simulation_consumer`; `episode_runner.py` builds the actual subprocess command when selected; the wrapped module is tested by `tests/test_research_simulation.py` | 2026-08-29 |
 | `research_source_capture.py` | VIVO | registered in `src/flujo/knowledge/project_router.py` TOOL_CATALOG as `research_source_capture` (mode plan_only, output `source_capture`) | 2026-08-29 |
-| `source_learning_bridge.py` | VIVO | registered in `src/flujo/knowledge/project_router.py` TOOL_CATALOG as `source_learning_bridge` (mode read_only, output `source_learning_verification`) | 2026-08-29 |
-| `tennis_mcp_ingest.py` | VIVO | wraps `flujo.tennis.mcp.write_jsonl`; the slice is exercised by `tests/test_tennis_mcp.py`; documented as the tennis lane's local consumer (`docs/MAK_CURRENT_STATE.md`, `context/LAST_HANDOFF.md`: "Tennis MCP first slice") | 2026-08-29 |
-| `tennis_shot_events.py` | VIVO | registered in `src/flujo/knowledge/project_router.py` TOOL_CATALOG as `tennis_shot_event_consumer`; `episode_runner.py` builds the actual subprocess command when selected; referenced as the action tool in `tests/test_learning_policy.py`; operator-run and measured (`context/LAST_HANDOFF.md`: 11 events from a fixture, 0 schema errors against `schemas/tennis/shot_event.schema.json`) | 2026-08-29 |
 | `triangulate_project_context.py` | VIVO | operator CLI documented and run (`docs/GLOSSARY.md`, `context/LAST_HANDOFF.md`); wraps `flujo.knowledge.project_context`, whose graph is served read-only by both hubs at `/api/project/context` | 2026-08-29 |
-| `venue.py` | VIVO | imported directly by `tests/test_venue.py` (`sys.path.insert` + `import venue`); open venue base for VJ/technical use (`sembrar`/`validar`/`listar`/`sitio`/`geometria`) | 2026-08-29 |
 
 Nota: el director listo tambien `render_flyer_mak.py` (VIVO, mak_ops) en
 su mensaje de spec, pero ese archivo NO existe en `tools/` de este
@@ -655,38 +676,74 @@ alone.
 | file | consumer kind | measured interpretation |
 |---|---|---|
 | `aep_reference_scan.py` | manual-only | operator CLI; tests exercise the RIFX reader contract |
-| `certified_query.py` | manual-only | operator query CLI; read-only typed answer over the declared corpus contracts |
 | `drenar_material.py` | manual-only | operator-only bounded queue drain; writes only to its explicit output and queue paths |
 | `ig_metadatos.py` | manual-only | operator metadata report over a published Instagram export; optional explicit output |
 | `medir_test_overlap.py` | manual-only | read-only AST-shape overlap report; never edits tests or production files |
 | `medir_tests.py` | manual-only | read-only test chronology/count report from Git history |
 | `build_mak_canonical_map.py` | manual-only | operator measurement; current output is the canonical physical MAK map |
-| `arica01_portfolio.py` | manual-only | bounded pilot CLI; no automatic dispatch |
 | `bake_static_materials.py` | manual-only | operator invokes the Blender CLI; no in-tree caller |
 | `build_effort_consumer_crosswalk.py` | manual-only | operator report CLI; temporary database run |
-| `classification_review.py` | manual-only | operator chooses propose/apply/classify actions |
 | `compile_contracurator.py` | manual-only | CLI wrapper; Hub/tests consume the wrapped contract |
-| `compile_portfolio.py` | manual-only | CLI wrapper; tests/docs consume the wrapped contract |
-| `compile_ssd_order_foundation.py` | manual-only | CLI wrapper; Hub/tests consume the wrapped contract |
 | `compute_effort_residuals.py` | manual-only | operator report CLI; temporary database run |
 | `execute_research_job.py` | manual-only | operator discovery/capture CLI; no automatic dispatch |
 | `gen_dashboard_productoras.py` | manual-only | operator static-document generator |
 | `gen_iskvw_prototipo.py` | manual-only | operator static-prototype generator |
 | `gen_presentacion_db.py` | manual-only | operator static-document generator |
-| `gen_rd_standalone.py` | manual-only | operator RD bundle generator |
-| `import_project_reconstruction.py` | manual-only | operator Project IR adapter CLI |
 | `optimize_blend_scene.py` | manual-only | operator invokes the Blender CLI; no in-tree caller |
 | `profile_blender_animation.py` | manual-only | operator invokes the Blender CLI; no in-tree caller |
 | `project_gate.py` | manual-only | operator route/probe CLI; Hub consumes the underlying API |
 | `project_learning.py` | manual-only | operator learning CLI; result recording is explicit |
 | `reconcile_garden_knowledge.py` | manual-only | operator reconciliation report CLI |
-| `run_vision_feedback.py` | manual-only | operator feedback projection CLI |
-| `show_asset_usage.py` | manual-only | operator Resolume analysis CLI |
 | `substrate_experiment.py` | manual-only | operator-run preregistered experiment |
-| `tennis_mcp_ingest.py` | manual-only | operator data projection CLI; tests consume the wrapped module |
 | `triangulate_project_context.py` | manual-only | operator context CLI; Hub consumes the underlying graph |
-| `venue_screen_setup.py` | manual-only | operator Resolume ScreenSetup projection; writes only to an explicit output directory |
 
+
+## 5-quater. Herramientas que salieron a FLUJO (separacion 2026-09-02)
+
+Causa: la separacion fisica de MAK y FLUJO movio la cadena de portafolio,
+oportunidades y render a `/home/mak/flujo/tools/`. El registro de MAK las
+seguia declarando, asi que `test_registro_sin_herramientas_fantasma` media 35
+fantasmas y un agente que buscara `compile_ssd_order_foundation.py` en esta
+rama concluia que no existe. No estan muertas: cambiaron de rama.
+Verificado el 2026-09-02: las 35 existen en `flujo/tools/` y ninguna en
+`tools/`. Su registro vive en `flujo/CAPACIDADES.md`, no aqui.
+Retiro de esta seccion: cuando el registro se genere desde el arbol.
+
+- `adapt_practice_receipts.py` -> `flujo/tools/adapt_practice_receipts.py`
+- `archive_observer.py` -> `flujo/tools/archive_observer.py`
+- `arica01_portfolio.py` -> `flujo/tools/arica01_portfolio.py`
+- `build_evidence_return.py` -> `flujo/tools/build_evidence_return.py`
+- `build_possibility_field.py` -> `flujo/tools/build_possibility_field.py`
+- `certified_query.py` -> `flujo/tools/certified_query.py`
+- `classification_review.py` -> `flujo/tools/classification_review.py`
+- `compile_application_research_package.py` -> `flujo/tools/compile_application_research_package.py`
+- `compile_autonomy_plan.py` -> `flujo/tools/compile_autonomy_plan.py`
+- `compile_cross_archive_relations.py` -> `flujo/tools/compile_cross_archive_relations.py`
+- `compile_cross_archive_research_frontier.py` -> `flujo/tools/compile_cross_archive_research_frontier.py`
+- `compile_portfolio.py` -> `flujo/tools/compile_portfolio.py`
+- `compile_practice_evidence_state.py` -> `flujo/tools/compile_practice_evidence_state.py`
+- `compile_product_episode.py` -> `flujo/tools/compile_product_episode.py`
+- `compile_ssd_order_foundation.py` -> `flujo/tools/compile_ssd_order_foundation.py`
+- `deep_learning_gate.py` -> `flujo/tools/deep_learning_gate.py`
+- `evaluate_artistic_program_hypotheses.py` -> `flujo/tools/evaluate_artistic_program_hypotheses.py`
+- `evaluate_opportunity_fit.py` -> `flujo/tools/evaluate_opportunity_fit.py`
+- `evaluate_product_learning.py` -> `flujo/tools/evaluate_product_learning.py`
+- `gen_rd_standalone.py` -> `flujo/tools/gen_rd_standalone.py`
+- `import_project_reconstruction.py` -> `flujo/tools/import_project_reconstruction.py`
+- `materialize_pilot_run.py` -> `flujo/tools/materialize_pilot_run.py`
+- `math_kernel.py` -> `flujo/tools/math_kernel.py`
+- `project_reconstruction.py` -> `flujo/tools/project_reconstruction.py`
+- `project_review.py` -> `flujo/tools/project_review.py`
+- `render_output_edges.py` -> `flujo/tools/render_output_edges.py`
+- `research_simulation.py` -> `flujo/tools/research_simulation.py`
+- `run_archive_toolchain.py` -> `flujo/tools/run_archive_toolchain.py`
+- `run_vision_feedback.py` -> `flujo/tools/run_vision_feedback.py`
+- `show_asset_usage.py` -> `flujo/tools/show_asset_usage.py`
+- `source_learning_bridge.py` -> `flujo/tools/source_learning_bridge.py`
+- `tennis_mcp_ingest.py` -> `flujo/tools/tennis_mcp_ingest.py`
+- `tennis_shot_events.py` -> `flujo/tools/tennis_shot_events.py`
+- `venue.py` -> `flujo/tools/venue.py`
+- `venue_screen_setup.py` -> `flujo/tools/venue_screen_setup.py`
 ## 5-bis. Snapshot histórico del registro medido (2026-08-28; superado)
 
 La tabla de arriba declara el consumidor en prosa. Esta fue el primer chequeo
