@@ -17,6 +17,89 @@ FLUJO `27ede605`.
 - `mak-archive-observation-batch-v1` remains the archive-observation batch
   contract.
 
+### Operator boundary correction — IRIS system vs portfolio — 2026-09-02
+
+The operator corrected the semantic conflation in the preceding handoff. The
+earlier `:3900` mention was a typo: the active MAK Hub is `:8900`. The more
+important correction is conceptual: **IRIS is not the artist's portfolio**.
+IRIS is the internal system the operator created to order and work through the
+archive, preserve evidence, propose defensible relations/orders, and receive
+human decisions. It can prepare material for a portfolio, dossier, application
+or research output, but it is not any of those outputs.
+
+`iskvw.cl` is the artist's public website, where material that passed
+curation was uploaded. It is a downstream public output with its own contract;
+it is not IRIS. The Hub route `/portafolio/` currently mounts
+`/home/mak/iskvw/editor.html` because that editor was the historical starting
+point for the operator-facing interface. The URL and filename are legacy
+implementation labels: the route is an internal IRIS interface/adapter, not
+the public portfolio and not the definition of IRIS.
+
+The operator's screenshot confirms an additional precision: the Hub shell at
+`:8900` (`MAK · ATLAS VIVO` / `campo de orden`) and the mounted editor/mesa are
+the same visible interface. Do not describe them as separate interfaces. The
+separation is semantic and operational: IRIS/Atlas is the internal system,
+`editor.html` is its implementation surface, and `iskvw.cl` is the downstream
+public output.
+
+The Claude audit was right that there are multiple `editor.html` files; the
+earlier one-file result was caused by an incomplete search. The corrected
+filesystem measurement (`find /home/mak -xdev -type f -name editor.html`) found
+16 physical copies across active checkouts, runtime/compatibility copies,
+archives, logs and rollback material. Only `iskvw/editor.html` is tracked in
+the current MAK checkout. This proves basename duplication, not product
+identity. The current `:8900` consumer is established by active route,
+`MAK_PORTFOLIO_ROOT`, source and served hash; a filename alone cannot identify
+IRIS or `iskvw.cl`.
+
+The operational consolidation is now explicit: `/home/mak/iskvw/editor.html`
+is the single active MAK runtime source for `127.0.0.1:8900/portafolio/`.
+`/home/mak/flujo/iskvw/editor.html` is the separate portable-checkout copy,
+currently byte-identical but not consumed by this process; it is synchronized
+only by an explicit FLUJO transport/commit. The former
+`/home/mak/plataforma/iskvw/editor.html` copy had no consumer in the measured
+route and was retired reversibly as
+`_archive/iris-editor-consolidation-20260902/plataforma/iskvw/editor.html.legacy-20260902`.
+`_archive/`, `_logs/` and rollback copies remain historical evidence and are
+not active duplicates. “Consolidated” therefore means one active
+source/consumer, with history preserved, not a destructive filesystem purge.
+
+Measured locally in this continuation: `ss -ltnp | rg ':(3900|8900)\b'` found
+only `127.0.0.1:8900`, served by
+`/home/mak/cultura/mak_plataforma/hub.py`; there was no `:3900` listener. No
+code, `iskvw` data, public site or runtime state was changed. All future
+prompts and edits must say explicitly which IRIS internal consumer or which
+`iskvw.cl` public output they address.
+
+### Editor authority consolidation — current continuation — 2026-09-02
+
+- Measured with `find /home/mak -xdev -type f -name editor.html`: 15 files
+  named `editor.html` remain across active checkouts, archives, logs and
+  rollback material. The initial count was 16; the stale compatibility copy
+  was moved to the named archive under an explicit legacy filename. This is a
+  preserved evidence inventory, not 15 active interfaces.
+- Measured with `curl http://127.0.0.1:8900/portafolio/`, `sha256sum`, `ss -ltnp`
+  and source inspection: HTTP 200, 253564 bytes, source and served SHA-256
+  `ed7e3bf2d02a841b52560be007390d78c7aed90c79d46258347b22700f03f331`, and
+  only `127.0.0.1:8900` listening. The active chain is
+  `/home/mak/cultura/mak_plataforma/hub.py` -> `MAK_PORTFOLIO_ROOT` default
+  `/home/mak/iskvw` -> `/home/mak/iskvw/editor.html`.
+- `/home/mak/flujo/iskvw/editor.html` is tracked in the independent FLUJO
+  checkout and currently byte-identical, but is not consumed by the MAK Hub.
+  The former `/home/mak/plataforma/iskvw/editor.html` was ignored, stale, and
+  had no reference in the current code path; it was moved reversibly to
+  `_archive/iris-editor-consolidation-20260902/` and is not an alternate
+  runtime source.
+- Failure: none in this consolidation slice. No historical file was deleted;
+  the stale compatibility copy was moved reversibly, no public `iskvw` data
+  was changed, and no service was restarted.
+- Write-set: the authority rule was added to `AGENTS.md`,
+  `docs/IRIS_CANONICAL.md`, `docs/MAK_CURRENT_STATE.md` and this handoff.
+- Next action: future IRIS/Atlas UI work edits only `/home/mak/iskvw/editor.html`
+  after route/root/hash verification. The retired copy is recoverable in the
+  named archive and must not be restored silently or used to edit the FLUJO
+  checkout.
+
 ### Claude sequence recovered
 
 - Fase 0: read-only physical-layout and runtime comprehension.
@@ -27,9 +110,10 @@ FLUJO `27ede605`.
   CI, where its `/home/mak` assumptions cannot hold.
 - C01-C11: separated MAK and FLUJO physically, moved ownership by consumer,
   repaired collection/lane mapping, and added per-lane workflows.
-- Portfolio/IRIS analysis: distinguished the MAK Hub portfolio editor from
-  `iskvw.cl`, identified the existing Mesa de Montaje, read the FONDART bases,
-  and added `docs/IRIS_CANONICAL.md`, the regional dossier, and invariant tests.
+- IRIS analysis: identified the MAK internal ordering system and its Mesa de
+  Montaje interface, distinguished both from `iskvw.cl`, read the FONDART
+  bases, and added `docs/IRIS_CANONICAL.md`, the regional dossier, and invariant
+  tests.
 - A data detour regenerated `campo.json` from 219 to 871, then correctly
   reverted it with `77afc45e` after recognizing that `iskvw/` is a dormant
   published-site surface and that its product decision is separate from IRIS.
@@ -961,16 +1045,241 @@ authorized, the existing release/publish procedure; do not regenerate
   and the ratchet now fails the day either becomes a real runtime import.
   IRIS remains paused.
 
+### MAK vertical circuit v1 -- 2026-09-02
+
+- Verdict: `VERTICAL_CIRCUIT_VERIFIED`. The circuit already existed complete in
+  code. No module was modified, no data semantics changed, and no piece was
+  implemented: the gap was that every node was unit-tested while the CHAIN was
+  not, so nothing failed when a hop lost a property.
+- Circuit chosen and why: the XIO show-kit evidence circuit. It is the smallest
+  chain that already has code AND a fixture, it is a MAK operation rather than
+  an IRIS editorial one, and its head already refuses the inference that
+  matters -- `artist`, `venue` and `producer` are always emitted as `unknown`
+  with an empty value, so an event name, a filename or a directory name cannot
+  become authorship. Alternatives were rejected on evidence:
+  `instagram_source.py` reads a real export (new real input, forbidden here),
+  and `portfolio_record` would enter Portfolio, which this phase excludes.
+- Input: five authoritative files in a show-kit root
+  (`setlist_festival_sentir.txt`, `setlist_durations_dref.json`,
+  `cue_map_dref.json`, `DIA_DEL_SHOW.md`, `ANOTACIONES_SHOW_20260724.md`),
+  written synthetically into `tmp_path`. The root is parameterised
+  (`MAK_XIO_SHOW_ROOT` / the `root` argument), so no physical show kit and no
+  new real data were used.
+- Evidence: atoms carrying three distinct epistemic statuses --
+  `observed` (timecodes read from the annotation), `declared` (event and date,
+  asserted by a named source) and `unknown` (artist, venue, producer, with no
+  source and no value). Every atom keeps its own `source`.
+- Modules and stores used, all existing:
+  `cultura/mak_plataforma/xio_evidence.py::load_show_evidence` ->
+  `cultura/mak_plataforma/ledger.py::build_work_envelope` /
+  `validate_work_envelope` ->
+  `cultura/mak_plataforma/discernment.py::deterministic_review` ->
+  `discernment.py::decision_record` ->
+  `ledger.py::append_review` / `review_to_ledger` -> `ledger.py::read_items`.
+  The reviewer runs its deterministic local path; Ollama was not called.
+- Result produced: an append-only ledger row, read back from
+  `tmp_path/common_ledger.jsonl`, carrying `domain=mak`, `lane=sistema`,
+  `decision=revisar`, `confidence=low`, `action=decide`, `owner=human`,
+  `next_action=revise provider output`, and the whole `mak-work-v1` envelope
+  with `work_id=xio:show:show_kit`, `status=candidate` and its five source
+  refs intact.
+- Envelope fields preserved through the chain: `work_id`, `lane=trabajo`,
+  `purpose`, `format=show_evidence`, `provider=xio_local`, `owner=MAK`,
+  `status=candidate`, `sources` (five refs), `created_at`, `next_action`,
+  `evidence_required=[xio_show_kit, human_portfolio_link]`,
+  `allowed_decisions` (the five-value vocabulary), and an identity block whose
+  `entities` populate `event` and `source` while `artist`, `username`,
+  `client`, `collab`, `venue` and `location` stay empty lists.
+- Producer and owner stay separate questions at every hop, which the test
+  asserts rather than assumes: the evidence producer is `xio_local` and its
+  owner is `MAK`; the decision producer is `local_deterministic` and its owner
+  becomes `human` precisely because the verdict was `revise`. The work's lane
+  is `trabajo` while the decision about it is `sistema` -- two objects, two
+  lanes, and merging them would lose which one was judged.
+- Possible states, all reachable and none skipped: evidence status
+  `observed` / `declared` / `unknown`; review verdict `accept` / `revise` /
+  `reject`; decision vocabulary `hacer` / `revisar` / `refutar` / `archivar` /
+  `descartar`; work status stays `candidate` throughout; `promotion` is
+  `none` in every branch.
+- Human decision required: the link to a portfolio source. `linked_to_source_id`
+  is `False` and `next_action` remains `link manually to portfolio source`. The
+  second test proves this is a real gate and not a side effect of the failing
+  branch: even when every field carries a source and the verdict is `accept`
+  with decision `hacer`, `promotion` is still `none`, the envelope is still
+  `candidate`, and no link is created. `accept` means the batch is reviewable,
+  never that the relation is true.
+- Mutation evidence, because a passing test proves nothing about its own
+  sensitivity. Nine corruptions were injected in memory (never into the repo)
+  and each one broke the test at a named line: source refs emptied (line 112),
+  owner overwritten with the provider (117), the three unknown atoms rewritten
+  as declared with the event name (97), an absence coerced to `False` (102),
+  `linked_to_source_id` set true (172), `next_action` blanked (168), the
+  envelope promoted to `accepted` (110), the decision node promoting with
+  `promotion=auto` (141), and the ledger row recording `confidence=high` for a
+  review that had asked for evidence (155). Detected: 9 of 9.
+- Write-set, exact, local and uncommitted: `tests/test_xio_evidence.py` and
+  `context/LAST_HANDOFF.md`, plus the pre-existing, untouched
+  `context/coordination/inbox/claude/phase2-publication-review-20260902.md`.
+  No module, store, contract, requirements file, workflow or lane contract
+  changed. The one non-test edit inside that file is factoring the existing
+  fixture into `_write_show_kit()` so both tests feed on the same input; the
+  original test's assertions are unchanged, and a duplicated fixture is how
+  two tests start measuring different things unnoticed.
+- Tests and results, with `PYTHONDONTWRITEBYTECODE=1`, `-o addopts=` and
+  `/home/mak/.venv/bin/python`: circuit plus implicated stores
+  (`test_xio_evidence`, `test_mak_ledger`, `test_mak_discernment`,
+  `test_mak_tandas`, `test_xio_portfolio_link`) `110 passed in 2.40s`;
+  `repo_hygiene` `96 passed in 28.69s`; the affected lane `mak`
+  `2177 passed, 5 skipped, 5 warnings, 5 subtests passed in 132.79s`, up from
+  2175 by the two new tests. `integration` was NOT run: no
+  integration-lane file changed and the lane contract keeps
+  `tests/test_xio_evidence.py` in `mak`. `python -m pip check` `No broken
+  requirements found.` exit 0; `git diff --check` exit 0 in both checkouts;
+  `tools/release_gate.py --check` `BLOCKERS (0) UNKNOWNS (0) WARNINGS (0)`
+  exit 5, its documented deferred-tests code; `tools/runtime_preflight.py
+  --check` exit 0 with `ok=5` and zero error/unknown/warn/adapter conditions.
+- Epistemological limits, stated rather than smoothed over:
+  1. The circuit proves the CHAIN's bookkeeping, not the truth of any claim
+     about the show. `event` and `date` remain `declared` by a source; nothing
+     verified them.
+  2. `ledger.review_to_ledger` types a row binarily -- `decision` when the
+     verdict is `accept`, `reject` otherwise -- so a `revise` verdict is
+     recorded with `type=reject` while its `decision` correctly reads
+     `revisar`. The precise value survives in `decision`; the coarse `type`
+     does not distinguish "not accepted yet" from "rejected". This was left
+     exactly as it is: changing it to make a test read better would be
+     changing data semantics, which this phase forbids. It is a candidate
+     observation for Faro, not a defect this circuit may decide.
+  3. The reviewer is mechanical. It detects empty evidence, low confidence,
+     domain mixing, secret-bearing text and negative claims without search
+     evidence. It does not judge artistic fit, and `deterministic_review` says
+     so in its own docstring.
+  4. `_review_payload` is the test's own mapping from evidence atoms to review
+     items. It is a demonstration of the contract, not a production adapter;
+     no such adapter was added, because none was asked for and the circuit
+     does not need one to be shown.
+- IRIS, its reader, `iskvw/datos/*`, `campo.json`, `animadas.json`,
+  `iskvw/piel/*`, databases, artistic outputs, services and ports were not
+  touched, and the 219/871 decision was not reopened. The productive
+  append-only ledger at `~/plataforma/common_ledger.jsonl` still carries its
+  earlier mtime (`sep 2 02:53`, hours before this session's runs), which is
+  the measured proof that every write went to `tmp_path`. FLUJO's checkout is
+  clean and received nothing. No commit, push, add, merge, reset, clean,
+  checkout or branch switch was performed.
+- Next action for Faro: review this two-path write-set and, if authorized,
+  publish it to `MAK`; FLUJO needs no push. After publication the clean-runner
+  expectation is `mak` lane at 2177 and `repo hygiene` unchanged at 88 passed /
+  8 skipped. The open question this circuit surfaces, and does not decide, is
+  limit 2 above: whether the ledger row `type` should carry the same
+  five-value vocabulary as `decision`. IRIS remains paused.
+
+### Faro review of vertical circuit -- 2026-09-02
+
+- The approach is worth continuing, but the mode should change: the physical
+  and CI boundary work is now sufficiently verified; another broad audit would
+  have diminishing returns. Claude's vertical circuit added a useful
+  end-to-end contract test without pretending that a synthetic show-kit proves
+  the truth of an artistic claim.
+- Independent checks passed: `tests/test_xio_evidence.py` `4 passed in 18.27s`;
+  implicated ledger/discernment/tandas/portfolio-link tests `106 passed in
+  20.36s`; `git diff --check` passed. Current local write-set is the new test,
+  this handoff, and the pre-existing Claude packet; FLUJO is clean.
+- The next order should be a focused semantic investigation of
+  `ledger.review_to_ledger`: a `revise` decision is currently stored with the
+  coarse row `type=reject`. Do not change it yet; first trace all consumers,
+  fixtures and compatibility implications. This is a real contract question,
+  not an excuse to reopen IRIS or regenerate data.
+
+### Portfolio surface ordered and registered -- 2026-09-02
+
+- What this closed: the identity of the Hub's portfolio surface, which had
+  confused two agents in a row. It is a PAIR -- `iskvw/editor.html` is the
+  shell and `iskvw/mesa_montaje.js` draws everything a person reads. Measured:
+  the served bytes equal the physical files in this checkout
+  (`editor ed7e3bf2...f331`, `mesa d7a50d27...ecb2`), `git status iskvw/` is
+  clean, so what runs on `127.0.0.1:8900/portafolio/` is what is committed.
+  No stale deployment existed.
+- The two traps, both now pinned by tests. Searching only `editor.html` for the
+  visible chrome ("atlas vivo", incertidumbre, siguiente frontera, evidencia
+  externa) returns ZERO, because those strings live in the JS -- which reads
+  exactly like an old version of a current tree. And the shell carries 89
+  `text-transform` rules, so the uppercase on screen is not the case in the
+  source: searching for what the screenshot shows fails a second time.
+- `IRIS` is the name of the Fondart application this system is presented under.
+  Operator's correction, 2026-09-02: it is NOT a component name and nothing in
+  the tree is renamed for it. An earlier draft of this session's CAPACIDADES
+  entry labelled the surface "IRIS (mesa de montaje)"; that was reverted to
+  "Mesa de montaje (pestana portafolio)". No file, route or symbol was renamed
+  by this work.
+- Registered so the confusion cannot recur: `CAPACIDADES.md` section 1-bis now
+  carries a row for the surface plus a block with its physical identity
+  (both hashes and byte sizes), its measured consumers -- `hub.py` (serves
+  `/portafolio/` and `/static/iskvw/editor`), `copilot.py` (through
+  `/api/portfolio/copilot/scene|learning|xio-link`),
+  `flujo/src/flujo/departments.py:57,61`, `tests/test_iskvw_editor_contract.py`,
+  `tests/test_curaduria_roundtrip.py`, `tools/validar_curaduria.py`,
+  `iskvw/datos/{curaduria,tablero}.json`, `iskvw/MAPA.md` -- and the ten API
+  routes the interface calls. `AGENTS.md` and `CLAUDE.md` carry the short
+  version with pointers here.
+- Everything the interface consumes answers. Ten routes probed read-only:
+  `inbox`, `audit`, `external-candidates`, `copilot/scene`, `copilot/learning`
+  return HTTP 200; `copilot/scene` returns `provider=local_hypothesis_engine`
+  and `map.schema=faro-gtm-map-v1`, which is `copilot.GTM_SCHEMA` -- the live
+  proof that the interface really reaches the copilot. The mutating routes are
+  POST (`hub.py:5288-5299`) and were NOT called: probing `copilot/xio-link`
+  with GET returns `ruta_api_no_encontrada`, which is the correct answer and
+  was my own probe error, not a defect. Inbox composition: 7044 items, 6976
+  `pendiente`, 62 `descartar`, 4 `seleccionar`, 2 `deseleccionar`; a scene over
+  a discarded record refuses to compose, by design.
+- Guards added to `tests/test_iskvw_editor_contract.py` (lane `repo_hygiene`),
+  mutation-verified 3/3 -- the guard fails when the shell stops loading the JS,
+  when the chrome migrates into the HTML, and when the JS loses the chrome,
+  which is the genuinely-old-version case:
+  `test_the_surface_is_a_pair_and_the_chrome_lives_in_the_javascript`,
+  `test_the_hub_serves_the_editor_from_this_checkout_not_the_sibling`
+  (`PORTFOLIO_ROOT` must resolve here, not to the sibling), and
+  `test_the_two_checkout_copies_do_not_diverge_in_silence` (both operational
+  checkouts track the pair; it refuses silent divergence without deciding
+  whether FLUJO should carry it at all).
+- Half-finished retirement found and registered, NOT acted on:
+  `/home/mak/plataforma/iskvw/editor.html` was archived reversibly to
+  `_archive/iris-editor-consolidation-20260902/` with its hash, but
+  `/home/mak/plataforma/iskvw/mesa_montaje.js` still exists as a symlink into
+  the FLUJO checkout, inside the Hub's own working directory. It is inert
+  today: `hub.py` resolves the absolute `PORTFOLIO_ROOT` and never a
+  cwd-relative `iskvw/` path, and `plataforma/` is untracked
+  (`.git/info/exclude:81`). Removing it is an operator decision and was left
+  to the operator.
+- The prose corrections carried in this publication came from the working tree
+  and were verified rather than assumed: `AGENTS.md` now points the served
+  surface at `/home/mak/iskvw` instead of the stale `/home/mak/flujo/iskvw`,
+  which matches `hub.py:92-99` and the measured runtime; `docs/IRIS_CANONICAL.md`
+  and `docs/MAK_CURRENT_STATE.md` state the system/product/site distinction;
+  `copilot.py`, `hub.py` and `tools/gen_campo_iskvw.py` gained explanatory
+  docstrings. None of them renames a file, a route or a symbol.
+- Verification, `PYTHONDONTWRITEBYTECODE=1` with `/home/mak/.venv/bin/python`:
+  focal editor contract `6 passed`; `repo_hygiene` `99 passed`; `mak` lane and
+  `integration` below; `python -m pip check` clean; `git diff --check` exit 0.
+- Not committed, deliberately and as instructed throughout this session:
+  `context/coordination/inbox/claude/phase2-publication-review-20260902.md`
+  stays modified and unstaged.
+- Next action for the operator: decide the leftover symlink
+  (`plataforma/iskvw/mesa_montaje.js`), and decide whether FLUJO should keep
+  tracking the pair at all. Neither is a defect today; both are pointers that
+  can become one. The portfolio surface itself needs no repair: it is current,
+  served from the right checkout, and now guarded.
+
 # Operational Handoff
 
 ## Agent bootstrap -- CURRENT -- 2026-09-02 (later) -- the suites, and the boundary the operator corrected
 
 ### The boundary. Read this before touching anything named portfolio.
 
-The operator's correction, verbatim in substance: **PORTAFOLIO is one thing and
-the EDITOR is another; from the editor's idea it joined DIMENSIONES DEL ORDEN,
-and what this agent found was a version that only considered obras.** He said
-to search `iskvw.cl` and it would be clear. It is.
+The operator's correction: **IRIS is the internal system he created to order
+his archive; it is not his portfolio.** The public portfolio/output and the
+editor/interface are separate things. The editor grew into an operator-facing
+IRIS interface when it joined DIMENSIONES DEL ORDEN, but its historical name
+does not redefine the system or the public site.
 
 - **`iskvw/` is iskvw.cl**, the artist's published portfolio SITE. Its contract
   is `iskvw/CONTRATO.md`: `datos/archivo.json` is the published content,
@@ -980,15 +1289,16 @@ to search `iskvw.cl` and it would be clear. It is.
   and nothing else. **Obras only.** Its scope is the operator's explicit #355
   decision (2026-07-27): posts and reels, never `archived_posts/` or `other/`,
   because publishing what someone archived reverses a decision they made.
-- **IRIS is the PORTAFOLIO surface of the MAK Hub**, grown out of
-  `iskvw/editor.html` and then joined with DIMENSIONES DEL ORDEN. The Hub still
-  MOUNTS that panel (`/portafolio/` -> `iskvw/editor.html`, `PORTFOLIO_ROOT` =
-  `/home/mak/iskvw`), which is the historical join and the reason the two look
-  like one thing. Its engine -- `copilot.py`, the 35 `/api/portfolio/*` routes,
-  the eight layers, five verbs, evidence states, GTM atlas and ordering field --
-  works on records, works, context and relations, not on a list of obras.
-- **Editing `iskvw/datos/*` or `iskvw/piel/*` is editing a published product,
-  not working on IRIS.**
+- **IRIS is the internal MAK ordering system**, with its operator-facing Hub
+  interface and engine. The Hub still mounts the historical curation panel
+  (`/portafolio/` -> `iskvw/editor.html`, `PORTFOLIO_ROOT` =
+  `/home/mak/iskvw`), which explains the old URL and why the two were confused.
+  Its engine -- `copilot.py`, the 35 `/api/portfolio/*` routes, the eight
+  layers, five verbs, evidence states, GTM atlas and ordering field -- works on
+  records, works, context and relations, not on a public list of obras. The
+  `portfolio` namespace is an implementation label, not the identity of IRIS.
+- **Editing `iskvw/datos/*` or `iskvw/piel/*` is editing the public output
+  product, not editing the IRIS ordering system.**
 
 What this agent got wrong, twice, recorded so it is not repeated.
 
@@ -1282,11 +1592,16 @@ plan, the reading protocol and the budget structure:
   `context/test_lane_map.json` (173 mak, 32 integration, 14 repo_hygiene).
 - **Activation is not promotion.** Even when the pair metric earns activation,
   `distance_comparison.promotion` stays `"none"`.
-- IRIS surface, measured: 35 distinct `/api/portfolio/*` route names in
-  `cultura/mak_plataforma/hub.py`; `copilot.py` 1820 lines and 46 module-level
-  functions, standard library only; 21 test files and 299 tests in the
-  portfolio-archive family; `iskvw/datos/archivo.json` 1.8 MB with 2034 pieces
-  and 5812 links; `campo.json` 273 KB with 871 works.
+- IRIS internal ordering system, measured: 35 distinct `/api/portfolio/*`
+  route names in `cultura/mak_plataforma/hub.py`; `copilot.py` 1820 lines and
+  46 module-level functions, standard library only; 21 test files and 299 tests
+  in the portfolio-archive family. The `portfolio` namespace is a technical
+  compatibility label; it does not make IRIS the public portfolio. The public
+  `iskvw` artifacts remain a separate downstream surface.
+- That measured snapshot recorded `iskvw/datos/archivo.json` at 1.8 MB with
+  2034 pieces and 5812 links, and `campo.json` at 273 KB with 871 works. These
+  are downstream/public-surface artifacts, not the identity or core state of
+  IRIS.
 - **35 tools the MAK registry still declared live in `flujo/tools/`**, moved by
   the 2026-09-02 separation -- the portfolio compile, render and opportunity
   chain, including `compile_portfolio.py` and
@@ -1402,7 +1717,8 @@ the platform rule above, nothing is currently cleared for an evaluator to open.
   layout and still say `flujo app` must not be left permanent, while it runs on
   8765 by the operator's request.
 - Three independent portfolio implementations with three incompatible
-  definitions of "obra"; four copies of `editor.html`;
+  definitions of "obra"; an earlier narrow count of four `editor.html` copies
+  (superseded by the later full physical count of 16);
   `POST /api/portfolio/dispatch` with no measured reader.
 - The organism has been paused since 2026-08-14 19:03.
 

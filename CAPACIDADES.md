@@ -215,8 +215,60 @@ activo.
 | Research | `cultura/mak_research/interfaz.py` / `/home/mak/.config/systemd/user/mak-research.service` | `127.0.0.1:8890` | Servicio interno de Research para el Hub; listener y proceso activos |
 | Codex bridge | `cultura/mak_codex/interfaz_codex.py` / `/home/mak/.config/systemd/user/mak-codex.service` | `127.0.0.1:8891` | Puente interno de Codex para MAK; listener y proceso activos |
 | Copilot curatorial | `cultura/mak_plataforma/copilot.py`; consumido por `hub.py` | Endpoints bajo `:8900/api/portfolio/copilot/*`; sin proceso propio | Ranking, atlas y sugerencias candidatas; no decide ni se ejecuta como daemon independiente |
+| Mesa de montaje (pestana portafolio) | `iskvw/editor.html` + `iskvw/mesa_montaje.js`, servidos por `hub.py` desde `PORTFOLIO_ROOT` | `127.0.0.1:8900/portafolio/`; tambien `/static/iskvw/editor` | La aplicacion de orden y relacion con copiloto; el par de archivos es la superficie, no solo el HTML. Medido 2026-09-02: HTTP 200 y hash servido igual al fisico |
 | SearXNG | `searxng/settings.yml` / runtime externo | `127.0.0.1:8888` | Dependencia de búsqueda de Research, no un Hub de MAK |
 | Cola ntfy | `/home/mak/.config/systemd/user/mak-research-queue.service` | Sin puerto; unidad opcional | Inactiva deliberadamente hasta configurar un topic; no confundirla con Research |
+
+#### La mesa de montaje: identidad fisica y consumidores (medido 2026-09-02)
+
+La pestana portafolio del Hub es la aplicacion para ordenar registros,
+relacionarlos y sostener un copiloto que aprende. El portafolio del artista es
+el PRODUCTO que sale de ahi, no la aplicacion. `iskvw.cl` es una tercera cosa:
+el sitio publicado, dormido, que consume `iskvw/datos/archivo.json` y una piel
+reemplazable. Las tres comparten el prefijo `iskvw/` por un empalme historico y
+NO son la misma superficie.
+
+`IRIS` es el nombre de la POSTULACION con que este sistema se presenta a
+Fondart. No es el nombre de un componente y no renombra nada del arbol: la
+superficie sigue siendo la pestana portafolio y su par de archivos.
+
+Causa de esta entrada: dos agentes seguidos se confundieron aqui. Buscar las
+cadenas visibles de la interfaz ("campo de orden", ATLAS VIVO, incertidumbre,
+siguiente frontera, EVIDENCIA EXTERNA) solo en `editor.html` devuelve CERO y
+parece que corre una version antigua; viven en el JS que ese shell carga. La
+superficie es un PAR y hay que medir los dos.
+
+| Que | Donde | Medicion 2026-09-02 |
+|---|---|---|
+| Shell | `iskvw/editor.html` (253.564 B) | `sha256 ed7e3bf2...f331`, igual al servido |
+| Interfaz | `iskvw/mesa_montaje.js` (113.121 B) | `sha256 d7a50d27...ecb2`, igual al servido; `<script src="mesa_montaje.js?v=20260811-atlas-context-map">` |
+| Raiz servida | `PORTFOLIO_ROOT`, por defecto `/home/mak/iskvw` (checkout MAK) | `hub.py:92-99` explica por que se retiro la grafia `HOME/flujo/iskvw` |
+
+Consumidores medidos, no supuestos:
+
+| Consumidor | Vinculo |
+|---|---|
+| `cultura/mak_plataforma/hub.py` | sirve `/portafolio/` y `/static/iskvw/editor`; monta la pestana en el iframe `ifr-portafolio` |
+| `cultura/mak_plataforma/copilot.py` | via `/api/portfolio/copilot/scene|learning|xio-link`; la escena responde `provider=local_hypothesis_engine` y `map.schema=faro-gtm-map-v1` (`copilot.GTM_SCHEMA`) |
+| `flujo/src/flujo/departments.py:57,61` | declara `iskvw`, `iskvw/editor.html` y expone `/static/iskvw/editor` en el Hub de FLUJO, sobre SU propia copia |
+| `tests/test_iskvw_editor_contract.py` | contrato del par (carril `repo_hygiene`) |
+| `tests/test_curaduria_roundtrip.py`, `tools/validar_curaduria.py` | curaduria sobre `iskvw/datos/curaduria.json` |
+| `iskvw/datos/tablero.json`, `iskvw/MAPA.md` | material y mapa de la superficie |
+
+Rutas que la interfaz llama (10, medidas desde el propio JS): `inbox`, `audit`,
+`draft`, `undo`, `commit`, `external-candidates`, `external-candidates/review`,
+`copilot/scene`, `copilot/learning`, `copilot/xio-link`. Las que mutan son POST
+(`hub.py:5288-5299`): probarlas con GET devuelve `ruta_api_no_encontrada`, que
+es la respuesta correcta y no un defecto.
+
+Riesgo abierto, sin decidir aqui: el par esta trackeado en LOS DOS checkouts
+(`/home/mak/iskvw` y `/home/mak/flujo/iskvw`) y hoy es identico byte a byte.
+Editar una copia y no la otra las separa en silencio, y el Hub MAK solo lee la
+suya. Quien decide si FLUJO debe seguir cargando esta superficie es el contrato
+de propiedad, no este documento.
+
+Retiro de esta entrada: cuando exista una sola copia autoritativa del par y el
+Hub la resuelva por contrato en vez de por ruta por defecto.
 
 `tools/` (ejecutables sueltos, 1 linea cada uno):
 

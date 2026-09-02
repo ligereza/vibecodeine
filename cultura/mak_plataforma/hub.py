@@ -4,6 +4,9 @@
 Thin frame around each department editor, embedded full-screen through an
 iframe. The Hub owns the browser-facing surface and proxies the internal
 research and codex services through same-origin /research/ and /codex/ paths.
+Its historically named ``/portafolio/`` route is the operator-facing IRIS
+ordering/curation interface (Atlas Campo del Orden), not the artist's public
+portfolio; ``iskvw.cl`` is a separate downstream site.
 The services keep their existing routes and contracts; their ports remain
 internal runtime boundaries.
 

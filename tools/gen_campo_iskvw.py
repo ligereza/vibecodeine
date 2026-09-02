@@ -20,7 +20,9 @@ Corre EN MAK (ahi vive el indice del micelio):
 
     python3 gen_campo_iskvw.py --salida iskvw/datos/campo.json
 
-    That is the path the MAK Hub portfolio tab serves as its campo de orden.
+    That is a downstream `iskvw` field artifact which the MAK Hub's internal
+    IRIS/Atlas Campo del Orden interface may consume through its historical
+    `/portafolio/` route. It is not the IRIS system or a publication decision.
     The default writes to the repository root, which this repo forbids.
 """
 from __future__ import annotations

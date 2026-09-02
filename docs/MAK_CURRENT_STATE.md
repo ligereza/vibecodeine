@@ -14,6 +14,54 @@ El traspaso estructurado vigente está en
 `/home/mak/context/LAST_HANDOFF.md`. Léelo junto con este estado; el antiguo
 `MAK_CODEX_HANDOFF.md` quedó histórico en `docs/handoffs/archive/`.
 
+## Frontera semántica: IRIS no es el portafolio
+
+**IRIS es el sistema interno que el operador creó para ordenar y trabajar su
+archivo**: conserva evidencia, propone relaciones y órdenes defendibles y
+recibe decisiones humanas. Puede preparar insumos para un portafolio, dossier,
+postulación o investigación, pero no es ninguno de esos productos.
+
+`iskvw.cl` es la web pública donde se sube lo que pasó por curatoria. Es una
+salida downstream separada, con su propio contrato. El Hub MAK de `:8900`
+contiene IRIS —el sistema que el operador creó para ordenar el archivo—,
+conocido en esta superficie como **Atlas Campo del Orden**. Conserva
+`/portafolio/` como nombre histórico para su interfaz interna de
+curatoria/ordenamiento, que monta `iskvw/editor.html`; esa ruta no convierte a
+IRIS en el portafolio ni convierte a `iskvw.cl` en parte del sistema interno.
+La pantalla `MAK · ATLAS VIVO / campo de orden` y el editor/mesa montado son la
+misma interfaz visible; la distinción es entre sistema, interfaz y salida, no
+entre dos diseños distintos.
+El mismo árbol físico contiene la piel pública (`iskvw/piel/campo/`) y ese
+editor interno; co-localización no significa identidad.
+
+La multiplicidad de `editor.html` también quedó medida: el primer
+`find /home/mak -xdev -type f -name editor.html` encontró 16 copias
+(checkouts, runtime, compatibilidad, archivos, logs y rollback). La copia de
+compatibilidad obsoleta se retiró después de forma reversible; el mismo
+inventario acotado ahora encuentra 15 archivos con ese basename y un artefacto
+archivado con nombre explícitamente legacy. Claude tuvo razón al detectar la
+duplicación; la conclusión correcta es que el basename no decide autoridad.
+Para el Hub activo sólo valen la ruta servida, `MAK_PORTFOLIO_ROOT`, el archivo
+fuente y su hash.
+
+### Autoridad única del editor IRIS — verificada 2026-09-02
+
+La cadena operativa consolidada es:
+
+`127.0.0.1:8900/portafolio/` → `cultura/mak_plataforma/hub.py` →
+`MAK_PORTFOLIO_ROOT=/home/mak/iskvw` → `/home/mak/iskvw/editor.html`.
+
+La respuesta HTTP es 200, mide 253564 bytes y conserva el SHA-256
+`ed7e3bf2d02a841b52560be007390d78c7aed90c79d46258347b22700f03f331`, igual al
+archivo fuente. Ésta es la única autoridad runtime del Atlas/IRIS visible en
+el Hub. `/home/mak/flujo/iskvw/editor.html` es una copia local de su checkout
+portable, actualmente idéntica pero no servida por este proceso; sólo se
+sincroniza mediante una decisión explícita de transporte. La copia vieja en
+`/home/mak/plataforma/iskvw/editor.html` fue retirada reversiblemente a
+`_archive/iris-editor-consolidation-20260902/` porque la ruta medida no la
+consume. Las copias en `_archive/`, `_logs/` y rollback se preservan como
+historia. No se edita ni se elige ningún archivo por llamarse `editor.html`.
+
 ## Consolidación local completada — 2026-08-29
 
 MAK local significa `/home/mak`, no sólo `/home/mak/flujo`. En esta sesión se
@@ -342,10 +390,10 @@ App puede usar el siguiente puerto libre (por ejemplo, 8766).
 | Área | Owner físico principal | Consumidor y contrato |
 |---|---|---|
 | RD | `RD/`, `src/flujo/`, `data/rd.db` | Eventos, cotizaciones, packs, suplementos, plano/rider, venues y entregables operativos. |
-| Portfolio / ISKVW | `web/`, `iskvw/`, `tools/portfolio/` | Obras, archivo público, piezas SVG, vínculos y presentación autoral. |
+| Portfolio / ISKVW (salida) | `web/`, `iskvw/`, `tools/portfolio/` | Obras, archivo público, piezas SVG, vínculos y presentación autoral; recibe resultados seleccionados, no define IRIS. |
 | Research | `cultura/mak_research/`, `tools/research_job_router.py`, `tools/execute_research_job.py` | Preguntas por dominio, fuentes, claims, relaciones, hashes, licencias y reportes/propuestas. |
 | Curatoria | `curatoria/`, `cultura/mak_curatoria/` | Carpetas caóticas -> clasificación, índice, procedencia, triangulación y dossier. |
-| Cultura / MAK | `cultura/mak_plataforma/` | Orquestación local, health, gobierno, backlog, entrega y exposición en 8900. |
+| Cultura / MAK + IRIS | `cultura/mak_plataforma/` | Orquestación local, sistema interno de ordenamiento IRIS, health, gobierno, backlog, entrega y exposición en 8900. |
 | Lenguaje / Vigía | `cultura/mak_lenguaje/`, `cultura/mak_vigia/` | Contratos de idioma y vigilancia de convocatorias sin convertir candidatos en hechos. |
 | Venue / SCD | `data/venues/`, `tools/venue*.py`, `tools/venue3d_smoke.mjs` | Ficha de venue, geometría, plano visual y demostración 3D. SCD es un demostrador, no un levantamiento técnico certificado. |
 
