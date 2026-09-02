@@ -98,7 +98,7 @@ mediciones del 31-08 permanecen abajo como historia fechada.
   líneas, 10.962 símbolos y 0 errores de sintaxis. Su alcance explícito incluye
   sólo la raíz Python, `src/`, `cultura/`, `tools/`, `tests/` y `scripts/`.
   Excluye `_archive`, `WIN`, montajes y árboles de material no-code. Su SHA-256
-  actual es `7926abb51345f9a5d6e89d6db44cc81652db9a216d0e2c2182a7013d549ae739`.
+  actual es `e8f49ec645eaa9c61d8a61f73a6b597b5e52cc5b12f9cda6758dd7b5af802f2b`.
 - `context/test_lane_map.json` (`mak-test-lane-map-v3`) es el contrato vigente
   y `tools/test_lane_map.py` lo carga. Conserva 243 acuerdos, 80 carriles
   respaldados por imports/rutas, mueve 1 caso por import directo y resuelve 56
