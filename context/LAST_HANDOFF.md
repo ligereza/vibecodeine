@@ -211,6 +211,22 @@ paused. The next action is operator review of this audit write-set and, if
 authorized, the existing release/publish procedure; do not regenerate
 `iskvw/datos/*`, touch the IRIS reader, or promote ordering into authorship.
 
+### Fase 2 publication — 2026-09-02
+
+- Operator authorized publication after the bounded write-set review. MAK was
+  committed as `9c2c4255` (`fix(mak): align physical checkout consumers`) with
+  57 paths; FLUJO was committed as `50e453c2`
+  (`fix(flujo): align physical checkout contracts`) with 3 paths.
+- Pushes succeeded without force: `fe4d3fab..9c2c4255 MAK -> MAK` and
+  `27ede605..50e453c2 FLUJO -> FLUJO` on remote `vibecodeine-legacy`.
+- The exact pre-publish evidence remains: MAK `2175 passed, 5 skipped`,
+  integration `372 passed`, FLUJO `1611 passed, 44 skipped`, both hygiene
+  lanes green, `flujo verify` OK, and runtime preflight 5/5 OK. No IRIS,
+  `iskvw/datos/*`, service state, or artistic output was changed.
+- The next action is to observe the remote CI runs for these two branch tips
+  and integration. IRIS remains paused; do not regenerate data or open the
+  IRIS reader as part of CI follow-up.
+
 # Operational Handoff
 
 ## Agent bootstrap -- CURRENT -- 2026-09-02 (later) -- the suites, and the boundary the operator corrected
