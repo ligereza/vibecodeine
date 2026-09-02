@@ -265,9 +265,15 @@ CI. Squash merges keep the PR author as the author (a merge of a MAK PR shows up
 in `git log` as a miskirabit commit: that is normal, it went through the gate, it
 is not a direct push).
 
-Repository topology (2026-08-13): within Git, `main` is the only canonical
-reviewed history. It is a reproducibility and publication checkpoint, not the
-complete organism and not the authority over local material.
+Repository topology (2026-09-02, supersedes the 2026-08-13 note): `MAK` and
+`FLUJO` are the two operational branches and each is a physical checkout. THIS
+checkout is `/home/mak/flujo`, branch `FLUJO`: the portable motor, its CLI, Hub
+and packaging. The Linux box is the parent checkout `/home/mak`, branch `MAK`,
+which consumes this motor from `/home/mak/flujo/src`. This branch does not
+carry the MAK departments, services or Hub, and the box layer is an optional
+peer (`MAK_BOX_AVAILABLE`, `MAK_RESEARCH_SOURCES_AVAILABLE`). `main` and
+`historia` are historical: never runtime, never deployment targets.
+`.claude/worktrees` is never runtime.
 
 - Physical Windows and MAK Linux surfaces are authoritative for files,
   databases, memories, services, mounted storage, and generated outputs.
@@ -278,8 +284,16 @@ complete organism and not the authority over local material.
   Windows and MAK Linux are physical nodes; Data, Capabilities, Products,
   Operations, and Tests are system boundaries that may be distributed across
   those nodes and Git projections.
-- New work uses a temporary `codex/*` worktree from `origin/main` and returns
-  through a reviewed PR to `main`.
+- New work goes to the branch that owns the surface: motor, CLI, Hub and
+  packaging here; box departments, services and box tooling to `MAK`. Each
+  operational branch pushes its own ref (`FLUJO:FLUJO`); nothing returns
+  through `main`.
+- Ownership is decided by importer, consumer and contract, never by directory
+  name.
+- Test presence is physical, not a marker: pytest imports a module before it
+  can deselect it. The lane authority is `context/test_lane_map.json`.
+- A test that needs both trees belongs to the `integration` lane, which lives
+  once, in MAK.
 - `dependabot/*` branches are temporary automated updates and use the same
   review gate.
 - `mak`, `rd`, `iskvw`, `mejoras`, and `mak-svg` are transition/history refs.
@@ -449,7 +463,7 @@ Live core:
 | `tests/` | Tests |
 | `web/src/` | React/Vite hub (build -> `context/*.html`) |
 | `scripts/validate_airdrop.py`, `scripts/run_airdrop_checks.py` | `_airdrop/` validator + runner |
-| `.github/workflows/ci.yml` | CI: install, compileall, health, pytest |
+| `.github/workflows/ci-flujo.yml` | CI: FLUJO profile + package, gate, `-m flujo` lane, entrypoint |
 | `pyproject.toml` | Metadata + version (the version rules) |
 | `.claude/skills/*/SKILL.md` | Agent playbooks |
 | `_archive/legacy_20260725_desktop/` | Tkinter floating app (Gemini->Claude router, PARKED); archived 2026-07-25, see CERTIFICADO.md there |
