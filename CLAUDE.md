@@ -502,6 +502,25 @@ Queryable database: `py -m flujo rd-db build|reactivo|packs|productora|venues|po
 (`src/flujo/rd/`, a regenerable projection; `data/rd.db` is gitignored).
 Everything this area outputs is read by humans: correct Spanish with diacritics.
 
+**The Hub portfolio tab is TWO files (2026-09-02, measured).** The surface at
+`127.0.0.1:8900/portafolio/` is the ordering/curation application: a shell,
+`iskvw/editor.html`, plus `iskvw/mesa_montaje.js`, which draws everything a
+person actually reads. Grepping the shell alone for what the screen shows
+returns zero and looks exactly like a stale deployment -- and the shell carries
+the `text-transform` rules, so the on-screen uppercase is not the source case
+either. Cause: two agents in a row concluded the wrong thing from that single
+measurement, one of them nearly rebuilding a tree that was current.
+
+Serve root is `PORTFOLIO_ROOT`, default `/home/mak/iskvw` (this checkout).
+`/home/mak/flujo/iskvw` is a branch-local copy, identical today, invisible to
+the Hub. `iskvw.cl` is a third thing: the dormant published site over
+`iskvw/datos/*` and a replaceable skin. `IRIS` is the name of the Fondart
+application this system is presented under; it renames no file, route or
+symbol. Identity, consumers and the ten API routes the interface calls:
+`CAPACIDADES.md` section 1-bis. Guards:
+`tests/test_iskvw_editor_contract.py`. Retirement: when one authoritative copy
+of the pair exists and the Hub resolves it by contract, not by a default path.
+
 **Culture (art research):** tapiz, tilde, psicosis, precursor. Third hub
 workspace (`CulturaPanel.tsx`). Tapiz instrument: `projects/tapiz/`
 (`py projects/tapiz/vibecode_spaces.py file.py -m void --svg piece.svg`). Meter:

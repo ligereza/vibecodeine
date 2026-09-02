@@ -1,9 +1,11 @@
-# IRIS -- canonical definition of the Mesa de Montaje
+# IRIS -- canonical definition of MAK's ordering system
 
-> Written 2026-09-02 on the operator's direction. IRIS is a NAME for what
-> already exists in MAK, not a new application. Anyone who reads this document
-> and starts building a second surface, a second database, a second corpus or a
-> second definition of "obra" has misread it.
+> Written 2026-09-02 on the operator's direction. IRIS is the name of the
+> internal MAK system the operator created to order and work through the
+> archive. It is not the artist's portfolio, not `iskvw.cl`, and not a new
+> application. Anyone who reads this document and starts building a second
+> surface, a second database, a second corpus or a second definition of "obra"
+> has misread it.
 >
 > Authority order for this subject: the operator -> `CLAUDE.md` ->
 > `context/LAST_HANDOFF.md` -> `docs/PORTAFOLIO_PRODUCCION.md` and
@@ -13,15 +15,18 @@
 
 ## 1. What IRIS is
 
-IRIS is the visual table (`Mesa de Montaje`) through which a person walks their
-own archive, sees why the system proposes a relation, and decides. It is the
-PORTAFOLIO surface of the MAK Hub on port 8900, plus the local engine behind
-it.
+IRIS is the internal MAK ordering system through which a person walks their own
+archive, sees why the system proposes a relation, and decides. The visual
+table (`Mesa de Montaje`) is its operator-facing surface, and the local engine
+behind it is part of the same system. In the Hub on port 8900, the operator's
+working name for this same system/interface is **Atlas Campo del Orden** (the
+visible `campo de orden`). IRIS can prepare material for a portfolio, dossier,
+application or research output; it is not any one of those outputs.
 
 It is an epistemic instrument, not a catalogue, a dashboard or a decorative
 graph. Its value is in what it refuses to assert.
 
-## 1-bis. What IRIS is NOT: iskvw.cl (operator's correction, 2026-09-02)
+## 1-bis. What IRIS is NOT: the portfolio and iskvw.cl (operator's correction, 2026-09-02)
 
 Two things share a surface and must not be conflated. This agent conflated
 them, so the boundary is written here before anything else.
@@ -37,28 +42,84 @@ explicit decision from #355 (2026-07-27): posts and reels, never
 `archived_posts/` or `other/`, because publishing what someone archived
 reverses a decision they made.
 
-**IRIS is the PORTAFOLIO surface of the MAK Hub**, which grew out of
-`iskvw/editor.html` -- the curation panel -- and then joined DIMENSIONES DEL
-ORDEN. Today the Hub still MOUNTS that panel (`/portafolio/` ->
-`iskvw/editor.html`, `PORTFOLIO_ROOT` = `/home/mak/iskvw`), which is the
-historical join and the reason the two look like one thing. But the engine
-behind IRIS -- `copilot.py`, the 35 `/api/portfolio/*` routes, the eight
-layers, the five verbs, the evidence states, the GTM atlas and the ordering
-field -- works on a richer model than a list of obras: records, works,
-context and relations, with claims that carry provenance and a state.
+The same physical tree contains two different roles: `iskvw/piel/campo/` is
+the public site's skin, while `iskvw/editor.html` is an operator tool. The
+public site and the co-located editor are not the same product, and neither is
+the whole IRIS system.
 
-**And it is DORMANT.** The operator's correction of 2026-09-02: iskvw.cl has
-not published anything in about a month and is not in use. Its publish
-workflow exists and is explicit, but nothing is being served from recent work.
-So `iskvw/` is a parked surface with a real contract, not a live product.
+**The Hub's `/portafolio/` route is the internal IRIS interface/entry point**,
+not the artist's portfolio. The screen showing `MAK · ATLAS VIVO` and `campo de
+orden` is this same interface, not a second one. It currently mounts
+`iskvw/editor.html` (`/portafolio/` -> `iskvw/editor.html`, `PORTFOLIO_ROOT` =
+`/home/mak/iskvw`) because that curation panel was the historical
+implementation from which the interface grew. The URL and the editor filename
+are legacy implementation labels; they do not define IRIS and do not turn the
+route into `iskvw.cl`.
 
-The consequence, stated plainly: **the obras-only version is the older one, and
-it is asleep. Editing `iskvw/datos/*` or `iskvw/piel/*` is not working on
-IRIS.** On 2026-09-02 this agent read a red test suite, traced it to
-`campo.json`, re-ran the capas and the animated pieces, and then -- the worse
-error -- called that damage to a live published product. It was not. Measure
-whether a surface is in use before calling it a product at risk. The lesson is
-the boundary and the dormancy, not the revert.
+**IRIS is the system the operator created to order the archive and prepare
+defensible outputs.** Its engine -- `copilot.py`, the `/api/portfolio/*`
+namespace, the evidence states, the GTM atlas and the ordering field -- works
+on a richer model than a public list of obras: records, works, context and
+relations, with claims that carry provenance and a state. The resulting
+proposals and decisions may feed a portfolio or another product, but remain
+inside the ordering system until a downstream consumer and the human gate
+accept them.
+
+`iskvw/` is a public output surface with its own contract. Its current
+publication state must be measured separately. Editing `iskvw/datos/*` or
+`iskvw/piel/*` maintains that public projection; it is not the same as changing
+the IRIS system or its ordering logic.
+
+The Claude audit was correct that the basename is non-unique. The initial
+filesystem check on 2026-09-02 counted **16 physical `editor.html` files**
+under `/home/mak`, across active checkouts, compatibility/runtime copies,
+archives, logs and rollback material. The stale compatibility copy was then
+retired reversibly; the current bounded count is **15 files named
+`editor.html`**, plus that preserved archive artifact under an explicit legacy
+name. Only `iskvw/editor.html` is tracked in the current MAK checkout. This
+multiplicity is historical/branch evidence, not product identity: authority is
+selected by the active route, `PORTFOLIO_ROOT`, source and served hash. A
+filename alone never identifies IRIS, the public site or a current runtime.
+
+### Operational identity matrix
+
+| Name | Role | Evidence/authority | Is not |
+|---|---|---|---|
+| IRIS / Atlas Campo del Orden | Internal MAK system for ordering the archive | `cultura/mak_plataforma/copilot.py` plus the Hub on `:8900` | The artist's portfolio or publication site |
+| `/portafolio/` | Entry point for the same internal IRIS/Atlas interface | Active route in `cultura/mak_plataforma/hub.py` | A public URL or a product identity |
+| `iskvw/editor.html` | Implementation file of that same visible interface, co-located with the site tree | `MAK_PORTFOLIO_ROOT` and the served asset hash | The whole IRIS system or `iskvw.cl` |
+| `iskvw.cl` | Public artist website/output | `iskvw/piel/` and `publicar_iskvw.yml` | IRIS |
+| Other `editor.html` copies | Historical, sibling, runtime or rollback material | Explicit route + source + hash required before use | Current authority by basename alone |
+
+### One active editor authority; preserved copies are not active duplicates
+
+The consolidation rule is operational, not destructive: there is one source
+of truth for the live MAK Hub consumer. On 2026-09-02 the measured chain is:
+
+    127.0.0.1:8900/portafolio/
+      -> cultura/mak_plataforma/hub.py
+      -> MAK_PORTFOLIO_ROOT=/home/mak/iskvw
+      -> /home/mak/iskvw/editor.html
+
+The served response is HTTP 200, has 253564 bytes, and its SHA-256 is
+`ed7e3bf2d02a841b52560be007390d78c7aed90c79d46258347b22700f03f331`, equal to
+the source file. This is the only active runtime authority for the visible
+Atlas/IRIS editor.
+
+The other physical copies have bounded meanings and must not be treated as
+parallel interfaces:
+
+| Path class | Status | Rule |
+|---|---|---|
+| `/home/mak/iskvw/editor.html` | Canonical MAK runtime source | Edit here for the live Hub; verify route, root and served hash afterwards. |
+| `/home/mak/flujo/iskvw/editor.html` | FLUJO branch-local checkout copy; currently byte-identical | Keep independent for portable checkout reproducibility; sync only through an explicit FLUJO transport/commit, never by ad-hoc editing. |
+| Former `/home/mak/plataforma/iskvw/editor.html` | Retired compatibility/runtime copy | Preserved reversibly as `_archive/iris-editor-consolidation-20260902/plataforma/iskvw/editor.html.legacy-20260902`; never restore without route/root/hash verification. |
+| `_archive/`, `_logs/`, rollback trees | Historical evidence | Preserve; these are not active duplicates and never determine current behavior. |
+
+Therefore “consolidated” means one active consumer and one selected source,
+not erasing historical files or pretending that two Git checkouts are one
+filesystem. A future UI change must name the consumer and show the exact
+source/served hash pair before it is accepted.
 
 ## 2. The problem it answers
 
@@ -128,8 +189,9 @@ Measured on the MAK checkout, 2026-09-02.
 
 | piece | evidence |
 |---|---|
-| PORTAFOLIO surface of the Hub | `cultura/mak_plataforma/hub.py`, route `/portafolio/` -> `iskvw/editor.html`, 35 distinct `/api/portfolio/*` route names |
-| local ordering engine | `cultura/mak_plataforma/copilot.py`, 1820 lines, 46 module-level functions, standard library only, no model provider |
+| IRIS operator interface/adapter | `cultura/mak_plataforma/hub.py`, route `/portafolio/` -> `iskvw/editor.html` (legacy URL and mounted editor), 35 distinct `/api/portfolio/*` route names |
+| IRIS local ordering engine | `cultura/mak_plataforma/copilot.py`, 1820 lines, 46 module-level functions, standard library only, no model provider |
+| public portfolio output | `iskvw/`, published by `.github/workflows/publicar_iskvw.yml`; separate site and contract |
 | declared contracts | `faro-gtm-map-v1`, `faro-portfolio-atlas-v1`, `faro-ordering-field-v2`, `faro-ordering-replay-v1`, `faro-curatorial-inference-v1`, `faro-portfolio-vision-v1` |
 | latent map | elastic rectangular grid, `GTM_DIMENSIONS = 32`, fit sampled above `GTM_FIT_LIMIT = 1024` |
 | triage vocabulary | `ORDER_LABELS = ("work", "record", "review", "discard")` |
@@ -162,21 +224,24 @@ Measured on the MAK checkout, 2026-09-02.
 
 ### Absent and unresolved
 
-- Three independent portfolio implementations with three incompatible
-  definitions of "obra" (recorded in `docs/AUTORIDAD.md`).
-- Four copies of `editor.html` on the machine.
+- Three independent implementations of the portfolio-output path with three
+  incompatible definitions of "obra" (recorded in `docs/AUTORIDAD.md`).
+- Historical note of multiple `editor.html` copies is confirmed and refined
+  above: 16 physical files were measured on 2026-09-02; only the active route
+  and served hash identify the current consumer.
 - `POST /api/portfolio/dispatch` has no measured reader.
 - The learning loop is blocked on human decisions, not on code.
 
 ## 7. Where the pieces physically live
 
 The 2026-09-02 separation put MAK at `/home/mak` and FLUJO at
-`/home/mak/flujo`. The consequence for IRIS, measured today: the portfolio
-COMPILE and RENDER chain went to FLUJO while MAK's registry still claimed it.
+`/home/mak/flujo`. The consequence for IRIS, measured today: its ordering and
+Hub integration live in MAK, while portfolio compile/render is a downstream
+FLUJO consumer.
 
-- IRIS surface and engine: MAK (`cultura/mak_plataforma/`). The mounted
-  curation panel and the published site live in `iskvw/` and are a
-  different product -- see section 1-bis.
+- IRIS system and Hub integration: MAK (`cultura/mak_plataforma/`). The
+  mounted curation panel at `/portafolio/` is an internal interface with a
+  historical name; the public site in `iskvw/` is a separate output product.
 - Compile, render, opportunity fit: FLUJO (`flujo/tools/`, 35 tools, listed in
   `CAPACIDADES.md` section 5-quater).
 - Knowledge layer: FLUJO (`flujo/src/flujo/knowledge/`), consumed by MAK tools
@@ -206,7 +271,8 @@ The shared surface principle, for every one of them: `overlay_only`,
 ## 9. Non-goals
 
 IRIS does not decide which order was the true one. It does not claim authorship
-from file evidence. It does not publish by itself. It does not accept NEW input
+from file evidence. It does not equal the artist's public portfolio or
+publication site. It does not publish by itself. It does not accept NEW input
 carrying personal data -- already-produced material may be re-read and
 re-measured, which is the operator's correction of 2026-07-31.
 
@@ -228,6 +294,6 @@ re-measured, which is the operator's correction of 2026-07-31.
   reference links inside a document only if they are live and key-free at
   evaluation time. Nothing is currently cleared for external view.
 
-Retirement of this document: when the three portfolio implementations collapse
-into one and the function map can be generated from the tree instead of
-written by hand.
+Retirement of this document: when the distinct portfolio-output paths collapse
+into one and the function map can be generated from the tree instead of written
+by hand.

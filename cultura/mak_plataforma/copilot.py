@@ -1,4 +1,10 @@
-"""Curatorial copilot contracts independent of any model provider."""
+"""IRIS ordering engine, independent of any model provider.
+
+The ``portfolio`` names in schemas and API-compatible callers are historical
+domain labels for downstream portfolio material. This module is not a
+portfolio publisher: it proposes defensible orders/relations for the internal
+MAK system IRIS (Atlas Campo del Orden) and preserves the human decision gate.
+"""
 from __future__ import annotations
 
 import json

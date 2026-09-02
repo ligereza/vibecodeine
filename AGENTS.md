@@ -136,14 +136,41 @@ blindly: preserve its work, compare hashes, then reconcile deliberately.
 - Existing routing is enough: AWS for visual evidence, Watsonx for research or
   hypotheses, Ollama for local judging, and deterministic fallback when a
   model fails. Never let a provider failure become an empty truth.
-- The portfolio editor, GTM projection, identity graph, ledger, Capataz,
+- The IRIS operator interface, GTM projection, identity graph, ledger, Capataz,
   `tandas.py`, `discernment.py`, and `contrato_archivo.py` are connected. Extend
   them; do not build a parallel UI or data store.
-- The only operational portfolio surface is `/portafolio/`, the current
-  GTM/map editor served from the MAK checkout under `/home/mak/flujo/iskvw`.
-  Legacy list/card or older editor surfaces are historical references: do not
-  edit them, deploy them, or use them as evidence of current behavior.
-- Before changing portfolio UI, verify with a command that `/portafolio/` is
+- The current internal IRIS interface is `/portafolio/`, the GTM/map editor
+  served by the MAK Hub from the MAK checkout under `/home/mak/iskvw`. The
+  route name is historical: this is the operator-facing ordering/curation
+  surface of IRIS/Atlas Campo del Orden, not the artist's portfolio and not the
+  public `iskvw.cl` site. The Hub shell and its mounted editor are one visible
+  interface; separate only their system/implementation/output roles. Legacy
+  list/card or older editor surfaces are historical references:
+  do not edit them, deploy them, or use them as evidence of current behavior.
+- There is one active runtime authority for that interface:
+  `/home/mak/iskvw/editor.html` served through the Hub on `127.0.0.1:8900`.
+  `/home/mak/flujo/iskvw/editor.html` is a branch-local FLUJO checkout copy,
+  not a second runtime; it may change only through an explicit branch/transport
+  decision. The former `/home/mak/plataforma/iskvw/editor.html` copy was
+  retired reversibly to `_archive/iris-editor-consolidation-20260902/` and is
+  not served by the measured route. That retirement is HALF done: measured
+  2026-09-02, `/home/mak/plataforma/iskvw/mesa_montaje.js` still exists as a
+  symlink into the FLUJO checkout (`/home/mak/flujo/iskvw/mesa_montaje.js`),
+  inside the Hub's own working directory. It is inert today because `hub.py`
+  resolves the absolute `PORTFOLIO_ROOT` and never a cwd-relative `iskvw/`
+  path, and `plataforma/` is untracked (`.git/info/exclude:81`). It is a live
+  pointer at the sibling tree all the same, and removing it is an operator
+  decision, not an agent's.
+  The surface is a PAIR: `iskvw/editor.html` is the shell and
+  `iskvw/mesa_montaje.js` draws the interface. Searching the HTML alone for
+  what the screen shows returns zero and reads like a stale deployment; the
+  shell also carries the `text-transform` rules, so the on-screen uppercase is
+  not the source case. `tests/test_iskvw_editor_contract.py` pins both traps
+  and the two-checkout divergence. Full identity, consumers and the ten API
+  routes the interface calls: `CAPACIDADES.md`, section 1-bis. Archives, logs and rollback trees retain
+  historical copies for evidence. Never edit or select any of these by
+  basename alone.
+- Before changing the IRIS/Hub ordering UI, verify with a command that `/portafolio/` is
   the served route and identify the exact `MAK_PORTFOLIO_ROOT` file and served
   asset hash. If the checkout, runtime, handoff, and served asset disagree,
   reconcile the discrepancy first; never choose an editor by filename alone.

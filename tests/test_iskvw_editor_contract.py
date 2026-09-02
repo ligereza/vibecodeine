@@ -256,3 +256,77 @@ def test_editor_keeps_search_board_filter_and_association_tray_separate():
     assert "inbox-action-primary" in source
     assert "const INBOX_SELECTED = new Set()" in source
     assert "anadirSeleccionAlTablero" in source
+
+
+# ---------------------------------------------------------------------------
+# The portfolio surface is a PAIR of files, and which copy is served is a
+# contract
+# ---------------------------------------------------------------------------
+#
+# Added 2026-09-02 after the same confusion cost two agents in a row. The Hub's
+# portfolio tab is the application that orders records, relates them and
+# carries a copilot that learns. The artist's portfolio is the PRODUCT that
+# comes out of it, and `iskvw.cl` is a third thing: the dormant published site.
+# They share the `iskvw/` prefix through a historical join and are not one
+# surface. (`IRIS` is the name of the grant application this system is
+# presented under; it renames nothing in the tree.)
+#
+# The trap these guards close: the interface a person sees is drawn by
+# `mesa_montaje.js`, not by `editor.html`. Searching the HTML alone for the
+# visible chrome returns ZERO and reads exactly like a stale deployment, which
+# is how "Codex left the old version" became a plausible-looking conclusion
+# about a tree that was current.
+#
+# Retirement: when one authoritative copy of the pair exists and the Hub
+# resolves it by contract instead of by a default path.
+
+# Strings a person reads on screen, in the case the SOURCE uses. The screen
+# shows them uppercase because the shell carries the `text-transform` rules, so
+# searching for what the screenshot shows is a second way to measure nothing.
+_VISIBLE_CHROME = (
+    "atlas vivo", "incertidumbre", "siguiente frontera", "evidencia externa",
+)
+
+
+def test_the_surface_is_a_pair_and_the_chrome_lives_in_the_javascript():
+    """Measuring `editor.html` alone cannot tell you what version is running."""
+    source = EDITOR.read_text(encoding="utf-8")
+    mesa = MESA.read_text(encoding="utf-8")
+
+    assert 'src="mesa_montaje.js' in source, (
+        "the shell must load the interface; without this the pair is not a pair")
+    for token in _VISIBLE_CHROME:
+        assert token in mesa, token
+        # Pin the trap itself: the chrome is NOT in the shell, so a search that
+        # stops at the HTML measures the wrong file and reports a false stale.
+        assert token not in source, token
+
+
+def test_the_hub_serves_the_editor_from_this_checkout_not_the_sibling():
+    """`PORTFOLIO_ROOT` decides which copy a person actually edits."""
+    hub = (Path(__file__).parents[1] / "cultura" / "mak_plataforma"
+           / "hub.py").read_text(encoding="utf-8")
+    assert 'os.path.join(HOME, "iskvw")' in hub
+    assert 'os.path.join(HOME, "flujo/iskvw")' not in hub
+    assert 'HOME, "flujo", "iskvw"' not in hub
+
+
+def test_the_two_checkout_copies_do_not_diverge_in_silence():
+    """Both operational checkouts track the pair; only MAK's copy is served.
+
+    Editing one and not the other separates them without any error, and the
+    Hub keeps showing its own. This does not decide whether FLUJO should carry
+    this surface at all -- an ownership question for the branch contract. It
+    only refuses the silent divergence.
+    """
+    sibling = Path(__file__).parents[1] / "flujo" / "iskvw"
+    if not sibling.is_dir():
+        return  # the sibling checkout is not materialized here; nothing to compare
+    for served in (EDITOR, MESA):
+        twin = sibling / served.name
+        if not twin.is_file():
+            continue
+        assert twin.read_bytes() == served.read_bytes(), (
+            "%s differs between the MAK checkout and %s. The Hub serves the MAK "
+            "copy, so the other one is invisible to anyone using /portafolio/."
+            % (served.name, sibling))
