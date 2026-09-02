@@ -540,15 +540,27 @@ def check_hub_boundaries(gate: Gate, root: Path, rows: list[dict[str, object]], 
             # transfer contract, but only the declared consumers are covered
             # by it, so the rest is reported as drift rather than silence.
             other_side = "flujo." if hub_path == MAK_HUB else "cultura."
+            def consumer_module(path: str) -> str:
+                """Normalize a checkout-relative consumer path to its module."""
+                value = path.replace("\\", "/")
+                # MAK profiles spell external motor paths as
+                # ``flujo/src/flujo/...``; FLUJO profiles use ``src/flujo/...``.
+                if value.startswith("flujo/src/"):
+                    value = value[len("flujo/"):]
+                value = value.removeprefix("src/").removesuffix(".py")
+                return value.replace("/", ".")
+
+            declared_modules = tuple(consumer_module(consumer)
+                                     for consumer in declared_consumers)
             undeclared = sorted(
                 module
                 for module in modules
                 if module.startswith(other_side)
                 and module not in crossed
                 and not any(
-                    consumer.replace("src/", "").replace("/", ".").removesuffix(".py").startswith(module)
-                    or module.startswith(consumer.replace("src/", "").replace("/", ".").removesuffix(".py"))
-                    for consumer in declared_consumers
+                    module == declared or module.startswith(declared + ".")
+                    or declared.startswith(module + ".")
+                    for declared in declared_modules
                 )
             )
             results.append(
@@ -1091,14 +1103,14 @@ def build_push_plans(branches: list[dict[str, object]]) -> dict[str, object]:
             "publishable": True,
             "target_ref": f"{REMOTE}/{branch}",
             "source_ref": branch,
-            "worktree": f".claude/worktrees/{branch.lower()}-closeout",
+            "worktree": str(BRANCH_SURFACES[branch]["physical_root"]),
             "sync_before_push": sync,
             "ahead": sync.get("ahead"),
             "fast_forwardable": sync.get("fast_forwardable"),
             "never": ["git add -A", "git add .", "git commit -a", "git push --force", "new branches"],
             "steps": [
                 f"python3 -m pytest tests/ {row.get('selector')} -q   # deferred here; this is the missing verdict",
-                f"git -C .claude/worktrees/{branch.lower()}-closeout log --oneline {REMOTE}/{branch}..{branch}",
+                f"git -C {BRANCH_SURFACES[branch]['physical_root']} log --oneline {REMOTE}/{branch}..{branch}",
                 f"git push {REMOTE} {branch}:{branch}   # same ref to same ref, requires explicit human approval",
             ],
             "executed": False,
