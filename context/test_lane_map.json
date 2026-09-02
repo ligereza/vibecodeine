@@ -2238,10 +2238,40 @@
       "lane": "flujo",
       "imports": [],
       "reason": "subject is a FLUJO motor tool: gen_campo_iskvw imports flujo.plano, venue imports flujo.venues, vj_set/git_performance imports flujo.resolume"
+    },
+    "tests/test_laser.py": {
+      "lane": "flujo",
+      "imports": [],
+      "reason": "imports only the motor (flujo.*); no reach into the cultura tree"
+    },
+    "tests/test_math_kernel.py": {
+      "lane": "flujo",
+      "imports": [],
+      "reason": "imports only the motor (flujo.*); no reach into the cultura tree"
+    },
+    "tests/test_node_runtime_requirement.py": {
+      "lane": "flujo",
+      "imports": [],
+      "reason": "imports only the motor (flujo.*); no reach into the cultura tree"
+    },
+    "tests/test_portfolio_gen.py": {
+      "lane": "flujo",
+      "imports": [],
+      "reason": "imports only the motor (flujo.*); no reach into the cultura tree"
+    },
+    "tests/test_project_router.py": {
+      "lane": "flujo",
+      "imports": [],
+      "reason": "imports only the motor (flujo.*); no reach into the cultura tree"
+    },
+    "tests/test_web_hub_endpoints.py": {
+      "lane": "flujo",
+      "imports": [],
+      "reason": "imports only the motor (flujo.*); no reach into the cultura tree"
     }
   },
   "summary": {
-    "assignments": 186,
+    "assignments": 192,
     "note": "pruned to the tests this branch physically carries"
   },
   "reconciled_at_utc": "2026-09-02T00:00:00+00:00"
