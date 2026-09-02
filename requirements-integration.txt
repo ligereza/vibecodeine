@@ -1,0 +1,8 @@
+# Integration lane: the composition of the two physical checkouts.
+#
+# Integration tests import the MAK tree AND the FLUJO motor, so neither
+# profile alone can install them. This file is the only place that depends on
+# the box layout being real, which is exactly what the lane measures: it reads
+# the FLUJO profile from the sibling checkout instead of duplicating it.
+-r requirements-mak.txt
+-r flujo/requirements-flujo.txt

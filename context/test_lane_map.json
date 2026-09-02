@@ -3201,6 +3201,72 @@
       "lane": "mak",
       "imports": [],
       "reason": "declared owner: the test exercises this branch's own surface"
+    },
+    "tests/test_departments.py": {
+      "lane": "integration",
+      "imports": [
+        "src.flujo.departments"
+      ],
+      "reason": "imports the motor as src.flujo.*, so it needs the FLUJO checkout on sys.path as well as the MAK tree"
+    },
+    "tests/test_archive_portfolio_department.py": {
+      "lane": "integration",
+      "imports": [
+        "src.flujo.departments"
+      ],
+      "reason": "imports the motor as src.flujo.*, so it needs the FLUJO checkout on sys.path as well as the MAK tree"
+    },
+    "tests/test_diagnostics.py": {
+      "lane": "integration",
+      "imports": [],
+      "reason": "reaches both physical checkouts; runs with PYTHONPATH=/home/mak:/home/mak/flujo/src"
+    },
+    "tests/test_knowledge_dossiers.py": {
+      "lane": "integration",
+      "imports": [],
+      "reason": "reaches both physical checkouts; runs with PYTHONPATH=/home/mak:/home/mak/flujo/src"
+    },
+    "tests/test_mak_research_router.py": {
+      "lane": "integration",
+      "imports": [],
+      "reason": "reaches both physical checkouts; runs with PYTHONPATH=/home/mak:/home/mak/flujo/src"
+    },
+    "tests/test_mapa_completo.py": {
+      "lane": "integration",
+      "imports": [],
+      "reason": "reaches both physical checkouts; runs with PYTHONPATH=/home/mak:/home/mak/flujo/src"
+    },
+    "tests/test_opportunity_validity_capture.py": {
+      "lane": "integration",
+      "imports": [],
+      "reason": "reaches both physical checkouts; runs with PYTHONPATH=/home/mak:/home/mak/flujo/src"
+    },
+    "tests/test_optional_dependencies_absence.py": {
+      "lane": "integration",
+      "imports": [],
+      "reason": "reaches both physical checkouts; runs with PYTHONPATH=/home/mak:/home/mak/flujo/src"
+    },
+    "tests/test_research_registry_contract.py": {
+      "lane": "integration",
+      "imports": [],
+      "reason": "reaches both physical checkouts; runs with PYTHONPATH=/home/mak:/home/mak/flujo/src"
+    },
+    "tests/test_steg_changelog.py": {
+      "lane": "integration",
+      "imports": [],
+      "reason": "reaches both physical checkouts; runs with PYTHONPATH=/home/mak:/home/mak/flujo/src"
+    },
+    "tests/test_system_status.py": {
+      "lane": "integration",
+      "imports": [],
+      "reason": "reaches both physical checkouts; runs with PYTHONPATH=/home/mak:/home/mak/flujo/src"
+    },
+    "tests/test_laser.py": {
+      "lane": "integration",
+      "imports": [
+        "contrato_archivo"
+      ],
+      "reason": "inserts both RAIZ/src and RAIZ/cultura/mak_plataforma on sys.path; needs both checkouts"
     }
   },
   "generated_at_utc": "2026-09-02T00:44:00+00:00",
@@ -3216,7 +3282,7 @@
     "rule": "direct imports/path evidence may move a lane; ambiguous evidence moves to review; prior_lane is retained"
   },
   "summary": {
-    "assignments": 196,
+    "assignments": 208,
     "note": "pruned to the tests this branch physically carries"
   }
 }
