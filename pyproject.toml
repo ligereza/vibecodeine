@@ -12,8 +12,8 @@ dependencies = [
     "matplotlib>=3.10.9",
     "pyyaml>=6.0.3",
     "Pillow>=12.3.0",
-    "pydantic>=2.13.4",
-    "typer>=0.27.1",
+    "pydantic>=2.13.5",
+    "typer>=0.27.2",
     "rich>=15.0.0",
     "jsonschema>=4.26.0",
     "requests>=2.34.2",
@@ -28,7 +28,7 @@ dev = [
     "vpype>=1.15.0",
     "pre-commit>=4.6.2",
     "pyflakes>=3.4.0",  # ratchet #139: NameError latentes en codigo autogenerado
-    "hypothesis>=6.165.10",
+    "hypothesis>=6.167.0",
 ]
 render = [
     # El critico perceptual del motor semantico mide sobre PIXELES, asi que sin
@@ -50,7 +50,7 @@ desktop-extras = [
     "pystray>=0.19.5",   # optional tray icon for --desktop (free)
 ]
 build = [
-    "pyinstaller>=6.22.1",  # free packaging to .exe; 'flujo package'. Not runtime dep.
+    "pyinstaller>=6.22.2",  # free packaging to .exe; 'flujo package'. Not runtime dep.
 ]
 
 [project.scripts]

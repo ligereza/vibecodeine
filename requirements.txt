@@ -5,8 +5,8 @@
 matplotlib>=3.10.9
 pyyaml>=6.0.3
 Pillow>=12.3.0
-pydantic>=2.13.4
-typer>=0.27.1
+pydantic>=2.13.5
+typer>=0.27.2
 rich>=15.0.0
 jsonschema>=4.26.0
 requests>=2.34.2
