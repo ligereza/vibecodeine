@@ -37,8 +37,13 @@ jobs:
         run: python -m pip install -r requirements-mak.txt
       - name: pip check
         run: python -m pip check
-      - name: Structural gate
-        run: python tools/release_gate.py --check
+      # `tools/release_gate.py` is NOT a CI step and was removed from here on
+      # 2026-09-02, the first time these per-lane workflows ever ran. It is a
+      # box-local pre-push instrument: it resolves /home/mak and /home/mak/flujo
+      # as physical checkouts on their branches, and it exits 5 even with zero
+      # blockers because READY_TO_PUSH requires evidence that the lane suites
+      # ran green. In CI the suite IS the verdict, so the gate is both
+      # redundant and structurally unable to pass. Run it locally before a push.
       - name: MAK lane
         env:
           PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/flujo/src
