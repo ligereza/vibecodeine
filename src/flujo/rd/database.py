@@ -22,6 +22,7 @@ vuelve segura una sustancia.
 from __future__ import annotations
 
 import json
+import os
 import hashlib
 import importlib.util
 import re
@@ -49,7 +50,16 @@ _CANDIDATE_REGISTRIES = {
     "relation_graph_v0_1": (_REPO / "data" / "rd_fuentes" / "candidates" / "relation_graph_v0.1.json", "relations"),
     "relation_index_v0_1": (_REPO / "data" / "rd_fuentes" / "candidates" / "relation_index_v0.1.json", "records"),
 }
-_FUENTES_PY = _REPO / "cultura" / "mak_research" / "fuentes.py"
+# The RD source roster is MAK research material, not motor material. The
+# portable motor may read it when the box is next to it, but must not require
+# it: MAK_RESEARCH_ROOT overrides, and the default is the parent checkout
+# because /home/mak/flujo sits inside /home/mak. Absent, the loader degrades
+# instead of raising FileNotFoundError.
+_MAK_RESEARCH_ROOT = Path(
+    os.environ.get("MAK_RESEARCH_ROOT", str(_REPO.parent / "cultura" / "mak_research"))
+)
+_FUENTES_PY = _MAK_RESEARCH_ROOT / "fuentes.py"
+MAK_RESEARCH_SOURCES_AVAILABLE = _FUENTES_PY.is_file()
 _VENUES_DIR = _REPO / "knowledge" / "venues"     # *.yaml canonicos
 _LOGOS_DIR = _REPO / "knowledge" / "logos"       # *.yaml canonicos
 # Directorios donde viven jsons con forma de evento (voluntarios/asistentes/...)
