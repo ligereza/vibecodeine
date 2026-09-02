@@ -1,0 +1,269 @@
+{
+  "task_id": "runtime-hardening-20260902",
+  "status": "complete",
+  "schema": "mak-runtime-hardening-dossier-v1",
+  "generated_at": "2026-09-02T09:50:00+00:00",
+  "physical_root": "/home/mak",
+  "predecessor": "runtime-contract-20260902",
+  "baseline": {
+    "git_status_short": [
+      " M context/LAST_HANDOFF.md",
+      " M cultura/mak_codex/interfaz_codex.py",
+      " M docs/MAK_CURRENT_STATE.md",
+      "?? context/coordination/",
+      "?? context/git_history_local_20260814_20260901.json",
+      "?? context/python_census_20260901.json",
+      "?? inventario_externo.sh",
+      "?? inventario_mak.sh",
+      "?? tools/runtime_preflight.py"
+    ],
+    "symlinks": [
+      {
+        "path": "/home/mak/.config/systemd/user/mak-hub.service",
+        "readlink": "/home/mak/flujo/cultura/mak_plataforma/mak-hub.service",
+        "stat": "1 655789",
+        "nlink": 1,
+        "inode": 655789,
+        "resolved_target": "/home/mak/cultura/mak_plataforma/mak-hub.service",
+        "resolved_target_sha256": "fbb5292a38bfc0be2def9fd8887f340b6d494aa0f744a552f82d6f27b339d70d",
+        "via_adapter": true
+      },
+      {
+        "path": "/home/mak/.config/systemd/user/mak-research.service",
+        "readlink": "/home/mak/flujo/cultura/mak_research/interfaz.service",
+        "stat": "1 655791",
+        "nlink": 1,
+        "inode": 655791,
+        "resolved_target": "/home/mak/cultura/mak_research/interfaz.service",
+        "resolved_target_sha256": "c0edad00de66c264e38fb7f056c648fca9b74c7af4908b80b8619a929b135c79",
+        "via_adapter": true
+      },
+      {
+        "path": "/home/mak/.config/systemd/user/mak-codex.service",
+        "readlink": "/home/mak/flujo/cultura/mak_codex/mak-codex.service",
+        "stat": "1 655792",
+        "nlink": 1,
+        "inode": 655792,
+        "resolved_target": "/home/mak/cultura/mak_codex/mak-codex.service",
+        "resolved_target_sha256": "aa689e31176ba48cb24f2fbaa0768dfb1819b9383004f6132fcd79201e50fbb0",
+        "via_adapter": true
+      }
+    ],
+    "systemctl_show": [
+      {
+        "unit": "mak-hub.service",
+        "fragment_path": "/home/mak/.config/systemd/user/mak-hub.service",
+        "exec_start_argv": "/home/mak/plataforma/.venv/bin/python /home/mak/cultura/mak_plataforma/hub.py",
+        "main_pid": 854934,
+        "active_state": "active",
+        "sub_state": "running",
+        "start_time": "2026-09-02T04:13:56-04:00"
+      },
+      {
+        "unit": "mak-research.service",
+        "fragment_path": "/home/mak/.config/systemd/user/mak-research.service",
+        "exec_start_argv": "/home/mak/research/.venv/bin/python /home/mak/cultura/mak_research/interfaz.py",
+        "main_pid": 854932,
+        "active_state": "active",
+        "sub_state": "running",
+        "start_time": "2026-09-02T04:13:56-04:00"
+      },
+      {
+        "unit": "mak-codex.service",
+        "fragment_path": "/home/mak/.config/systemd/user/mak-codex.service",
+        "exec_start_argv": "/usr/bin/python3 /home/mak/cultura/mak_codex/interfaz_codex.py",
+        "main_pid": 854933,
+        "active_state": "active",
+        "sub_state": "running",
+        "start_time": "2026-09-02T04:13:56-04:00"
+      }
+    ],
+    "listeners_and_http": [
+      {"port": 8900, "listener": "127.0.0.1:8900 pid=854934", "http_path": "/health", "http_status": 200},
+      {"port": 8890, "listener": "127.0.0.1:8890 pid=854932", "http_path": "/", "http_status": 200},
+      {"port": 8891, "listener": "127.0.0.1:8891 pid=854933", "http_path": "/", "http_status": 200}
+    ],
+    "preflight_text": {
+      "summary": {"ok": 1, "ok_via_adapter": 3, "warn": 1, "unknown": 0, "error": 0},
+      "findings": [
+        {"surface_id": "mak_hub", "status": "ok_via_adapter", "codes": ["unit_fragment_via_adapter"]},
+        {"surface_id": "mak_research", "status": "ok_via_adapter", "codes": ["unit_fragment_via_adapter"]},
+        {"surface_id": "mak_codex", "status": "ok_via_adapter", "codes": ["unit_fragment_via_adapter"]},
+        {"surface_id": "flujo_app", "status": "warn", "codes": ["exec_start_via_adapter", "port_fallback"]},
+        {"surface_id": "ollama", "status": "ok", "codes": []}
+      ]
+    }
+  },
+  "symlinks_replaced": [
+    {
+      "path": "/home/mak/.config/systemd/user/mak-hub.service",
+      "operation": "replaced",
+      "target_before": "/home/mak/flujo/cultura/mak_plataforma/mak-hub.service",
+      "target_after": "/home/mak/cultura/mak_plataforma/mak-hub.service",
+      "inode_before": 655789,
+      "inode_after": 655431,
+      "sha256_before": "fbb5292a38bfc0be2def9fd8887f340b6d494aa0f744a552f82d6f27b339d70d",
+      "sha256_after": "fbb5292a38bfc0be2def9fd8887f340b6d494aa0f744a552f82d6f27b339d70d",
+      "sha256_identical": true,
+      "procedure": "stat; ln -s to direct target as .mak-hub.service.new in the same directory; readlink and readlink -f verified; sha256 of new destination compared with old; mv -T over the symlink (rename(2), atomic); destination file never deleted",
+      "destination_file_after": {"path": "/home/mak/cultura/mak_plataforma/mak-hub.service", "inode": 30308886, "size": 389}
+    },
+    {
+      "path": "/home/mak/.config/systemd/user/mak-research.service",
+      "operation": "replaced",
+      "target_before": "/home/mak/flujo/cultura/mak_research/interfaz.service",
+      "target_after": "/home/mak/cultura/mak_research/interfaz.service",
+      "inode_before": 655791,
+      "inode_after": 655495,
+      "sha256_before": "c0edad00de66c264e38fb7f056c648fca9b74c7af4908b80b8619a929b135c79",
+      "sha256_after": "c0edad00de66c264e38fb7f056c648fca9b74c7af4908b80b8619a929b135c79",
+      "sha256_identical": true,
+      "procedure": "same six steps",
+      "destination_file_after": {"path": "/home/mak/cultura/mak_research/interfaz.service", "inode": 30308810, "size": 633}
+    },
+    {
+      "path": "/home/mak/.config/systemd/user/mak-codex.service",
+      "operation": "replaced",
+      "target_before": "/home/mak/flujo/cultura/mak_codex/mak-codex.service",
+      "target_after": "/home/mak/cultura/mak_codex/mak-codex.service",
+      "inode_before": 655792,
+      "inode_after": 655498,
+      "sha256_before": "aa689e31176ba48cb24f2fbaa0768dfb1819b9383004f6132fcd79201e50fbb0",
+      "sha256_after": "aa689e31176ba48cb24f2fbaa0768dfb1819b9383004f6132fcd79201e50fbb0",
+      "sha256_identical": true,
+      "procedure": "same six steps",
+      "destination_file_after": {"path": "/home/mak/cultura/mak_codex/mak-codex.service", "inode": 30308850, "size": 451}
+    }
+  ],
+  "unit_bodies": [
+    {"path": "cultura/mak_plataforma/mak-hub.service", "operation": "unchanged", "sha256": "fbb5292a38bfc0be2def9fd8887f340b6d494aa0f744a552f82d6f27b339d70d"},
+    {"path": "cultura/mak_research/interfaz.service", "operation": "unchanged", "sha256": "c0edad00de66c264e38fb7f056c648fca9b74c7af4908b80b8619a929b135c79"},
+    {"path": "cultura/mak_codex/mak-codex.service", "operation": "unchanged", "sha256": "aa689e31176ba48cb24f2fbaa0768dfb1819b9383004f6132fcd79201e50fbb0"}
+  ],
+  "daemon_reload": {
+    "command": "systemctl --user daemon-reload",
+    "exit": 0,
+    "services_restarted": false,
+    "evidence": "MainPID unchanged for all three: 854934, 854932, 854933; start_time still 2026-09-02T04:13:56-04:00"
+  },
+  "state_before_after": [
+    {
+      "unit": "mak-hub.service",
+      "active_before": "active",
+      "active_after": "active",
+      "main_pid_before": 854934,
+      "main_pid_after": 854934,
+      "http_before": {"port": 8900, "path": "/health", "status": 200},
+      "http_after": {"port": 8900, "path": "/health", "status": 200}
+    },
+    {
+      "unit": "mak-research.service",
+      "active_before": "active",
+      "active_after": "active",
+      "main_pid_before": 854932,
+      "main_pid_after": 854932,
+      "http_before": {"port": 8890, "path": "/", "status": 200},
+      "http_after": {"port": 8890, "path": "/", "status": 200}
+    },
+    {
+      "unit": "mak-codex.service",
+      "active_before": "active",
+      "active_after": "active",
+      "main_pid_before": 854933,
+      "main_pid_after": 854933,
+      "http_before": {"port": 8891, "path": "/", "status": 200},
+      "http_after": {"port": 8891, "path": "/", "status": 200}
+    }
+  ],
+  "preflight_changes": [
+    {
+      "path": "tools/runtime_preflight.py",
+      "operation": "modified",
+      "sha256_before": "8243c711e456e1ef2349a2cf6055b357d9a321881ac523856bc82feef5e057bf",
+      "sha256_after": "96f9c8d9130e37c2e924ed00cc3a60dedee48f3d32b06fa192aba2cb70658bdc",
+      "nlink_before": 1,
+      "nlink_after": 1,
+      "additions": [
+        "independent condition counting: SurfaceReport.conditions plus a report-level `conditions` block, so a second condition under a worse status is no longer lost",
+        "--strict flag with one exit code per condition",
+        "--check-adapter realigned from 3 to 4 so code 3 always means warning and code 4 always means adapter dependency",
+        "--strict and --check-adapter imply the check",
+        "text output prints the condition counts, the exit-code table, and a per-surface `carries=` list"
+      ]
+    },
+    {
+      "path": "tests/test_runtime_preflight.py",
+      "operation": "create",
+      "sha256_after": "276dcfd629169cdfa5fd748d00c6f45560e9e098899662c36899b4745dc77a68",
+      "nlink_after": 1,
+      "tests": 14
+    }
+  ],
+  "exit_code_contract": {
+    "normal": {"error": 1, "unknown": 2, "warn": 0, "adapter_dependency": 0, "clean": 0},
+    "strict": {"error": 1, "unknown": 2, "warn": 3, "adapter_dependency": 4, "clean": 0},
+    "check_adapter": {"error": 1, "unknown": 2, "warn": 0, "adapter_dependency": 4, "clean": 0},
+    "precedence": "error > unknown > warn > adapter_dependency; the worst condition wins and the full breakdown stays in `conditions`",
+    "independence": "--check-adapter escalates the adapter condition with or without --strict; --strict does not need --check-adapter to reach code 4"
+  },
+  "measured_after": {
+    "summary_worst_status_per_surface": {"ok": 4, "ok_via_adapter": 0, "warn": 1, "unknown": 0, "error": 0},
+    "conditions_surfaces_carrying_each": {"error": 0, "unknown": 0, "warn": 1, "adapter_dependency": 1},
+    "why_both_rows_matter": "after the symlink replacement the status row reports ok_via_adapter=0, but flujo_app still depends on the adapter through the venv .pth. The status row alone would have declared the adapter dependency gone; the conditions row keeps it visible.",
+    "remaining_findings": [
+      {"surface_id": "flujo_app", "status": "warn", "carries": ["warn", "adapter_dependency"], "codes": ["exec_start_via_adapter", "port_fallback"]}
+    ]
+  },
+  "tests": [
+    {"command": "systemctl --user daemon-reload", "exit": 0},
+    {"command": "systemctl --user is-active mak-hub.service mak-research.service mak-codex.service", "exit": 0, "output": ["active", "active", "active"]},
+    {"command": "curl 127.0.0.1:8900/health", "http_status": 200},
+    {"command": "curl 127.0.0.1:8890/", "http_status": 200},
+    {"command": "curl 127.0.0.1:8891/", "http_status": 200},
+    {"command": "python3 -m py_compile tools/runtime_preflight.py", "exit": 0},
+    {"command": "/home/mak/.venv/bin/python -m pytest tests/test_runtime_preflight.py -q", "exit": 0, "passed": 14, "failed": 0, "errors": 0, "belongs_to_change": true},
+    {
+      "command": "/home/mak/.venv/bin/python -m pytest tests/test_operational_entrypoints.py tests/test_mak_hub_salud.py tests/test_mak_research_interfaz_http.py tests/test_mak_codex_nodos.py -q",
+      "exit": 0,
+      "passed": 88,
+      "failed": 0,
+      "errors": 0,
+      "belongs_to_change": false,
+      "note": "run once in this phase; 88 progress dots, no fail or error string in the captured output"
+    },
+    {"command": "python3 tools/runtime_preflight.py --check", "exit": 0, "meaning": "no error and no unknown; the warning is not a failure in normal mode"},
+    {"command": "python3 tools/runtime_preflight.py --check --strict", "exit": 3, "meaning": "the 8765->8766 fallback is a warning and stays visible"},
+    {"command": "python3 tools/runtime_preflight.py --check --check-adapter", "exit": 4, "meaning": "flujo_app still resolves its source through the adapter via the venv .pth"},
+    {"command": "git diff --check", "exit": 0}
+  ],
+  "first_run_defects_fixed_before_closing": [
+    {
+      "defect": "@dataclass could not resolve annotations under importlib.util.module_from_spec",
+      "error": "AttributeError: 'NoneType' object has no attribute '__dict__'",
+      "fix": "register the module in sys.modules before exec_module, in the test loader only"
+    }
+  ],
+  "unknowns": [
+    {
+      "id": "flujo_app_pth_still_outside_write_set",
+      "detail": "/home/mak/.venv/lib/python3.11/site-packages/__editable__.flujo-0.56.1.pth still reads /home/mak/flujo/src. It is the last code-source reference through the adapter among the five surfaces and it is not in this phase's write set, so `--check-adapter` correctly stays at 4."
+    },
+    {
+      "id": "exit_code_2_still_unproven_at_runtime",
+      "detail": "unknown maps to code 2 and is now covered by a unit test over exit_code, but no live run has produced it: systemctl resolves units by name regardless of --root, and removing a unit is outside the write set."
+    },
+    {
+      "id": "in_memory_bytes",
+      "detail": "unchanged from the previous phase. The preflight proves the declared source, the ExecStart, the live command line and the source mtime against process start; it cannot inspect code objects already loaded by a running interpreter."
+    },
+    {
+      "id": "daemon_reload_scope",
+      "detail": "daemon-reload re-read the fragments and the loaded content is byte-identical, so no restart was needed or performed. Whether a future edit of a unit body needs a restart is not decided here."
+    },
+    {
+      "id": "other_adapter_references_untouched",
+      "detail": "the 92 references measured in the previous phase (17 of code-source class) remain, minus the 3 symlinks fixed here. tools/mak_ops/check_mak_mirror.py and its pinning test are still outside any write set."
+    }
+  ],
+  "writes_outside_allowed_set": []
+}
