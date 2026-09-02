@@ -19,7 +19,16 @@ from datetime import date, datetime, timezone
 from typing import Any
 from urllib.parse import urlsplit
 
-from cultura.mak_research.source_pipeline import canonical_url, source_id_for
+# Optional MAK peer: see flujo.autonomia. Without the MAK research tree the
+# capture path raises a declared error instead of failing at import time.
+try:  # pragma: no cover - exercised by the branch that lacks cultura/
+    from cultura.mak_research.source_pipeline import canonical_url, source_id_for
+
+    MAK_RESEARCH_AVAILABLE = True
+except ImportError:
+    canonical_url = None  # type: ignore[assignment]
+    source_id_for = None  # type: ignore[assignment]
+    MAK_RESEARCH_AVAILABLE = False
 from .research_evidence_triangulation import triangulate_research_evidence
 from .research_frontier_bridge import SCHEMA as FRONTIER_SCHEMA
 

@@ -75,7 +75,10 @@ def _canonical_url(value: Any) -> str:
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
         raise VigiaCaptureBridgeError("url_invalid")
     # Keep URL normalization aligned with the existing capture consumer.
-    from cultura.mak_research.source_pipeline import canonical_url
+    try:
+        from cultura.mak_research.source_pipeline import canonical_url
+    except ImportError as exc:  # the MAK research tree is not in this checkout
+        raise VigiaCaptureBridgeError("mak_research_absent") from exc
     normalized = canonical_url(url)
     if not normalized:
         raise VigiaCaptureBridgeError("url_invalid")
