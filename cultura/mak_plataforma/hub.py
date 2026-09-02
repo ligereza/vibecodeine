@@ -2811,6 +2811,56 @@ def _portfolio_scene(item_id, limit=10, focus_facet="", shuffle=False,
     return scene
 
 
+PORTFOLIO_FORMATS_DIR = os.path.join(_REPO_ROOT, "data", "portfolio_formats")
+
+
+def _portfolio_formats():
+    """The declared purposes. `G` in docs/DIMENSIONES_DEL_ORDEN.md."""
+    specs = []
+    try:
+        names = sorted(os.listdir(PORTFOLIO_FORMATS_DIR))
+    except OSError:
+        return specs
+    for name in names:
+        if not name.endswith(".json"):
+            continue
+        try:
+            with open(os.path.join(PORTFOLIO_FORMATS_DIR, name),
+                      encoding="utf-8") as fh:
+                spec = json.load(fh)
+        except (OSError, ValueError):
+            continue
+        if isinstance(spec, dict) and spec.get("slots"):
+            specs.append(spec)
+    return specs
+
+
+def _portfolio_order_compositions(limit_per_slot=30):
+    """N defensible orders, one per declared purpose. None of them is THE order.
+
+    This is `F` in the theory: the piece that did not exist, because the system
+    emitted a single verdict instead of N orders.
+    """
+    specs = _portfolio_formats()
+    if not specs:
+        return {"ok": False, "error": "sin formatos declarados", "orders": []}
+    items = _portfolio_inbox().get("items", [])
+    orders = copilot.compose_orders(items, specs, limit_per_slot=limit_per_slot)
+    return {
+        "ok": True,
+        "schema": copilot.COMPOSITION_SCHEMA,
+        "corpus": len(items),
+        "orders": orders,
+        "valid_orders": [order["format_id"] for order in orders if order["valid"]],
+        "blocked_orders": [order["format_id"] for order in orders
+                           if not order["valid"]],
+        "promotion": "none",
+        "owner": "human",
+        "next_action": "elegir un proposito y revisar el orden que propone; "
+                       "ninguno se publica solo",
+    }
+
+
 def _portfolio_external_review_rows():
     if _ledger is None:
         return []
@@ -5029,6 +5079,13 @@ class H(BaseHTTPRequestHandler):
             return self._json(_portfolio_scene(
                 item_id, limit=limit, focus_facet=focus_facet,
                 shuffle=shuffle, shuffle_seed=shuffle_seed, surface=surface))
+        if p == "/api/portfolio/copilot/orders":
+            raw = (urllib.parse.parse_qs(u.query).get("limit") or ["30"])[0]
+            try:
+                limit = max(1, min(int(raw), 200))
+            except (TypeError, ValueError):
+                limit = 30
+            return self._json(_portfolio_order_compositions(limit_per_slot=limit))
         if p == "/api/portfolio/copilot/map":
             query = urllib.parse.parse_qs(u.query)
             width = (query.get("width") or [8])[0]

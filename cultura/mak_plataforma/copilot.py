@@ -1624,6 +1624,232 @@ def normalize_vision(raw, item_id, provider, evidence=None):
     }
 
 
+COMPOSITION_SCHEMA = "faro-order-composition-v1"
+
+# O_G, from docs/DIMENSIONES_DEL_ORDEN.md: `O_G = F({phi(x)}, E, G)`. The same
+# corpus yields different orders because G changes. G was already implemented
+# and nobody had named it that way: a FORMAT is a purpose
+# (`data/portfolio_formats/*.json`, schema `mak-portfolio-format-v1`), and each
+# one declares its slots, its allowed claims, its forbidden claims and its
+# forbidden inferences. What did not exist was F: the system emitted one
+# verdict instead of N orders. Measured 2026-09-02: nothing in the tree
+# composed an order from a declared format -- `portfolio_dossier.py` does not
+# mention them and only a test and two documents read the directory.
+#
+# The honest limit, measured the same day: ZERO of 7044 records carry a
+# `permission` or a `state` field, while every slot declares `min_state` and
+# `min_permission`. So a composition cannot claim a permission for anything.
+# It abstains there and says so, which is the `U` term of the objective --
+# unsupported assertions -- held at zero by construction rather than by
+# promise.
+#
+# Retirement: when records carry a recorded permission and the state ladder
+# below is replaced by the archive's own declaration.
+
+# What a record's state can be derived from, WITHOUT claiming anything the
+# archive does not hold. Anything richer than this is the operator's call.
+COMPOSITION_STATES = ("observed", "candidate", "unknown")
+COMPOSITION_UNRECORDED = "unrecorded"
+
+
+def _composition_state(record):
+    """`observed` only when the archive itself shows the thing happened.
+
+    A dated artifact that exists on disk is an observation. Everything else is
+    a candidate: present in the corpus, not yet backed for a claim. Nothing
+    here reads a filename, a folder or a position as evidence -- the forbidden
+    inferences say a file date is not an event date, and this respects that by
+    never promoting one into the other.
+    """
+    if not isinstance(record, dict):
+        return "unknown"
+    has_asset = record.get("asset_available") is True
+    has_date = bool(str(record.get("date") or record.get("fecha") or "").strip())
+    if has_asset and has_date:
+        return "observed"
+    if has_asset or has_date:
+        return "candidate"
+    return "unknown"
+
+
+# The ladder this module can actually verify. A format may declare a rung that
+# is not here -- F4 declares `supported_candidate` -- and the first version of
+# this function defaulted an unknown rung to `candidate`, silently accepting a
+# LOWER bar than the format asked for. That is the same defect as reading an
+# absence as health, so an unrecognised minimum now fails closed and says so.
+_STATE_LADDER = {"unknown": 0, "candidate": 1, "observed": 2}
+
+
+def _state_satisfies(state, minimum):
+    """(satisfies, verifiable) -- never assume a rung this module cannot rank."""
+    rung = _STATE_LADDER.get(str(minimum or "").strip())
+    if rung is None:
+        return False, False
+    return _STATE_LADDER.get(state, 0) >= rung, True
+
+
+def compose_order(records, spec, limit_per_slot=None):
+    """One defensible order for one declared purpose. Never the only one.
+
+    Returns what the format could fill from evidence, what it had to abstain
+    on, and why it is or is not valid -- so an unfillable format reports what
+    the archive is missing instead of inventing a portfolio.
+    """
+    spec = spec if isinstance(spec, dict) else {}
+    records = [row for row in (records or []) if isinstance(row, dict)]
+    slots_out = []
+    used = set()
+
+    for slot in (spec.get("slots") or []):
+        if not isinstance(slot, dict):
+            continue
+        count = slot.get("count") if isinstance(slot.get("count"), dict) else {}
+        minimum = int(count.get("min") or 0)
+        maximum = int(count.get("max") or 0) or len(records)
+        if limit_per_slot:
+            maximum = min(maximum, int(limit_per_slot))
+        min_state = str(slot.get("min_state") or "candidate")
+        min_permission = str(slot.get("min_permission") or "").strip()
+
+        eligible, rejected = [], {}
+        _, state_verifiable = _state_satisfies("observed", min_state)
+        for row in records:
+            item_id = str(row.get("id") or row.get("source_id") or "")
+            if not item_id or item_id in used:
+                continue
+            state = _composition_state(row)
+            satisfies, _ = _state_satisfies(state, min_state)
+            if not satisfies:
+                rejected[state] = rejected.get(state, 0) + 1
+                continue
+            eligible.append({
+                "item_id": item_id,
+                "state": state,
+                "source_ref": str(row.get("asset_path")
+                                  or row.get("uri_export") or item_id),
+                "permission": COMPOSITION_UNRECORDED,
+            })
+
+        selected = eligible[:maximum]
+        used.update(row["item_id"] for row in selected)
+        abstentions = []
+        if not state_verifiable:
+            abstentions.append({
+                "on": "state", "declared": min_state,
+                "reason": "el formato declara un estado que este motor no sabe "
+                          "rankear; no se asume uno mas bajo",
+            })
+        if min_permission:
+            abstentions.append({
+                "on": "permission",
+                "declared": min_permission,
+                "reason": "ningun registro del archivo declara permiso; "
+                          "no se afirma uno",
+            })
+        for state, n in sorted(rejected.items()):
+            abstentions.append({
+                "on": "state", "declared": min_state,
+                "reason": "%d registro(s) en estado %s, bajo el minimo" % (n, state),
+            })
+
+        slots_out.append({
+            "slot_id": str(slot.get("slot_id") or ""),
+            "title": str(slot.get("title") or ""),
+            "claim": str(slot.get("claim") or ""),
+            "layer": str(slot.get("layer") or ""),
+            "min_state": min_state,
+            "min_permission": min_permission or COMPOSITION_UNRECORDED,
+            "state_verifiable": state_verifiable,
+            "required": minimum > 0,
+            "count_min": minimum,
+            "count_max": maximum,
+            "selected": selected,
+            "selected_count": len(selected),
+            "satisfied": len(selected) >= minimum,
+            "permission_satisfied": False if min_permission else None,
+            "abstentions": abstentions,
+        })
+
+    invalid = []
+    for slot in slots_out:
+        if slot["required"] and not slot["satisfied"]:
+            invalid.append("ranura obligatoria %s bajo su minimo (%d de %d)"
+                           % (slot["slot_id"], slot["selected_count"],
+                              slot["count_min"]))
+        if not slot["state_verifiable"]:
+            invalid.append("ranura %s declara min_state %s, fuera de la escalera "
+                           "verificable" % (slot["slot_id"], slot["min_state"]))
+        if slot["min_permission"] != COMPOSITION_UNRECORDED:
+            invalid.append("ranura %s exige permiso %s y el archivo no registra "
+                           "permisos" % (slot["slot_id"], slot["min_permission"]))
+
+    filled = sum(slot["selected_count"] for slot in slots_out)
+    return {
+        "schema": COMPOSITION_SCHEMA,
+        "format_id": str(spec.get("format_id") or ""),
+        "family": str(spec.get("family") or ""),
+        "title": str(spec.get("title") or ""),
+        "purpose": str(spec.get("purpose") or ""),
+        "declared_claims": list(spec.get("declared_claims") or []),
+        "forbidden_claims": list(spec.get("forbidden_claims") or []),
+        "forbidden_inferences": list(spec.get("forbidden_inferences") or []),
+        "slots": slots_out,
+        "filled": filled,
+        "objective": _composition_objective(slots_out, records),
+        "valid": not invalid,
+        "invalid_reasons": invalid,
+        "unsupported_claims": 0,
+        "promotion": "none",
+        "owner": "human",
+        "producer": "local_order_composition",
+        "next_action": ("registrar permisos y estados en el archivo antes de "
+                        "declarar este formato" if invalid else
+                        "revisar el orden propuesto y decidir su publicacion"),
+    }
+
+
+def _composition_objective(slots, records):
+    """The terms of `O*_G`, each measured or declared unmeasured.
+
+    The theory maximises alpha*C + beta*D + gamma*R_G + delta*V + eta*T
+    - lambda*N - mu*U. Reporting a number for a term that was not measured
+    would be the exact defect the U term exists to punish, so the unmeasured
+    ones say so instead of carrying a zero that reads as a score.
+    """
+    selected = [row for slot in slots for row in slot["selected"]]
+    total = len(selected)
+    observed = sum(1 for row in selected if row["state"] == "observed")
+    required = [slot for slot in slots if slot["required"]]
+    return {
+        "R_G": {"value": round(
+            sum(1 for slot in required if slot["satisfied"]) / len(required), 4)
+            if required else None,
+            "measured": bool(required),
+            "detail": "ranuras obligatorias satisfechas"},
+        "T": {"value": round(observed / total, 4) if total else None,
+              "measured": bool(total),
+              "detail": "proporcion de piezas en estado observed"},
+        "N": {"value": round(1 - (len({row["item_id"] for row in selected})
+                                  / total), 4) if total else None,
+              "measured": bool(total),
+              "detail": "repeticion entre ranuras"},
+        "U": {"value": 0, "measured": True,
+              "detail": "afirmaciones sin respaldo, cero por construccion"},
+        "C": {"value": None, "measured": False,
+              "detail": "coherencia: requiere un criterio declarado por el autor"},
+        "D": {"value": None, "measured": False,
+              "detail": "diversidad: requiere el mismo criterio que C"},
+        "V": {"value": None, "measured": False,
+              "detail": "potencia perceptiva: el indice cubre 100 de 7044 piezas"},
+    }
+
+
+def compose_orders(records, specs, limit_per_slot=None):
+    """N orders, one per declared purpose. None of them is the answer."""
+    return [compose_order(records, spec, limit_per_slot=limit_per_slot)
+            for spec in (specs or []) if isinstance(spec, dict)]
+
+
 READINESS_SCHEMA = "faro-evidence-readiness-v1"
 
 # What a person needs in front of them before labelling a record work / record
