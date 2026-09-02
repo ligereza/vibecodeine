@@ -43,7 +43,7 @@ try:
                                                 observe_shadow)
 except ImportError:
     sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH",
-                                     "/home/mak/flujo/cultura"))
+                                     "/home/mak/cultura"))
     try:
         from mak_conductor.runtime import (active_enabled, dispatch_sync,
                                            enqueue_shadow,

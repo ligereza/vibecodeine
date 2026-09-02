@@ -23,9 +23,9 @@ def sha256(path: Path) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--global-db", type=Path, default=Path("/home/mak/flujo/data/mak_knowledge.db"))
+    parser.add_argument("--global-db", type=Path, default=Path("/home/mak/data/mak_knowledge.db"))
     parser.add_argument("--garden-db", type=Path, default=Path("/home/mak/research/jardines_interpretativos/jardines_interpretativos.sqlite"))
-    parser.add_argument("--report", type=Path, default=Path("/home/mak/flujo/context/MAK_JARDINES_RECONCILIATION.md"))
+    parser.add_argument("--report", type=Path, default=Path("/home/mak/context/MAK_JARDINES_RECONCILIATION.md"))
     args = parser.parse_args()
 
     global_conn = sqlite3.connect(args.global_db)
@@ -59,7 +59,7 @@ def main() -> int:
         FROM entity_relations r JOIN entities s ON s.entity_id=r.source_entity_id
         WHERE r.relation_kind='possibly_consumed_by'
           AND (s.path LIKE '/home/mak/research/%'
-               OR s.path LIKE '/home/mak/flujo/cultura/mak_research/%')
+               OR s.path LIKE '/home/mak/cultura/mak_research/%')
         """
     ).fetchone()[0]
 

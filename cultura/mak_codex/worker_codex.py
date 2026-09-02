@@ -18,7 +18,7 @@ try:
                                                 shared_gpu_lease)
 except ImportError:  # mirrored MAK runtime imports from the repo's cultura dir
     sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH",
-                                     "/home/mak/flujo/cultura"))
+                                     "/home/mak/cultura"))
     from mak_conductor.runtime import (enqueue_shadow, file_content_hash,
                                        active_enabled, dispatch_sync,
                                        observe_shadow, shared_gpu_lease)

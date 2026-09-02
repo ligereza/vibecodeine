@@ -22,7 +22,7 @@ except Exception:  # pragma: no cover - standalone/local fixture use
 
 SCHEMA = "faro-xio-evidence-v1"
 DEFAULT_ROOT = Path(os.environ.get(
-    "MAK_XIO_SHOW_ROOT", "/home/mak/flujo/xio/show_kit"))
+    "MAK_XIO_SHOW_ROOT", "/home/mak/xio/show_kit"))
 MAX_SEGMENTS = 24
 
 

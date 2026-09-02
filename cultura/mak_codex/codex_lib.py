@@ -66,7 +66,7 @@ try:
                                                 enqueue_shadow, observe_shadow)
 except ImportError:  # standalone Linux codex checkout
     sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH",
-                                     "/home/mak/flujo/cultura"))
+                                     "/home/mak/cultura"))
     try:
         from mak_conductor.runtime import (external_budget_limit,
                                            reserve_external_call,

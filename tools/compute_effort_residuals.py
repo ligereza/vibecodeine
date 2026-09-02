@@ -275,9 +275,9 @@ def write_report(report_path: Path, csv_path: Path, rows, records, group_stats, 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--db", type=Path, default=Path("/home/mak/flujo/data/mak_knowledge.db"))
-    parser.add_argument("--report", type=Path, default=Path("/home/mak/flujo/context/MAK_EFFORT_RESIDUALS.md"))
-    parser.add_argument("--csv", type=Path, default=Path("/home/mak/flujo/context/MAK_EFFORT_RESIDUALS.csv"))
+    parser.add_argument("--db", type=Path, default=Path("/home/mak/data/mak_knowledge.db"))
+    parser.add_argument("--report", type=Path, default=Path("/home/mak/context/MAK_EFFORT_RESIDUALS.md"))
+    parser.add_argument("--csv", type=Path, default=Path("/home/mak/context/MAK_EFFORT_RESIDUALS.csv"))
     args = parser.parse_args()
     computed_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
     conn = sqlite3.connect(args.db)

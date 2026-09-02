@@ -29,7 +29,7 @@ import time
 try:
     from cultura.mak_conductor.runtime import active_enabled, dispatch_sync
 except ImportError:  # pragma: no cover - direct MAK deployment
-    sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH", "/home/mak/flujo/cultura"))
+    sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH", "/home/mak/cultura"))
     try:
         from mak_conductor.runtime import active_enabled, dispatch_sync
     except ImportError:
