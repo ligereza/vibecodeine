@@ -172,7 +172,7 @@ La autoridad operativa no termina en `flujo`. El registro maestro enumera las
 | `models`, `model-config`, `blender*` | proveedores y runtimes creativos | capacidad condicionada |
 | `xio_puente`, `n8n-local`, `searxng` | puentes/runtimes especificos | aislados; no core |
 
-Runtimes observados: Hub `127.0.0.1:8900`, Research `127.0.0.1:8890`, Codex
+Runtimes observados (medición 2026-09-02): Hub `127.0.0.1:8900`, Research `127.0.0.1:8890`, Codex
 `127.0.0.1:8891`, Ollama `127.0.0.1:11434`, Open WebUI `:8080` y el runner de
 Actions. La escucha prueba presencia del proceso, no salud del servicio,
 capacidad del proveedor ni validez de sus datos. `GoogleDrive` y `OneDrive`
@@ -199,6 +199,24 @@ CLI real (`py -m flujo --help`, v0.56.1), comandos principales:
 - `daily`, `handoff`, `portal`, `doctor`, `health`, `verify`, `version` -- operacion y diagnostico del repo.
 - `github-sync` -- sync simple con GitHub. (`airdrop` se retiro el 2026-08-28; la cadena estaba muerta desde el 2026-08-14, ver `docs/SCRIPTS_INVENTORY.md`.)
 - `delegate`, `ai-prompt`, `privacy`, `knowledge`, `package`, `init`, `clean`, `brand` (legacy) -- utilidades de soporte.
+
+### 1-bis. Hubs y servicios del organismo (medición operativa 2026-09-02)
+
+Esta tabla separa la capacidad declarada del estado vivo. El puerto y el
+listener se vuelven a comprobar en `docs/MAK_CURRENT_STATE.md` o mediante
+`GET /api/status`; no se debe interpretar una fila histórica como un proceso
+activo.
+
+| Superficie | Fuente canónica / unidad | Entrada y puerto | Alcance y estado observado |
+|---|---|---|---|
+| MAK Hub | `cultura/mak_plataforma/hub.py` / `/home/mak/.config/systemd/user/mak-hub.service` | `127.0.0.1:8900`; `GET /health` y `GET /api/status` | Interfaz agrupada de MAK, Portfolio/ISKVW, departamentos y Copilot; listener activo, HTTP 200 |
+| FLUJO App | `src/flujo/web/hub.py`; `python -m flujo app` | Default `8765`; auto-puerto observado `8766` el 2026-09-02 | Workspace portátil/manual; no es un servicio permanente ni el Hub MAK |
+| FLUJO `serve` | `src/flujo/serve/server.py`; `python -m flujo serve` | Default `8777`; no escuchaba en la medición | Servidor liviano/legado; su parser no sustituye al backend completo de `flujo app` |
+| Research | `cultura/mak_research/interfaz.py` / `/home/mak/.config/systemd/user/mak-research.service` | `127.0.0.1:8890` | Servicio interno de Research para el Hub; listener y proceso activos |
+| Codex bridge | `cultura/mak_codex/interfaz_codex.py` / `/home/mak/.config/systemd/user/mak-codex.service` | `127.0.0.1:8891` | Puente interno de Codex para MAK; listener y proceso activos |
+| Copilot curatorial | `cultura/mak_plataforma/copilot.py`; consumido por `hub.py` | Endpoints bajo `:8900/api/portfolio/copilot/*`; sin proceso propio | Ranking, atlas y sugerencias candidatas; no decide ni se ejecuta como daemon independiente |
+| SearXNG | `searxng/settings.yml` / runtime externo | `127.0.0.1:8888` | Dependencia de búsqueda de Research, no un Hub de MAK |
+| Cola ntfy | `/home/mak/.config/systemd/user/mak-research-queue.service` | Sin puerto; unidad opcional | Inactiva deliberadamente hasta configurar un topic; no confundirla con Research |
 
 `tools/` (ejecutables sueltos, 1 linea cada uno):
 
@@ -406,7 +424,7 @@ Solo existencia + donde se configura. Nunca el valor de una llave.
 | Integracion | Que es | Donde vive la config |
 |---|---|---|
 | Claude / Anthropic | Director (Fable/Opus) + subagentes Sonnet/Haiku; tiers en tabla de `CLAUDE.md` | `ANTHROPIC_API_KEY` en `.env` (ver `.env.example`); ejecutado via Claude Code CLI, no en runtime del repo |
-| ollama LOCAL en MAK | Modelos chicos, throughput-first, capa "barato" | Adaptador en `research_lib.py`; `127.0.0.1:11434` no estaba escuchando durante la medicion 2026-08-15, por lo que queda como capacidad cableada pero no disponible en ese instante |
+| ollama LOCAL en MAK | Proveedor local de inferencia: `completion` (`gemma3:4b`, `deepseek-coder:6.7b`) y `embedding` (`nomic-embed-text`) | Servicio `ollama.service` (`/usr/local/bin/ollama serve`) activo en `127.0.0.1:11434` (v0.32.0), con `OLLAMA_HOST=127.0.0.1`, paralelismo 1 y contexto 8192, revalidado 2026-09-02. Consumidores de código confirmados: fallback LLM de Research (`cultura/mak_research/research_lib.py`), fallback coder de MAK Codex (`cultura/mak_codex/codex_lib.py`), juez local del Conductor (`cultura/mak_plataforma/discernment.py`), visión de minería RD (`cultura/mak_plataforma/mineria_rd.py`), revisión por tandas (`cultura/mak_plataforma/tandas.py`) y chat local (`cultura/mak_plataforma/chat_agente.py`, default `gemma3:4b`). No se encontró consumidor local confirmado para `nomic-embed-text`; su disponibilidad no prueba uso. |
 | IBM watsonx | Retirado; evidencia histórica preservada fuera del runtime | Sin claves activas; herramientas exclusivas archivadas en `_archive/watsonx-retired-20260820/` |
 | Groq | Proveedor rapido para roles `razonar`/`bulk` | `GROQ_API_KEY`, `GROQ_MODEL` en `cultura/mak_research/research_lib.py` (defaults linea 32) y `.env` |
 | Gemini | Reemplazo cloud probado para sintesis y razonamiento cuando Cerebras no tiene crédito | `GEMINI_API_KEY`, `GEMINI_MODEL` en `research_lib.py`; usa `gemini-3.6-flash` |
@@ -439,7 +457,7 @@ jsonschema, requests).
 
 | Nodo | Rol | Detalle |
 |---|---|---|
-| MAK (Debian 12, host actual) | Organismo autonomo, GPU GTX 1650 (CUDA), runner self-hosted GitHub y hub local | `~/plataforma/` = espejo de `cultura/mak_plataforma/`; Blender 4.5.3 LTS portable en `~/blender/`; la medicion 2026-08-16 encontro el hub activo en 8900; 8890/8891 no escuchaban |
+| MAK (Debian 12, host actual) | Organismo autonomo, GPU GTX 1650 (CUDA), runner self-hosted GitHub y hub local | `~/plataforma/` = proyección de compatibilidad para `cultura/mak_plataforma/` (la implementación canónica); Blender 4.5.3 LTS portable en `~/blender/`; snapshot histórico 2026-08-16: Hub activo en 8900 y 8890/8891 sin listener. El estado actual se consulta en la tabla 1-bis y `docs/MAK_CURRENT_STATE.md` |
 | WIN (archivo historico) | Evidencia y origen de la migracion | `/home/mak/WIN` es read-only para la operacion; no es runtime ni consumidor de APIs actuales |
 | OneDrive / Google Drive | Storage de entrega de renders | rclone en MAK (`onedrive-rclone.service`), remote `gdrive:` |
 
@@ -496,6 +514,7 @@ tabla; archivo sin entrada = ratchet rojo.
 | `build_possibility_field.py` | VIVO | CLI for strategic possibility aggregation; consumed by the Piso 2 contract tests | 2026-08-25 |
 | `compile_contracurator.py` | VIVO | compila la exposicion falsable del Contracurador sobre la vista de archivo ya proyectada; consumidor `tests/test_contracurator.py` y el Hub en `/api/portfolio/archive-view` | 2026-08-28 |
 | `medir_organismo.py` | VIVO | mide el organismo MAK y lo imprime: lineas de cron activas/pausadas, cuales de los cinco organos de `/home/mak/GENESIS.md` responden, si `main` tiene proteccion de rama (hay un cron que mergea), cuantas lineas arrancarian al reanudar, y los entornos Python. Solo lectura: no toca crontab, servicios ni archivos. Existe para que `docs/MAK_ORGANISMO.md` no vuelva a cargar esas cifras en prosa -- la regla 3 de `docs/AUTORIDAD.md` dice que lo medido se mide, no se escribe. Consumidor: una persona, a mano | 2026-08-28 |
+| `capabilities.py` | VIVO | contrasta nueve superficies declaradas de MAK/FLUJO con sus fuentes, unidades systemd, listeners/endpoints locales, modelos Ollama y rutas consumidoras; emite `mak-capabilities-runtime-v1` en texto/JSON/Markdown y falla con `--check` si falta una fila, fuente, modelo, consumidor o servicio requerido. `--check-branch` contrasta además `branch_profile.json` con el checkout y el selector pytest (excepto perfiles históricos). No reescribe `CAPACIDADES.md`; consumidor: operador y CI acotado | 2026-09-02 |
 | `medir_tests.py` | VIVO | mapea la suite por el commit que agrego cada archivo de test: separa las areas que llegaron enteras en un commit (un diseno) de las que crecieron en commits sueltos a lo largo de semanas (acrecion, donde una propiedad puede quedar verificada dos veces). El proposito de cada test ya esta escrito en el mensaje de su commit de alta, asi que no abre ningun test para saberlo: corre un solo `git log` y solo cuenta lineas `def test_`. `--cronologia` lista los 164 commits de alta del mas viejo al mas nuevo. Solo lectura. Consumidor: una persona, a mano | 2026-08-29 |
 | `medir_test_overlap.py` | VIVO | medidor read-only de solapamiento estructural: agrupa funciones test por forma AST normalizada, conserva nombres/operaciones y produce candidatos de revision; consumidor: una persona, a mano | 2026-08-31 |
 | `mak_merge_roots.py` | VIVO | planifica y ejecuta la fusión física reversible de raíces `flujo`/`vibecodeine`: compara hashes, conserva variantes y registra cada copia o redirección; consumidor: operador, a mano | 2026-08-31 |
@@ -562,6 +581,7 @@ tabla; archivo sin entrada = ratchet rojo.
 | `gen_propuestas_rd.py` | VIVO | el ultimo salto a la base RD: alimenta el escritor de borradores de `mineria_rd.py` desde `docs/rd/candidatos_curatoria/candidatos_db.jsonl` (ya digerido por `extraccion_db`), sin OCR ni GPU; re-matchea contra los catalogos ACTUALES, reporta dudosos sin proponerlos y exige evidencia >= 2; los borradores salen a una carpeta aparte y entran solo por PR humano; `tests/test_gen_propuestas_rd.py` | 2026-07-29 |
 | `gen_rd_standalone.py` | VIVO | hornea la base RD en `herramientas_rd.html` (bundle sin servidor), `npm run build:rd` | 2026-07-27 |
 | `repo_audit.py` | VIVO | gate read-only de grafo web, referencias activas obsoletas y contratos de las SQLite locales; consumidor `.github/workflows/ci.yml`, `Makefile audit` y `tests/test_repo_audit.py` | 2026-08-21 |
+| `verify_learning_hashmaps.py` | VIVO | verifica en solo lectura los mapas hash de aprendizaje contra el arbol MAK completo; distingue referencias con hash de referencias solo por ruta y nunca reescribe mapas ni fuentes. Consumidor: operador y validacion de continuidad | 2026-09-02 |
 | `gen_dashboard_productoras.py` | VIVO | genera `db_productoras.html`; documentado en `docs/rd/DB_PRODUCTORAS_ESTADO.md`; consume la salida de `triangular_fichas.py` | 2026-07-25 (llega a main con la promocion de `rd`, PR #303) |
 | `gen_presentacion_db.py` | VIVO | genera `docs/rd/presentacion_db.html`, la pieza formal para la directiva RD; documentado en `docs/rd/DB_PRODUCTORAS_ESTADO.md` | 2026-07-25 (llega a main con la promocion de `rd`, PR #303) |
 | `gen_propuesta_directiva.py` | VIVO | genera `docs/rd/propuesta_directiva.html`, la propuesta a la directiva (que ofrece RD, con que cuenta, como protege los datos y que necesita aprobar); lee `data/rd.db`, asi que ninguna cifra se escribe a mano | 2026-07-26 |
