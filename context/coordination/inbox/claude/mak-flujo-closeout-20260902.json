@@ -1,7 +1,7 @@
 {
   "schema": "mak-flujo-closeout-v1",
   "task_id": "mak-flujo-closeout-20260902",
-  "status": "CLOSURE_IN_PROGRESS",
+  "status": "CLOSURE_COMPLETE_SUITES_DEFERRED",
   "date": "2026-09-02T10:39:53.936720+00:00",
   "branch_shas_before": {
     "MAK": "a62f9019585f9c80a749dae7383f3a519f2efdf5",
@@ -10,8 +10,8 @@
     "historia": "09f7e7d9059db286bb1fa44de322139e2b5d1d68"
   },
   "branch_shas_after": {
-    "MAK": "82210a741eabc664e6c6521c34f9ee3f0e5df514",
-    "FLUJO": "0dc99a25ae12ab6550a0e81ee287c05762c43952",
+    "MAK": "8333c4a60f2013fa0f2e5d416cbbc38eb5aa5e6a",
+    "FLUJO": "6dfd4c22ba3d226a6ac1242d8864fd9431e14e2b",
     "main": "3d83ed606f9ce27a1a410860a0380de684524898",
     "historia": "09f7e7d9059db286bb1fa44de322139e2b5d1d68"
   },
@@ -363,11 +363,12 @@
     }
   ],
   "rollback_commands": [
+    "git -C /home/mak checkout main",
+    "mv /home/mak/_archive/root-preserve-20260902/flujo-adapter-dir /home/mak/flujo",
+    "git -C /home/mak apply _archive/root-preserve-20260902/main-worktree.patch",
+    "cp -r /home/mak/_archive/root-preserve-20260902/box-shims/* /home/mak/",
     "git -C /home/mak update-ref refs/heads/MAK a62f9019585f9c80a749dae7383f3a519f2efdf5",
-    "git -C /home/mak update-ref refs/heads/FLUJO ad9ee8811325ee8661023312cd1d4a419407f547",
-    "git -C /home/mak worktree remove .claude/worktrees/mak-closeout",
-    "git -C /home/mak worktree remove .claude/worktrees/flujo-closeout",
-    "kill 897766 && nohup .venv/bin/python -m flujo app --no-abrir --host 127.0.0.1 --port 8765 &"
+    "git -C /home/mak update-ref refs/heads/FLUJO ad9ee8811325ee8661023312cd1d4a419407f547"
   ],
   "exact_push_commands_not_executed": [
     "cd /home/mak/.claude/worktrees/mak-closeout && PYTHONPATH=src /home/mak/.venv/bin/python -m pytest -o addopts='' -q -m mak",
@@ -393,7 +394,7 @@
   "current_phase": "collection_repaired",
   "current_action": "done",
   "next_action": "measure hub reachability from the shared knowledge surface",
-  "last_update": "2026-09-02T12:32:29.456276+00:00",
+  "last_update": "2026-09-02T12:36:24.934492+00:00",
   "separation_metrics": {
     "common_paths_before": 3617,
     "common_paths_after": 2840,
@@ -533,17 +534,17 @@
     {
       "id": "C09",
       "title": "fix the contradictory lines of the operative docs",
-      "status": "in_progress"
+      "status": "done"
     },
     {
       "id": "C10",
       "title": "remove concrete leftovers: worktrees, root copies, operator scripts",
-      "status": "todo"
+      "status": "done"
     },
     {
       "id": "C11",
       "title": "closure condition: evidence for all eleven",
-      "status": "todo"
+      "status": "done"
     }
   ],
   "closure_decision": {
@@ -552,5 +553,72 @@
     "main_historia": "historical, not runtime",
     ".claude/worktrees": "never runtime",
     "consumption": "MAK consumes FLUJO from /home/mak/flujo/src without copying src/flujo"
+  },
+  "closure_evidence": {
+    "mak_checkout": {
+      "path": "/home/mak",
+      "branch": "MAK"
+    },
+    "flujo_checkout": {
+      "path": "/home/mak/flujo",
+      "branch": "FLUJO"
+    },
+    "worktrees": [
+      "/home/mak [MAK]",
+      "/home/mak/flujo [FLUJO]"
+    ],
+    "claude_worktrees_dir": "removed",
+    "runtime_from_worktrees": 0,
+    "ports": {
+      "8900": 200,
+      "8890": 200,
+      "8891": 200,
+      "8765": 200
+    },
+    "services": {
+      "mak-hub": "active",
+      "mak-research": "active",
+      "mak-codex": "active"
+    },
+    "collections": {
+      "mak": 0,
+      "flujo": 0,
+      "integration": 0
+    },
+    "environments": {
+      "env-mak": "requirements-mak.txt, pip check clean",
+      "env-flujo": "requirements-flujo.txt, pip check clean",
+      "env-integ": "requirements-integration.txt, pip check clean"
+    },
+    "gate": {
+      "command": "python3 tools/release_gate.py --check",
+      "rc": 5,
+      "meaning": "IMPLEMENTATION_COMPLETE_TESTS_DEFERRED, 0 blockers, 0 unknowns"
+    },
+    "preflight": {
+      "command": "python3 tools/runtime_preflight.py --check --strict",
+      "rc": 0
+    },
+    "commits": {
+      "MAK": 22,
+      "FLUJO": 13
+    },
+    "historical_unchanged": {
+      "main": "3d83ed606f9ce27a1a410860a0380de684524898",
+      "historia": "09f7e7d9059db286bb1fa44de322139e2b5d1d68"
+    },
+    "remotes_unchanged": {
+      "MAK": "72b0e5e43d7b6193f424abf4fa405d5967e9bece",
+      "FLUJO": "127f37476d13473dc521c064f3832d4d5c1d120f",
+      "main": "77333b4c5a948f04c9d4bb228bff42d82bd91e4f"
+    },
+    "push_executed": false,
+    "root_untracked": 0,
+    "adapter_or_recursive_alias": "none: no level-1 symlink in /home/mak or /home/mak/flujo"
+  },
+  "deferred_suite_commands": {
+    "mak": "PYTHONPATH=/home/mak:/home/mak/flujo/src python3 -m pytest -o addopts='' -q -m mak",
+    "flujo": "cd /home/mak/flujo && PYTHONPATH=/home/mak/flujo/src python3 -m pytest -o addopts='' -q -m flujo",
+    "integration": "cd /home/mak && PYTHONPATH=/home/mak:/home/mak/flujo:/home/mak/flujo/src python3 -m pytest -o addopts='' -q -m integration"
   }
 }
