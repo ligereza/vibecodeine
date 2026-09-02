@@ -1,0 +1,52 @@
+name: CI FLUJO
+permissions:
+  contents: read
+# FLUJO is the portable motor. main and historia are historical and are not
+# deployment targets, so neither triggers this workflow.
+on:
+  push:
+    branches: [FLUJO]
+  pull_request:
+    branches: [FLUJO]
+jobs:
+  flujo:
+    name: gate + flujo lane
+    runs-on: ubuntu-latest
+    env:
+      PYTHONIOENCODING: utf-8
+      PYTHONUTF8: "1"
+    steps:
+      # The canonical layout again: MAK at the workspace root, FLUJO at
+      # ./flujo. FLUJO does not carry the gate -- it is MAK box tooling -- so
+      # the gate runs from the MAK checkout against this layout. The FLUJO
+      # lane itself needs nothing from MAK, which is the point of the branch.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: MAK
+          fetch-depth: 0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: FLUJO
+          path: flujo
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - name: Install the FLUJO profile
+        working-directory: flujo
+        run: python -m pip install -r requirements-flujo.txt
+      - name: pip check
+        run: python -m pip check
+      - name: Structural gate
+        run: python tools/release_gate.py --check
+      - name: FLUJO lane
+        working-directory: flujo
+        env:
+          PYTHONPATH: ${{ github.workspace }}/flujo/src
+        run: python -m pytest -o addopts='' -q -m flujo
+      - name: Entrypoint resolves from the branch content
+        working-directory: flujo
+        env:
+          PYTHONPATH: ${{ github.workspace }}/flujo/src
+        run: python -m flujo --help
