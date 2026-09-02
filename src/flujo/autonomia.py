@@ -15,9 +15,21 @@ import sys
 import time
 from typing import Iterable
 
-from cultura.mak_plataforma import ledger as common_ledger
-from cultura.mak_plataforma import providers as external_providers
-from cultura.mak_plataforma import tandas
+# The MAK box layer is an optional peer, not a build dependency of the
+# portable motor: importing it at module scope made `import flujo.autonomia`
+# fail on any machine without the MAK tree, which is what tied FLUJO to this
+# box's topology. Absence is reported through MAK_BOX_AVAILABLE.
+try:  # pragma: no cover - exercised by the branch that lacks cultura/
+    from cultura.mak_plataforma import ledger as common_ledger
+    from cultura.mak_plataforma import providers as external_providers
+    from cultura.mak_plataforma import tandas
+
+    MAK_BOX_AVAILABLE = True
+except ImportError:  # the MAK departments are not present in this checkout
+    common_ledger = None  # type: ignore[assignment]
+    external_providers = None  # type: ignore[assignment]
+    tandas = None  # type: ignore[assignment]
+    MAK_BOX_AVAILABLE = False
 
 
 CANONICAL_BRANCHES = ("main",)

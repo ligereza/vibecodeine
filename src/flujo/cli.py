@@ -147,8 +147,13 @@ def autonomia_status(
 ):
     """Mide si el circuito remoto/local -> juez local -> ledger esta listo."""
     import json as _json
-    from cultura.mak_plataforma import tandas as _tandas
     from .autonomia import MAK_SSH_TARGET, autonomy_status as _status, mak_status
+    from .autonomia import MAK_BOX_AVAILABLE, tandas as _tandas
+
+    if not MAK_BOX_AVAILABLE:
+        console.print("[yellow]MAK box layer ausente en este checkout: "
+                      "este comando requiere el arbol cultura/mak_plataforma.[/]")
+        raise typer.Exit(code=2)
 
     if executor == "mak":
         payload = mak_status(target=ssh_target or MAK_SSH_TARGET)
