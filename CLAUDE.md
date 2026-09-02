@@ -265,9 +265,14 @@ CI. Squash merges keep the PR author as the author (a merge of a MAK PR shows up
 in `git log` as a miskirabit commit: that is normal, it went through the gate, it
 is not a direct push).
 
-Repository topology (2026-08-13): within Git, `main` is the only canonical
-reviewed history. It is a reproducibility and publication checkpoint, not the
-complete organism and not the authority over local material.
+Repository topology (2026-09-02, supersedes the 2026-08-13 note): `MAK` and
+`FLUJO` are the two operational branches and each is a physical checkout.
+`/home/mak` is the MAK checkout (the Linux box: departments, services, Hub);
+`/home/mak/flujo` is the FLUJO checkout (the portable motor, its CLI and Hub).
+MAK consumes the motor from `/home/mak/flujo/src` and carries no copy of
+`src/flujo`. `main` and `historia` are historical aggregates: reproducibility
+and publication checkpoints, never runtime and never deployment targets.
+`.claude/worktrees` is never runtime.
 
 - Physical Windows and MAK Linux surfaces are authoritative for files,
   databases, memories, services, mounted storage, and generated outputs.
@@ -278,8 +283,17 @@ complete organism and not the authority over local material.
   Windows and MAK Linux are physical nodes; Data, Capabilities, Products,
   Operations, and Tests are system boundaries that may be distributed across
   those nodes and Git projections.
-- New work uses a temporary `codex/*` worktree from `origin/main` and returns
-  through a reviewed PR to `main`.
+- New work goes to the branch that owns the surface: box departments,
+  services and box tooling to `MAK`, motor/CLI/Hub/packaging to `FLUJO`. Each
+  operational branch pushes its own ref (`MAK:MAK`, `FLUJO:FLUJO`); neither
+  returns through `main`.
+- Ownership is decided by importer, consumer and contract, never by directory
+  name. A path under `tools/` is not MAK by that fact alone: three tests were
+  misclassified exactly that way and only surfaced as collection errors.
+- Test presence is physical, not a marker: pytest imports a module before it
+  can deselect it. The lane authority is `context/test_lane_map.json`.
+- The `integration` lane is the composition of both checkouts and lives once,
+  in MAK, with `requirements-integration.txt`.
 - `dependabot/*` branches are temporary automated updates and use the same
   review gate.
 - `mak`, `rd`, `iskvw`, `mejoras`, and `mak-svg` are transition/history refs.
