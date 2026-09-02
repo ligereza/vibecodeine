@@ -1,0 +1,46 @@
+name: CI integration
+permissions:
+  contents: read
+# The integration lane is the composition of the two physical checkouts. It
+# runs on both operational branches because a change on either side can break
+# the composition, and on neither historical branch.
+on:
+  push:
+    branches: [MAK, FLUJO]
+  pull_request:
+    branches: [MAK, FLUJO]
+jobs:
+  integration:
+    name: integration lane (MAK + FLUJO)
+    runs-on: ubuntu-latest
+    env:
+      PYTHONIOENCODING: utf-8
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: MAK
+          fetch-depth: 0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: FLUJO
+          path: flujo
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      # requirements-integration.txt reads the FLUJO profile from the sibling
+      # checkout instead of duplicating it, so this step also proves the
+      # layout is real.
+      - name: Install the composition
+        run: python -m pip install -r requirements-integration.txt
+      - name: pip check
+        run: python -m pip check
+      - name: Integration lane
+        env:
+          # Three paths on purpose: the MAK tree, the FLUJO checkout root (for
+          # tests that import the motor as src.flujo.*) and the motor package
+          # root.
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/flujo:${{ github.workspace }}/flujo/src
+        run: python -m pytest -o addopts='' -q -m integration

@@ -1,0 +1,45 @@
+name: CI MAK
+permissions:
+  contents: read
+# MAK is the Linux box surface. main and historia are historical and are not
+# deployment targets, so no branch here triggers on them.
+on:
+  push:
+    branches: [MAK]
+  pull_request:
+    branches: [MAK]
+jobs:
+  mak:
+    name: gate + mak lane
+    runs-on: ubuntu-latest
+    env:
+      PYTHONIOENCODING: utf-8
+      PYTHONUTF8: "1"
+    steps:
+      # The canonical layout is materialized on purpose: MAK at the workspace
+      # root and FLUJO at ./flujo, exactly as on the box. Three lane=mak tests
+      # import consumed contracts (flujo.knowledge.learning_policy,
+      # flujo.substrate.xmp, flujo.knowledge.lane_registry), so MAK is not
+      # self-contained by design -- it consumes the motor from flujo/src.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: FLUJO
+          path: flujo
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - name: Install the MAK profile
+        run: python -m pip install -r requirements-mak.txt
+      - name: pip check
+        run: python -m pip check
+      - name: Structural gate
+        run: python tools/release_gate.py --check
+      - name: MAK lane
+        env:
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/flujo/src
+        run: python -m pytest -o addopts='' -q -m mak
