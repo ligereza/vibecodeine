@@ -84,7 +84,7 @@ def main():
         print("ERROR: falta la dependencia opcional qwen-agent; no se instalo automaticamente.",
               file=sys.stderr)
         return 2
-    modelo = sys.argv[1] if len(sys.argv) > 1 else "llama3.1:8b"
+    modelo = sys.argv[1] if len(sys.argv) > 1 else "gemma3:4b"
     llm_cfg = {'model': modelo, 'model_server': 'http://127.0.0.1:11434/v1', 'api_key': 'ollama'}
     bot = Assistant(llm=llm_cfg, function_list=['leer_estado', 'vetear', 'entregar', 'leer_bitacora'],
                      system_message="Sos el capataz de MAK, conversas con el usuario en espanol. "
