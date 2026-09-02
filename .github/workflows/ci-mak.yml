@@ -43,3 +43,12 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/flujo/src
         run: python -m pytest -o addopts='' -q -m mak
+      # The hygiene lane ran in NO job until 2026-09-02. The separation created
+      # it and CI got one job per operational lane, so the 14 files that guard
+      # the registry, the docs, the language rule and the CI contract itself
+      # were left ungated -- which is why four of them sat red unnoticed. The
+      # ratchets that catch documentation lying were the ones with no gate.
+      - name: repo hygiene lane
+        env:
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/flujo/src
+        run: python -m pytest -o addopts='' -q -m repo_hygiene

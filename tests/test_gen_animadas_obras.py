@@ -74,13 +74,37 @@ def test_contrato_excluye_svg_ausente_y_vincula_el_presente():
                               "clase": "manual"}]
 
 
-def test_manifiesto_real_coincide_con_el_campo():
+def test_the_real_manifest_never_publishes_works_outside_the_field():
+    """The direction that had a real incident behind it (#355, 2026-07-27).
+
+    The old assertion was ``len(manifiesto) == len(campo)``, and it went red on
+    2026-09-02 when the field legitimately grew from 219 to 871 works: the
+    perception reached ``reels`` and more of ``posts``, exactly as the #355
+    commit predicted it would. Its author already wrote the rule for this
+    case -- "size is not the property worth protecting; a legitimate change of
+    scope turning a test red is a bad test".
+
+    What must never happen is the other direction: publishing an animated piece
+    for a work the filter excluded. That reverses a decision the user made, and
+    it is checked here over EVERY row instead of the first 30. A work in the
+    field with no animated piece yet is the honest-missing case the archive
+    already accepts elsewhere (``trazo`` measures 208 of 871 and writes no key
+    for the rest).
+    """
     manif = json.loads((RAIZ / "iskvw" / "datos" / "animadas.json").read_text(encoding="utf-8"))
-    assert len(manif["piezas"]) == len(OBRAS)
+    por_id = {o["id"]: o for o in OBRAS}
+
+    assert manif["piezas"], "the real manifest is empty: nothing was measured"
+    orphans = [f["obra_id"] for f in manif["piezas"]
+               if f["obra_id"] not in por_id]
+    assert not orphans, (
+        "animadas.json publishes pieces for works that are not in the field, "
+        "which is published material the filter declares unpublished: %s"
+        % ", ".join(orphans[:5]))
+
     for fila in manif["piezas"][:30]:
         assert (RAIZ / fila["src"]).is_file(), fila["src"]
-        assert fila["spec"] == derivar_spec(
-            next(o for o in OBRAS if o["id"] == fila["obra_id"]))
+        assert fila["spec"] == derivar_spec(por_id[fila["obra_id"]])
 
 
 def test_las_obras_curadas_entran_al_contrato():
