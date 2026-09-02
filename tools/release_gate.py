@@ -47,8 +47,47 @@ REMOTE = "vibecodeine-legacy"
 COMMAND_TIMEOUT = 20.0
 
 VERDICT_READY = "READY_TO_PUSH"
+VERDICT_IMPLEMENTED = "IMPLEMENTATION_COMPLETE_TESTS_DEFERRED"
 VERDICT_NOT_READY = "NOT_READY"
-VERDICT_UNKNOWN = "UNKNOWN"
+VERDICT_UNKNOWN = "UNKNOWN_EXTERNAL"
+
+# The precondition suites. READY_TO_PUSH requires evidence that these ran
+# green; without it the honest state is IMPLEMENTATION_COMPLETE_TESTS_DEFERRED.
+# The previous gate returned READY_TO_PUSH while explaining that it "never
+# means the tests are green", which made the strongest word in the vocabulary
+# mean the weakest thing.
+PRECONDITION_SUITES = {
+    "MAK": "python3 -m pytest tests/ -m mak -q",
+    "FLUJO": "python3 -m pytest tests/ -m flujo -q",
+}
+
+# What each branch owns, and therefore what the other must not carry.
+BRANCH_SURFACES = {
+    "MAK": {
+        "own_hub": "cultura/mak_plataforma/hub.py",
+        "foreign_hub": "src/flujo/web/hub.py",
+        "foreign_entrypoint": "src/flujo/cli.py",
+        "own_capabilities": "CAPACIDADES_MAK.md",
+        "foreign_capabilities": "CAPACIDADES_FLUJO.md",
+        "own_requirements": "requirements-mak.txt",
+        "foreign_requirements": "requirements-flujo.txt",
+        "own_lane": "mak",
+        "foreign_lane": "flujo",
+        "entrypoints": ("cultura/mak_plataforma/hub.py", "tools/runtime_preflight.py"),
+    },
+    "FLUJO": {
+        "own_hub": "src/flujo/web/hub.py",
+        "foreign_hub": "cultura/mak_plataforma/hub.py",
+        "foreign_entrypoint": "cultura/mak_research/interfaz.py",
+        "own_capabilities": "CAPACIDADES_FLUJO.md",
+        "foreign_capabilities": "CAPACIDADES_MAK.md",
+        "own_requirements": "requirements-flujo.txt",
+        "foreign_requirements": "requirements-mak.txt",
+        "own_lane": "flujo",
+        "foreign_lane": "mak",
+        "entrypoints": ("src/flujo/cli.py", "src/flujo/web/hub.py"),
+    },
+}
 
 SEV_OK = "ok"
 SEV_INFO = "info"
@@ -523,6 +562,108 @@ def check_hub_boundaries(gate: Gate, root: Path, rows: list[dict[str, object]], 
 # ------------------------------------------------------------------- lane map
 
 
+
+def check_separation(gate: Gate, root: Path, branch: str, profile: dict[str, object] | None) -> dict[str, object]:
+    """Measure physical separation, not the declaration of it.
+
+    Every item here was a real defect at some point in this repository: the
+    foreign Hub present in both refs, 387 of 388 test files shared, the CLI
+    entrypoint declared on a branch that no longer carried it, and requirements
+    that forced one branch to install the other's stack.
+    """
+
+    surface = BRANCH_SURFACES.get(branch)
+    row: dict[str, object] = {"branch": branch}
+    if surface is None:
+        return row
+
+    row["own_hub_present"] = file_in_ref(root, branch, surface["own_hub"])
+    row["foreign_hub_present"] = file_in_ref(root, branch, surface["foreign_hub"])
+    if not row["own_hub_present"]:
+        gate.add("own_hub_absent", SEV_BLOCKER,
+                 f"{branch} does not carry its own hub {surface['own_hub']}",
+                 evidence=f"git cat-file -e {branch}:{surface['own_hub']}")
+    if row["foreign_hub_present"]:
+        gate.add("foreign_hub_present", SEV_BLOCKER,
+                 f"{branch} still carries the other branch's hub implementation "
+                 f"{surface['foreign_hub']}",
+                 evidence=f"git cat-file -e {branch}:{surface['foreign_hub']}")
+
+    missing_entrypoints = [e for e in surface["entrypoints"] if not file_in_ref(root, branch, e)]
+    row["entrypoints"] = list(surface["entrypoints"])
+    row["missing_entrypoints"] = missing_entrypoints
+    if missing_entrypoints:
+        gate.add("entrypoint_absent", SEV_BLOCKER,
+                 f"{branch} declares entrypoints it does not carry: {', '.join(missing_entrypoints)}")
+
+    row["own_capabilities_present"] = file_in_ref(root, branch, surface["own_capabilities"])
+    row["foreign_capabilities_present"] = file_in_ref(root, branch, surface["foreign_capabilities"])
+    row["own_requirements_present"] = file_in_ref(root, branch, surface["own_requirements"])
+    row["foreign_requirements_present"] = file_in_ref(root, branch, surface["foreign_requirements"])
+    if row["foreign_capabilities_present"]:
+        gate.add("foreign_capabilities_present", SEV_BLOCKER,
+                 f"{branch} carries {surface['foreign_capabilities']}")
+    if row["foreign_requirements_present"]:
+        gate.add("foreign_requirements_mixed", SEV_BLOCKER,
+                 f"{branch} carries {surface['foreign_requirements']}")
+
+    # Foreign tests: presence, not marker selection. pytest imports a module
+    # before it can deselect it, so a lane marker never made a foreign test
+    # harmless.
+    lanes, error = json_from_ref(root, branch, "context/test_lane_map.json")
+    foreign_tests: list[str] = []
+    own_tests: list[str] = []
+    if lanes is None:
+        gate.add("lane_contract_unreadable", SEV_UNKNOWN, f"{branch}: {error}")
+    else:
+        assignments = lanes.get("assignments") or {}
+        assert isinstance(assignments, dict)
+        for path, meta in assignments.items():
+            lane = meta.get("lane") if isinstance(meta, dict) else None
+            if lane == surface["foreign_lane"]:
+                foreign_tests.append(str(path))
+            elif lane == surface["own_lane"]:
+                own_tests.append(str(path))
+        code, out, _ = git(root, "ls-tree", "-r", "--name-only", branch, "tests/")
+        tracked = {line for line in out.splitlines() if line.endswith(".py")}
+        present_foreign = sorted(set(foreign_tests) & tracked)
+        row["foreign_tests_declared"] = len(foreign_tests)
+        row["foreign_tests_present"] = present_foreign
+        row["own_tests_declared"] = len(own_tests)
+        row["test_files_tracked"] = len(tracked)
+        if present_foreign:
+            gate.add("foreign_tests_present", SEV_BLOCKER,
+                     f"{branch} carries {len(present_foreign)} test files declared for the "
+                     f"{surface['foreign_lane']} lane: {', '.join(present_foreign[:5])}"
+                     + (" ..." if len(present_foreign) > 5 else ""),
+                     evidence=f"git ls-tree -r {branch} tests/ vs context/test_lane_map.json")
+
+    # Shared contracts must be declared AND neutral.
+    declared = set()
+    if isinstance(profile, dict):
+        declared = {str(x) for x in (profile.get("shared_consumers") or []) if isinstance(x, str)}
+    row["shared_consumers_declared"] = sorted(declared)
+    undeclared_present: list[str] = []
+    if branch == "MAK":
+        code, out, _ = git(root, "ls-tree", "-r", "--name-only", branch, "src/")
+        carried = [line for line in out.splitlines() if line.endswith(".py")]
+        row["foreign_src_files_carried"] = len(carried)
+        skeleton = {"src/flujo/__init__.py", "src/flujo/version.py"}
+        for path in carried:
+            if path in skeleton or path.endswith("__init__.py"):
+                continue
+            if path not in declared:
+                undeclared_present.append(path)
+        row["undeclared_shared_contracts"] = undeclared_present
+        if undeclared_present:
+            gate.add("undeclared_shared_contract", SEV_BLOCKER,
+                     f"{branch} carries {len(undeclared_present)} src/flujo files its profile "
+                     f"does not declare as shared consumers: {', '.join(undeclared_present[:5])}"
+                     + (" ..." if len(undeclared_present) > 5 else ""),
+                     evidence=f"git ls-tree -r {branch} src/ vs branch_profile.json shared_consumers")
+    return row
+
+
 def check_lane_map(gate: Gate, root: Path) -> dict[str, object]:
     path = root / "tools" / "test_lane_map.py"
     row: dict[str, object] = {"path": str(path), "readable": False, "lanes": [], "entries": 0}
@@ -886,6 +1027,16 @@ def build_report(root: Path) -> dict[str, object]:
     finally:
         shutil.rmtree(workdir, ignore_errors=True)
 
+    separation = []
+    for row in branches:
+        if str(row["branch"]) in BRANCH_SURFACES:
+            per_branch = Gate()
+            separation.append(check_separation(per_branch, root, str(row["branch"]),
+                                               row.get("profile")))
+            row["separation_findings"] = [
+                {"code": f.code, "severity": f.severity, "detail": f.detail, "evidence": f.evidence}
+                for f in per_branch.findings]
+            gate.findings.extend(per_branch.findings)
     lane_map = check_lane_map(gate, root)
     runtime = check_runtime(gate, root)
     adapter = check_adapter_dependency(gate, root, runtime)
@@ -895,12 +1046,30 @@ def build_report(root: Path) -> dict[str, object]:
 
     blockers = gate.of(SEV_BLOCKER)
     unknowns = gate.of(SEV_UNKNOWN)
-    if blockers:
+
+    def branch_verdict(name: str) -> str:
+        rows = next((r for r in branches if r["branch"] == name), {})
+        findings = rows.get("separation_findings") or []
+        assert isinstance(findings, list)
+        if any(f["severity"] == SEV_BLOCKER for f in findings):
+            return VERDICT_NOT_READY
+        if any(f["severity"] == SEV_UNKNOWN for f in findings):
+            return VERDICT_UNKNOWN
+        sync = rows.get("sync") or {}
+        if sync.get("behind"):
+            return VERDICT_UNKNOWN
+        # Implementation can be complete while the precondition suite is
+        # unrun. That state has its own name.
+        return VERDICT_IMPLEMENTED
+
+    verdict_mak = branch_verdict("MAK")
+    verdict_flujo = branch_verdict("FLUJO")
+    if blockers or VERDICT_NOT_READY in (verdict_mak, verdict_flujo):
         verdict = VERDICT_NOT_READY
-    elif unknowns:
+    elif unknowns or VERDICT_UNKNOWN in (verdict_mak, verdict_flujo):
         verdict = VERDICT_UNKNOWN
     else:
-        verdict = VERDICT_READY
+        verdict = VERDICT_IMPLEMENTED
 
     return {
         "schema": SCHEMA,
@@ -908,11 +1077,19 @@ def build_report(root: Path) -> dict[str, object]:
         "date": datetime.now(timezone.utc).isoformat(),
         "physical_root": str(root),
         "verdict": verdict,
+        "verdict_overall": verdict,
+        "verdict_MAK": verdict_mak,
+        "verdict_FLUJO": verdict_flujo,
         "ready_to_push": verdict == VERDICT_READY,
-        "verdict_scope": "local repository coherence only; the test suite is deferred, so "
-        "READY_TO_PUSH never means the tests are green",
+        "verdict_scope": "physical and contractual separation of the operational branches, "
+        "plus runtime and adapter evidence",
+        "separation": separation,
+        "precondition_suites": PRECONDITION_SUITES,
+        "precondition_suites_executed": False,
         "tests_deferred": True,
-        "tests_deferred_reason": "this gate is forbidden from running pytest, collection included",
+        "tests_deferred_reason": "this gate does not run pytest; READY_TO_PUSH requires "
+        "evidence that the precondition suites ran green, so the reachable state here is "
+        "IMPLEMENTATION_COMPLETE_TESTS_DEFERRED",
         "branches": branches,
         "hub_boundaries": hubs,
         "lane_map": lane_map,
@@ -944,6 +1121,8 @@ def build_report(root: Path) -> dict[str, object]:
 def render_text(report: dict[str, object]) -> str:
     lines = [
         f"RESULTADO_GATE: {report['verdict']}",
+        f"verdict_MAK={report['verdict_MAK']} verdict_FLUJO={report['verdict_FLUJO']} "
+        f"verdict_overall={report['verdict_overall']}",
         f"{report['schema']} | root={report['physical_root']} | {report['date']}",
         f"scope: {report['verdict_scope']}",
         f"tests_deferred: {report['tests_deferred']} ({report['tests_deferred_reason']})",
@@ -968,6 +1147,19 @@ def render_text(report: dict[str, object]) -> str:
         lines.append(
             f"  {row['branch']}:{row['hub']} forbidden={row['forbidden_imports_found'] or 'none'} "
             f"undeclared={row['undeclared_cross_imports'] or 'none'}"
+        )
+    lines.append("")
+    lines.append("separation:")
+    for row in report["separation"]:  # type: ignore[union-attr]
+        assert isinstance(row, dict)
+        lines.append(
+            f"  {row['branch']}: own_hub={row.get('own_hub_present')} "
+            f"foreign_hub={row.get('foreign_hub_present')} "
+            f"foreign_tests={len(row.get('foreign_tests_present') or [])} "
+            f"tests_tracked={row.get('test_files_tracked')} "
+            f"foreign_reqs={row.get('foreign_requirements_present')} "
+            f"missing_entrypoints={row.get('missing_entrypoints')} "
+            f"undeclared_contracts={len(row.get('undeclared_shared_contracts') or [])}"
         )
     lane_map = report["lane_map"]
     assert isinstance(lane_map, dict)
@@ -1060,6 +1252,11 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         if report["verdict"] == VERDICT_UNKNOWN:
             return 2
+        if report["verdict"] == VERDICT_IMPLEMENTED:
+            # Not a failure: implementation is complete and the precondition
+            # suites are still owed. A distinct code so a caller can tell it
+            # apart from a fully green READY_TO_PUSH.
+            return 5
     return 0
 
 
