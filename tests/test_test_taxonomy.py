@@ -31,8 +31,15 @@ def test_filename_topic_exposes_the_existing_subject_axis() -> None:
 
 
 def test_small_candidate_is_explicitly_routable() -> None:
+    """Probed `test_mak_research_interfaz_pure.py` until 2026-09-02.
+
+    That file belongs to MAK. The classifier reads the SOURCE for its signals,
+    so a path absent from this checkout yields none and falls back to
+    `unknown` -- the probe stopped measuring the property it names.
+    `test_flujo_port_contract.py` lives here and classifies the same way.
+    """
     size, scope, environment = classify_test_axes(
-        "tests/test_mak_research_interfaz_pure.py"
+        "tests/test_flujo_port_contract.py"
     )
     assert (size, scope, environment) == ("small", "unit", "machine_bound")
 
