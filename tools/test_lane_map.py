@@ -384,6 +384,7 @@ PERSISTED_LANE_DATA = {
   "tests/test_project_router.py": "flujo",
   "tests/test_psicosis_agente.py": "repo_hygiene",
   "tests/test_puente_issues.py": "mak",
+  "tests/test_runtime_preflight.py": "mak",
   "tests/test_rd_database.py": "flujo",
   "tests/test_rd_datos.py": "flujo",
   "tests/test_rd_db_logos.py": "flujo",

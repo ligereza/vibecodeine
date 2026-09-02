@@ -6533,6 +6533,11 @@
       "reason": "persisted AST assignment",
       "resolution": "agreement",
       "status": "agreement"
+    },
+    "tests/test_runtime_preflight.py": {
+      "lane": "mak",
+      "imports": [],
+      "reason": "declared owner: the test exercises this branch's own surface"
     }
   },
   "generated_at_utc": "2026-09-02T00:44:00+00:00",
