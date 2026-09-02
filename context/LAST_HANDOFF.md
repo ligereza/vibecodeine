@@ -1376,6 +1376,83 @@ authorized, the existing release/publish procedure; do not regenerate
   now visible instead of silent, and widening the index is the next lever --
   a batch compute decision, not a workflow change.
 
+### O_G composed: N defensible orders instead of one verdict -- 2026-09-02
+
+- The operator's reframing, in his words: he had thought MAK had to learn to
+  make CLASSIC portfolios, and realised he should create portfolio FORMATS
+  instead -- and that being art, deviation is easier to justify. That is not a
+  change of mood; `docs/DIMENSIONES_DEL_ORDEN.md:160` already named it as the
+  theory's one open gap: "$O_G$ -- un orden defendible, relativo a un
+  proposito -- todavia no existe como salida: el sistema emite un veredicto
+  unico en vez de N ordenes."
+- Two things were already built for this idea before it was named. The copilot
+  splits every relation into an `evidence` space and a `resonance` space, and
+  in the live scene 19 of 19 relations are `resonance` with confidence `alta`
+  -- under "learn the classic portfolio" that reads as total failure; under
+  "create formats" it is the material. And the interface already says "La
+  geometria permanece. Tus decisiones cambian el campo, no borran la
+  ambiguedad."
+- The boundary this work holds, stated because "art justifies error" is true
+  in one layer and false in the other: the FORMAT is invented, the EVIDENCE is
+  not. An unexpected order, an abstention, an exhibited gap -- that is
+  authorship. An artist, a venue or a date the system did not measure is not
+  art justifying error; it is the machine lying about the archive the work is
+  made of. The codebase already draws that line as evidence/resonance,
+  candidate/accepted and unknown/absent.
+- `G` was already implemented and unnamed: a FORMAT is a purpose.
+  `data/portfolio_formats/*.json` holds six of them
+  (`mak-portfolio-format-v1`), each declaring slots with `count`, `claim`,
+  `layer`, `min_state` and `min_permission`, plus `declared_claims`,
+  `forbidden_claims`, `forbidden_inferences` and `invalid_if`. Measured: NOTHING
+  composed an order from them. `flujo/src/flujo/knowledge/portfolio_dossier.py`
+  does not mention them, and inside MAK only one test and two documents read
+  the directory.
+- `F` now exists: `copilot.compose_order()` / `compose_orders()`, schema
+  `faro-order-composition-v1`, exposed at
+  `GET /api/portfolio/copilot/orders`. It fills each declared slot from the
+  corpus, reports what it selected with `source_ref` and derived state, what it
+  abstained on and why, whether each `invalid_if` condition triggers, and the
+  terms of the objective.
+- The result over the real archive, 7044 records and all six formats: every
+  slot's count is satisfiable -- `R_G` 1.0, `T` 1.0, redundancy `N` 0 -- and
+  ALL SIX formats are invalid for one single reason. Zero of 7044 records carry
+  a `permission` field, and every slot declares a `min_permission`. So the
+  finding is not "MAK cannot make portfolios": it is "record permission and six
+  formats become producible". That is worth more than any composition the
+  engine could have fabricated.
+- Two defects of my own, both found by running against the real archive rather
+  than a fixture. F4 declares `min_state: supported_candidate`, a rung this
+  engine cannot rank, and the first version silently defaulted it to
+  `candidate` -- accepting a LOWER bar than the format asked for, which is the
+  same defect as reading an absence as health. It now fails closed, selects
+  nothing for that slot and says why. And the objective reports `C`, `D` and
+  `V` as `measured: false` with a reason instead of a zero: `V` cannot be
+  scored because the perception index covers 100 of 7044 pieces, and reporting
+  a number for an unmeasured term is precisely what the `U` term exists to
+  punish. `U` itself is 0 by construction, not by promise.
+- Nothing about the state ladder invents authorship: a record is `observed`
+  only when the archive itself shows a dated artifact on disk, `candidate` when
+  it has one of the two, `unknown` otherwise. No filename, folder, position or
+  adjacency is read as evidence, which is what the formats' own
+  `forbidden_inferences` demand.
+- Tests: six in `tests/test_copilot.py` -- N orders with none of them the
+  answer and the constraints travelling with each; abstention on an unrecorded
+  permission; failing closed on an unrankable state; refusing to read a
+  filename or a date as an event; never scoring an unmeasured term; and no
+  record reused across slots. Figures: `tests/test_copilot.py` `48 passed`;
+  `mak` `2188 passed, 5 skipped`; `repo_hygiene` `100 passed`; `integration`
+  and `runtime_preflight` below.
+- Nothing was published, promoted or written to the archive. Every order
+  carries `promotion: none`, `owner: human` and its own `next_action`; the six
+  compositions are proposals a person reads, and no record was labelled or
+  linked to produce them.
+- Next, and it is the operator's call rather than a technical one: the engine
+  has no surface yet. The six orders and what blocks each are available at the
+  route but not drawn in the interface, because how a format is presented is an
+  aesthetic decision, not a mechanical one. The other open lever is the one the
+  measurement exposed: recording permission, without which no format can be
+  declared valid.
+
 # Operational Handoff
 
 ## Agent bootstrap -- CURRENT -- 2026-09-02 (later) -- the suites, and the boundary the operator corrected
