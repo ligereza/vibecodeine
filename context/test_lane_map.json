@@ -32,16 +32,6 @@
       ],
       "reason": "persisted AST assignment"
     },
-    "tests/test_agent_bootstrap.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "pathlib",
-        "tools.agent_bootstrap",
-        "unittest"
-      ],
-      "reason": "persisted AST assignment"
-    },
     "tests/test_airdrop.py": {
       "lane": "flujo",
       "imports": [
@@ -156,15 +146,6 @@
         "json",
         "os",
         "pathlib"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_archive_portfolio_department.py": {
-      "lane": "flujo",
-      "imports": [
-        "__future__",
-        "pathlib",
-        "src.flujo.departments"
       ],
       "reason": "persisted AST assignment"
     },
@@ -306,28 +287,6 @@
       ],
       "reason": "persisted AST assignment"
     },
-    "tests/test_archivo_ensayos.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "importlib.util",
-        "json",
-        "pathlib",
-        "sys"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_archivo_iskvw_posicion.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "gen_archivo_iskvw",
-        "json",
-        "pathlib",
-        "sys"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
     "tests/test_artistic_program_evaluator.py": {
       "lane": "flujo",
       "imports": [
@@ -403,40 +362,6 @@
       ],
       "reason": "persisted AST assignment"
     },
-    "tests/test_backlog_descargar_concurrency.py": {
-      "lane": "mak",
-      "imports": [
-        "hashlib",
-        "importlib.util",
-        "json",
-        "pathlib",
-        "threading",
-        "time"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_becas_calendario.py": {
-      "lane": "mak",
-      "imports": [
-        "pathlib",
-        "pytest",
-        "tempfile",
-        "tools.becas_calendario"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_becas_calendario_missing_dir.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "becas_calendario",
-        "pathlib",
-        "pytest",
-        "subprocess",
-        "sys"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
     "tests/test_blender_nodes.py": {
       "lane": "flujo",
       "imports": [
@@ -453,18 +378,6 @@
       ],
       "reason": "persisted AST assignment"
     },
-    "tests/test_blender_scene_probe.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "json",
-        "pathlib",
-        "pytest",
-        "subprocess",
-        "tools.blender_scene_probe"
-      ],
-      "reason": "persisted AST assignment"
-    },
     "tests/test_blendfile.py": {
       "lane": "flujo",
       "imports": [
@@ -477,19 +390,6 @@
         "struct"
       ],
       "reason": "persisted AST assignment"
-    },
-    "tests/test_borradura_ascii.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "borradura",
-        "hashlib",
-        "pathlib",
-        "subprocess",
-        "sys",
-        "tapiz"
-      ],
-      "reason": "resolved from imports/source paths"
     },
     "tests/test_brand.py": {
       "lane": "flujo",
@@ -510,39 +410,6 @@
         "tools.build_application_intake"
       ],
       "reason": "persisted AST assignment"
-    },
-    "tests/test_busqueda_ciega.py": {
-      "lane": "mak",
-      "imports": [
-        "pathlib",
-        "pytest",
-        "sys"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_calidad_loop.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "cultura.mak_plataforma.calidad_loop",
-        "datetime",
-        "json",
-        "pathlib",
-        "pytest"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_campo_filtro.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "gen_campo_iskvw",
-        "glob",
-        "json",
-        "pathlib",
-        "sys"
-      ],
-      "reason": "resolved from imports/source paths"
     },
     "tests/test_canary.py": {
       "lane": "flujo",
@@ -566,52 +433,6 @@
         "unittest.mock"
       ],
       "reason": "persisted AST assignment"
-    },
-    "tests/test_capas_iskvw.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "gen_capas_iskvw",
-        "json",
-        "pathlib",
-        "pytest",
-        "sys",
-        "tilde_meter"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_capataz.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "cultura.mak_plataforma",
-        "json",
-        "pytest",
-        "threading",
-        "time"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_capataz_enrutamiento.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "importlib.util",
-        "pathlib",
-        "pytest"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_cartografia_filtros.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "cartografia_filtros",
-        "pathlib",
-        "pytest",
-        "sys"
-      ],
-      "reason": "resolved from imports/source paths"
     },
     "tests/test_catalog_federation.py": {
       "lane": "flujo",
@@ -651,16 +472,6 @@
         "sqlite3"
       ],
       "reason": "persisted AST assignment"
-    },
-    "tests/test_check_mak_trabajo.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "importlib.util",
-        "pathlib",
-        "subprocess"
-      ],
-      "reason": "resolved from imports/source paths"
     },
     "tests/test_classification_queue.py": {
       "lane": "flujo",
@@ -750,41 +561,6 @@
       ],
       "reason": "persisted AST assignment"
     },
-    "tests/test_codex_cadena.py": {
-      "lane": "mak",
-      "imports": [
-        "pathlib"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_codex_no_es_sandbox.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "ast",
-        "pathlib",
-        "pytest",
-        "re"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_coherence.py": {
-      "lane": "mak",
-      "imports": [
-        "coherence",
-        "pathlib",
-        "sys"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_coherence_boundaries.py": {
-      "lane": "mak",
-      "imports": [
-        "cultura.mak_plataforma",
-        "pathlib"
-      ],
-      "reason": "persisted AST assignment"
-    },
     "tests/test_comandos_manifiesto.py": {
       "lane": "repo_hygiene",
       "imports": [
@@ -807,74 +583,6 @@
         "typer.testing"
       ],
       "reason": "persisted AST assignment"
-    },
-    "tests/test_comparar_cobertura.py": {
-      "lane": "mak",
-      "imports": [
-        "importlib.util",
-        "json",
-        "pathlib",
-        "subprocess",
-        "sys"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_compete_engine.py": {
-      "lane": "mak",
-      "imports": [
-        "compete_engine",
-        "json",
-        "pathlib",
-        "pytest",
-        "subprocess",
-        "sys",
-        "system_map",
-        "tapiz_telemetry",
-        "time"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_compilador_navegador.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "json",
-        "motor_semantico",
-        "pathlib",
-        "pytest",
-        "shutil",
-        "subprocess",
-        "sys",
-        "xml.etree.ElementTree"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_consolidar_fichas.py": {
-      "lane": "mak",
-      "imports": [
-        "importlib.util",
-        "json",
-        "pathlib",
-        "subprocess",
-        "sys"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_construir_mapa_visual.py": {
-      "lane": "mak",
-      "imports": [
-        "tools.construir_mapa_visual"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_consulta_busqueda.py": {
-      "lane": "mak",
-      "imports": [
-        "pathlib",
-        "pytest",
-        "sys"
-      ],
-      "reason": "adds cultura/mak_research to sys.path and imports research_lib"
     },
     "tests/test_contract_audit.py": {
       "lane": "flujo",
@@ -901,46 +609,6 @@
       ],
       "reason": "persisted AST assignment"
     },
-    "tests/test_contrato_archivo.py": {
-      "lane": "mak",
-      "imports": [
-        "gen_archivo_iskvw",
-        "importlib.util",
-        "pathlib",
-        "sys"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_copilot.py": {
-      "lane": "mak",
-      "imports": [
-        "cultura.mak_plataforma.copilot",
-        "json"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_corpus_a_micelio.py": {
-      "lane": "mak",
-      "imports": [
-        "pathlib",
-        "pytest",
-        "sys"
-      ],
-      "reason": "adds cultura/mak_research to sys.path and imports corpus_a_micelio"
-    },
-    "tests/test_corpus_olvido.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "corpus_olvido",
-        "os",
-        "pathlib",
-        "pytest",
-        "subprocess",
-        "sys"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
     "tests/test_cotizaciones_base.py": {
       "lane": "flujo",
       "imports": [
@@ -948,35 +616,6 @@
         "flujo.cotizaciones_base"
       ],
       "reason": "persisted AST assignment"
-    },
-    "tests/test_cron_nocturno.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "datetime",
-        "nocturno",
-        "os",
-        "pathlib",
-        "sys"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_cron_state_atomic.py": {
-      "lane": "mak",
-      "imports": [
-        "importlib.util",
-        "json",
-        "pathlib"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_crontab_mak_referencias.py": {
-      "lane": "mak",
-      "imports": [
-        "pathlib",
-        "re"
-      ],
-      "reason": "resolved from imports/source paths"
     },
     "tests/test_cross_archive_relations.py": {
       "lane": "flujo",
@@ -1006,98 +645,6 @@
         "sys"
       ],
       "reason": "persisted AST assignment"
-    },
-    "tests/test_cultura_sin_automerge.py": {
-      "lane": "mak",
-      "imports": [
-        "ast",
-        "pathlib",
-        "re",
-        "warnings"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_curaduria.py": {
-      "lane": "mak",
-      "imports": [
-        "contrato_archivo",
-        "pathlib",
-        "sys"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_curaduria_roundtrip.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "contrato_archivo",
-        "json",
-        "pathlib",
-        "pytest",
-        "re",
-        "shutil",
-        "subprocess",
-        "sys",
-        "validar_curaduria"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_curatoria_ordenes.py": {
-      "lane": "mak",
-      "imports": [
-        "importlib.util",
-        "pathlib",
-        "subprocess",
-        "sys"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_curatoria_percepcion.py": {
-      "lane": "mak",
-      "imports": [
-        "PIL",
-        "json",
-        "pathlib",
-        "percepcion",
-        "reporter",
-        "sys",
-        "unittest"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_curatoria_portfolio_critica.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "contrato_archivo",
-        "json",
-        "pathlib",
-        "sys"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_curatoria_triangular.py": {
-      "lane": "mak",
-      "imports": [
-        "importlib.util",
-        "json",
-        "pathlib",
-        "sys"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_curatoria_watchdog_panel.py": {
-      "lane": "mak",
-      "imports": [
-        "importlib.util",
-        "json",
-        "os",
-        "pathlib",
-        "subprocess",
-        "sys",
-        "time"
-      ],
-      "reason": "resolved from imports/source paths"
     },
     "tests/test_dashboard.py": {
       "lane": "flujo",
@@ -1130,15 +677,6 @@
       ],
       "reason": "persisted AST assignment"
     },
-    "tests/test_debate_modelos.py": {
-      "lane": "mak",
-      "imports": [
-        "pathlib",
-        "pytest",
-        "sys"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
     "tests/test_deep_learning_gate.py": {
       "lane": "flujo",
       "imports": [
@@ -1160,43 +698,6 @@
       ],
       "reason": "persisted AST assignment"
     },
-    "tests/test_departments.py": {
-      "lane": "flujo",
-      "imports": [
-        "__future__",
-        "hub",
-        "json",
-        "pathlib",
-        "src.flujo.departments",
-        "sys",
-        "threading",
-        "urllib.request"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_diagnostico_proyectos.py": {
-      "lane": "mak",
-      "imports": [
-        "importlib.util",
-        "json",
-        "pathlib",
-        "sqlite3",
-        "tempfile",
-        "unittest"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_diagnostics.py": {
-      "lane": "flujo",
-      "imports": [
-        "flujo.diagnostics",
-        "json",
-        "pathlib",
-        "subprocess",
-        "sys"
-      ],
-      "reason": "persisted AST assignment"
-    },
     "tests/test_director.py": {
       "lane": "flujo",
       "imports": [
@@ -1208,28 +709,6 @@
       ],
       "reason": "persisted AST assignment"
     },
-    "tests/test_empaquetar_assets.py": {
-      "lane": "mak",
-      "imports": [
-        "json",
-        "pathlib",
-        "tools.portfolio.empaquetar_assets"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_energia_log.py": {
-      "lane": "mak",
-      "imports": [
-        "datetime",
-        "energia_log",
-        "json",
-        "pathlib",
-        "pytest",
-        "sys",
-        "unittest.mock"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
     "tests/test_entity_crosswalk.py": {
       "lane": "flujo",
       "imports": [
@@ -1239,48 +718,6 @@
         "sys"
       ],
       "reason": "persisted AST assignment"
-    },
-    "tests/test_entregar_concurrency.py": {
-      "lane": "mak",
-      "imports": [
-        "cultura.mak_plataforma",
-        "json",
-        "threading",
-        "time"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_entregar_iconos_guard.py": {
-      "lane": "mak",
-      "imports": [
-        "entregar",
-        "json",
-        "pathlib",
-        "pytest",
-        "sys"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_entregar_micelio.py": {
-      "lane": "mak",
-      "imports": [
-        "entregar_micelio",
-        "pathlib",
-        "pytest",
-        "sys"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_entregar_smoke_gate.py": {
-      "lane": "mak",
-      "imports": [
-        "entregar",
-        "json",
-        "pathlib",
-        "pytest",
-        "sys"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
     },
     "tests/test_episode_runner.py": {
       "lane": "flujo",
@@ -1327,16 +764,6 @@
       ],
       "reason": "persisted AST assignment"
     },
-    "tests/test_extraccion_db.py": {
-      "lane": "mak",
-      "imports": [
-        "importlib.util",
-        "json",
-        "pathlib",
-        "sys"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
     "tests/test_feature_policy.py": {
       "lane": "flujo",
       "imports": [
@@ -1347,16 +774,6 @@
         "pytest"
       ],
       "reason": "persisted AST assignment"
-    },
-    "tests/test_fila_cero.py": {
-      "lane": "mak",
-      "imports": [
-        "fila_cero",
-        "pathlib",
-        "pytest",
-        "sys"
-      ],
-      "reason": "resolved from imports/source paths"
     },
     "tests/test_flujo_dispatcher.py": {
       "lane": "flujo",
@@ -1384,27 +801,6 @@
       ],
       "reason": "persisted AST assignment"
     },
-    "tests/test_formato_ensayo.py": {
-      "lane": "mak",
-      "imports": [
-        "formato_ensayo",
-        "json",
-        "pathlib",
-        "re",
-        "sys"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_formatos_mak.py": {
-      "lane": "mak",
-      "imports": [
-        "codex_lib",
-        "pathlib",
-        "pytest",
-        "sys"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
     "tests/test_formats_catalogo.py": {
       "lane": "flujo",
       "imports": [
@@ -1412,48 +808,6 @@
         "pytest"
       ],
       "reason": "persisted AST assignment"
-    },
-    "tests/test_fuentes.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "fuentes",
-        "pathlib",
-        "sys"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_gen_animadas_obras.py": {
-      "lane": "mak",
-      "imports": [
-        "contrato_archivo",
-        "gen_animadas_obras",
-        "json",
-        "motor_semantico.compilador",
-        "pathlib",
-        "sys"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_gen_archivo_iskvw.py": {
-      "lane": "mak",
-      "imports": [
-        "gen_archivo_iskvw",
-        "json",
-        "pathlib",
-        "sys"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_gen_propuestas_rd.py": {
-      "lane": "mak",
-      "imports": [
-        "importlib.util",
-        "json",
-        "pathlib",
-        "sys"
-      ],
-      "reason": "resolved from imports/source paths"
     },
     "tests/test_generar_catalogo_rd.py": {
       "lane": "flujo",
@@ -1478,37 +832,6 @@
       ],
       "reason": "persisted AST assignment"
     },
-    "tests/test_git_web_contract.py": {
-      "lane": "repo_hygiene",
-      "imports": [
-        "pathlib"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_higiene_docs.py": {
-      "lane": "repo_hygiene",
-      "imports": [
-        "__future__",
-        "pathlib",
-        "pytest",
-        "re",
-        "repo_scan",
-        "subprocess"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_higiene_repo.py": {
-      "lane": "repo_hygiene",
-      "imports": [
-        "__future__",
-        "pathlib",
-        "pytest",
-        "re",
-        "subprocess",
-        "sys"
-      ],
-      "reason": "persisted AST assignment"
-    },
     "tests/test_hotfix_03411.py": {
       "lane": "flujo",
       "imports": [
@@ -1525,17 +848,6 @@
         "zipfile"
       ],
       "reason": "persisted AST assignment"
-    },
-    "tests/test_hub_archive_portfolio_view.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "importlib.util",
-        "json",
-        "pathlib",
-        "sys"
-      ],
-      "reason": "resolved from imports/source paths"
     },
     "tests/test_hub_comando_seguro.py": {
       "lane": "flujo",
@@ -1555,95 +867,6 @@
         "pathlib"
       ],
       "reason": "persisted AST assignment"
-    },
-    "tests/test_hub_dependency_degradation.py": {
-      "lane": "mak",
-      "imports": [
-        "hub",
-        "io",
-        "json",
-        "os",
-        "sys"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_hub_durable_writers.py": {
-      "lane": "mak",
-      "imports": [
-        "cultura.mak_plataforma",
-        "http.server",
-        "json",
-        "pathlib",
-        "threading",
-        "urllib.parse",
-        "urllib.request"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_hub_execution_routes.py": {
-      "lane": "integration",
-      "imports": [
-        "hub",
-        "io",
-        "json",
-        "os",
-        "sys"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_hub_post_dispatch_errors.py": {
-      "lane": "mak",
-      "imports": [
-        "hub",
-        "io",
-        "json",
-        "os",
-        "sys"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_hub_render_and_rescue_routes.py": {
-      "lane": "integration",
-      "imports": [
-        "hub",
-        "io",
-        "json",
-        "os",
-        "sys"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_hub_second_witness_routes.py": {
-      "lane": "mak",
-      "imports": [
-        "hub",
-        "io",
-        "json",
-        "os",
-        "sys"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_hub_static_content_routes.py": {
-      "lane": "mak",
-      "imports": [
-        "hub",
-        "io",
-        "os",
-        "sys"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_iconos_conjunto.py": {
-      "lane": "mak",
-      "imports": [
-        "iconos_conjunto",
-        "json",
-        "pathlib",
-        "sys",
-        "types"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
     },
     "tests/test_identity_ties.py": {
       "lane": "flujo",
@@ -1700,16 +923,6 @@
       ],
       "reason": "persisted AST assignment"
     },
-    "tests/test_ig_metadatos.py": {
-      "lane": "mak",
-      "imports": [
-        "json",
-        "pathlib",
-        "pytest",
-        "sys"
-      ],
-      "reason": "adds tools to sys.path and imports ig_metadatos"
-    },
     "tests/test_ig_url_canonica.py": {
       "lane": "flujo",
       "imports": [
@@ -1753,56 +966,6 @@
       ],
       "reason": "persisted AST assignment"
     },
-    "tests/test_inferential_archaeology.py": {
-      "lane": "mak",
-      "imports": [
-        "duckdb",
-        "json",
-        "pathlib",
-        "pytest",
-        "sqlite3",
-        "tools.inferential_archaeology"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_informe_plantilla.py": {
-      "lane": "mak",
-      "imports": [
-        "pathlib",
-        "pytest",
-        "sys"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_ingesta_archivo.py": {
-      "lane": "mak",
-      "imports": [
-        "PIL",
-        "__future__",
-        "builtins",
-        "cultura.mak_curatoria",
-        "cultura.mak_curatoria.percepcion",
-        "json",
-        "pathlib",
-        "sqlite3",
-        "sys",
-        "types"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_ingesta_evidence_gate.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "cultura.mak_curatoria",
-        "json",
-        "pathlib",
-        "pytest",
-        "sqlite3",
-        "sys"
-      ],
-      "reason": "persisted AST assignment"
-    },
     "tests/test_intake.py": {
       "lane": "flujo",
       "imports": [
@@ -1835,22 +998,6 @@
       ],
       "reason": "persisted AST assignment"
     },
-    "tests/test_interfaz_jobs_concurrency.py": {
-      "lane": "mak",
-      "imports": [
-        "http.client",
-        "interfaz",
-        "io",
-        "json",
-        "pathlib",
-        "pytest",
-        "sys",
-        "threading",
-        "time",
-        "urllib.error"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
     "tests/test_iskvw_archive_view_ui.py": {
       "lane": "integration",
       "imports": [
@@ -1870,58 +1017,6 @@
         "pathlib"
       ],
       "reason": "reads only iskvw editor assets; no local import"
-    },
-    "tests/test_iskvw_librerias.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "json",
-        "pathlib",
-        "pytest",
-        "shutil",
-        "subprocess",
-        "sys",
-        "vendorizar_iskvw"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_iskvw_piel_medir.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "json",
-        "os",
-        "pathlib",
-        "pytest",
-        "shutil",
-        "subprocess",
-        "sys"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_iskvw_piel_smoke.py": {
-      "lane": "mak",
-      "imports": [
-        "json",
-        "pathlib",
-        "pytest",
-        "shutil",
-        "subprocess"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_iskvw_semilla.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "json",
-        "pathlib",
-        "pytest",
-        "re",
-        "shutil",
-        "subprocess"
-      ],
-      "reason": "resolved from imports/source paths"
     },
     "tests/test_iskvw_vinculos.py": {
       "lane": "repo_hygiene",
@@ -1959,18 +1054,6 @@
       ],
       "reason": "persisted AST assignment"
     },
-    "tests/test_knowledge_dossiers.py": {
-      "lane": "flujo",
-      "imports": [
-        "__future__",
-        "flujo.cli",
-        "flujo.knowledge",
-        "pathlib",
-        "pytest",
-        "typer.testing"
-      ],
-      "reason": "persisted AST assignment"
-    },
     "tests/test_knowledge_reconciliation.py": {
       "lane": "flujo",
       "imports": [
@@ -1983,41 +1066,6 @@
         "sqlite3"
       ],
       "reason": "persisted AST assignment"
-    },
-    "tests/test_knowledge_scanner_skips.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "importlib.util",
-        "pathlib",
-        "pytest"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_laser.py": {
-      "lane": "flujo",
-      "imports": [
-        "contrato_archivo",
-        "flujo",
-        "json",
-        "pathlib",
-        "pytest",
-        "subprocess",
-        "sys"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_latido.py": {
-      "lane": "mak",
-      "imports": [
-        "importlib.util",
-        "io",
-        "json",
-        "pathlib",
-        "sys",
-        "time"
-      ],
-      "reason": "resolved from imports/source paths"
     },
     "tests/test_learning_policy.py": {
       "lane": "flujo",
@@ -2040,574 +1088,12 @@
       ],
       "reason": "persisted AST assignment"
     },
-    "tests/test_logo_clean_lab_dataset.py": {
-      "lane": "mak",
-      "imports": [
-        "pathlib",
-        "subprocess",
-        "sys",
-        "tempfile"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_mak_backlog.py": {
-      "lane": "mak",
-      "imports": [
-        "backlog",
-        "json",
-        "os",
-        "pathlib",
-        "pytest",
-        "research_lib",
-        "sys",
-        "tempfile"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_mak_benchmark.py": {
-      "lane": "mak",
-      "imports": [
-        "cultura.mak_plataforma.benchmark",
-        "json"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_mak_codex_nodos.py": {
-      "lane": "integration",
-      "imports": [
-        "fcntl",
-        "importlib",
-        "json",
-        "pathlib",
-        "pytest",
-        "re",
-        "sys",
-        "threading",
-        "types"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_mak_conductor.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "contextlib",
-        "cultura.mak_conductor.conductor",
-        "cultura.mak_conductor.gpu_arbiter",
-        "cultura.mak_conductor.producer_catalog",
-        "cultura.mak_conductor.queue_store",
-        "cultura.mak_conductor.queue_worker",
-        "cultura.mak_conductor.runtime",
-        "cultura.mak_plataforma",
-        "json",
-        "pytest",
-        "threading",
-        "time"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_mak_conductor_registry.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "cultura.mak_conductor",
-        "cultura.mak_conductor.handler_registry",
-        "cultura.mak_conductor.queue_store",
-        "cultura.mak_conductor.queue_worker",
-        "cultura.mak_conductor.source_bridge",
-        "cultura.mak_curatoria",
-        "cultura.mak_curatoria.diagnostico_proyectos",
-        "inspect",
-        "json",
-        "os",
-        "pathlib",
-        "subprocess",
-        "sys",
-        "zipfile"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_mak_delegar.py": {
-      "lane": "mak",
-      "imports": [
-        "io",
-        "json",
-        "mak",
-        "os",
-        "sys",
-        "unittest",
-        "unittest.mock"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_mak_diagnostics.py": {
-      "lane": "integration",
-      "imports": [
-        "hub",
-        "json",
-        "pathlib",
-        "sys",
-        "threading",
-        "urllib.parse",
-        "urllib.request"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_mak_discernment.py": {
-      "lane": "mak",
-      "imports": [
-        "cultura.mak_plataforma",
-        "json",
-        "subprocess",
-        "sys"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_mak_fallback.py": {
-      "lane": "mak",
-      "imports": [
-        "fallback_util",
-        "importlib",
-        "os",
-        "pytest",
-        "resource",
-        "sys",
-        "types"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_mak_fructificacion.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "importlib.util",
-        "pathlib"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_mak_fusion.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "importlib.util",
-        "json",
-        "pathlib"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_mak_gpu_activity.py": {
-      "lane": "mak",
-      "imports": [
-        "importlib.util",
-        "json",
-        "pathlib",
-        "sys"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_mak_grafo_fallback.py": {
-      "lane": "mak",
-      "imports": [
-        "grafo",
-        "os",
-        "pytest",
-        "sys"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_mak_heartbeat.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "importlib.util",
-        "json",
-        "pathlib",
-        "sys"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_mak_hub_eventos.py": {
-      "lane": "integration",
-      "imports": [
-        "hub",
-        "json",
-        "os",
-        "sys"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_mak_hub_salud.py": {
-      "lane": "integration",
-      "imports": [
-        "hub",
-        "json",
-        "os",
-        "sqlite3",
-        "sys",
-        "time"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_mak_iconos.py": {
-      "lane": "integration",
-      "imports": [
-        "entregar",
-        "importlib",
-        "json",
-        "motor_semantico",
-        "pathlib",
-        "pytest",
-        "re",
-        "resource",
-        "sys",
-        "types",
-        "xml.etree.ElementTree"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_mak_ideas.py": {
-      "lane": "mak",
-      "imports": [
-        "cultura.mak_plataforma",
-        "json",
-        "threading",
-        "time"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_mak_interfaz_config.py": {
-      "lane": "mak",
-      "imports": [
-        "interfaz",
-        "os",
-        "pathlib",
-        "pytest",
-        "sys",
-        "tempfile",
-        "unittest"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_mak_ledger.py": {
-      "lane": "mak",
-      "imports": [
-        "cultura.mak_plataforma",
-        "json",
-        "subprocess",
-        "sys"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_mak_micelio_ideas.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "importlib.util",
-        "json",
-        "pathlib",
-        "threading"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_mak_mirror_fixes.py": {
-      "lane": "mak",
-      "imports": [
-        "cadena",
-        "fcntl",
-        "grafo",
-        "importlib",
-        "interfaz",
-        "pathlib",
-        "pytest",
-        "research_lib",
-        "resource",
-        "sys",
-        "types"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_mak_organos_visibles.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "importlib.util",
-        "json",
-        "pathlib",
-        "sys",
-        "types"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_mak_pausa.py": {
-      "lane": "mak",
-      "imports": [
-        "pathlib",
-        "pausa",
-        "pytest",
-        "research",
-        "sys"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_mak_portfolio_bridge.py": {
-      "lane": "mak",
-      "imports": [
-        "cultura.mak_plataforma",
-        "cultura.mak_plataforma.contrato_archivo",
-        "json",
-        "pathlib",
-        "pytest",
-        "threading",
-        "time",
-        "urllib.error",
-        "urllib.request"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_mak_post.py": {
-      "lane": "mak",
-      "imports": [
-        "cultura.mak_post.pipeline",
-        "pathlib"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_mak_post_registry.py": {
-      "lane": "mak",
-      "imports": [
-        "cultura.mak_conductor.handler_registry",
-        "cultura.mak_conductor.producer_catalog",
-        "json"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_mak_process_guard.py": {
-      "lane": "integration",
-      "imports": [
-        "importlib.util",
-        "pathlib"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_mak_reanudar.py": {
-      "lane": "integration",
-      "imports": [
-        "fcntl",
-        "hub",
-        "interfaz",
-        "pathlib",
-        "pytest",
-        "sys",
-        "threading",
-        "time"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_mak_research_iconos_auto.py": {
-      "lane": "mak",
-      "imports": [
-        "json",
-        "pathlib",
-        "pytest",
-        "sys",
-        "worker"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_mak_research_interfaz_http.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "http.client",
-        "interfaz",
-        "io",
-        "json",
-        "pathlib",
-        "pytest",
-        "shutil",
-        "sys",
-        "threading",
-        "unittest.mock",
-        "urllib.error",
-        "urllib.parse"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_mak_research_interfaz_pure.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "importlib",
-        "importlib.util",
-        "interfaz",
-        "json",
-        "pathlib",
-        "pytest",
-        "research_lib",
-        "sys",
-        "threading",
-        "time",
-        "unittest.mock"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_mak_research_lib.py": {
-      "lane": "mak",
-      "imports": [
-        "json",
-        "pathlib",
-        "research_lib",
-        "sys",
-        "unittest",
-        "unittest.mock",
-        "urllib.error"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_mak_research_memoria_degradation.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "json",
-        "memoria",
-        "pathlib",
-        "pytest",
-        "research_lib",
-        "shutil",
-        "sys",
-        "time"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_mak_research_router.py": {
-      "lane": "integration",
-      "imports": [
-        "pathlib",
-        "research_router",
-        "sys"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_mak_research_watchdog.py": {
-      "lane": "mak",
-      "imports": [
-        "pathlib"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_mak_retencion.py": {
-      "lane": "mak",
-      "imports": [
-        "os",
-        "pathlib",
-        "pytest",
-        "retencion",
-        "sys",
-        "time"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_mak_reviews.py": {
-      "lane": "mak",
-      "imports": [
-        "cultura.mak_plataforma",
-        "json",
-        "threading",
-        "time"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_mak_revision.py": {
-      "lane": "mak",
-      "imports": [
-        "cultura.mak_plataforma",
-        "json"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_mak_revision_episodios.py": {
-      "lane": "mak",
-      "imports": [
-        "cultura.mak_plataforma",
-        "json"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_mak_salud_proveedores.py": {
-      "lane": "mak",
-      "imports": [
-        "json",
-        "os",
-        "pytest",
-        "research_lib",
-        "sys",
-        "threading"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_mak_sin_gptmini.py": {
-      "lane": "mak",
-      "imports": [
-        "pathlib"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_mak_sync_safe.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "importlib.util",
-        "json",
-        "os",
-        "pathlib",
-        "pytest",
-        "subprocess",
-        "sys"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_mak_tandas.py": {
-      "lane": "mak",
-      "imports": [
-        "cultura.mak_plataforma",
-        "inspect",
-        "json",
-        "pathlib",
-        "re",
-        "subprocess",
-        "sys"
-      ],
-      "reason": "persisted AST assignment"
-    },
     "tests/test_mak_tandas_surface.py": {
       "lane": "flujo",
       "imports": [
         "__future__",
         "flujo.web.hub",
         "json"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_mak_trabajo_resp.py": {
-      "lane": "mak",
-      "imports": [
-        "json",
-        "pathlib",
-        "pytest",
-        "sys",
-        "trabajo"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_mak_ua.py": {
-      "lane": "mak",
-      "imports": [
-        "json",
-        "pathlib",
-        "research_lib",
-        "sys",
-        "unittest",
-        "unittest.mock"
       ],
       "reason": "persisted AST assignment"
     },
@@ -2618,119 +1104,6 @@
         "flujo.manifest",
         "flujo.models",
         "json"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_mantenimiento.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "cultura.mak_plataforma",
-        "json",
-        "os",
-        "pathlib",
-        "pytest",
-        "subprocess",
-        "time",
-        "unittest.mock"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_mapa_completo.py": {
-      "lane": "flujo",
-      "imports": [
-        "__future__",
-        "flujo.cli",
-        "importlib.util",
-        "pathlib",
-        "pytest",
-        "re"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_marca_sin_precio.py": {
-      "lane": "mak",
-      "imports": [
-        "marca_sin_precio",
-        "pathlib",
-        "pytest",
-        "re",
-        "sys",
-        "tilde_residuo"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_marco_no_va_al_buscador.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "pathlib",
-        "pytest",
-        "research",
-        "research_lib",
-        "sys"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_material_ocurrencias.py": {
-      "lane": "mak",
-      "imports": [
-        "json",
-        "pathlib",
-        "pytest",
-        "sys"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_math_kernel.py": {
-      "lane": "flujo",
-      "imports": [
-        "__future__",
-        "copy",
-        "flujo.knowledge.math_kernel",
-        "flujo.knowledge.project_router",
-        "hashlib",
-        "json",
-        "pathlib",
-        "pytest"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_mecanismo_residuo.py": {
-      "lane": "mak",
-      "imports": [
-        "mecanismo_residuo",
-        "pathlib",
-        "sys"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_medir_organismo.py": {
-      "lane": "mak",
-      "imports": [
-        "tools.medir_organismo"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_memoria_projection.py": {
-      "lane": "mak",
-      "imports": [
-        "memoria",
-        "pathlib",
-        "sys"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_metricas_capataz.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "cultura.mak_plataforma.metricas_capataz",
-        "datetime",
-        "json",
-        "pathlib",
-        "pytest",
-        "tempfile"
       ],
       "reason": "persisted AST assignment"
     },
@@ -2754,17 +1127,6 @@
       ],
       "reason": "persisted AST assignment"
     },
-    "tests/test_micelio_deposito.py": {
-      "lane": "mak",
-      "imports": [
-        "json",
-        "pathlib",
-        "pytest",
-        "subprocess",
-        "sys"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
     "tests/test_migrate_unified_knowledge.py": {
       "lane": "integration",
       "imports": [
@@ -2776,66 +1138,6 @@
         "sqlite3",
         "sys",
         "tools.mak_ops.migrate_unified_knowledge"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_mineria_rd.py": {
-      "lane": "mak",
-      "imports": [
-        "json",
-        "mineria_rd",
-        "pathlib",
-        "pytest",
-        "subprocess",
-        "sys",
-        "unittest",
-        "urllib.error"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_motor_semantico.py": {
-      "lane": "mak",
-      "imports": [
-        "copy",
-        "json",
-        "motor_semantico",
-        "pathlib",
-        "pytest",
-        "re",
-        "sys",
-        "xml.etree.ElementTree"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_motor_semantico_rasterizador.py": {
-      "lane": "mak",
-      "imports": [
-        "motor_semantico",
-        "pathlib",
-        "pytest",
-        "sys"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_mutaciones.py": {
-      "lane": "mak",
-      "imports": [
-        "cultura.mak_plataforma",
-        "json",
-        "threading"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_node_runtime_requirement.py": {
-      "lane": "flujo",
-      "imports": [
-        "__future__",
-        "flujo",
-        "flujo.knowledge.runtime_tools",
-        "flujo.knowledge.system_status",
-        "json",
-        "pathlib",
-        "sys"
       ],
       "reason": "persisted AST assignment"
     },
@@ -2862,28 +1164,11 @@
       ],
       "reason": "persisted AST assignment"
     },
-    "tests/test_operating_world_experiment.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "experiments.mak_operating_world.model"
-      ],
-      "reason": "persisted AST assignment"
-    },
     "tests/test_operational_bridge.py": {
       "lane": "flujo",
       "imports": [
         "flujo.knowledge.operational_bridge",
         "sqlite3"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_operational_entrypoints.py": {
-      "lane": "repo_hygiene",
-      "imports": [
-        "__future__",
-        "importlib.util",
-        "pathlib"
       ],
       "reason": "persisted AST assignment"
     },
@@ -2958,86 +1243,6 @@
       ],
       "reason": "persisted AST assignment"
     },
-    "tests/test_opportunity_validity_capture.py": {
-      "lane": "integration",
-      "imports": [
-        "__future__",
-        "copy",
-        "cultura.mak_research.source_pipeline",
-        "flujo.knowledge.opportunity_validity_capture",
-        "hashlib",
-        "json",
-        "pathlib",
-        "pytest",
-        "sqlite3",
-        "subprocess",
-        "sys"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_optional_dependencies_absence.py": {
-      "lane": "integration",
-      "imports": [
-        "PIL",
-        "__future__",
-        "builtins",
-        "cultura.mak_curatoria",
-        "flujo.knowledge",
-        "importlib.util",
-        "pathlib",
-        "pytest"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_osc_sender.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "importlib.util",
-        "json",
-        "pathlib",
-        "pytest",
-        "socket",
-        "struct",
-        "sys"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_paleta_reactivos.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "json",
-        "paleta_reactivos",
-        "pathlib",
-        "re",
-        "sys"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_physical_projections.py": {
-      "lane": "repo_hygiene",
-      "imports": [
-        "hashlib",
-        "json",
-        "os",
-        "pathlib",
-        "pytest"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_piel_manifiesto.py": {
-      "lane": "mak",
-      "imports": [
-        "json",
-        "pathlib",
-        "pytest",
-        "shutil",
-        "subprocess",
-        "sys"
-      ],
-      "reason": "persisted AST assignment"
-    },
     "tests/test_pilot_run_manifest.py": {
       "lane": "flujo",
       "imports": [
@@ -3091,18 +1296,6 @@
       ],
       "reason": "persisted AST assignment"
     },
-    "tests/test_plano_stands.py": {
-      "lane": "mak",
-      "imports": [
-        "json",
-        "os",
-        "pathlib",
-        "pytest",
-        "subprocess",
-        "sys"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
     "tests/test_plano_trazador.py": {
       "lane": "flujo",
       "imports": [
@@ -3121,28 +1314,6 @@
       "lane": "flujo",
       "imports": [
         "flujo.plano"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_png_xmp_witness.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "pathlib",
-        "struct",
-        "tools.png_xmp_witness",
-        "zlib"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_portfolio_decision_drafts.py": {
-      "lane": "mak",
-      "imports": [
-        "cultura.mak_plataforma",
-        "json",
-        "threading",
-        "urllib.error",
-        "urllib.request"
       ],
       "reason": "persisted AST assignment"
     },
@@ -3171,17 +1342,6 @@
       ],
       "reason": "persisted AST assignment"
     },
-    "tests/test_portfolio_gen.py": {
-      "lane": "integration",
-      "imports": [
-        "catalog_contract",
-        "generar_portfolio",
-        "json",
-        "pathlib",
-        "sys"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
     "tests/test_portfolio_production.py": {
       "lane": "flujo",
       "imports": [
@@ -3196,16 +1356,6 @@
         "json",
         "pathlib",
         "pytest"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_portfolio_works.py": {
-      "lane": "mak",
-      "imports": [
-        "json",
-        "pathlib",
-        "pytest",
-        "tools.portfolio.generar_works"
       ],
       "reason": "persisted AST assignment"
     },
@@ -3438,15 +1588,6 @@
       ],
       "reason": "persisted AST assignment"
     },
-    "tests/test_project_lanes.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "pathlib",
-        "tools"
-      ],
-      "reason": "persisted AST assignment"
-    },
     "tests/test_project_reconstruction.py": {
       "lane": "integration",
       "imports": [
@@ -3470,34 +1611,6 @@
         "sqlite3",
         "tempfile",
         "unittest"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_project_router.py": {
-      "lane": "flujo",
-      "imports": [
-        "__future__",
-        "flujo.knowledge.episode_runner",
-        "flujo.knowledge.project_ir",
-        "flujo.knowledge.project_router",
-        "pathlib",
-        "tempfile",
-        "unittest"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_psicosis_agente.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "pathlib"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_puente_issues.py": {
-      "lane": "mak",
-      "imports": [
-        "cultura.mak_plataforma"
       ],
       "reason": "persisted AST assignment"
     },
@@ -3571,15 +1684,6 @@
       ],
       "reason": "persisted AST assignment"
     },
-    "tests/test_readme_svg.py": {
-      "lane": "mak",
-      "imports": [
-        "pathlib",
-        "re",
-        "tools.update_readme_svg"
-      ],
-      "reason": "reconciled by direct import evidence: tools.update_readme_svg"
-    },
     "tests/test_reception.py": {
       "lane": "flujo",
       "imports": [
@@ -3588,17 +1692,6 @@
         "os",
         "pytest",
         "unittest.mock"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_reconcile_iskvw_media.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "json",
-        "pathlib",
-        "pytest",
-        "tools.reconcile_iskvw_media"
       ],
       "reason": "persisted AST assignment"
     },
@@ -3618,23 +1711,6 @@
         "tests.test_project_reconstruction"
       ],
       "reason": "persisted AST assignment"
-    },
-    "tests/test_recovered_import.py": {
-      "lane": "mak",
-      "imports": [
-        "pathlib",
-        "tools.recovered.import_claude_sessions"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_refutar_orden.py": {
-      "lane": "mak",
-      "imports": [
-        "pathlib",
-        "pytest",
-        "sys"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
     },
     "tests/test_render_flyer_mak.py": {
       "lane": "integration",
@@ -3685,23 +1761,6 @@
       ],
       "reason": "persisted AST assignment"
     },
-    "tests/test_render_video_rd.py": {
-      "lane": "mak",
-      "imports": [
-        "importlib.util",
-        "pathlib"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_render_video_sequence_mak.py": {
-      "lane": "mak",
-      "imports": [
-        "importlib.util",
-        "json",
-        "pathlib"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
     "tests/test_replay.py": {
       "lane": "flujo",
       "imports": [
@@ -3710,13 +1769,6 @@
         "flujo.knowledge.replay",
         "json",
         "pytest"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_repo_audit.py": {
-      "lane": "mak",
-      "imports": [
-        "tools.repo_audit"
       ],
       "reason": "persisted AST assignment"
     },
@@ -3729,17 +1781,6 @@
         "subprocess"
       ],
       "reason": "persisted AST assignment"
-    },
-    "tests/test_research_event_log.py": {
-      "lane": "mak",
-      "imports": [
-        "json",
-        "os",
-        "research_lib",
-        "sys",
-        "threading"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
     },
     "tests/test_research_evidence_triangulation.py": {
       "lane": "flujo",
@@ -3776,32 +1817,6 @@
       ],
       "reason": "persisted AST assignment"
     },
-    "tests/test_research_mutations_concurrency.py": {
-      "lane": "mak",
-      "imports": [
-        "importlib.util",
-        "json",
-        "pathlib",
-        "sys",
-        "threading",
-        "time"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_research_registry_contract.py": {
-      "lane": "flujo",
-      "imports": [
-        "__future__",
-        "flujo.web.hub",
-        "importlib.util",
-        "os",
-        "pathlib",
-        "pytest",
-        "sqlite3",
-        "sys"
-      ],
-      "reason": "persisted AST assignment"
-    },
     "tests/test_research_simulation.py": {
       "lane": "flujo",
       "imports": [
@@ -3812,16 +1827,6 @@
         "json",
         "jsonschema",
         "pathlib"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_research_source_capture.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "json",
-        "pathlib",
-        "tools"
       ],
       "reason": "persisted AST assignment"
     },
@@ -3892,17 +1897,6 @@
       ],
       "reason": "persisted AST assignment"
     },
-    "tests/test_revisor_gates.py": {
-      "lane": "mak",
-      "imports": [
-        "importlib.util",
-        "json",
-        "pathlib",
-        "pytest",
-        "sys"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
     "tests/test_route_resolver.py": {
       "lane": "flujo",
       "imports": [
@@ -3969,19 +1963,6 @@
       ],
       "reason": "persisted AST assignment"
     },
-    "tests/test_showcontrol_token.py": {
-      "lane": "mak",
-      "imports": [
-        "flask",
-        "logging",
-        "pathlib",
-        "plugins.base",
-        "pytest",
-        "showcontrol",
-        "sys"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
     "tests/test_smoke.py": {
       "lane": "flujo",
       "imports": [
@@ -4021,18 +2002,6 @@
       ],
       "reason": "persisted AST assignment"
     },
-    "tests/test_source_pipeline.py": {
-      "lane": "mak",
-      "imports": [
-        "fondart_corpus",
-        "hashlib",
-        "pathlib",
-        "source_pipeline",
-        "sys",
-        "unittest.mock"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
-    },
     "tests/test_ssd_order_operator_frontier.py": {
       "lane": "flujo",
       "imports": [
@@ -4044,19 +2013,6 @@
         "json",
         "pathlib",
         "pytest"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_steg_changelog.py": {
-      "lane": "flujo",
-      "imports": [
-        "__future__",
-        "flujo.version",
-        "pathlib",
-        "steg_changelog",
-        "subprocess",
-        "svg_lint",
-        "sys"
       ],
       "reason": "persisted AST assignment"
     },
@@ -4117,18 +2073,6 @@
       ],
       "reason": "persisted AST assignment"
     },
-    "tests/test_system_status.py": {
-      "lane": "flujo",
-      "imports": [
-        "__future__",
-        "flujo.knowledge",
-        "flujo.knowledge.runtime_tools",
-        "json",
-        "os",
-        "pathlib"
-      ],
-      "reason": "persisted AST assignment"
-    },
     "tests/test_tapiz_vibecode.py": {
       "lane": "flujo",
       "imports": [
@@ -4185,16 +2129,6 @@
       ],
       "reason": "imports conftest and tests taxonomy; no motor/box import"
     },
-    "tests/test_thing_registro.py": {
-      "lane": "mak",
-      "imports": [
-        "json",
-        "pathlib",
-        "pytest",
-        "re"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
     "tests/test_three_plane_manifest.py": {
       "lane": "flujo",
       "imports": [
@@ -4205,59 +2139,6 @@
         "jsonschema",
         "pathlib",
         "pytest"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_tilde_meter.py": {
-      "lane": "mak",
-      "imports": [
-        "json",
-        "pathlib",
-        "sys",
-        "tilde_meter"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_tilde_paridad.py": {
-      "lane": "mak",
-      "imports": [
-        "pathlib",
-        "sys",
-        "tilde_paridad"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_tilde_render.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "pathlib",
-        "projects.tilde",
-        "sys",
-        "tilde_meter",
-        "xml.etree.ElementTree"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_tilde_residuo.py": {
-      "lane": "mak",
-      "imports": [
-        "pathlib",
-        "sys",
-        "tilde_residuo"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_tilde_sobrevivencia.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "json",
-        "pathlib",
-        "projects.tapiz.vibecode.svg_export",
-        "subprocess",
-        "sys",
-        "xml.etree.ElementTree"
       ],
       "reason": "persisted AST assignment"
     },
@@ -4278,17 +2159,6 @@
       ],
       "reason": "persisted AST assignment"
     },
-    "tests/test_trabajo_concurrency.py": {
-      "lane": "mak",
-      "imports": [
-        "cultura.mak_plataforma",
-        "json",
-        "pathlib",
-        "sys",
-        "threading"
-      ],
-      "reason": "persisted AST assignment"
-    },
     "tests/test_un_solo_documento.py": {
       "lane": "repo_hygiene",
       "imports": [
@@ -4299,28 +2169,6 @@
       ],
       "reason": "persisted AST assignment"
     },
-    "tests/test_utilidades_mak_sanidad.py": {
-      "lane": "mak",
-      "imports": [
-        "pathlib",
-        "pytest",
-        "subprocess",
-        "sys"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_validar_curaduria.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "json",
-        "pathlib",
-        "subprocess",
-        "sys",
-        "validar_curaduria"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
     "tests/test_validate_airdrop.py": {
       "lane": "integration",
       "imports": [
@@ -4330,47 +2178,6 @@
         "sys"
       ],
       "reason": "reconciled by unique local module/path resolution"
-    },
-    "tests/test_venue.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "json",
-        "jsonschema",
-        "math",
-        "pathlib",
-        "pytest",
-        "sys",
-        "venue",
-        "venue_geometria_scd"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_venue3d_smoke.py": {
-      "lane": "mak",
-      "imports": [
-        "pathlib",
-        "pytest",
-        "shutil",
-        "subprocess"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_vigia.py": {
-      "lane": "mak",
-      "imports": [
-        "importlib.util",
-        "json",
-        "mutaciones",
-        "pathlib",
-        "pytest",
-        "research_lib",
-        "sys",
-        "threading",
-        "time",
-        "urllib.error"
-      ],
-      "reason": "resolved from imports/source paths"
     },
     "tests/test_vigia_capture_bridge.py": {
       "lane": "integration",
@@ -4384,26 +2191,6 @@
         "tools.compile_vigia_capture_plans"
       ],
       "reason": "persisted AST assignment"
-    },
-    "tests/test_vigia_opportunity_queue.py": {
-      "lane": "mak",
-      "imports": [
-        "cultura.mak_plataforma",
-        "importlib.util",
-        "pathlib"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_vinculos_iskvw.py": {
-      "lane": "mak",
-      "imports": [
-        "importlib.util",
-        "json",
-        "pathlib",
-        "subprocess",
-        "sys"
-      ],
-      "reason": "reconciled by unique local module/path resolution"
     },
     "tests/test_vision_feedback_memory.py": {
       "lane": "flujo",
@@ -4419,103 +2206,6 @@
         "pytest"
       ],
       "reason": "persisted AST assignment"
-    },
-    "tests/test_visual_index.py": {
-      "lane": "mak",
-      "imports": [
-        "cultura.mak_plataforma",
-        "json"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_vj_git_performance.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "csv",
-        "importlib.util",
-        "json",
-        "os",
-        "pathlib",
-        "pytest",
-        "subprocess",
-        "sys"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_web_hub_endpoints.py": {
-      "lane": "flujo",
-      "imports": [
-        "__future__",
-        "flujo.version",
-        "flujo.web.hub",
-        "json",
-        "pathlib",
-        "pytest",
-        "sqlite3"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_wifi_intelligence_plugin.py": {
-      "lane": "mak",
-      "imports": [
-        "flask",
-        "logging",
-        "pathlib",
-        "plugins.base",
-        "pytest",
-        "sys",
-        "wifi_intelligence"
-      ],
-      "reason": "reviewed module/path assignment"
-    },
-    "tests/test_xio_evidence.py": {
-      "lane": "mak",
-      "imports": [
-        "cultura.mak_plataforma",
-        "json"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_xio_portfolio_link.py": {
-      "lane": "mak",
-      "imports": [
-        "cultura.mak_plataforma",
-        "json"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_xio_puente_monitor.py": {
-      "lane": "mak",
-      "imports": [
-        "importlib.util",
-        "json",
-        "os",
-        "pathlib",
-        "sys"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_xio_puente_staged.py": {
-      "lane": "mak",
-      "imports": [
-        "flask",
-        "importlib.util",
-        "pathlib",
-        "pytest",
-        "sys",
-        "threading"
-      ],
-      "reason": "resolved from imports/source paths"
-    },
-    "tests/test_xio_superficie.py": {
-      "lane": "mak",
-      "imports": [
-        "__future__",
-        "pathlib",
-        "pytest"
-      ],
-      "reason": "resolved from imports/source paths"
     },
     "tests/test_zipper.py": {
       "lane": "flujo",
@@ -4536,38 +2226,8 @@
     }
   },
   "summary": {
-    "disagreements": 144,
-    "lanes": {
-      "flujo": {
-        "N": 175,
-        "SETHASH": "8017f02dafe81d803a19cea5f11a85c691c80b982884aada8b61cdb40df9a1a5"
-      },
-      "integration": {
-        "N": 24,
-        "SETHASH": "e259fa4a1d0d98d49d5609ffc4da3c890939429ff0def709dcf78b00bb2e4222"
-      },
-      "mak": {
-        "N": 174,
-        "SETHASH": "41bc352d5ca23679a2991728a9cb3f91c3f5d03e282c20bf9ed2877e45b3188b"
-      },
-      "repo_hygiene": {
-        "N": 14,
-        "SETHASH": "af26381ed7387a068a3f2850df9aa101dbf42ab00269622480fd312c88a647bc"
-      },
-      "review": {
-        "N": 0,
-        "SETHASH": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-      }
-    },
-    "resolutions": {
-      "agreement": 243,
-      "moved_by_direct_ast": 1,
-      "moved_by_path_resolution": 56,
-      "moved_to_review": 63,
-      "persisted_supported_by_path": 80,
-      "review_remaining": 0,
-      "review_resolved_by_targeted_structure": 7
-    },
-    "tests": 387
-  }
+    "assignments": 183,
+    "note": "pruned to the tests this branch physically carries"
+  },
+  "reconciled_at_utc": "2026-09-02T00:00:00+00:00"
 }
