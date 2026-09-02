@@ -340,16 +340,6 @@
       ],
       "reason": "persisted AST assignment"
     },
-    "tests/test_autonomia_cli.py": {
-      "lane": "flujo",
-      "imports": [
-        "flujo",
-        "flujo.cli",
-        "json",
-        "typer.testing"
-      ],
-      "reason": "persisted AST assignment"
-    },
     "tests/test_autonomy_plan.py": {
       "lane": "flujo",
       "imports": [
@@ -592,20 +582,6 @@
         "pathlib",
         "tempfile",
         "unittest"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_contracurator.py": {
-      "lane": "flujo",
-      "imports": [
-        "__future__",
-        "copy",
-        "flujo.knowledge.contracurator",
-        "flujo.knowledge.product_view",
-        "flujo.knowledge.project_ir",
-        "json",
-        "pathlib",
-        "pytest"
       ],
       "reason": "persisted AST assignment"
     },
@@ -1342,23 +1318,6 @@
       ],
       "reason": "persisted AST assignment"
     },
-    "tests/test_portfolio_production.py": {
-      "lane": "flujo",
-      "imports": [
-        "__future__",
-        "copy",
-        "flujo.knowledge.human_decision_log",
-        "flujo.knowledge.portfolio_claims",
-        "flujo.knowledge.portfolio_format",
-        "flujo.knowledge.portfolio_render",
-        "flujo.knowledge.product_view",
-        "flujo.knowledge.screen_setup_evidence",
-        "json",
-        "pathlib",
-        "pytest"
-      ],
-      "reason": "persisted AST assignment"
-    },
     "tests/test_possibility_field.py": {
       "lane": "flujo",
       "imports": [
@@ -1507,38 +1466,6 @@
       ],
       "reason": "persisted AST assignment"
     },
-    "tests/test_product_view.py": {
-      "lane": "flujo",
-      "imports": [
-        "__future__",
-        "copy",
-        "flujo.knowledge.application_research_package",
-        "flujo.knowledge.portfolio_dossier",
-        "flujo.knowledge.product_plan",
-        "flujo.knowledge.product_view",
-        "json",
-        "pathlib",
-        "pytest",
-        "subprocess",
-        "sys",
-        "test_portfolio_dossier",
-        "test_product_plan"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_project_api.py": {
-      "lane": "flujo",
-      "imports": [
-        "__future__",
-        "flujo.knowledge.contract_registry",
-        "flujo.knowledge.project_api",
-        "flujo.knowledge.project_ir",
-        "pathlib",
-        "tempfile",
-        "unittest"
-      ],
-      "reason": "persisted AST assignment"
-    },
     "tests/test_project_context.py": {
       "lane": "flujo",
       "imports": [
@@ -1597,20 +1524,6 @@
         "pathlib",
         "sqlite3",
         "tools.build_application_intake"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_project_research.py": {
-      "lane": "flujo",
-      "imports": [
-        "__future__",
-        "flujo.knowledge.episode_runner",
-        "flujo.knowledge.project_ir",
-        "flujo.knowledge.project_research",
-        "pathlib",
-        "sqlite3",
-        "tempfile",
-        "unittest"
       ],
       "reason": "persisted AST assignment"
     },
@@ -1756,17 +1669,6 @@
       "imports": [
         "copy",
         "flujo.render.rescale",
-        "json",
-        "pytest"
-      ],
-      "reason": "persisted AST assignment"
-    },
-    "tests/test_replay.py": {
-      "lane": "flujo",
-      "imports": [
-        "__future__",
-        "copy",
-        "flujo.knowledge.replay",
         "json",
         "pytest"
       ],
@@ -2239,17 +2141,7 @@
       "imports": [],
       "reason": "subject is a FLUJO motor tool: gen_campo_iskvw imports flujo.plano, venue imports flujo.venues, vj_set/git_performance imports flujo.resolume"
     },
-    "tests/test_laser.py": {
-      "lane": "flujo",
-      "imports": [],
-      "reason": "imports only the motor (flujo.*); no reach into the cultura tree"
-    },
     "tests/test_math_kernel.py": {
-      "lane": "flujo",
-      "imports": [],
-      "reason": "imports only the motor (flujo.*); no reach into the cultura tree"
-    },
-    "tests/test_node_runtime_requirement.py": {
       "lane": "flujo",
       "imports": [],
       "reason": "imports only the motor (flujo.*); no reach into the cultura tree"
@@ -2263,15 +2155,10 @@
       "lane": "flujo",
       "imports": [],
       "reason": "imports only the motor (flujo.*); no reach into the cultura tree"
-    },
-    "tests/test_web_hub_endpoints.py": {
-      "lane": "flujo",
-      "imports": [],
-      "reason": "imports only the motor (flujo.*); no reach into the cultura tree"
     }
   },
   "summary": {
-    "assignments": 192,
+    "assignments": 182,
     "note": "pruned to the tests this branch physically carries"
   },
   "reconciled_at_utc": "2026-09-02T00:00:00+00:00"
