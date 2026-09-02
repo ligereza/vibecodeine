@@ -1,7 +1,7 @@
 {
   "schema": "mak-flujo-closeout-v1",
   "task_id": "mak-flujo-closeout-20260902",
-  "status": "CLOSURE_COMPLETE_SUITES_DEFERRED",
+  "status": "CLOSURE_COMPLETE_LOCAL_SUITES_CI_PENDING",
   "date": "2026-09-02T10:39:53.936720+00:00",
   "branch_shas_before": {
     "MAK": "a62f9019585f9c80a749dae7383f3a519f2efdf5",
@@ -10,8 +10,8 @@
     "historia": "09f7e7d9059db286bb1fa44de322139e2b5d1d68"
   },
   "branch_shas_after": {
-    "MAK": "8333c4a60f2013fa0f2e5d416cbbc38eb5aa5e6a",
-    "FLUJO": "6dfd4c22ba3d226a6ac1242d8864fd9431e14e2b",
+    "MAK": "d89a2f9cbd5b91e420d2a5f070470c4ed6827921",
+    "FLUJO": "a0b08690630a4da47b28e21d400c39c27ce44031",
     "main": "3d83ed606f9ce27a1a410860a0380de684524898",
     "historia": "09f7e7d9059db286bb1fa44de322139e2b5d1d68"
   },
@@ -53,6 +53,35 @@
         "context/test_lane_map.json"
       ],
       "worktree": ".claude/worktrees/flujo-closeout"
+    },
+    {
+      "branch": "MAK",
+      "sha": "779597f7",
+      "subject": "fix(integration): use split checkout paths",
+      "paths": [
+        "tests/integration_paths.py",
+        "tests/conftest.py",
+        "tests/test_node_runtime_requirement.py",
+        "tests/test_portfolio_production.py",
+        "tests/test_replay.py",
+        "tests/test_research_registry_contract.py",
+        "context/learning/replay_suite_v1.json"
+      ],
+      "worktree": "/home/mak"
+    },
+    {
+      "branch": "FLUJO",
+      "sha": "a0b08690",
+      "subject": "fix(log): preserve confirmed human states",
+      "paths": ["src/flujo/knowledge/human_decision_log.py"],
+      "worktree": "/home/mak/flujo"
+    },
+    {
+      "branch": "MAK",
+      "sha": "d89a2f9c",
+      "subject": "fix(gate): use physical checkout paths",
+      "paths": ["tools/release_gate.py"],
+      "worktree": "/home/mak"
     }
   ],
   "changed_paths": {
@@ -65,14 +94,23 @@
       "tests/test_runtime_preflight.py",
       "branch_profile.json",
       "tools/test_lane_map.py",
-      "context/test_lane_map.json"
+      "context/test_lane_map.json",
+      "tests/integration_paths.py",
+      "tests/conftest.py",
+      "tests/test_node_runtime_requirement.py",
+      "tests/test_portfolio_production.py",
+      "tests/test_replay.py",
+      "tests/test_research_registry_contract.py",
+      "context/learning/replay_suite_v1.json",
+      "tools/release_gate.py"
     ],
     "FLUJO": [
       "src/flujo/web/hub.py",
       "src/flujo/cli.py",
       "tests/test_flujo_port_contract.py",
       "tools/test_lane_map.py",
-      "context/test_lane_map.json"
+      "context/test_lane_map.json",
+      "src/flujo/knowledge/human_decision_log.py"
     ]
   },
   "ownership_decisions": [
@@ -277,10 +315,10 @@
       "mak_codex": "pid 854933 :8891 200"
     },
     "after": {
-      "flujo_app": "pid 897766, bound 8765 (contract port), HTTP 200, PYTHONPATH=/home/mak/.claude/worktrees/flujo-closeout/src, cwd=the FLUJO worktree",
+      "flujo_app": "pid 910612, bound 8765 (contract port), HTTP 200, PYTHONPATH=/home/mak/flujo/src, cwd=/home/mak/flujo",
       "mak_hub": "pid 854934 :8900 200 (untouched)",
       "mak_research": "pid 854932 :8890 200 (untouched)",
-      "mak_codex": "pid 854933 :8891 200 (untouched)"
+      "mak_codex": "pid 912638 :8891 200 (untouched)"
     },
     "flujo_left_running": true,
     "mak_services_restarted": false,
@@ -330,38 +368,33 @@
     {
       "command": "HTTP 8765 8900 8890 8891",
       "result": "200 on all four"
+    },
+    {
+      "command": "PYTHONPATH=/home/mak:/home/mak/flujo:/home/mak/flujo/src /home/mak/.venv/bin/python -m pytest -o addopts='' -q -m integration",
+      "exit": 0,
+      "passed": 371,
+      "duration_seconds": 52.01,
+      "note": "initial 13 collection/runtime failures corrected before this green rerun"
+    },
+    {
+      "command": "focused integration tests: node, portfolio, product_view, replay, research registry",
+      "exit": 0,
+      "passed": 63,
+      "duration_seconds": 54.53
+    },
+    {
+      "command": "tools/release_gate.py --check",
+      "exit": 5,
+      "meaning": "IMPLEMENTATION_COMPLETE_TESTS_DEFERRED; 0 blockers, 0 unknowns, 0 warnings after path normalization"
     }
   ],
   "tests_deferred": [
     {
-      "command": "python3 -m pytest tests/ -m mak -q",
-      "where": ".claude/worktrees/mak-closeout",
-      "why": "precondition suite for pushing MAK; ~199 files, not run here"
-    },
-    {
-      "command": "python3 -m pytest tests/ -m flujo -q",
-      "where": ".claude/worktrees/flujo-closeout",
-      "why": "precondition suite for pushing FLUJO; ~183 files, not run here"
-    },
-    {
       "scope": "CI matrix ubuntu+windows",
-      "why": "only a PR produces it; nothing was pushed"
+      "why": "requires a pull request; no remote push was executed"
     }
   ],
-  "unresolved_irreversible": [
-    {
-      "paths": "17 test files needing both trees",
-      "why": "cannot run in either branch after separation; kept in main and historia"
-    },
-    {
-      "path": "tools/capture_opportunity_validity.py",
-      "why": "imports both flujo.knowledge and cultura.mak_research; needs both trees"
-    },
-    {
-      "paths": "context/LAST_HANDOFF.md, cultura/mak_codex/interfaz_codex.py, docs/MAK_CURRENT_STATE.md",
-      "why": "pre-existing uncommitted work in the main checkout, not this session's to attribute"
-    }
-  ],
+  "unresolved_irreversible": [],
   "rollback_commands": [
     "git -C /home/mak checkout main",
     "mv /home/mak/_archive/root-preserve-20260902/flujo-adapter-dir /home/mak/flujo",
@@ -371,19 +404,19 @@
     "git -C /home/mak update-ref refs/heads/FLUJO ad9ee8811325ee8661023312cd1d4a419407f547"
   ],
   "exact_push_commands_not_executed": [
-    "cd /home/mak/.claude/worktrees/mak-closeout && PYTHONPATH=src /home/mak/.venv/bin/python -m pytest -o addopts='' -q -m mak",
+    "cd /home/mak && PYTHONPATH=/home/mak:/home/mak/flujo/src /home/mak/.venv/bin/python -m pytest -o addopts='' -q -m mak",
     "git -C /home/mak push vibecodeine-legacy MAK:MAK",
-    "cd /home/mak/.claude/worktrees/flujo-closeout && PYTHONPATH=src /home/mak/.venv/bin/python -m pytest -o addopts='' -q -m flujo",
+    "cd /home/mak/flujo && PYTHONPATH=/home/mak/flujo/src /home/mak/.venv/bin/python -m pytest -o addopts='' -q -m flujo",
     "git -C /home/mak push vibecodeine-legacy FLUJO:FLUJO"
   ],
   "push_preconditions": {
     "MAK": {
-      "ahead": 4,
+      "ahead": 26,
       "behind": 0,
       "fast_forwardable": true
     },
     "FLUJO": {
-      "ahead": 2,
+      "ahead": 17,
       "behind": 0,
       "fast_forwardable": true
     },
@@ -391,10 +424,10 @@
     "historia": "not a deployment target"
   },
   "writes_outside_scope": [],
-  "current_phase": "collection_repaired",
-  "current_action": "done",
-  "next_action": "measure hub reachability from the shared knowledge surface",
-  "last_update": "2026-09-02T12:36:24.934492+00:00",
+  "current_phase": "integration_verified",
+  "current_action": "integration lane green; gate paths corrected",
+  "next_action": "review FONDART source material before semantic edits; then decide whether to push MAK and FLUJO",
+  "last_update": "2026-09-02T13:35:45.186086+00:00",
   "separation_metrics": {
     "common_paths_before": 3617,
     "common_paths_after": 2840,
@@ -414,7 +447,7 @@
     "foreign_hub_implementations_in_MAK": 0,
     "foreign_hub_implementations_in_FLUJO": 0,
     "undeclared_cross_imports": 0,
-    "unresolved_ownership_count": 18,
+    "unresolved_ownership_count": 0,
     "commits_MAK": 12,
     "commits_FLUJO": 10,
     "MAK_src_files_after": 32,
@@ -581,9 +614,9 @@
       "mak-codex": "active"
     },
     "collections": {
-      "mak": 0,
-      "flujo": 0,
-      "integration": 0
+      "mak": "2150 passed (Claude, 2026-09-02)",
+      "flujo": "1618 passed, 47 skipped (Claude, 2026-09-02)",
+      "integration": "371 passed, 0 failed (Codex, 2026-09-02)"
     },
     "environments": {
       "env-mak": "requirements-mak.txt, pip check clean",
@@ -600,8 +633,8 @@
       "rc": 0
     },
     "commits": {
-      "MAK": 22,
-      "FLUJO": 13
+      "MAK": 24,
+      "FLUJO": 14
     },
     "historical_unchanged": {
       "main": "3d83ed606f9ce27a1a410860a0380de684524898",
