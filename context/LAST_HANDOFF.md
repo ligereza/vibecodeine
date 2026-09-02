@@ -646,6 +646,262 @@ authorized, the existing release/publish procedure; do not regenerate
   declaration changing; declaring them if MAK code needs them is a separate,
   deliberate decision. IRIS remains paused.
 
+### MAK dependency boundary audit -- 2026-09-02
+
+- Verdict: `NO_DIRECT_MAK_DEPENDENCY_DEFECT`. No requirements file was
+  changed. The warning recorded earlier is now characterized precisely instead
+  of being acted on blindly: MAK does not import `rich`, `pydantic` or
+  `requests` even once, so their transitive arrival is not load-bearing and
+  declaring them would add a dependency MAK does not use.
+- Method. AST pass over the 737 tracked `.py` files of the MAK checkout,
+  collecting every top-level `Import`/`ImportFrom` with `level == 0`, excluding
+  stdlib (`sys.stdlib_module_names`) and MAK's own modules (every tracked stem
+  and package directory, since MAK code imports siblings through `sys.path`).
+  Eight files under `context-history/.../quarantine/` fail to parse and are
+  quarantined malformed generated code, not runtime. Each remaining name was
+  resolved to its distribution with `importlib.metadata.packages_distributions()`
+  and compared against `requirements-mak.txt` resolved through its `-r` include
+  of `requirements.txt`.
+- Matrix of the investigated packages. `direct` means a real import statement
+  in tracked MAK code, not a mention or an install:
+
+  | package | direct MAK import | zone / lane | guarded | declared for its lane | decision |
+  |---|---|---|---|---|---|
+  | `rich` | none (0 sites) | -- | -- | not needed | transitive, intentional |
+  | `pydantic` | none (0 sites) | -- | -- | not needed | transitive, intentional |
+  | `requests` | none (0 sites) | -- | -- | not needed | transitive, intentional |
+  | `typer` | 2 sites | `tests/test_autonomia_cli.py:3`, `tests/test_knowledge_dossiers.py:13`, both lane `integration` | no | yes, via `requirements-integration.txt` -> `flujo/requirements-flujo.txt` | declared |
+  | `pypdf` | 1 site | `cultura/mak_research/source_pipeline.py:166`, runtime | yes, lazy + `except ImportError` | not required | optional by design |
+  | `werkzeug` | 1 site | `xio/new/server.py:20`, `mak-xio.service` disabled | no | yes, equivalently | guaranteed by declared `Flask>=3.1.3` |
+  | `crawl4ai` | 1 site | `cultura/mak_research/source_pipeline.py:262`, runtime, lazy | no | yes | declared |
+  | `fontTools` | 4 sites | `.claude/skills/entregas-rd/generadores/gen_vectorizar.py:18-21`, agent skill | no | no | gap, not runtime -- see warnings |
+  | `openpyxl` | 4 sites | `docs/recovered/claude_sessions_2026-08-12/raw/...`, recovered material | no | no | not runtime |
+  | `customtkinter` | 1 site | `projects/plano/referencia_plano_teatro.py:1`, reference script | no | no | not runtime, not installed |
+  | `tiktoken`, `torch` | 1 site each | `.claude/skills/.../benchmark.py`, `cultura/mak_plataforma/visual_index.py:320` | yes (`try`) | not required | optional by design |
+
+- Transitive provenance, measured from installed metadata rather than assumed.
+  `rich` and `pydantic` are HARD requirements of `crawl4ai`, which the MAK
+  profile declares, so they are guaranteed for as long as that declaration
+  stands. `requests` is a hard requirement of no declared MAK package: in this
+  venv it arrives through `tiktoken` and the editable `flujo`, and in the CI
+  MAK runner it arrives through crawl4ai's deeper chain. `typer` is guaranteed
+  by nothing in the MAK profile, which is exactly why it was absent in run
+  33670334244 and why the manifest ratchet failed there.
+- Necessity probe, the measurement that settles it. A `sitecustomize.py` in the
+  session scratchpad (outside the repo) blocked `rich`, `pydantic`, `requests`,
+  `typer` and `pywebview` at import time -- deliberately stricter than any real
+  environment -- and both MAK-profile lanes stayed fully green: `repo_hygiene`
+  `91 passed in 37.41s` and `mak` `2175 passed, 5 skipped, 5 warnings,
+  5 subtests passed in 114.63s`. MAK therefore does not need any of them, and
+  the correction criteria are not met for a single one.
+- Related mechanism discovered while resolving an apparent contradiction, worth
+  keeping. Two `integration`-lane tests import `typer.testing` unguarded at
+  module level, which should break collection in the MAK-profile lanes. It does
+  not, because `tests/conftest.py:302` `pytest_ignore_collect` skips whole test
+  modules whose declared lane differs when `-m` names one exact lane. So in
+  `-m mak` and `-m repo_hygiene` runs foreign-lane modules are never imported.
+  That is the deliberate mechanism; the general warning that pytest imports
+  before it deselects still holds for broader marker expressions and for the
+  release gate's physical-presence reasoning.
+- No requirements contract test exists today. `tools/release_gate.py` enforces
+  only profile FILE separation (MAK must not carry `requirements-flujo.txt`);
+  nothing verifies that a direct third-party import is declared. The claim in
+  `requirements.txt` that the split was "measured by AST over every tracked
+  .py file of each branch" is a one-time hand measurement, and this audit
+  independently reproduces it as still true for the four packages in question.
+- Files modified: `none` for code, requirements, workflows and tests. The only
+  write is this handoff section. `context/coordination/inbox/claude/phase2-publication-review-20260902.md`
+  remains modified, unstaged and untouched.
+- Commands and exact results, all read-only with `PYTHONDONTWRITEBYTECODE=1`
+  and `/home/mak/.venv/bin/python`: `python -m pip check` -> `No broken
+  requirements found.` exit 0; the two necessity-probe lane runs above;
+  `git diff --check` exit 0 in both checkouts; `git diff --name-only` on the
+  three requirements files returns zero paths. Refs unchanged and matching
+  their remotes: MAK `0b9880f9d53da32083e979bd5fd13161f721b567`, FLUJO
+  `50e453c2a6ee9837c73acda3cec6ff74d0598f7e`.
+- No dependency was installed, removed or upgraded, permanently or otherwise.
+  The two probe environments are `sitecustomize.py` files in the session
+  scratchpad; nothing was written into `/home/mak`, no venv was modified, and
+  no pre-existing material was deleted.
+- IRIS, `iskvw/datos/*`, `campo.json`, `animadas.json`, `iskvw/piel/*`,
+  databases, artistic outputs, services and ports were not touched. Nothing was
+  regenerated, no service was started, stopped or restarted, and no commit,
+  push, add, merge, reset, clean, checkout or branch switch was performed.
+- Warnings for Faro, none of them a blocker and none corrected here because
+  they fall outside the stated criteria:
+  1. `fontTools` is imported unguarded by
+     `.claude/skills/entregas-rd/generadores/gen_vectorizar.py` and is declared
+     in no profile, with no consumer in `tools/` or `cultura/`. A freshly
+     installed MAK profile would break that RD vectorization generator. It is
+     an agent skill script, not service runtime, so the decision of whether
+     `.claude/skills` dependencies belong in the box profile is a policy call,
+     not a defect to patch.
+  2. `requests` reaches the MAK profile through no declared package, unlike
+     `rich` and `pydantic`, which `crawl4ai` requires hard. Since MAK imports
+     none of the three, this only matters if MAK ever starts importing one.
+  3. `openpyxl` and `customtkinter` are unguarded imports in recovered material
+     and a project reference script respectively, neither on a runtime path;
+     `customtkinter` is not even installed.
+- Next action for Faro: decide item 1 only if the box is expected to run the
+  RD vectorization generator from a clean profile install; otherwise nothing is
+  pending. If a durable guarantee is wanted instead of a repeated audit, the
+  missing instrument is a ratchet that fails when a tracked MAK file directly
+  imports a third-party distribution absent from the MAK profile, with an
+  explicit allowlist for guarded optional backends -- that is a new test, not a
+  requirements edit, and it was not written here because no defect justified
+  it. IRIS remains paused.
+
+### MAK dependency contract hardening -- 2026-09-02
+
+- `fontTools` decision: `AGENT_TOOL_ONLY`. No requirements file was changed.
+- Entrypoint evidence, measured as absence in every place an entrypoint would
+  live: no reference in `.github/`, no crontab line, no systemd unit
+  (`systemctl --user list-unit-files` matches zero), nothing in `tools/` or
+  `cultura/`, nothing in `MAPA.md` or `context/comandos.json`, and nothing in
+  `/home/mak/flujo/src`. The only references are `.claude/skills/entregas-rd/SKILL.md`,
+  `.claude/skills/taller-svg-rd/SKILL.md` and the script itself. Two further
+  hits sit in `docs/recovered/claude_sessions_2026-08-12/raw/`, which is
+  recovered transcript material, not documentation of a command.
+  `.claude/skills/entregas-rd/generadores/gen_vectorizar.py` is a standalone
+  `python3 gen_vectorizar.py IN.svg OUT.svg` script whose `fontTools` import is
+  unguarded, with a fallback only for the DejaVu font PATH (via matplotlib),
+  not for the library. It is an on-demand agent generator, not service runtime.
+- Policy applied to `.claude/skills`: out of the MAK runtime scope, recorded in
+  `_OUT_OF_SCOPE` with that reason. The classification is protected rather than
+  merely written down: `fonttools` is declared in no profile, so the same
+  import inside `cultura/`, `tools/` or `xio/` IS an offence and fails the new
+  ratchet. A test asserts exactly that pair -- the skill path is out of scope
+  AND the identical import in runtime scope offends.
+- Ratchet created, reusing the existing infrastructure and adding no second
+  architecture: `tests/test_test_taxonomy.py::test_the_mak_runtime_declares_every_dependency_it_imports`.
+  It walks `git ls-files`, keeps the files the MAK profile is responsible for
+  (`cultura/`, `tools/`, `xio/`, plus tracked tests whose lane contract says
+  `mak` or `repo_hygiene`) and fails when a direct third-party import is
+  neither declared in `requirements-mak.txt` (resolved through its `-r`
+  include), nor guarded by its own `try/except ImportError`, nor classified in
+  one of three reasoned tables. It distinguishes stdlib
+  (`sys.stdlib_module_names`), MAK's own modules (every tracked stem and
+  package directory, because MAK imports siblings through `sys.path`), the
+  consumed motor (`flujo`, `src`), and import names that differ from their
+  distribution (`_IMPORT_TO_DISTRIBUTION`: PIL, yaml, sklearn, fontTools, cv2,
+  dateutil, fitz, serial, OpenSSL, attr).
+- Why it lives in that file, since the reason is a constraint and not a
+  preference: a new test file would land in the `review` lane, because
+  `context/test_lane_map.json` is generated and must not be hand-edited, and
+  `tests/conftest.py:302` `pytest_ignore_collect` skips non-matching lanes on
+  every exact-lane run -- so a new file would never execute in any CI job. A
+  new `tools/` module would need a VIVO/MUERTO row in `CAPACIDADES.md`
+  (`test_tools_en_registro`, plus its reverse `test_registro_sin_herramientas_fantasma`),
+  a second surface for logic only this ratchet consumes. The chosen file is
+  already declared `repo_hygiene`, the lane that guards classification.
+- The venv is explicitly NOT the contract. Installed distributions are never
+  consulted; a test asserts that by reading the source of the seven contract
+  functions through `inspect.getsource` and refusing
+  `packages_distributions`, `importlib.metadata`, `pkg_resources` and
+  `find_distributions`. The first version of that test greped its own
+  forbidden-word list and failed on itself, which is why it now measures the
+  functions instead of the file. Functionally: `rich` IS installed in the box
+  venv and the guard still reports `import rich` in runtime scope as an
+  offence.
+- Allowlists, each entry carrying the reason that makes it checkable:
+  - `_RUNTIME_PROVIDED` -- `bpy`, `bmesh`, `mathutils`, `gpu`, `bgl`, `aud`:
+    Blender's embedded Python, not installable with pip, so declaring them
+    would be a lie pip could not satisfy. Measured sites: 7 for `bpy`
+    (`cultura/BLENDER.trilogy_450frames.py`, `tools/audit_blend_scene.py`,
+    `tools/bake_static_materials.py` and others; 4 already guarded) and 1 for
+    `mathutils`.
+  - `_GUARANTEED_BY_DECLARED` -- `werkzeug`: `Flask>=3.1.3` declares
+    `werkzeug>=3.1.0`, and `xio/new/server.py:20` imports
+    `werkzeug.utils.secure_filename` directly. `mak-xio.service` is disabled,
+    but the file stays in scope on purpose rather than being hidden by a
+    scope exclusion.
+  - `_CALLER_HANDLED_OPTIONAL` -- `pypdf`: `_pypdf_extract()` is a lazy import
+    and `extract_pdf_text()` catches `ImportError`, returning
+    `pdf_text_backend_unavailable` after the `pdftotext` binary fails. No
+    single-file AST pass can see a caller's handler, so it is named here with
+    where the fallback lives.
+  - Auto-detected, needing no entry: `pdfplumber`, `psycopg`, `qwen_agent`,
+    `torch`, `mobileclip`, all already wrapped in `try/except ImportError`.
+- Files modified: `tests/test_test_taxonomy.py` and this handoff. No
+  requirements file, no workflow, no pytest configuration, no lane contract,
+  no runtime code.
+- Write-set, exact, local and uncommitted: `tests/test_test_taxonomy.py`,
+  `context/LAST_HANDOFF.md`, plus the pre-existing and untouched
+  `context/coordination/inbox/claude/phase2-publication-review-20260902.md`.
+  FLUJO's checkout is clean; nothing there changed.
+- Ten demonstrations, all synthetic text this repo does not contain, so the
+  guard is not measured only against the tree it guards: a missing direct
+  import (fontTools) offends; a declared package (flask) does not; stdlib does
+  not; an own module (`research_lib`) does not; a FLUJO import in an
+  `integration`-lane test is out of scope (`tests/test_autonomia_cli.py`,
+  `tests/test_knowledge_dossiers.py`, both of which import `typer.testing`
+  unguarded and are correct); a `try/except ImportError` optional does not
+  offend; the same import unguarded does; a data table, a comment and a string
+  mentioning `fontTools` and `rich` do not; `.claude/skills` does not; and the
+  whole contract holds with `rich`, `pydantic`, `requests` and `typer` blocked
+  at import time. Bite check: synthetic runtime files importing `boto3`,
+  `fontTools`, `paramiko` and `pydantic` are each reported with file, line and
+  resolved distribution.
+- Tests and exact figures, all with `PYTHONDONTWRITEBYTECODE=1` and
+  `/home/mak/.venv/bin/python`:
+  - focal `tests/test_test_taxonomy.py`: `17 passed in 2.23s`; the same file
+    with the four suspect packages blocked: `17 passed in 47.36s`.
+  - `repo_hygiene`, the verbatim `ci-mak.yml` step: `96 passed in 28.74s`, up
+    from 91 by the five new tests.
+  - `mak`, verbatim: `2175 passed, 5 skipped, 5 warnings, 5 subtests passed in
+    106.96s`.
+  - `integration`, verbatim: `373 passed, 20 warnings in 48.92s`. The `flujo`
+    lane was not run: no file in the FLUJO checkout changed.
+  - `python -m pip check`: `No broken requirements found.` exit 0.
+  - `python -m flujo verify`: `✓ verify OK` exit 0, from `/home/mak/flujo`.
+  - `tools/release_gate.py --check`: `BLOCKERS (0)`, `UNKNOWNS (0)`,
+    `WARNINGS (0)`, exit 5, its documented deferred-tests code.
+  - `tools/runtime_preflight.py --check`: exit 0, `ok=5`,
+    `error=0 unknown=0 warn=0 adapter_dependency=0`.
+  - `git diff --check` exit 0 in both checkouts; `git diff --name-only` lists
+    the three paths above and nothing else.
+- No dependency was installed, removed or upgraded. The import-blocking probe
+  is a `sitecustomize.py` in the session scratchpad outside the repository; no
+  venv was modified and no pre-existing material was deleted. Generated
+  residue from this session, registered rather than swept:
+  `/home/mak/flujo/_logs/hub_smoke_2026-09-02_16-30-58.log`, written by
+  `flujo verify` into a gitignored directory (`.gitignore:196`).
+- Protected surfaces: IRIS and its reader, `iskvw/datos/*`, `campo.json`,
+  `animadas.json`, `iskvw/piel/*`, databases, artistic outputs, services and
+  ports were not touched; nothing was regenerated; the FLUJO branch was not
+  modified; the Claude coordination packet was preserved unstaged. No commit,
+  push, add, merge, reset, clean, checkout or branch switch was performed.
+- Blockers: none. Warnings, unchanged from the audit and deliberately not
+  "fixed" by declaring anything: (1) a clean MAK-profile install still cannot
+  run the RD vectorization generator, which is the accepted consequence of
+  `AGENT_TOOL_ONLY` -- if the box is ever expected to run it from a clean
+  profile, `fonttools` becomes a real declaration decision, and the ratchet
+  will demand it the moment that import moves into runtime scope;
+  (2) `requests` reaches the MAK profile through no declared package, unlike
+  `rich` and `pydantic`, which `crawl4ai` requires hard -- harmless while MAK
+  imports none of the three, and the ratchet now catches the day one of them
+  is imported; (3) the guard reads direct subprocess-free imports and one
+  level of module constants, so a dependency reached only through a dynamic
+  `importlib.import_module(name)` built at runtime would escape it.
+- Next action for Faro: review the two-path write-set and, if authorized,
+  publish it to `MAK` with the existing procedure; FLUJO needs no push. After
+  publication the expectation on a clean runner is `repo hygiene lane` at
+  96 passed and the integration lane unchanged at 341 passed / 32 skipped.
+  IRIS remains paused.
+
+### Faro independent verification of dependency hardening -- 2026-09-02
+
+- Re-ran the new ratchet directly: `tests/test_test_taxonomy.py` completed with
+  `17 passed in 3.36s`.
+- Re-ran the complete `repo_hygiene` lane with
+  `PYTHONDONTWRITEBYTECODE=1` and `-o addopts=`: `96 passed in 32.76s`.
+- `git diff --check` passes. The only current paths are the dependency-ratchet
+  test, this handoff, and the pre-existing Claude packet; FLUJO remains clean.
+- This confirms the reported `DEPENDENCY_CONTRACT_HARDENED` result locally. The
+  change is still uncommitted and the remote remains at MAK `0b9880f9`; the next
+  action is review and explicit authorization before any publication. IRIS,
+  data, services and artistic outputs remain untouched.
+
 # Operational Handoff
 
 ## Agent bootstrap -- CURRENT -- 2026-09-02 (later) -- the suites, and the boundary the operator corrected

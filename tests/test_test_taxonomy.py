@@ -1,7 +1,22 @@
-"""Focused guards for the non-sequential test-area index."""
+"""Focused guards for the non-sequential test-area index, and for the MAK
+dependency boundary that the lane contract does not cover.
+
+Both contracts live here on purpose (2026-09-02). A separate test file would
+land in the `review` lane, because `context/test_lane_map.json` is generated
+and must not be hand-edited, and `pytest_ignore_collect` skips non-matching
+lanes on every exact-lane run -- so a new file would never execute. A new
+`tools/` module would need a VIVO/MUERTO row in `CAPACIDADES.md`
+(`test_tools_en_registro`), a second surface for logic only this ratchet
+consumes. This file is already declared `repo_hygiene`, the lane that guards
+classification, so the dependency boundary is guarded from here.
+"""
 
 import ast
+import inspect
 import re
+import subprocess
+import sys
+from pathlib import Path
 
 from conftest import classify_test_axes, classify_test_path, topic_for_test_path
 from tools.test_lane_map import REPO, TEST_LANE_MAP, _is_motor_path
@@ -215,3 +230,333 @@ def test_a_hygiene_lane_test_never_spawns_the_flujo_cli() -> None:
         "the MAK profile does not install. Their lane is integration:\n"
         + "\n".join(offenders)
     )
+
+
+# ---------------------------------------------------------------------------
+# The MAK dependency boundary
+# ---------------------------------------------------------------------------
+#
+# Audited 2026-09-02: MAK imports rich, pydantic and requests exactly zero
+# times, so their transitive arrival is not load-bearing and declaring them
+# would add dependencies MAK does not use. typer is absent from the MAK
+# profile, which is what broke the manifest ratchet in CI run 33670334244.
+# Nothing re-measured any of that, which is the defect this guard closes: the
+# claim in `requirements.txt` that the split was "measured by AST" was a
+# one-time hand measurement, and `tools/release_gate.py` only enforces profile
+# FILE separation, never import-vs-declaration coverage.
+#
+# The venv is NOT the source of truth here. Installed distributions are never
+# consulted: a package present only because another package happens to require
+# it would otherwise read as "declared". Every answer comes from the
+# requirements files, from `git ls-files`, from the interpreter's stdlib list,
+# and from the three reasoned tables below.
+#
+# Retirement: when a profile installer verifies coverage itself.
+
+# Import name -> distribution name, for the cases where they differ. An
+# explicit table, because deriving it needs the installed metadata this guard
+# refuses to trust.
+_IMPORT_TO_DISTRIBUTION = {
+    "PIL": "pillow",
+    "yaml": "pyyaml",
+    "sklearn": "scikit-learn",
+    "fontTools": "fonttools",
+    "cv2": "opencv-python",
+    "dateutil": "python-dateutil",
+    "fitz": "pymupdf",
+    "serial": "pyserial",
+    "OpenSSL": "pyopenssl",
+    "attr": "attrs",
+}
+
+# Provided by an embedding interpreter, never installable with pip. The files
+# that import these run inside Blender (`blender --python`), so declaring them
+# in a requirements file would be a lie that pip could not satisfy.
+_RUNTIME_PROVIDED = {
+    "bpy": "Blender's embedded Python",
+    "bmesh": "Blender's embedded Python",
+    "mathutils": "Blender's embedded Python",
+    "gpu": "Blender's embedded Python",
+    "bgl": "Blender's embedded Python",
+    "aud": "Blender's embedded Python",
+}
+
+# Hard requirements of a package the MAK profile DOES declare. Listed with the
+# declaration that guarantees them, so the guarantee is auditable here instead
+# of being inferred from whatever the venv happens to hold.
+_GUARANTEED_BY_DECLARED = {
+    "werkzeug": "Flask>=3.1.3 declares werkzeug>=3.1.0; xio/new/server.py "
+                "imports werkzeug.utils.secure_filename directly",
+}
+
+# Optional backends whose ImportError is handled by a CALLER, which no
+# single-file AST pass can see. Each entry names where the fallback lives, so
+# the claim is checkable and not a blanket exemption.
+_CALLER_HANDLED_OPTIONAL = {
+    "pypdf": "cultura/mak_research/source_pipeline.py: _pypdf_extract() is a "
+             "lazy import; extract_pdf_text() catches ImportError and returns "
+             "pdf_text_backend_unavailable after the pdftotext binary fails",
+}
+
+# What the MAK profile is actually responsible for running.
+_MAK_RUNTIME_PREFIXES = ("cultura/", "tools/", "xio/")
+
+# Everything else, with the reason it is out of scope. `.claude/skills` is the
+# decided policy, not an oversight: `gen_vectorizar.py` imports fontTools
+# unguarded, and no workflow, cron line, systemd unit, `tools/`, `cultura/`,
+# `MAPA.md`, `context/comandos.json` or FLUJO source invokes it -- only two
+# SKILL.md files do. It is AGENT_TOOL_ONLY. If that import ever moves into
+# runtime scope, fonttools is declared nowhere and this guard fails, which is
+# how the classification stays protected instead of merely written down.
+_OUT_OF_SCOPE = {
+    ".claude/": "agent playbooks and skill scripts: AGENT_TOOL_ONLY",
+    "context-history/": "historical material, not runtime",
+    "_archive/": "archived material, not runtime",
+    "docs/": "documentation and recovered raw sessions, not runtime",
+    "projects/": "project material and reference scripts, not service runtime",
+    "iskvw/": "published-site surface, not the MAK service profile",
+    "svg/": "product material, not runtime",
+    "web/": "the Vite hub source, not a Python runtime",
+}
+
+
+def _distributions_declared_by(path: Path, seen: set[Path] | None = None) -> set[str]:
+    """Requirement names a profile declares, following its `-r` includes."""
+    seen = set() if seen is None else seen
+    if path in seen or not path.is_file():
+        return set()
+    seen.add(path)
+    names: set[str] = set()
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.split("#", 1)[0].strip()
+        if not line:
+            continue
+        if line.startswith("-r "):
+            names |= _distributions_declared_by(
+                (path.parent / line[3:].strip()).resolve(), seen)
+        elif not line.startswith("-e"):
+            names.add(re.split(r"[<>=!\[;]", line)[0].strip().lower().replace("_", "-"))
+    return names
+
+
+def _tracked_python_files() -> list[str]:
+    out = subprocess.run(["git", "-C", str(REPO), "ls-files", "*.py"],
+                         capture_output=True, text=True, check=True).stdout
+    return out.split()
+
+
+def _own_module_names(files: list[str]) -> set[str]:
+    """Module names MAK itself provides, from the tracked tree.
+
+    MAK imports siblings by inserting their directory on `sys.path`, so a
+    top-level name may be a tracked module rather than a distribution. Read
+    from `git ls-files`, never from the disk or the venv.
+    """
+    names = {"conftest"}
+    for rel in files:
+        path = Path(rel)
+        names.add(path.stem)
+        names.update(path.parts[:-1])
+    return names
+
+
+def _is_mak_runtime_scope(rel: str) -> bool:
+    """True when the MAK profile is responsible for this file's imports."""
+    if any(rel.startswith(prefix) for prefix in _OUT_OF_SCOPE):
+        return False
+    if rel.startswith("tests/"):
+        record = TEST_LANE_MAP.get(rel)
+        return bool(record) and record.lane in ("mak", "repo_hygiene")
+    return any(rel.startswith(prefix) for prefix in _MAK_RUNTIME_PREFIXES)
+
+
+def _guarded_node_ids(tree: ast.AST) -> set[int]:
+    """Nodes inside a `try` that handles ImportError (or handles everything)."""
+    guarded: set[int] = set()
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Try):
+            continue
+        handles_import = any(
+            handler.type is None
+            or "ImportError" in ast.unparse(handler.type)
+            or "ModuleNotFoundError" in ast.unparse(handler.type)
+            for handler in node.handlers
+        )
+        if handles_import:
+            for child in ast.walk(node):
+                guarded.add(id(child))
+    return guarded
+
+
+def _third_party_imports(source: str, own: set[str], stdlib: set[str]):
+    """Yield (import name, line, guarded) for third-party imports only."""
+    tree = ast.parse(source)
+    guarded = _guarded_node_ids(tree)
+    for node in ast.walk(tree):
+        names: list[str] = []
+        if isinstance(node, ast.Import):
+            names = [alias.name for alias in node.names]
+        elif isinstance(node, ast.ImportFrom) and node.module and node.level == 0:
+            names = [node.module]
+        for full in names:
+            top = full.split(".", 1)[0]
+            if top in stdlib or top in own or top.startswith("_"):
+                continue
+            if top == "flujo" or top == "src":
+                continue  # the consumed motor, not a PyPI distribution
+            yield top, node.lineno, id(node) in guarded
+
+
+def _undeclared_imports(rel: str, source: str, declared: set[str],
+                        own: set[str], stdlib: set[str]) -> list[str]:
+    """Offending imports in one file, applying the whole policy."""
+    offenders: list[str] = []
+    for top, line, guarded in _third_party_imports(source, own, stdlib):
+        distribution = _IMPORT_TO_DISTRIBUTION.get(
+            top, top.lower().replace("_", "-"))
+        if distribution in declared:
+            continue
+        if top in _RUNTIME_PROVIDED or top in _GUARANTEED_BY_DECLARED:
+            continue
+        if top in _CALLER_HANDLED_OPTIONAL:
+            continue
+        if guarded:
+            continue  # optional backend with its own ImportError fallback
+        offenders.append(f"{rel}:{line} imports {top} ({distribution})")
+    return offenders
+
+
+_MAK_PROFILE = REPO / "requirements-mak.txt"
+_STDLIB = frozenset(sys.stdlib_module_names)
+
+# Synthetic sources. Each one names the property it pins, so a future edit
+# cannot quietly change what the guard means.
+_SYNTHETIC = {
+    "missing_direct_import": (
+        "cultura/mak_probe/render.py",
+        "from fontTools.ttLib import TTFont\n",
+        True,
+    ),
+    "declared_package": ("cultura/mak_probe/api.py", "import flask\n", False),
+    "stdlib": ("cultura/mak_probe/io.py", "import json, subprocess\n", False),
+    "own_module": ("cultura/mak_probe/use.py", "import research_lib\n", False),
+    "guarded_optional": (
+        "cultura/mak_probe/opt.py",
+        "try:\n    import pdfplumber\nexcept ImportError:\n    pdfplumber = None\n",
+        False,
+    ),
+    "unguarded_optional": (
+        "cultura/mak_probe/opt2.py", "import pdfplumber\n", True,
+    ),
+    "installed_but_undeclared": (
+        "cultura/mak_probe/pretty.py", "import rich\n", True,
+    ),
+    "mentions_only": (
+        "cultura/mak_probe/table.py",
+        'TOOLS = {"fontTools": "vectorizes RD text"}\n'
+        "# import fontTools would belong to the RD skill, not here\n"
+        'DOC = "import rich"\n',
+        False,
+    ),
+}
+
+
+def test_every_synthetic_dependency_case_lands_where_the_policy_says():
+    """One assertion per contract rule, on text this repo does not contain.
+
+    Measuring a guard only against the tree it guards proves nothing: that tree
+    is clean by construction the moment the policy is written.
+    """
+    declared = _distributions_declared_by(_MAK_PROFILE)
+    own = _own_module_names(_tracked_python_files())
+    for name, (rel, source, should_offend) in _SYNTHETIC.items():
+        offenders = _undeclared_imports(rel, source, declared, own, _STDLIB)
+        assert bool(offenders) is should_offend, (name, offenders)
+
+
+def test_a_flujo_import_is_out_of_scope_in_its_own_lane():
+    """`integration` installs the FLUJO profile, so its imports are declared
+    there. Two such tests import `typer.testing` unguarded, and they are
+    correct: `pytest_ignore_collect` keeps them out of the MAK-profile runs."""
+    assert not _is_mak_runtime_scope("tests/test_autonomia_cli.py")
+    assert not _is_mak_runtime_scope("tests/test_knowledge_dossiers.py")
+    for rel in ("tests/test_autonomia_cli.py", "tests/test_knowledge_dossiers.py"):
+        assert TEST_LANE_MAP[rel].lane == "integration"
+    assert _is_mak_runtime_scope("tests/test_test_taxonomy.py")
+
+
+def test_agent_skills_are_out_of_scope_and_the_policy_is_the_reason():
+    """AGENT_TOOL_ONLY, decided 2026-09-02 with the entrypoint evidence.
+
+    The guard still protects the classification: the same import inside runtime
+    scope IS an offence, so the skill cannot become a silent runtime
+    dependency by being moved.
+    """
+    vectorizer = ".claude/skills/entregas-rd/generadores/gen_vectorizar.py"
+    assert (REPO / vectorizer).is_file(), "the audited script must still exist"
+    assert not _is_mak_runtime_scope(vectorizer)
+    assert ".claude/" in _OUT_OF_SCOPE
+    declared = _distributions_declared_by(_MAK_PROFILE)
+    own = _own_module_names(_tracked_python_files())
+    assert "fonttools" not in declared
+    assert _undeclared_imports("cultura/mak_probe/x.py",
+                               "from fontTools.ttLib import TTFont\n",
+                               declared, own, _STDLIB)
+
+
+def test_the_contract_never_consults_installed_distributions():
+    """The venv is not the contract.
+
+    Measured on the contract FUNCTIONS, not on this file's text: the first
+    version of this check greped its own forbidden-word list and failed. `rich`
+    is installed in the box venv and the guard still calls it undeclared, which
+    is the whole point -- a package present because something else required it
+    is not a declaration.
+    """
+    logic = "".join(inspect.getsource(fn) for fn in (
+        _distributions_declared_by, _own_module_names, _tracked_python_files,
+        _is_mak_runtime_scope, _guarded_node_ids, _third_party_imports,
+        _undeclared_imports,
+    ))
+    for forbidden in ("packages_" + "distributions", "importlib" + ".metadata",
+                      "pkg_" + "resources", "find_" + "distributions"):
+        assert forbidden not in logic, forbidden
+    declared = _distributions_declared_by(_MAK_PROFILE)
+    for absent in ("rich", "pydantic", "requests", "typer"):
+        assert absent not in declared, absent
+    own = _own_module_names(_tracked_python_files())
+    assert _undeclared_imports("cultura/mak_probe/pretty.py", "import rich\n",
+                               declared, own, _STDLIB)
+
+
+def test_the_mak_runtime_declares_every_dependency_it_imports():
+    """The ratchet. A new direct third-party import in MAK runtime scope must
+    be declared in `requirements-mak.txt`, guarded by its own ImportError
+    fallback, or classified in one of the three reasoned tables above."""
+    declared = _distributions_declared_by(_MAK_PROFILE)
+    assert declared, "the MAK profile parsed empty: the guard measured nothing"
+    files = _tracked_python_files()
+    assert files, "git ls-files returned nothing: the guard measured nothing"
+    own = _own_module_names(files)
+    scoped = [rel for rel in files if _is_mak_runtime_scope(rel)]
+    assert len(scoped) > 100, (
+        "MAK runtime scope collapsed to %d files; a zero-ish scope reports "
+        "'nothing missing' forever" % len(scoped))
+    offenders: list[str] = []
+    for rel in scoped:
+        try:
+            source = (REPO / rel).read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        try:
+            offenders.extend(
+                _undeclared_imports(rel, source, declared, own, _STDLIB))
+        except SyntaxError:
+            continue
+    assert not offenders, (
+        "direct third-party imports in MAK runtime scope that "
+        "requirements-mak.txt does not declare. Declare the distribution, "
+        "guard the import with its own ImportError fallback, or classify it in "
+        "_RUNTIME_PROVIDED / _GUARANTEED_BY_DECLARED / "
+        "_CALLER_HANDLED_OPTIONAL with the reason:\n  "
+        + "\n  ".join(offenders))
