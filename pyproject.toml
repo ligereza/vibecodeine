@@ -8,15 +8,14 @@ authors = [
     {name = "ligereza"}
 ]
 license = {text = "MIT"}
+# Measured by AST over every tracked .py of this branch: the box imports
+# none of pydantic, typer, rich or requests.
 dependencies = [
     "matplotlib>=3.10.9",
     "pyyaml>=6.0.3",
     "Pillow>=12.3.0",
-    "pydantic>=2.13.4",
-    "typer>=0.27.1",
-    "rich>=15.0.0",
     "jsonschema>=4.26.0",
-    "requests>=2.34.2",
+    "numpy>=2.1.0",
 ]
 
 [project.optional-dependencies]
@@ -53,8 +52,9 @@ build = [
     "pyinstaller>=6.22.1",  # free packaging to .exe; 'flujo package'. Not runtime dep.
 ]
 
-[project.scripts]
-flujo = "flujo.cli:app"
+# No console script on the MAK branch: src/flujo/cli.py belongs to the
+# portable motor and is not carried here. The box invokes its departments
+# through cultura/mak_plataforma/hub.py and its systemd units.
 
 [build-system]
 requires = ["setuptools>=84.0.0", "wheel"]
