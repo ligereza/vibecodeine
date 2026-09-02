@@ -287,7 +287,7 @@ function cargar(){
   fetch(q('/api/piezas')).then(function(r){return r.json();}).then(function(d){PIEZAS=d;pinta();});
   fetch(q('/api/jobs')).then(function(r){return r.json();}).then(function(d){
     var html=d.length?d.map(function(j){
-      var cl='d-'+(j.estado||'').toLowerCase().replace(/\s+/g,'-');
+      var cl='d-'+(j.estado||'').toLowerCase().replace(/\\s+/g,'-');
       var link=j.path?' <a href="#" style="color:#9db67c" onclick="ver(\\'auto\\',\\''+
         encodeURIComponent(j.path)+'\\');return false">ver</a>':'';
       return '<div class="job"><span class="dot '+cl+'"></span><span style="flex:1;overflow:hidden;'+
@@ -305,7 +305,7 @@ function mdMin(src){
     if(l.indexOf('```')===0){ if(enFence){out.push('<pre>'+esc(buf.join('\\n'))+'</pre>');buf=[];}
       enFence=!enFence; return;}
     if(enFence){buf.push(l);return;}
-    var m=l.match(/^(#{1,3})\s+(.*)/);
+    var m=l.match(/^(#{1,3})\\s+(.*)/);
     if(m){out.push('<h'+m[1].length+'>'+esc(m[2])+'</h'+m[1].length+'>');return;}
     out.push('<p>'+esc(l).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')+'</p>');
   });
