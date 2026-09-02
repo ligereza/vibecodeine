@@ -91,7 +91,7 @@ mediciones del 31-08 permanecen abajo como historia fechada.
   líneas, 10.962 símbolos y 0 errores de sintaxis. Su alcance explícito incluye
   sólo la raíz Python, `src/`, `cultura/`, `tools/`, `tests/` y `scripts/`.
   Excluye `_archive`, `WIN`, montajes y árboles de material no-code. Su SHA-256
-  actual es `3af2d0c4abac5d3b9397d680452e206aefdd086b15358e7a8a41b4d8e27dc4f7`.
+  actual es `7926abb51345f9a5d6e89d6db44cc81652db9a216d0e2c2182a7013d549ae739`.
 - `context/test_lane_map.json` (`mak-test-lane-map-v3`) es el contrato vigente
   y `tools/test_lane_map.py` lo carga. Conserva 243 acuerdos, 80 carriles
   respaldados por imports/rutas, mueve 1 caso por import directo y resuelve 56
@@ -116,6 +116,10 @@ mediciones del 31-08 permanecen abajo como historia fechada.
   archivos que cerraron `review` (49 passed), `tests/test_repo_audit.py` (5
   passed en 33 s), `py_compile` RC 0 y `git diff --check` RC 0. No se ejecutó
   la suite completa.
+- Se corrigieron dos escapes `\\s` en el HTML embebido de
+  `cultura/mak_codex/interfaz_codex.py`; la colección limpia dejó de emitir la
+  advertencia `invalid escape sequence`, y las pruebas enfocadas de interfaz
+  quedaron en 67 passed.
 
 ### Cierre de `review` y triage de divergencias — 2026-09-01
 
