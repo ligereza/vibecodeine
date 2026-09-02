@@ -5,19 +5,24 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
+# MAK consumes the motor from the FLUJO checkout; it carries no src/flujo copy.
+MOTOR_SRC = Path(os.environ.get("FLUJO_SOURCE_ROOT", str(ROOT / "flujo" / "src")))
+if MOTOR_SRC.is_dir() and str(MOTOR_SRC) not in sys.path:
+    sys.path.insert(0, str(MOTOR_SRC))
 
-from src.flujo.knowledge.operational_memberships import (  # noqa: E402
+from flujo.knowledge.operational_memberships import (  # noqa: E402
     OperationalMembershipError,
     project_archive_capabilities,
     project_store_memberships,
 )
-from src.flujo.knowledge.project_ir import LearningStore  # noqa: E402
+from flujo.knowledge.project_ir import LearningStore  # noqa: E402
 
 
 def main(argv: list[str] | None = None) -> int:

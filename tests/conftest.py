@@ -28,6 +28,11 @@ _REPO = Path(__file__).resolve().parents[1]
 _SRC = _REPO / "src"
 if _SRC.is_dir() and str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
+# MAK carries no src/flujo copy: the motor is consumed from the FLUJO checkout
+# (contract 2026-09-02).  Without this the departments tests fail at collection.
+_MOTOR_SRC = _REPO / "flujo" / "src"
+if _MOTOR_SRC.is_dir() and str(_MOTOR_SRC) not in sys.path:
+    sys.path.insert(0, str(_MOTOR_SRC))
 # Integration tests intentionally compose the two physical checkouts.  Keep
 # FLUJO's helper tests importable without pretending they belong to MAK.
 _FLUJO_TESTS = _REPO / "flujo" / "tests"
