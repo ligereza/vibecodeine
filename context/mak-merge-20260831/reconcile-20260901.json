@@ -4268,6 +4268,18 @@
     "non_file_type_conflicts": 22,
     "current_precondition_mismatches": 18
   },
+  "canonical_live_resolution_20260902": {
+    "status": "closed_by_current_live_authority",
+    "counts": {
+      "three_way_conflicts": 46,
+      "base_missing": 55,
+      "non_file_type_conflicts": 22,
+      "current_precondition_mismatches": 18
+    },
+    "decision": "The existing live file remains the sole executable version for each unresolved route; retained origin variants remain frozen evidence under fused/origins.",
+    "semantic_merge_claim": false,
+    "archive_bytes_removed": false
+  },
   "line_ending_cleanup": {
     "paths_restored_without_semantic_delta": 134,
     "reason": "The archive copies used CRLF; those paths differed from HEAD only by line endings and were restored to avoid a meaningless mass diff."
