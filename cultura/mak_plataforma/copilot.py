@@ -1624,6 +1624,140 @@ def normalize_vision(raw, item_id, provider, evidence=None):
     }
 
 
+READINESS_SCHEMA = "faro-evidence-readiness-v1"
+
+# What a person needs in front of them before labelling a record work / record
+# / review / discard. Measured 2026-09-02: of 7044 records, 116 are labelled
+# and 6928 are not, and the ordering model predicts NONE of them with high
+# confidence (alta=0, media=4156, baja=2772). So every case is still a human
+# look, and the only lever left is making that look cheaper. The seed rows
+# already carry `has_description`, `has_vision` and `review_scope`; the
+# interface read none of them, so the operator decided without seeing what the
+# case even contains -- and `review`, the label that means "not decidable yet",
+# was used once in 116 decisions.
+#
+# Retirement: when the ordering model predicts a usable share of the field and
+# the frontier stops being one-by-one.
+READINESS_CHANNELS = ("asset", "description", "date", "perception",
+                      "classification", "relations", "work_group")
+
+# The minimum a defensible label rests on. Everything else enriches.
+READINESS_REQUIRED = ("asset", "description")
+
+
+def _readiness_row(channel, status, detail="", source_ref=""):
+    """One channel, with its status kept separate from its explanation.
+
+    `absent` means measured and not there. `unknown` means NOT MEASURED for
+    this record, which is a different claim and must never collapse into
+    `absent` -- reading an absence as a finding is how a gap becomes a fact.
+    """
+    if status not in ("present", "absent", "unknown"):
+        status = "unknown"
+    return {"channel": channel, "status": status,
+            "detail": str(detail or "")[:240],
+            "source_ref": str(source_ref or "")[:400]}
+
+
+def evidence_readiness(record, vision=None, vision_indexed=None,
+                       relations=None, work_group=None):
+    """Report what one record HAS and LACKS before a human decides on it.
+
+    Pure: it receives what was already measured elsewhere and invents nothing.
+    `vision_indexed` is the set of ids the perception index actually covers;
+    without it, a missing vision record stays `unknown`, because the index
+    covered 100 of 7044 records and "not indexed" is not "has no perception".
+    """
+    record = record if isinstance(record, dict) else {}
+    rows = []
+
+    asset = record.get("asset_available")
+    rows.append(_readiness_row(
+        "asset",
+        "present" if asset is True else "absent" if asset is False else "unknown",
+        "archivo local del registro",
+        record.get("asset_path", "")))
+
+    description = str(record.get("description") or "").strip()
+    rows.append(_readiness_row(
+        "description",
+        "present" if description else "absent",
+        "texto que el autor escribio sobre la pieza",
+        record.get("source_id", "")))
+
+    date = str(record.get("date") or "").strip()
+    rows.append(_readiness_row(
+        "date", "present" if date else "absent", date or "sin fecha declarada",
+        record.get("publication_id", "")))
+
+    item_id = str(record.get("source_id") or "")
+    if isinstance(vision, dict) and vision.get("features"):
+        rows.append(_readiness_row(
+            "perception", "present",
+            "confianza declarada: %s" % (vision.get("confidence") or "low"),
+            item_id))
+    elif vision_indexed is not None and item_id in set(vision_indexed):
+        rows.append(_readiness_row(
+            "perception", "absent",
+            "indexado y sin lectura utilizable", item_id))
+    else:
+        rows.append(_readiness_row(
+            "perception", "unknown",
+            "fuera del indice de percepcion; no medido, no ausente", item_id))
+
+    classification = record.get("classification")
+    rows.append(_readiness_row(
+        "classification",
+        "present" if isinstance(classification, dict) and classification else "absent",
+        "clasificacion humana previa", item_id))
+
+    relation_rows = relations if isinstance(relations, (list, tuple)) else []
+    rows.append(_readiness_row(
+        "relations",
+        "present" if relation_rows else "absent",
+        "%d relacion(es) propuestas, todas candidatas" % len(relation_rows),
+        item_id))
+
+    group = work_group if work_group is not None else record.get("work_group")
+    rows.append(_readiness_row(
+        "work_group",
+        "present" if isinstance(group, dict) and group else "absent",
+        "agrupacion de obra ya establecida", item_id))
+
+    by_channel = {row["channel"]: row for row in rows}
+    missing = [row["channel"] for row in rows if row["status"] == "absent"]
+    unmeasured = [row["channel"] for row in rows if row["status"] == "unknown"]
+    blocking = [name for name in READINESS_REQUIRED
+                if by_channel[name]["status"] != "present"]
+
+    if blocking:
+        decision = "abstain"
+        next_action = ("falta lo minimo para etiquetar (%s): registrar `review` "
+                       "con la evidencia que falta" % ", ".join(blocking))
+    elif missing or unmeasured:
+        decision = "decidable_con_reservas"
+        next_action = ("se puede etiquetar; lo no medido queda declarado, "
+                       "no resuelto")
+    else:
+        decision = "decidable"
+        next_action = "etiquetar con la evidencia completa a la vista"
+
+    return {
+        "schema": READINESS_SCHEMA,
+        "item_id": item_id,
+        "channels": rows,
+        "missing": missing,
+        "unmeasured": unmeasured,
+        "blocking": blocking,
+        "decision": decision,
+        "labels": list(ORDER_LABELS),
+        "promotion": "none",
+        "owner": "human",
+        "producer": "local_readiness_report",
+        "next_action": next_action,
+    }
+
+
 def provider_status(environment):
     return {
         "local_deterministic": True,

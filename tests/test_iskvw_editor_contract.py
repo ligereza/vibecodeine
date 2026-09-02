@@ -311,22 +311,73 @@ def test_the_hub_serves_the_editor_from_this_checkout_not_the_sibling():
     assert 'HOME, "flujo", "iskvw"' not in hub
 
 
-def test_the_two_checkout_copies_do_not_diverge_in_silence():
-    """Both operational checkouts track the pair; only MAK's copy is served.
+def test_the_mak_tree_never_reads_the_sibling_copy_of_the_surface():
+    """MAK owns this surface; FLUJO's copy of it cannot run.
 
-    Editing one and not the other separates them without any error, and the
-    Hub keeps showing its own. This does not decide whether FLUJO should carry
-    this surface at all -- an ownership question for the branch contract. It
-    only refuses the silent divergence.
+    First written on 2026-09-02 as "the two copies must stay byte-identical",
+    and refuted the same day by the first real improvement to the interface:
+    that rule would force every MAK-side UI change to also touch the FLUJO
+    branch, coupling the two checkouts the separation existed to decouple.
+
+    Measured instead: the FLUJO Hub serves no `/api/portfolio/*` route, and the
+    interface makes five or more fetches to exactly those routes, so the
+    sibling copy is inert there -- it would load and fail every call. What
+    still needs guarding is the real risk: someone editing the sibling copy
+    believing they are editing the served one. So the rule is direction, not
+    equality: nothing in the MAK tree may read the sibling's copy.
+    Measured over string LITERALS, not file text: `hub.py` carries a comment
+    explaining why the `HOME/flujo/iskvw` spelling was retired, and a plain
+    substring search calls that comment a read. Naming a path is not using it.
     """
-    sibling = Path(__file__).parents[1] / "flujo" / "iskvw"
-    if not sibling.is_dir():
-        return  # the sibling checkout is not materialized here; nothing to compare
-    for served in (EDITOR, MESA):
-        twin = sibling / served.name
-        if not twin.is_file():
+    import ast
+
+    sibling = "flujo/iskvw"
+    offenders = []
+    for folder in ("cultura", "tools", "iskvw"):
+        root = Path(__file__).parents[1] / folder
+        if not root.is_dir():
             continue
-        assert twin.read_bytes() == served.read_bytes(), (
-            "%s differs between the MAK checkout and %s. The Hub serves the MAK "
-            "copy, so the other one is invisible to anyone using /portafolio/."
-            % (served.name, sibling))
+        for path in root.rglob("*.py"):
+            if "__pycache__" in path.parts:
+                continue
+            source = path.read_text(encoding="utf-8", errors="replace")
+            if sibling not in source:
+                continue
+            try:
+                tree = ast.parse(source, filename=str(path))
+            except SyntaxError:
+                continue
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Constant) and isinstance(node.value, str):
+                    if sibling in node.value:
+                        offenders.append("%s:%d" % (path, node.lineno))
+    assert not offenders, (
+        "these read the sibling checkout's copy of the surface; the Hub serves "
+        "the MAK one:\n  " + "\n  ".join(offenders))
+    assert 'os.path.join(HOME, "iskvw")' in (
+        Path(__file__).parents[1] / "cultura" / "mak_plataforma" / "hub.py"
+    ).read_text(encoding="utf-8")
+
+
+def test_the_interface_shows_what_the_record_has_and_lacks():
+    """Data reaching the browser is not the same as a person being able to
+    read it. The frontier rows carried has_description / has_vision /
+    review_scope for months and the interface referenced none of them.
+    """
+    mesa = MESA.read_text(encoding="utf-8")
+    shell = EDITOR.read_text(encoding="utf-8")
+
+    assert "evidence_readiness" in mesa, "the interface must consume the report"
+    assert "readinessStrip" in mesa
+    # Every channel is named for a person, not left as a raw key.
+    for channel in ("asset", "description", "date", "perception",
+                    "classification", "relations", "work_group"):
+        assert f"{channel}:" in mesa, channel
+    # The three statuses must be visually distinct, or `unknown` reads as
+    # `absent` and a gap becomes a finding.
+    for status in ("is-present", "is-absent", "is-unknown"):
+        assert f".mesa-readiness-chips .{status}" in shell, status
+    # Abstention has to look different from a reservation.
+    assert '.mesa-readiness[data-decision="abstain"]' in shell
+    # And the label that means "not decidable yet" stays one click away.
+    assert 'data-order-action="review"' in mesa

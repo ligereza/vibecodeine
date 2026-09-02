@@ -1284,6 +1284,98 @@ authorized, the existing release/publish procedure; do not regenerate
   current, served from the right checkout, guarded, and now the only copy on a
   runtime path.
 
+### Evidence readiness on the decision frontier -- 2026-09-02
+
+- The workflow bottleneck, measured before building anything: of 7044 records
+  the operator has labelled 116 and left 6928 unlabelled, and the ordering
+  model predicts NONE of them with high confidence -- `alta: 0`, `media: 4156`,
+  `baja: 2772`, coverage 0.0165. The active-learning loop itself is already
+  well built: `ordering.human_seed` ranks the most informative unlabelled
+  cases, the interface centres one, prefetches the next and auto-advances after
+  a decision. So the model gives the operator no leverage, every case is still
+  a human look, and the only lever left is making that look cheaper.
+- Two candidate levers were measured and one was rejected. Publication siblings:
+  6431 of 6586 publications carry a single medium and only 18 undecided
+  siblings sit in publications that already have a decision -- no leverage
+  there, so it was dropped rather than built. The real gap: the frontier rows
+  already carry `has_description`, `has_vision` and `review_scope`, and the
+  interface referenced NONE of them (`asset_available` was the only field it
+  read). The operator was deciding without seeing what the case contained --
+  and `review`, the label that means "not decidable yet", was used once in 116
+  decisions (work 32, record 22, discard 61, review 1).
+- What was added, `copilot.evidence_readiness()` (schema
+  `faro-evidence-readiness-v1`): a pure report of what one record HAS and
+  LACKS across seven channels -- asset, description, date, perception,
+  classification, relations, work_group. It receives what was already measured
+  and invents nothing.
+- The epistemic distinction the report exists for: `unknown` is kept apart from
+  `absent`. The perception index covers 100 of 7044 records, so a missing
+  vision row is almost always "not indexed", not "this record has no
+  perception". Without `vision_indexed` the channel stays `unknown`; with it,
+  an indexed record that has no usable reading is `absent`. Collapsing the two
+  is how a gap becomes a finding.
+- `asset` and `description` are the minimum a defensible label rests on. When
+  either is missing the report returns `decision: abstain` and names the
+  blocking channels, with `next_action` pointing at `review` and the missing
+  evidence -- which turns a case that would sit `pendiente` forever into a
+  recorded outcome. Otherwise it returns `decidable_con_reservas` and declares
+  what is missing without resolving it. `promotion` is `none` and `owner` is
+  `human` in every branch: a readout is not a decision.
+- Wired into the surface without a new round trip: `hub.py` folds the report
+  into the scene the interface already fetches, and `mesa_montaje.js` renders
+  it as a chip strip inside the existing order HUD, using the existing visual
+  language. The three statuses are visually distinct in `editor.html`
+  (`is-present`, `is-absent`, `is-unknown`), and abstention is styled apart
+  from a reservation, so `unknown` cannot read as `absent` on screen. The
+  `revisar` button was already one click away and stays there.
+- Live proof rather than a claim: `GET /api/portfolio/copilot/scene` now
+  returns `evidence_readiness` with
+  `decision=decidable_con_reservas`, `missing=[classification, work_group]`,
+  `unmeasured=[perception]` for the first frontier candidate; the served
+  `mesa_montaje.js` carries the renderer and the served `editor.html` carries
+  the eight style rules.
+- A guard I wrote this morning was refuted by this work and replaced.
+  `test_the_two_checkout_copies_do_not_diverge_in_silence` demanded the MAK and
+  FLUJO copies of the surface stay byte-identical; the first real improvement
+  broke it, and the rule was wrong: it would force every MAK-side UI change to
+  also touch the FLUJO branch, coupling the two checkouts the separation
+  existed to decouple. Measured instead: the FLUJO Hub serves no
+  `/api/portfolio/*` route while the interface makes five or more fetches to
+  exactly those routes, so the sibling copy is inert there. The replacement,
+  `test_the_mak_tree_never_reads_the_sibling_copy_of_the_surface`, guards
+  direction instead of equality, over string LITERALS via AST -- because
+  `hub.py` carries a comment explaining why the `HOME/flujo/iskvw` spelling was
+  retired, and a plain substring search called that comment a read. Naming a
+  path is not using it. Mutation-checked 4/4 and 46x faster than the version it
+  replaced.
+- Tests: five in `tests/test_copilot.py` covering the unknown/absent split in
+  both directions, abstention on a missing minimum, no promotion and a human
+  owner in every branch, reservations that do not block a label, and a record
+  it cannot read at all failing closed. One in
+  `tests/test_iskvw_editor_contract.py` asserting the INTERFACE makes it
+  distinguishable -- every channel named for a person, three visually distinct
+  statuses, abstention styled apart -- because data reaching the browser is not
+  the same as a person being able to read it.
+- Figures: `tests/test_copilot.py` `42 passed`;
+  `tests/test_iskvw_editor_contract.py` `7 passed`; `repo_hygiene`
+  `100 passed`; `mak` `2182 passed, 5 skipped, 5 warnings, 5 subtests`;
+  `integration` `373 passed`; `pip check` clean; `git diff --check` exit 0;
+  `runtime_preflight --check` exit 0 with `ok=5`; `/portafolio/` HTTP 200 after
+  the Hub restart that picked the change up.
+- Ownership question now answered with evidence, and left as a recommendation
+  rather than an action: the FLUJO checkout tracks `iskvw/editor.html` and
+  `iskvw/mesa_montaje.js`, and its Hub cannot serve them. They are dead weight
+  on that branch. Removing them is a FLUJO commit and was not taken here; the
+  direction guard makes the duplicate harmless meanwhile.
+- Not touched: `iskvw/datos/*`, `campo.json`, `animadas.json`, `iskvw/piel/*`,
+  databases, artistic outputs, the published site. No record was labelled, no
+  relation created, no data regenerated. The improvement changes what the
+  operator SEES before deciding; it decides nothing.
+- Next: the perception index covers 100 of 7044 records and its feedback total
+  is 0, so `perception` will report `unknown` for almost every case. That is
+  now visible instead of silent, and widening the index is the next lever --
+  a batch compute decision, not a workflow change.
+
 # Operational Handoff
 
 ## Agent bootstrap -- CURRENT -- 2026-09-02 (later) -- the suites, and the boundary the operator corrected

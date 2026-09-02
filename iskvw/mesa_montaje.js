@@ -1036,6 +1036,36 @@
     syncEditorMode();
   }
 
+  // Lo que la ficha TIENE y lo que le FALTA, antes de etiquetarla. El estado
+  // `unknown` se muestra distinto de `absent` a proposito: el indice de
+  // percepcion cubre una parte chica del campo, asi que "sin lectura" casi
+  // siempre es "no medido", y leer esa ausencia como dato es como un vacio se
+  // vuelve un hecho.
+  const READINESS_LABEL = {
+    asset: "archivo", description: "descripcion", date: "fecha",
+    perception: "percepcion", classification: "clasificacion",
+    relations: "relaciones", work_group: "grupo",
+  };
+  const READINESS_MARK = { present: "si", absent: "no", unknown: "?" };
+
+  function readinessStrip() {
+    const report = state.scene?.evidence_readiness;
+    if (!report || !Array.isArray(report.channels) || !report.channels.length) return "";
+    const chips = report.channels.map((row) => {
+      const label = READINESS_LABEL[row.channel] || row.channel;
+      const mark = READINESS_MARK[row.status] || "?";
+      return `<span class="is-${escMesa(row.status)}" title="${escMesa(row.detail || "")}">`
+        + `${escMesa(label)} ${mark}</span>`;
+    }).join("");
+    const blocking = Array.isArray(report.blocking) ? report.blocking : [];
+    const verdict = blocking.length
+      ? `falta lo minimo (${blocking.map((name) => escMesa(READINESS_LABEL[name] || name)).join(", ")}) · revisar`
+      : escMesa(report.next_action || "");
+    return `<div class="mesa-readiness" data-decision="${escMesa(report.decision || "")}">`
+      + `<div class="mesa-readiness-chips">${chips}</div>`
+      + `<small>${verdict}</small></div>`;
+  }
+
   function renderOrderHud() {
     if (!state.orderHud) return;
     const ids = [...state.orderSelectedIds];
@@ -1052,7 +1082,7 @@
       ? ids.map((id) => escMesa(String(id))).join(" · ")
       : `${ids.slice(0, 3).map((id) => escMesa(String(id))).join(" · ")} · +${ids.length - 3}`;
     const draftActions = pending ? `<div class="mesa-order-actions"><button type="button" data-order-action="save-draft-all">guardar ${pending} borrador(es)</button><button type="button" data-order-action="commit-draft-all">efectuar ${pending} acción(es)</button><button type="button" data-order-action="cancel-draft-all">volver sin aplicar</button></div>` : "";
-    state.orderHud.innerHTML = `<div class="mesa-order-compass" role="toolbar" aria-label="Destino de orden"><div class="mesa-order-hud-copy"><b>${ids.length}</b><span>${copy}${pending ? ` · ${pending} pendiente(s)` : ""}</span><small class="mesa-order-targets">objetivos: ${targetSummary}</small></div><button type="button" class="is-work" data-order-action="work" aria-label="preparar como obra">${actionGlyph("work")}<span>obra</span></button><button type="button" class="is-record" data-order-action="record" aria-label="preparar como registro">${actionGlyph("record")}<span>registro</span></button><button type="button" class="is-review" data-order-action="review" aria-label="dejar para revisar">${actionGlyph("review")}<span>revisar</span></button><button type="button" class="is-discard" data-order-action="discard" aria-label="preparar descarte; no es obra">${actionGlyph("discard")}<span>descarte</span></button><button type="button" class="is-region" data-order-action="region" aria-label="comparar región">${actionGlyph("region")}<span>${ids.length > 1 ? "una pieza" : "región"}</span></button><button type="button" class="is-detail" data-order-action="detail" aria-label="abrir detalle">${actionGlyph("detail")}<span>detalle</span></button>${draftActions}</div>`;
+    state.orderHud.innerHTML = `<div class="mesa-order-compass" role="toolbar" aria-label="Destino de orden"><div class="mesa-order-hud-copy"><b>${ids.length}</b><span>${copy}${pending ? ` · ${pending} pendiente(s)` : ""}</span><small class="mesa-order-targets">objetivos: ${targetSummary}</small>${ids.length === 1 ? readinessStrip() : ""}</div><button type="button" class="is-work" data-order-action="work" aria-label="preparar como obra">${actionGlyph("work")}<span>obra</span></button><button type="button" class="is-record" data-order-action="record" aria-label="preparar como registro">${actionGlyph("record")}<span>registro</span></button><button type="button" class="is-review" data-order-action="review" aria-label="dejar para revisar">${actionGlyph("review")}<span>revisar</span></button><button type="button" class="is-discard" data-order-action="discard" aria-label="preparar descarte; no es obra">${actionGlyph("discard")}<span>descarte</span></button><button type="button" class="is-region" data-order-action="region" aria-label="comparar región">${actionGlyph("region")}<span>${ids.length > 1 ? "una pieza" : "región"}</span></button><button type="button" class="is-detail" data-order-action="detail" aria-label="abrir detalle">${actionGlyph("detail")}<span>detalle</span></button>${draftActions}</div>`;
     positionOrderHud();
   }
 

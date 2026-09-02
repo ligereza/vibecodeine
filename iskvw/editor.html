@@ -854,6 +854,14 @@
   .mesa-order-hud-copy b{color:#d9f1dc;font-size:.86rem}
   .mesa-order-hud-copy span{max-width:160px;color:#9cb09e;font-size:.48rem;line-height:1.2}
   .mesa-order-targets{display:block;max-width:210px;overflow:hidden;color:#d5e7d6;font-size:.42rem;line-height:1.3;text-overflow:ellipsis;white-space:nowrap}
+  .mesa-readiness{display:block;max-width:230px;margin-top:4px;pointer-events:none}
+  .mesa-readiness-chips{display:flex;flex-wrap:wrap;gap:3px}
+  .mesa-readiness-chips span{padding:1px 5px;border:1px solid #403743;border-radius:999px;background:#100e12;color:#9cb09e;font-size:.4rem;letter-spacing:.02em;white-space:nowrap}
+  .mesa-readiness-chips .is-present{border-color:#55735c;color:#c9e5cb}
+  .mesa-readiness-chips .is-absent{border-color:#7a4a4a;color:#e0b3b3}
+  .mesa-readiness-chips .is-unknown{border-color:#5a5570;color:#b9b3cf;font-style:italic}
+  .mesa-readiness small{display:block;margin-top:3px;color:#9cb09e;font-size:.4rem;line-height:1.3}
+  .mesa-readiness[data-decision="abstain"] small{color:#e0b3b3}
   .mesa-order-compass .mesa-order-actions{position:absolute;left:50%;top:18%;z-index:4;display:flex;max-width:360px;transform:translateX(-50%);pointer-events:auto}
   .mesa-order-compass>button{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;width:66px;aspect-ratio:1;border:1px solid #55735c;border-radius:50%;background:rgba(11,18,13,.94);color:#c9e5cb;font:inherit;font-size:.48rem;cursor:pointer;pointer-events:auto;box-shadow:0 12px 25px rgba(0,0,0,.52);transition:transform .16s ease,border-color .16s ease,background .16s ease}
   .mesa-order-compass>button:hover{transform:scale(1.1);border-color:#b4e7bc;background:#17291b;color:#f3fff4}
