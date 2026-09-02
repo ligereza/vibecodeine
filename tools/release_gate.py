@@ -40,7 +40,12 @@ from pathlib import Path
 
 SCHEMA = "mak-release-gate-v1"
 PHYSICAL_ROOT = Path("/home/mak")
-ADAPTER_NAME = "flujo"
+# /home/mak/flujo is the physical FLUJO checkout, not an adapter. The old
+# constant name is kept as an alias because the checkout-report helper still
+# uses it.
+FLUJO_CHECKOUT = "flujo"
+FLUJO_SOURCE_ROOT = "flujo/src"
+ADAPTER_NAME = FLUJO_CHECKOUT
 REMOTE = "vibecodeine-legacy"
 # Every subprocess is bounded.  A slow probe becomes a recorded TIMEOUT, never
 # an implicit pass.
@@ -66,6 +71,7 @@ BRANCH_SURFACES = {
     "MAK": {
         "own_hub": "cultura/mak_plataforma/hub.py",
         "foreign_hub": "src/flujo/web/hub.py",
+        "physical_root": "/home/mak",
         "foreign_entrypoint": "src/flujo/cli.py",
         "own_capabilities": "CAPACIDADES_MAK.md",
         "foreign_capabilities": "CAPACIDADES_FLUJO.md",
@@ -78,6 +84,7 @@ BRANCH_SURFACES = {
     "FLUJO": {
         "own_hub": "src/flujo/web/hub.py",
         "foreign_hub": "cultura/mak_plataforma/hub.py",
+        "physical_root": "/home/mak/flujo",
         "foreign_entrypoint": "cultura/mak_research/interfaz.py",
         "own_capabilities": "CAPACIDADES_FLUJO.md",
         "foreign_capabilities": "CAPACIDADES_MAK.md",
@@ -379,8 +386,21 @@ def check_branch(gate: Gate, root: Path, branch: str) -> dict[str, object]:
         # Shared consumers are contract surfaces.  Only source files are
         # required in a ref: a declared database is a runtime artifact and is
         # gitignored, so demanding it here would be a manufactured blocker.
+        # A consumed contract is not a carried file. MAK reads the motor from
+        # the FLUJO checkout, so those paths are verified on the physical
+        # filesystem instead of being demanded from this ref.
         for consumer in profile.get("shared_consumers", []) or []:
-            if isinstance(consumer, str) and consumer.endswith(".py"):
+            if not isinstance(consumer, str) or not consumer.endswith(".py"):
+                continue
+            if consumer.startswith(f"{FLUJO_CHECKOUT}/"):
+                if not (root / consumer).is_file():
+                    gate.add(
+                        "consumed_contract_absent_on_disk",
+                        SEV_BLOCKER,
+                        f"{branch} consumes {consumer}, absent from the FLUJO checkout",
+                        evidence=f"stat {root / consumer}",
+                    )
+            else:
                 required.append(consumer)
     else:
         if kind != "historical":
@@ -645,6 +665,8 @@ def check_separation(gate: Gate, root: Path, branch: str, profile: dict[str, obj
     row["shared_consumers_declared"] = sorted(declared)
     undeclared_present: list[str] = []
     if branch == "MAK":
+        # MAK must carry no motor copy at all; check_physical_layout blocks on
+        # that. Anything still present here is undeclared by construction.
         code, out, _ = git(root, "ls-tree", "-r", "--name-only", branch, "src/")
         carried = [line for line in out.splitlines() if line.endswith(".py")]
         row["foreign_src_files_carried"] = len(carried)
@@ -662,6 +684,102 @@ def check_separation(gate: Gate, root: Path, branch: str, profile: dict[str, obj
                      + (" ..." if len(undeclared_present) > 5 else ""),
                      evidence=f"git ls-tree -r {branch} src/ vs branch_profile.json shared_consumers")
     return row
+
+
+
+def check_physical_layout(gate: Gate, root: Path) -> dict[str, object]:
+    """Prove the layout decision on disk, not in a document.
+
+    /home/mak is the MAK checkout, /home/mak/flujo is the FLUJO checkout,
+    .claude/worktrees is never runtime, and MAK consumes the motor from
+    /home/mak/flujo/src without copying src/flujo. Each of these was violated
+    at some point today, and only the last one was visible before this check.
+    """
+
+    flujo_root = root / FLUJO_CHECKOUT
+    code, out, _ = git(root, "branch", "--show-current")
+    mak_branch = out.strip() if code == 0 else None
+    code_f, out_f, _ = run(["git", "-C", str(flujo_root), "branch", "--show-current"])
+    flujo_branch = out_f.strip() if code_f == 0 else None
+
+    row: dict[str, object] = {
+        "mak_checkout": str(root),
+        "mak_branch": mak_branch,
+        "flujo_checkout": str(flujo_root),
+        "flujo_branch": flujo_branch,
+        "flujo_source_root": str(root / FLUJO_SOURCE_ROOT),
+    }
+    if mak_branch != "MAK":
+        gate.add("mak_checkout_not_on_mak", SEV_BLOCKER,
+                 f"{root} is on {mak_branch!r}; the physical MAK checkout must be on MAK",
+                 evidence=f"git -C {root} branch --show-current")
+    if flujo_branch != "FLUJO":
+        gate.add("flujo_checkout_not_on_flujo", SEV_BLOCKER,
+                 f"{flujo_root} is on {flujo_branch!r}; it must be the FLUJO checkout",
+                 evidence=f"git -C {flujo_root} branch --show-current")
+
+    # MAK must not carry a second copy of the motor.
+    code, out, _ = git(root, "ls-tree", "-r", "--name-only", "MAK", "src/")
+    mak_src = [line for line in out.splitlines() if line.endswith(".py")]
+    row["mak_src_files"] = len(mak_src)
+    if mak_src:
+        gate.add("mak_carries_a_motor_copy", SEV_BLOCKER,
+                 f"MAK tracks {len(mak_src)} files under src/; it consumes the motor from "
+                 f"{root / FLUJO_SOURCE_ROOT} instead of copying it",
+                 evidence=f"git ls-tree -r MAK src/")
+
+    # No live process may run from a Claude worktree, and the motor must
+    # resolve inside the FLUJO checkout.
+    worktree_marker = "/.claude/worktrees/"
+    offenders: list[dict[str, object]] = []
+    for entry in sorted(Path("/proc").iterdir()):
+        if not entry.name.isdigit():
+            continue
+        pid = int(entry.name)
+        argv = _proc_cmdline_gate(pid)
+        if not argv:
+            continue
+        joined = " ".join(argv)
+        if not any(token in joined for token in ("mak_plataforma", "mak_research", "mak_codex", "flujo")):
+            continue
+        try:
+            cwd = os.readlink(f"/proc/{pid}/cwd")
+        except OSError:
+            cwd = ""
+        if worktree_marker in joined or worktree_marker in cwd:
+            offenders.append({"pid": pid, "cwd": cwd, "cmdline": joined})
+    row["runtime_from_worktree"] = offenders
+    for item in offenders:
+        gate.add("runtime_from_claude_worktree", SEV_BLOCKER,
+                 f"pid {item['pid']} runs from a Claude worktree (cwd={item['cwd']})",
+                 evidence="/proc/<pid>/cwd and cmdline")
+
+    # The editable hook must name the FLUJO checkout, never a stale adapter.
+    hooks: list[str] = []
+    for pth in sorted((root / ".venv" / "lib").glob("python3*/site-packages/*.pth")):
+        try:
+            for line in pth.read_text(encoding="utf-8", errors="replace").splitlines():
+                if line.strip():
+                    hooks.append(line.strip())
+        except OSError:
+            continue
+    row["path_hooks"] = hooks
+    motor_hooks = [h for h in hooks if h.endswith("/src") or "/flujo" in h]
+    expected = str(root / FLUJO_SOURCE_ROOT)
+    for hook in motor_hooks:
+        if hook != expected:
+            gate.add("motor_hook_outside_flujo_checkout", SEV_BLOCKER,
+                     f"an editable hook resolves the motor from {hook}; expected {expected}",
+                     evidence="site-packages/*.pth")
+    return row
+
+
+def _proc_cmdline_gate(pid: int) -> list[str]:
+    try:
+        raw = Path(f"/proc/{pid}/cmdline").read_bytes()
+    except OSError:
+        return []
+    return [p.decode("utf-8", "replace") for p in raw.split(b"\0") if p]
 
 
 def check_lane_map(gate: Gate, root: Path) -> dict[str, object]:
@@ -1037,6 +1155,7 @@ def build_report(root: Path) -> dict[str, object]:
                 {"code": f.code, "severity": f.severity, "detail": f.detail, "evidence": f.evidence}
                 for f in per_branch.findings]
             gate.findings.extend(per_branch.findings)
+    physical_layout = check_physical_layout(gate, root)
     lane_map = check_lane_map(gate, root)
     runtime = check_runtime(gate, root)
     adapter = check_adapter_dependency(gate, root, runtime)
@@ -1092,6 +1211,7 @@ def build_report(root: Path) -> dict[str, object]:
         "IMPLEMENTATION_COMPLETE_TESTS_DEFERRED",
         "branches": branches,
         "hub_boundaries": hubs,
+        "physical_layout": physical_layout,
         "lane_map": lane_map,
         "runtime": runtime,
         "adapter_dependency": adapter,
