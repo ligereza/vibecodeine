@@ -4,8 +4,8 @@
 Scope, stated up front so the verdict cannot be over-read:
 
 * This gate judges **local repository coherence**: branch profiles, required
-  files per ref, hub boundaries, lane map readability, runtime soundness, the
-  adapter dependency, and the classification of the dirty working tree.
+  files per ref, hub boundaries, lane map readability, runtime soundness,
+  motor consumption, and the classification of the dirty working tree.
 * It does NOT run the test suite.  ``tests_deferred`` is always true and the
   push plan starts by running the tests.  ``READY_TO_PUSH`` therefore means
   "the local state is coherent and nothing blocks a commit", never "the tests
@@ -40,9 +40,8 @@ from pathlib import Path
 
 SCHEMA = "mak-release-gate-v1"
 PHYSICAL_ROOT = Path("/home/mak")
-# /home/mak/flujo is the physical FLUJO checkout, not an adapter. The old
-# constant name is kept as an alias because the checkout-report helper still
-# uses it.
+# /home/mak/flujo is the physical FLUJO checkout. The old constant name is
+# kept as an alias because the report field remains schema-compatible.
 FLUJO_CHECKOUT = "flujo"
 FLUJO_SOURCE_ROOT = "flujo/src"
 ADAPTER_NAME = FLUJO_CHECKOUT
@@ -966,16 +965,17 @@ def check_runtime(gate: Gate, root: Path) -> dict[str, object]:
 def check_adapter_dependency(gate: Gate, root: Path, runtime: dict[str, object]) -> dict[str, object]:
     """Record how the motor is consumed, and from where.
 
-    This used to report adapter indirection as debt. Under the layout decision
-    /home/mak/flujo IS the FLUJO checkout, so consuming the motor from
-    flujo/src is the contract and is reported as such. What must never
+    The function and output key retain their v1 names for compatibility with
+    existing consumers. Under the layout decision /home/mak/flujo IS the
+    FLUJO checkout, so consuming the motor from flujo/src is the contract and
+    is reported as ordinary physical-checkout evidence. What must never
     disappear is the location: check_physical_layout blocks when a hook or a
     surface resolves the motor anywhere else.
     """
 
     row: dict[str, object] = {
         "adapter_path": str(root / ADAPTER_NAME),
-        "role": "compatibility_adapter",
+        "role": "flujo_physical_checkout",
         "pth_hooks": [],
         "surfaces_depending": [],
         "port_fallbacks": [],
@@ -1042,6 +1042,12 @@ def check_adapter_dependency(gate: Gate, root: Path, runtime: dict[str, object])
 # release must not carry a file nobody classified.
 DIRTY_RULES = (
     ("context/coordination/", "session_dossier", "coordination dossier written this session"),
+    (".github/workflows/", "release_candidate", "workflow contract"),
+    ("CAPACIDADES.md", "durable_doc", "MAK capability contract"),
+    ("requirements-integration.txt", "release_candidate", "integration dependency contract"),
+    ("tests/", "release_candidate", "regression and contract tests"),
+    ("scripts/", "release_candidate", "operator and workflow scripts"),
+    ("tools/", "release_candidate", "operational tooling"),
     ("tools/runtime_preflight.py", "release_candidate", "runtime preflight tool"),
     ("tools/release_gate.py", "release_candidate", "this gate"),
     ("tests/test_runtime_preflight.py", "release_candidate", "tests for the preflight"),
@@ -1279,7 +1285,7 @@ def build_report(root: Path) -> dict[str, object]:
         "verdict_FLUJO": verdict_flujo,
         "ready_to_push": verdict == VERDICT_READY,
         "verdict_scope": "physical and contractual separation of the operational branches, "
-        "plus runtime and adapter evidence",
+        "plus runtime and motor-consumption evidence",
         "separation": separation,
         "precondition_suites": PRECONDITION_SUITES,
         "precondition_suites_executed": False,
@@ -1292,6 +1298,8 @@ def build_report(root: Path) -> dict[str, object]:
         "physical_layout": physical_layout,
         "lane_map": lane_map,
         "runtime": runtime,
+        # Field name retained for consumers of mak-release-gate-v1; the role
+        # inside it states the current physical-checkout semantics.
         "adapter_dependency": adapter,
         "worktree": worktree,
         "push_plans": push_plans,

@@ -19,11 +19,17 @@ from flujo.knowledge.project_ir import LearningStore, build_project_ir
 
 
 ROOT = Path(__file__).resolve().parents[1]
+REAL_ARCHIVE = ROOT / "iskvw" / "datos" / "archivo.json"
+
+
+def _real_archive() -> dict:
+    if not REAL_ARCHIVE.is_file():
+        pytest.skip("requires the generated physical iskvw archive")
+    return json.loads(REAL_ARCHIVE.read_text(encoding="utf-8"))
 
 
 def _view() -> dict:
-    archive = json.loads((ROOT / "iskvw" / "datos" / "archivo.json").read_text(encoding="utf-8"))
-    return project_archive_portfolio_view(archive, max_items_per_format=24)
+    return project_archive_portfolio_view(_real_archive(), max_items_per_format=24)
 
 
 def test_real_visible_56_produces_one_falsifiable_exhibition() -> None:
@@ -51,7 +57,7 @@ def test_real_visible_56_produces_one_falsifiable_exhibition() -> None:
 
 
 def test_typed_context_is_a_real_survival_gate() -> None:
-    archive = json.loads((ROOT / "iskvw" / "datos" / "archivo.json").read_text(encoding="utf-8"))
+    archive = _real_archive()
     archive["vinculos"] = [row for row in archive["vinculos"] if row["clase"] != "etiqueta"]
     view = project_archive_portfolio_view(archive, max_items_per_format=24)
     # The input remains a valid archive view after the source relations are

@@ -6,3 +6,4 @@
 # the FLUJO profile from the sibling checkout instead of duplicating it.
 -r requirements-mak.txt
 -r flujo/requirements-flujo.txt
+-e ./flujo

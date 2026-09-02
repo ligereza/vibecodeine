@@ -10,6 +10,11 @@ import re
 import sys
 from typing import Any, Callable, Sequence
 
+ROOT = Path(__file__).resolve().parents[2]
+MOTOR_SRC = ROOT / "flujo" / "src"
+if MOTOR_SRC.is_dir() and str(MOTOR_SRC) not in sys.path:
+    sys.path.insert(0, str(MOTOR_SRC))
+
 from flujo.knowledge.postgres_migration import (
     MigrationPlan,
     apply_plan,

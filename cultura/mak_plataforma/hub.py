@@ -155,18 +155,16 @@ SERVICE_PROXY_PREFIXES = {
 }
 SERVICE_PROXY_MAX_BYTES = 2_000_000
 
-# The 8900 hub is launched from /home/mak/plataforma, while the canonical
-# diagnostics package lives in this repository's src/ tree. Add only the
-# canonical source roots so the existing external projection stays intact.
-# Resolve the physical checkout instead of preserving the legacy
-# ``/home/mak/flujo`` adapter spelling.  The Hub is often launched through
-# that compatibility path; reporting the lexical alias as the repository root
-# makes status payloads and downstream consumers believe there are two roots.
+# The 8900 hub is launched from /home/mak/plataforma. The MAK checkout does
+# not carry a motor copy: its shared diagnostics and knowledge consumers live
+# in the sibling FLUJO checkout. Add that source root explicitly because the
+# service's platform venv does not install FLUJO editable.
 _REPO_ROOT = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", ".."))
 _SSD_ORDER_FOUNDATION_PATH = os.path.join(
     _REPO_ROOT, "out", "contracurator", "ssd_order_foundation.json")
-_SRC_ROOT = os.path.join(_REPO_ROOT, "src")
-for _import_root in (_REPO_ROOT, _SRC_ROOT):
+_FLUJO_SOURCE_ROOT = os.path.abspath(os.environ.get(
+    "FLUJO_SOURCE_ROOT", os.path.join(_REPO_ROOT, "flujo", "src")))
+for _import_root in (_REPO_ROOT, _FLUJO_SOURCE_ROOT):
     if _import_root not in sys.path:
         sys.path.insert(0, _import_root)
 try:

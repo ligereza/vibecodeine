@@ -16,7 +16,7 @@ ROOT = repo_root()
 
 def main() -> int:
     """Delegate all scoring and rendering to ``python -m flujo daily``."""
-    src = str(ROOT / "src")
+    src = str(ROOT / "flujo" / "src")
     env = os.environ.copy()
     current = env.get("PYTHONPATH", "")
     env["PYTHONPATH"] = src + (os.pathsep + current if current else "")

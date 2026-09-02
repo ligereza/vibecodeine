@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT / "flujo" / "src"))
 
 from flujo.knowledge.episode_runner import probe_declared_consumer, record_probe  # noqa: E402
 from flujo.knowledge.project_api import promoted_rules  # noqa: E402

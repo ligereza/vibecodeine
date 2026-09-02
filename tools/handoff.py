@@ -8,9 +8,15 @@ context/LAST_HANDOFF.md. El cierre real lo escribe el humano/agente revisando.
 import subprocess, re, datetime
 from pathlib import Path
 
+
+ROOT = Path(__file__).resolve().parents[1]
+
 def ver():
     try:
-        m = re.search(r'version\s*=\s*"([^"]+)"', Path("pyproject.toml").read_text(encoding="utf-8"))
+        pyproject = ROOT / "pyproject.toml"
+        motor_version = ROOT / "flujo" / "src" / "flujo" / "version.py"
+        source = motor_version if motor_version.is_file() else pyproject
+        m = re.search(r'version\s*=\s*["\']([^"\']+)["\']', source.read_text(encoding="utf-8"))
         return m.group(1) if m else "?"
     except Exception:
         return "?"
@@ -25,7 +31,7 @@ def main():
     v = ver(); date = datetime.date.today().isoformat()
     br = git("branch", "--show-current"); log = git("log", "--oneline", "-8")
     print(f"""Date: {date}
-Version: {v}   (debe coincidir con pyproject.toml y src/flujo/version.py)
+Version: {v}   (motor: flujo/src/flujo/version.py; caja: pyproject.toml)
 Assistant: Cauce
 Branch: {br}
 

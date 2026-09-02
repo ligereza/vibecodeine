@@ -48,6 +48,11 @@ def _is_motor(name: str) -> bool:
     return name == "flujo" or name.startswith("flujo.") or name.startswith("src.flujo.")
 
 
+def _is_motor_path(path: str) -> bool:
+    """Recognize motor paths from either the MAK or FLUJO checkout root."""
+    return path.startswith(("src/flujo/", "flujo/src/flujo/"))
+
+
 def _is_local_box_import(name: str) -> bool:
     top = name.split(".", 1)[0]
     if _is_motor(name) or top in {"__future__", "tests"}:
@@ -547,8 +552,10 @@ REVIEW_LANE_ASSIGNMENTS = {
 def _module_locations() -> dict[str, tuple[Path, ...]]:
     """Index importable project modules once for unresolved test modules."""
     locations: dict[str, list[Path]] = {}
-    for root_name in ("src", "cultura", "tools", "iskvw", "scripts", "xio", "projects"):
-        root = REPO / root_name
+    roots = [REPO / name for name in
+             ("src", "cultura", "tools", "iskvw", "scripts", "xio", "projects")]
+    roots.append(REPO / "flujo" / "src")
+    for root in roots:
         if not root.is_dir():
             continue
         for candidate in root.rglob("*.py"):
@@ -575,14 +582,15 @@ def _infer_review_lane(path: Path) -> str:
         stem = name.rsplit(".", 1)[-1]
         for candidate in _MODULE_LOCATIONS.get(stem, ()):
             candidate_text = candidate.relative_to(REPO).as_posix()
-            if candidate_text.startswith("src/flujo/"):
+            if _is_motor_path(candidate_text):
                 lanes.add("flujo")
             elif candidate_text.startswith("projects/tapiz/"):
                 lanes.add("flujo")
             elif candidate_text.startswith(("cultura/", "tools/", "iskvw/", "scripts/", "xio/", "projects/")):
                 lanes.add("mak")
 
-    if "src/flujo/" in source or "scripts/flujo.py" in source or "projects/tapiz/" in source:
+    if ("src/flujo/" in source or "flujo/src/flujo/" in source or
+            "scripts/flujo.py" in source or "projects/tapiz/" in source):
         lanes.add("flujo")
     if any(token in source for token in ("cultura/", "tools/", "iskvw/", "xio/", "projects/cultura/", "projects/plano/")):
         lanes.add("mak")
@@ -592,7 +600,7 @@ def _infer_review_lane(path: Path) -> str:
     for stem in set(re.findall(r"(?<![\w-])([a-zA-Z_][\w-]*)\.py", source)):
         for candidate in _MODULE_LOCATIONS.get(stem, ()):
             candidate_text = candidate.relative_to(REPO).as_posix()
-            if candidate_text.startswith("src/flujo/"):
+            if _is_motor_path(candidate_text):
                 lanes.add("flujo")
             elif candidate_text.startswith("projects/tapiz/"):
                 lanes.add("flujo")
@@ -754,7 +762,7 @@ def lanes_for_changed_paths(paths: Iterable[str]) -> tuple[str, ...]:
                 ).lane)
             if consumers:
                 continue
-            if path.startswith("src/flujo/"):
+            if _is_motor_path(path):
                 selected.add("flujo")
             elif path.startswith(("tools/", "cultura/")) or path.endswith(".py"):
                 selected.add("mak")

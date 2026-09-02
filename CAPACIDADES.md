@@ -549,7 +549,7 @@ tabla; archivo sin entrada = ratchet rojo.
 
 | archivo | estado | consumidor/evidencia | ultima senal |
 |---|---|---|---|
-| `release_gate.py` | VIVO | gate local de coherencia de rama antes de push; consumido por `.github/workflows/ci-mak.yml` y `ci-flujo.yml` (`python tools/release_gate.py --check`) | 2026-09-02 |
+| `release_gate.py` | VIVO | gate local de coherencia de rama ANTES de push, corrido por el operador. No es paso de CI y no puede serlo: resuelve `/home/mak` y `/home/mak/flujo` como checkouts fisicos en su rama, y sale con codigo 5 aun con cero blockers porque READY_TO_PUSH exige evidencia de que las suites corrieron verdes. Se quito de `ci-mak.yml` y `ci-flujo.yml` el 2026-09-02, en su primera ejecucion | 2026-09-02 |
 | `runtime_preflight.py` | VIVO | prueba que codigo ejecuta cada servicio; consumido por `tools/release_gate.py` (comprobacion de runtime) y por el operador | 2026-09-02 |
 | `bridge_issue_render.py` | REVISAR | utilidad operativa conservada al fusionar la caja; consumidor manual, sin caller de produccion medido | 2026-08-31 |
 | `build_duplicate_decision_report.py` | REVISAR | informe manual de duplicados; se conserva como herramienta de operador, sin caller automatico medido | 2026-08-31 |
