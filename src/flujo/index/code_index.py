@@ -21,7 +21,7 @@ DEFAULT_OUTPUT = "context/code_structure_index.json"
 SKIP_DIRS = frozenset({
     ".git", ".venv", ".agents", ".codex", ".claude", "__pycache__",
     ".pytest_cache", "node_modules", "dist", "build", ".mypy_cache",
-    ".ruff_cache", "WIN",
+    ".ruff_cache", "WIN", "context-history",
 })
 
 _EFFECT_IMPORTS = {
