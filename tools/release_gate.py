@@ -160,6 +160,13 @@ RETIRED_SPELLINGS = (
     'join(HOME, "flujo"',
     "join(HOME, 'flujo'",
     '"flujo", "iskvw"',
+    # Fourth spelling, and the one the path-shaped patterns above could never
+    # see: the retired layout also survived as a DOTTED IMPORT. Eight MAK
+    # tools and two tests still read "from src.flujo.knowledge...", which
+    # resolved while /home/mak/src/flujo existed and became two silent
+    # collection errors plus eight tracebacks once it did not (2026-09-02).
+    "from src.flujo.",
+    "import src.flujo",
 )
 SPELLING_SCAN_SUFFIXES = (".py", ".sh", ".service", ".timer", ".pth", ".yml")
 # Records are allowed to name the retired layout: that is what a record is

@@ -260,6 +260,7 @@ repositorio. Las credenciales y tokens se mantienen fuera de Git.
 | `FLUJO_RD_ROOT` | Raíz externa del material RD indexable. |
 | `FLUJO_WEB_DEBUG` | Activa diagnóstico web local. |
 | `FLUJO_WORKSPACE_ROOT` | Raíz explícita del workspace. |
+| `FLUJO_SOURCE_ROOT` | Raíz del código del motor FLUJO que MAK consume; por defecto `/home/mak/flujo/src`. MAK no lleva copia de `src/flujo`, así que las herramientas que importan `flujo.knowledge.*` resuelven por aquí. |
 | `FLYER_BASE` | Raíz alternativa del material de flyers. |
 | `BLENDER_EXE` | Ruta explícita opcional del binario Blender; si falta, MAK busca el binario local instalado junto a `/home/mak/flujo`. |
 | `MAK_BLENDER` | Alias histórico de `BLENDER_EXE`, reconocido para no romper instalaciones existentes. Solo lo leía el diagnóstico de curatoría, así que quien seguía esta tabla resolvía Blender en un lado y no en el otro; ahora ambos nombres funcionan en los dos y gana `BLENDER_EXE`. |
