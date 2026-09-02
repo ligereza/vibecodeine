@@ -3,6 +3,8 @@
 import re
 from pathlib import Path
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOWS = ROOT / ".github" / "workflows"
@@ -38,6 +40,21 @@ def test_ci_targets_linux_and_its_own_operational_branch_only():
             refs = {ref.strip() for ref in lista.split(",") if ref.strip()}
             assert refs <= {"MAK", "FLUJO"}, (name, sorted(refs))
             assert refs, name
+
+
+def test_pull_request_composition_checks_the_revision_under_review():
+    integration = _workflow("ci-integration.yml")
+    assert "github.event.pull_request.merge_commit_sha" in integration
+    assert "github.base_ref == 'MAK'" in integration
+    assert "github.base_ref == 'FLUJO'" in integration
+
+    # The second checkout in CI FLUJO must follow the event revision. A fixed
+    # ref would silently test the branch tip instead of the pull request.
+    flujo_workflow = ROOT / "flujo" / ".github" / "workflows" / "ci-flujo.yml"
+    if not flujo_workflow.is_file():
+        pytest.skip("requires the sibling FLUJO checkout")
+    text = flujo_workflow.read_text(encoding="utf-8")
+    assert "ref: FLUJO" not in text
 
 
 def test_git_topology_guard_requires_one_trunk_and_archive_tag():

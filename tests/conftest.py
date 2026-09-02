@@ -1,8 +1,10 @@
-"""Make the suite test THIS checkout's src/flujo, not an editable install.
+"""Make the suite test the source owned by THIS physical checkout.
 
 From a git worktree, `import flujo` would otherwise resolve to the main
 checkout's installed package and the suite would silently test stale code.
-Prepending this repo's src/ pins every test to the code next to it.
+MAK consumes the motor from its sibling ``flujo/src`` checkout; FLUJO tests
+use their own ``src`` directory. Only a real package root is prepended, so an
+ignored legacy ``src/flujo/__pycache__`` cannot win import resolution.
 
 The labels below are a collection index, not a semantic claim about a test's
 complete coverage. They let a person run a bounded slice such as
@@ -26,7 +28,7 @@ from tools.test_lane_map import lane_for_test_path
 
 _REPO = Path(__file__).resolve().parents[1]
 _SRC = _REPO / "src"
-if _SRC.is_dir() and str(_SRC) not in sys.path:
+if (_SRC / "flujo" / "__init__.py").is_file() and str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 # MAK carries no src/flujo copy: the motor is consumed from the FLUJO checkout
 # (contract 2026-09-02).  Without this the departments tests fail at collection.

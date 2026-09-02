@@ -20,6 +20,8 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -218,6 +220,8 @@ def test_flujo_path_is_reported_as_the_physical_flujo_checkout():
     # The inverse of what this test asserted before: /home/mak/flujo must now
     # BE a checkout of FLUJO. Finding sibling symlinks or no git dir there
     # would mean the layout regressed to the adapter.
+    if not (MODULE.PHYSICAL_ROOT / MODULE.ADAPTER_NAME / ".git").exists():
+        pytest.skip("requires the physical MAK + FLUJO checkouts")
     report = MODULE.adapter_report(MODULE.PHYSICAL_ROOT)
     assert report["role"] == "flujo_physical_checkout"
     assert report["is_symlink"] is False
@@ -229,6 +233,49 @@ def test_flujo_path_is_reported_as_the_physical_flujo_checkout():
     assert report["recursive_symlinks"] == []
     assert report["broken_symlinks"] == []
     assert report["source_root"] == str(MODULE.PHYSICAL_ROOT / "flujo" / "src")
+
+
+def test_mak_hub_resolves_shared_motor_consumers_from_flujo_checkout():
+    source = (ROOT / "cultura" / "mak_plataforma" / "hub.py").read_text(
+        encoding="utf-8"
+    )
+    assert '"FLUJO_SOURCE_ROOT", os.path.join(_REPO_ROOT, "flujo", "src")' in source
+    assert '_SRC_ROOT = os.path.join(_REPO_ROOT, "src")' not in source
+
+
+def test_mak_unit_cannot_be_hidden_inside_the_flujo_checkout(tmp_path, monkeypatch):
+    root = tmp_path / "root"
+    source = root / "cultura" / "mak_plataforma" / "hub.py"
+    source.parent.mkdir(parents=True)
+    source.write_text("# canonical\n", encoding="utf-8")
+    target = root / "flujo" / "units" / "mak-hub.service"
+    target.parent.mkdir(parents=True)
+    target.write_text("[Service]\n", encoding="utf-8")
+    fragment = root / "unit-link.service"
+    fragment.symlink_to(target)
+
+    monkeypatch.setattr(
+        MODULE,
+        "_systemctl",
+        lambda *_args: {
+            "FragmentPath": str(fragment),
+            "ExecStart": f"/usr/bin/python3 {source}",
+            "ActiveState": "active",
+            "SubState": "running",
+            "MainPID": "0",
+        },
+    )
+    surface = MODULE.Surface(
+        "mak_hub", "MAK Hub", "MAK", "cultura/mak_plataforma/hub.py",
+        "systemd_user", None, (), unit="mak-hub.service",
+    )
+    report = MODULE.SurfaceReport("mak_hub", "MAK Hub", "systemd_user")
+
+    MODULE._unit_evidence(report, root, surface, source)
+
+    assert "unit_fragment_in_flujo_checkout" in [f.code for f in report.findings]
+    assert report.status == MODULE.STATUS_ERROR
+    assert report.conditions[MODULE.CONDITION_ADAPTER] is False
 
 
 # ---------------------------------------------------------------- native source
@@ -340,6 +387,8 @@ def test_port_fallback_never_becomes_a_silent_success(monkeypatch):
 
 
 def test_the_report_alters_no_file_it_inspects():
+    if not (MODULE.PHYSICAL_ROOT / MODULE.ADAPTER_NAME / ".git").exists():
+        pytest.skip("requires the physical MAK + FLUJO checkouts")
     watched = [
         MODULE.PHYSICAL_ROOT / "cultura" / "mak_plataforma" / "hub.py",
         MODULE.PHYSICAL_ROOT / "cultura" / "mak_research" / "interfaz.py",

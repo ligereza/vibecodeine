@@ -17,7 +17,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT / "flujo" / "src"))
 from flujo.diagnostics import redact_text  # noqa: E402
 
 SCHEMA = "mak-archaeology-deliverables-v1"

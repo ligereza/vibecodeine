@@ -7,8 +7,8 @@ build_live_ecosystem(repo_root=None) -> compete_engine.EcosystemState
 
 Paints the ecosystem from REAL repo state using only cheap signals:
 file names, byte sizes, counts, mtimes and short-timeout git plumbing.
-The only file bodies ever sampled are the first line of
-src/flujo/__init__.py and version/date tokens from versioned metadata.
+The only file bodies ever sampled are the first line of the motor package
+``__init__.py`` and version/date tokens from versioned metadata.
 Exported (decaying) asset content must stay names/sizes/counts/dates
 only -- keep that invariant when adding builders.
 
@@ -274,8 +274,21 @@ def _build_fungi_zones(state, root, now):
         state.decaying_assets[asset.asset_id] = asset
 
 
+def _motor_init(root):
+    """Find the motor package in either physical checkout shape."""
+    for candidate in (
+        root / "src" / "flujo" / "__init__.py",
+        root / "flujo" / "src" / "flujo" / "__init__.py",
+    ):
+        if candidate.is_file():
+            return candidate
+    return None
+
+
 def _build_tapiz_core(state, root, now):
-    init = root / "src" / "flujo" / "__init__.py"
+    init = _motor_init(root)
+    if init is None:
+        return
     line = _first_line(init)
     if line is None:
         return
@@ -285,7 +298,7 @@ def _build_tapiz_core(state, root, now):
         mtime = now
     asset = ce.ArtAsset(
         "TAP-001", "Tapiz Core",
-        'src/flujo/__init__.py first line: "%s"' % line,
+        '%s first line: "%s"' % (init.relative_to(root).as_posix(), line),
         ce.MetadataLayer("Woven core package of the repo",
                          ["tapiz", "python"], True),
         ce.EntityState.ACTIVE, mtime,

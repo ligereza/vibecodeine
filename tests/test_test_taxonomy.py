@@ -1,6 +1,7 @@
 """Focused guards for the non-sequential test-area index."""
 
 from conftest import classify_test_axes, classify_test_path, topic_for_test_path
+from tools.test_lane_map import _is_motor_path
 
 
 def test_research_layers_share_one_area_label() -> None:
@@ -23,6 +24,12 @@ def test_unknown_filename_is_visible_in_explicit_fallback() -> None:
     areas, roles = classify_test_path("tests/test_unclassified_edge.py")
     assert areas == ("misc",)
     assert roles == ("general",)
+
+
+def test_lane_map_recognizes_motor_paths_from_both_checkouts() -> None:
+    assert _is_motor_path("src/flujo/cli.py")
+    assert _is_motor_path("flujo/src/flujo/cli.py")
+    assert not _is_motor_path("cultura/mak_plataforma/hub.py")
 
 
 def test_filename_topic_exposes_the_existing_subject_axis() -> None:

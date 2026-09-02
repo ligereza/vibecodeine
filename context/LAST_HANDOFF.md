@@ -1,3 +1,216 @@
+## Agent bootstrap — CURRENT — 2026-09-02 — ODT Claude trace and current CI boundary
+
+### Continuity evidence
+
+The exported Claude conversation was read in bounded text slices from
+`/home/mak/Escritorio/mensajes.odt` (OpenDocument, 227091 bytes; LibreOffice
+text extraction: 10630 lines, 620419 bytes). It is a transcript/evidence source,
+not current authority. Its first tracked baseline was MAK `3d83ed60` on the old
+`main` profile; the transcript later ended after pushing MAK `fe4d3fab` and
+FLUJO `27ede605`.
+
+### Inherited standing contract
+
+- `Stage 2D accepted` remains accepted and is not reopened.
+- `171 focused tests` is the historical measurement for that stage.
+- `docs/MAK_SYSTEM_DIRECTIVE.md` remains in force.
+- `mak-archive-observation-batch-v1` remains the archive-observation batch
+  contract.
+
+### Claude sequence recovered
+
+- Fase 0: read-only physical-layout and runtime comprehension.
+- Fases 1-2: built `tools/runtime_preflight.py`, removed three service symlink
+  indirections, and added focused tests/dossiers without changing Git.
+- Fase 3: built `tools/release_gate.py`; it correctly classified the local
+  release as not ready, but the later workflow wiring put this box-local tool in
+  CI, where its `/home/mak` assumptions cannot hold.
+- C01-C11: separated MAK and FLUJO physically, moved ownership by consumer,
+  repaired collection/lane mapping, and added per-lane workflows.
+- Portfolio/IRIS analysis: distinguished the MAK Hub portfolio editor from
+  `iskvw.cl`, identified the existing Mesa de Montaje, read the FONDART bases,
+  and added `docs/IRIS_CANONICAL.md`, the regional dossier, and invariant tests.
+- A data detour regenerated `campo.json` from 219 to 871, then correctly
+  reverted it with `77afc45e` after recognizing that `iskvw/` is a dormant
+  published-site surface and that its product decision is separate from IRIS.
+- The transcript's final CI verdict was FLUJO green, MAK red in 4 tests, and
+  integration red in 11 tests. It stopped before repairing those environment
+  boundaries.
+
+### Current state verified after the export
+
+- `/home/mak` is on `MAK` at `fe4d3fab`; `/home/mak/flujo` is on `FLUJO` at
+  `27ede605`; both tips equal the remote refs. `main` remains historical at
+  `77333b4c` and `historia` at `ab9afa13`.
+- At the start of this continuation the only pre-existing uncommitted change
+  was the one-line `CAPACIDADES.md` correction that removes the false claim
+  that `release_gate.py` runs in CI. It was preserved. The current worktree is
+  intentionally dirty with the audit write-set below; nothing was staged or
+  committed.
+- Remote runs for those exact tips are measured: `CI FLUJO` succeeded;
+  `CI MAK` failed with four failures; `CI integration` failed with eleven.
+  The observed causes are box-only assertions in MAK and absent physical
+  `iskvw/datos/archivo.json`, missing FLUJO console-script installation, and
+  missing FLUJO-side contracts in the clean integration checkout. These are the
+  next CI-boundary slice, not evidence to modify IRIS or `iskvw/` data.
+
+### Next action from the export (completed in this continuation)
+
+The four MAK failures and eleven integration failures were traced to their
+clean-checkout assumptions. The smallest correction was applied and verified:
+tests with a physical MAK root or generated `iskvw/datos/archivo.json` now skip
+only when that substrate is absent; MAK path resolution sees the sibling FLUJO
+checkout; the department catalog resolves motor-owned paths through `flujo/`;
+and `requirements-integration.txt` installs FLUJO editable so its declared
+console script exists. No `iskvw` data was regenerated and no 219/871 decision
+was changed.
+
+### Diagnostic reading completed after the Claude export
+
+The primary files confirm a causal distinction that must survive compaction:
+
+- Claude's useful work was the physical MAK/FLUJO split, the lane contracts and
+  the invariant tests. The remaining red CI is not proof that IRIS or the
+  published archive data is wrong. The workflows run clean checkouts, while
+  several tests still assert box-only paths or generated material absent from a
+  checkout; integration also installs the requirements but not the FLUJO
+  package, so its declared `flujo` console script cannot exist there.
+- The repository has a real architectural ambiguity: the Hub mounts
+  `/home/mak/iskvw` at `/portafolio/`, while the same tree is the `iskvw.cl`
+  site. The contracts nevertheless separate them: IRIS is the MAK Hub/Mesa de
+  Montaje over record/work/context/relation; `iskvw.cl` consumes the
+  obras-oriented `datos/archivo.json` and replaceable skin. A shared path does
+  not make them the same product.
+- Claude's data detour was therefore an inference error, not a missing-feature
+  discovery: it used a red environmental/contract test as a reason to
+  regenerate `campo.json`, re-run layers and add animated pieces. The later
+  claim that this endangered a live product was also unmeasured; the local
+  contract and handoff state that `iskvw.cl` is dormant. No 219/871 choice is
+  reopened by this continuation.
+- The portfolio production work already contains F1/F2/F3 output, F4 as a
+  bounded transcription, F6 as an existing human-facing RD artifact, and
+  F2-barbería as an intentionally non-feasible adversarial case. “No full
+  application”, “no Hub exposure”, and “fit abstain” are declared boundaries,
+  not evidence that the formats or theory were absent. `opportunity_fit.py`
+  computes a fail-closed link and research candidates; it does not decide
+  artistic fit.
+- The theory also names a current implementation gap: `O_G` (multiple
+  defensible orders relative to purpose) is not yet a produced output. The
+  local GTM/ordering surface is a bounded candidate map with a sampled fit
+  path, not proof of learned semantic generalization. That gap must not be
+  “solved” by promoting positions, filenames, or one ordering into authorship
+  or truth.
+
+Measured sources for this diagnosis: `docs/IRIS_CANONICAL.md` sections 1-bis,
+4, 6 and 7; `iskvw/CONTRATO.md`; `docs/PORTAFOLIO_PRODUCCION.md` sections 8,
+14–18; `docs/DIMENSIONES_DEL_ORDEN.md`; `flujo/src/flujo/knowledge/opportunity_fit.py`;
+`cultura/mak_plataforma/hub.py`; `cultura/mak_plataforma/copilot.py`; and the
+current CI workflows/tests. The CI portability action described here is now
+completed locally. IRIS is explicitly paused by the operator; do not begin its
+decision-reader slice in the next continuation.
+
+### CI portability repair evidence — 2026-09-02
+
+- `python -m pip install -r requirements-integration.txt` succeeded, including
+  editable installation of `flujo`; `pip check` reported no broken requirements.
+- MAK lane: `2170 passed, 5 skipped, 5 warnings, 5 subtests` in 113.52s.
+  The five skips are the generated physical archive tests absent from a clean
+  checkout; they remain executable on the box.
+- MAK repo hygiene: `87 passed` in 42.78s.
+- Integration lane: `371 passed` in 22.33s.
+- FLUJO lane: `1611 passed, 44 skipped, 7 warnings` in 82.13s.
+- FLUJO repo hygiene: `54 passed, 1 skipped` in 27.16s.
+- Bootstrap continuity: `tests/test_agent_bootstrap.py` `2 passed` after the
+  current packet was amended to retain the inherited Stage 2D contract. The
+  first literal FLUJO command failed only because that checkout has no local
+  `.venv`; rerunning with the box interpreter used by the workflow passed.
+- Live consumer check: Hub `/portafolio/` HTTP 200, compact inbox HTTP 200, and
+  `/static/iskvw/editor` served SHA-256 equals the physical
+  `iskvw/editor.html` hash `ed7e3bf2d02a841b52560be007390d78c7aed90c79d46258347b22700f03f331`.
+  `iskvw/datos/campo.json` and `iskvw/datos/animadas.json` each contain 219
+  pieces.
+
+### Claude operational audit and repair — 2026-09-02
+
+- The audited Claude range is the physical MAK/FLUJO split ending at
+  `fe4d3fab` (MAK) and `27ede605` (FLUJO). The split itself is preserved; the
+  audit found defects in consumers that still assumed the old layout.
+- Fixed the live Hub import root: it now loads the motor from
+  `/home/mak/flujo/src`, and `/api/status` reports `repo=ready` with
+  `/home/mak/flujo/src/flujo/knowledge/project_api.py`; `/api/departments`
+  exposes the three areas with HTTP 200.
+- Fixed the MAK cron working directory, CAPATAZ lookup, conductor shadow unit,
+  `verify_all.py`, handoff version lookup, and the direct MAK tools that still
+  injected `ROOT/src`. Fixed both Blender render wrappers, the command-map
+  generator, telemetry, and lane-map detection to consume the physical sibling
+  checkout. Added regression tests for these boundaries.
+- Fixed PR workflow checkout composition so the revision under review is
+  tested, not an unrelated branch tip. The local release gate now classifies
+  the current write-set, reports the physical FLUJO checkout explicitly, and
+  returns no blockers or unknowns; exit 5 remains its documented
+  `IMPLEMENTATION_COMPLETE_TESTS_DEFERRED` state.
+- Removed only generated residue: `/home/mak/src/flujo` contained 200 `.pyc`
+  files and no source; 43 `__pycache__` directories / 776 `.pyc` files under
+  `/home/mak/flujo` carried stale `.claude/worktrees/flujo-closeout` code
+  filenames and were removed. A clean FLUJO run produced no stale worktree
+  mentions; current caches, when recreated, contain no such references.
+- Verification: MAK `2175 passed, 5 skipped`; MAK hygiene `89 passed`; root
+  integration `372 passed`; FLUJO `1611 passed, 44 skipped`; FLUJO hygiene
+  `54 passed, 1 skipped`; `flujo verify` exit 0; runtime preflight `5/5 ok`,
+  zero errors/unknowns/warnings/adapters; `git diff --check` passed. The
+  integration failure in `test_mak_iconos` was a real order-dependent wrapper
+  import issue and is now fixed; the ordered 36-test reproduction and the full
+  372-test integration run pass.
+- Write-set is local and uncommitted across the two operational checkouts;
+  no service was activated, no data/IRIS surface was changed, and no commit or
+  push was made.
+
+### Full suite recheck — 2026-09-02 — after Claude audit repair
+
+- Commands were rerun with `/home/mak/.venv/bin/python` and
+  `PYTHONDONTWRITEBYTECODE=1`. MAK lane (`-m mak`): `2175 passed, 5 skipped,
+  5 warnings, 5 subtests` in 106.48s. MAK hygiene (`-m repo_hygiene`): `89
+  passed` in 40.37s. Integration (`-m integration`): `372 passed, 20
+  warnings` in 13.70s.
+- FLUJO lane (`-m flujo`): `1611 passed, 44 skipped, 7 warnings` in 87.34s.
+  FLUJO hygiene (`-m repo_hygiene`): `54 passed, 1 skipped` in 26.16s.
+  `python -m flujo verify` completed with `✓ verify OK`; its health warning
+  only says the optional local index is absent.
+- `tools/runtime_preflight.py --check`: exit 0, five runtime surfaces OK,
+  zero error/unknown/warn/adapter conditions. `tools/release_gate.py --check`:
+  exit 5 with `IMPLEMENTATION_COMPLETE_TESTS_DEFERRED`, zero blockers and
+  unknowns; exit 5 is the tool's documented deferred-tests code.
+- Two initial generic interpreter commands did not execute tests: `python` is
+  absent from this shell and `/usr/bin/python3` has no pytest. The rerun with
+  the box venv is the authoritative measurement above. No IRIS or
+  `iskvw/datos/*` surface changed.
+
+### Write-set review — 2026-09-02 — Fase 1
+
+- The local write-set is bounded to 56 changed/untracked paths in MAK and 3
+  changed paths in FLUJO. The diffs are limited to the physical checkout
+  boundary, runtime/CLI path resolution, CI composition, release/preflight
+  contracts, regression tests, this handoff, and the bounded Claude Fase 2
+  packet at `context/coordination/inbox/claude/phase2-publication-review-20260902.md`.
+  No unexplained top-level artifact or data mutation was found.
+- Remaining literal `src/flujo` strings in MAK allowlists and gate detectors
+  are intentional logical/foreign-path contracts: `_path_roots()` resolves
+  them against `/home/mak/flujo` first, while the gate keeps them to detect
+  retired layouts. They are not active imports of the stale `/home/mak/src`
+  tree.
+- Review result: no additional repair is justified without broadening scope.
+  `git diff --check` passed, the focal handoff/idioma ratchets passed (`15
+  passed`), and the live services remained outside the data/IRIS write-set.
+  Fase 1 is complete; publication remains a separate authorized action.
+
+### Continuation point after the repair
+
+The fixes are local: no commit or push was made, so remote CI still reflects
+the earlier tips until the operator authorizes publication. IRIS remains
+paused. The next action is operator review of this audit write-set and, if
+authorized, the existing release/publish procedure; do not regenerate
+`iskvw/datos/*`, touch the IRIS reader, or promote ordering into authorship.
+
 # Operational Handoff
 
 ## Agent bootstrap -- CURRENT -- 2026-09-02 (later) -- the suites, and the boundary the operator corrected

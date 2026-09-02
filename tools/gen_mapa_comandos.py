@@ -80,10 +80,10 @@ def _help(path: list[str]) -> str:
         "NO_COLOR": "1",
         "PYTHONIOENCODING": "utf-8",
     }
-    # El checkout es portable y puede convivir con artefactos historicos del
-    # mismo proyecto. El mapa debe interrogar ESTE src/, no el paquete que casualmente gane en
+    # MAK consume el CLI desde el checkout físico FLUJO hermano. El mapa debe
+    # interrogar esa fuente canónica, no un paquete que casualmente gane en
     # sys.path del entorno global.
-    raiz_src = str(RAIZ / "src")
+    raiz_src = str(RAIZ / "flujo" / "src")
     pythonpath = entorno.get("PYTHONPATH", "")
     entorno["PYTHONPATH"] = raiz_src + (os.pathsep + pythonpath if pythonpath else "")
     r = subprocess.run(

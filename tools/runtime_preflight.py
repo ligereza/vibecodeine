@@ -16,12 +16,12 @@ surface:
 
 Contract of this file:
 
-* ``/home/mak`` is the canonical physical root.  ``__file__`` is resolved, so
-  invoking the tool through the compatibility adapter still reports the
-  physical root and records the indirection instead of hiding it.
-* ``/home/mak/flujo`` is a ``compatibility_adapter``: a real directory of
-  sibling symlinks.  It is never reported as a second repository, a worktree
-  or an independent operational root.
+* ``/home/mak`` is the canonical MAK physical root.  ``__file__`` is
+  resolved, so invoking the tool through an old compatibility path still
+  reports the physical root and records the indirection instead of hiding it.
+* ``/home/mak/flujo`` is the independent physical FLUJO checkout.  It is
+  reported as a checkout/worktree, never as an adapter or a second copy of
+  the motor.
 * Git is version reference, not physical authority.  Branch facts are read
   from ``branch_profile.json`` and annotate a surface; they never override a
   measurement taken from the filesystem or from ``/proc``.
@@ -663,12 +663,22 @@ def _unit_evidence(report: SurfaceReport, root: Path, surface: Surface, resolved
         report.data["unit_fragment_sha256"] = _sha256(fragment_real)
         target = os.readlink(fragment) if Path(fragment).is_symlink() else None
         report.data["unit_fragment_symlink_target"] = target
-        if target and target.startswith(f"{root}/{ADAPTER_NAME}/"):
-            report.add(
-                "unit_fragment_via_adapter",
-                STATUS_OK_VIA_ADAPTER,
-                f"unit fragment reaches its body through the adapter: {target} -> {fragment_real}",
-            )
+        if _inside(fragment_real, root / ADAPTER_NAME):
+            if surface.owner_branch == "MAK":
+                report.add(
+                    "unit_fragment_in_flujo_checkout",
+                    STATUS_ERROR,
+                    f"MAK unit fragment resolves inside the FLUJO checkout: {target} -> {fragment_real}",
+                )
+            else:
+                # A FLUJO-owned unit may legitimately live in the FLUJO
+                # checkout. Keep this as ordinary evidence, not the retired
+                # adapter status, so branch mix-ups remain visible.
+                report.add(
+                    "unit_fragment_in_flujo_checkout",
+                    STATUS_OK,
+                    f"unit fragment resolves inside the FLUJO checkout: {fragment_real}",
+                )
 
     exec_raw = properties.get("ExecStart", "")
     exec_start = _exec_start_argv(exec_raw)
@@ -948,12 +958,13 @@ def evaluate(root: Path, surface: Surface, listeners: dict[int, dict[str, object
 
 
 def normalize_root(candidate: Path) -> tuple[Path, str | None]:
-    """Collapse a root that points at the compatibility adapter.
+    """Normalize a legacy symlink-tree invocation to its parent checkout.
 
     `/home/mak/flujo` is a real directory, so `realpath` does not collapse it
     and `root / "flujo"` would then invent `/home/mak/flujo/flujo`.  The
-    adapter is never an independent operational root, so it is normalized to
-    its parent and the substitution is recorded rather than hidden.
+    Current ``/home/mak/flujo`` is an independent checkout and is not
+    normalized. The compatibility behavior remains only for old synthetic or
+    symlink-tree layouts, whose substitution is recorded rather than hidden.
     """
 
     resolved = Path(os.path.realpath(candidate))

@@ -103,7 +103,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT / "flujo" / "src"))
 
 from flujo import runrecord                                          # noqa: E402
 from flujo.substrate import epistemics                               # noqa: E402

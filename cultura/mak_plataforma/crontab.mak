@@ -10,7 +10,7 @@
 17 */12 * * * /usr/bin/python3 /home/mak/plataforma/backlog_codex.py >> /home/mak/plataforma/logs/backlog_codex.log 2>&1 # MAK-BACKLOG-CODEX
 35 6 * * * /usr/bin/python3 /home/mak/plataforma/junta.py >> /home/mak/plataforma/logs/junta.log 2>&1 # MAK-JUNTA
 15 7 * * * /usr/bin/python3 /home/mak/codex/agente_libre.py >> /home/mak/plataforma/logs/agente_libre.log 2>&1 # MAK-AGENTE-LIBRE
-20 */6 * * * cd /home/mak/flujo && /usr/bin/python3 /home/mak/plataforma/revisor.py --enforce >> /home/mak/plataforma/logs/revisor.log 2>&1 # MAK-REVISOR
+20 */6 * * * cd /home/mak && /usr/bin/python3 /home/mak/plataforma/revisor.py --enforce >> /home/mak/plataforma/logs/revisor.log 2>&1 # MAK-REVISOR
 10,40 * * * * /usr/bin/python3 /home/mak/plataforma/capataz.py >> /home/mak/plataforma/logs/capataz.log 2>&1 # MAK-CAPATAZ
 7 */4 * * * cd ~/plataforma && python3 latido.py >> logs/latido_cron.log 2>&1 # MAK-LATIDO restaurado 2026-07-22
 */10 * * * * /home/mak/curatoria/curatoria_guardia.sh rd # MAK-CURATORIA

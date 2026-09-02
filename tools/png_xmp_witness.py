@@ -31,7 +31,7 @@ from pathlib import Path
 from typing import Any, BinaryIO
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT / "flujo" / "src"))
 
 from flujo.substrate.xmp import PNG_MAGIC, PNG_XMP_KEYWORD  # noqa: E402
 

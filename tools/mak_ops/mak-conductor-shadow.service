@@ -5,7 +5,7 @@ ConditionPathExists=/home/mak/state/ALLOW_MAK_CONDUCTOR_SHADOW
 
 [Service]
 Type=oneshot
-WorkingDirectory=/home/mak/flujo
+WorkingDirectory=/home/mak
 Environment=MAK_CONDUCTOR_SHADOW=1
 Environment=MAK_CONDUCTOR_ACTIVE=0
 Environment=MAK_CONDUCTOR_GPU=1
