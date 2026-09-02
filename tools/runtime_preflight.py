@@ -58,7 +58,13 @@ from urllib.request import Request, urlopen
 
 SCHEMA = "mak-runtime-preflight-v1"
 PHYSICAL_ROOT = Path("/home/mak")
-ADAPTER_NAME = "flujo"
+# /home/mak/flujo is no longer a compatibility adapter: it is the physical
+# FLUJO checkout, and MAK consumes the motor from /home/mak/flujo/src without
+# copying src/flujo. What used to be "adapter indirection" is now the declared
+# layout; resolving OUTSIDE this root is the defect.
+FLUJO_CHECKOUT = "flujo"
+FLUJO_SOURCE_ROOT = "flujo/src"
+ADAPTER_NAME = FLUJO_CHECKOUT
 # Evidence trees.  Code executed from here is historical material, not runtime.
 FROZEN_PREFIXES = ("_archive", "WIN")
 
@@ -162,7 +168,7 @@ SURFACES: tuple[Surface, ...] = (
         surface_id="flujo_app",
         label="FLUJO App",
         owner_branch="FLUJO",
-        source_declared="src/flujo/web/hub.py",
+        source_declared="flujo/src/flujo/web/hub.py",
         kind="manual_process",
         declared_port=8765,
         # src/flujo/web/hub.py::_find_free_port(start_port=8765, max_tries=8)
@@ -388,9 +394,15 @@ def _script_tokens(argv: list[str]) -> list[str]:
 
 
 def adapter_report(root: Path) -> dict[str, object]:
-    """Describe /home/mak/flujo as a compatibility adapter, nothing else."""
+    """Describe /home/mak/flujo as the physical FLUJO checkout.
 
-    adapter = root / ADAPTER_NAME
+    It used to be a directory of sibling symlinks and this function used to
+    prove it was not a second repository. The layout decision inverted that:
+    it must now BE a checkout of FLUJO, and finding symlinks or no git dir
+    there is the defect.
+    """
+
+    adapter = root / FLUJO_CHECKOUT
     entries: list[str] = []
     links = 0
     cycles: list[str] = []
@@ -407,9 +419,14 @@ def adapter_report(root: Path) -> dict[str, object]:
                     broken.append(child.name)
     code, out, _ = _run(["git", "-C", str(root), "worktree", "list", "--porcelain"])
     worktrees = [line.split(" ", 1)[1] for line in out.splitlines() if line.startswith("worktree ")]
+    code_b, out_b, _ = _run(["git", "-C", str(adapter), "branch", "--show-current"])
+    branch = out_b.strip() if code_b == 0 else None
     return {
         "path": str(adapter),
-        "role": "compatibility_adapter",
+        "role": "flujo_physical_checkout",
+        "branch": branch,
+        "is_flujo_checkout": branch == "FLUJO",
+        "source_root": str(root / FLUJO_SOURCE_ROOT),
         "exists": adapter.is_dir(),
         "is_symlink": adapter.is_symlink(),
         "own_git_dir": (adapter / ".git").exists(),
@@ -547,11 +564,18 @@ def _check_exec_paths(
         if not candidate.is_absolute():
             candidate = root / candidate
         real = Path(os.path.realpath(candidate))
-        if token.startswith(f"{root}/{ADAPTER_NAME}/"):
+        if token.startswith(f"{root}/{FLUJO_SOURCE_ROOT}/"):
             report.add(
-                "exec_start_via_adapter",
-                STATUS_OK_VIA_ADAPTER,
-                f"{origin} names the adapter path {token}; it resolves to {real}",
+                "resolves_in_flujo_checkout",
+                STATUS_OK,
+                f"{origin} resolves inside the FLUJO checkout: {token}",
+            )
+        elif token.startswith(f"{root}/src/flujo/"):
+            report.add(
+                "flujo_resolved_outside_its_checkout",
+                STATUS_ERROR,
+                f"{origin} resolves the motor from {token}; the declared source root "
+                f"is {root}/{FLUJO_SOURCE_ROOT}",
             )
         frozen = _frozen_prefix(real, root)
         if frozen:
@@ -743,7 +767,15 @@ def _process_evidence(report: SurfaceReport, root: Path, surface: Surface, pid: 
     if not argv:
         report.add("cmdline_unreadable", STATUS_UNKNOWN, f"/proc/{pid}/cmdline is not readable")
         return
-    report.data["process_cwd"] = os.readlink(f"/proc/{pid}/cwd") if os.access(f"/proc/{pid}/cwd", os.R_OK) else None
+    cwd = os.readlink(f"/proc/{pid}/cwd") if os.access(f"/proc/{pid}/cwd", os.R_OK) else None
+    report.data["process_cwd"] = cwd
+    for label, value in (("cwd", cwd), ("cmdline", " ".join(argv))):
+        if value and "/.claude/worktrees/" in value:
+            report.add(
+                "runtime_from_claude_worktree",
+                STATUS_ERROR,
+                f"the live {label} points into a Claude worktree, which is never runtime: {value}",
+            )
     start = _proc_start_time(pid)
     if start is not None:
         report.data["process_started_at"] = datetime.fromtimestamp(start, timezone.utc).isoformat()
