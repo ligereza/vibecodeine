@@ -119,6 +119,10 @@ mediciones del 31-08 permanecen abajo como historia fechada.
 - `mak-hub.service` fue recargado tras resolver la raíz física: `/api/status`
   devuelve ahora `repo_root=/home/mak` y `physical_root=/home/mak`; el alias
   `/home/mak/flujo` queda sólo para compatibilidad de rutas heredadas.
+- 2026-09-02: las unidades `mak-hub`, `mak-research` y `mak-codex` dejaron de
+  ejecutar sus fuentes por el alias `/home/mak/flujo` y ahora usan directamente
+  `/home/mak/cultura/...`; tras `daemon-reload` y reinicio controlado quedaron
+  activas, con HTTP 200 en `8900/health`, `8890/` y `8891/`.
 - Validación enfocada actual: `tests/test_code_index.py` (2 passed), los 7
   archivos que cerraron `review` (49 passed), `tests/test_repo_audit.py` (5
   passed en 33 s), `py_compile` RC 0 y `git diff --check` RC 0. No se ejecutó
@@ -213,6 +217,24 @@ decisión aplicada fue un handoff global vivo más estados departamentales
 archivados, con los contratos departamentales apuntando a sus copias históricas.
 No inferir de la fusión que toda variante tenga ruta viva ni que sus diferencias
 estén cerradas.
+
+### Comprobador de capacidades y runtimes — 2026-09-02
+
+Se añadió `tools/capabilities.py`, un comprobador read-only que contrasta nueve
+superficies MAK/FLUJO con sus fuentes, filas de `CAPACIDADES*.md`, unidades
+systemd, listeners y HTTP. La corrección inicial evitó pasar la ruta del unit a
+`systemctl` en vez de su nombre. Medición final:
+`python3 tools/capabilities.py --check --check-branch --format text` => `9/9`
+declaradas, `9/9` fuentes presentes, `issues=0`, MAK `8900`, Research `8890`,
+Codex `8891`, Ollama `11434` (3/3 modelos y 6/6 consumidores), FLUJO App `8766`
+(fallback de `8765`) y SearXNG `8888`; `serve` `8777` no está escuchando y la
+cola ntfy permanece inactiva, ambos estados esperados. El gate de registro de
+herramientas y el handoff focal pasaron `3 passed`; no se ejecutó la suite
+completa. `main` ahora lleva un perfil explícito `kind=historical` y el
+selector pytest del checkout histórico quedó neutral (`-q`); `MAK` y `FLUJO`
+conservan sus perfiles y selectores propios en sus ramas. El consumidor
+`cultura/mak_plataforma/chat_agente.py` quedó con default `gemma3:4b`, que sí
+está instalado; no se instaló `qwen-agent` ni se abrió una sesión de modelo.
 
 ---
 

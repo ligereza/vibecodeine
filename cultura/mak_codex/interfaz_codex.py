@@ -307,7 +307,7 @@ function mdMin(src){
     if(enFence){buf.push(l);return;}
     var m=l.match(/^(#{1,3})\\s+(.*)/);
     if(m){out.push('<h'+m[1].length+'>'+esc(m[2])+'</h'+m[1].length+'>');return;}
-    out.push('<p>'+esc(l).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')+'</p>');
+    out.push('<p>'+esc(l).replace(/\\*\\*(.+?)\\*\\*/g,'<b>$1</b>')+'</p>');
   });
   if(buf.length)out.push('<pre>'+esc(buf.join('\\n'))+'</pre>');
   return out.join('');
