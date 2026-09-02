@@ -152,7 +152,11 @@ SERVICE_PROXY_MAX_BYTES = 2_000_000
 # The 8900 hub is launched from /home/mak/plataforma, while the canonical
 # diagnostics package lives in this repository's src/ tree. Add only the
 # canonical source roots so the existing external projection stays intact.
-_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+# Resolve the physical checkout instead of preserving the legacy
+# ``/home/mak/flujo`` adapter spelling.  The Hub is often launched through
+# that compatibility path; reporting the lexical alias as the repository root
+# makes status payloads and downstream consumers believe there are two roots.
+_REPO_ROOT = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", ".."))
 _SSD_ORDER_FOUNDATION_PATH = os.path.join(
     _REPO_ROOT, "out", "contracurator", "ssd_order_foundation.json")
 _SRC_ROOT = os.path.join(_REPO_ROOT, "src")

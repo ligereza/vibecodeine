@@ -1,0 +1,4 @@
+surface,method,mak_source,win_source,comparison,validation,result,write_observation,decision
+serve,AST contract,/home/mak/flujo/src/flujo/cli.py,/home/mak/WIN/flujo/src/flujo/cli.py,FunctionDef serve without source locations,Python AST parse/dump equality + Phase 44/45/46 runtime evidence,AST equal; options/defaults/dispatch match,writes_detected=false; no source edit,RESOLVED_NO_SERVE_MISMATCH
+app_alias,AST contract,/home/mak/flujo/src/flujo/cli.py,/home/mak/WIN/flujo/src/flujo/cli.py,FunctionDef app_alias without source locations,Python AST parse/dump equality,AST equal; alias dispatch matches,writes_detected=false; no source edit,RESOLVED_NO_SERVE_MISMATCH
+cli.py,full-file evidence,/home/mak/flujo/src/flujo/cli.py,/home/mak/WIN/flujo/src/flujo/cli.py,full content differs,physical existence/hash record only,difference retained; no serve mismatch proven,writes_detected=false; no merge,OPEN_NON_SERVE_EVIDENCE_ONLY

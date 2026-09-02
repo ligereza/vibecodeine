@@ -1,0 +1,3 @@
+source,target,consumer,action,status,verification,mutation,risk,next_action
+/home/mak/flujo/cultura/mak_codex/codex_lib.py,/home/mak/codex/codex_lib.py,Codex job dispatch,compile/import/chain parsing,VERIFIED,"py_compile=0; same chain contract; no process",provider calls and generated pieces gated,validate local Codex quality path
+/home/mak/flujo/cultura/mak_codex/worker_codex.py,/home/mak/codex/worker_codex.py,Codex API worker,compile/import/safe rejection,VERIFIED,"py_compile=0; unknown mode/path rejection; process gate=0",normal mode launches subprocess/locks/GPU/events,inspect calidad_loop or testear fixture

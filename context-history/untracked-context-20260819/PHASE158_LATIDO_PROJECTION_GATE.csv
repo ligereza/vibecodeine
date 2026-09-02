@@ -1,0 +1,2 @@
+source,target,consumer,mutation_boundary,decision,status,verification
+/home/mak/flujo/cultura/mak_plataforma/latido.py,/home/mak/plataforma/latido.py,MAK-LATIDO paused crontab,normal run writes heartbeat state/log and POSTs loopback research,wrapper projection,VERIFIED,"py_compile=0; isolated fake-loopback canonical/wrapper contract equal; process gate=0"

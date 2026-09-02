@@ -1,0 +1,2 @@
+canonical,runtime_root,consumer,valid_fixture,invalid_fixture,status,decision
+/home/mak/flujo/cultura/mak_post,/home/mak/post absent,mak_conductor handler registry,candidate/no errors,rejected/deterministic errors,VERIFIED,keep root absent and source-owned

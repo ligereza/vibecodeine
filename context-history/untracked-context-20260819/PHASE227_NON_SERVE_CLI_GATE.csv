@@ -1,0 +1,15 @@
+phase,surface,command,exit,result,classification,next
+227,version,"python -m flujo version",0,pass,read-only,continue audit
+227,health,"python -m flujo health",0,pass,read-only,continue audit
+227,rd_packs,"python -m flujo rd-db packs",0,pass,read-only,continue audit
+227,rd_events,"python -m flujo rd-db eventos",0,pass,read-only,continue audit
+227,rd_tests,"python -m flujo rd-db testeos",0,pass,read-only,continue audit
+227,rd_venues,"python -m flujo rd-db venues",0,pass,read-only,continue audit
+227,jobs,"python -m flujo job list",0,"8 jobs visible",read-only,continue audit
+227,job_next,"python -m flujo job next",0,"next job resolved",read-only,continue audit
+227,job_status_valid,"python -m flujo job status jobs/2026-07-02_cotizacion_general_agencia_eventos",0,pass,read-only,continue audit
+227,job_status_missing_arg,"python -m flujo job status",2,"expected usage gate",non-mutating,provide argument only when authorized
+227,knowledge,"python -m flujo knowledge list",0,pass,read-only,continue audit
+227,datadrop,"python -m flujo datadrop list",0,pass,read-only,continue audit
+227,render_formats,"python -m flujo render formats",0,pass,read-only,continue audit
+227,compile,"python -m py_compile src/flujo/cli.py",0,pass,static,continue audit

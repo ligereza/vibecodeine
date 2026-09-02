@@ -1,0 +1,11 @@
+branch,scope,status,gate
+main,stable MAK FLUJO baseline,stable target,verify health typecheck runtime
+codex/architecture/mak-ownership,folder projection ownership,proposed,path launcher parity
+codex/consolidation/tools,pure consumer tool consolidation,partially evidenced,AST import fixture rollback
+codex/integration/rd-assets,RD asset manifests and generators,partially evidenced,isolated generation index output
+codex/integration/rd-data,authorized real field data,blocked_external_data,schema provenance rollback
+codex/integration/rd-runtime,RD mutating routes,fixture_only,authorized foreground run
+codex/integration/flujo-automation,EVENTO issue URL processing,contract_dryrun,provider-backed contract
+codex/verification/dependency-gates,pytest qwen web runtime,environment_gate,supported runtime and full tests
+codex/cleanup/confirmed-junk,exact confirmed junk only,quarantine_started,pre post health rollback
+codex/release/verification,final objective audit,not_ready,all gates proven

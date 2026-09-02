@@ -1,0 +1,9 @@
+root,files,dirs,bytes,classification,decision
+/home/mak/apps,2102,623,1460151287,external installed applications,preserve outside FLUJO scope
+/home/mak/labs,99,84,459217001,dated lab/evidence surface,preserve and classify
+/home/mak/src/ml-mobileclip,166,69,10947800,optional external model source,defer dependency adoption
+/home/mak/workspace,0,4,16384,empty parser shell,empty unowned candidate
+/home/mak/quarantine,4087,688,184399187,rollback and evidence,preserve
+/home/mak/flujo/web/node_modules,unknown,unknown,unknown,web build dependencies,preserve and audit separately
+/home/mak/flujo/docs/recovered,unknown,unknown,unknown,recovered historical evidence,preserve
+/home/mak/flujo/out,unknown,unknown,unknown,generated outputs,preserve until consumer map

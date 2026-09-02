@@ -1,0 +1,13 @@
+surface,role,status,action
+/home/mak/flujo,canonical authoring baseline,ACTIVE,continue integration
+/home/mak/flujo-deploy,deployment snapshot,SEPARATE,preserve and audit later
+/home/mak/vibecodeine,separate project,OUT_OF_SCOPE_DIRECT_MERGE,preserve
+/home/mak/actions-runner,CI infrastructure and credentials,PROTECTED,do not clean broadly
+/home/mak/bucle,separate project,SEPARATE,preserve
+/home/mak/n8n-local,discarded service with env files,DISABLED_PROTECTED,preserve sensitive files
+/home/mak/searxng,service settings,DISABLED_PROTECTED,do not start
+/home/mak/venv-providers,provider environment,DEPENDENCY_BOUNDARY,no install
+/home/mak/curatoria_test,fixtures and benchmarks,EVIDENCE,preserve
+/home/mak/curatoria_encolado,empty staging directory,UNRESOLVED,no deletion by emptiness
+/home/mak/vigia,watch department,READONLY_VERIFIED,protect state
+/home/mak/lenguaje,language department,READONLY_VERIFIED,gate writers and cron

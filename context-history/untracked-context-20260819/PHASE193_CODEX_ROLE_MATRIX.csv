@@ -1,0 +1,13 @@
+phase,module,class,owner,decision
+193,debug.py,exact,mak_codex,keep shared helper
+193,fallback_util.py,exact,mak_codex,keep shared helper
+193,iconos.py,exact,mak_codex,keep shared helper
+193,interfaz_codex.py,exact,mak_codex,keep service runtime path
+193,agente_libre.py,projection,mak_codex,keep canonical plus wrapper
+193,codex_lib.py,projection,mak_codex,keep canonical plus wrapper
+193,generar.py,projection,mak_codex,keep canonical plus wrapper
+193,revisar.py,projection,mak_codex,keep canonical plus wrapper
+193,testear.py,projection,mak_codex,fixture-gated canonical plus wrapper
+193,worker_codex.py,projection,mak_codex,keep canonical plus wrapper
+193,source_only,none,none,no action
+193,runtime_only,none,none,no action

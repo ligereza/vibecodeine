@@ -1,0 +1,2 @@
+phase,scope,action,result,exit_code,changed_files,risk,next_action
+106,curatoria panel/watchdog ownership,replace active root duplicates with canonical projections,imports and compile passed; no server/watchdog execution,0,/home/mak/curatoria/panel.py|/home/mak/curatoria/watchdog.py,percepcion WIN semantic divergence remains open; stateful services not launched,audit percepcion path/fallback gate

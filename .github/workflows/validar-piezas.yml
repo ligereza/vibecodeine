@@ -12,6 +12,7 @@ on:
       - 'src/flujo/comercial/**'
       - 'projects/piezas_vectoriales/suplementos_rd/**'
   pull_request:
+    branches: [main]
     paths:
       - 'svg/**'
       - 'src/flujo/comercial/**'

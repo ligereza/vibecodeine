@@ -1,0 +1,2 @@
+source,target,consumer,status,verification,mutation,decision
+/home/mak/flujo/cultura/mak_codex/iconos.py,/home/mak/codex/iconos.py,Codex semantic SVG icon flow,VERIFIED,"py_compile=0; fake-planner fixture smoke true; SVG equal; visual ok; dedupe unique; process gate=0",temporary fixture only,keep pair and pieces classified

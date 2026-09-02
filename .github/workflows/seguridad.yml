@@ -17,6 +17,7 @@ name: seguridad
 
 on:
   pull_request:
+    branches: [main]
   push:
     branches: [main]
   schedule:
@@ -84,6 +85,9 @@ jobs:
     # El ratchet de VCD-08 ya vive en la suite (tests/test_privacidad_repo.py) y
     # corre en ci.yml. Se repite aca a proposito para que un fallo de privacidad
     # se lea como lo que es y no se pierda entre 900 tests verdes.
+    # The PR contract job runs this cheap ratchet first. Keep this copy for
+    # pushes and the weekly scan, but avoid duplicate PR critical-path work.
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

@@ -1,0 +1,18 @@
+phase,module,exit,bytecode,side_effect,next
+242,cultura.mak_plataforma.backlog,0,disabled,none,keep owner
+242,cultura.mak_plataforma.backlog_codex,0,disabled,none,keep owner
+242,cultura.mak_plataforma.capataz,0,disabled,none,keep owner
+242,cultura.mak_plataforma.chat_agente,0,disabled,none,keep owner
+242,cultura.mak_plataforma.coherence,0,disabled,none,keep owner
+242,cultura.mak_plataforma.contrato_archivo,0,disabled,none,keep owner
+242,cultura.mak_plataforma.entregar_micelio,0,disabled,none,keep owner
+242,cultura.mak_plataforma.junta,0,disabled,none,keep owner
+242,cultura.mak_plataforma.latido,0,disabled,none,keep owner
+242,cultura.mak_plataforma.material,0,disabled,none,keep owner
+242,cultura.mak_plataforma.puente_issues,0,disabled,none,keep owner
+242,cultura.mak_plataforma.revision,0,disabled,none,keep owner
+242,cultura.mak_plataforma.roles,0,disabled,none,keep owner
+242,cultura.mak_plataforma.salud,0,disabled,none,keep owner
+242,cultura.mak_plataforma.tandas,0,disabled,none,keep owner
+242,cultura.mak_plataforma.trabajo,0,disabled,none,keep owner
+242,cultura.mak_plataforma.vigilar_red,0,disabled,none,keep owner

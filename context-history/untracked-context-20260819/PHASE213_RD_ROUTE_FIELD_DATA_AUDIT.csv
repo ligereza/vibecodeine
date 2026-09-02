@@ -1,0 +1,13 @@
+surface,method_or_command,effect,status
+catalog_panel,"GET /api/rd-db",read source and knowledge allowlist,PASS
+tariff_panel,"GET /api/rd-packs",read data/rd_packs.json,PASS
+field_summary,"GET /api/rd-datos-summary",read-only SQLite URI,PASS
+logo_preview,"GET /api/rd-db/logo?slug=thegrid",read; 404 missing asset,PASS_NON_MUTATING
+catalog_rebuild,"flujo rd-db build",rewrite rd.db,DEFERRED
+field_ingest,"flujo rd-datos ingest",append rd_datos.db,DEFERRED
+field_report,"flujo rd-datos informe",write markdown output,DEFERRED
+logo_upload,"POST /api/rd-db/logo",write knowledge/logos/descargas,DEFERRED
+symbol_add,"POST /api/plano-simbolos",write data/plano_simbolos.json,DEFERRED
+plan_render,"POST /api/plano/render",transient in-memory payload,VALIDATED_PHASE223
+quote_render,"POST /api/cotizacion/render",transient in-memory payload,VALIDATED_PHASE223
+datadrop_mutators,"POST datadrop endpoints",write evidence/manifests,DEFERRED

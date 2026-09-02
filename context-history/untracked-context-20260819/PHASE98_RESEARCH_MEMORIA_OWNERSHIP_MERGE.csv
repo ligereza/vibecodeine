@@ -1,0 +1,2 @@
+phase,scope,action,result,exit_code,changed_files,risk,next_action
+98,research memoria ownership,replace active root duplicate with canonical compatibility projection,verified import help compile and no persistent process,0,/home/mak/research/memoria.py,module metadata callers untested; public and private names re-exported,continue bounded ownership merge audit

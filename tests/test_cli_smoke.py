@@ -30,6 +30,22 @@ def test_health_command(tmp_path: Path, monkeypatch):
     assert result.exit_code == 0
 
 
+def test_verify_fails_closed_when_a_subprocess_fails(monkeypatch):
+    calls = []
+
+    def fake_run(cmd, **kwargs):
+        calls.append((cmd, kwargs))
+        return type("Completed", (), {"returncode": 7, "stdout": "", "stderr": "boom"})()
+
+    monkeypatch.setattr("subprocess.run", fake_run)
+    result = runner.invoke(app, ["verify", "--no-pytest", "--no-hub-smoke"])
+
+    assert result.exit_code == 1
+    assert "verify falló en compileall" in result.output
+    assert "verify OK" not in result.output
+    assert len(calls) == 1
+
+
 def test_job_list_empty(tmp_path: Path, monkeypatch):
     monkeypatch.setattr("flujo.paths.repo_root", lambda: tmp_path)
     (tmp_path / "jobs").mkdir()

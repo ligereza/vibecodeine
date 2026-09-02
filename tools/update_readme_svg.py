@@ -37,7 +37,8 @@ def digest(readme: str) -> list[str]:
     """Build a compact status layer from the current README, not old artwork."""
     selected = [
         "VIBECODEINE / FLUJO / DIMENSIONS OF ORDER",
-        "one permanent branch: main | source copies: source/* | work slices: work/*",
+        "Git checkpoint: main only; runtime truth: Windows + MAK local state",
+        "MAK / RD / Portfolio: sovereign organisms; Git: reviewed transport",
         "MAK = Linux inbox + research + codex + hub",
         "traceability: work_id -> evidence -> decision -> next_action",
         "README: ASCII vessel / text as material / animation as artwork",
@@ -47,8 +48,10 @@ def digest(readme: str) -> list[str]:
         if not line:
             continue
         folded = line.lower()
+        if "four canonical branches" in folded:
+            continue
         if any(token in folded for token in (
-                "main", "source", "work", "integration", "svg", "branch",
+                "main", "mak", "iskvw", "rd", "svg", "branch",
                 "artist", "readme", "hub", "ledger", "evidence")):
             if line not in selected:
                 selected.append(line)

@@ -1,0 +1,3 @@
+consumer,invalid_input,valid_fixture,rollback,status
+/api/rd-db/logo,rejected_preserves_old,PASS,PASS,PASS_WITH_ROLLBACK_FIXTURE
+/api/datadrop-analyze,not_applicable,PASS,PASS,PASS_WITH_ROLLBACK_FIXTURE

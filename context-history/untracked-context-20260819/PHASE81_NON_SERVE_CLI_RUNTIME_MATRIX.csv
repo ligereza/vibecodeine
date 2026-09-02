@@ -1,0 +1,11 @@
+consumer,runtime,status,result
+version,system,verified,exit 0 version 0.56.1
+health,system,verified,exit 0
+job-list,system,verified,exit 0 8 jobs
+datadrop-list,system,verified,exit 0
+rd-readers,system,verified,packs eventos testeos venues exit 0
+knowledge-productoras,system,environment_mismatch,exit 1 yaml missing
+knowledge-productoras,canonical_venv,verified,exit 0 3 entities
+knowledge-venues,canonical_venv,verified,exit 0 3 entities
+autonomia-status,system,verified,exit 0 no provider call
+project_entrypoint,shell,open,flujo not found on PATH

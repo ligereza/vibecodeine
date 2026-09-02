@@ -1,0 +1,4 @@
+department,gate,result,status
+vigia,AST and --help,1/1 AST and help exit 0,READONLY_VERIFIED
+lenguaje,AST and medir.py JSON,4/4 AST and measure exit 0,READONLY_VERIFIED
+vigia/lenguaje,writer cron model paths,not executed,EXTERNAL_MUTATOR_GATED

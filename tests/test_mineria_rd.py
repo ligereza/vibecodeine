@@ -15,6 +15,30 @@ sys.path.insert(0, str(proyecto_dir / "cultura" / "mak_plataforma"))
 import mineria_rd  # noqa: E402
 
 
+def _snapshot_guarded_catalogs() -> set[tuple[str, int, int, int]]:
+    """Snapshot only the catalogs ``proponer`` promises not to mutate.
+
+    ``REPO_ROOT`` is the physical MAK root.  A recursive snapshot of it would
+    walk user home data, caches and mounted OneDrive content, turning this
+    unit test into an accidental full-disk scan.  The contract under test is
+    narrower: the real ``data/`` and ``knowledge/`` catalogs must remain
+    unchanged while drafts are written to ``outdir``.
+    """
+    rows = set()
+    for relative in ("data", "knowledge"):
+        base = mineria_rd.REPO_ROOT / relative
+        if not base.exists():
+            continue
+        for path in base.rglob("*"):
+            try:
+                stat = path.lstat()
+            except OSError:
+                continue
+            rows.add((str(path.relative_to(mineria_rd.REPO_ROOT)), stat.st_ino,
+                      stat.st_size, stat.st_mtime_ns))
+    return rows
+
+
 def test_replace_failure_preserves_previous_state_and_cleans_temp(
         monkeypatch, tmp_path):
     path = tmp_path / "estado.json"
@@ -518,11 +542,11 @@ class TestProponer:
     def test_no_toca_data_ni_knowledge_reales(self, tmp_path, monkeypatch):
         # aunque REPO_ROOT real exista, proponer() no debe escribir ahi
         outdir = tmp_path / "propuestas_mineria"
-        antes = set(mineria_rd.REPO_ROOT.rglob("*")) if mineria_rd.REPO_ROOT.exists() else set()
+        antes = _snapshot_guarded_catalogs()
 
         mineria_rd.proponer(self._consolidado_ejemplo(), outdir=str(outdir))
 
-        despues = set(mineria_rd.REPO_ROOT.rglob("*")) if mineria_rd.REPO_ROOT.exists() else set()
+        despues = _snapshot_guarded_catalogs()
         assert antes == despues
 
 

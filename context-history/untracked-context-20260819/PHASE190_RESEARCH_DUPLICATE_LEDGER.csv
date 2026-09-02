@@ -1,0 +1,6 @@
+phase,family,class,count,decision,quarantine_destination
+190,research_docs_ops,exact_byte_match,13,preserve pending consumer check,context/quarantine/phase190_research_family/<name>.runtime
+190,research_python_helpers,exact_byte_match,19,preserve until launcher gate,context/quarantine/phase190_research_family/<name>.runtime
+190,research_runtime_wrappers,semantic_projection,9,keep canonical plus runtime wrapper,none
+190,research_state,mailboxes/locks/checkpoints/logs/outputs,excluded,preserve,none
+190,full_hash,sha256 read-only comparison,exit 0,ledger only,none

@@ -1,0 +1,8 @@
+item,status,path_or_command,result
+verify_core,verified,venvs/flujo/bin/flujo verify --no-pytest --no-hub-smoke,exit 0
+compileall,verified,verify substep,pass
+health,verified,verify substep,pass
+version,verified,verify substep,pass 0.56.1
+pip_check,verified,venvs/flujo/bin/python -m pip check,exit 0 no broken requirements
+core_imports,verified,canonical venv,typer yaml Pillow pydantic requests boto3 matplotlib pass
+web_build,separate_blocked,Phase80,Node/Rollup runtime boundary

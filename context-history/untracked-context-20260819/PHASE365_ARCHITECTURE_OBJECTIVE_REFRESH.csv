@@ -1,0 +1,6 @@
+change,canonical_owner,live_consumer,verification,disposition
+research_credential_fallback,cultura/mak_research,/home/mak/research,five_file_exact_parity_no_n8n_refs,VERIFIED
+platform_provider_fallback,cultura/mak_plataforma/providers.py,/home/mak/plataforma/providers.py,exact_parity_py_compile,VERIFIED
+n8n_automation_root,none,none,no_process_or_unit_credentials_mode_600,EXCLUDED_PROTECTED
+xio_bridge,cultura/mak_xio_puente,/home/mak/xio_puente,user_exclusion,EXCLUDED_NO_TEST
+win_archive,/home/mak/WIN,none,authority_contract,HISTORICAL_READ_ONLY

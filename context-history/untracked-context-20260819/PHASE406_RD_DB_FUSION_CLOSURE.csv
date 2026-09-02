@@ -1,0 +1,8 @@
+"source","role","tables","rows","integrity","schema_version","user_version","disposition"
+"/home/mak/flujo/data/rd.db","active canonical catalog","20","7587","ok","37","20260815","canonical retained"
+"/home/mak/state/windows-director-20260813/rd/rd.db","historical state snapshot","20","7587","ok","35","0","preserved evidence"
+"/home/mak/WIN/flujo/data/rd.db","historical Windows snapshot","20","7587","ok","normalized equal","n/a","preserved historical source"
+"/home/mak/WIN/flujo/tmp_rd_integration_check.db","temporary integration evidence","20","7587","ok","normalized equal","n/a","preserved evidence"
+"/home/mak/WIN/flujo/_logs/local_reconciliation_20260813/mak_rd.db","older reconciliation artifact","12","113","ok","incomplete subset","n/a","historical evidence; not additive source"
+"normalized comparison","all user tables","20/20 equal","7587/7587 equal","pass","column metadata equal","n/a","no row merge required"
+"/home/mak/flujo/data/rd_datos.db","separate privacy/field store","4","0","ok","n/a","n/a","not merged"

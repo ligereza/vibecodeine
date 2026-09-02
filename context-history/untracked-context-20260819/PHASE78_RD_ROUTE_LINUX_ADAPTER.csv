@@ -1,0 +1,7 @@
+item,status,path_or_command,result
+historical_index,protected,src/flujo/route/rutas_rd.json,C:\\rd preserved
+linux_adapter,integrated,src/flujo/route/resolver.py,--base-dir and FLUJO_RD_ROOT
+real_cli,verified,flujo hub route,exit 0
+local_doctor,verified,FLUJO_RD_ROOT=/home/mak/RD,28 routes checked and 1 expected artifact absent
+syntax,verified,py_compile,exit 0
+data_mutation,none,rutas_rd.json and /home/mak/RD,unchanged

@@ -1,0 +1,7 @@
+phase,field,result,decision
+196,contract_keys,8 of 8 match,keep projection
+196,stable_fields,match,keep projection
+196,mem_disponible_mb,32 MB sequential variance,expected dynamic metric
+196,services,all checked inactive,do not start
+196,gpu,read-only snapshot,do not reserve
+196,process_gate,empty,no persistent process

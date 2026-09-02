@@ -1,0 +1,7 @@
+item,status,path_or_command,result
+index_build,verified,/home/mak/RD -> /tmp temporary,1743 files and 56.8 GB
+index_stats,verified,flujo hub index stats,exit 0
+index_find,verified,flujo hub index find etiqueta,5 results exit 0
+duplicate_analysis,verified,flujo hub index dupes,near estimate 532.2 MB; no hash claim
+cleanup_analysis,verified,flujo hub index cleanup,17 build-cache files and 6.6 GB estimate
+operational_index,unchanged,src/flujo/index/index_rd.json,remains absent

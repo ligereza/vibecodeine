@@ -1,0 +1,5 @@
+surface,canonical_source,projection_or_runtime,ast_ok,ast_fail,decision
+plataforma,cultura/mak_plataforma,/home/mak/plataforma,48,1,source canonical; projection protected
+curatoria,cultura/mak_curatoria,/home/mak/curatoria,9,0,source canonical; projection protected
+research,cultura/mak_research,/home/mak/research,28,0,source canonical; runtime/evidence protected
+codex,cultura/mak_codex,/home/mak/codex,18,7,source canonical; malformed pieces audit later

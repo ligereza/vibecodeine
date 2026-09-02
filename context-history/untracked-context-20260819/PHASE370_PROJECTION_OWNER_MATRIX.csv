@@ -1,0 +1,9 @@
+family,canonical_source,live_path,result,disposition
+Research,cultura/mak_research,/home/mak/research,five_changed_pairs_exact_local_imports_pass,OWNER_VERIFIED
+Platform,cultura/mak_plataforma,/home/mak/plataforma,provider_pair_exact_n8n_refs_absent,OWNER_VERIFIED
+Codex,cultura/mak_codex,/home/mak/codex,wrapper_exact_interface_imports_unit_pass,WRAPPER_INTENTIONAL
+Curatoria,cultura/mak_curatoria,/home/mak/curatoria,wrappers_exact_guard_imports_pass,WRAPPER_INTENTIONAL
+Vigia,cultura/mak_vigia,/home/mak/vigia,exact_pair_parser_golden_rules_pass,OWNER_VERIFIED
+Lenguaje,cultura/mak_lenguaje,/home/mak/lenguaje,exact_pair_bilingual_signal_pass,OWNER_VERIFIED
+XIO,cultura/mak_xio_puente,/home/mak/xio_puente,user_excluded_no_test,EXCLUDED
+n8n,none,/home/mak/n8n-local,no_tool_service_credentials_only,DISCARDED_PROTECTED

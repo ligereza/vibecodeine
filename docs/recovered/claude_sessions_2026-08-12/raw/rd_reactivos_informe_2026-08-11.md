@@ -4,7 +4,7 @@
 
 Se normalizaron doce reactivos a partir del scraping realizado con Firecrawl sobre páginas públicas de Reduciendo Daño. El archivo estructurado es:
 
-[rd_reactivos_normalizados_2026-08-11.json](C:/Users/issvk/claude_sesiones_recuperadas/rd_reactivos_normalizados_2026-08-11.json)
+[rd_reactivos_normalizados_2026-08-11.json](<local-user-home>/claude_sesiones_recuperadas/rd_reactivos_normalizados_2026-08-11.json)
 
 El resultado es un **candidato de integración**, no una guía médica nueva ni una validación química independiente. Conserva los colores, tiempos, sustancias y advertencias que aparecen en las páginas scrapeadas.
 

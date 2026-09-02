@@ -1,0 +1,7 @@
+item,status,path_or_command,result
+web_typecheck,verified,/home/mak/flujo/web,exit 0
+vite_version,verified,/home/mak/flujo/web/node_modules,7.3.2
+node_runtime,blocked,/usr/bin/node,18.20.4; Vite requires >=20.19
+rollup_native,blocked,web/node_modules/@rollup,linux-x64-gnu optional module absent
+web_build,blocked,temporary output,exit 1 before output creation
+source_mutation,none,/home/mak/flujo/web,no source lockfile node_modules or dist change

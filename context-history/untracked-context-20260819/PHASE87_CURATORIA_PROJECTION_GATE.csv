@@ -1,0 +1,9 @@
+item,status,path_or_command,result
+canonical_projection_parity,verified,three diagnostico_proyectos.py paths,SHA-256 equal
+canonical_compile,verified,venvs/flujo/bin/python -m py_compile,exit 0
+root_compile,verified,venvs/flujo/bin/python -m py_compile,exit 0
+canonical_help,verified,canonical --help,exit 0
+root_help,verified,root --help,exit 0
+root_state,protected,/home/mak/curatoria,fichas drainage logs and direct entrypoint
+cleanup,not_performed,curatoria projection,hash equality insufficient
+win_evidence,preserved,/home/mak/WIN/flujo/cultura/mak_curatoria,unchanged

@@ -1,0 +1,4 @@
+fixture,policy,exit,result,real_db
+rd_datos_demo/testeos_demo.csv,strict,0,"30 temporary rows",untouched
+temporary PII row,strict,0,"0 persisted; 1 rejected",untouched
+real field source,not supplied,DEFERRED,"no acta/authority",empty

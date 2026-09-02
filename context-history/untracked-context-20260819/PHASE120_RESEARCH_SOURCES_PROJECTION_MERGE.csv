@@ -1,0 +1,4 @@
+path,role,action,result
+/home/mak/flujo/cultura/mak_research/fuentes.py,canonical source-quality owner,unchanged,imports fixtures and compile pass
+/home/mak/research/fuentes.py,MAK root compatibility surface,replaced with canonical projection,imports pure fixtures and compile pass
+/home/mak/WIN, historical evidence,unchanged,no network database or provider action

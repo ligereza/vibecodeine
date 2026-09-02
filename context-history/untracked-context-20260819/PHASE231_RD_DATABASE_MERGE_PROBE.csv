@@ -1,0 +1,4 @@
+phase,source,tables,rows,integrity,live_write,decision
+231,/home/mak/flujo/data/rd.db,20,7587,ok,no,preserve source pending architecture decision
+231,/home/mak/flujo/data/rd_datos.db,3,0,ok,no,preserve privacy store pending architecture decision
+231,temp unified candidate,23,7587,ok,no,probe only; no promotion

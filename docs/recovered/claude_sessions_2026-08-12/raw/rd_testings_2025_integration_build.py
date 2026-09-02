@@ -22,8 +22,8 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
 
-SOURCE = Path(r"C:\Users\issvk\Downloads\Testeo 2025.xlsx")
-OUT_DIR = Path(r"C:\Users\issvk\claude_sesiones_recuperadas")
+SOURCE = Path(r"<local-user-home>\Downloads\Testeo 2025.xlsx")
+OUT_DIR = Path(r"<local-user-home>\claude_sesiones_recuperadas")
 STAMP = "2026-08-12"
 SOURCE_COPY = OUT_DIR / "Testeo 2025.source.xlsx"
 JSON_OUT = OUT_DIR / f"rd_testeos_eventos_2025_evidence_{STAMP}.json"

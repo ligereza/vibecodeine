@@ -1,0 +1,8 @@
+family,paths_or_pattern,consumer,classification,decision
+rd_evidence_json,flujo/data/rd_fuentes plus docs/recovered raw copy,rd database reader and provenance,evidence duplicate,retain until manifest
+platform_mirror,cultura/mak_plataforma plus /home/mak/plataforma,flujo cli autonomy conductor,source/projection,consolidate ownership first
+curatoria_mirror,cultura/mak_curatoria plus /home/mak/curatoria,conductor and department tools,source/projection,consolidate ownership first
+research_mirror,cultura/mak_research plus /home/mak/research,rd database vigia codex conductor,source/projection plus corpus evidence,retain until launcher audit
+codex_mirror,cultura/mak_codex plus /home/mak/codex,codex handlers and human tools,source/projection,inspect entrypoints
+rd_asset_variants,RD/suplementos workspace copies and flujo/jobs outputs,RD human/job workflows,source/output/delivery variants,compare manifests
+research_corpus_repeats,research/corpus dated capture trees,research reproducibility,provenance snapshots,preserve

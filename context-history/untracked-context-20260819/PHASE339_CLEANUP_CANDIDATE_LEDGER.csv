@@ -1,0 +1,5 @@
+id,original_path,role,disposition,rollback
+C339-01,/home/mak/install_mak.sh,historical mutating MAK installer,QUARANTINE_CANDIDATE_PRESERVE,move quarantine/phase339_root_installers/install_mak.sh back
+C339-02,/home/mak/instalar.sh,obsolete Docker Open WebUI installer,QUARANTINE_CANDIDATE_PRESERVE,move quarantine/phase339_root_installers/instalar.sh back
+C339-03,/home/mak/blender-4.5.3-viejo,distinct old external runtime,PROTECT_PENDING_PROJECT_PROVENANCE,restore whole directory after exact manifest
+C339-04,/home/mak/plataforma/interfaz.py,legacy UI existing prior quarantine,QUARANTINED_PHASE270,reverse move recorded in Phase270

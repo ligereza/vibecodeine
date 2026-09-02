@@ -1,0 +1,2 @@
+phase,scope,action,result,exit_code,changed_files,risk,next_action
+115,platform capataz/chat ownership,replace active root variants with canonical localhost projections,capataz fixtures and compile/AST checks passed; chat import gated by missing qwen_agent; no chat/PR/delivery/provider execution,0,/home/mak/plataforma/capataz.py|/home/mak/plataforma/chat_agente.py,missing qwen_agent and mutating chat tools remain gated; WIN remote address historical only,perform platform automation dry-run without installing dependencies

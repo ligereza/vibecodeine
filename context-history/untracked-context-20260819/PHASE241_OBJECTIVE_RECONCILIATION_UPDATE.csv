@@ -1,0 +1,14 @@
+phase,objective,status,evidence
+241,1,OPEN_EMPTY_DATA,real source absent
+241,2,PROBED_NO_LIVE_MERGE,temp unified candidate 23 tables
+241,3,FIXTURE_PASS_LIVE_DEFERRED,temporary mutator fixtures
+241,4,USER_CONFIRMED_PAUSED,issue URL confirmed and scheduler paused
+241,5,READ_DISPATCH_PASS,read CLI and 17 help dispatches
+241,6,INDEX_RECONCILED,RD asset/index crosswalk
+241,7,BASE_PASS_OPTIONAL_OPEN,base venv pip check/imports
+241,8,PROPOSED_PARTIALLY_APPLIED,Phase 237 disposition
+241,9,CLASSIFIED_BY_PROVENANCE_AND_CONSUMER,Phase 239 duplicate disposition
+241,10,OWNER_FUSED_WITH_RUNTIME_PROJECTIONS,Phase 238/240 Platform ledger
+241,11,LOCAL_HEALTH_PASS_EXTERNAL_OPEN,Phase 235/234
+241,12,REVERSIBLE_CLEANUP_PASS,Phase 228/229
+241,13,PROPOSAL_READY_NO_OPERATION,Phase 218

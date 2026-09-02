@@ -1,0 +1,3 @@
+source,target,consumer,action,status,verification,mutation,risk,next_action
+/home/mak/flujo/cultura/mak_research/research.py,/home/mak/research/research.py,standalone research and service worker,verify existing compatibility projection,VERIFIED,"py_compile=0; canonical/runtime --help cmp=0; process gate=0",none in help gate,providers and artifact writes remain gated,select next research consumer
+/home/mak/flujo/cultura/mak_research/research_lib.py,/home/mak/research/research_lib.py,research.py/interfaz.py,verify shared dependency,VERIFIED,py_compile=0,none,provider calls require authority,inspect next consumer

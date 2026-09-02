@@ -39,12 +39,19 @@ REPO = HOME / "flujo"
 ORGANS = [("research", 8890), ("codex", 8891), ("plataforma", 8900)]
 
 
-def sh(*args: str, timeout: int = 60) -> str:
+def sh_result(*args: str, timeout: int = 60) -> tuple[str, str, bool]:
+    """Run a probe and preserve whether it actually ran successfully."""
     try:
-        return subprocess.run(args, capture_output=True, text=True,
-                              timeout=timeout).stdout
+        proc = subprocess.run(args, capture_output=True, text=True,
+                              timeout=timeout, check=False)
+        return proc.stdout, proc.stderr, proc.returncode == 0
     except (subprocess.SubprocessError, OSError):
-        return ""
+        return "", "", False
+
+
+def sh(*args: str, timeout: int = 60) -> str:
+    """Compatibility helper for non-verdict display probes."""
+    return sh_result(*args, timeout=timeout)[0]
 
 
 def port_open(port: int) -> bool:
@@ -63,12 +70,14 @@ def process_on(port: int) -> str:
     return ""
 
 
-def cron_state() -> tuple[int, int, list[str]]:
-    text = sh("crontab", "-l")
+def cron_state() -> tuple[int, int, list[str], bool]:
+    text, _stderr, ok = sh_result("crontab", "-l")
+    if not ok:
+        return 0, 0, [], False
     active = [x for x in text.splitlines()
               if x.strip() and not x.lstrip().startswith("#")]
     paused = [x for x in text.splitlines() if x.lstrip().startswith("# PAUSED")]
-    return len(active), len(paused), paused
+    return len(active), len(paused), paused, True
 
 
 def target(line: str):
@@ -153,30 +162,42 @@ def cron_details(paused_lines: list[str]) -> list[dict[str, str | int | bool | N
     return details
 
 
-def heartbeat_snapshot(active: int, paused_lines: list[str]) -> dict[str, object]:
+def heartbeat_snapshot(active: int, paused_lines: list[str],
+                       *, cron_available: bool = True) -> dict[str, object]:
     """Emit a machine-readable organism pulse without changing the machine."""
-    protection = sh("gh", "api", "repos/:owner/:repo/branches/main/protection")
-    rules = sh("gh", "api", "repos/:owner/:repo/rules/branches/main")
+    protection, protection_err, protection_ok = sh_result(
+        "gh", "api", "repos/:owner/:repo/branches/main/protection")
+    rules, rules_err, rules_ok = sh_result(
+        "gh", "api", "repos/:owner/:repo/rules/branches/main")
+    protection_not_found = "not found" in (protection + protection_err).lower()
+    rules_not_found = "not found" in (rules + rules_err).lower()
     try:
-        rule_count = len(json.loads(rules)) if rules.strip() else 0
+        rule_count = (len(json.loads(rules)) if rules.strip() else 0) \
+            if rules_ok or rules_not_found else None
     except json.JSONDecodeError:
-        rule_count = 0
+        rule_count = None
     organs = []
     for name, port in ORGANS:
         organs.append({"name": name, "port": port, "alive": port_open(port),
                        "process": process_on(port)})
     organs.extend([
-        {"name": "lenguaje", "port": None, "alive": bool(active),
-         "process": "cron" if active else "cron_paused"},
-        {"name": "xio_puente", "port": None,
-         "alive": sh("systemctl", "--user", "is-active", "mak-xio").strip() == "active",
-         "process": sh("systemctl", "--user", "is-active", "mak-xio").strip() or "unknown"},
+        {"name": "lenguaje", "port": None,
+         "alive": bool(active) if cron_available else None,
+         "process": ("cron" if active else "cron_paused")
+                    if cron_available else "unknown"},
     ])
+    xio, _xio_err, xio_ok = sh_result("systemctl", "--user", "is-active", "mak-xio")
+    xio = xio.strip()
+    xio_known = xio_ok or xio in {"active", "inactive", "failed", "dead"}
+    organs.append({"name": "xio_puente", "port": None,
+                   "alive": xio == "active" if xio_known else None,
+                   "process": xio or "unknown"})
     details = cron_details(paused_lines)
     return {
         "schema": "mak-organism-heartbeat-v1",
         "measured_at": datetime.now(timezone.utc).isoformat(),
         "cron": {
+            "available": cron_available,
             "active_lines": active,
             "paused_lines": len(paused_lines),
             "static_ready_lines": sum(bool(row["static_ready"]) for row in details),
@@ -184,7 +205,9 @@ def heartbeat_snapshot(active: int, paused_lines: list[str]) -> dict[str, object
         },
         "organs": organs,
         "branch_protection": {
-            "classic_present": bool(protection.strip()) and "Not Found" not in protection,
+            "available": protection_ok or protection_not_found,
+            "classic_present": (bool(protection.strip()) and not protection_not_found)
+                               if protection_ok or protection_not_found else None,
             "ruleset_count": rule_count,
         },
     }
@@ -198,16 +221,20 @@ def main(argv: list[str] | None = None) -> int:
                         help="emitir el pulso del organismo como JSON")
     args = parser.parse_args(argv)
 
-    active, paused_count, paused_lines = cron_state()
+    active, paused_count, paused_lines, cron_available = cron_state()
     if args.json:
-        print(json.dumps(heartbeat_snapshot(active, paused_lines), ensure_ascii=False,
-                         indent=2, sort_keys=True))
-        return 0
+        print(json.dumps(heartbeat_snapshot(
+            active, paused_lines, cron_available=cron_available),
+            ensure_ascii=False, indent=2, sort_keys=True))
+        return 0 if cron_available else 1
 
     print("MAK, medido ahora. Solo lectura.\n")
 
-    print(f"1. capa de cron: {'CORRIENDO' if active else 'PAUSADA'}"
-          f"   ({active} activas, {paused_count} pausadas)")
+    if cron_available:
+        print(f"1. capa de cron: {'CORRIENDO' if active else 'PAUSADA'}"
+              f"   ({active} activas, {paused_count} pausadas)")
+    else:
+        print("1. capa de cron: INDETERMINADA (no se pudo leer crontab)")
     for mark in sorted({m for x in paused_lines
                         for m in re.findall(r"PAUSED[A-Z0-9-]*", x)}):
         print(f"     marca: {mark}  ({sum(1 for x in paused_lines if mark in x)} lineas)")
@@ -220,22 +247,33 @@ def main(argv: list[str] | None = None) -> int:
             print(f"     {name:<12} :{port}  VIVO   {process_on(port)}")
         else:
             print(f"     {name:<12} :{port}  caido")
-    xio = sh("systemctl", "--user", "is-active", "mak-xio").strip()
+    xio, _xio_err, xio_ok = sh_result("systemctl", "--user", "is-active", "mak-xio")
+    xio = xio.strip()
+    xio_known = xio_ok or xio in {"active", "inactive", "failed", "dead"}
     print(f"     {'lenguaje':<12} cli/cron  "
-          f"{'pausado con el cron' if not active else 'segun cron'}")
-    print(f"     {'xio_puente':<12} daemon    {xio or 'sin dato'}")
+          f"{'pausado con el cron' if not active else 'segun cron'}"
+          if cron_available else "     lenguaje     cli/cron  indeterminado")
+    print(f"     {'xio_puente':<12} daemon    {xio if xio_known else 'indeterminado'}")
     print(f"     -> {alive} de 5 organos responden")
 
     print("\n3. proteccion de rama en main (hay un cron que mergea)")
-    protection = sh("gh", "api", "repos/:owner/:repo/branches/main/protection")
-    rules = sh("gh", "api", "repos/:owner/:repo/rules/branches/main")
+    protection, protection_err, protection_ok = sh_result(
+        "gh", "api", "repos/:owner/:repo/branches/main/protection")
+    rules, rules_err, rules_ok = sh_result(
+        "gh", "api", "repos/:owner/:repo/rules/branches/main")
+    protection_not_found = "not found" in (protection + protection_err).lower()
+    rules_not_found = "not found" in (rules + rules_err).lower()
     try:
-        rule_count = len(json.loads(rules)) if rules.strip() else 0
+        rule_count = (len(json.loads(rules)) if rules.strip() else 0) \
+            if rules_ok or rules_not_found else None
     except json.JSONDecodeError:
-        rule_count = 0
-    if "Not Found" in protection or not protection.strip():
+        rule_count = None
+    if (protection_ok or protection_not_found) and (rules_ok or rules_not_found) \
+            and (protection_not_found or not protection.strip()):
         print(f"     SIN proteccion clasica (404) y {rule_count} reglas de ruleset")
         print("     revisor.py --enforce llama a `gh pr merge`. No hay red.")
+    elif not protection_ok or not rules_ok:
+        print("     INDETERMINADA: no se pudo medir la proteccion de main")
     else:
         print("     proteccion presente")
 
@@ -265,7 +303,7 @@ def main(argv: list[str] | None = None) -> int:
         if (env / "bin" / "python").exists():
             size = sh("du", "-sh", str(env), timeout=90).split("\t")[0] or "?"
             print(f"     {size:>7}  {env}")
-    return 0
+    return 0 if cron_available else 1
 
 
 if __name__ == "__main__":

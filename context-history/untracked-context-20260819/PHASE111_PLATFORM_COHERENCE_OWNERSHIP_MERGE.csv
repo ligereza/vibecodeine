@@ -1,0 +1,2 @@
+phase,scope,action,result,exit_code,changed_files,risk,next_action
+111,platform coherence ownership,replace active root documentation-only duplicate with canonical projection,import help compile passed; no checker sync or external action,0,/home/mak/plataforma/coherence.py,tandas functional divergence remains open,resolve tandas ownership with contract fixtures

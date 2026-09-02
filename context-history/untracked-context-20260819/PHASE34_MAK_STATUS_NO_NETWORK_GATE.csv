@@ -1,0 +1,4 @@
+Identity: LUNA principal
+route,method,source_consumer,input_surface,expected_output,mutation_boundary,static_fixture_status,http_status,write_check,final_status
+/api/mak,GET,src/flujo/web/hub.py -> _get_mak -> local _get_mak_tandas,FLUJO_MAK_URL unset plus optional local ledger reads,configured=false disponible=false truthful error and tandas object,no external URL; local reads only,PASS,200,writes_detected=0,INTEGRATED_LOCAL_FALLBACK
+/api/organismo,GET,deferred branch selected by FLUJO_MAK_URL,external MAK process URL not contacted,not claimed in this gate,external network/process boundary; no SSH or probe,DEFERRED,N/A,no execution,DEFERRED_EXTERNAL_RUNTIME

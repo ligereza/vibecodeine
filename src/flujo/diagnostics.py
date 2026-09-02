@@ -253,28 +253,29 @@ def route_idea(text: str = "", area: str = "auto", root: Path | None = None) -> 
     }
 
 
-def _run_git(root: Path, *args: str) -> str:
+def _run_git(root: Path, *args: str) -> tuple[str, bool]:
     try:
         proc = subprocess.run(
             ["git", *args], cwd=str(root), text=True, encoding="utf-8",
             errors="replace", capture_output=True, timeout=3,
         )
     except (OSError, subprocess.TimeoutExpired):
-        return ""
-    return (proc.stdout or "").strip()
+        return "", False
+    return (proc.stdout or "").strip(), proc.returncode == 0
 
 
 def _git_state(root: Path) -> dict[str, Any]:
-    branch = _run_git(root, "rev-parse", "--abbrev-ref", "HEAD")
-    commit = _run_git(root, "rev-parse", "--short", "HEAD")
-    status = _run_git(root, "status", "--porcelain=v1")
+    branch, branch_ok = _run_git(root, "rev-parse", "--abbrev-ref", "HEAD")
+    commit, commit_ok = _run_git(root, "rev-parse", "--short", "HEAD")
+    status, status_ok = _run_git(root, "status", "--porcelain=v1")
     rows = [line for line in status.splitlines() if line.strip()]
+    available = branch_ok and commit_ok and status_ok
     return {
-        "available": bool(branch or commit),
+        "available": available,
         "branch": redact_text(branch, 120),
         "commit": redact_text(commit, 120),
-        "dirty": bool(rows),
-        "changed_entries": len(rows),
+        "dirty": bool(rows) if available else None,
+        "changed_entries": len(rows) if available else None,
     }
 
 
@@ -351,6 +352,10 @@ def render_markdown(report: dict[str, Any]) -> str:
     checks = report.get("checks") or {}
     repro = report.get("reproduction") or {}
     hub = checks.get("local_hub_8900") or {}
+    dirty = git.get("dirty")
+    dirty_label = "unknown" if dirty is None else str(dirty)
+    changed_entries = git.get("changed_entries")
+    changed_label = "unknown" if changed_entries is None else str(changed_entries)
     lines = [
         "# MAK diagnostic report",
         "",
@@ -363,7 +368,7 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"- platform: `{env.get('platform', '')} {env.get('platform_release', '')}`",
         f"- python: `{env.get('python', '')}`",
         f"- git: `{git.get('branch') or 'unknown'}@{git.get('commit') or 'unknown'}`",
-        f"- working_tree_dirty: `{git.get('dirty')}` ({git.get('changed_entries', 0)} entries)",
+        f"- working_tree_dirty: `{dirty_label}` ({changed_label} entries)",
         "",
         "## Idea",
         "",

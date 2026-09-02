@@ -1,0 +1,11 @@
+owner,contents,consumer_rule,cleanup_state
+/home/mak/flujo/src,FLUJO source and runtime,one active implementation per import path,protected live source
+/home/mak/flujo/data,canonical structured data,schema/reader owns each database,protected live data
+/home/mak/flujo/jobs,job state and traceability,one owner and rollback path,protected live state
+/home/mak/flujo/datadrops,inbound review files,never mix with published assets,protected input
+/home/mak/flujo/projects,active project sources,project source has explicit export destination,protected live source
+/home/mak/RD,RD creative sources/editables/deliveries/evidence,retain existing surface until classified,preserve and classify
+/home/mak/flujo/assets,only runtime-consumed assets,provenance registered per asset,adopt selectively
+/home/mak/<department>,distinct live department tools,retain while owner and consumer are real,review by consumer
+/home/mak/archive,retired or superseded evidence,archive after replacement and provenance,retained evidence
+/home/mak/WIN,complete Windows historical archive,never runtime,never delete

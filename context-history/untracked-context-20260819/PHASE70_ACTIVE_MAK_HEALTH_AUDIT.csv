@@ -1,0 +1,8 @@
+check,scope,result,exit_code,side_effects
+flujo_health,local FLUJO,pass,0,none
+flujo_doctor,local FLUJO,pass with working tree warning,0,none
+rd_db_testeos,merged RD evidence reader,pass with human review gate,0,none
+active_ast,208 active Python files,pass,0,none
+active_shell,10 department shell files,pass,0,none
+persistent_processes,MAK FLUJO Blender vigia worker sync,none found,0,none
+user_schedule,crontab and user timers,no active entries,0,none

@@ -1,0 +1,12 @@
+phase,component,result,decision
+183,research.py,wrapper import exit 0,usable projection
+183,worker.py,wrapper import exit 0,usable projection
+183,fuentes.py,wrapper import exit 0,usable projection
+183,cadena.py,wrapper import exit 0,usable projection
+183,grafo.py,wrapper import exit 0,usable projection
+183,memoria.py,wrapper import exit 0,usable projection
+183,panel.py,wrapper import exit 0,usable projection
+183,refutar.py,wrapper import exit 0,usable projection
+183,cola.py,wrapper import exit 0,usable projection
+183,stale_pid_files,5172 and 68022 not running,preserve evidence; no service
+183,provider_execution,not run,defer to bounded authority gate

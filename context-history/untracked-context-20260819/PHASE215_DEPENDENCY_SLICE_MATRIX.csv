@@ -1,0 +1,10 @@
+slice,required_base,optional,validation
+"FLUJO CLI/jobs/knowledge/RD reads","typer rich pyyaml pydantic requests jsonschema",none,"CLI and imports pass"
+"RD catalog/field report","pyyaml SQLite stdlib",none,"imports and empty report pass"
+"quote/plano/SVG","base plus Pillow/matplotlib","cairosvg render extra","prior fixture pass"
+"web hub reads",base,"pywebview web extra","temporary GET server pass"
+"language/Tilde","stdlib plus local Research wrapper","capable model only on explicit correction","compile/import pass"
+"Research/Codex/Curatoria","canonical culture modules","qwen/model/GPU optional","wrapper gates pass"
+"visual index","base plus MobileCLIP path","GPU/backend optional","read fixture pass"
+"deploy sync","stdlib git fcntl filesystem",none,"compile pass; not executed"
+"tests/QA","base","dev extra","no install"

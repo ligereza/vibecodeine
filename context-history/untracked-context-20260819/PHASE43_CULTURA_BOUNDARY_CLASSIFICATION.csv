@@ -1,0 +1,2 @@
+surface,method,source,target,inputs,expected_output,validation,result,write_observation,decision
+projects/cultura,SCAN,/home/mak/flujo/projects/cultura vs /home/mak/WIN/flujo/projects/cultura,MAK CULTURA genealogy,bounded MAK/WIN relative paths and source references,owner/consumer/platform classification,MAK-wide bounded path scan + bilingual source-reference search,55 MAK files; 56 WIN files; 54 common; no active hub route for projects/cultura,writes_detected=false; no copy/publication/cleanup,EVIDENCE_ONLY_NO_ACTIVE_HUB_CONSUMER

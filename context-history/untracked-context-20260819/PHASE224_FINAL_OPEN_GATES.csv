@@ -1,0 +1,7 @@
+gate,status,evidence,next_input
+real RD field data,OPEN,"zero real rows; demo fixture only","real CSV/acta plus authority"
+RD mutators,DEFERRED,"logo fixture; all writers mapped","explicit write/output authority"
+optional runtime,PARTIAL,"base pip check/imports pass","provider/GPU authority if needed"
+historical panel,UNRESOLVED,"syntax failure line 145; no consumer","preservation/repair decision"
+legacy platform UI,PRESERVE,"hash and no launcher ref","quarantine approval if desired"
+Git branches,PROPOSAL_ONLY,"Phase218 proposal","branch creation authorization"

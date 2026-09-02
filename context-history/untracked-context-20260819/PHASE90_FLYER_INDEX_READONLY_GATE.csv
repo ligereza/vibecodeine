@@ -1,0 +1,7 @@
+item,status,path_or_command,result
+flyer_list,verified,venvs/flujo/bin/flujo flyer-list,exit 0
+reader_db_mutation,fixed,src/flujo/index/db.py,mode=ro and absent-safe
+real_db_integrity,verified,data/flujo.db,20480 bytes and mtime unchanged
+temporary_rebuild,verified,rebuild_index fixture,2 manifests indexed
+temporary_readers,verified,list_flyers/find_duplicates,2 rows and 1 duplicate; mtime unchanged
+source_compile,verified,py_compile,exit 0

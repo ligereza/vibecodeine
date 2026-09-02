@@ -1,0 +1,6 @@
+phase,path,consumer,status,decision
+182,/home/mak/apps/antigravity,operator application bridge,no direct MAK runtime import,keep app layer
+182,/home/mak/apps/vscode,operator/editor boundary,no direct MAK runtime import,keep app layer
+182,/home/mak/src/ml-mobileclip,mak_plataforma.visual_index,lazy model consumer; static/read gate pass,retain as external source
+182,visual_index_status,Hub derived read path,exit 0 with 100 units,read path integrated
+182,visual_index_rebuild,GPU/provider writer,not run,requires separate bounded foreground gate

@@ -1,0 +1,2 @@
+source,target,consumer,mutation_boundary,decision,status,verification
+/home/mak/flujo/cultura/mak_plataforma/vigilar_red.py,/home/mak/plataforma/vigilar_red.py,MAK-VIGILAR paused crontab,reads TCP state; writes log snapshot; may publish ntfy,wrapper projection,VERIFIED,"py_compile=0; import contract=0; live revising path intentionally not called"

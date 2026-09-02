@@ -1,0 +1,5 @@
+consumer,status,result
+knowledge-classify,verified,exit 0; Creamfields + Espacio Riesco -> mainstream
+knowledge-show-productora,verified,exit 0; creamfields YAML loaded
+knowledge-show-venue,verified,exit 0; espacio_riesco YAML loaded
+mutation_or_provider,not_called,read-only commands only

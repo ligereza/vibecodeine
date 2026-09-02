@@ -43,7 +43,10 @@ from flujo.knowledge.classification_queue import (  # noqa: E402
 )
 
 DEFAULT_DB = ROOT / "data" / "mak_knowledge.db"
-DEFAULT_CANONICAL = "/home/mak/flujo"
+# `/home/mak` is the physical MAK checkout.  `/home/mak/flujo` remains a
+# compatibility adapter, but using it as the default canonical path makes
+# copy proposals report the alias instead of the box's real root.
+DEFAULT_CANONICAL = "/home/mak"
 
 
 def _load(db: Path, canonical_root: str):

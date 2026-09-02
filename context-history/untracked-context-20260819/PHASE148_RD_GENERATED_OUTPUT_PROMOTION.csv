@@ -1,0 +1,6 @@
+path,old_role,action,result,rollback
+/home/mak/flujo/jobs/2026-07-04_eventos-brief/packs_servicios_rd.json,derived job output,moved old file then regenerated,canonical JSON contract PASS,context/quarantine/phase148_rd_precanonical_outputs/job/packs_servicios_rd.json
+/home/mak/flujo/jobs/2026-07-04_eventos-brief/packs_servicios_rd_blanco.svg,derived job output,moved old file then regenerated,generated exit 0,context/quarantine/phase148_rd_precanonical_outputs/job/packs_servicios_rd_blanco.svg
+/home/mak/flujo/jobs/2026-07-04_eventos-brief/packs_servicios_rd_dark.svg,derived job output,moved old file then regenerated,generated exit 0,context/quarantine/phase148_rd_precanonical_outputs/job/packs_servicios_rd_dark.svg
+/home/mak/flujo/svg/eventos_rd/packs_servicios_rd_blanco_editable.svg,derived indexed editable output,moved old file then regenerated,generated exit 0,context/quarantine/phase148_rd_precanonical_outputs/svg/packs_servicios_rd_blanco_editable.svg
+/home/mak/flujo/svg/eventos_rd/packs_servicios_rd_dark_editable.svg,derived indexed editable output,moved old file then regenerated,generated exit 0,context/quarantine/phase148_rd_precanonical_outputs/svg/packs_servicios_rd_dark_editable.svg

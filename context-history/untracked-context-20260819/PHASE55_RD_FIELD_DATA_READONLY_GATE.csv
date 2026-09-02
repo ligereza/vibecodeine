@@ -1,0 +1,2 @@
+path,initial_size,empty_summary,nonempty_fixture,write_check,status
+/home/mak/flujo/data/rd_datos.db,0,disponible_false,disponible_true_counts_pass,unchanged,RD_FIELD_READ_CONTRACT_SAFE
