@@ -29,7 +29,10 @@ def test_tool_consumer_inventory_is_explicit_and_bounded():
 
     assert result["schema"] == "mak-tool-consumer-inventory-v1"
     assert result["historical_win_excluded"] is True
-    assert result["count"] == 137
+    # 105, not 137: the MAK/FLUJO separation removed the tools that drive the
+    # motor from this branch. The number is pinned on purpose -- an unnoticed
+    # drift in the tool inventory is what this ratchet exists to catch.
+    assert result["count"] == 105
     assert len(result["files"]) == result["count"]
     summary = result["summary"]
     assert summary["with_production_reference"] + summary["tests_only"] \
