@@ -2802,7 +2802,7 @@ def cotizaciones(
 
 @app.command()
 def serve(
-    port: int = typer.Option(8765, "--port", "-p", help="puerto del servidor"),
+    port: int = typer.Option(None, "--port", "-p", help="puerto del servidor; sin este flag se busca uno libre desde el puerto contractual"),
     host: str = typer.Option("127.0.0.1", "--host", help="host (0.0.0.0 para red local)"),
     desktop: bool = typer.Option(False, "--desktop", help="abrir en ventana nativa con pywebview (si está instalado)"),
     procesar_pendientes: bool = typer.Option(False, "--procesar-pendientes", help="al arrancar, avanzar los jobs de flyer pendientes (modifica jobs: por eso no es el default)"),
@@ -2825,21 +2825,26 @@ def serve(
     limpia ese camino ni arrancaba. Archivado en
     el historial de git (retirado del arbol el 2026-07-30).
     """
-    from .web.hub import launch
+    from .web.hub import launch, CONTRACT_PORT
     from .paths import repo_root
+    # Omitting --port asks for auto-detection from the contract port; passing
+    # it asks for that exact port and must never be moved silently.
+    auto_port = port is None
+    port = CONTRACT_PORT if auto_port else port
     r = repo_root()
     console.print(f"[cyan]flujo workspace (hub) en http://{host}:{port}[/]")
     console.print(f"[dim]Repo context: {r}[/dim]")
     # --no-abrir existe porque levantar el hub para revisarlo o para un chequeo
     # abria una pestana cada vez; ocho arranques seguidos dejan ocho pestanas.
     launch(host=host, port=port, desktop=desktop, root=r,
-           procesar_pendientes=procesar_pendientes, open_browser=abrir)
+           procesar_pendientes=procesar_pendientes, open_browser=abrir,
+           auto_port=auto_port)
 
 
 # Alias: flujo app → flujo serve
 @app.command("app")
 def app_alias(
-    port: int = typer.Option(8765, "--port", "-p"),
+    port: int = typer.Option(None, "--port", "-p"),
     host: str = typer.Option("127.0.0.1", "--host"),
     desktop: bool = typer.Option(False, "--desktop"),
     procesar_pendientes: bool = typer.Option(False, "--procesar-pendientes", help="al arrancar, avanzar los jobs de flyer pendientes"),

@@ -201,6 +201,7 @@ PERSISTED_LANE_DATA = {
   "tests/test_feature_policy.py": "flujo",
   "tests/test_fila_cero.py": "repo_hygiene",
   "tests/test_flujo_dispatcher.py": "repo_hygiene",
+  "tests/test_flujo_port_contract.py": "flujo",
   "tests/test_flyer_auto_parth.py": "flujo",
   "tests/test_flyer_carousel_index.py": "flujo",
   "tests/test_formato_ensayo.py": "repo_hygiene",
