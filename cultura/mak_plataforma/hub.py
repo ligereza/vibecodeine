@@ -89,8 +89,14 @@ REFLEXIONES_DIR = os.path.join(HOME, "plataforma/reflexiones")
 RESEARCH_JOBS = os.path.join(HOME, "research/jobs.jsonl")
 CODEX_JOBS = os.path.join(HOME, "codex/jobs.jsonl")
 RELEVO = os.path.join(HOME, "RELEVO_MAK.md")
+# The iskvw root belongs to THIS checkout. It used to be spelled
+# HOME/flujo/iskvw, which resolved here through the compatibility adapter;
+# once /home/mak/flujo became the FLUJO checkout the tab started reading the
+# sibling tree, where iskvw/datos/archivo.json does not exist because
+# tools/gen_archivo_iskvw.py runs from MAK and writes to MAK. The tab kept
+# answering 200 on the tracked files and served no generated data.
 PORTFOLIO_ROOT = os.path.abspath(os.environ.get(
-    "MAK_PORTFOLIO_ROOT", os.path.join(HOME, "flujo", "iskvw")))
+    "MAK_PORTFOLIO_ROOT", os.path.join(HOME, "iskvw")))
 PORTFOLIO_INBOX = os.path.join(
     HOME, "plataforma/director_runs/portfolio-editor-20260808/PORTFOLIO_INBOX.json")
 PORTFOLIO_MEDIA_ROOT = os.path.join(HOME, "portfolio_media/media")

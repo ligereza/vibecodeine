@@ -155,6 +155,11 @@ RETIRED_SPELLINGS = (
     "/home/mak/flujo/cultura",
     "/home/mak/flujo/tools",
     '/ "flujo" / "cultura"',
+    # Third spelling, found by hand after the ratchet missed it: the MAK Hub
+    # resolved its iskvw root as os.path.join(HOME, "flujo", "iskvw").
+    'join(HOME, "flujo"',
+    "join(HOME, 'flujo'",
+    '"flujo", "iskvw"',
 )
 SPELLING_SCAN_SUFFIXES = (".py", ".sh", ".service", ".timer", ".pth", ".yml")
 # Records are allowed to name the retired layout: that is what a record is
