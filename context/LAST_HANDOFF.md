@@ -587,6 +587,65 @@ authorized, the existing release/publish procedure; do not regenerate
   lane at 373. The verdict is that matrix, not this local certification. IRIS
   remains paused; do not open its decision-reader slice as CI follow-up.
 
+### Published and CI green -- 2026-09-02 -- manifest ratchet in integration
+
+- Published SHA: MAK `9bfdc7460789d68eedf7ecaa0f7520d6260ceda9`,
+  `fix(mak): place manifest ratchet in integration`, four paths,
+  `550 insertions(+), 12 deletions(-)`. Push was a fast-forward without force:
+  `fc8005c1..9bfdc746 MAK -> MAK` on remote `vibecodeine-legacy`.
+- Refs after publication: local `MAK` and remote `refs/heads/MAK` both read
+  `9bfdc7460789d68eedf7ecaa0f7520d6260ceda9`. FLUJO local and remote both
+  remain `50e453c2a6ee9837c73acda3cec6ff74d0598f7e`: no FLUJO commit, no FLUJO
+  push, no file in that checkout changed, and `CI FLUJO` was not expected to
+  run and did not.
+- Committed paths, exactly four: `tests/test_comandos_manifiesto.py`,
+  `tests/test_mapa_completo.py`, `tests/test_test_taxonomy.py`,
+  `context/LAST_HANDOFF.md`. Excluded and preserved unstaged:
+  `context/coordination/inbox/claude/phase2-publication-review-20260902.md`.
+  The staged set was verified against that list before committing, and
+  `git diff --cached --check` exited 0. The committed handoff also carries the
+  `Faro verification of Claude correction` section, which was already in the
+  working tree.
+- CI runs matched by SHA, not by recency. For `9bfdc746`: `CI MAK`
+  run 33676031859, job `gate + mak lane`, **success** in 3m24s; `CI integration`
+  run 33676031874, job `integration lane (MAK + FLUJO)`, **success** in 1m18s.
+  Both jobs completed; no run of another revision was read as evidence.
+- Job figures from the runners themselves, with the comparison that proves the
+  fix rather than merely asserting it:
+  - `CI MAK` step `repo hygiene lane`: `83 passed, 8 skipped in 34.36s`. On the
+    previous tip `fc8005c1` (run 33670334244) the same step was
+    `1 failed, 80 passed, 8 skipped`. The failure is gone, and 81 -> 83 is
+    accounted for by the two pinned detector tests.
+  - `CI MAK` step `MAK lane`: `2172 passed, 8 skipped, 5 warnings, 5 subtests
+    passed in 100.58s`.
+  - `CI integration`: `341 passed, 32 skipped, 20 warnings in 20.26s`, against
+    `340 passed, 32 skipped` on `fc8005c1`. The skip count did NOT grow, so the
+    moved check actually RAN on a clean runner and passed. That is the evidence
+    that mattered: a ratchet that skipped there would have gated nothing.
+- Local versus CI counts, reconciled so the next reader is not misled. Local
+  totals were `repo_hygiene` 91, `mak` 2180 (2175 passed + 5 skipped) and
+  `integration` 373; the runners report 83+8=91, 2172+8=2180 and 341+32=373.
+  No test disappeared: the difference is entirely tests that skip when the
+  physical MAK substrate is absent, which is the designed behavior. The
+  earlier expectation of "integration at 373" refers to that total, not to 373
+  passing on a clean runner.
+- Protected surfaces: the commit contains no IRIS file, no `iskvw/*` path, no
+  `campo.json`, no `animadas.json`, no `iskvw/piel/*`, no database, no
+  artistic output, no requirements file, no service or systemd configuration,
+  and no generated JSON -- `context/test_lane_map.json` was never edited. No
+  data, layer or animation was regenerated. No service was started, stopped or
+  restarted and no port changed; runtime was read-only throughout
+  (`tools/runtime_preflight.py --check` exit 0, `ok=5`, before publication).
+  No merge, reset, clean, checkout or branch switch was performed, and only the
+  `MAK` ref was pushed.
+- Next action for Faro/Codex: nothing is pending on this correction -- the
+  clean-runner verdict now exists and is green on both workflows for the
+  published SHA. The remaining open item from the prior sections is unchanged
+  and unrelated: `rich`, `pydantic` and `requests` reach the MAK profile only
+  transitively, so a future dependency change could remove them without any
+  declaration changing; declaring them if MAK code needs them is a separate,
+  deliberate decision. IRIS remains paused.
+
 # Operational Handoff
 
 ## Agent bootstrap -- CURRENT -- 2026-09-02 (later) -- the suites, and the boundary the operator corrected
