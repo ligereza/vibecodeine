@@ -68,8 +68,8 @@ SURFACES: tuple[Surface, ...] = (
         "flujo_app",
         "FLUJO App",
         "flujo",
-        "src/flujo/web/hub.py",
-        ("FLUJO App", "src/flujo/web/hub.py"),
+        "flujo/src/flujo/web/hub.py",
+        ("hub", "src/flujo/web/hub.py"),
         ports=(8765, 8766),
         http_paths=("/",),
         expectation="manual",
@@ -78,8 +78,8 @@ SURFACES: tuple[Surface, ...] = (
         "flujo_serve",
         "FLUJO serve",
         "flujo",
-        "src/flujo/serve/server.py",
-        ("FLUJO `serve`", "src/flujo/serve/server.py"),
+        "flujo/src/flujo/serve/server.py",
+        ("serve", "src/flujo/serve/server.py"),
         ports=(8777,),
         http_paths=("/",),
         expectation="manual",
@@ -486,7 +486,10 @@ def main(argv: list[str] | None = None) -> int:
     doc_paths = args.docs or [
         Path("CAPACIDADES.md"),
         Path("CAPACIDADES_MAK.md"),
-        Path("CAPACIDADES_FLUJO.md"),
+        # The FLUJO capability document lives in the sibling checkout, not
+        # here: this branch does not carry it. Without this path the FLUJO
+        # surfaces report capability_row_missing while their document exists.
+        Path("flujo/CAPACIDADES_FLUJO.md"),
     ]
     docs = [(path if path.is_absolute() else root / path) for path in doc_paths]
     docs = [path for path in docs if path.is_file()]
