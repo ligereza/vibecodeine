@@ -9,6 +9,7 @@ not silently mistaken for a disposable duplicate.
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import os
@@ -242,7 +243,25 @@ def _redirect_targets() -> list[Path]:
     return found
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Triangula raíces MAK con metadatos. Por defecto persiste la matriz; "
+            "use --no-write para una comprobación sin escritura."
+        )
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=OUT_DIR,
+        help=f"directorio de salida (por defecto: {OUT_DIR})",
+    )
+    parser.add_argument(
+        "--no-write",
+        action="store_true",
+        help="calcula y muestra los conteos sin escribir triangulation.json/md",
+    )
+    args = parser.parse_args(argv)
     # The physical MAK checkout is /home/mak.  The /home/mak/flujo adapter is
     # a compatibility path and must not become the scan destination again.
     roots = discover_roots(destination=HOME)
@@ -287,8 +306,12 @@ def main() -> int:
             },
         },
     }
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-    (OUT_DIR / "triangulation.json").write_text(json.dumps(result, ensure_ascii=True, indent=2) + "\n", encoding="utf-8")
+    output_dir = args.output_dir.expanduser().resolve()
+    if not args.no_write:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        (output_dir / "triangulation.json").write_text(
+            json.dumps(result, ensure_ascii=True, indent=2) + "\n", encoding="utf-8"
+        )
     lines = [
         "# Triangulación de raíces MAK",
         "",
@@ -315,8 +338,19 @@ def main() -> int:
             f"{row['birth_epoch'] or 'n/a'} | {row['python_file_count']} | "
             f"{row['git_dirty'] if row['git_dirty'] is not None else 'n/a'} |"
         )
-    (OUT_DIR / "triangulation.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(json.dumps({"output": str(OUT_DIR), "counts": result["counts"]}, ensure_ascii=True, sort_keys=True))
+    if not args.no_write:
+        (output_dir / "triangulation.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print(
+        json.dumps(
+            {
+                "output": None if args.no_write else str(output_dir),
+                "wrote": not args.no_write,
+                "counts": result["counts"],
+            },
+            ensure_ascii=True,
+            sort_keys=True,
+        )
+    )
     return 0
 
 
