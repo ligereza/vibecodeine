@@ -23,6 +23,7 @@ from flujo.knowledge.runtime_tools import (
     node_candidates,
     resolve_node,
 )
+from integration_paths import FLUJO_ROOT
 
 REPO = Path(__file__).resolve().parents[1]
 
@@ -71,7 +72,7 @@ def test_status_reports_the_requirement_next_to_the_resolved_binary():
 
 def test_status_no_longer_keeps_its_own_node_candidate_list():
     """The duplicate list is what let the two answers disagree."""
-    source = (REPO / "src" / "flujo" / "knowledge" / "system_status.py").read_text(
+    source = (FLUJO_ROOT / "src" / "flujo" / "knowledge" / "system_status.py").read_text(
         encoding="utf-8")
     assert "codex-primary-runtime" not in source, (
         "system_status hardcodes a node path again; resolution belongs to "

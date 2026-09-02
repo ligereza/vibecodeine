@@ -6,6 +6,7 @@ import copy
 import json
 
 import pytest
+from integration_paths import MAK_ROOT
 
 from flujo.knowledge.replay import (
     ReplaySuiteError,
@@ -18,7 +19,7 @@ from flujo.knowledge.replay import (
 def test_core_replay_suite_is_traceable_and_split_independent():
     suite = load_replay_suite(
         "context/learning/replay_suite_v1.json",
-        source_root=".",
+        source_root=MAK_ROOT,
     )
     assert suite["splits"] == {"replay": 2, "holdout": 2}
     assert suite["groups"] == 4
@@ -45,7 +46,8 @@ def test_replay_suite_rejects_group_leakage_and_fingerprint_drift():
 
 
 def test_evaluation_distinguishes_abstention_and_failure_without_promotion():
-    suite = load_replay_suite("context/learning/replay_suite_v1.json", source_root=".")
+    suite = load_replay_suite(
+        "context/learning/replay_suite_v1.json", source_root=MAK_ROOT)
     passed = {case["case_id"]: "passed" for case in suite["cases"]}
     report = evaluate_predictions(suite, passed)
     assert report["status"] == "passed"
@@ -55,4 +57,3 @@ def test_evaluation_distinguishes_abstention_and_failure_without_promotion():
     partial = evaluate_predictions(suite, {suite["cases"][0]["case_id"]: "failed"})
     assert partial["status"] == "abstained"
     assert partial["missing"] == 3
-
