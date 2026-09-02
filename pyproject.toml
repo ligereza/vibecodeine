@@ -73,7 +73,7 @@ target-version = ["py310"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-q -m mak"
+addopts = "-q"
 strict_config = true
 strict_markers = true
 markers = [
