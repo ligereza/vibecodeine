@@ -51,6 +51,12 @@ evidencia fechada, incluso cuando se contradicen.
   La ola local que precedió esta topología está en `32d929d8`, `6166a8b8`,
   `940d2324`, `111a52e6`, `ac789a31` y `29715450`; no se hizo push de esos
   nombres a `ligereza-mak`.
+- Revalidación 2026-09-02: los tips publicados de `vibecodeine-legacy` son
+  `MAK=39f16c4de32b8751682e068c2d9053b8a9450597`,
+  `FLUJO=efeaa8a911d7675bc4cdcd0bf72aeb48b8ca6a9c` y
+  `main=historia=ab9afa13fb4d5cf257d97972c73301b0bc0d78fb`; `git ls-remote`
+  coincide con cada tip local. Esta revalidación sustituye los tips abreviados
+  anteriores, que quedan como historia de la transición.
 
 ### Estado documental medido
 
