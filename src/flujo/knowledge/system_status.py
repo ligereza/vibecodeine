@@ -302,7 +302,12 @@ def _provider_component(repo: Path, physical: Path) -> dict[str, Any]:
         repo_text = str(repo)
         if repo_text not in _sys.path:
             _sys.path.insert(0, repo_text)
-        from cultura.mak_plataforma import providers
+        try:
+            from cultura.mak_plataforma import providers
+        except ImportError:
+            # No MAK departments in this checkout: the provider surface is
+            # simply absent, which is a status, not a crash.
+            return {"available": False, "reason": "mak_box_absent"}
 
         names: set[str] = set(os.environ)
         env_files = (
