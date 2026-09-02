@@ -180,23 +180,6 @@
       "resolution": "agreement",
       "status": "agreement"
     },
-    "tests/test_campo_filtro.py": {
-      "ast_lane": "repo_hygiene",
-      "ast_reason": "no local import; tree/git/docs signal",
-      "imports": [
-        "__future__",
-        "gen_campo_iskvw",
-        "glob",
-        "json",
-        "pathlib",
-        "sys"
-      ],
-      "lane": "mak",
-      "path_inference_lane": "mak",
-      "reason": "resolved from imports/source paths",
-      "resolution": "persisted_supported_by_path",
-      "status": "disagreement"
-    },
     "tests/test_capas_iskvw.py": {
       "ast_lane": "repo_hygiene",
       "ast_reason": "no local import; tree/git/docs signal",
@@ -3043,26 +3026,6 @@
       "resolution": "moved_by_path_resolution",
       "status": "disagreement"
     },
-    "tests/test_venue.py": {
-      "ast_lane": "repo_hygiene",
-      "ast_reason": "no local import; tree/git/docs signal",
-      "imports": [
-        "__future__",
-        "json",
-        "jsonschema",
-        "math",
-        "pathlib",
-        "pytest",
-        "sys",
-        "venue",
-        "venue_geometria_scd"
-      ],
-      "lane": "mak",
-      "path_inference_lane": "mak",
-      "reason": "resolved from imports/source paths",
-      "resolution": "persisted_supported_by_path",
-      "status": "disagreement"
-    },
     "tests/test_venue3d_smoke.py": {
       "ast_lane": "repo_hygiene",
       "ast_reason": "no local import; tree/git/docs signal",
@@ -3142,26 +3105,6 @@
       "reason": "persisted AST assignment",
       "resolution": "agreement",
       "status": "agreement"
-    },
-    "tests/test_vj_git_performance.py": {
-      "ast_lane": "repo_hygiene",
-      "ast_reason": "no local import; tree/git/docs signal",
-      "imports": [
-        "__future__",
-        "csv",
-        "importlib.util",
-        "json",
-        "os",
-        "pathlib",
-        "pytest",
-        "subprocess",
-        "sys"
-      ],
-      "lane": "mak",
-      "path_inference_lane": "mak",
-      "reason": "resolved from imports/source paths",
-      "resolution": "persisted_supported_by_path",
-      "status": "disagreement"
     },
     "tests/test_wifi_intelligence_plugin.py": {
       "ast_lane": "repo_hygiene",
@@ -3273,7 +3216,7 @@
     "rule": "direct imports/path evidence may move a lane; ambiguous evidence moves to review; prior_lane is retained"
   },
   "summary": {
-    "assignments": 199,
+    "assignments": 196,
     "note": "pruned to the tests this branch physically carries"
   }
 }
