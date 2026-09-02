@@ -44,7 +44,7 @@ CAPATAZ_PATH = os.path.join(
     HOME, "flujo", "cultura", "mak_plataforma", "doctrina", "CAPATAZ.md"
 )
 if not os.path.exists(CAPATAZ_PATH):
-    CAPATAZ_PATH = os.path.join(HOME, "flujo", "context", "CAPATAZ.md")
+    CAPATAZ_PATH = os.path.join(HOME, "context", "CAPATAZ.md")
 SALUD_PROVEEDORES_PATH = os.path.join(HOME, "research", "salud_proveedores.json")
 BACKLOG_RESEARCH_PATH = os.path.join(HOME, "plataforma", "backlog.jsonl")
 BACKLOG_CODEX_PATH = os.path.join(HOME, "plataforma", "backlog_codex.txt")

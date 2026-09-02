@@ -47,7 +47,7 @@ RAMA_BUZON = "mak"
 RUTA_UTILIDADES = "cultura/mak_plataforma/utilidades/"
 
 HOME = os.path.expanduser("~")
-REPO = os.path.join(HOME, "flujo")
+REPO = HOME  # the MAK checkout is this department's repo root
 JOBS = os.path.join(HOME, "codex", "jobs.jsonl")
 OUT = os.path.join(HOME, "plataforma", "reflexiones", "revisor_shadow.json")
 LOG = os.path.join(HOME, "plataforma", "logs", "revisor.log")
