@@ -3300,6 +3300,13 @@
       "lane": "integration",
       "imports": [],
       "reason": "its replay sources are MAK-generated material; needs both checkouts"
+    },
+    "tests/test_campo_filtro.py": {
+      "lane": "mak",
+      "imports": [
+        "gen_campo_iskvw"
+      ],
+      "reason": "ownership by consumer: the generator produces iskvw/datos/campo.json, which the MAK Hub portfolio tab serves. Its flujo.plano import is lazy and resolves through the FLUJO checkout"
     }
   },
   "generated_at_utc": "2026-09-02T00:44:00+00:00",
@@ -3315,7 +3322,7 @@
     "rule": "direct imports/path evidence may move a lane; ambiguous evidence moves to review; prior_lane is retained"
   },
   "summary": {
-    "assignments": 217,
+    "assignments": 218,
     "note": "pruned to the tests this branch physically carries"
   }
 }
