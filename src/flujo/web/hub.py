@@ -2564,7 +2564,14 @@ class _HubDesktopApi:
             return {"error": str(e)}
 
 
-def _find_free_port(host: str = "127.0.0.1", start_port: int = 8765, max_tries: int = 8) -> int:
+# The port FLUJO declares in branch_profile.json. Auto-detection is opt-in:
+# comparing the requested port against this constant made an explicit
+# `--port 8765` indistinguishable from the default, so an explicit request was
+# silently moved to 8766 and the declared port never bound.
+CONTRACT_PORT = 8765
+
+
+def _find_free_port(host: str = "127.0.0.1", start_port: int = CONTRACT_PORT, max_tries: int = 8) -> int:
     """Auto port detection for robust launch (no 'address in use' errors)."""
     for p in range(start_port, start_port + max_tries):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -2576,8 +2583,8 @@ def _find_free_port(host: str = "127.0.0.1", start_port: int = 8765, max_tries: 
     return start_port  # fallback (will error later for clear msg)
 
 
-def run_server(host: str = "127.0.0.1", port: int = 8765, root: Path | None = None,
-               procesar_pendientes: bool = False):
+def run_server(host: str = "127.0.0.1", port: int = CONTRACT_PORT, root: Path | None = None,
+               procesar_pendientes: bool = False, auto_port: bool = False):
     """Start the HTTP server. root passed from CLI for explicit context.
     Uses auto-detected free port when default is busy.
     In packaged: assets from asset_root, workspace writes go next to exe.
@@ -2601,8 +2608,8 @@ def run_server(host: str = "127.0.0.1", port: int = 8765, root: Path | None = No
 
     r = HubRequestHandler.ROOT or asset_root()
     actual_port = port
-    if port == 8765:
-        # Auto-detect only on default to keep explicit --port working
+    if auto_port:
+        # Opt-in only: an explicit --port must bind or fail, never move.
         actual_port = _find_free_port(host, port)
         if actual_port != port:
             print(f"[flujo] Puerto {port} ocupado → usando {actual_port}")
@@ -2641,11 +2648,12 @@ def run_server(host: str = "127.0.0.1", port: int = 8765, root: Path | None = No
 
 def launch(
     host: str = "127.0.0.1",
-    port: int = 8765,
+    port: int = CONTRACT_PORT,
     desktop: bool = False,
     open_browser: bool = True,
     root: Path | None = None,
     procesar_pendientes: bool = False,
+    auto_port: bool = False,
 ):
     """Launch server thread + optional desktop or browser.
     root: explicit repo root passed from CLI to give full context to backend.
@@ -2656,11 +2664,13 @@ def launch(
         root = asset_root() if _is_packaged() else repo_root()
     # Auto port detection (robust for designer daily use; avoids bind errors)
     actual_port = port
-    if port == 8765:
+    if auto_port:
         actual_port = _find_free_port(host, port)
         if actual_port != port:
             print(f"[flujo] Auto-port detection: {port} ocupado → {actual_port}")
     # start server passing root for APIs to use absolute context (also used by static pages)
+    # auto_port is already resolved above; the server thread must bind exactly
+    # the port launch() decided, never search again.
     thread = Thread(target=run_server, args=(host, actual_port, root, procesar_pendientes), daemon=True)
     thread.start()
 

@@ -4528,6 +4528,11 @@
         "zipfile"
       ],
       "reason": "persisted AST assignment"
+    },
+    "tests/test_flujo_port_contract.py": {
+      "lane": "flujo",
+      "imports": [],
+      "reason": "declared owner: the test exercises this branch's own surface"
     }
   },
   "summary": {
