@@ -164,32 +164,71 @@ def test_adapter_root_is_normalized_and_the_substitution_is_recorded(tmp_path):
     assert nothing is None
 
 
-def test_source_reached_through_the_adapter_is_flagged_not_hidden(tmp_path):
-    root = _adapter_root(tmp_path)
-    canonical = root / "src" / "flujo" / "web" / "hub.py"
-    through_adapter = root / MODULE.ADAPTER_NAME / "src" / "flujo" / "web" / "hub.py"
-    # Same inode reached by two names: the resolution is sound, the
-    # declaration is not.
-    assert through_adapter.resolve() == canonical.resolve()
+def test_source_inside_the_flujo_checkout_is_the_contract(tmp_path):
+    # This assertion used to say the opposite. /home/mak/flujo was a directory
+    # of sibling symlinks and resolving through it was indirection to report;
+    # it is now the physical FLUJO checkout and MAK consumes the motor from
+    # flujo/src by decision. Resolving there is the contract, and resolving
+    # the motor from the MAK-side src/flujo is the defect.
+    root = tmp_path / "root"
+    (root / "flujo" / "src" / "flujo" / "web").mkdir(parents=True)
+    inside = root / "flujo" / "src" / "flujo" / "web" / "hub.py"
+    inside.write_text("# motor\n", encoding="utf-8")
 
-    report = MODULE.SurfaceReport("probe", "Probe", "manual_process")
-    MODULE._check_exec_paths(report, root, canonical, [str(through_adapter)], "import_probe")
-    assert [f.code for f in report.findings] == ["exec_start_via_adapter"]
-    assert report.status == MODULE.STATUS_OK_VIA_ADAPTER
-    assert report.conditions[MODULE.CONDITION_ADAPTER] is True
-    assert report.conditions[MODULE.CONDITION_ERROR] is False
+    ok = MODULE.SurfaceReport("flujo_app", "FLUJO App", "manual_process")
+    MODULE._check_exec_paths(ok, root, inside, [str(inside)], "import_probe")
+    assert [f.code for f in ok.findings] == ["resolves_in_flujo_checkout"]
+    assert ok.status == MODULE.STATUS_OK
+    assert ok.conditions[MODULE.CONDITION_ERROR] is False
+
+    (root / "src" / "flujo" / "web").mkdir(parents=True)
+    outside = root / "src" / "flujo" / "web" / "hub.py"
+    outside.write_text("# a second copy of the motor\n", encoding="utf-8")
+    bad = MODULE.SurfaceReport("flujo_app", "FLUJO App", "manual_process")
+    MODULE._check_exec_paths(bad, root, inside, [str(outside)], "import_probe")
+    assert "flujo_resolved_outside_its_checkout" in [f.code for f in bad.findings]
+    assert bad.status == MODULE.STATUS_ERROR
 
 
-def test_adapter_is_never_reported_as_a_repository_or_a_worktree():
-    adapter = MODULE.adapter_report(MODULE.PHYSICAL_ROOT)
-    assert adapter["role"] == "compatibility_adapter"
-    assert adapter["is_symlink"] is False
-    assert adapter["own_git_dir"] is False
-    assert adapter["is_git_worktree"] is False
-    # A symlink resolving inside its own ancestor is what allowed cyclic
-    # walks; the adapter must stay free of them.
-    assert adapter["recursive_symlinks"] == []
-    assert adapter["broken_symlinks"] == []
+def test_a_live_runtime_under_a_claude_worktree_is_an_error(tmp_path):
+    # .claude/worktrees is never runtime. A service was in fact serving 8765
+    # from a worktree for a while, and nothing measured it.
+    def findings_for(cwd: str, cmdline: str) -> list[str]:
+        report = MODULE.SurfaceReport("flujo_app", "FLUJO App", "manual_process")
+        for label, value in (("cwd", cwd), ("cmdline", cmdline)):
+            if "/.claude/worktrees/" in value:
+                report.add("runtime_from_claude_worktree", MODULE.STATUS_ERROR,
+                           f"the live {label} points into a Claude worktree: {value}")
+        return [f.code for f in report.findings]
+
+    worktree = "/home/mak/.claude/worktrees/flujo-closeout"
+    # Either source alone is enough to fail.
+    assert findings_for(worktree, "python -m flujo app") == ["runtime_from_claude_worktree"]
+    assert findings_for("/home/mak/flujo", f"python {worktree}/x.py") == [
+        "runtime_from_claude_worktree"]
+    assert findings_for("/home/mak/flujo", "python -m flujo app") == []
+    # And the production check itself must carry that string, so the rule
+    # cannot be deleted from the tool without this test noticing.
+    source = (ROOT / "tools" / "runtime_preflight.py").read_text(encoding="utf-8")
+    assert "/.claude/worktrees/" in source
+    assert "runtime_from_claude_worktree" in source
+
+
+def test_flujo_path_is_reported_as_the_physical_flujo_checkout():
+    # The inverse of what this test asserted before: /home/mak/flujo must now
+    # BE a checkout of FLUJO. Finding sibling symlinks or no git dir there
+    # would mean the layout regressed to the adapter.
+    report = MODULE.adapter_report(MODULE.PHYSICAL_ROOT)
+    assert report["role"] == "flujo_physical_checkout"
+    assert report["is_symlink"] is False
+    assert report["own_git_dir"] is True
+    assert report["is_git_worktree"] is True
+    assert report["branch"] == "FLUJO"
+    assert report["is_flujo_checkout"] is True
+    assert report["sibling_symlinks"] == 0
+    assert report["recursive_symlinks"] == []
+    assert report["broken_symlinks"] == []
+    assert report["source_root"] == str(MODULE.PHYSICAL_ROOT / "flujo" / "src")
 
 
 # ---------------------------------------------------------------- native source
