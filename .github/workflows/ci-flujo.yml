@@ -33,9 +33,14 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
-      - name: Install the FLUJO profile
+      - name: Install the FLUJO profile and the package
         working-directory: flujo
-        run: python -m pip install -r requirements-flujo.txt
+        # The package itself, not only the requirements: three tests assert
+        # that this venv exposes the `flujo` console script, and a
+        # requirements-only install has none.
+        run: |
+          python -m pip install -r requirements-flujo.txt
+          python -m pip install --no-deps -e .
       - name: pip check
         run: python -m pip check
       - name: Structural gate
