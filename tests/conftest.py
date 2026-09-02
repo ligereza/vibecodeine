@@ -28,6 +28,11 @@ _REPO = Path(__file__).resolve().parents[1]
 _SRC = _REPO / "src"
 if _SRC.is_dir() and str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
+# Integration tests intentionally compose the two physical checkouts.  Keep
+# FLUJO's helper tests importable without pretending they belong to MAK.
+_FLUJO_TESTS = _REPO / "flujo" / "tests"
+if _FLUJO_TESTS.is_dir() and str(_FLUJO_TESTS) not in sys.path:
+    sys.path.insert(0, str(_FLUJO_TESTS))
 
 
 # Filename tokens are deliberately broad and overlap is allowed. A bridge can
