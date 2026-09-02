@@ -287,6 +287,23 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     )
 
 
+def pytest_ignore_collect(collection_path: Path, config: pytest.Config) -> bool:
+    """Skip whole test modules when the selector names one exact lane.
+
+    ``-m`` normally filters *after* pytest imports every test module.  The
+    persisted AST lane map is safe to consult before collection, so the
+    default ``-m mak`` run does not parse the unrelated FLUJO modules.  More
+    expressive marker expressions keep pytest's normal collection semantics.
+    """
+    expression = (config.getoption("markexpr") or "").strip()
+    if expression not in TEST_LANES:
+        return False
+    path = Path(collection_path)
+    if not path.is_file() or path.name == "conftest.py" or not path.name.startswith("test_"):
+        return False
+    return lane_for_test_path(path) != expression
+
+
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
     for item in items:
         areas, roles = classify_test_path(Path(str(item.fspath)))
