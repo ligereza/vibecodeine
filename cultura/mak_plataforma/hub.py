@@ -74,7 +74,7 @@ PORT = int(os.environ.get("HUB_PORT", "8900"))
 HUB_HOST = os.environ.get("HUB_HOST", "127.0.0.1")
 HOME = os.path.expanduser("~")
 _percepcion = None
-_percepcion_root = os.path.join(HOME, "flujo", "cultura", "mak_curatoria")
+_percepcion_root = os.path.join(HOME, "cultura", "mak_curatoria")
 if os.path.isdir(_percepcion_root):
     try:
         sys.path.insert(0, _percepcion_root)
@@ -143,7 +143,7 @@ PORTFOLIO_TRIANGULATION_REVIEW = os.path.join(
 PORTFOLIO_VISUAL_INDEX_ROOT = os.path.abspath(os.environ.get(
     "MAK_VISUAL_INDEX_ROOT", os.path.join(HOME, "plataforma/derived/visual-index")))
 PORTFOLIO_XIO_SHOW_ROOT = os.path.abspath(os.environ.get(
-    "MAK_XIO_SHOW_ROOT", os.path.join(HOME, "flujo", "xio", "show_kit")))
+    "MAK_XIO_SHOW_ROOT", os.path.join(HOME, "xio", "show_kit")))
 LEGACY_RESCUE_REVIEW = os.path.join(
     HOME, "plataforma/director_runs/faro-report-action-queue-20260808/RESCUE_ADJUDICATED.json")
 LEGACY_REPORT_RUNS = os.path.join(HOME, "plataforma/director_runs")
