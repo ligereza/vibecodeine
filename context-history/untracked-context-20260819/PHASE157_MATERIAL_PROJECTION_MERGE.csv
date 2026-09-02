@@ -1,0 +1,2 @@
+source,target,consumer,action,status,command_result,mutation,risk,rollback
+/home/mak/flujo/cultura/mak_plataforma/material.py,/home/mak/plataforma/material.py,/home/mak/plataforma/trabajo.py,replace exact projection with wrapper,VERIFIED,/usr/bin/python3 py_compile=0; --contar output cmp=0,none in read-only gate,normal mode writes queue and cron is paused,/home/mak/flujo/context/quarantine/phase156_platform_projection/material.py.pre-wrapper

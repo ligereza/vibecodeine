@@ -1,0 +1,11 @@
+check,result,exit_or_state
+flujo_health,PASS,0
+rd_db_packs,PASS,0
+real_job_status,PASS,0
+core_imports,PASS,0
+curatoria_encolado_active_path,ABSENT,yes
+mak_research_service,INACTIVE,inactive
+mak_codex_service,INACTIVE,inactive
+mak_hub_service,INACTIVE,inactive
+mak_interfaz_service,INACTIVE,inactive
+OneDrive,KNOWN_DISCONNECTED,Errno 107

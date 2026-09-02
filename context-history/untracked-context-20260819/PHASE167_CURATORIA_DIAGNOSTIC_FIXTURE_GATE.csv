@@ -1,0 +1,2 @@
+source,target,consumer,input,outputs,status,verification,decision
+/home/mak/flujo/cultura/mak_curatoria/diagnostico_proyectos.py,/home/mak/curatoria/diagnostico_proyectos.py,curatoria project plans,derived SQLite fixture,diagnostic JSONL HTML,VERIFIED,"py_compile=0; source/runtime main fixture equal; exit=0; process gate=0",keep data-bound copies separate

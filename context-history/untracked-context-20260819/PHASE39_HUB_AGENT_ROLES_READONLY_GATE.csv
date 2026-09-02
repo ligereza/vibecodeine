@@ -1,0 +1,2 @@
+route,method,source,target,inputs,expected_output,validation,result,write_observation,decision
+/api/agents-roles,GET,src/flujo/web/hub.py -> _get_agents_roles,/home/mak/flujo hub UI,static role definitions and prompt templates,roles array with note and five role objects,AST/import + schema + bounded WIN/MAK role-id crosswalk + temporary localhost HTTP,HTTP 200; 5 unique roles; MAK/WIN IDs equal; direct/http equal; no dispatch,writes_detected=false; no subprocess/provider/worker,INTEGRATED_READ_ONLY_WITH_POLICY_BOUNDARY

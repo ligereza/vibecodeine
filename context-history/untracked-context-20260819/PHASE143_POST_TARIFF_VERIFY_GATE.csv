@@ -1,0 +1,5 @@
+gate,command,exit_code,result
+verify,flujo verify --no-pytest,0,compile health version and hub smoke passed
+pip_check,python -m pip check,0,no broken requirements
+process_gate,filtered ps scan,0,no prohibited process
+web_typecheck,npm run typecheck,0,validated after Phase 142

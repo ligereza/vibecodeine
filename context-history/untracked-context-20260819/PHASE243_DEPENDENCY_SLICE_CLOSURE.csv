@@ -1,0 +1,9 @@
+slice,base_dependencies,optional_or_local,environment,result
+"FLUJO CLI hub jobs knowledge","typer rich pyyaml pydantic requests jsonschema Pillow","projects local; pywebview pystray PyInstaller optional","venvs/flujo","BASE_PASS"
+"RD catalog field report database","pyyaml SQLite stdlib","flujo local; rd_datos empty protected","venvs/flujo","BASE_PASS"
+"RD quote plano SVG","Pillow matplotlib base","cairosvg render extra; browser fallback","venvs/flujo","BASE_PASS_OPTIONAL_RENDER"
+"Canonical MAK Platform","Pillow boto3 stdlib","mak_conductor/mak_plataforma local; mobileclip local; torch visual env; qwen_agent user local; numpy lazy","venvs/flujo plus explicit external paths","BASE_PASS_OPTIONAL_GATED"
+"Research","stdlib","fondart_corpus and mak_conductor local; numpy lazy","research root plus base","LOCAL_PASS_OPTIONAL_NUMPY"
+"Codex semantic motor","Pillow stdlib","motor_semantico local; cairosvg render extra in research venv","venvs/flujo","LOCAL_PASS_OPTIONAL_RENDER"
+"Curatoria","Pillow pyyaml SQLite stdlib","mak_conductor and mak_plataforma local","venvs/flujo","BASE_LOCAL_PASS"
+"Language Tilde","stdlib local wrappers","provider/model only explicit correction","venvs/flujo","STDLIB_PASS_PROVIDER_DEFERRED"

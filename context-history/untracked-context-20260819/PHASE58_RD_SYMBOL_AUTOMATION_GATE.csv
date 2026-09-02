@@ -1,0 +1,3 @@
+consumer,fixture,rollback,ast,status
+/api/plano-simbolos,PASS,PASS,PASS,PASS_WITH_ROLLBACK_FIXTURE
+/api/auto-pending-flyers,empty_input_pass,not_applicable,PASS,FIXTURE_ONLY_MUTATOR

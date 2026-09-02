@@ -1,0 +1,7 @@
+phase,family,scan_count,representative,consumer,decision,rollback
+239,small_text_metadata_scan,4143,"99 exact groups / 334 paths",bounded active roots,classified no deletion,none
+239,research_corpus_captures,12_plus_runs,research/corpus/fondart-*,research evidence,preserve provenance,original paths
+239,research_source_runtime,13_docs_ops_plus_scripts,cultura/mak_research and research,services/projections,canonical plus runtime projection,restore original path
+239,platform_source_runtime,36 exact plus 20 divergent,cultura/mak_plataforma and plataforma,systemd/manifest,see Phase238,restore original path
+239,curatoria_candidate_outputs,5 exact pairs,curatoria/db and flujo/docs/rd/candidatos_curatoria,gen_propuestas_rd.py,keep both pending output provenance,restore original path
+239,generated_director_results,multiple groups,plataforma/director_runs,generated evidence,preserve outputs,original paths

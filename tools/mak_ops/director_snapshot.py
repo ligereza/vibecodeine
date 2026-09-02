@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Snapshot read-only Windows -> MAK para dirigir el siguiente paso con evidencia.
 
-Uso en Windows, desde la raiz del repo:
-    py tools/mak/director_snapshot.py --output director_snapshot.md
+Uso en Windows, desde la raíz del repo:
+    py tools/mak_ops/director_snapshot.py --output director_snapshot.md
 
 No modifica MAK, GitHub, cron, servicios, red, archivos ni datos. Solo hace:
 - HTTP GET a Research/Codex through the Hub and to Hub health on the private LAN;
@@ -63,9 +63,12 @@ for d in "$HOME/flujo" "$HOME/plataforma" "$HOME/research" "$HOME/codex"; do
   if [ -d "$d" ]; then printf '%s=present\n' "$d"; else printf '%s=missing\n' "$d"; fi
 done
 say GIT
-if [ -d "$HOME/flujo/.git" ]; then
-  git -C "$HOME/flujo" status -sb 2>&1 || true
-  git -C "$HOME/flujo" log -1 --format='HEAD=%H%nDATE=%ad%nSUBJECT=%s' --date=iso 2>&1 || true
+if [ -d "$HOME/.git" ]; then
+  # MAK is the physical checkout root.  $HOME/flujo is a compatibility
+  # adapter, not an independent Git worktree; using it here makes Git report
+  # false changes (or recurse through the adapter).
+  git -C "$HOME" status -sb 2>&1 || true
+  git -C "$HOME" log -1 --format='HEAD=%H%nDATE=%ad%nSUBJECT=%s' --date=iso 2>&1 || true
 else
   echo 'checkout=missing'
 fi

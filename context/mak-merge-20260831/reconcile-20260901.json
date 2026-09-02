@@ -1,0 +1,4327 @@
+{
+  "schema": "mak-divergence-reconcile-v1",
+  "generated_at": "2026-09-01T15:51:47.280937+00:00",
+  "manifest": "/home/mak/_archive/merge-20260831/fused/projection3/MANIFEST.json",
+  "base_commit": "4b8453cbf17b25431e091a4a6fe3f09a819a0ffb",
+  "stats": {
+    "non_file": 22,
+    "base_missing": 55,
+    "applied": 482,
+    "conflict": 46,
+    "no_change": 190,
+    "precondition": 18
+  },
+  "applied": [
+    {
+      "path": ".claude/skills/caveman-compress/scripts/__init__.py",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "429c3e1c5cc5b9705f28d77f303c728304ae68693913ad3d5ce9b5a44c8ee40f",
+      "sha_after": "a1dfce8f9102299499ecf397909dc3b1cc73cd60a4da7d853316025383ea74be"
+    },
+    {
+      "path": ".claude/skills/caveman-compress/scripts/__main__.py",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "6d8b7d7846a845059d7a3107143f11131f63c5511d669b44085b15ec5e3d2279",
+      "sha_after": "c13eb66970ae37b8b044f428b309e67868814b90a8bb408806f3316ce4dfbc5b"
+    },
+    {
+      "path": ".claude/skills/caveman-compress/scripts/benchmark.py",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "84a5a94bebcce03c9dc4a70333f120f03e11075bce9298e1e74b95594e142d43",
+      "sha_after": "54fa7eb7c803183bda707bc0b3949a351c1351f8d06a24d758c3490d0cdefa76"
+    },
+    {
+      "path": ".claude/skills/caveman-compress/scripts/cli.py",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "17edb6b425adc0ea04e35f1e90dfe318ba4232a1b815c5ff7d6cff7d574efea6",
+      "sha_after": "7db968e7e0208a4225a15c03ed52edee0460c043e9e2f7343b1a6312bc61d0bc"
+    },
+    {
+      "path": ".claude/skills/caveman-compress/scripts/compress.py",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "9537671f5b8bf81bfe99078666948a93b5a5f1ae07d2f7bc3f085fe1a6b408c0",
+      "sha_after": "529335df6f857f9413021d6a6009f913443b8559849b3b1e79439bc8c49c93bc"
+    },
+    {
+      "path": ".claude/skills/caveman-compress/scripts/detect.py",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "46bb2b3092c2896eec023135495923701716c586b370976f244674342dd9a35e",
+      "sha_after": "d69fb4c8289880a5c48647ed356bf692f7c03e547255d72587ef116c0c1c98ca"
+    },
+    {
+      "path": ".claude/skills/caveman-compress/scripts/validate.py",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "8b9e752b70868f6e03b3d7e76de19dd6b4ac92dad50522992738340e9916dc0d",
+      "sha_after": "f15c9de7299f9a4e72d4adf10bd7d98e80d6b1a5a6606e1423d7dca58f426b45"
+    },
+    {
+      "path": ".gitattributes",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "767b6480b05224a2bb4dbce522112790cd745b813d0cce4f222bce655d3bcce8",
+      "sha_after": "39f90fdd43a2b1ce9315c534da00d5d48ca8d97e593dcb4851b3fed3517fe677"
+    },
+    {
+      "path": ".githooks/pre-commit",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "78386b1031dcd1fe1fe0f7f08b4c662c11df33fec29e94a7472f7c70607c2610",
+      "sha_after": "e23dabc57716091e99231d147e9dca8eaecd949dcc27950850f6ccf964e4546b"
+    },
+    {
+      "path": ".github/workflows/airdrop_gate.yml",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "e6cf6cece1a208952e5b4b29796662c51b0db1edd8157c9c91389b29abdea7ff",
+      "sha_after": "c4a992399c97621b439178942c0d0531e30f65c5fc6b60887598e6b0071d3cd0"
+    },
+    {
+      "path": ".github/workflows/render_piezas_vectoriales.yml",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "8c8ef1675a1f56d73d22286e5974ef6a2bbad3c3bfcca041afacf367b57c6eea",
+      "sha_after": "b5a98f9b7e2f73440705ecc37ffca55424235a566a7c71d0e97705dbad06082a"
+    },
+    {
+      "path": ".github/workflows/seguridad.yml",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "59a66b2d625c776077c12063416e6fd7ca21d8c548e3c5ea467f0becc0b09805",
+      "sha_after": "3c13c07f3724d116f25b500b679cc4093b0011a671904b848fbc948956bcea37"
+    },
+    {
+      "path": ".github/workflows/validar-piezas.yml",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "09b464f88d5f3217b1b51f82a98c9f819a6556f749913ed43e9f167bae1f800b",
+      "sha_after": "7a9f9a4f9d7f4b3a049c8ab83e4083a20fdfc96f89179d7867f276728daa2c3b"
+    },
+    {
+      "path": ".gitkeep",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "09b3a898d9989130e75f7640ef3d6321a1765bacc2ee3e57b0a6ae1e275aaaf6",
+      "sha_after": "7cd5a697fd6afafcbe16008b5342a226c504b074a0c4c840178a1e849859fe52"
+    },
+    {
+      "path": "LICENSE",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "3f91cbb247f9a063e20e2356443c5dc178425462e07f368b088e22cc7cb703f7",
+      "sha_after": "8c29966068d89cd418d9c707bc4d0273f26cd14c9db8bf9c897870878ef21c8b"
+    },
+    {
+      "path": "arte-ascii-readme.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "2bda5d95340a56cad6ac8c2450aa33a127966a1db358497a5b4374863546f9db",
+      "sha_after": "d06f5b0606825275f162e9fb8cb3044ea9bdde82190e0bfb79b0a9d3a923dafc"
+    },
+    {
+      "path": "assets/logo/RD_logo_vector_blanco.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "8a3b12fb607eb6fa2e5afb9f92b0d189ce30df4630f32c7c743e365d7143ef6b",
+      "sha_after": "00c5cad92f9cf5735938d54d278d0d05e3b37ca5dfaab943d878a5c48694a0f5"
+    },
+    {
+      "path": "assets/logo/RD_logo_vector_negro.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "27d3d2ddee460e33336b9d5f00e01e61893091ed5006cfaad8d65c0fc6c1abd7",
+      "sha_after": "fe962c185c6ec76f6122483e27e6f6e3e3b5072f75d664499cb672f45e47e22c"
+    },
+    {
+      "path": "cultura/blend-math-lab.html",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "696ea38d3725f1857e12830ce0824903174dab2dfb4246129e2ebbc73c804a16",
+      "sha_after": "1be2087a8528728cbbbf263964e653288e8fcf3e8ca5dc128c66ae6abf44825f"
+    },
+    {
+      "path": "cultura/mak_plataforma/backlog_semilla.jsonl",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "d32fb4d15508552c146b6153b4c2cd3107486fb5f10e796dc39cf59295202dd8",
+      "sha_after": "b9c23f50eaa3e41f6212b1a67c9ebb58d307acc087009cfd53e56729688915dd"
+    },
+    {
+      "path": "cultura/trilogia.3d.blender.html",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "eeda9681fc42847fb09fc754ae3f22e67b8bfa9dcf86a06830adcd749e0ee4a5",
+      "sha_after": "4c59308ebb5d0363ebaa592cd79eab6d8994ae0096424e13c6609e5d5776909b"
+    },
+    {
+      "path": "cultura/xio-concept.html",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "2f9094fc7ded35b5e0fa4ed85a40ebf119079ed3dba8fb490b4ce2f891f13732",
+      "sha_after": "0c72dda0973530f154c94ce390c96330fb443861812e9eb5ac7a77686d466558"
+    },
+    {
+      "path": "data/plano_simbolos/_ejemplo_hidratacion.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "5aae8eb336d294828f41c63f0f8e7bfdaa92263a3cf5d3c1e39d501d4e576bbc",
+      "sha_after": "33f8d67313e64f289c77bb78d8c015f9a3e1181bf7c9e5215d41698e85895f4c"
+    },
+    {
+      "path": "data/rd_datos_demo/atenciones_demo.csv",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "0a620ff79ea7cf7f0edc2d64cd457c3ca9005c8093ee16f965a3394651bbdf4e",
+      "sha_after": "ab032807b870e9533bcabb0d05b212688675b26cb7c1041a66779ad08a064f4e"
+    },
+    {
+      "path": "data/rd_datos_demo/encuestas_demo.csv",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "c293705ad14c78eced007025eb1a959aa28a1e6a9c59b6af3a3d2b45fc088c84",
+      "sha_after": "403f252058fa313ba37c38b90d9a4e163f648f957819fb4ef336afd79c12b12e"
+    },
+    {
+      "path": "data/rd_datos_demo/testeos_demo.csv",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "19ca3135a496f6ced2cd10cc79c2d545572a1c464850456e9616b5144e90075c",
+      "sha_after": "32bd1bf4f3583921c63f2a6be5e648d71d09ae1428c371bc12fb524ea6b853ab"
+    },
+    {
+      "path": "data/rd_packs.json",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "d5d19332c373c46959ea541a1f568608dad918f16ac99fbf845419baf98e5796",
+      "sha_after": "97fe208a165947d1b1025be22e0fffcd61ddf6d2f9f9a48a029c1b065574efe9"
+    },
+    {
+      "path": "datadrops/2026-06-22_154643_0_raveeditrdrealv5/analysis/palette.json",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "c90397edc1eb5bfc6afe1b6a79c083f74dead1c2c1e5fdbbbb5c737a4cb21f31",
+      "sha_after": "098b84b94fded4e71e794d43cd503126cac752447902a6c03e3dcfa4b31f114c"
+    },
+    {
+      "path": "datadrops/2026-06-22_154643_0_raveeditrdrealv5/manifest.json",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "7cc6705c914506e2b0c7c47f4abc47c655f8a5f3ba692fed0947791c1ec1d642",
+      "sha_after": "f70f8af1fe88895b364d4379a671ef44ef7ee1591cefb93e77b7e4a841552d63"
+    },
+    {
+      "path": "datadrops/2026-06-22_154643_1_suplementos3d/analysis/palette.json",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "c51482234e28b920e2f9036bccd44b75fd538d7014c61728b3580c4a1ccf5fdd",
+      "sha_after": "39793a650fe9e679fbb2f97a6a9af24993ceb8529b859a0e14a3aa1f32b100a7"
+    },
+    {
+      "path": "datadrops/2026-06-22_154643_1_suplementos3d/manifest.json",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "ab47346cbb9b539cc4c4d21724f69e6494ab0e1d9db676ff465b2b735db1be22",
+      "sha_after": "1ac8fc61e11acd714b0b2df04ebd9d93ada51c1331924800f958fc07ec8f759b"
+    },
+    {
+      "path": "datadrops/Propuesta_Reduciendo_Dano.txt",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "9df65a4cac1b12e1e7a26c6cdcbbce7517a51feb8853ffd2c56f983cdbb3f713",
+      "sha_after": "7cc2347c08114a469a28a7b6cae02ff1efe4aaa784c415b733055c6517cc2c50"
+    },
+    {
+      "path": "docs/HERRAMIENTAS_VISUALES.md",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "5709f772affe3d4f1b0992d8226d2ae32e76b5ab8535b87768d245be594fdf32",
+      "sha_after": "812b7634324237acc1488702fda696e4562910495f73c3b8392a2d648a747571"
+    },
+    {
+      "path": "docs/cultura/ensayos/rave/galeria.html",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "ab80931ca879e5c9328ff78afc823f3b21b9d05446ec2a54eb1d5a0cc4a0154c",
+      "sha_after": "4e2af4b131eb16fa6d782d0b5b36b173012969410b34da7b610879c888c159af"
+    },
+    {
+      "path": "docs/cultura/ensayos/rave/iconos/01-paradise-garage.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "cac28c81f72219b88d497cf1103cc9edccb43b573ca41ee659e82ea400385f77",
+      "sha_after": "807da4f15e5f0b52a2158a3af18c23596b8eaece874953b8530f227d7505d91f"
+    },
+    {
+      "path": "docs/cultura/ensayos/rave/iconos/02-warehouse-house-chicago.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "97c1ec5900b382b5c5347cfe3bfaf37cda2a2fb115915c7a65e7524930a81c1e",
+      "sha_after": "54c63522704d147156446fb0f5ffa633c27404dfe885afa906ab2ba6e1923e43"
+    },
+    {
+      "path": "docs/cultura/ensayos/rave/iconos/03-detroit-techno.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "6d11627c399047d2143996641e3eaab132e8f86eea2f5b969301835338e3e445",
+      "sha_after": "1480140622508ae202b9d626e75697a2cf2c7f8cc2e6f52d06f1fce8c4853c40"
+    },
+    {
+      "path": "docs/cultura/ensayos/rave/iconos/04-ibiza-balearic-1987.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "948e0ab5b88ea8ccef4b14e023986a1f5e9ac98475b56c96f888019a539b65e2",
+      "sha_after": "9631e385fb87a3c968b76438acd8a02e810ae58b1e33340fd49188c5b14348c0"
+    },
+    {
+      "path": "docs/cultura/ensayos/rave/iconos/05-shoom-smiley-acid-house.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "80eb410b6b54bbdf3d89590acfa50c2fed9177514ca9d2653586e3297a57e1ae",
+      "sha_after": "f8412e1bd24f45e49283feb0297f7c24f5e6dbf45de6a784a6fa69828d62a70b"
+    },
+    {
+      "path": "docs/cultura/ensayos/rave/iconos/06-segundo-verano-del-amor.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "346cf6e61530203b519977a6112569571baa1029c1865bd71aa19069329f47e8",
+      "sha_after": "3c1986a28c45fdcf0f83d8f08da64759ae84cce7f6358251e75736e5ea9b413d"
+    },
+    {
+      "path": "docs/cultura/ensayos/rave/iconos/07-berlin-muro-techno.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "bac9c8247ec482c5f4f29d3e60f39ac5287532f0c9b6ffc95ac8e37d37cfcf87",
+      "sha_after": "12964d2b62687b65a555ddf94bd7029e279931a5ea71be3be33bb9925269dc86"
+    },
+    {
+      "path": "docs/cultura/ensayos/rave/iconos/08-roland-tb-303.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "afffea2414a98865062b184f1051c449cc4e70043d7ce48e08ba20b31e769ce5",
+      "sha_after": "3da3439dddd060cdf172f9fb511d8dcdc7d9a1e66560823e055633d91cdc16a4"
+    },
+    {
+      "path": "docs/cultura/ensayos/rave/iconos/09-acid-lsd-estado-alterado.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "893375a4c10caf92bab5c63d6f99314eb9e256511eac06bc0765c2785c5ab18c",
+      "sha_after": "fc7b60f9b2e6e9f7a07e8ed05e9fc0ad75ef9adedf44862810de081a0c933391"
+    },
+    {
+      "path": "docs/cultura/ensayos/rave/iconos/10-plur-codigo-moral.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "2f6502b010e7b2b2110cae8b858bf69794eb527e0233c864f518378c2356082d",
+      "sha_after": "820d6c28585bfa3971dbfdd9d9578df0e7cac0f4e01b48ea180314078cdf1786"
+    },
+    {
+      "path": "docs/cultura/ensayos/rave/iconos/11-inclusividad-raices-queer-negras.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "1a428639e5b595b309e73b6c1eb809ba7a82807a84de076b2295dc07329bb0c5",
+      "sha_after": "10809571e9b9089bda028fc5d3c913f6b26a443ce8c21d44cd27122cf8927b45"
+    },
+    {
+      "path": "docs/cultura/ensayos/rave/iconos/12-taz-zona-autonoma-temporal.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "bace1646ead9dbbc38235df268785c56558984df74e9e10567c719f9a60a0503",
+      "sha_after": "aa984ee2dc15ac64556e6f06cf87713da362d6d90fb3216fd038336eb5134641"
+    },
+    {
+      "path": "docs/cultura/ensayos/rave/iconos/13-spiral-tribe-free-party.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "e47eb37c7266ad87b240a24f55099b0b21d7dd57bdbff9a65fdc34440e0acce4",
+      "sha_after": "24e47e23a34e3d8890efbdd0cb34aa167efefc83e2d450d35db030486df275b5"
+    },
+    {
+      "path": "docs/cultura/ensayos/rave/iconos/14-castlemorton-1992.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "5cdfa3257ee933e79f980384ac52c242c6d585b3fab65ec75594b37b18c7f533",
+      "sha_after": "97fa10fc97ad95d69731dbcd7174c241d117ae2cfe0b82da925fe2d408e77eb7"
+    },
+    {
+      "path": "docs/cultura/ensayos/rave/iconos/15-criminal-justice-act-1994.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "cba37375878454ee243449476c95b621938a592b9f6a2eb57dbb17f302f9c740",
+      "sha_after": "b831cca3d92fca7a0cbd764e76499ba9865684f4e95063b126afe3c9afa4d154"
+    },
+    {
+      "path": "docs/cultura/ensayos/rave/iconos/16-comercializacion-legado-vivo.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "cf86a85a9c43cdfdeb2508983d9180da212d48526f32bcf709a2ccd7070874bf",
+      "sha_after": "d52d1f3039f9ed1e630809a54e5db2cf93302a0a7a16a1c730ece5b728d63c0e"
+    },
+    {
+      "path": "docs/cultura/lib/color.js",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "7e2b7152d04b8b1aab3010827fe909bb18d06f7756218a5102e9e48c1ee34733",
+      "sha_after": "28b191f89ed3ca0adc82a4c5bd759d47eced5090b26905d9baaacd5beedd6a05"
+    },
+    {
+      "path": "docs/cultura/lib/compilador.js",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "26dee552620971094d9ac2bc6667286408124e8acd6f25487962c20300a4a33e",
+      "sha_after": "b2235971113f7292cdaa5bf3e96e6aa18710d6393afc07f6ad418d9bc4691c2e"
+    },
+    {
+      "path": "docs/cultura/lib/hiccup-svg.js",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "ff4de2ae49444b55e89b8d47297741c4b738aeffc9df0e563d26a27a9fa07ba2",
+      "sha_after": "27d883e9cf73f5ffb75dc267a5a08e27c41c9fad87013072471aea76ce55da00"
+    },
+    {
+      "path": "docs/cultura/lib/hiccup.js",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "843007e749769cd5cec60e210c7b8920706df843b15c83d37e5a079eda244b46",
+      "sha_after": "0b9c42fbb935e67d187a143867a20b3edf9cabf28ad04759a56b9ce6496b5f01"
+    },
+    {
+      "path": "docs/iskvw/prototipo.html",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "1185ba48c0c5002c1f939fb36452687446b12119a404e48256cf86f4170171bd",
+      "sha_after": "fb49ec872a3b5c8fe6510259d2f3edb62f7a99e360dc89a0f625021f4e6b1cc5"
+    },
+    {
+      "path": "docs/laser/toolkit.html",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "937b196e6f94a507dda2c92a71633f034c1925be614c32769612c72f0f821e8b",
+      "sha_after": "80e25e091631b7b8cb76dd5e46aa85ddf501bf9842a7877269171060f88214b8"
+    },
+    {
+      "path": "docs/rd/backlog_semilla_rd.jsonl",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "7fdc324d5a4d4fc2761a90182b63e982fdd18798062b3a667199cc004c7cb66b",
+      "sha_after": "e1f4eff6612c452614ad6edb25a9bb88edccc0ab5b35bed8c9722f776bd4f8ef"
+    },
+    {
+      "path": "docs/rd/candidatos_curatoria/candidatos_db.jsonl",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "d03874c844e233a7d1aa14a6b566691cdf1c3278aacbac3a38da2de13b40f6e7",
+      "sha_after": "976963c6ef6e3ef19b6b5cff5aa96826be7a5c93636d4acbdd3aab140e5a4246"
+    },
+    {
+      "path": "docs/rd/prototypes/2026-08-11/rd_matriz_interactiva_2026-08-11.html",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "4a7929e1bd362c6332ebd78afee41dfd916bf670d733bc5608e092d75d3aef71",
+      "sha_after": "196557527b9760bab4849cbe48eeab98800f8997fb952f67fd13606bf99ef3de"
+    },
+    {
+      "path": "docs/rd/prototypes/2026-08-11/rd_post_chemsex_spec_2026-08-11.html",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "f288f7b97bbcb0dacce9c2e1633d46ae8b47be8dea216566f640d7c8d1e27a71",
+      "sha_after": "9329d4e9f70b6bb50dbc5f0c75547da446e94b234732f4f0b32bccc625406d0c"
+    },
+    {
+      "path": "docs/rd/prototypes/2026-08-11/rd_post_cover_prototype_2026-08-11.html",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "9f526062dd573e2d2e6172f18071aefa82cdc080f40685a388cd8672a213df7e",
+      "sha_after": "9f810662b384acb324670f612351f7f0cce2f6c703a0cdafa888fc9d244f1ea2"
+    },
+    {
+      "path": "docs/rd/prototypes/2026-08-11/rd_post_cover_prototype_2026-08-11.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "ad0679df6f93d93666a1fb12afa56db2c59a2d8f3dea8261a45c9ea838cf4faa",
+      "sha_after": "e6285ada6e03398f766d55bbb7ce6f996ac8e80711596b05546d8dff35bfb664"
+    },
+    {
+      "path": "docs/recovered/claude_sessions_2026-08-12/raw/83087cdd-3709-48de-ab41-62325e73d863_nombre-cauce.md",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "c7d5e02df2b717c951fbd0eb681a2878e78f17c6d2938b3a33997429c1edae75",
+      "sha_after": "c9a54cacf88ef073b9a4997c9b9c9401ae3d9bc52f93b59ebcb57709c2c6a964"
+    },
+    {
+      "path": "docs/recovered/claude_sessions_2026-08-12/raw/MANIFEST.json",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "c6f3133c9013fbaddc6603b88ef0c0d6bed545164a9ce0a527fa4578a00f1036",
+      "sha_after": "687f55e4541d8cdf4f31db9e55dddab1d35afa44557f6753a6a60a2d7baddbf0"
+    },
+    {
+      "path": "docs/recovered/claude_sessions_2026-08-12/raw/bases-texto-fondos-fondart-2027.json",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "69cd7d63e995ca7b6b855a3c072643e584e6e743fd226b4b57d5f15968723675",
+      "sha_after": "8f2e3dbfd3ef1eb634cc18132176920fa9ed53c273580e4598fe04ed1d12a7fd"
+    },
+    {
+      "path": "docs/recovered/claude_sessions_2026-08-12/raw/claude_sesiones_index.html",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "aa52d184522ce1d8f27b9bb71976d73eaacb461cbf3d4e7552d914cffab4a88c",
+      "sha_after": "1b4c92ec6b8c979947169fdc2ae05584ee5cdd07169a68fe568c5ca5694d39b2"
+    },
+    {
+      "path": "docs/recovered/claude_sessions_2026-08-12/raw/claude_web_export_inventory.md",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "c83d0cce0fa9ad88e3aa06ff9fd15049d4e84c546b81d3f90decdab5693276d5",
+      "sha_after": "02a235411e0bd6ff78bdd23997d35678a8ca84b117b8f4c49bbbc8ff7770aab4"
+    },
+    {
+      "path": "docs/recovered/claude_sessions_2026-08-12/raw/fondos-fondart-terminos-condiciones-requisitos-2027.md",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "caf86d3783b3080e631628a352391b3a0c5f31c2717ff25e72f6d113ce767b42",
+      "sha_after": "c2feb848e80ceb27f77c0fbc9caeea8d7a7a252fde006ec431d171fa2197914f"
+    },
+    {
+      "path": "docs/recovered/claude_sessions_2026-08-12/raw/fondos-postulaciones-requisitos-visible-2027.md",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "f705ff34e5d29eb367b5795e7c75bebc17174d6eb86ee40582f5492539fee69a",
+      "sha_after": "888f2b0d1cc3e3558fa3a3612167dea8f5b8f1017b80a84e0fcfaf4583a06088"
+    },
+    {
+      "path": "docs/recovered/claude_sessions_2026-08-12/raw/fondos-postulaciones-santiago-fondart-2026-extracto.md",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "1c72555a0995bda3fe6634764384b2db93d0d6fe5962ab4bd9b2d6abbc143848",
+      "sha_after": "30dfbe4701ce8ff8502a0c4371162f91acb313e3e88c61a9aab9caf7a9a1b0c9"
+    },
+    {
+      "path": "docs/recovered/claude_sessions_2026-08-12/raw/fondos-postulaciones-santiago-fondart-2026.json",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "e807221aac66249ec736227ff26ab35491692ef35d4a0afc5395d095cfc95594",
+      "sha_after": "c08a11c6bee78f7f393d308666d9c982d9d9512630a7a5b5bc473f916e891ae9"
+    },
+    {
+      "path": "docs/recovered/claude_sessions_2026-08-12/raw/fondos-postulaciones-terminos-requisitos-2027.json",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "cae5e2e6667facfbb93d71d582a2e8bf7efd88bb7d1912874510aa131d17e26d",
+      "sha_after": "782993f81b4b94b69fdd4a6c5665e828ff9099d967201655fe8b7bf2e3960b45"
+    },
+    {
+      "path": "docs/recovered/claude_sessions_2026-08-12/raw/rd_fichas_entidades_2026-08-11.html",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "dd78b402cb564067b5379935f6b6e248f0704f5b7b0868f00c2fb15719eef9d4",
+      "sha_after": "0533f2d26376c2bff2080ee6cecca1b41121c66e10a35a4f8920f519ca61b20a"
+    },
+    {
+      "path": "docs/recovered/claude_sessions_2026-08-12/raw/rd_fichas_entidades_2026-08-11.json",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "02eeb0fff3c9df64d06c899a0dd19702d96775335d6c75c5cd13e4821ade282b",
+      "sha_after": "331a6b3b900606f355b20c7cce0439536606fe8861cade8e34c255951872b9cb"
+    },
+    {
+      "path": "docs/recovered/claude_sessions_2026-08-12/raw/rd_firecrawl_2026-08-11.json",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "99a41b5d36dae0b0306b14adbc0317cdf65da54d3a8b244f10221bc09f42f140",
+      "sha_after": "06a8deaa08308f45c72a236dbd3f3d4bcac5bc697b28d8f7cb251d7bd2e47345"
+    },
+    {
+      "path": "docs/recovered/claude_sessions_2026-08-12/raw/rd_firecrawl_matriz_2026-08-11.json",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "d914cbf45819cbfcf5c9df7c36fd11128dba594d24d85671b3a71d29b2594e2b",
+      "sha_after": "96e13b1fb07c96a9da370dad181937bd8e70a224634cff0596e0c40851eab995"
+    },
+    {
+      "path": "docs/recovered/claude_sessions_2026-08-12/raw/rd_fuentes_catalogo_2026-08-11.json",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "ef5bfcfac8ab65c30dab3751619c318e48726ebc730df7470b3de7e5d4eb61dc",
+      "sha_after": "250b59e6d2a7e09a04c7ba2a4f63a9fff5bd93fb6bdb3e2a63daeb46fdadf6bd"
+    },
+    {
+      "path": "docs/recovered/claude_sessions_2026-08-12/raw/rd_indice_integracion_relaciones_2026-08-11.json",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "c218878315e40965109fd31db223c9fc80380c85dce7e5ef4bffcdad0b569128",
+      "sha_after": "cf1330d3666ad33ae32649d3be7d16a48759f8b969f3557a7dfe229642bd896a"
+    },
+    {
+      "path": "docs/recovered/claude_sessions_2026-08-12/raw/rd_matriz_interactiva_2026-08-11.html",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "4a7929e1bd362c6332ebd78afee41dfd916bf670d733bc5608e092d75d3aef71",
+      "sha_after": "196557527b9760bab4849cbe48eeab98800f8997fb952f67fd13606bf99ef3de"
+    },
+    {
+      "path": "docs/recovered/claude_sessions_2026-08-12/raw/rd_post_chemsex_spec_2026-08-11.html",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "f288f7b97bbcb0dacce9c2e1633d46ae8b47be8dea216566f640d7c8d1e27a71",
+      "sha_after": "9329d4e9f70b6bb50dbc5f0c75547da446e94b234732f4f0b32bccc625406d0c"
+    },
+    {
+      "path": "docs/recovered/claude_sessions_2026-08-12/raw/rd_post_chemsex_spec_2026-08-11.json",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "34e43f272edab4dceaf772e839a91f04287388c14648e8d7bb2ce1f24359d499",
+      "sha_after": "b7de5c64e0398200792537052ca2ad36049262fca7ec78dc171b7a48ff5457c5"
+    },
+    {
+      "path": "docs/recovered/claude_sessions_2026-08-12/raw/rd_post_chemsex_visual_brief_2026-08-11.json",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "b446eb53f96143d92be802461a10245ef070d37d0cbf665f7b1f9e830f0a7654",
+      "sha_after": "d9f7f632893d5f6d0da3c149bef224cabe67c4d6d675ee60f5de07211950bf07"
+    },
+    {
+      "path": "docs/recovered/claude_sessions_2026-08-12/raw/rd_post_chemsex_visual_brief_informe_2026-08-11.md",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "b5cbf6017e6dd63124fcc675cb0c4bfdb5b35c03c0768ee02dd616ee510ca92b",
+      "sha_after": "cd76dda4d52350c7ec423f30250ebc7ef4c372098f13e85c158bcbef9877bf8f"
+    },
+    {
+      "path": "docs/recovered/claude_sessions_2026-08-12/raw/rd_reactivos_auditoria_internacional_2026-08-11.md",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "4f592fdeb99881b4916178ec5ff6a669d6646cc50d1ed3f51085a2fb8aeaa487",
+      "sha_after": "ad102b64b1c4a54e336f5b55125abebb9f96342d2fc44437b62f53e9fd25e33f"
+    },
+    {
+      "path": "docs/recovered/claude_sessions_2026-08-12/raw/rd_reactivos_informe_2026-08-11.md",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "90dbcb0c9dd98a2fdaad7e32f8631698ad7c022fa05aa3a42dd0377ba5437cbc",
+      "sha_after": "4017b430dbbf3c475a0d05cc793cdead69d3ee8c14b61e762b959e3fc45df8e1"
+    },
+    {
+      "path": "docs/recovered/claude_sessions_2026-08-12/raw/rd_testeos_eventos_2025_evidence_2026-08-12.json",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "8b80830ba74cf5ff26b7575fed5ac5f2ed8cb204796be6d39a7a33b8586db127",
+      "sha_after": "3b0e529a7b1283923f4a4665adbdbcd2aca8b47ae0840f500ba115469f660916"
+    },
+    {
+      "path": "docs/recovered/claude_sessions_2026-08-12/raw/rd_testeos_eventos_2025_informe_2026-08-12.md",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "32d1540728d1c6daa5bdc48d7e9e33c5352a2369cdedb16b9d22b1099a9d0670",
+      "sha_after": "3f96a1f8a0656e42e14c2148ed51c8a18db41d7bd40857f3390560b6495da90c"
+    },
+    {
+      "path": "docs/recovered/claude_sessions_2026-08-12/raw/rd_testings_2025_integration_build.py",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "ce73f8a3c9e77072cab7dfb13095d3131fb1dff0e0291464b598ac22ff867f73",
+      "sha_after": "c3e698aa7149b8e02c1c4f66afb681ca24aa6341ae22b0c1851c514d9616782a"
+    },
+    {
+      "path": "docs/recovered/claude_sessions_2026-08-12/raw/rd_universo_entidades_informe_2026-08-11.md",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "ac5fd9cc0661268cc80f26d3b65e2adfc7a33b0891c7cb2a8423664948791168",
+      "sha_after": "762c7f740911493ebd3ae64ed0db42610dc8f4c5dd775b68b6df1bff6fd2ba07"
+    },
+    {
+      "path": "iskvw/datos/micelio.json",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "ed255001f56b25cfdd7a5240a8fee904ff90f7bf90a356f4e70853299c5a71f7",
+      "sha_after": "a4a056eb3d25a102816a63cafbfcb397e7948540800329040535ffe21bd2cd42"
+    },
+    {
+      "path": "iskvw/mesa_montaje.js",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "d7a50d2722e300f9a42db0584d0480b1d703d9fd158b0f8bcabc038afd64ecb2",
+      "sha_after": "0386c057dba1faa8138452b78d3c18762f86930ee50c3dc3e0dc086fcdf67498"
+    },
+    {
+      "path": "iskvw/piel/animadas/00dfbf29763b-17963390141716156.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "b37b4a353cc31248fbc190a0b350d5c3ff40731ca68d04852aa6c17988c038d8",
+      "sha_after": "191a59359e556e5f1d7e3ccef2d387fffec88cb7f15a81978ce457c677349f10"
+    },
+    {
+      "path": "iskvw/piel/animadas/0142feb0bda0-17857906844163602.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "62fd18e8d966e075ef35c8ca36360800276b88d6bc6abdcb7b41d15a0ffd0ef9",
+      "sha_after": "ad264300204a0b37d757d79b6fd84ccad192def0c4ebcf3d7cae266f9b322bb0"
+    },
+    {
+      "path": "iskvw/piel/animadas/0219e1d84690-17954134879326364.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "2495100f6fedb761d8a1ddcac439ffd061af7238ed7290ee207a55146b6ed290",
+      "sha_after": "80c3e9249881daf4d752124b632a1199aae181d2494b7e45c90614030b01fb71"
+    },
+    {
+      "path": "iskvw/piel/animadas/02d8e16e7c73-18037394818164790.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "25066c7234ff18eeded60a67eda76925412f2333a73dfcf16d0efa525fb06482",
+      "sha_after": "70625ed53f04f47d1f3459478758c70b1ca3ea9da21eacb59782d2576f3f223e"
+    },
+    {
+      "path": "iskvw/piel/animadas/0309513c750b-17988112985588156.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "ee0c8617368fbe3fd8507c636dea4c5b5abaf55b408d3ea94987c3001ba395ca",
+      "sha_after": "738d2f2fdfbfed3647be974ecaefa50153c4557528d32347b0bd172646a126ca"
+    },
+    {
+      "path": "iskvw/piel/animadas/04d565d4c17f-18020008679255636.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "13ac1086aba0a9cf86d221cebab196392584c48c7e920fadc68611475e9864dc",
+      "sha_after": "870689819fb7490d8407db77c58969d1ced37b03f176def96c5bf2b8e5c7516b"
+    },
+    {
+      "path": "iskvw/piel/animadas/070d74bb7ee3-17845442352222553.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "e64e38014ac1b658252c7a463e96858aa26689f03ae5f012044350620e0ee8b6",
+      "sha_after": "f3d925d538cb1feafb3a709f4b3f9ab50e05671eaf4740bdf8187796c35eaff9"
+    },
+    {
+      "path": "iskvw/piel/animadas/08d8944c7581-17896000479057228.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "8b678948df2b326cec9e33bdbc2b8e24b73df7b7e4557bcbea26de8ae0741227",
+      "sha_after": "848c639b2993019e7332614a30a145e20021c8cfa302447528277a1aaee5e7e2"
+    },
+    {
+      "path": "iskvw/piel/animadas/0986fd0e1556-17890634727098060.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "63982bae69727df73d56c3240d42c32fa31544eaa3b16969dd432b87705afdbc",
+      "sha_after": "a414b97928a37938015faf7a0dada35be22f3c0fbe64cc8376d1a7799463e579"
+    },
+    {
+      "path": "iskvw/piel/animadas/0b6e572c5a89-17869666019637673.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "e47606c2b370e50fba5508360f29d79bfc6188559ef3765ed4a9d7a5f29fd4ce",
+      "sha_after": "b89a7fff9266f2742dc072a5eb2b6d27ae3345242df95570940788151918823f"
+    },
+    {
+      "path": "iskvw/piel/animadas/0bffc5fc7955-17843571640579977.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "f11263e0506f506d63a5e3fafd89f58bd9d4e385c8b39055bd3415c22d205438",
+      "sha_after": "30ec939ba38663d3c2216eadc8ca2df3cebbd457e7d4eb555b34601f5d0a8913"
+    },
+    {
+      "path": "iskvw/piel/animadas/0cb12eff4a8b-18046460327208724.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "357bbef2847b6ef171b9deb0d4eb0b83b01a6a6d9056e59c44986872dae41403",
+      "sha_after": "7192b641a6ce5e63d41cee1bb0627b894bcd453e23ec98a9ff6e83461f59a2ec"
+    },
+    {
+      "path": "iskvw/piel/animadas/0fa807254c70-17850145885813995.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "8c148d230bdea028013580148e3e2cfcb9fe18aca761adbcba0555d642b105d4",
+      "sha_after": "845ab6a5eccec69c481b01e84b1abfc301f13d4b21138022ec39389fe229e2db"
+    },
+    {
+      "path": "iskvw/piel/animadas/0fd5d5060dbf-18039831448636728.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "13ca25c957df1784c3f155319d217dedfeb71e353144b00b736e8b1af1effcf6",
+      "sha_after": "3475975d4df04eb994b3f382a166ded9cf4c7bb5a028612e85f7ee7fd69108c5"
+    },
+    {
+      "path": "iskvw/piel/animadas/11266e87c50b-18027468613155305.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "1ae26d8c99aded93a2c6bb4928c410d425c3473868ae0cc6cb9404d435a4422b",
+      "sha_after": "3d65a796183247883cb29964c4d141c66ed099723a400efeb332e86af11055de"
+    },
+    {
+      "path": "iskvw/piel/animadas/12f92487c0ee-17878704946493756.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "58c9aec0fd56839966fcf921767bbcff148db470cce283b77bfccf6e340f6970",
+      "sha_after": "fc715fc1a3dd020c1624a0d669a55aceab3ca98b1600b3788e88bbbd95cf9717"
+    },
+    {
+      "path": "iskvw/piel/animadas/12fee1ff6258-17905818486257867.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "473449c4014724789672f99baec580f225947f827497814fa8da0361d3eb3a7a",
+      "sha_after": "f4ec4ab5e58672466827a48da3cc38233098bef4c8648a680890c22bfbf8ee10"
+    },
+    {
+      "path": "iskvw/piel/animadas/1631c7043143-17857558768532518.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "194a2cdd44ac38f2be7105d18bb74097a61363d6ecbdbba6e6f9a7f7555e655b",
+      "sha_after": "90a63c67fddf1c3034a573982d27ec50f50fc24528df253bc1af11c09655705f"
+    },
+    {
+      "path": "iskvw/piel/animadas/17cbe031ca38-17922479254362947.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "090ef364f51a6356b42d3b8896c6af72ea831b9ac65849c7309a1e7bbf5c1869",
+      "sha_after": "c69d49a4b3588929aefe043088bc1e38572e15c85841956780b3cc79302fc19b"
+    },
+    {
+      "path": "iskvw/piel/animadas/19116286e171-17973643747627482.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "e0f4efe55ca5b809134eae67cacf3cf4f994ff16184490073e873139a1e329d2",
+      "sha_after": "26ddb5c20c80e91cae05d38489470d5cbebfd6630ac688945f7be17da8f76acc"
+    },
+    {
+      "path": "iskvw/piel/animadas/196b3c04dc11-17995133948367802.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "0f4b971d6d3e2d5da8d3ce786a6f28bb09807e0eb97b8810ed296fea0d0d2d01",
+      "sha_after": "84b3dd4ca96cfe19cdaafa22218cdbe23fe9189d4e0ca99c3fc85502c8cec4ea"
+    },
+    {
+      "path": "iskvw/piel/animadas/196d8431a3d3-17890131999386365.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "e0f4c70c58da411372b78acec3405a32deda399004590bf93b974e3a05dbfc99",
+      "sha_after": "605a6cb740bab2f789dc83292efee098577409029ba56a400e50d2e3b690d9c7"
+    },
+    {
+      "path": "iskvw/piel/animadas/1a2cfe51b2f3-17919931742825923.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "9adc5e8909e569de2960d5e501c9793fcdac23afbc25375abc624e2670caed48",
+      "sha_after": "684e27df38e41789f1e4429dad5aa308c1e630633141f6a7d6e2936ce702abac"
+    },
+    {
+      "path": "iskvw/piel/animadas/1b5030f45984-17950172047590824.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "518ca1ebae9c225be091c0da6dbf11a86555553d0ef9c880bfc715988e5d5736",
+      "sha_after": "60c7efbc158080928f2c53e647bc80ba988064a0ef9e23c1701e0438efcdb389"
+    },
+    {
+      "path": "iskvw/piel/animadas/1cbbd987e1c4-18046704922359496.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "dc52ed55c861814f520cecc5d8c548c3f7a5f8f11b4510130c1b7a40eee9e51b",
+      "sha_after": "b1fb53ae1e2112aae81095d8ef2fc71aac31ed33cc97e921d13710f060353717"
+    },
+    {
+      "path": "iskvw/piel/animadas/1ce1a99879f3-18032221660216727.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "2737047850a1e04ba1e9965c9632846d034a4f09626c4056d18692e4be604005",
+      "sha_after": "7debad8372cc5547db57c61155e6a3ade2351d4f0a347caaf539a2e3542f2810"
+    },
+    {
+      "path": "iskvw/piel/animadas/1d38b3e02d71-17852485193026716.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "358a05279acca58289a23e12cbc1a441ecc4ad34aab67408db079056a3da0aa9",
+      "sha_after": "8653ec7357277bf9af3283840b224ccbb1272498424c404b267bb538ced9b576"
+    },
+    {
+      "path": "iskvw/piel/animadas/20f0f7b4c882-17971405207236015.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "8838864902d70659976b99e95d785c452fdff0b325fac310c275bd1de5b5051e",
+      "sha_after": "62d128d10f05cb28d7a81d5550aa5a9d8d00685643715bf2f6506d5b8bb33d22"
+    },
+    {
+      "path": "iskvw/piel/animadas/21490b68ce62-17935111921327616.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "7a4121bc6d7b8407cb6b2027d09e24d06cec7c5d40e20f16063b1b5663b55468",
+      "sha_after": "b45b6bf69bc5a62ad5cc9cbf09549641410cc874fca3dda70ada36d33f702bf5"
+    },
+    {
+      "path": "iskvw/piel/animadas/229e279b2e03-17901746678649318.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "636c2332a35b8ac7eab6da6764665a34ff5bc02f1b450f2125571310dde8bd2a",
+      "sha_after": "01dadfe22d8c0d5e443161f562b4f609e9ed5f3da1b52e695ca3799f1b97918e"
+    },
+    {
+      "path": "iskvw/piel/animadas/23d91037633f-17862116563354908.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "9fd7ec9f7fd3ffe03e08ac66114cf20a682b0df95674b60dfa39045c6d62e2ad",
+      "sha_after": "51abbbcde0aadfe0684f391e9312f18723d0dc0a92eaca0cde8fcd96a8a4a9a1"
+    },
+    {
+      "path": "iskvw/piel/animadas/248ffb44bd63-17907756642389163.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "c10756609cf363831834485c98f6eae7eef78a096cbf8f23a7f2597b9d883380",
+      "sha_after": "92c296252adaa183910cd104a4bda7a35e3eb8ee9f2995a5482ecd66f052543d"
+    },
+    {
+      "path": "iskvw/piel/animadas/298b05deffe6-17980659043235652.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "db325da710da4c3a0df47f75f3c4080a42a04cd9221016a1475d2455d3d6438c",
+      "sha_after": "2cf89f911edd8cb17bc2a93b7603ef3fff81ca511acda6d92e5df0629826885c"
+    },
+    {
+      "path": "iskvw/piel/animadas/29c6ee454099-18024745522325508.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "7206254667817bcea4288b26dab2c85d7e16145dce276636dbdd2439fd202ac1",
+      "sha_after": "ca3f42e70a933ec6e17ff99cc94f402e89a1e9700b5e2305f00a396ea7b37ff3"
+    },
+    {
+      "path": "iskvw/piel/animadas/2a1d316b2c8a-17925973582930358.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "6ec1f2229a91997c5c98a4fa4c338520b6eb4b17cb66e13a1ee7c1fe853b8b1a",
+      "sha_after": "38f57eac10e7b76b8741cc7f3aa1d2a59d257db2df7ad3ac516747b2e43350a4"
+    },
+    {
+      "path": "iskvw/piel/animadas/2a6cd487543e-18041459209209008.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "f747feb96d8a62cc23dc576d63fd1fac5cbd8f11ae5300f118df776b067e38b9",
+      "sha_after": "adfd8853579a60f91c8250e20444238859920609bf66e94ce0e297aa6309e60c"
+    },
+    {
+      "path": "iskvw/piel/animadas/2ab727377783-17926121515293459.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "90690b232d3042e9b396a328a526394efaf7b1f254cb266f2ac6b7d67a33c499",
+      "sha_after": "82a6cc7369c383f8cb043ff7ccbb48d229736eb8f9a43c4922dc97333f2a3055"
+    },
+    {
+      "path": "iskvw/piel/animadas/2b0f0388730c-18007224232002257.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "e2ab71e52a7960954c552ae3a557e781c81f8060a2167d5e51ec9ed210d92890",
+      "sha_after": "943cad920a4a86c09c2e1df4766295536fbb240d8e07d86632dc62ce95c8cc87"
+    },
+    {
+      "path": "iskvw/piel/animadas/2b25266fd2ac-17973031436785166.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "c3c380100130c591cedc60fe081b56ed109029c7475207fb7be67ce2cb07d5d5",
+      "sha_after": "96a4e7258d0ad373c1c7368bd18a08d875ee848e51d20cfec24009441074fa4c"
+    },
+    {
+      "path": "iskvw/piel/animadas/2bc600ffc3e7-17881347154780719.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "b4d20ecc128e9fd94b4080fd0e014834a6084cb3e0fc33a5fbfd6abf76780fb0",
+      "sha_after": "ea2594e17b735294a267021368a41a7f23e92d185719ce5f6d8a1191370d43f8"
+    },
+    {
+      "path": "iskvw/piel/animadas/2ddc586d2cbd-17942274569252156.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "da7f28256adc592bb6d2fd3e6fa5315788cb36ba9aeaa9c6cee978ce510429a1",
+      "sha_after": "fb16db46b2f05349c7be3acdbc20457cd9c1fffabd4c4ac2a0a2a790bf854465"
+    },
+    {
+      "path": "iskvw/piel/animadas/2e3829004718-17931375283311054.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "53d9dc7dbcc60f6957017b91c31aaaee66146d330940208deb9aa3f0973725ec",
+      "sha_after": "cc38f25364fa9b642ad66a55603eefe3c85cf4529ffb22108e26358859358193"
+    },
+    {
+      "path": "iskvw/piel/animadas/30685a8b8f50-18030500869835498.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "32568a99777dd478b4cc601845032a395e3bdb718a8582521d44d134061797e8",
+      "sha_after": "85dd7845ac94e5bf0c263114d56e56adefecfc90d434af4d86d257c5361a6481"
+    },
+    {
+      "path": "iskvw/piel/animadas/30fcb6538d57-18027037204785191.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "443374a2d52376e1e0879aa5dbc45f3cc95bf3f3f9e26d0e6154723a21a445ba",
+      "sha_after": "8e56d7110aa5ddba80be1992b4dba9d2d9166b03931562eb93a550716116e88d"
+    },
+    {
+      "path": "iskvw/piel/animadas/3112139ddd11-17872469170449460.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "412a9f7e7e7c6ace1de404481f05b15e3e1f0364073c86cba710350d94a2488c",
+      "sha_after": "ca6a43f2b0e2332b02be3fec60473eb69f4d37cf3b5275b99ee53fabf1d9aa04"
+    },
+    {
+      "path": "iskvw/piel/animadas/3147095932d0-17938411838340253.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "df9ddad6ad4657096ce7a9696fb7e6c1ddebc8fe146c429fdc1c05cb640a6b85",
+      "sha_after": "e5f0c499d1350ac16b997893dd8f9bef92d86b9c3fb7bfaa2c3f0053f79a14d8"
+    },
+    {
+      "path": "iskvw/piel/animadas/31a9c297b538-17873328835671068.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "084f36559e0df7cea6c33af438465a9a2af77bc4edf5f4896ceeaebca1ec9d23",
+      "sha_after": "51a8e698f6a9d5906bc86b29b474de7832c76caa11057268906ccef4dc74c094"
+    },
+    {
+      "path": "iskvw/piel/animadas/31c7d939afec-18030531728093298.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "ba0d2581cadec57d488b9cbd9add56d1485dd19598f7bc1194e936b2c7ba27ec",
+      "sha_after": "b893a25799fb7cadca2a9943f56055cc754769d6047782ad269b6cb71d422689"
+    },
+    {
+      "path": "iskvw/piel/animadas/395f7f500f6a-17941517737215370.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "03062137d32ce203603b3f26176e6e43e84bf57b5a4fbeda2c436022f1504762",
+      "sha_after": "fff0724c0d907e3170e77f3ecee2144b44aaa035efdd4d7f29177f19538d0bd7"
+    },
+    {
+      "path": "iskvw/piel/animadas/3c0e66c38cf0-17903499398588620.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "a752d7707eec4bdc745794224a7072a2c3ebf05241d042238bf7ab23edf7ceb3",
+      "sha_after": "a7d699e6906364fdb7afd7c99f97f25f77af95ce91729481208781336f5626be"
+    },
+    {
+      "path": "iskvw/piel/animadas/3c5de2a5b585-18014354447815393.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "4b963a6c5ed9ea5029c7429ca80d58b755d70aa3f29f776ab6081c9ead0f486d",
+      "sha_after": "f216d605a0c83050565b88b2f27b46b3d804fa231e59b53a146c0e4b59c7b1c4"
+    },
+    {
+      "path": "iskvw/piel/animadas/3d2e229b21e8-17891099396688732.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "a775c55ab62df0dfcf91271d82ed582c18f98e57e3ec530a122b15cf75cc21d8",
+      "sha_after": "85ca0a9f655314e97151b012f2f0248ede122d0d386f3bceebdbeda2af12b330"
+    },
+    {
+      "path": "iskvw/piel/animadas/3d914888bcd5-17952394505250295.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "db8c7389d877f8cc7aa04b1ccf6e33b75c9c13b99dfed6f7b68b987efc4e802f",
+      "sha_after": "41a8addeba7293926ea0a04a916e63d0cc990e81812a5809a4ae36f2b4e9a1fe"
+    },
+    {
+      "path": "iskvw/piel/animadas/3e254697de58-17856415024396354.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "e32b2118be19df04f7f6714c0c1b654513865664121951f54ac337a0b3d2c8ac",
+      "sha_after": "40fb39b9073098916036e80872c5d84ce2299084514d5036f51595fd57733be8"
+    },
+    {
+      "path": "iskvw/piel/animadas/41fcd93b1b40-17915129442148731.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "a40824c8e68e45621c84980d028cbe472c6b0d62dab615bafddd01a1141e11d7",
+      "sha_after": "ef5efd83b25ed606bdb27cc8decd6f7fc936ea81d4958e78eb6280479c2898d0"
+    },
+    {
+      "path": "iskvw/piel/animadas/424488499f19-17852234998587048.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "b479387e6db81d08f316aa216a965f69b1153b2c3515d15bb948df8928d9fa09",
+      "sha_after": "4a9869094fbb630886a0d51cd90ee5f1d7762a192f45548b63ff2bca8156486b"
+    },
+    {
+      "path": "iskvw/piel/animadas/426723f40aa0-17856257185528232.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "cfcd2183de92ddd794767ec1fcead3a280fe4735a3491aaec3c156557e15cc98",
+      "sha_after": "b9b1c6ea3fd19fc7fe40420bff9c3a099d2da8244ccdcf71494afeaf674d6346"
+    },
+    {
+      "path": "iskvw/piel/animadas/43e76a1ca91e-17909801017791769.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "f4b3504d6a2569fc69990661cd6a362bb8da276830f588d9debef50aa4467329",
+      "sha_after": "5632f5ed98d6ca2d8ef7447f8e279124fbe5b1af533b4e9cca3573007390683d"
+    },
+    {
+      "path": "iskvw/piel/animadas/45e39c680d4f-18000762428700413.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "4324ae915ae2df9afb9d4080d62dcbfced8a53544b196fa209218689d494e88a",
+      "sha_after": "a765bec9cb5e834c063396bdc29c1aba9c444fdc2b7466327f03f5aed22ff1b6"
+    },
+    {
+      "path": "iskvw/piel/animadas/462cb8d97b0a-17854869059277411.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "e3b502819340b3b423ad56385eebe40d165cd9c2564ce246a4f146c42f169f85",
+      "sha_after": "3d9f7571519231d292510fe97d6654a30f266ce33ae8562c3a8c3b5b446d3c8a"
+    },
+    {
+      "path": "iskvw/piel/animadas/469a446f0eb4-18009779075826996.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "5b88a6f76e619aa978af9c775de80ff7793d21e1de207a2cd0ca12ec12338144",
+      "sha_after": "2f5a7283383092badfd5281be97294f5ee9100e589b66aa0bfc1c4cb891c22b1"
+    },
+    {
+      "path": "iskvw/piel/animadas/469b65a1c664-17883592555766748.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "aadc2eb6b5f49f28ca36e227108ed585eaa85d4eb0f8862dbafddf6f93d1d33b",
+      "sha_after": "f382d40ba8d8cf9f5e6eb9f569086f8d13209427cf70c731a36f44612b03c83a"
+    },
+    {
+      "path": "iskvw/piel/animadas/47c5e1280c8d-17903695373302170.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "48e62825611507e2869d92eabc75f2918560bed314b3a492948393eecd8bfe8d",
+      "sha_after": "acf13582678ed30333f325b94ce45b032ef2460569423d4abe0b74ec3fa1c17c"
+    },
+    {
+      "path": "iskvw/piel/animadas/482f35d610ba-17978304679616985.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "e74c5b6a5b3f2fa5ffea09617771f8635f49e1192c9f8e63d44ea2af77c38fc3",
+      "sha_after": "2c7a0073f0075026708c95368bfa7a5db418f05b4fa190803c61159f4773a231"
+    },
+    {
+      "path": "iskvw/piel/animadas/4a40b16cde31-17859851695716477.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "b00b9da58ec8162c3583c20f21569d849a3593bec1b95af545fabe25bbc239c4",
+      "sha_after": "fe42416016972fa075990c55994db376e5688f2682f287856da43b1f873be226"
+    },
+    {
+      "path": "iskvw/piel/animadas/4a97ae0a63a1-17920162732987408.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "ab575c8f06437326a436dc1d4e302fd531ef0ea95e836a530912b7780e7b0d13",
+      "sha_after": "880f84d80ef6ab5bf6f7a4588052a4a65c9029e83c2de073a434582a6308fe19"
+    },
+    {
+      "path": "iskvw/piel/animadas/4b7e3865fe95-17857585285695768.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "dbccdac3181c089a450ec3fbdf4d24cfeb6e9dd3535469ba4dee8f7445f04827",
+      "sha_after": "207785051680e7f6bacef0eb40685faab63b769555ff55b288341aad5115ac32"
+    },
+    {
+      "path": "iskvw/piel/animadas/4bfb2474cdd4-17852453596740632.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "427df6b294e3bccd0cf660c5aabf54ecdaeee0a723d57b4ea7c8b20f14105712",
+      "sha_after": "dfcbd6fa91e82efa4b16b4957dd705dcb0c973b28d7aec3d614121c435ea0823"
+    },
+    {
+      "path": "iskvw/piel/animadas/4c2cca9cb908-17983913072552679.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "d4e900111a0f231ad70e36874f5e2b73498436da736328d4e128a04d1a28df17",
+      "sha_after": "fd42471d5e669cd28e72303a57da1dfc0ca557828ece261c53e506f76fde84b6"
+    },
+    {
+      "path": "iskvw/piel/animadas/4ce8705aceee-17935718032695979.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "2f399cdf9d3496a8804cbc36f8a6f03ce59268dbfb523a4861282f544af69ac4",
+      "sha_after": "ae4df8b159a81a0b5f710079eb21241e8ad785db8be57af512704cbed95a9a42"
+    },
+    {
+      "path": "iskvw/piel/animadas/4fb51cb0841a-18044199200352968.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "295a41ba391d4323c38759f5968beff3d8fec5279d385ca7818ea5a6518f3575",
+      "sha_after": "7fd1ef4be19836bcc5f178e8ba2d66457954a2f499495fc5d90fdd8ee5609101"
+    },
+    {
+      "path": "iskvw/piel/animadas/505348af9811-18043147852364441.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "d792c53d5cc418063aff8f1e2417ba61df9783589517a55c15e9183a51f64863",
+      "sha_after": "7670b3eb8dbcf18e6cf61bae4633bb6e7d1438f0555aa7341a3cc9f34d1ba8bb"
+    },
+    {
+      "path": "iskvw/piel/animadas/50661730f653-17854541141265810.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "754255d429f80fe525587773b853d9fcfdd8e16a4aee1affd11e9b4238b4a561",
+      "sha_after": "d19c875b4fd042c726da70a095fd27b0953eed5bf46a351cd2db3808a2aee74f"
+    },
+    {
+      "path": "iskvw/piel/animadas/53e5bedf179e-18015892819195070.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "6a5c0c2a92613e6817474a9d819173d541c4026130745e8ccbfbc4cc04001437",
+      "sha_after": "17f3c2d19d581c676eb2103c8dfb5bb45fe635dbe611a75d8dacd5cc4cc8cf7e"
+    },
+    {
+      "path": "iskvw/piel/animadas/5503d6cd1b06-17852382094998479.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "8367cf1d8721b1039d0ed0d76e7e093967a5eaabecbbfbb9101917bcdb5a00d9",
+      "sha_after": "c99dab7dfed822cb579b9dc2307e5b8a88015b7a9f7ebc00acce309794590194"
+    },
+    {
+      "path": "iskvw/piel/animadas/554aebe1f5ae-17843337307459792.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "edd31273bd70cf3d394b4cfe08e5502beef7aab375fa7b15547a90a9f7f09f35",
+      "sha_after": "56f1701a40246d8676740e86d73459eaa92e20079a8157abb046605a032da25d"
+    },
+    {
+      "path": "iskvw/piel/animadas/55d07e864c5e-17887963534739559.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "095758ff141248e01d36475dc0aeb9ddae33b808f58194f50115f28a3a6cb2ec",
+      "sha_after": "82892a3c4d8f692c9b737ca78034ce45c4ee1074c21644509dbd9b14fdda426f"
+    },
+    {
+      "path": "iskvw/piel/animadas/58fb07316da4-17995719622846671.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "28d92832966f79529122ff05e9cc81b39bbf799cfba53379af0a738587716f05",
+      "sha_after": "8643f0bab9119b8a05a4373a7ea549286e19f9c7fdad9e003e5f1e8f737333d5"
+    },
+    {
+      "path": "iskvw/piel/animadas/59184c75ae63-18023904385794570.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "abedad59ea64f70d8e2429280db8e4731448c86455e4a8b91cf1bdf7950f60ea",
+      "sha_after": "ca816d248f25de16668ab2b4ad8c3fb96a744483aa9f5366ae075ba55929f4e5"
+    },
+    {
+      "path": "iskvw/piel/animadas/5a63a35bf7a8-17866132174511924.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "920c5b5af997048aa1e5f0d1ddef663ddf71d35fef11d463f00975df08b18022",
+      "sha_after": "1427a43aa8a999e9eb6f9da9b54a2eeb1101a88ab196a8d669f9dbb2eefcbf68"
+    },
+    {
+      "path": "iskvw/piel/animadas/5a8006c51f7c-18046313870118858.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "f28bc61754170583f43708cdd26c100bade260a4a3719370176d39fd7ce613ec",
+      "sha_after": "c67b34fb17e5d9c19e400eb18dba9e91b689ac801db8b82071b2018cec1c6c2d"
+    },
+    {
+      "path": "iskvw/piel/animadas/5afcd95029f1-17927022512336908.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "4f9313e132d6c415ede0a3bd698eb71f495b7c7a1d4e2ceb8e65165ba6ac103b",
+      "sha_after": "e9654448e8b2a780512e08a8f8674263e92920e1c98f415ef7dac8ed0cf178b0"
+    },
+    {
+      "path": "iskvw/piel/animadas/5cab5f2cbce0-17871820783379260.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "4e548f6a88435a1295b0bb3a82c25668ab2a700aa6cc952be3ae4fcff39999f2",
+      "sha_after": "0fe1289af3289f2e0e4e919594d69235fb15504e72581db21e425cbb0bcb6659"
+    },
+    {
+      "path": "iskvw/piel/animadas/5dfdf07e3c7d-17852448997388699.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "2a133a65dad0145f1db7f37d1aaf3f7ff9569982197f27ae0e00e0f1309087d2",
+      "sha_after": "a876347a0c6cb85527906dd64d154a039c23490de833336371d0b8e47b374457"
+    },
+    {
+      "path": "iskvw/piel/animadas/5f6fbb3a285d-17843328659444328.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "ebf1f30405c302e317134c91e9ead0077948cd87d353adb8c00cc68f090da547",
+      "sha_after": "b563e94034fd6e9e8afc352ff30fbebe7830160f5cb6f301bc73bf39594c67ae"
+    },
+    {
+      "path": "iskvw/piel/animadas/5f7472403ef2-17888511127323558.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "7188ecaa82b16d40d1d55c3e5ba33a245a5d629dce53c02e6a4ab12c41d99695",
+      "sha_after": "0fdaf213d1dd182cc34be0324d1c09402e4cfd9e9152ac3aca3824cea06c8924"
+    },
+    {
+      "path": "iskvw/piel/animadas/614cef7a9a8b-17854724201160688.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "c2d7918f64d664936f60067028cb5d68fa1cc82199e72f19215b914ff47f8032",
+      "sha_after": "aaac6a75e9540bbbcb403dd1bb874307ea2ee26a5b4f5ba996a7a6101e3254e6"
+    },
+    {
+      "path": "iskvw/piel/animadas/616ee906aeec-17962190425532463.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "eccd8ef34b99f43d717a8ddc625cc5503a2bec70c01d13eafdb8c94dd831df10",
+      "sha_after": "c1b46e6b537ecc503922a1d2830fa6a881abf48c1aa94c8c7ed5efb7f1adbe36"
+    },
+    {
+      "path": "iskvw/piel/animadas/6275fab9abeb-17876063299534561.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "fe7bd32372b2e39ce7f0e8e264245727a7869c3d900e5c80cee35b94906c38e5",
+      "sha_after": "1913a4b0c60d7f7fa73565d26172031e6f7e5f597dfc5cc2546cfb2015136943"
+    },
+    {
+      "path": "iskvw/piel/animadas/6286cc34b8e1-17971649371238729.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "bf78f0d9b61c5573ed61711f02e9924cf5b968105848710f623604808af56066",
+      "sha_after": "7783474c3bfcd1257e14658a32ed21f4ece8ff185f727ed0cf7c2565d058ece5"
+    },
+    {
+      "path": "iskvw/piel/animadas/62a044f75382-18024809851845772.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "c3b16eff647937bc63262aa53a788e515843d14b3b6323512cc9b60edd91df64",
+      "sha_after": "0f2c2d27cbe6f321c2d9ae3811866582996f6a10674ceda6cbf63723ad861b15"
+    },
+    {
+      "path": "iskvw/piel/animadas/63b190b54138-17845787518845296.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "e19952382dae8e8549078efbeb6ea141afa89a587b2fc823e8a9063f2d4e0eb6",
+      "sha_after": "ebff61cf4f35c336a3e99fe899837b0b023fc09f045e484dfee2568ace935659"
+    },
+    {
+      "path": "iskvw/piel/animadas/64a65eab9dad-17859506293659408.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "da95b57a59716abfaab0dcf6ab5b1dc092d1ab1e228649ae10f6df72a2d0efa7",
+      "sha_after": "531ef13850477cf0ce403ed3fa22b78721ec40e62cde3a2ef93476d92cf1ac93"
+    },
+    {
+      "path": "iskvw/piel/animadas/652443a11851-17857101362197863.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "c6263dac027b3fced10a9c7ae1777734206a70e464dbc56095f55950f0b8da6a",
+      "sha_after": "62710b80486fa5cc4df5f280ae50f5b784ed29fe52efc09d3cffeb582fc3f700"
+    },
+    {
+      "path": "iskvw/piel/animadas/6611aff74b99-18032684564372263.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "c1ec5420c1c994302c53f0247c4b58abdafb7d855b897e63e14b25051f732a00",
+      "sha_after": "507e72e368d14d9bd4096c15db5f553c709bdb552d44fd894aaa7b5c1b8c9eb3"
+    },
+    {
+      "path": "iskvw/piel/animadas/685b4d981f7c-18038253160975120.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "b9034749e267e95fd6a1367118501133817b733dd52459cdad129586e69e90c0",
+      "sha_after": "6b4252d826889a85d5d1cba161765dfcffcb2998bf0eea69ab79a4253868a4aa"
+    },
+    {
+      "path": "iskvw/piel/animadas/68e042c84028-17934207533872011.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "aa1f825b21d8a0bafee8edd070d1f3540a1d2e929cb74fac21dff7b2fe50bccc",
+      "sha_after": "bed28fb06589b6c34e45ff3a726b099bc6c9e12f716850a08de548226d7c049a"
+    },
+    {
+      "path": "iskvw/piel/animadas/6a2b6cc16bb4-18000677603236889.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "6698a6afe353acc1a6d7ed9806c1b09d4909244811632f2f26833cc17d73ef8c",
+      "sha_after": "1eb428a49469a8e135a1cd6df62eb073fab83c9889387ff0da77d9eb5b07de5e"
+    },
+    {
+      "path": "iskvw/piel/animadas/6c3f2b081d3c-18037683662584029.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "2ea5b5b5dcdab3955acbf36730d37fffdf9f4d743bd23a933d245ec5206771a1",
+      "sha_after": "7e58907bd44556c983aaf16f15346119ad7b44b543e44d56c19b32982deef467"
+    },
+    {
+      "path": "iskvw/piel/animadas/707f9c22bf76-18004246832396649.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "19d35e9885bb7573f680693a75dbe387772b7934f041dd0999067f5d81d8b55c",
+      "sha_after": "b5b8634d6fe071a72ea6d557495020158759ead51407d30e368200c7279ea957"
+    },
+    {
+      "path": "iskvw/piel/animadas/708591fa4ff5-18036078992195907.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "4c6f64e189f4f05bb21df2972287b4d57fa0f0c6ac262b586d744bbc17d8211e",
+      "sha_after": "57077d2b23faace65c071ccac5972e14dc0fbd6b1b292c8959e55c9defa36dd5"
+    },
+    {
+      "path": "iskvw/piel/animadas/709516867d5c-17991523726227122.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "87f43616064210fb1c97c4254d2d1bdd8d69a8b03b6bfb465589709d53265ece",
+      "sha_after": "e037bad35d240cb73148fc6ce3d79088a44e6e0c91cf56db4ff2853ed643fc43"
+    },
+    {
+      "path": "iskvw/piel/animadas/70dbffd8d51d-17882303062334963.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "00f9fcba4e55d63b988f5f7af1ff7b5bd84125b04c2cbacfb14ac585849f50bb",
+      "sha_after": "63f1b001aff249891099ba5a96fa10a2b195e79eae25e5238addbe7cfd0a8db3"
+    },
+    {
+      "path": "iskvw/piel/animadas/738e94312612-17888318691124495.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "e09397d3edc1c721d01b72d3c32c8afaf13e6178bb411366e4841f6cfbba2e34",
+      "sha_after": "166d3450cd2949a953ed8474c66242df397a9579242808b3c8a3dca24611be5f"
+    },
+    {
+      "path": "iskvw/piel/animadas/74459f3169b5-17903165113588892.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "e88c7bf2bcb9dd794f833e1821702f6708292a7509077b1f964d61e9372449b9",
+      "sha_after": "a9e3c8ba532fafff1e3c50a0b5b4e8e813fb009c7d088ee73f231390d9efdbb3"
+    },
+    {
+      "path": "iskvw/piel/animadas/7537a43931f5-17880030728540671.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "049f2186f1d357576e141814255d48cfcfe2644c94f323e665819611497ebbdf",
+      "sha_after": "ae98a8bacf55d6d51327e6e3b93ccc710b667fb66472e7550c7e2d93931ec06c"
+    },
+    {
+      "path": "iskvw/piel/animadas/76688e6ec157-17953319629530145.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "68616475927b211952f90ec108885806e78c700073bc11d8a1fbefb02dc09647",
+      "sha_after": "dd410dac90405306a2e7aa99b889aa2ddd3b2b2da5a9d5dbcd4888307b8cd8b8"
+    },
+    {
+      "path": "iskvw/piel/animadas/7785c95c9370-17852840569564439.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "f472590a93c0f57520097054c594ff1b16d37635e97cb4dd9fc9402c84a67b7a",
+      "sha_after": "67be2d50d57c029123b4b147c96796f92279ed93d081b4ce3f22d06f8d9276c8"
+    },
+    {
+      "path": "iskvw/piel/animadas/789193d3e117-17866260151364074.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "1f18ff72406392968c1fa84836d0981dac271d37fc7da74e5a54505bdc9d9c40",
+      "sha_after": "68eecfd1b47c236724382fe9769f536dc41260863868665a38140a54b3a3bc01"
+    },
+    {
+      "path": "iskvw/piel/animadas/7959759f21fc-17867276761467490.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "6f02a2b4835ccb97ca5d4c1993dcade50e9984bbf2fdf0f76de2f29f58895407",
+      "sha_after": "f06e9a9693033729fd2dd322ad05e7b8402c18e8cd26bfe07540ca87c3ded17b"
+    },
+    {
+      "path": "iskvw/piel/animadas/798b71072217-17958599114585462.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "6788b836c78626a66a1937c659599d63091ed696e9f38e73a861a66088b68067",
+      "sha_after": "852936e926f0a79171b93750679812c7252f42b788694cd625626674fcf236bd"
+    },
+    {
+      "path": "iskvw/piel/animadas/7bede9529955-17988022210474137.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "499e7e54e0deec5d69a915d866a863075ff7940ac5dc98634f9c549ce3855580",
+      "sha_after": "ef1ef9eda886d8d67f1718554260adaea37f84e0bf4dbebfbdc10ac82dd22316"
+    },
+    {
+      "path": "iskvw/piel/animadas/7cbc907f282f-17996095862572575.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "f647b5dfa4f929a7797260c8f8852496400103ee02f7ef58054350a38df6fe4b",
+      "sha_after": "296469ca69fcbb3efd07b57158bc4ac99a17177775f78bf2092a18d414d2257c"
+    },
+    {
+      "path": "iskvw/piel/animadas/7effbf393c6d-17948307560315640.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "14730fc90f694422126a2ddd9ff886b399537d2b9af8bdc1dd1f0eabc9dd2552",
+      "sha_after": "0036ec4105d3081f2491749a761a6c5497e0315b268e851d38b7daa46f383062"
+    },
+    {
+      "path": "iskvw/piel/animadas/8033b0656077-17992005898201864.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "58e82ae7f022d26396934b6b1d9fa5e3761615cc9589a9010d4d214708127ec5",
+      "sha_after": "76cfd4b915abc9f846f69bc07444667de22db0d1b46eb55fe4141d8e49395d1a"
+    },
+    {
+      "path": "iskvw/piel/animadas/820a4be12dc9-17854988393220848.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "3b899511e0dc70d556ef517f7378b5a92f4d0d17ea2ff427a2e13398460e0f31",
+      "sha_after": "388bca75ac380fec6e2cdbd05889481c62471d0aa897b4c6bd5c5ee5c03065f1"
+    },
+    {
+      "path": "iskvw/piel/animadas/8390de6692ce-17906258920342528.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "f26eb01a778e80f0b1fac3457059641e87728d9c4819d382ab864d5e0806427f",
+      "sha_after": "be7b56c080aa3d3a58955403808690a431e877d9ba6d36707e769f6a7fd15b7c"
+    },
+    {
+      "path": "iskvw/piel/animadas/85954ebb9eba-17889941056342714.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "8bb49479ceb7c740a8fa9a4cc6527d3ebf8146a2959efb25a07379f6cd60530e",
+      "sha_after": "840767f25b9b24e1f6464f1a3f4115767117b9027ed4f28dd8ec513b50ba7747"
+    },
+    {
+      "path": "iskvw/piel/animadas/884e6c9fe122-17850072878008610.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "77ddde98772eba2ba47c5c78b5a1fda5add6ad57354fd40c30e2275c94d6466b",
+      "sha_after": "5785760e1192658f9ed42fdea3c89c5920183820afcee1f9aa481575651001a4"
+    },
+    {
+      "path": "iskvw/piel/animadas/8953ed397094-17856044518371302.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "15722c7d5d65b02427021b0fe6d60e8f3cf7c4234ff9ed1b408d79eaca5b165e",
+      "sha_after": "f3faea657f513e8ad34e6c10b7834a56ea809aa1840d851cad3970701f22bf71"
+    },
+    {
+      "path": "iskvw/piel/animadas/89b1df943701-17976437587426924.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "861fe081d79a29a418c045a9882bf79d43ab65acb97fa9efd1f6bcf44bbace0a",
+      "sha_after": "4ed6ba4075e47553facf97f46a5eddf844383102e54faa88fd4e3a6efe04ec63"
+    },
+    {
+      "path": "iskvw/piel/animadas/8e2176d13f78-17880943226362042.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "2555e85080c6899774cfee5791d80c2d8382c8c53fb16ccad0f6466b9393c443",
+      "sha_after": "9b8c3f43a45ec7d3f07fd34b90f8b56270b5ef2bf8e8f873d46e4b91b9e263eb"
+    },
+    {
+      "path": "iskvw/piel/animadas/906ecb05310d-17929370071961613.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "5cd066f0c3deb7d30cd57299777e4b95d0ee5d97873f74a20772e121a186d93d",
+      "sha_after": "642bb5e02a78e05a9dc242366f6dc8e8fa64bc456db4cbc214b7b5ff098fcdfb"
+    },
+    {
+      "path": "iskvw/piel/animadas/9368b6a43866-18001717157275260.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "07bf20f5e7c0b1a38301e5d27c651b26bdb188a2f996aae314f0a6f93340949b",
+      "sha_after": "a8eec2ddaf03fe37ea68933609ceddc249b1729df1deee493d094c3f637e76fb"
+    },
+    {
+      "path": "iskvw/piel/animadas/93ba8427fd53-18025876696979203.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "66ad0671cb7343a1efb9054fa67a5b1f042d66ecd139ec41b24d965a43b776be",
+      "sha_after": "2e1a7e46d24a760871f546e51d78ab953bea37439793809c60968c44d571d819"
+    },
+    {
+      "path": "iskvw/piel/animadas/944287df6fc9-17867272316919445.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "66c65e6b745ce9750b677ad116ce30a92602068cf87ef12e957fabfc8ac0adfb",
+      "sha_after": "921da3ee8f5df11989b65c07dc3a824f21b6fd3f502620ca07058d900e586ccc"
+    },
+    {
+      "path": "iskvw/piel/animadas/96423d60e71e-18039320674171833.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "b3ff9b46b2c927531744c16b9bacdd589d2cf193e089edc5110ec6df2caae933",
+      "sha_after": "73fbb528f655faba263b16149af5d9b8b976aed1f4bbe97133a9e33507cc28ba"
+    },
+    {
+      "path": "iskvw/piel/animadas/97425692c5c4-17894763210171792.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "94609082b6f8e207dc094c0c0b67cb7202a78432b41b0aa6ef623ac31dbc8f09",
+      "sha_after": "be2799f7889bb668e74e8c9cabc9d788c57e6ab475d017d91a242e72a0636569"
+    },
+    {
+      "path": "iskvw/piel/animadas/975796bda466-17883123040368304.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "096eb530d1a20a1ebb429019b8d3b022613ed1d79eff7fb04b39ac2ac8e67b28",
+      "sha_after": "fb86f2ce7599239faa9c65c28bb94d09d4929807cbf42c737591535eec59e8e6"
+    },
+    {
+      "path": "iskvw/piel/animadas/9bd0b2ef3159-17974158467618047.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "ec05496260afa37bfba40d46182f3cbe2f7a377b2ab05aec260b1062b234f112",
+      "sha_after": "8ffb35d3f8bee99251dea1074a87342c7e0324de18d74d1e665a33aa256c6bfc"
+    },
+    {
+      "path": "iskvw/piel/animadas/9bfe162c78f7-17853914342827122.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "00cddeb0a9a3d108e7f85c752d72f360a7567cef9ecdcd24ad3fc60e0d39a61f",
+      "sha_after": "7f2936d5909d08ab7b992ca59a4932963b4ce92555c935f11683a6ce080085e2"
+    },
+    {
+      "path": "iskvw/piel/animadas/9c03b2b85ffd-17867756357007350.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "0045ee7e3b2547e973b5e73cd05c05ced60c1239a729fdc58a8859d1e282cbb5",
+      "sha_after": "cc4739f96aaf4fe374db702208e77b4653f9bcc6d8f7cacb726e870a9e558867"
+    },
+    {
+      "path": "iskvw/piel/animadas/9ca8f2d81150-18039205718370073.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "bffa2dec2c579bc688da21d842e1be3963537f9e150464203e2b319a10dab680",
+      "sha_after": "46558aad1aa99aa02b1a7b9ecbf5bdadedd0cf0465d7c36348d0858c121f3f33"
+    },
+    {
+      "path": "iskvw/piel/animadas/9d1c8873b72d-17875877382045470.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "c3e2b800649b58f16019ea854ee207a1d8dced9d1dcb03c4c34daeeec417c78c",
+      "sha_after": "71dbf5001608facfe8b84c65a22b1955ee4a159ec349db3c9e98896e04e67953"
+    },
+    {
+      "path": "iskvw/piel/animadas/9f8bc8818916-17917610360544437.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "ed15e60acb7c8234b7fe4eea3add7fab294512a4af70f4a81c54d887940b6858",
+      "sha_after": "28fbdefdfb543c82a6b0b94277e7beeb8f25bc92193cd5e353a1826561f22255"
+    },
+    {
+      "path": "iskvw/piel/animadas/a0a18f0c0509-17864158375421508.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "e898b02201e0d3c910b280e0e31243565d602da60184b495932545c98df5032c",
+      "sha_after": "06971114b1500679d39cfda668c292d83d174b0e72a5ca88bd7627d83e4e4173"
+    },
+    {
+      "path": "iskvw/piel/animadas/a18665eb1a14-17881701249354045.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "d8709779d512678bc90afa5d266e3a18076a48dae9aa55f3de867c14af72a072",
+      "sha_after": "fb2d7faba020ac292b1106280a097ebf5d2fd2c552183fedb890f9e2e921baa0"
+    },
+    {
+      "path": "iskvw/piel/animadas/a1c8697866ea-17853532205187140.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "135401e3ba2df0d4e969c5091e49bc6250da9b7383bd11ab4f4e4f4690e2eb2c",
+      "sha_after": "8458efe2881a5a138d124ebe2ffab8618d1a5cee3e2bebc0277c87e9e055c8c3"
+    },
+    {
+      "path": "iskvw/piel/animadas/a2c12438de18-17927313944894972.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "94771a539ab1b7b36d7f9b673a371fa5dd57dc841a348775d3cc50f0c79d9223",
+      "sha_after": "fea5db8f7d4d85863286ef0a75062bcebe08519ff09a20d6eb7bb17b7bb96e59"
+    },
+    {
+      "path": "iskvw/piel/animadas/a2dbdccd72b0-17857597066757138.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "19bf75df048c8f101b1e9e280ee3849a3a47948101aa47a9c57ea4f7984fa610",
+      "sha_after": "ed396292b31a1cbff193ceebb661094d66159290dd7d8e29436a0a683654d131"
+    },
+    {
+      "path": "iskvw/piel/animadas/a3098c606ca1-18035622598311174.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "508c189ce4ec022cfacbc2404110ecf1c28439c608624a1cf1ae844eece947fb",
+      "sha_after": "26c4506b0ca944fe229b32fd0ed4e742ba21b11f5283419a1e07eefb52a46806"
+    },
+    {
+      "path": "iskvw/piel/animadas/a4e497f75f30-17877159435368708.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "54924d7e1d1fc930d895674b501874fdab3ceaba8eb04512f954209ee423f4a1",
+      "sha_after": "c2ca51d5205a37ddc731624dbda14678054b5ec093540066f0e722b9bb9f2a1c"
+    },
+    {
+      "path": "iskvw/piel/animadas/a53dedc24d16-17866918565631590.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "c609cc6ded3b0d1e8863e1c556ef7145d8c293be2e4aac0376faeba9f5967632",
+      "sha_after": "875a2f18f3a3ccf8c6f09b1599135cf1b70158bf2a717ffbb0f86bf0ecf9f3c0"
+    },
+    {
+      "path": "iskvw/piel/animadas/a54acb2ffc17-17887498509305353.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "fc83c0eaba7cb0e5a0d5bf7663cd642f76932439e33deac92d6d16f5d1d20477",
+      "sha_after": "fb45b8f740e11559804a7b8146b1d075da829f36d816be17c5fba82000d5d29d"
+    },
+    {
+      "path": "iskvw/piel/animadas/a54b493c83dc-17931529555724724.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "c74d3378c4cc9e850e84913ddd99b0be807bdb509ef9c5fffaa6430e2ab52e3c",
+      "sha_after": "17ec70d00f76b08fb808496ab950dce95fad2c769e5ef9998d584f3bf06353ad"
+    },
+    {
+      "path": "iskvw/piel/animadas/a632e8737c66-18035328752225452.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "d957bfa72edfae9d7ce87bae9f6da9be91e6bd0f1f5b0ad14696d86fef37928a",
+      "sha_after": "24027215367a47cecceae5d65ae1d69ee4fdef95c8a32d521d694502c0ad86c2"
+    },
+    {
+      "path": "iskvw/piel/animadas/a6db0c8c9fb1-17851550597063004.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "cb72c87fd04cb0aaf5a9c8317a198aeefdeab2a1da2575568f206ae1595a882b",
+      "sha_after": "9624abe69dd0b5078bccc511d582e03abda9d021f0ca77e5c80f99396e11b409"
+    },
+    {
+      "path": "iskvw/piel/animadas/a71c42b9ccc6-17880397139811782.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "e3f0185f41dab75ab7809e134e68903287926aeb1844502c5dffa6130e4ffc15",
+      "sha_after": "6242163dd6c25efa6be195ab0034b8c0099473774d81ece313c4ea5b6606e48a"
+    },
+    {
+      "path": "iskvw/piel/animadas/a73066a24bf4-18027936916249115.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "395f3c8dfc44c96345bd82ddaded58067ac688340f9bbe81b343f52ac433eff6",
+      "sha_after": "e533c771ee15cf14dcb9fdd8b60782460d9b85f3792c0c28de7efa6dd15543b6"
+    },
+    {
+      "path": "iskvw/piel/animadas/a855cb3e64a8-17851907533756714.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "200bcb242d761b0ace7abd18a6abef095af102313268a95db894ed9b47e4848c",
+      "sha_after": "270e952deba9c9f361a887d3a7cc7de3ba2508431ac0d0a12009f901b59e3be0"
+    },
+    {
+      "path": "iskvw/piel/animadas/ab95176baac7-17863182340666631.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "e5962cb23e7aa4def8879c764d0a8dbcc25446671ee560ece39c3c599c0880b1",
+      "sha_after": "9240a7f6691c2e8b4db03e91c12e4434212b17189a3c9c80bc44bdfe40b005a1"
+    },
+    {
+      "path": "iskvw/piel/animadas/ac5fcf77a3e3-17938347118323980.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "17de53f43ec0f8fe425f470b8076dd057e4a281aa1233e5dc46233684523ad8d",
+      "sha_after": "0450a3db47d3f4f46ffaf78d2b149967f8bb98d3d2b88251d947fdaa0a04531b"
+    },
+    {
+      "path": "iskvw/piel/animadas/ace00821b886-17952822080182508.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "f7be6810256980dd12ffdaec52fdbe890027e569393294a1d55d5a11e257aa82",
+      "sha_after": "832ccdda9836dbf92a45243c0a77d3e51574fe0f54c2c01683d32db26881c76c"
+    },
+    {
+      "path": "iskvw/piel/animadas/b4826aec8c85-17983848808413828.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "9202b65a7e095d0f70834f0012cd82d3379e2d273a399073e830538ddd33b69a",
+      "sha_after": "f316f14961655e0d5020d722491d0d2cf57c491b2ac65bd30fdb1c2b3fc83f88"
+    },
+    {
+      "path": "iskvw/piel/animadas/b4a21501412d-17973436162886570.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "87ad0bf1ead45526a3cb1fd325f929089c8d751244aad684da4426cc0a875296",
+      "sha_after": "aa50f17e2eff25d7e2027995100cd9f6789fd151aea71f13e6dd3598de22cf4e"
+    },
+    {
+      "path": "iskvw/piel/animadas/b5386769010f-17967901133172544.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "22b670173d63c7996f86e677b66a0ebdf0016231dae3a86b9e8e3c24c90e1f28",
+      "sha_after": "c67f67e1a395da292988614e3cb3eee8f18b983f06e73bbc52ee619bf74841ad"
+    },
+    {
+      "path": "iskvw/piel/animadas/b622ddb80161-17854954905131132.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "007f71486ac83184d7334fcc3585ca8eea327b54cdda78357b9b1de4d949b015",
+      "sha_after": "72cb87d4468624e88bcdd14db1b21ce16af3793caf4df3d49e6524b1ef19c324"
+    },
+    {
+      "path": "iskvw/piel/animadas/b7893c484798-17949299791604959.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "dd165ed9fa359b2be10504727a601d430f927def7410f704768c8fc8c850c7b9",
+      "sha_after": "bcca7d5bb5ae5df7168dedd05e2d66ef06ec4797a1d4570381074bc72e0f042f"
+    },
+    {
+      "path": "iskvw/piel/animadas/b7db44844c69-17869689289853974.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "9e3ffeea723bcd909dd1f200e7c3c8d55fbb05a830668ce0d507d960cd7fcbe8",
+      "sha_after": "549025c0187c41b7ad3727da7602922fda0a10c9f282abc4df201c7a2a81d7e1"
+    },
+    {
+      "path": "iskvw/piel/animadas/b7e5e5fb7c92-18038093332156834.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "f994e1b913a910f07516bfcd1c14a174afbfec59eaf791cb159ac61066a6876b",
+      "sha_after": "f25a01fbfd11522c5b609eaf7c4258dc570f5192a7f46237a3749b3ecf3e5db5"
+    },
+    {
+      "path": "iskvw/piel/animadas/b7fd4e77b4a2-17926032902806396.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "cc7b604e6b620461ce83dc0efcd7a0ff41baa485c6695c69d77f353e2cd65e32",
+      "sha_after": "44822323a5b89255d35526cb5a8d582c314ba4a4dcb66ae5a7eb178319494496"
+    },
+    {
+      "path": "iskvw/piel/animadas/b84dbc5e84a8-17974721233720861.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "405b7f85641aaf4b73e3721c57e4953be2f275e38bdbe6d94619188bd5a75cc7",
+      "sha_after": "a617b3a9e51b09785fe459e7730ff33c47f98468edb9ff66ab325c9ded7d6e85"
+    },
+    {
+      "path": "iskvw/piel/animadas/b9c4c92daa55-18022778749304715.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "f71045d64913001faeb28b5fe9c11d70e37cb4d552ff56ddd71e71c59c06567b",
+      "sha_after": "8bc7e7620a1788f2cce96b5408cf04c72629d3b507d9e85cf507204d84e7c54c"
+    },
+    {
+      "path": "iskvw/piel/animadas/b9d99421b10f-17980010639952080.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "3b36d3833cbcd8af92472b60b32d44416fb66f43fa1c9dc4d3c111c9a59b4fec",
+      "sha_after": "50cb69bb68fb7c7c0bb9087021c49a9c145509fcc5497c9fe023aa9ab8a4ad8c"
+    },
+    {
+      "path": "iskvw/piel/animadas/b9e64fd64603-17882155144429191.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "e8363438d271614b813c4f6e8cf3f39a3b231d27ef49ec518c7621744f632287",
+      "sha_after": "0b34b534a54d871cef893abbe3cf2dc4bb3a53fb5986db129bc89d8a1b6da115"
+    },
+    {
+      "path": "iskvw/piel/animadas/ba68d36f0b59-18014122394476059.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "2121bf38022d8ab58b2c7d750101f4d07f272f35f942217498be6eaa8b4fff37",
+      "sha_after": "663d1da739749620ac78c053560e8e9a2f64598f254569956e4cde1c5537581e"
+    },
+    {
+      "path": "iskvw/piel/animadas/bacf9a14813c-17930415769342822.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "9d4abab64aa2909d2b57993f8cd8e73ad6569059eab28469bccb61e529ff86d5",
+      "sha_after": "6614f62c27cc819ef94e65e9e7fee9b5128a150b74ef0c55029505fb4d1443e2"
+    },
+    {
+      "path": "iskvw/piel/animadas/bbce1758481a-17856523829176989.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "8138600e343dfbca9834d0290a8777dadb2a0d26bd99a2834f29e620ef2f9a8c",
+      "sha_after": "95afaf67ca73fea33b3823e06ea81368a7a0f0cb3c02476a78bda8f6ab4ed8c7"
+    },
+    {
+      "path": "iskvw/piel/animadas/c00203a1b3aa-17893302373618541.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "82477703ad67da843c200484296c4c14141c6a595900da7d209253faa162d73e",
+      "sha_after": "5374396bbee1109e7974c7516c373b4ec84b3dabadd20c34a5ac71f3be99f30e"
+    },
+    {
+      "path": "iskvw/piel/animadas/c0560fe28b09-17966138426608671.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "3427408882f222ef52a0fac549d5098d62ea58070e45f550df8686c610a381a2",
+      "sha_after": "f81fb2570d3be32fce7db02e8f9576204476b7813f2d0ad7db9ef105978561b0"
+    },
+    {
+      "path": "iskvw/piel/animadas/c19c1776dcad-17902678446125471.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "e0b37feed77d198fbd73df372610b42fecde0690321dcfc0ffb059e353e42b2c",
+      "sha_after": "aae0a5c8d1fbef6c894eaab60db557f93b91fa9bab2bdf8278d2d8c9e7550043"
+    },
+    {
+      "path": "iskvw/piel/animadas/c47d46620944-17967933337471287.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "4b0439a68bd41a307388b6061fa21170e0628415ac64ede71defedc7816465ab",
+      "sha_after": "b6eb58ddb36b70bcd6873a7ac087c1fcf3570ac17b20b3d8cd110c98cf1e0883"
+    },
+    {
+      "path": "iskvw/piel/animadas/c54e379eaff9-17974105490670053.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "b78281f42d37ef9c8cf46788e383bc87fac583d68fcd6f1a554926bd9f651cf4",
+      "sha_after": "275dcd27d80fa72f7e0d11d11ce2cce1e3af397309dc547e24e57df8fb16d0a5"
+    },
+    {
+      "path": "iskvw/piel/animadas/c603ca65f216-18016259455084202.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "b741561a90999012cf9bde1e0c65541cc6884b82fb7f112519bcbe62836e3784",
+      "sha_after": "9c3174495246453d07e4da452755808ff717c5d0b5473eb1df49452c5f58f8d9"
+    },
+    {
+      "path": "iskvw/piel/animadas/c68f9bef3a83-17968555390696307.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "a660d8d97161964a69d06ba4bf20cb389ddceb83ac770f6df988c120fd63d910",
+      "sha_after": "291327d99ace48716a45e256dc7474f22b641d43964b0e8eded4c3c512137b4c"
+    },
+    {
+      "path": "iskvw/piel/animadas/c888a7bc77e4-18015988396089055.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "9076098946adfb750b245cc6212bc4cdcaa8f7fc3f0c9ab66a8e55b0b9373f93",
+      "sha_after": "c67be4c44cf7667c588cfd7a18fecddf31117db323ade7cbdca281b04ea645e1"
+    },
+    {
+      "path": "iskvw/piel/animadas/c9fd60a14c5d-18046605865086283.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "17d7d92e330684477b2f59f44ba294134fb3c4872ee98309bdca44742a32dc6d",
+      "sha_after": "6bf5ccf6ab372208851bbcbddf6838519d69423fda30c0befdef7dde89c8c51d"
+    },
+    {
+      "path": "iskvw/piel/animadas/cbc08a35a9f3-17862660513372721.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "cee4abe93959cf2ac72e3faa2969d8a6c7503bdbc01f6a1ae483714231f1a814",
+      "sha_after": "121d75002102759ffbea2f2026734cadedb66944ea046989b331130fb20c1542"
+    },
+    {
+      "path": "iskvw/piel/animadas/cf901baa57a8-17884915530214952.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "da3762e11ea0e7a4a80f1fd9c2bd842c942f7768eeb8ed87890d9c461fa1416f",
+      "sha_after": "666a1396c71fd47291a2eb86d0867c973401654e22bc1e8648dc24d640700ef5"
+    },
+    {
+      "path": "iskvw/piel/animadas/d1b3f78b459b-17872102909481262.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "4c80f8ec9beb035bc0577a319d408e4c563adf5df346a24341d8b72d445d0b5b",
+      "sha_after": "e11056f6bcd99a477bac7291139d2e5d71d4c160c9aaa05e02593c2ba355274f"
+    },
+    {
+      "path": "iskvw/piel/animadas/d379c6b14deb-17922172468848742.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "af56b82ba96ffe8e1ba06055468eb6cac0dd13a6f3b1b08f11d3a2b03c0a61db",
+      "sha_after": "08c89f6958000ef05f86fe9c582939df9e6192baaae0894a745093a442b89c65"
+    },
+    {
+      "path": "iskvw/piel/animadas/d3e0ff6a1931-17923706170929622.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "fcfa94ba684d580114416569c6bb54f252baab96f61edd153a44651257a9a490",
+      "sha_after": "a0236e93165608021dd35afb90896aeb7b21dcf9e57a9ea3fa2d953aaa1ca24a"
+    },
+    {
+      "path": "iskvw/piel/animadas/d493fd0a393a-17861305420545825.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "13c5ace66776861054a10bbdbc45dc823f8a9112c5f760fef07ae736f0611056",
+      "sha_after": "3667527b6626223f8f5747df93f7a99e957e2d2b808a7c7f2e9b69df8b72a7e6"
+    },
+    {
+      "path": "iskvw/piel/animadas/d4ab64242cdb-17844724201661167.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "591b2fa71ab3357d13b92e8fd91af492fa4aa30d3b5e0b902759429522823aea",
+      "sha_after": "120893886f8748d875b3faf582475967154969aa65880e07d1eacf64c7a022fb"
+    },
+    {
+      "path": "iskvw/piel/animadas/d50bcf42b35c-17997760667585464.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "fb88985685fa47aeb7eec9d1454f60782db4fa7b381a06b35a6faedae3b386b8",
+      "sha_after": "514020973e1701e10f8916be1b178d98262c73e1d69b98c248bc7f0b4b9534ef"
+    },
+    {
+      "path": "iskvw/piel/animadas/d54a5d8c3f92-17896425919564980.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "fba02d89bf987ce48d1393ad15075cbbd45731c7c1b3eda4d05e025c233a8d86",
+      "sha_after": "596288a3281e2973da117d39b0ce8195ee481d387bf0e55610b45879c23f2d4c"
+    },
+    {
+      "path": "iskvw/piel/animadas/d58fc823447a-17894584518153632.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "7ac9b0d14e08a26214c9b27d894ad656687655275f48422316bffdd9c6f93cef",
+      "sha_after": "eebd89f46173c85b3fda4878051918de114e72b49478d00e809f9e964ed97931"
+    },
+    {
+      "path": "iskvw/piel/animadas/d5abfa05d85b-17997359173276602.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "edbd14427dac23b12d8f27248ca45ff763a455da581495eafbad09c7e61235ef",
+      "sha_after": "e9518c8e0965b4b53fb7f6ccdac2b9009ea1e62f13b7231f053699a8ba5be1f1"
+    },
+    {
+      "path": "iskvw/piel/animadas/d5bdf158f273-18013055563219281.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "a3a3eeec27681c0d95db117f9457d96838b74afdb4d493c1a0a3ed186446531d",
+      "sha_after": "f3f3426886b3a913c76715fe00823e087d3a413ba87c977cbc7964743df6b7be"
+    },
+    {
+      "path": "iskvw/piel/animadas/d6bdef32b2c1-18004810045586801.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "229fd00cc513105362c2f305ea44cf12b1ad632d853568f8e7f3eecea9830774",
+      "sha_after": "c8b051787bc0140e19e069b7d65e8c6f8f45004fcc5fce3d040c29249d983acc"
+    },
+    {
+      "path": "iskvw/piel/animadas/d8727f120597-17864582880343851.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "e17521cd840d4fb3aa70778472116c7a05977fd4877ad645c3874bcaeac4e5da",
+      "sha_after": "a3387b0f565f5a5548bcd4ce8cbba504f81e6b745194b992ada533c129177aa8"
+    },
+    {
+      "path": "iskvw/piel/animadas/d8a334efb37b-17857606856174709.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "206c9b1155c270149498bf2c8370de3ace3f9ad826e44b94776f94471218fe70",
+      "sha_after": "9f7774597534346353f811ca2d89d2fd8311059e8fc83cf9ad607160571169b4"
+    },
+    {
+      "path": "iskvw/piel/animadas/dd3a305b5ad4-18044157760131818.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "a54d1dcc143e689314cc7bcb38778ef2f29d5c57653ac12d5a02b7e197d12a09",
+      "sha_after": "e51e7f075655ac1c63d622089eac735717136fa419ea3174f29be32053d5c998"
+    },
+    {
+      "path": "iskvw/piel/animadas/ddc5ed8b2836-18037996208732713.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "0c5809b2f48e672528ae72b47a10748f2f7fc5c2f6c6ebd700b5d76f01e86cb8",
+      "sha_after": "a28e008d98040c5cca60a8549179930f42fad0a44860fa969d65c6d70400480a"
+    },
+    {
+      "path": "iskvw/piel/animadas/df1f20c46c9e-17930300897449367.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "90ed8e514391795e1e338b04bbf58b8369c15a50ecef2adfc64afda8d07ab0f7",
+      "sha_after": "529746b56aae7c0868c4ae1676e18c7e0f3e2f08f063799442c921f566101d08"
+    },
+    {
+      "path": "iskvw/piel/animadas/e039fc9487a6-18044196727141488.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "6990314a8ce718fd0fc861da3ab892b587183c05730e34e1b1bb5fe88d39e462",
+      "sha_after": "32a720c2ea5a4919d68d709a4e37c3fdd66c10eecd7575eb0204a6f66580bd2d"
+    },
+    {
+      "path": "iskvw/piel/animadas/e1339c3b32a1-17866198324751913.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "22841ef3e6b10a305e7622912063d69211fb80eadacab33ada42e3f3e627371b",
+      "sha_after": "ef04683c6b5f0eb602cae7a43281914690f70259861b452e0dddf40c383a15c0"
+    },
+    {
+      "path": "iskvw/piel/animadas/e24c1c4afe59-17972832553704127.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "09fd959ba90e02eedfa61892502e41376adae81b79d11e0f62300edd6a5d0546",
+      "sha_after": "6ac2c93e60018548c22eaf5707b4adb58b00e77e360e4bb87067f8481516fe8f"
+    },
+    {
+      "path": "iskvw/piel/animadas/e3dccf254688-18023547625243981.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "d355b54ba04af2375eb3d6e7982e694e285758bf0acb0d1afe8cb4b3a2922ced",
+      "sha_after": "cda4f38f14f82ff62972c90c316dc69250ed1cab5a878f0ef1baaf1b4479add2"
+    },
+    {
+      "path": "iskvw/piel/animadas/e50e2a7207aa-17881947253365515.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "ceccf7e22e55c70743cddb5cc9841c506870404cf79f8eb888f7436d4e58b3d3",
+      "sha_after": "bfc2979d429fb55de3ef6ebbff49fc94b4815290f804696270e15d41d147747c"
+    },
+    {
+      "path": "iskvw/piel/animadas/e52a3dc32a99-18000331694768894.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "9027305c2a653b4107e22e976a2857e16d14e478df20afdb2d36c993f2678e3a",
+      "sha_after": "5199d2fc2ca8a4da48a3d329dcdf173815692fc5e9fc730de966b3e1d42bf50f"
+    },
+    {
+      "path": "iskvw/piel/animadas/e7bbfea249b7-17847173833847674.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "c5db2ee04d45dbaf3fbff56120a88ffab9b3f0a70814ec86583b03bf794a8511",
+      "sha_after": "fd86efafb4e12dc312e90b5e35b5773fb6f15609a72cb1317acabb60c8235edc"
+    },
+    {
+      "path": "iskvw/piel/animadas/e7cdbea4a481-18008788493194016.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "876eb680a465054531389023ac4ac8223fa7202c32741b2a69d85f292fb3a3d4",
+      "sha_after": "7f9447ae78d8ff8e6832a451c817dd3399fa3ddf688c4b9c1ae9deff761e4067"
+    },
+    {
+      "path": "iskvw/piel/animadas/e8561ed5b36f-17922173342398055.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "a3d838e5dfaf81a17387c75bb96e01a2f8ba92617be705e4f05f576e751d4971",
+      "sha_after": "ded3868af79f0f55204796ffd6fe812fa94d04047df0ec841b437a55f7eabf40"
+    },
+    {
+      "path": "iskvw/piel/animadas/eac1e3ff9265-17886435419639069.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "80a8e442afdfc4dae3ded6a1b6c05ab4972d920235be54edf92be566b20fef0c",
+      "sha_after": "0a540e74fd1fe845aee52fb219b0c788bec136ac7163a751f5039471f5efb7f4"
+    },
+    {
+      "path": "iskvw/piel/animadas/ec0e8596eae8-17899256850111382.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "38e9c9102ea2976faf040b907fce0d2508fb6a88b21639c6fae6781d8ead9aab",
+      "sha_after": "16e9e77008f17d0df914694be8914f28884f8dd3330cedb7f9d7c9d29ec414f5"
+    },
+    {
+      "path": "iskvw/piel/animadas/ee7a3500f4e2-17890383429401863.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "11e892d1ac486e48b41094943c1170b7130cc709ac30c9ad875de61a88bb68ea",
+      "sha_after": "ac2c5baa201c756dc94a3ea487fc420c78dbcb7190e36ed4236a6e0bf744cf92"
+    },
+    {
+      "path": "iskvw/piel/animadas/ee966a429816-17896910748056160.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "ed381f20f8f51ad110f864947df8abb6cc143cab491dc45d654d6a6af8188798",
+      "sha_after": "f6151e6dc0564535013a470229b85d5bb1d1e8961197894c70d37bc4b39fe775"
+    },
+    {
+      "path": "iskvw/piel/animadas/ef32d58eb517-17845030481297400.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "faaa7b529412e8efaa4ad0631053ec262beadf1d6cc1e8bef6b45ee07c474096",
+      "sha_after": "e52d5f18e26c4424b7f0ab1aed106a3a5a6dcfe08255a06b682e0d8f4e8a1f39"
+    },
+    {
+      "path": "iskvw/piel/animadas/f0c61a97cb3a-17848120819422106.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "51583695b5a591e9c3b323e39c8015b82360e8836bc2d4052d3d22edb13a6436",
+      "sha_after": "345655c07d5fb6eed32f2aa0d75cca5216852b694ac62e9f64dc57e836e271f1"
+    },
+    {
+      "path": "iskvw/piel/animadas/f1bd29f6b71e-18022603120675787.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "5de6817e5d60d82ed681fc92a8d6ce7ed69ddff38be11454e1b7dc4d79d7ff5c",
+      "sha_after": "0d209767365c436c5d3dbc1627ae6dca0768e45da2f0f09b85efce15225eafb1"
+    },
+    {
+      "path": "iskvw/piel/animadas/f4c029c09afe-17875722509747916.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "8c976b337ffcffa5684f73127d103f762cb23c5be4f70451c18df1c0a52ff0d0",
+      "sha_after": "a65a9e17ed18423eb3d053a913de21e586e005c18da82fe6722ac47593645c0f"
+    },
+    {
+      "path": "iskvw/piel/animadas/f4cce4725e4e-17950066945275581.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "a0ecbb7b34f8af41b1ee34a24d4b8cfca8a9d8e8e4d0083145e981ea72d4bc5c",
+      "sha_after": "108055e19446a5cd2c4c484b65c01affb7b1940a7f12e08f25976fe1e431082a"
+    },
+    {
+      "path": "iskvw/piel/animadas/f5d0c058461d-17888148403348431.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "44ca8f931e03b345eb217d6685b3f5ee7c60e25c7b2e82b03143d32cef4d5646",
+      "sha_after": "c01b94d49c627575dafe132a4f04b615ee4422c4fa7966ffc19c3ebf8ca5ad4a"
+    },
+    {
+      "path": "iskvw/piel/animadas/f9f28cd4b9bb-17907859922296381.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "a9043519362b1fbf754b239c836dfbf13237861525f021b6d3170682a737f6a4",
+      "sha_after": "d4b7ca301a1ed1d9c26accea853c9fdf129e7d6450f42ccbc03a6e5f5b6f7702"
+    },
+    {
+      "path": "iskvw/piel/animadas/fc55664f011c-18040456306010733.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "74ac99737ec03140753c4a085d82d6f4c6bbc9b4d5f7f676218256a3b07b00d0",
+      "sha_after": "9e0557ffce6d6ff547ea142ed40377a14452c775795be58414eae48a353f56bf"
+    },
+    {
+      "path": "iskvw/piel/animadas/fc7136de1e7f-17939322224390711.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "56a6ef08d1f1f6e4d9627b71ff2fed5bd80d74eaeabe540b0794396bcc8dd551",
+      "sha_after": "40332664dbee2ce91914b6205057d6ee477692f6b18aa8cdbcda1c22ed00383d"
+    },
+    {
+      "path": "iskvw/piel/animadas/fcaae5dd5a62-17969315711254699.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "c25cc58927b6c32dad850d109c428c0a94f227e846c73e6deea04e03241c3a67",
+      "sha_after": "c91ab5a97d06de6709d21dd94f9298711e163c3ae0c6cc2a6458b1c6c502e0cb"
+    },
+    {
+      "path": "iskvw/piel/animadas/fd34ec19212c-17853871524389343.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "321a05b92b00f8d364bfccc15f4645843a62a3f45495e748f876a4fbf6a6de78",
+      "sha_after": "503410b0da7bce2fb8c0ad9589ba8134b1ebbd8fad814c518726a6b1eac9e6fa"
+    },
+    {
+      "path": "iskvw/piel/campo/index.html",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "2e7548a3e7355716b7b151981287b73662299bb8666929bb8664959b4051d807",
+      "sha_after": "dfdfeba3f5934e63da4e54b58d852c2f7e495fee41b6873c8f587b1065330fa6"
+    },
+    {
+      "path": "iskvw/piel/campo/piel.json",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "2240442f8bcd014e507fc2f59f946edc43ed84a57f49b531b40ffc3476963124",
+      "sha_after": "e39f5187504127d45995e9ee028be4e7c086cbab7501d592d9e4b9ccb267d86f"
+    },
+    {
+      "path": "iskvw/piel/lib/distancia.js",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "6a656dcecc7fc18c681baa56bae75991a6383a8d6a921f2180272ab151337364",
+      "sha_after": "1b1e26a8340ce5b5c84ab77a4b1c790e5e451d2fa179e50e4374365b8ddc7b02"
+    },
+    {
+      "path": "iskvw/piel/lib/gestos.js",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "edaef85d2b76bff768734953cc9b03ea2d3e369802c5e8a691b91fa5d4374e00",
+      "sha_after": "4eaff17693b67f1cd65e2bb9c6cd32badae1144caa1bfa3aa1d347fa083db1ce"
+    },
+    {
+      "path": "iskvw/piel/lib/trazo.js",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "2d87ca285ee68d84ca5a0c09f43fe135980cb3c55bff9d5b7736b6aa8d9a31d1",
+      "sha_after": "a0bdb4ff480964218fb161e626077248579320e64e650f3c50c0a64b6c6b8a97"
+    },
+    {
+      "path": "iskvw/piel/lib/tsne.js",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "40515fe9fab33d89e6936acc5fd762c8b055c06cfb173c306758dc81d0f3cdf2",
+      "sha_after": "7b3a8f1a0a7b86906de8c89b7076bf28e6b58988b7726b709443bff5bc6213a2"
+    },
+    {
+      "path": "iskvw/piel/terminal/index.html",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "8fde16e32c2c05426533a32193f917c05a7f70bf3b05ba6fcabdd532669dcada",
+      "sha_after": "6f824ead938e039d18a01f71a92276306b3455b85c73d3fd911af61210d55ced"
+    },
+    {
+      "path": "iskvw/piel/venue/index.html",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "9aaff21fabc8ccc9b26b3a791da2bcb5b8581085e5422215d3af87d6a66ea194",
+      "sha_after": "a0249522f8d5da10b01581e58bab36c0c8f446fe79ffd374a48991036fd7edd0"
+    },
+    {
+      "path": "iskvw/propuestas/gpt-oss-120b/index.html",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "2ccea6a95b7ea51c9a1f07389b90735d5b039ae420dc69c6b277bf1ac2465ae0",
+      "sha_after": "c62c21eb042e4828c25b9a8c6c7ae631ceb870d48077f96e2e1d8a7a61a4fc74"
+    },
+    {
+      "path": "iskvw/propuestas/index.html",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "8acf3c4dd9b717595801a6198710aaa014334896c585c51f2077556b0d2f2aa6",
+      "sha_after": "f591d8cd5ab8d700767dab5b7927ecd52e71e0e18907a699da059a2f23762752"
+    },
+    {
+      "path": "iskvw/propuestas/llama-4-maverick-17b-128e-instruct-fp8/index.html",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "dc6345b504ea04fe7c6d2492c1a5d4782cb765efc403b3e0b7f894b0c4f49af1",
+      "sha_after": "969d12ad670ec708879855304e68e0dc8e14746ab75260d6f63e4aa5019e416b"
+    },
+    {
+      "path": "iskvw/propuestas/mistral-large-2512/index.html",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "9f9c2ccf65f1cc7960c5cb36b45bbe4b4aeb04e380eebf05e2223fef821b81df",
+      "sha_after": "53e971f5b2f54aa0f9c87571eafabb97c29f66314846c6b2c4f95e906cb1cccf"
+    },
+    {
+      "path": "iskvw/propuestas/mistral-medium-2505/index.html",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "72e3c1ddf2dab7294f162a366895c0fa0f384ed01aefae7e6a37d8a78df4e771",
+      "sha_after": "063bd4eacfccb3a7dfde9c0c5ce8fef20a2cdf61e93349e9dc31713327326599"
+    },
+    {
+      "path": "knowledge/logos/descargas/dame.txt",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "e574c4aec2aebf854053b778040d38fdcd540c31644e03bda7e2bd3ad62ec5fd",
+      "sha_after": "9944f5467059dd2f2fb363cc6fd7113e8fb885f42ade632a0af1208d7d586424"
+    },
+    {
+      "path": "knowledge/logos/descargas/glovox.txt",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "bb7aa36e675caba70e175400c76c7d22bec37069259cc1a07b111216f6e3ed71",
+      "sha_after": "8be0c5cfcd3c53399b8d313828ae1aa4ec3e75b2fdca62ce4f428494af0f2f75"
+    },
+    {
+      "path": "knowledge/logos/descargas/piknic.txt",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "e574c4aec2aebf854053b778040d38fdcd540c31644e03bda7e2bd3ad62ec5fd",
+      "sha_after": "9944f5467059dd2f2fb363cc6fd7113e8fb885f42ade632a0af1208d7d586424"
+    },
+    {
+      "path": "knowledge/logos/descargas/technoyouth.txt",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "e574c4aec2aebf854053b778040d38fdcd540c31644e03bda7e2bd3ad62ec5fd",
+      "sha_after": "9944f5467059dd2f2fb363cc6fd7113e8fb885f42ade632a0af1208d7d586424"
+    },
+    {
+      "path": "knowledge/logos/vector/club_freedom.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "033acf0fa12866ffd3d1c0a3430e184197110df7b0d4ec22350cd0fd4b9c6655",
+      "sha_after": "9a2590bd2f2b702bda7a6c39c4d622cf21f2bbfbd7ce8d5cfaf27cd909aa1df0"
+    },
+    {
+      "path": "knowledge/logos/vector/creamfields.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "2936ab0243be768d338f5099fc791b7fadd2058022952e3c8039d433c05c6aca",
+      "sha_after": "74d917b703b1d8b952898f8fbde4feaf0f1a8d1019ffc02cf0d4c31134d03aca"
+    },
+    {
+      "path": "knowledge/logos/vector/grid_system.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "325c047ec72c7b3f685d2f914948b76596f1f1b1482a835101862437bd8660d5",
+      "sha_after": "09fcabe46f0cd417fb3d2e2a93bff4d7edfce859788cf7991e6473ac919ec15f"
+    },
+    {
+      "path": "knowledge/logos/vector/panal_records.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "5150c72709afae0cd185096a635819c731f97a59e4c1b75760914e1f0b7e7f78",
+      "sha_after": "5cdef2c501a5fd62719d9b49a4dda35b7f250876a642188ade57fa11516f9e57"
+    },
+    {
+      "path": "knowledge/logos/vector/street_machine.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "6f7d767f27f142071520a71d5ef0d14aec264a8a072c58286e882397e57d9499",
+      "sha_after": "5ca68d79c54d5b6e7c320f4d7384da9f88229fe1f36e622269e7eb33138f9695"
+    },
+    {
+      "path": "knowledge/logos/vector/sundeck.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "566f297cc96fd7cfd477d721257eaeaf316322b65c5e61fb9d63a0caf3654885",
+      "sha_after": "fcbe8f1723d3dd39c2702ad75835ecd9140a0102b65906cb46a1e5811df79ae7"
+    },
+    {
+      "path": "projects/cultura/cartografia_filtros/registro_bloqueos.jsonl",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "22a8824ea844d75fb8bb5e091a29c6845e658115ef9e87659f388dead740b74a",
+      "sha_after": "c78eef6108e1725c9f1221d60b2f45e72424df8b22fde0e7e8565957613553c0"
+    },
+    {
+      "path": "projects/cultura/doublecup/svg/salidas/cableado.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "8885e18188934e5e8cb6dee520d8499330ae56678f3689230312321a87e2820e",
+      "sha_after": "3d157f9d16fcc893e9ce3caac5a7a6a093bde46231575d4c4ae2eb218275a989"
+    },
+    {
+      "path": "projects/cultura/doublecup/svg/salidas/depth.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "6b5222025c583b141c1f552d080ff448922c1ee7137d76a497ea95f3aa398ad0",
+      "sha_after": "7caca50979c418e5dd833e1b5095b4ec0f5c3d51e785ce979a302bb064a5fa5f"
+    },
+    {
+      "path": "projects/cultura/doublecup/svg/salidas/normal.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "7abd1c32a1f1d083bbdbb588d0c7e08e327b11ee41c5a5757f70622e4921968d",
+      "sha_after": "5370bf7cb1a6c8e4be288e5edc5ece5a2a5fb2fbe7345e72711a77fe4cf94fa4"
+    },
+    {
+      "path": "projects/cultura/doublecup/svg/salidas/oclusion_test.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "93fd262f03f1fc0d7782a7824a8c6689beb8fa12af648eb39fa569912875712f",
+      "sha_after": "88d8bfc5e0966c4be579b39433fce812e2d89a96a8abb2ac25d913b8f27dd05b"
+    },
+    {
+      "path": "projects/cultura/doublecup/svg/salidas/polos_test.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "adb545e1ceddf1570a85d5160e6c7ad0194073deeffb603db1a8f562266ecf30",
+      "sha_after": "677ff3454907cf349d9ee2859625ef3f672124977fd80e8a06d22b24ee4c7bf1"
+    },
+    {
+      "path": "projects/cultura/doublecup/svg/salidas/relieve.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "1c4b2e6d4883c596ebd55c3c3d088c0a6682817f3806860945ae166c9614dc3c",
+      "sha_after": "c04c90ed783b832738a9875951f684ab6c2de34456422bb32da2984991c31c08"
+    },
+    {
+      "path": "projects/cultura/doublecup/svg/salidas/sintesis.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "a01b3fe5f1dd7e1d79f75363c7b5655955d25a2c339f18c859573db10d185200",
+      "sha_after": "10b2d12f97925594a07f5438efdda7e94c8f76d2c20d9b372dfca05c0db3a6fb"
+    },
+    {
+      "path": "projects/cultura/doublecup/svg/salidas/sombra.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "47b7b6d43180fc78f6b71a2bab2b6e183e50661b08047dd296862aeff3082250",
+      "sha_after": "c509361c62b7782aefa0c63c284a7c6fae4e1d3b1372146c7d2b8a5bfb3dfd90"
+    },
+    {
+      "path": "projects/cultura/doublecup/svg/salidas/union.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "7646abb01ca8b0bd76ed75639fffd55248ef02690154308ff4bbfe19aaa21462",
+      "sha_after": "2b432675ee64e040af8953761133e98c9e5c26e3cb1de786238c816859c8e49c"
+    },
+    {
+      "path": "projects/cultura/doublecup/svg/salidas/vaso.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "89f3c2176cf5546ca47f03e4e513c03f27c3122b6077349c0c3b5ce6ed977573",
+      "sha_after": "3edb0bfd80729de824196262ffb2c4ab0d6d3060576c4d4c626df06c53d4eaff"
+    },
+    {
+      "path": "projects/cultura/doublecup/svg/sistema/cap.js",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "7e866b29a86d7cb79063c039c680ad306ca8200b14bb311d93058d4b5fffa589",
+      "sha_after": "4b6492da2c37b076c4e30f41387564efe2a05aae9b40d00bec7e1f00e6dbc8a3"
+    },
+    {
+      "path": "projects/cultura/doublecup/svg/sistema/cap2.js",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "d1a6ceaff40758911fdcde5a17e62d4d130366a504e68415a5c9aee08fe17a35",
+      "sha_after": "b008bf058a6e3eedc05d0e1ae0fefad8c874d92b9ea941910b9af98d403340ae"
+    },
+    {
+      "path": "projects/cultura/doublecup/svg/sistema/cap3.js",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "aeeb6f52fce6432c088b20a1af3e640d69b3ea43d6594a1e5698507241d267f5",
+      "sha_after": "fd9ee94baae81484c7ac17a3ee787e7494b9e575b32e29eeb0486af52d5a6efa"
+    },
+    {
+      "path": "projects/cultura/doublecup/svg/sistema/cap4.js",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "facea2109aee0d85e9f0374f3b5b6c9775c011f5df724ded38a4e03dda9836a8",
+      "sha_after": "405c7bac988868a86fe1764e59ee0d70f4ffc2a1da01d2fe3a0f6625be1342cc"
+    },
+    {
+      "path": "projects/cultura/doublecup/svg/sistema/cap5.js",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "5639fdf6073ea64038d1cd68285ea676ba7dfc97ecb2831e5a7e3ed23613931d",
+      "sha_after": "42c4f9303c64119cca275fb5ba89a29f92feb461997b0bab312784835f9ecef0"
+    },
+    {
+      "path": "projects/cultura/doublecup/svg/sistema/cap6.js",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "e53df64f208be213f44878d15d581117369f4a4eba241370cdbb64f358e211ea",
+      "sha_after": "0d192a5b986c0c0e3a097779ab87e504d3c79227ab82c8cc69f4937983f5ea5d"
+    },
+    {
+      "path": "projects/cultura/doublecup/svg/sistema/cap7.js",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "b47410871a163d9c138a8963c7d1af9fab13cc40016e849c0a2912cb664ed9bc",
+      "sha_after": "e0285e798c7dc00fa731b2c778612df54ec484983054a2140155766ea1db7862"
+    },
+    {
+      "path": "projects/cultura/doublecup/svg/sistema/cap8.js",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "b1e78c0475bec00ad3e42484d701ccd763952d627474b7e64b09b722773b887c",
+      "sha_after": "31a9b61101feefe0a9a0dc882e364d835c1e1bfb8754ece91c48258b15661eb3"
+    },
+    {
+      "path": "projects/cultura/doublecup/svg/sistema/cap9.js",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "87958442e82c4ffab8eef3ce89ba26c4a76f90a7f3b78cbba737fe7997020911",
+      "sha_after": "bddf7f316a16a066e0cae7b56394f05fba4102be98cbba217e8a892a30b51793"
+    },
+    {
+      "path": "projects/cultura/doublecup/svg/sistema/capc.js",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "d538a017333e814ea43041064fa0add3902664b614a6d63f4f74020086200254",
+      "sha_after": "b524e9e221a9e4049d7b02b80d7cf484525a646f97fb863c1df6aa47a82243a5"
+    },
+    {
+      "path": "projects/cultura/doublecup/svg/sistema/capr.js",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "47e1bbed28cff4223754b9803fcbac1443fa8b83354967ef7df2a5b1b71a18e4",
+      "sha_after": "cf8e6c6847d4073e890b81fa50de8ca3c617a3e971eea6709c1255c5f20a06dd"
+    },
+    {
+      "path": "projects/cultura/doublecup/svg/sistema/caps.js",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "6a62f2ce1dd58d27b11f4b4d547f3a5b1f47c385e2d2be28c1b2250d05dfdf3f",
+      "sha_after": "95e00331cb723606e716299444ea11d175b4be36d22d2bae6875415e1247d0c8"
+    },
+    {
+      "path": "projects/cultura/doublecup/svg/sistema/capu.js",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "d9b1171250c3ca0b784b98d4696b3065b45bb313585c697b25a7ddeb41321756",
+      "sha_after": "16447b7e3a5f7e3c4b22dbeb0d3cd51a08dea6ae07fbd6be49f641d92e5e4ccf"
+    },
+    {
+      "path": "projects/cultura/doublecup/svg/sistema/capx.js",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "49e7951794f17c73722bba62db41f733a0908cff10303a2e9749aae1f3516372",
+      "sha_after": "55cbf4dac42e219bd271bf8d5b2142667b7a34ce52a8a9db1a8f6ba7d22106ec"
+    },
+    {
+      "path": "projects/cultura/identidad/identidad_rd.html",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "347d2df007f21ef27be4958cd003e8e986986f90d3b22120269b7012df31da71",
+      "sha_after": "463e5b02dfff55842ae71893e22aec8cb238c396dff82cefd100fbaefbeb4f2f"
+    },
+    {
+      "path": "projects/flujo/ejemplos/.gitkeep",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "b8d4dac4612cc9e80ca4ed1db41331d2d1ca51e70518a37978dfd3f4e5ded424",
+      "sha_after": "44447afd43cf51f2bfb29445242cdbde9e28260b36188e4dfea09796c43dd43d"
+    },
+    {
+      "path": "projects/flujo/json/.gitkeep",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "ff4355f79cfd89d19e42a0fb1eb933a211a5190ba0ce62b959747e4aa5aab7a1",
+      "sha_after": "9881925933da505447cdda41ec6f902771a3dc11d67295f3be7a6ba414850b96"
+    },
+    {
+      "path": "projects/logo_clean_lab/learning/mini_dataset.jsonl",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "c1caa27badb768e696e8a4fd95505be598fd428bd89405ff03c7c7e497826a32",
+      "sha_after": "a0704763420b1f1d9bf2d3f4abf22b8fcc44a797ef2755c10437c890dd1532c7"
+    },
+    {
+      "path": "projects/logo_clean_lab/scripts/validate_dataset.py",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "f134de5f3107df1a0eb691c037e097fa267fa7c396307378db4e1aa5cfc34e63",
+      "sha_after": "4e8894b988f183908ea5a1ff8fcf5423910b188fe6842b18cc3a4f059110d0ca"
+    },
+    {
+      "path": "projects/tapiz/piezas_curadas/border_dossier_tapiz.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "35a3219584dfb7b53d1b4df5952071d58d58fc819b8881300e29a553be0ac059",
+      "sha_after": "19fed89d65e9142d034d1de4d7f999fc9fa2b895df6e9527da4bc2f3a4d1916d"
+    },
+    {
+      "path": "projects/tapiz/piezas_curadas/border_validate_airdrop.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "c7dacd8317c6085d7671716777b5c0aaf32ba03fa544d0798781182dfcdc2852",
+      "sha_after": "5baebe21b37eb01e0bf652eb5679c5d136fef53918f3e56285eb1672a18e1ccd"
+    },
+    {
+      "path": "projects/tapiz/piezas_curadas/cauce_cauce.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "e1e9a414a54ee2a90b577f0a6b064b9a7090d4173f545f0872ec4854a07fc402",
+      "sha_after": "005b4f22186b60b2f340bccd925de6031ed9808c5457c6db9519e5a891bbe4fe"
+    },
+    {
+      "path": "projects/tapiz/piezas_curadas/cauce_sala3d.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "2814af8a463765577c9afd0a47ca77b836e6884e8ccb2399b8a060e86ba8741f",
+      "sha_after": "434506ad7280ff54f47e254aa608d2bcf9e090bf78cb55295815256d571ec070"
+    },
+    {
+      "path": "projects/tapiz/piezas_curadas/field_compete_engine.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "78af0b9243b5a49c909c203fbb1853feb424a9c4e42b69cfd23f9384bddd458a",
+      "sha_after": "b3bbaa6eae5954b7937cb06d9c6bee3b57450eea2ffc514c57ef3b3cca94e7c1"
+    },
+    {
+      "path": "projects/tapiz/piezas_curadas/field_telemetry.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "cf5bc5790d1d57676e580756b16b841cd6aef7578d13198be1dada18ee1eb6d3",
+      "sha_after": "8d0876849f7afcc132cdb7b525a0f5f2bf12b11dcf42d5abcb0c901620612ed9"
+    },
+    {
+      "path": "projects/tapiz/piezas_curadas/medallion_entrada.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "5c3eae1833dd9158e67d894331dc9deb5590cba8a59ab4144fb27187a9a65e28",
+      "sha_after": "f15e8d8360c6277392a7f93c7c391d6ff724d6edc7dda46e4e132c78bc2a33f3"
+    },
+    {
+      "path": "projects/tapiz/piezas_curadas/medallion_loom.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "c34a5dcac837a931b751fd7c3515efc438a8be3fe1b466b030120933098b8210",
+      "sha_after": "7c8cdd4cb4f03feecf1c19181ef7cbae2a40e16fd16542a85fe28191e50a8541"
+    },
+    {
+      "path": "projects/tapiz/piezas_curadas/mihrab_spaces.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "f47e00114f7f93f63a92635bba075b3377dc180f226456750879eb0a81a3509a",
+      "sha_after": "c867efdff47e889cf7921e9f8d54a7c26628389447214f2549a715900161cfd1"
+    },
+    {
+      "path": "projects/tapiz/piezas_curadas/mihrab_tilde_meter.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "91533977158393d7d974e338ced10733d2c42f374f18d1b80a27306347e36f7a",
+      "sha_after": "c53c76064bd2fde391d9e235b6a435ec4e59730cba896d84aeb6edb2132b5be5"
+    },
+    {
+      "path": "projects/tapiz/piezas_curadas/void_animado.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "893f2235c0c941c020631a62b90ba635782a018bb63904cc88c4914a3e4d326d",
+      "sha_after": "78debc8960a8a2ce33ce496b0a7a096cf9e3d26996bc2d02fbf6310da463568a"
+    },
+    {
+      "path": "projects/tapiz/pyproject.toml",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "af05cb0300cf710f082b795e371dc5ee277ae025b0683c80f7369232362068d2",
+      "sha_after": "2c9bf4f654178a198ea48236d3587539c0d59ec82e58a1911259636c5771d3a7"
+    },
+    {
+      "path": "projects/tapiz/tapiz_readme.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "23a4e351518905cf9aa6accd613c8219a0bc28e1f45f432795f7b7749218d81c",
+      "sha_after": "090214629634adfc704091408c1610d94655e98bf3193e4d228fb7e04c7a89c6"
+    },
+    {
+      "path": "projects/tapiz/vaso_animado.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "420f23c353db84bca1c0245538e54345525edb51033d8fadcc14adb89fa6a779",
+      "sha_after": "43739d7cffce495af6405c2b62de03684a9b949de39a3cba4b523938da995612"
+    },
+    {
+      "path": "projects/tapiz/vibecode_spaces.html",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "fa6b22534036234e3207d74649741e89e0dd2b4cf2d9d3102fd8f8a67da9406e",
+      "sha_after": "83f4fbe0816b88faaf8be58b0723ac3cb6ace6ad28daa8de5cf5724543c8debe"
+    },
+    {
+      "path": "projects/tapiz/vibecode_void.html",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "855a5994a5152da52216d24c026b9b55785d26d8ea3ee53c8b655aa46e4d935d",
+      "sha_after": "73be382ecfa2e97e159fc18e373d47e3944244d74dd4bfd01f84102b95acbd78"
+    },
+    {
+      "path": "scripts/validate_airdrop.py",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "de74116e28eada9e3e0acbf99d485c1e82a0e17d1ce16c599de96df4e5d66810",
+      "sha_after": "3b42179a1a4481ac226d13c28b8a076fd650937d92b5c08b4b6599182c018426"
+    },
+    {
+      "path": "src/flujo/airdrop.py",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "ec99bd5f87c8594b42c490022b521c2b03784361d9d85538cefd23960b70cdec",
+      "sha_after": "6032531be6194da59b94cedd3feb80e81f1e6467720843aeec9dee1a2c91b0aa"
+    },
+    {
+      "path": "src/flujo/automation.py",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "c900dd6d65c06806bfbab6ed6c7c1a36923aa75577b41cf08e382c261897e1c5",
+      "sha_after": "1e5a59e62e75d9748f6b55e4bce058c6f7e0ea9d678f5b969a7f51ae5c8de920"
+    },
+    {
+      "path": "src/flujo/datadrops.py",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "8f92e1e3ffd3e3419cccf94964c0db544c6d103bbb1a75bb2d03bae998eac780",
+      "sha_after": "ccda4ce388f4782b90f3cf88ca134932325f09a1a066b91125e835939d7cc9db"
+    },
+    {
+      "path": "src/flujo/export/__init__.py",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "f382edacde0ec89935a556d243e90ed24abc498040e50417f32bf28052d324ba",
+      "sha_after": "f5306e318f5d93731534a3c1cdb7add1579f8cf843c617904b7be3be22fb17aa"
+    },
+    {
+      "path": "src/flujo/knowledge/__main__.py",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "d1ee83a3804c3121a5ac080259ecf89f55b3961eee9493fdfb99508b7292d742",
+      "sha_after": "309ba5a735d8a89eda81bf11965e9fdc85847e1be8b129b239b86ca63a69e1fa"
+    },
+    {
+      "path": "src/flujo/rd/database.py",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "16efec4ece69d545d31e5fc0c5862ead1cd06ecc9da2d293cf2a7cd9d32f5825",
+      "sha_after": "51310d1ca6d9d4309e4af9f2b6299d4f1bb675c0609aaf02aaaea82c2863381c"
+    },
+    {
+      "path": "src/flujo/remote_ai.py",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "e305b0d48c2b62b28f03a43c55e84c9cd5a0553b91bdab9f536e036fa830ac99",
+      "sha_after": "53a2cf660b2f04d04233b4e7b7eca47fe37a96c8ab8510332090ad212f441bf5"
+    },
+    {
+      "path": "src/flujo/templates/compose.jsx",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "ebc691cb153c9710e9d0f549e3b817c97fdd7e4b5103d62c67ae334d402f29ab",
+      "sha_after": "288756200624342720beaaf824fc6cbcfedd5f605885e507a8bef7c021bb3b5a"
+    },
+    {
+      "path": "src/flujo/templates/compose_ai.jsx",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "9bdc1a07807042ed692768348068a17f4ddb6a65cec60c13697715231d7ecb0b",
+      "sha_after": "267fa31a53d1333c6ba03f04e367c45953094dadaa1ac35637c38846730bc4e0"
+    },
+    {
+      "path": "svg/suplementos_rd/09_contraportadas_dark/01_linea_suplementos_rd.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "e9acb2e9306a2fbd064084d3f4e0df9d7fc7a28c6e2f426257df6dac8eaf79fc",
+      "sha_after": "d8f98ed23429a2377cd9689bad0e58f5be33cdda1805ff6793f341d45c3887f7"
+    },
+    {
+      "path": "svg/suplementos_rd/09_contraportadas_dark/02_impulso.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "e3662c40093e0bbfc19c64862ad661703690a65032990c73103828a6255759ea",
+      "sha_after": "025c7cba61db31987d2830ad4d8de97221672ce408935e07fdb6eafb77cb9147"
+    },
+    {
+      "path": "svg/suplementos_rd/09_contraportadas_dark/03_hongos_adaptogenos.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "1c98d6e6c713be053c2c615c067e12beee94244f6666d8451b6c1af21d6e0f50",
+      "sha_after": "1a73b648e266312dd54974419c69bd0808ccf0b6bb3c0f5743f6b2b9c606e603"
+    },
+    {
+      "path": "svg/suplementos_rd/09_contraportadas_dark/04_pre_fiesta.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "df596a9339f502e9af1cb4d3d878c9cd80276ad162362e5073eae6c17ceba9d0",
+      "sha_after": "b58ed34790b104a7d3a577b70c6eac6b8e590d49c45a02c5247f32ecbf95f267"
+    },
+    {
+      "path": "svg/suplementos_rd/09_contraportadas_dark/05_magnesio.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "dff3079772e2407530de50445ec249feaa7669b3383a9ad39274ea5eef721c11",
+      "sha_after": "fa513fcacb220b672541f712dcd75eacadcad25f0c61296001972bf4d4360bc1"
+    },
+    {
+      "path": "svg/suplementos_rd/09_contraportadas_dark/06_creatina_monohidratada.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "1d018e6108efd529ad1aec51b67a26606a8a2f8bebe451b9cbc5ddb09e38d74e",
+      "sha_after": "fea427592fb652ff54982e4594e6f2329a6108eead45b126f8a0b80ba04bbe7b"
+    },
+    {
+      "path": "svg/suplementos_rd/09_contraportadas_dark/07_proteina.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "c003a377a66239f8b53260c354b65d91941ec7af995cefda43adfee5b11e86e1",
+      "sha_after": "e78ef7f114ff68b82ca04744ce43a10c7a24f493706a12ee5db093705c19567f"
+    },
+    {
+      "path": "svg/suplementos_rd/09_contraportadas_dark/08_post_fiesta.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "c648087cfedfae65d6787887626a7e9386a6a86bcb6aec06dd475263497982a7",
+      "sha_after": "fd443df3cea1be69647839373e6293bc216d009fc4ae76bc1c2dddcb606c81a9"
+    },
+    {
+      "path": "svg/suplementos_rd/_master_contraportadas.json",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "e7bfe12315d86b3abe414fe2786a771e48da8296544bc9eee67db92b41b01689",
+      "sha_after": "54e00bc41f60154adc222da3185500267bc2a122bff4bb1fa993fab086a404b0"
+    },
+    {
+      "path": "svg/suplementos_rd/_plantilla/contraportada_cambios.svg",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "7245998e39c285ee9626d6dd9602a9b5354e33fc50b7f096acd6393751e4ad8d",
+      "sha_after": "e39fee24206d773a29c595628e0caec627c577df34d1942c8881105c0ba63db3"
+    },
+    {
+      "path": "tests/fixtures/chataigne_1103_real.noisette",
+      "method": "three_way_clean",
+      "nlink_before": 3,
+      "sha_before": "8efb6510311382b9abcd655f1bc7f7a5e541d306dba511ff2ed48d8167ed481b",
+      "sha_after": "62f0310ff2f537ac22a259114969d78130eb060cd8625dbf0702ce1419168bf5"
+    },
+    {
+      "path": "tests/test_airdrop_signing.py",
+      "method": "three_way_clean",
+      "nlink_before": 4,
+      "sha_before": "1887c3b83e779bfad75f29c1d06ba34d7f24f1887a543f7fcac6a5d324e10020",
+      "sha_after": "9c076f72c1b5ca068c84de8af9fc33e09ae78028be31192d9d7f1d9c5e9756d6"
+    },
+    {
+      "path": "tests/test_auto_pending_flyers.py",
+      "method": "three_way_clean",
+      "nlink_before": 3,
+      "sha_before": "e0967e539626ccbba27b9bb28396d18edf579605e44f51e0f920722ddaeaff9b",
+      "sha_after": "dd8b9feaff1eb255475478d985b2daf18b2371d4a4656ac45ba7680e9cfac232"
+    },
+    {
+      "path": "tests/test_cron_state_atomic.py",
+      "method": "three_way_clean",
+      "nlink_before": 3,
+      "sha_before": "ac2d6ab9fe09569c3d4dc02a1e757ae7882fae2728be66e7a0ca07e7d98c26cd",
+      "sha_after": "d7c345f60f8718b7ead6c4244a0fd3e32d43ad3bfe66a71fc131da6f3396b012"
+    },
+    {
+      "path": "tests/test_cultura_sin_automerge.py",
+      "method": "three_way_clean",
+      "nlink_before": 3,
+      "sha_before": "04f53f7107e2f8d771dc754fbfc5dd57ba5f9e9069f9533568679250b82ec0ce",
+      "sha_after": "003d3edb11da2b16db02677d570bf301eda3606ef352ab6b1df142b525720487"
+    },
+    {
+      "path": "tests/test_datadrops_pdf_support.py",
+      "method": "three_way_clean",
+      "nlink_before": 3,
+      "sha_before": "3778a09d9f9148a548d1b248b0998bd778f7a5903dd98ab496adc289f98703f6",
+      "sha_after": "0393d7c31ccddc1a15bb26d860058f2dd1cec23adeb339a27f44e06cb0df354c"
+    },
+    {
+      "path": "tests/test_illustrator_bridge.py",
+      "method": "three_way_clean",
+      "nlink_before": 3,
+      "sha_before": "e45150ce8e4817a1ce474d67e7948dfc1ba10ec7841ffdae643401b89c15d1c3",
+      "sha_after": "2aca2ccc07cc3e1fd8175b3b4e3aabc085d5b8d872e6c0a183a101c8e614589f"
+    },
+    {
+      "path": "tests/test_logo_clean_lab_dataset.py",
+      "method": "three_way_clean",
+      "nlink_before": 3,
+      "sha_before": "678183f0ee15d4f588327638a85d0dc9a07924278f125f957bee3ade8670e3d1",
+      "sha_after": "290c4a53c12e5753ee394bbe7e40096c7806d9395a0ddc3d08dceb09a632e248"
+    },
+    {
+      "path": "tests/test_mak_research_router.py",
+      "method": "three_way_clean",
+      "nlink_before": 3,
+      "sha_before": "35a698f41a43c7412b637f8d7d8416abefbc18a0e468d4c061034dbdf3858546",
+      "sha_after": "363bf5c692d66bb33034ab2a4f6461cb427a9b373f43533566433c9697dffd3b"
+    },
+    {
+      "path": "tests/test_rd_database.py",
+      "method": "three_way_clean",
+      "nlink_before": 3,
+      "sha_before": "b0443ec28ec4033633fa56952ee2d3ff644f5a366588d68fd5be521732587911",
+      "sha_after": "849fc3688c9998a46396b87a1c776e0931c9d6db16c602a6d9dad5f2b7177318"
+    },
+    {
+      "path": "tests/test_readme_svg.py",
+      "method": "three_way_clean",
+      "nlink_before": 3,
+      "sha_before": "4daa0130d009db6d9cd07fcab724d4efd43adf684f76300e2369e2ad0267c8b8",
+      "sha_after": "25b7dce7cff020f2e95eff30771f07a4e178221a6cf392253c87df0d637106ea"
+    },
+    {
+      "path": "tests/test_validate_airdrop.py",
+      "method": "three_way_clean",
+      "nlink_before": 4,
+      "sha_before": "33a459b6d1958694dd26c9b35082338d1e8ed95f274a042087108dd513dd0b3c",
+      "sha_after": "af94b52bb0490d3eed6032496545a8cb90a068281ce6d5085939b34af8c8c843"
+    },
+    {
+      "path": "tools/adobe_panel/check_install.ps1",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "d82d29a04830332de19cd5f8ed9529439a97503a3b5bf93c145dbb0ddcad9df9",
+      "sha_after": "b9616d842209b518a55db49188fefbb09b5bab8bc594b4d0bf8c62ce920a6f79"
+    },
+    {
+      "path": "tools/adobe_panel/js/main.js",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "b8177dc6bfe61c5b48f13a374705fb2a096310a2b16d99f31341470d44628d20",
+      "sha_after": "b216ee29d8764b8c3b154a346b9fe7e6bc6cd2efc4243d484ed2a63d2cf446cc"
+    },
+    {
+      "path": "tools/gota_rd/index.html",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "a688cef757c2343de341f4736c9c863781b2c58c1d5f303a534e4258b2a17a4f",
+      "sha_after": "c348865b038e02d630322bbbc9814a4893760c8ebc3ad8069892f819353dea4e"
+    },
+    {
+      "path": "tools/illustrator/ai_ae_bridge.jsx",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "27fab678fe6974c2e5b5c7d961b64edfd99474d2c41e2eaa6da027d7bfb690e7",
+      "sha_after": "f1528d54425c044c629580bb656156e0d6110ecf39d7087f3a0838992f4d11e7"
+    },
+    {
+      "path": "tools/illustrator/ai_export_svg_png.jsx",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "e5cb4e4a7e85233d13dce612ef843c6d79dce48ac7d63296e75c23d119bce24c",
+      "sha_after": "3fce6e6204b65d73d3269081770e16356401cf2cacf794acc278a1db17436717"
+    },
+    {
+      "path": "tools/illustrator/ai_illustrator_bridge.jsx",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "152f13e0fd93e341e87a9ed0ab99097d0eff7beadce988b3275ae986391f67fc",
+      "sha_after": "1710221a6e3bd5df5bc479c2a88fbda558df48923b1c2d9aea0da5f08095d503"
+    },
+    {
+      "path": "tools/illustrator/ai_photoshop_bridge.jsx",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "09bd2ae3b8e9543a3f4254cc4fe6dde5998252696d9842a829fa6423581c44aa",
+      "sha_after": "149f8f059169bc318a1d46b9ef593726a960180895aecaae22752728fef9e57f"
+    },
+    {
+      "path": "tools/illustrator/scripts/logo_clean_master.jsx",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "ddf26f6ff4ed03477e17081e1e2b91e5849ab3813b49bda1fe173cf54b4c1772",
+      "sha_after": "85b1c3d56ee2c90f7413ea9e099bdd0a1b98cbe395fad8d1496464de228ac3af"
+    },
+    {
+      "path": "tools/iskvw_piel_medir.mjs",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "0539866106ea7214adae14ded94950fa571f983cbcc91e5071f437bf5fca4a09",
+      "sha_after": "272bb2537c90ec9dbdcde8520296390da6ef25a51fe8f458ebbe80c134d006bc"
+    },
+    {
+      "path": "tools/iskvw_piel_smoke.mjs",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "938020b06925fd271de0314b05d9db3699f6f267858310451be20ad612a8f323",
+      "sha_after": "169da6339b8931c898c27b2c6bff148215bd8d0af2cbb68e39dcd865d57a558b"
+    },
+    {
+      "path": "tools/lib/piel_dom.mjs",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "02f2d7a2e77f26a9106e1103eee621950382ce19f35fc507cf41469727146934",
+      "sha_after": "a305f036c68206714fa97bce8f8cb7b71f121f1268a1e3b527804dfec2efa07a"
+    },
+    {
+      "path": "tools/mak_ops/mak-conductor-shadow.service",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "8133576d0ab69ff35165389255535b8b8525aff6e6d563f2ca1bd4f4eb40360b",
+      "sha_after": "3f04605fbcbbac008fe245d0d1495d678a6a8305b8090a4384e18b174e1ebe3b"
+    },
+    {
+      "path": "tools/mak_ops/mak-conductor-shadow.timer",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "a47272db798bdfea88c66bf1d3e30c7e55bf960953a6a9521ed522cc771113ec",
+      "sha_after": "bb2e9199eaf81917d99b71e9315d7fedc1f73184d29878f286855c00420ee88c"
+    },
+    {
+      "path": "tools/sala3d/build.js",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "2aa14a570ec2d31bd807623e4e2e1e4470381825239d62507f0dce55cf5eedd3",
+      "sha_after": "9859834ccc2886e5c2f3aaadc8e024117c82b058f8cffb17203c7024e28c90ba"
+    },
+    {
+      "path": "tools/sala3d/template.html",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "190bb1de2df9784b5b94f9a4ae8d3b7f2e82b02855a4f1f8775bd274b793f33b",
+      "sha_after": "c5c2af3661d7ee222e89f8e8ad0665fbaa720a147595772ffcdcd4114e8df4a4"
+    },
+    {
+      "path": "tools/tapiz_renderer.html",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "0845bbd13489ead7fdb8e81ee01dabe7adca8638af22a8603b8a4b8036028602",
+      "sha_after": "5ebc9b7f5fdea9c9fb71c6bf48e0509f4b4dee6a67e930c84529d300ee86e324"
+    },
+    {
+      "path": "tools/tapiz_three.html",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "00c80dc35c014cd41ea15bd26a8e8ab3f7a2268f62c411e70a94ddd80c5006e9",
+      "sha_after": "8b41d074a4c2b3820d5432e305e1fc5fd92749b9d3d9787b1e1f74f9b31af121"
+    },
+    {
+      "path": "tools/venue3d_contexto.mjs",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "ff5a090655fb82339590ae3df8ea053b478bdd789212a934afb3680c8e78083c",
+      "sha_after": "c979eeae70701bf85b5b718bd7613dd7e30f264a21001bdc24ded8b8f3caf328"
+    },
+    {
+      "path": "tools/venue3d_smoke.mjs",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "b2ac2e26830a9aa439aa059acf1568edfdac24207910f7d3d4c8c053786ae5f5",
+      "sha_after": "9fc90a194e297423da346a003367e6a27dc7e086be8f76ec5e619add4e98a317"
+    },
+    {
+      "path": "tools/venue_secuencia.mjs",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "73af00120988f7ec665724063a1c5b30c0125de7472cb1f1732b6d12cb7a01e0",
+      "sha_after": "2f4c9d05da5f2804b26b446119bc88408584153fd9d5803ace1027b27d4b43ca"
+    },
+    {
+      "path": "tools/verificar_piel_honesta.mjs",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "0614c6770da355afc4bf08d12d292297ed65a53a46d1ffdb94580dfd124a5cc9",
+      "sha_after": "e00f81be54dcb88bcf40db770d0345a0be70937558575f0291208c6d0daa6fb8"
+    },
+    {
+      "path": "web/plano.html",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "4b9e3e01da7b906711f736ddec3833f8a951180a84779f452e43b482ffee69c4",
+      "sha_after": "8009c64a0038ad997ad5083eb19aa003b856b38504e3326cad86afe5bc7a61d3"
+    },
+    {
+      "path": "web/rd.html",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "14f6275bc387c12bdc7b34eade76eeb84806322aeac74ce49349a2d384c6fcb1",
+      "sha_after": "5629a5f6a73d8901e9483235f80f950853be1f23b034ecec4771c4e1a795b0b2"
+    },
+    {
+      "path": "web/scripts/copy-plano-share.mjs",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "acdb0a3e08a844d3c84b352ff3d0b32a32e381a1040fe4cd166378606ea9f4d2",
+      "sha_after": "830437268cb70daf09b197ec7bbcc92101fab8d17bdc8cb67e0146ff6de258bd"
+    },
+    {
+      "path": "web/src/App.tsx",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "d3f1ab66d8209e5df94f8894d67cddc569abea2240486b041d2742207a5a4fbc",
+      "sha_after": "36e1f95c73d34da43c3175ffc5e4119279d02d20b82addcd455c16b1cd2dec63"
+    },
+    {
+      "path": "web/src/components/AppShell.tsx",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "16623bc2ebdfd2fa1ac58e44b791593fa63dea68f754ca8808323cbe1a417590",
+      "sha_after": "ce6563870fbee38ea40604caa5e651bd85e9387710e1d23005a701f10da32bfa"
+    },
+    {
+      "path": "web/src/components/CommandCopy.tsx",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "bcde818d3d21e5ecbdcd71390ece5b52d0623d4c234d729bbbb7466dcc4414fd",
+      "sha_after": "eb75c8b35c4fcc999ea42313f783d084377eeaafc8452c1c2e5a0a66f22e823a"
+    },
+    {
+      "path": "web/src/components/CommandPanel.tsx",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "c1e74f6e0c58d7c707c45e9c60855bd0365b4e57e69dba0efa0c32a985657070",
+      "sha_after": "81bd8fd2d7eaf88ce85742d4538b760330da0fed93a5498933477320619af9cb"
+    },
+    {
+      "path": "web/src/components/CulturaPanel.tsx",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "44d190d69895570ad74d78384f7ec4e4e99993859e2f577e2cb57039cc2a51c0",
+      "sha_after": "d20b1d1728919fad29e747e28849b1ec3e2611d3c87001da68b2052253e29c8b"
+    },
+    {
+      "path": "web/src/components/IntakePanel.tsx",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "edc70e57a20d649df8e98ca9bce45aca7b5205637f890e725900f20170e12ab3",
+      "sha_after": "437891bf0b7bb9a629534b2d17b3966bb84e5f83be8e70b43ef318e8619580ad"
+    },
+    {
+      "path": "web/src/components/JobsPanel.tsx",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "758a5934e705cd6f043f620dbb2eadc8682c9467e3decdd57310c0e6ae0466c0",
+      "sha_after": "adc9a86776f85b46327310861a2566469922618321a66d57a5eac4f4e3729af6"
+    },
+    {
+      "path": "web/src/components/MappingTool.tsx",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "363bd4de841001f17284919964629f44528c83e2f9f05297ab42232439efbe4d",
+      "sha_after": "768adbc8925cd1a8ed32c405475a895d9e3f70492e525b2c260a7fffccd6bb75"
+    },
+    {
+      "path": "web/src/components/PlanoStandalone.tsx",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "a29efa458300c30d03d29adbba4863bb54a7ec25b391c235473efd4818feb839",
+      "sha_after": "20c8698c2302f18fb662809e238f2544cb4fca04409b18685878a319b56b5022"
+    },
+    {
+      "path": "web/src/components/PlanoTool.tsx",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "5e469a8f300bd5f7f6b6acea0c4fa2d57d80fa84e3a9cb7502590bbf9b063abb",
+      "sha_after": "f1349789b689e8c602aab68848f1f60ed2792d8ae0dc05567280a1306e492deb"
+    },
+    {
+      "path": "web/src/components/QuotePanel.tsx",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "82e821a57daf7caaa65d569c48ea6a65141379ce0a046d14a5ab1bfdab33b3e6",
+      "sha_after": "2c610f3a9c107beff797beddbbe339259a36f8afdd44a5671957670566d4bb61"
+    },
+    {
+      "path": "web/src/components/ResolumePanel.tsx",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "16434977ec668039a91e52bd1644cd49c36cdf51358377ad787dbc5addaa129a",
+      "sha_after": "cfdd5cc2bf88d5e058b552937e02fc2d2b4bde956c95c19c34286b91c8d8916e"
+    },
+    {
+      "path": "web/src/components/ShowPanel.tsx",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "aeec0507b209b707151e3c8183ee3c1b36a1934eaf4878c026584ad64fdd58e5",
+      "sha_after": "75704f1f24da4ba9be7d67f4bc66620a534a8aa7d13baa2e2c8b3bcc3532d313"
+    },
+    {
+      "path": "web/src/data/configTypes.ts",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "cc091b651ce6bb7a09e24588d9d09b8d6649d5678c109b7c1dda3b08a1dfa30b",
+      "sha_after": "0c96d54422d1f4088cbe65922a8f9a0f584076e07b18df75b0b962024802e97d"
+    },
+    {
+      "path": "web/src/data/cotizacionServicios.ts",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "f72f0c896566d22a5324a18f4d2625ea2a6d63d1e78fb7432ae70d78bba917e3",
+      "sha_after": "f3834f989d89b3b9ca3b4ae65c70734650c8c1a29a472f74c3def04791a3a7fe"
+    },
+    {
+      "path": "web/src/data/planoConfig.ts",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "bbd606a1a29812919d3e1f642d052603d8ac6ad2e821c474b030d87f3573fdb2",
+      "sha_after": "acaa2888be71b0cb00c85acf1c00b7a67dbe99166c4961fdb2d6bae06c64fed8"
+    },
+    {
+      "path": "web/src/data/planoSimbolos.ts",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "d8ea11ee63bede87e38da1b7074f23e0e4dd1bcb2b9a80c99b270e934346e535",
+      "sha_after": "01cdd7ea2e9ba0012285976e13c27f778067cb53335171af86a55c0aa7842f0c"
+    },
+    {
+      "path": "web/src/data/profiles.ts",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "2ba5764598f7a4a5483d8efa6893ed48c7436f39f48090c4180444f25abd5714",
+      "sha_after": "25e77cbafa5d04df393823072e2c78efc495a5860fb4d9ba6caa61d8c33fddae"
+    },
+    {
+      "path": "web/src/data/svgIndex.ts",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "735ee9bd1d3c5ebb7f0f4c58fb43e8af8015f1a2b80feae0a3da0c912309a2e0",
+      "sha_after": "90b245bb59ec5cfe3e78027d45424befe8744f1a3ec9d8a1ae464678a157aaef"
+    },
+    {
+      "path": "web/src/data/trazador.ts",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "42fa65032ea02af4920f4e6a4185401867b79184020e9afbabe877294a324808",
+      "sha_after": "b8a444695fde508e96411b671e91ec4a5ffa16315aa66c0eb607f04ae785aeee"
+    },
+    {
+      "path": "web/src/main.tsx",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "f1080251efa44fc019d75928c040b348fc20e44f0c632cc38df11787a163205a",
+      "sha_after": "7c5c968b84ef3aa77713c9a3cb8ad20e9230e8389519411a7b8718fe59b005d3"
+    },
+    {
+      "path": "web/src/mainPlano.tsx",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "c2ab67718e662b8fd168e6793c0d221aad3b352ad94ba3dabfdedb108e58db4a",
+      "sha_after": "d3b456abe977d8c437533a1aed97d5b768412735689a7e38801b733a42e28ef9"
+    },
+    {
+      "path": "web/src/mainRd.tsx",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "2d4b7b0be7f1724679bdbe9e80f7fe9a0f5d7e07d1d748554ea69dbc6fdfc985",
+      "sha_after": "b836cae32ff48ac5f66523275ad6d08fbef1ba726abaf7ef856d9177c517145f"
+    },
+    {
+      "path": "web/src/vite-env.d.ts",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "ae95afc81fa0e7c2593ecddbb1ffa5b9bd7f845cda8662dc9d5f98698a340f25",
+      "sha_after": "1deb3ceb32fa04d492eab6a54d92fadc7b30a6cb0d6e48b62723f55503225336"
+    },
+    {
+      "path": "web/vite.plano.config.ts",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "ee3bb523b5345a7024583bb5bd45a807c2548e4212566c4a6aca5cfaadc86361",
+      "sha_after": "a37c7b6cb1ad82e4569cc3aa250c3c55e55b39390c166098517a01e0e5faa408"
+    },
+    {
+      "path": "web/vite.rd.config.ts",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "8710552a1153aa3799eb7e8a3e1dc10ea7eebcd939b44150832aaa19ba62d7ff",
+      "sha_after": "9d7f30214b3783a60c0690b4e86d1e9ec658cd4464398d585d4ba393fd2ed3c3"
+    },
+    {
+      "path": "xio/.gitignore",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "cc1caaf866078a9579656e7acc308bc06304ffeb4d01d3a9e0217fa562f11241",
+      "sha_after": "76cf51ca7734777dbe07fe53031f57584bf6b8b28dfd0efaab3c20648c8334d1"
+    },
+    {
+      "path": "xio/hotspot_boot_service/app/build.gradle",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "37b504297577d01fc707e1692987abf2aafccd85bbbb30c21af0f6f40b7d8eba",
+      "sha_after": "7c39aa51393c826df6dd07e720f87a2a03d2b13d6893f69b324018a1c98dcfce"
+    },
+    {
+      "path": "xio/hotspot_boot_service/app/src/main/AndroidManifest.xml",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "fdc07f20614cc251462c66827f6502e641c3d51684c30da6ec9ec284ba02337b",
+      "sha_after": "32bfa639c502c62c3e26a2ecac3171ce0b5881100ef0378852cd5dd58d611066"
+    },
+    {
+      "path": "xio/hotspot_boot_service/app/src/main/java/com/xio/hotspotboot/BootReceiver.java",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "48544ac3719bc0d88d2b6a49a11e0bdcef75de2e675e57225bb1e843f8037fd0",
+      "sha_after": "f08303d264f5301433fc7a6ca445f01237d6126dfb2327a9817454634e0d04ee"
+    },
+    {
+      "path": "xio/hotspot_boot_service/app/src/main/java/com/xio/hotspotboot/HotspotAccessibilityService.java",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "932b1102d921bc314a898f45a5a4e8fe203e79605b30b01773d134c3b5446d8e",
+      "sha_after": "ca51f526ee75ac0af2fe29de9e0c5f64a2df1e1bf8edca211c276582cf92ea90"
+    },
+    {
+      "path": "xio/hotspot_boot_service/app/src/main/res/values/strings.xml",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "5aaed01a978796757e23b7f658ebe0283c5d2478d9cd224962c7817c879f8182",
+      "sha_after": "c7290d7c2c3fe43c10d43bb846b9b9880825c9282ce53318d47e6d8631246f31"
+    },
+    {
+      "path": "xio/hotspot_boot_service/app/src/main/res/xml/accessibility_service_config.xml",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "e1216b8e0143f1a8e0976493eb0b3f9867b1fa90639a75a2794f27d0de4cd1df",
+      "sha_after": "ff303427cac2dfbac06368d03aeb5c221f8c017ee38bedcac58e75944bbd6c3c"
+    },
+    {
+      "path": "xio/hotspot_boot_service/build.gradle",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "45c52d3e4cda52c3c47293586e53ce17db9dcb9c5851f44db1b082a204ef8e9e",
+      "sha_after": "e01102464520da1d6c46282390abb3c5359dcff991275dd98b708511f3f4e082"
+    },
+    {
+      "path": "xio/hotspot_boot_service/gradle.properties",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "9f6b6e3789e842d6fa57cd364d5e407a19a41bef42224e33192770f6ace3f368",
+      "sha_after": "f05e2c7715346c1aad997160f00a25c12bb2b51ff28afa101868fdece940e3f2"
+    },
+    {
+      "path": "xio/hotspot_boot_service/settings.gradle",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "e1d26179d3122d74869ba25806bff45db60b39081fc83f8093e5bab394595ca6",
+      "sha_after": "50453b94a8f125093f9b5907d0d24086404ae08a131e296bfe3064e0b91632fa"
+    },
+    {
+      "path": "xio/new/static/index.html",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "c1af6585977dff8fd54b0f4118a845ed6f5a295a63ec73dc83fabbf710ffa281",
+      "sha_after": "99b61e70823435220ec5046cac9cbeae176e3b1d84ce2408b0828d3ec0af60b4"
+    },
+    {
+      "path": "xio/new/xio-reboot-watch.vbs",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "9b0033252aed39cdd25c6c0ce889d2f32a00f304c6903d552f65a3f59dda7ec3",
+      "sha_after": "af89835d40d8832c532d2d5269f5d58bed695f06f7f0a79910d009ef1990cd09"
+    },
+    {
+      "path": "xio/show_kit/cargar_setlist.bat",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "5a55d13beeb371e4716c4914e7203efd171674f816b7c61a53eb8be1e8d067d2",
+      "sha_after": "f94fcbcad07acfcdb649a009482b850938850f67a92f7eb52640084b56147f8d"
+    },
+    {
+      "path": "xio/show_kit/check_show.bat",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "28e9e264adc6448ef7c2b02a0d145e6960714b11efa417c7251604e8988b9dfa",
+      "sha_after": "3abd3e17f4d2d08e7b07a3e803604f4fc703500042ea69a8f0aecbd5623d17ca"
+    },
+    {
+      "path": "xio/show_kit/cue_engine.bat",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "1f87011e8f9f6612f7d6a4ed19d59639d826162840448b4c0aad0293fb6f4119",
+      "sha_after": "ee9ba2fba64d55624b65ff440994f4f460c39d4252ea22fff78214c2ed2903a4"
+    },
+    {
+      "path": "xio/show_kit/cue_map_dref.json",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "96589b6d91bd3d441758e51b381c580703f61af2d7ec0a5cf7904cebfa69b73a",
+      "sha_after": "788df5c76334c237c64a62f0369eb8a3e50ab780acfbfbfd39bf1ed350e3cc3c"
+    },
+    {
+      "path": "xio/show_kit/festival_sentir.noisette",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "1f82f63b5d90c49645550ad349db51325dfd7beda1c3d6cef72d51f2d45ea07c",
+      "sha_after": "c97c51c1cbddb8d89a808676cdac5a09e4a999a6e57311cf796b451113e428f9"
+    },
+    {
+      "path": "xio/show_kit/registros/show_dref_20260724/foh_20260724.jsonl",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "82944b043a9cee950e8a49657f597d91ea1b68f28a9f3fbd5b13f3fb2bffe2e9",
+      "sha_after": "1e38fa2c945d525ad646101de7244d2925ca2fe87f6fd690fd6aec6015e6785f"
+    },
+    {
+      "path": "xio/show_kit/registros/show_dref_20260724/foh_20260725.jsonl",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "72333b3a24e8f5ec698683530347188195a9304e54a7d4510009e1cc588755d4",
+      "sha_after": "e6a9c702d51c12a6578fbaebc0b65054146a9c1a6a9733c70d6d8fded1fbe1b3"
+    },
+    {
+      "path": "xio/show_kit/registros/show_dref_20260724/soundcheck_20260724.jsonl",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "2c41cb132368b1cbf4f4c0c55542d5150bf08f9805cb9288fee4d4690f52a989",
+      "sha_after": "06ff7c700b2b30c83b07f910d8aaa5ba907290f9f277c91102a921cb8b14596c"
+    },
+    {
+      "path": "xio/show_kit/relay_luces.bat",
+      "method": "three_way_clean",
+      "nlink_before": 1,
+      "sha_before": "700c27a362feae4d60440c19ae4a092eee96b9f33a2b3b5e6db29307dc060a7b",
+      "sha_after": "549825b541cd625670b70854f770379991c61a86add56297309353f4fff555e1"
+    }
+  ],
+  "conflicts": [
+    {
+      "path": ".env.example",
+      "rc": 1
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "rc": 2
+    },
+    {
+      "path": ".gitignore",
+      "rc": 1
+    },
+    {
+      "path": "Makefile",
+      "rc": 1
+    },
+    {
+      "path": "context/flujo_hub.html",
+      "rc": 1
+    },
+    {
+      "path": "context/plano_demo.html",
+      "rc": 1
+    },
+    {
+      "path": "context/svg_visualizer.html",
+      "rc": 1
+    },
+    {
+      "path": "cultura/mak_codex/mak-codex.service",
+      "rc": 1
+    },
+    {
+      "path": "cultura/mak_conductor/handler_registry.py",
+      "rc": 1
+    },
+    {
+      "path": "cultura/mak_curatoria/percepcion.py",
+      "rc": 1
+    },
+    {
+      "path": "cultura/mak_plataforma/crontab.mak",
+      "rc": 1
+    },
+    {
+      "path": "cultura/mak_plataforma/hub.py",
+      "rc": 4
+    },
+    {
+      "path": "cultura/mak_plataforma/mak-hub.service",
+      "rc": 1
+    },
+    {
+      "path": "cultura/mak_plataforma/mak-xio.service",
+      "rc": 1
+    },
+    {
+      "path": "cultura/mak_plataforma/tandas.py",
+      "rc": 1
+    },
+    {
+      "path": "cultura/mak_research/cola.service",
+      "rc": 1
+    },
+    {
+      "path": "cultura/mak_research/interfaz.service",
+      "rc": 1
+    },
+    {
+      "path": "docs/GLOSSARY.md",
+      "rc": 1
+    },
+    {
+      "path": "docs/SCRIPTS_INVENTORY.md",
+      "rc": 2
+    },
+    {
+      "path": "docs/rd/presentacion_db.html",
+      "rc": 1
+    },
+    {
+      "path": "docs/rd/propuesta_directiva.html",
+      "rc": 1
+    },
+    {
+      "path": "docs/recovered/claude_sessions_2026-08-12/README.md",
+      "rc": 1
+    },
+    {
+      "path": "iskvw/PROMPT_ESTETICA.md",
+      "rc": 1
+    },
+    {
+      "path": "iskvw/editor.html",
+      "rc": 1
+    },
+    {
+      "path": "projects/plano/plano_editor.html",
+      "rc": 1
+    },
+    {
+      "path": "requirements.txt",
+      "rc": 1
+    },
+    {
+      "path": "src/flujo/autonomia.py",
+      "rc": 5
+    },
+    {
+      "path": "src/flujo/paths.py",
+      "rc": 1
+    },
+    {
+      "path": "svg/eventos_rd/packs_servicios_rd_blanco_editable.svg",
+      "rc": 1
+    },
+    {
+      "path": "svg/eventos_rd/packs_servicios_rd_dark_editable.svg",
+      "rc": 1
+    },
+    {
+      "path": "tests/test_autonomia_cli.py",
+      "rc": 3
+    },
+    {
+      "path": "tests/test_mak_conductor_registry.py",
+      "rc": 1
+    },
+    {
+      "path": "tests/test_mak_reanudar.py",
+      "rc": 1
+    },
+    {
+      "path": "tests/test_operational_entrypoints.py",
+      "rc": 1
+    },
+    {
+      "path": "tools/update_readme_svg.py",
+      "rc": 1
+    },
+    {
+      "path": "web/scripts/copy-rd-share.mjs",
+      "rc": 1
+    },
+    {
+      "path": "web/src/api/flujoApi.ts",
+      "rc": 1
+    },
+    {
+      "path": "web/src/components/AutomatizacionesPanel.tsx",
+      "rc": 1
+    },
+    {
+      "path": "web/src/components/EventsPanel.tsx",
+      "rc": 1
+    },
+    {
+      "path": "web/src/components/HubDashboard.tsx",
+      "rc": 1
+    },
+    {
+      "path": "web/src/components/MakPanel.tsx",
+      "rc": 1
+    },
+    {
+      "path": "web/src/components/PortafolioPanel.tsx",
+      "rc": 1
+    },
+    {
+      "path": "web/src/components/RdDbPanel.tsx",
+      "rc": 1
+    },
+    {
+      "path": "web/src/components/SvgVisualizer.tsx",
+      "rc": 1
+    },
+    {
+      "path": "web/src/data/productoras.ts",
+      "rc": 1
+    },
+    {
+      "path": "web/src/rdBrand.ts",
+      "rc": 1
+    }
+  ],
+  "skipped": [
+    {
+      "path": ".agents/skills/caveman-compress/scripts/__init__.py",
+      "reason": "non_file"
+    },
+    {
+      "path": ".agents/skills/caveman-compress/scripts/__main__.py",
+      "reason": "non_file"
+    },
+    {
+      "path": ".agents/skills/caveman-compress/scripts/benchmark.py",
+      "reason": "non_file"
+    },
+    {
+      "path": ".agents/skills/caveman-compress/scripts/cli.py",
+      "reason": "non_file"
+    },
+    {
+      "path": ".agents/skills/caveman-compress/scripts/compress.py",
+      "reason": "non_file"
+    },
+    {
+      "path": ".agents/skills/caveman-compress/scripts/detect.py",
+      "reason": "non_file"
+    },
+    {
+      "path": ".agents/skills/caveman-compress/scripts/validate.py",
+      "reason": "non_file"
+    },
+    {
+      "path": ".agents/skills/entregas-rd/SKILL.md",
+      "reason": "base_missing"
+    },
+    {
+      "path": ".agents/skills/revivir-subagentes/SKILL.md",
+      "reason": "base_missing"
+    },
+    {
+      "path": ".agents/skills/taller-svg-rd/SKILL.md",
+      "reason": "base_missing"
+    },
+    {
+      "path": ".coverage",
+      "reason": "base_missing"
+    },
+    {
+      "path": "PLAN.md",
+      "reason": "base_missing"
+    },
+    {
+      "path": "agents.md",
+      "reason": "base_missing"
+    },
+    {
+      "path": "context/MD_CONTEXT_MASTER.md",
+      "reason": "base_missing"
+    },
+    {
+      "path": "context/PHASE_REPORTS_INDEX.md",
+      "reason": "base_missing"
+    },
+    {
+      "path": "context/code_structure_index.json",
+      "reason": "base_missing"
+    },
+    {
+      "path": "cultura/.dev",
+      "reason": "base_missing"
+    },
+    {
+      "path": "cultura/mak_curatoria/diagnostico_proyectos.py",
+      "reason": "base_missing"
+    },
+    {
+      "path": "cultura/mak_curatoria/ingesta_archivo.py",
+      "reason": "base_missing"
+    },
+    {
+      "path": "data/artist_discographies.json",
+      "reason": "base_missing"
+    },
+    {
+      "path": "data/rd.db",
+      "reason": "base_missing"
+    },
+    {
+      "path": "docs/MAK_CURRENT_STATE.md",
+      "reason": "base_missing"
+    },
+    {
+      "path": "docs/admissibility.md",
+      "reason": "base_missing"
+    },
+    {
+      "path": "iskvw/datos/archivo.json",
+      "reason": "base_missing"
+    },
+    {
+      "path": "iskvw/piel/trazos/5cab5f2cbce0.svg",
+      "reason": "non_file"
+    },
+    {
+      "path": "iskvw/piel/trazos/5f7472403ef2.svg",
+      "reason": "non_file"
+    },
+    {
+      "path": "iskvw/piel/trazos/64a65eab9dad.svg",
+      "reason": "non_file"
+    },
+    {
+      "path": "iskvw/piel/trazos/93ba8427fd53.svg",
+      "reason": "non_file"
+    },
+    {
+      "path": "iskvw/piel/trazos/a3098c606ca1.svg",
+      "reason": "non_file"
+    },
+    {
+      "path": "iskvw/piel/trazos/a4e497f75f30.svg",
+      "reason": "non_file"
+    },
+    {
+      "path": "iskvw/piel/trazos/a632e8737c66.svg",
+      "reason": "non_file"
+    },
+    {
+      "path": "iskvw/piel/trazos/ac5fcf77a3e3.svg",
+      "reason": "non_file"
+    },
+    {
+      "path": "iskvw/piel/trazos/b622ddb80161.svg",
+      "reason": "non_file"
+    },
+    {
+      "path": "iskvw/piel/trazos/c47d46620944.svg",
+      "reason": "non_file"
+    },
+    {
+      "path": "iskvw/piel/trazos/c888a7bc77e4.svg",
+      "reason": "non_file"
+    },
+    {
+      "path": "iskvw/piel/trazos/d493fd0a393a.svg",
+      "reason": "non_file"
+    },
+    {
+      "path": "iskvw/piel/trazos/e039fc9487a6.svg",
+      "reason": "non_file"
+    },
+    {
+      "path": "iskvw/piel/trazos/eac1e3ff9265.svg",
+      "reason": "non_file"
+    },
+    {
+      "path": "iskvw/piel/trazos/f4cce4725e4e.svg",
+      "reason": "non_file"
+    },
+    {
+      "path": "jobs/2026-07-04_eventos-brief/flows/gen_packs.py",
+      "reason": "base_missing"
+    },
+    {
+      "path": "jobs/2026-07-04_eventos-brief/packs_servicios_rd.json",
+      "reason": "base_missing"
+    },
+    {
+      "path": "jobs/2026-07-04_eventos-brief/packs_servicios_rd_blanco.svg",
+      "reason": "base_missing"
+    },
+    {
+      "path": "jobs/2026-07-04_eventos-brief/packs_servicios_rd_dark.svg",
+      "reason": "base_missing"
+    },
+    {
+      "path": "src/flujo.egg-info/PKG-INFO",
+      "reason": "base_missing"
+    },
+    {
+      "path": "src/flujo.egg-info/SOURCES.txt",
+      "reason": "base_missing"
+    },
+    {
+      "path": "src/flujo.egg-info/requires.txt",
+      "reason": "base_missing"
+    },
+    {
+      "path": "src/flujo/diagnostics.py",
+      "reason": "base_missing"
+    },
+    {
+      "path": "src/flujo/knowledge/episode_runner.py",
+      "reason": "base_missing"
+    },
+    {
+      "path": "src/flujo/knowledge/learning_policy.py",
+      "reason": "base_missing"
+    },
+    {
+      "path": "src/flujo/knowledge/operational_bridge.py",
+      "reason": "base_missing"
+    },
+    {
+      "path": "src/flujo/knowledge/project_ir.py",
+      "reason": "base_missing"
+    },
+    {
+      "path": "src/flujo/knowledge/system_status.py",
+      "reason": "base_missing"
+    },
+    {
+      "path": "src/flujo/runrecord.py",
+      "reason": "base_missing"
+    },
+    {
+      "path": "src/flujo/substrate/__init__.py",
+      "reason": "base_missing"
+    },
+    {
+      "path": "src/flujo/substrate/epistemics.py",
+      "reason": "base_missing"
+    },
+    {
+      "path": "src/flujo/substrate/schema.py",
+      "reason": "base_missing"
+    },
+    {
+      "path": "src/flujo/substrate/xmp.py",
+      "reason": "base_missing"
+    },
+    {
+      "path": "tests/test_diagnostics.py",
+      "reason": "base_missing"
+    },
+    {
+      "path": "tests/test_git_web_contract.py",
+      "reason": "base_missing"
+    },
+    {
+      "path": "tests/test_inferential_archaeology.py",
+      "reason": "base_missing"
+    },
+    {
+      "path": "tests/test_ingesta_archivo.py",
+      "reason": "base_missing"
+    },
+    {
+      "path": "tests/test_learning_policy.py",
+      "reason": "base_missing"
+    },
+    {
+      "path": "tests/test_project_ir.py",
+      "reason": "base_missing"
+    },
+    {
+      "path": "tests/test_substrate.py",
+      "reason": "base_missing"
+    },
+    {
+      "path": "tests/test_system_status.py",
+      "reason": "base_missing"
+    },
+    {
+      "path": "tools/audit_blend_scene.py",
+      "reason": "base_missing"
+    },
+    {
+      "path": "tools/bake_static_materials.py",
+      "reason": "base_missing"
+    },
+    {
+      "path": "tools/inferential_archaeology.py",
+      "reason": "base_missing"
+    },
+    {
+      "path": "tools/mak_status.py",
+      "reason": "base_missing"
+    },
+    {
+      "path": "tools/optimize_blend_scene.py",
+      "reason": "base_missing"
+    },
+    {
+      "path": "tools/profile_blender_animation.py",
+      "reason": "base_missing"
+    },
+    {
+      "path": "tools/render_output_edges.py",
+      "reason": "base_missing"
+    },
+    {
+      "path": "tools/substrate_scan.py",
+      "reason": "base_missing"
+    },
+    {
+      "path": "web/dist-plano/plano.html",
+      "reason": "base_missing"
+    },
+    {
+      "path": "web/dist-rd/rd.html",
+      "reason": "base_missing"
+    },
+    {
+      "path": "web/dist/index.html",
+      "reason": "base_missing"
+    },
+    {
+      "path": "web/venues/index.html",
+      "reason": "base_missing"
+    }
+  ],
+  "precondition_mismatches": [
+    {
+      "path": "CAPACIDADES.md",
+      "current": [
+        "file",
+        "986b505ebe3cfb5236f8d54ed5769dd894829ddbbdf5041730ae2a997ecad857"
+      ],
+      "expected": [
+        [
+          "file",
+          "add08e9e9b0cf42946ffdb7e61f319b8a9b754d2964c55d0abc3faa93e90dfd6"
+        ],
+        [
+          "file",
+          "345650ee978181e2abf1cdb4e184344fad3698f2a906aa14b22ceb34bb3f9851"
+        ],
+        [
+          "file",
+          "b5e27b4dae215de0560b5a95b29eb916e671fc7d1b711cc0d0834072a84a4224"
+        ]
+      ]
+    },
+    {
+      "path": "MAPA.md",
+      "current": [
+        "file",
+        "28a1e0dd15b12b700c140bfd1957786fd1d19d89ed532f9a8858d301cdbdb44e"
+      ],
+      "expected": [
+        [
+          "file",
+          "d97a78502f50b074803b4eeb7ee963c6227ce822664c6a9b852a2fa626b418b9"
+        ],
+        [
+          "file",
+          "b40b7a2447c443d3c52655537bbe25c4b8183b95f8dee764a2dec84d2f653cea"
+        ],
+        [
+          "file",
+          "733c24d0ffdb11dc02ad5105fadef9ec3708aaffa5c4ebeb9556f4c0186200dd"
+        ]
+      ]
+    },
+    {
+      "path": "context/LAST_HANDOFF.md",
+      "current": [
+        "file",
+        "6f3281d280a28e9fabd016a3388b9bbc24965dc467a6e92d8a1548bb2face1ff"
+      ],
+      "expected": [
+        [
+          "file",
+          "657cda08fa65e543ee086084da33c2b2e52fcdab4100dbd153f3e47acc215e57"
+        ],
+        [
+          "file",
+          "1f0c1e30af0d7a40b0cc1c9a2562f138ce163d2dc092855283aa4ef024e760fd"
+        ]
+      ]
+    },
+    {
+      "path": "context/comandos.json",
+      "current": [
+        "file",
+        "cedf7ba81de0b3b587224ee27205bb3a0cb83101f9f2647e892dd9d76fa18956"
+      ],
+      "expected": [
+        [
+          "file",
+          "6395aeed747a417a3832b209a0296cbe485c95733422cb594c60d326a2539df7"
+        ],
+        [
+          "file",
+          "bee96eba5f5d56ac4cfdb4c2506cfce84b789126dedca7bcbb897aeb3535e89d"
+        ],
+        [
+          "file",
+          "9c4f235d8f7ac92d846a650e6bce424e7a8d9569b18ce5e158fdb21f0f5ef07b"
+        ]
+      ]
+    },
+    {
+      "path": "cultura/mak_research/fallback_util.py",
+      "current": [
+        "missing",
+        null
+      ],
+      "expected": [
+        [
+          "file",
+          "e9fb6d7ec06b5c701518b5395ec9255d51a433337c4d4cdcfa5052ab8b76c63a"
+        ],
+        [
+          "file",
+          "011560a85400dc82738cc4b595c4c8ddde6777433ee0f8aebe307a10ca290aba"
+        ]
+      ]
+    },
+    {
+      "path": "out/works.json",
+      "current": [
+        "file",
+        "cb1820b870c0bec8f74dab4856eeac2978ea62337c09d362a3d199f3cff5a684"
+      ],
+      "expected": [
+        [
+          "file",
+          "b5965e8bac0628bef5522088020b1c030aaa07ab30c574af472075635bd38a2d"
+        ],
+        [
+          "file",
+          "8b30bcd0adfedb7950a9e6a9f4ec8fc93367ac76bb6d43bdc66091b04fa6f4d4"
+        ]
+      ]
+    },
+    {
+      "path": "pyproject.toml",
+      "current": [
+        "file",
+        "afcf5675b8d55de68062e463c0a1ba6c116702223115b36c653a28aff0c3ea2c"
+      ],
+      "expected": [
+        [
+          "file",
+          "9957dc776c60feb76b27c77d17035251ed346498be03e3e30594653bd2abb2bf"
+        ],
+        [
+          "file",
+          "c6bd31e13639503f82e7299058775484e4b379b8b6ceae841cbab2eea5134880"
+        ],
+        [
+          "file",
+          "7f1ce120cc4c937c5520e6ee71dc93590fea61fc63918d80e60c942805f2ad62"
+        ]
+      ]
+    },
+    {
+      "path": "src/flujo/cli.py",
+      "current": [
+        "file",
+        "8ea1ccf8f0d2e62a1f86559fa467494ebcf466d9ecba399d5df08eb78d734c6b"
+      ],
+      "expected": [
+        [
+          "file",
+          "0cc6bb347ecf049aa1133f09477d3136d1dcc8f727e1a100c479463019b23871"
+        ],
+        [
+          "file",
+          "b69fb16900b18026518bbe26e346bfc016feb30d2668e5a4dde0867d80af7569"
+        ],
+        [
+          "file",
+          "e800137ce1b7c2805e70787d6de08c03597841331a8bae17115760f2754a6433"
+        ]
+      ]
+    },
+    {
+      "path": "src/flujo/departments.py",
+      "current": [
+        "file",
+        "67073197f9eecf1245b5381a170ef72cd159dd21e084ff86988c8f1c898fc727"
+      ],
+      "expected": [
+        [
+          "file",
+          "6a099044ade6133bd3407d27c005069865dcebed5e6ad38524567a00064721b8"
+        ],
+        [
+          "file",
+          "6d358a7212331b691892119646b7fc0d592ba1dd36cbbbc8bda702d828e2ed2d"
+        ]
+      ]
+    },
+    {
+      "path": "tests/conftest.py",
+      "current": [
+        "file",
+        "316194f7ffd1cd6335ac41e666ac42cd539e387f39a2b08895c5031f40897ba9"
+      ],
+      "expected": [
+        [
+          "file",
+          "ebf8fa58263fcff6e7bd9df53d42432de6fe40181b753172f2a47e738afbde0a"
+        ],
+        [
+          "file",
+          "ebf8fa58263fcff6e7bd9df53d42432de6fe40181b753172f2a47e738afbde0a"
+        ],
+        [
+          "file",
+          "d413daa6114837ba88e7155d5f4fd31c48cef98b751bdc4599f0bd719f587560"
+        ]
+      ]
+    },
+    {
+      "path": "tests/fixtures/env_documentado_baseline.txt",
+      "current": [
+        "file",
+        "63a36b6e71c8d504be81538fb9a03d13cfc91e5b88611c5f2e175b215879fb0c"
+      ],
+      "expected": [
+        [
+          "file",
+          "7d5a21338313336fb742c160b28326e7f3661241a985f12819566a18c6518b72"
+        ],
+        [
+          "file",
+          "c8c7e5173c11078d4a9cc0ae9e22a4a0d7161e7c6c9a5dbf1bd327f2143ab6d2"
+        ]
+      ]
+    },
+    {
+      "path": "tests/fixtures/idioma_baseline.txt",
+      "current": [
+        "file",
+        "b4790fa5771830ba25e0d2bf94a834bed7b2a19660aef83858cdb8fc393c8a39"
+      ],
+      "expected": [
+        [
+          "file",
+          "bdedb60bb236971434491e508c4d2be9e8d27f30a5ec2e90f3fcdc9c3370099a"
+        ],
+        [
+          "file",
+          "c7d5b82075f8ede7e21beb447cd7116e955325f3909c900f1b8df23c820e3ca4"
+        ],
+        [
+          "file",
+          "1505cc4affe7b8a9247fa72b3eef669f2bf60114233c1d986846a78f9f5072df"
+        ]
+      ]
+    },
+    {
+      "path": "tests/test_higiene_docs.py",
+      "current": [
+        "file",
+        "5eda0aeeabe41c0517c84842d75150463cd64efa95b2d9f141c33adc6c73a544"
+      ],
+      "expected": [
+        [
+          "file",
+          "38980a4ae5117af2940a3969a8cbf01d939c303d738bd2b6d68d410fb4e4cb53"
+        ],
+        [
+          "file",
+          "5f751474520ad3f31c18e291553254749777a7c9f8be0152a22e67e3769f3445"
+        ],
+        [
+          "file",
+          "5f751474520ad3f31c18e291553254749777a7c9f8be0152a22e67e3769f3445"
+        ]
+      ]
+    },
+    {
+      "path": "tests/test_higiene_repo.py",
+      "current": [
+        "file",
+        "bc762431f825561f57bca608ab3de4ee437c35a7c8f0d5d3ee63c458b16add42"
+      ],
+      "expected": [
+        [
+          "file",
+          "b2a7bcc0ebb852b61881d09f66d0c7f8fed555d78333cdff93d41be0e4419321"
+        ],
+        [
+          "file",
+          "c79e4ef7fd65eda1991cf74421a2b6459c26341d9f0236c6a6264bb8c7470dac"
+        ],
+        [
+          "file",
+          "c79e4ef7fd65eda1991cf74421a2b6459c26341d9f0236c6a6264bb8c7470dac"
+        ]
+      ]
+    },
+    {
+      "path": "tests/test_privacidad_repo.py",
+      "current": [
+        "file",
+        "09c1149115a210bb55e6f234a504ccd60e98ae223204338b284cd2f81b37ce33"
+      ],
+      "expected": [
+        [
+          "file",
+          "b1a9c77d36d70a90d237545e372b41f5380640c86aec05ed36f1e000bac77ac5"
+        ],
+        [
+          "file",
+          "56c319bea725e21e5ad810e63c4a2e09f51aee644b3db9b8515010e1d1e98033"
+        ],
+        [
+          "file",
+          "56c319bea725e21e5ad810e63c4a2e09f51aee644b3db9b8515010e1d1e98033"
+        ]
+      ]
+    },
+    {
+      "path": "tests/test_repo_audit.py",
+      "current": [
+        "file",
+        "de4ec5d57c05e33591822f2dd134cea0838badd6dd5b9c2a5b73cb56bd88222a"
+      ],
+      "expected": [
+        [
+          "file",
+          "ce7c80cd8441766f3bdd4599c4e696734f957bf00e507b2ade1b6e131e7fc6b9"
+        ],
+        [
+          "file",
+          "4fb7fe09154e6b78b5bae385ea43fffe7006199d84e008c863124bc0738dd850"
+        ]
+      ]
+    },
+    {
+      "path": "tools/idioma.py",
+      "current": [
+        "file",
+        "38afdb4eea1a38671c5fae355c2503b7796e50846da2dca1715cf3438f17a2c7"
+      ],
+      "expected": [
+        [
+          "file",
+          "0b1003da98f8b5fb59edc561949e582c1739110e1554b05df51a230588da0142"
+        ],
+        [
+          "file",
+          "78944d770eb5bac8d559389c8737555d4e446f3f4ddd519c83854ccddfaf0a4d"
+        ],
+        [
+          "file",
+          "78944d770eb5bac8d559389c8737555d4e446f3f4ddd519c83854ccddfaf0a4d"
+        ]
+      ]
+    },
+    {
+      "path": "tools/repo_audit.py",
+      "current": [
+        "file",
+        "df1b9723990511835b9bd6a981c5a88bec4f881d3f2ceb270ed068a9acf0d187"
+      ],
+      "expected": [
+        [
+          "file",
+          "ff658a8281a49ce609bc6ec7cd5f5b5c017567126e9613814cbc55d473957b11"
+        ],
+        [
+          "file",
+          "68c6f150fc349c974f8dab2bca51c4689dcfce1276d2f7b0a9c377f85f09dcc0"
+        ]
+      ]
+    }
+  ],
+  "manual_resolutions": [
+    {
+      "path": "tests/test_cron_state_atomic.py",
+      "decision": "kept existing paused-cron contract",
+      "reason": "The win variant asserted /home/mak/bin/mak_sync_safe.py, but that executable is absent from all three origins; the live safe implementation is tools/mak_ops/sync_mak_safe.py. No invented path was added."
+    },
+    {
+      "path": "tests/test_cultura_sin_automerge.py",
+      "decision": "kept executable allowlist only",
+      "reason": "producer_catalog.py is explicitly skipped by _fuentes_cultura(), so adding it to the assertion would make the allowlist internally inconsistent."
+    },
+    {
+      "path": "tools/update_readme_svg.py",
+      "decision": "merged current-authority digest contract",
+      "reason": "Added the MAK/runtime authority lines and filtered the stale four-canonical-branches statement; focused readme tests pass."
+    }
+  ],
+  "conflict_resolution_summary": {
+    "active_runner_consensus_accepted": 31,
+    "no_consensus_left_for_manual_review": 15,
+    "consensus_policy": "active-flujo and runner-vibecodeine byte-identical content is retained; win-flujo remains frozen evidence"
+  },
+  "validation": {
+    "command": "./.venv/bin/python -m pytest -o addopts='' -q tests/test_airdrop_signing.py tests/test_cron_state_atomic.py tests/test_cultura_sin_automerge.py tests/test_mak_research_router.py tests/test_rd_database.py tests/test_readme_svg.py tests/test_validate_airdrop.py",
+    "result": "87 passed",
+    "seconds": 62.89
+  },
+  "unresolved_after_reconcile": {
+    "three_way_conflicts": 46,
+    "base_missing": 55,
+    "non_file_type_conflicts": 22,
+    "current_precondition_mismatches": 18
+  },
+  "line_ending_cleanup": {
+    "paths_restored_without_semantic_delta": 134,
+    "reason": "The archive copies used CRLF; those paths differed from HEAD only by line endings and were restored to avoid a meaningless mass diff."
+  },
+  "closure_20260901": {
+    "status": "resolved_current_canonical",
+    "count": 32,
+    "selection": "The current live tree is the sole executable authority for the remaining no-consensus and precondition paths; every retained origin variant remains frozen under fused/origins.",
+    "paths": [
+      ".gitignore",
+      "Makefile",
+      "cultura/mak_plataforma/crontab.mak",
+      "cultura/mak_plataforma/hub.py",
+      "cultura/mak_plataforma/tandas.py",
+      "docs/GLOSSARY.md",
+      "docs/SCRIPTS_INVENTORY.md",
+      "docs/recovered/claude_sessions_2026-08-12/README.md",
+      "iskvw/PROMPT_ESTETICA.md",
+      "iskvw/editor.html",
+      "src/flujo/autonomia.py",
+      "src/flujo/paths.py",
+      "tests/test_autonomia_cli.py",
+      "tests/test_operational_entrypoints.py",
+      "CAPACIDADES.md",
+      "MAPA.md",
+      "context/LAST_HANDOFF.md",
+      "context/comandos.json",
+      "cultura/mak_research/fallback_util.py",
+      "out/works.json",
+      "pyproject.toml",
+      "src/flujo/cli.py",
+      "src/flujo/departments.py",
+      "tests/conftest.py",
+      "tests/fixtures/env_documentado_baseline.txt",
+      "tests/fixtures/idioma_baseline.txt",
+      "tests/test_higiene_docs.py",
+      "tests/test_higiene_repo.py",
+      "tests/test_privacidad_repo.py",
+      "tests/test_repo_audit.py",
+      "tools/idioma.py",
+      "tools/repo_audit.py"
+    ],
+    "retired_exceptions": [
+      {
+        "path": "cultura/mak_research/fallback_util.py",
+        "replacement": "cultura/mak_codex/fallback_util.py",
+        "decision": "retired_duplicate",
+        "evidence": "No live import remains; replacement exists and is independently materialized."
+      }
+    ],
+    "verification": {
+      "command": "current live path plus at least one preserved origin variant, with retired exceptions checked for replacement and import absence",
+      "result": "32/32 resolved; 31 retained live, 1 retired duplicate; no archive bytes removed"
+    }
+  },
+  "policy": "only conflict-free git merge-file results with current-live precondition; no archive writes; atomic os.replace"
+}

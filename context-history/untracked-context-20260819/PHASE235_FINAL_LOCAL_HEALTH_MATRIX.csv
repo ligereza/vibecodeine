@@ -1,0 +1,8 @@
+phase,check,result,exit,side_effect,next
+235,core_imports,7_of_7,0,none,reconcile objectives
+235,pip_check,no broken requirements,0,none,reconcile objectives
+235,readonly_cli,all named commands pass,0,none,reconcile objectives
+235,sqlite_integrity,"rd.db=ok; rd_datos.db=ok",0,none,keep DB decision explicit
+235,cron_active,0,0,none,leave paused
+235,user_services,all six inactive,0,none,leave inactive
+235,physical_invariants,"flujo WIN RD DBs handoff present",0,none,reconcile objectives

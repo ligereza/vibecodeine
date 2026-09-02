@@ -1,0 +1,9 @@
+phase,item,observed_value,role,decision
+179,rd_root,1742 files / 60865045370 bytes,active RD corpus,keep and classify before merge
+179,rd_db,20 tables / integrity ok,regenerable operational catalog,keep separate and read-only for consumers
+179,rd_datos_db,3 tables / 0 rows / integrity ok,privacy-first field data,keep separate; no merge
+179,lab_index,1749 asset rows / 1585 full / 164 pending,derived metadata evidence,reconcile snapshot before authority
+179,lab_exact_duplicates,49 current relations versus 47 summary,derived exact-hash evidence,candidate only; no deletion
+179,catalog_reader,20 productoras / 3 venues / 7 events,curatoria catalog consumer,foreground read-only passed
+179,field_reader,0 field records / disclaimer present,rd_datos summary consumer,foreground read-only passed
+179,pytest_environment,missing in /home/mak/venvs/flujo,validation environment,document limitation; do not install

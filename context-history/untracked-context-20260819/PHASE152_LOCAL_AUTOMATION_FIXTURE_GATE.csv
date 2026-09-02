@@ -1,0 +1,5 @@
+component,consumer,command,result,mutation,open_gate
+/home/mak/flujo/src/flujo/automation.py,hub auto-pending endpoint,isolated Python fixture run,exit 0; processed 1; brief/report created,temporary root only,provider-backed Gmail/issue chain
+/home/mak/flujo/src/flujo/jobs/lifecycle.py,job preparation,called by fixture,brief state pendiente_datos,temporary root only,authorized real job
+/home/mak/flujo/src/flujo/web/hub.py,/api/auto-pending-flyers and explicit app flag,static consumer mapping,not invoked live,no mutation,temporary hub route check
+/home/mak/flujo/tools/gmail_to_github_issues.gs,external Gmail->issue writer,not invoked,not applicable,no mutation,external/provider authority

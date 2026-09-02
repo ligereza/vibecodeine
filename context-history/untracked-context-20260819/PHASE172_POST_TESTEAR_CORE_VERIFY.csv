@@ -1,0 +1,5 @@
+check,command,result,notes,next_action
+core_verify,"/home/mak/venvs/flujo/bin/flujo verify --no-pytest",PASS,"exit=0; compileall health version hub smoke",inspect Codex generators
+web_typecheck,"cd /home/mak/flujo/web && npm run typecheck",PASS,"exit=0; tsc --noEmit",inspect Codex generators
+wrong_web_root,"npm run typecheck in /home/mak/flujo",EXPECTED_ERROR,"ENOENT package.json; corrected root; no files changed",none
+process_gate,targeted process scan,PASS,"no Codex/FLUJO persistent process",continue

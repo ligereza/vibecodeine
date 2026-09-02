@@ -1,0 +1,2 @@
+phase,scope,action,result,exit_code,changed_files,risk,next_action
+107,curatoria percepcion ownership,replace active root duplicate with canonical compatibility projection while preserving WIN variant,corrected pure fixtures and compile passed; custom usage contract exits 2 for --help; no OCR or vision execution,0,/home/mak/curatoria/percepcion.py,external vision and fiche writes remain gated,continue curatoria read/fixture audit

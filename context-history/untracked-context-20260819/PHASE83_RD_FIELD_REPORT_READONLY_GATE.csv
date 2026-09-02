@@ -1,0 +1,6 @@
+item,status,path_or_command,result
+rddatos_help,verified,venvs/flujo/bin/flujo rd-datos --help,exit 0
+required_option,verified,flujo rd-datos informe,exit 2 when --salida omitted
+field_report,verified,flujo rd-datos informe --salida /tmp,exit 0; 934-byte truthful empty report
+real_db,unchanged,data/rd_datos.db,0 bytes and mtime unchanged
+field_ingest,deferred,rd-datos ingest,no real approved field data available

@@ -1,0 +1,2 @@
+phase,scope,action,result,exit_code,changed_files,risk,next_action
+109,curatoria extraccion ownership,replace active root documentation-only duplicate with canonical compatibility projection,corrected pure fixtures and compile passed; no candidate/report/database write,0,/home/mak/curatoria/extraccion_db.py,writer boundary remains gated,close curatoria and audit next department

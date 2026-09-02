@@ -1,0 +1,2 @@
+source,target,consumer,status,verification,mutation,decision
+/home/mak/flujo/cultura/mak_codex/generar.py,/home/mak/codex/generar.py,Codex generated-piece flow,VERIFIED,"py_compile=0; local planner/coder/sandbox fixture ok; code equal; reports temporary; process gate=0",temporary fixture only,keep canonical projection and provider gate

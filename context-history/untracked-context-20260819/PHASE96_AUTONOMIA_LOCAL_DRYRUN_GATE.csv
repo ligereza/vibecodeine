@@ -1,0 +1,8 @@
+item,status,result
+local_dry_run,verified,exit 0 ok=true status=briefed
+rd_evidence_contract,verified,primary_source triangulation uncertainty present
+provider_calls,none,Watsonx Ollama AWS not called
+ssh_calls,none,executor local
+ledger_write,none,dry-run created no common/batch ledger
+output_scope,temporary,one brief under /tmp
+production_publication,deferred,authority gate preserved

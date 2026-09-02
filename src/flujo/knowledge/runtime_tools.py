@@ -170,6 +170,16 @@ def resolve_console_script(name: str, *, env_var: str | None = None) -> Path | N
         seen.add(key)
         try:
             if candidate.is_file() and os.access(candidate, os.X_OK):
+                # Keep the spelling of the interpreter's own bin directory.
+                # In this MAK layout ``.venv`` is a compatibility symlink to
+                # the archived environment; resolving it would hide the
+                # operational path callers were asked to diagnose.
+                if candidate.parent in {
+                    Path(sys.executable).parent,
+                    Path(sys.prefix) / "bin",
+                    Path(sys.prefix) / "Scripts",
+                }:
+                    return candidate
                 return candidate.resolve()
         except OSError:
             continue

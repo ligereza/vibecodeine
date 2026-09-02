@@ -1,0 +1,2 @@
+source,target,consumer,bug,fix,status,verification,changed_files,next_action
+/home/mak/flujo/cultura/mak_codex/testear.py,/home/mak/codex/testear.py,Codex generated-test gate,"-I removed temp module path; valid fixture failed ModuleNotFoundError","isolated -c runner inserts temp path before unittest.main",VERIFIED,"py_compile=0; source/runtime fake-coder fixture OK RC=0; process gate=0","/home/mak/flujo/cultura/mak_codex/testear.py",run core checks then inspect generar/iconos

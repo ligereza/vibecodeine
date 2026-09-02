@@ -1,0 +1,41 @@
+surface,scale,role,disposition
+/home/mak/flujo,862M,canonical source/runtime/data/jobs,KEEP_OWNER
+/home/mak/RD,57G,creative source/editable/delivery/evidence,KEEP_PROTECTED
+/home/mak/WIN,7.9G,Windows historical archive,KEEP_HISTORICAL_READ_ONLY
+/home/mak/curatoria_inbox,173G,inbound material,KEEP_PROTECTED_INBOUND
+/home/mak/research,768M,active runtime projection,KEEP_RUNTIME
+/home/mak/codex,2.6M,active runtime projection,KEEP_RUNTIME
+/home/mak/curatoria,8.4M,active runtime projection,KEEP_RUNTIME
+/home/mak/plataforma,106M,platform plus legacy candidates,KEEP_FOR_NOW
+/home/mak/vigia,344K,monitoring projection,KEEP_RUNTIME
+/home/mak/lenguaje,1.5M,language department,KEEP_UNTIL_CONSUMER_AUDIT
+/home/mak/labs,439M,derived evidence,KEEP_EVIDENCE
+/home/mak/indexes,113M,derived indexes,KEEP_DERIVED
+/home/mak/state,301M,probe metadata,KEEP_EVIDENCE
+/home/mak/portfolio_media,5.5G,portfolio outputs,KEEP_OUTPUT
+/home/mak/renders,120K,generated renders,KEEP_OUTPUT
+/home/mak/trazos,4.9M,creative source corpus,KEEP_SOURCE_OR_EVIDENCE
+/home/mak/models,206M,external models,KEEP_EXTERNAL_MODEL
+/home/mak/src,11M,external source,KEEP_EXTERNAL_SOURCE
+/home/mak/apps,1.4G,external applications,KEEP_EXTERNAL
+/home/mak/Apps,576M,application resources,KEEP_EXTERNAL
+/home/mak/blender,1.2G,external Blender,KEEP_EXTERNAL
+/home/mak/blender-4.5.3-viejo,1.2G,older Blender,REVIEW_BY_PROVENANCE
+/home/mak/venvs,6.6G,runtime environments,KEEP_RUNTIME
+/home/mak/.venvs,6.9G,host environments,KEEP_HOST_RUNTIME
+/home/mak/venv-providers,57M,provider environment,KEEP_EXTERNAL_RUNTIME
+/home/mak/backups,166M,backups,KEEP_RECOVERY
+/home/mak/rollback,240M,rollback snapshots,KEEP_RECOVERY
+/home/mak/quarantine,185M,quarantine evidence,KEEP_RECOVERY
+/home/mak/flujo-deploy,153M,deployment surface,REVIEW_BY_PROVENANCE
+/home/mak/actions-runner,998M,external runner,KEEP_EXTERNAL
+/home/mak/n8n-local,16K,discarded automation,EXCLUDED_FROM_ACTIVE_MAK
+/home/mak/xio_puente,3.0M,user-excluded bridge,EXCLUDED_BY_USER
+/home/mak/bucle,2.6M,loop material,REVIEW_BY_CONSUMER
+/home/mak/vibecodeine,440M,creative source,KEEP_SOURCE
+/home/mak/curatoria_test,28M,test fixtures,KEEP_TEST_EVIDENCE
+/home/mak/curatoria_encolado,4K,staging queue,REVIEW_BY_PATH
+/home/mak/workspace,16K,workspace state,REVIEW_BY_CONSUMER
+/home/mak/OneDrive,disconnected,external sync,LEAVE_UNTOUCHED
+"host dot-directories and user folders",variable,OS credentials caches apps,OUTSIDE_MAK_REORGANIZATION
+"loose root files/logs/installers",small/unknown,mixed diagnostics and launchers,UNRESOLVED

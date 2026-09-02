@@ -1,0 +1,13 @@
+metric,value,result
+"input observations",5394,"read-only candidate"
+"events",42,"joined by event_id"
+"events with valid ISO date",10,"review required for remaining 32"
+"rows missing date",4425,"invalid for live ingest"
+"rows missing substance",318,"invalid for live ingest"
+"rows missing reagent",357,"invalid for live ingest"
+"strict privacy inserts in temp DB",762,"temporary only"
+"strict privacy rejections",19,"never persisted"
+"form invalid rows",4613,"temporary only"
+"live rd_datos hash", "unchanged", "no live write"
+"CLI corrected route", "exit 0; 762 temp rows", "contract passes in temp DB"
+"CLI first harness", "exit 1", "harness error before CLI; corrected"

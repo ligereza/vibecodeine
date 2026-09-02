@@ -1,0 +1,2 @@
+source,target,consumer,interface,status,verification,decision,next_action
+/home/mak/flujo/cultura/mak_codex/motor_semantico,/home/mak/codex/motor_semantico,Codex icon/SVG workflow,compilador.py spec.json output.svg,VERIFIED,"py_compile=0; source/runtime SVG equal; exit=0; 3802 bytes; process gate=0",keep engine and generated pieces classified,inspect Codex jobs/worker boundary

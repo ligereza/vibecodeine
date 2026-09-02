@@ -1,0 +1,12 @@
+phase,layer,owner,rule,status
+188,authoring,/home/mak/flujo,semantic source owner,proposed
+188,runtime,/home/mak/research|codex|curatoria|plataforma|vigia,one projection per department,proposed
+188,rd_assets,/home/mak/RD,consumer-classified creative corpus,keep
+188,rd_catalog,/home/mak/flujo/data/rd.db,regenerable operational projection,keep separate
+188,field_data,/home/mak/flujo/data/rd_datos.db,privacy-first and empty,keep separate
+188,derived_evidence,/home/mak/labs,provenance-bound no promotion,keep
+188,external_apps,/home/mak/apps,binaries not source,keep separate
+188,external_source,/home/mak/src,declared consumer only,keep separate
+188,historical,/home/mak/WIN,archive only,no runtime use
+188,quarantine,/home/mak/flujo/context/quarantine/<phase>,reversible candidates with rollback,not yet used
+188,git,none,propose only after stabilization,deferred

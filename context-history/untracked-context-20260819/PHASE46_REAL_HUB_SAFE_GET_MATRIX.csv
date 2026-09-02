@@ -1,0 +1,13 @@
+route,method,source,target,inputs,expected_output,validation,result,write_observation,decision
+/api/ping,GET,src/flujo/web/hub.py,/home/mak/flujo real hub,local runtime,health envelope,real temporary process GET,HTTP 200,writes_detected=false,PASS_REAL_RUNTIME
+/api/status,GET,src/flujo/web/hub.py,/home/mak/flujo real hub,local root/assets,status envelope,real temporary process GET,HTTP 200,writes_detected=false,PASS_REAL_RUNTIME
+/api/rd-packs,GET,src/flujo/web/hub.py -> data/rd_packs.json,/home/mak/flujo RD,local packs,pack catalog,real temporary process GET,HTTP 200,writes_detected=false,PASS_REAL_RUNTIME
+/api/rd-db,GET,src/flujo/web/hub.py -> src/flujo/rd/panel.py,/home/mak/flujo RD,rd.db projection,productoras/venues/resumen,real temporary process GET,HTTP 200,writes_detected=false,PASS_REAL_RUNTIME
+/api/list-svg-works,GET,src/flujo/web/hub.py -> svg/,/home/mak/flujo ISKVW,SVG assets,groups/count,real temporary process GET,HTTP 200,writes_detected=false,PASS_REAL_RUNTIME
+/api/svg-index,GET,src/flujo/web/hub.py -> svg/,/home/mak/flujo ISKVW,SVG assets,alias listing,real temporary process GET,HTTP 200,writes_detected=false,PASS_REAL_RUNTIME
+/api/portafolio,GET,src/flujo/web/hub.py -> tools/portfolio,/home/mak/flujo ISKVW,portfolio catalog,projects/prototype,real temporary process GET,HTTP 200,writes_detected=false,PASS_REAL_RUNTIME
+/api/show-kit,GET,src/flujo/web/hub.py -> xio/show_kit,/home/mak/flujo ISKVW,show-kit files,setlist/cues/records,real temporary process GET,HTTP 200,writes_detected=false,PASS_REAL_RUNTIME
+/api/list-jobs,GET,src/flujo/web/hub.py -> src/flujo/jobs,/home/mak/flujo jobs,brief.yaml files,jobs/count,real temporary process GET,HTTP 200,writes_detected=false,PASS_REAL_RUNTIME
+/api/dashboard-summary,GET,src/flujo/web/hub.py -> src/flujo/dashboard,/home/mak/flujo dashboard,local manifests/configs,summary priorities,real temporary process GET,HTTP 200,writes_detected=false,PASS_REAL_RUNTIME
+/api/event-presets,GET,src/flujo/web/hub.py -> src/flujo/eventos/presets.py,/home/mak/flujo RD,local preset constants,presets/connected,real temporary process GET,HTTP 200,writes_detected=false,PASS_REAL_RUNTIME
+/api/agents-roles,GET,src/flujo/web/hub.py,/home/mak/flujo hub UI,static role templates,roles/note,real temporary process GET,HTTP 200,writes_detected=false,PASS_REAL_RUNTIME_POLICY_BOUNDARY

@@ -1,0 +1,5 @@
+family,semantic_candidates,status,next_action
+platform,entregar_micelio.py,EXTERNAL_WRITER_GATE,Static and dry-run contract only
+curatoria,none,PROJECTIONS_CLOSED,Protect data and evidence surfaces
+research,none,PROJECTIONS_CLOSED,Protect corpus and evidence surfaces
+codex,none,PROJECTIONS_CLOSED,Protect pieces and review surfaces

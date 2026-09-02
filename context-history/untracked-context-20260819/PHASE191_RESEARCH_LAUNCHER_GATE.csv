@@ -1,0 +1,6 @@
+phase,check,result,decision
+191,installed_crontab,exit 0; relevant Research lines PAUSED,do not enable
+191,research.sh active launcher,none found,manual wrapper preserved
+191,exact_shell_modes,0644,not directly executable
+191,quarantine_candidate,safety inconclusive,no change
+191,process_gate,empty,no persistent process

@@ -1,0 +1,16 @@
+surface,file_count,function,consumer,status,decision
+/home/mak/RD/AUTOMATIZACION,614,event flyer workflow and outputs,src/flujo/eventos/flyer_auto.py,mixed operational/evidence,retain and resolve path contract
+/home/mak/RD/suplementos,470,product and commercial creative,human RD workflow,asset/evidence,retain and classify
+/home/mak/RD/flyernuevo,87,event flyer and reel history,route map only,historical,retain
+/home/mak/RD/assets,82,reusable assets,route map and human workflows,library candidate,retain and map ownership
+/home/mak/RD/recursos,65,branding and shared resources,route map and selected FLUJO assets,shared library,retain and map ownership
+/home/mak/RD/CREAMFIELDS,62,event-specific material,route map,historical,retain
+/home/mak/RD/New Folder,59,unnamed working material,no proven consumer,unresolved,classify before cleanup
+/home/mak/RD/FEBRERO,48,event-specific material,route map,historical,retain
+/home/mak/RD/FLYER,34,flyer variants,route map,historical,retain and compare variants
+/home/mak/RD/Almacenamiento automático de Adobe After Effects,27,Adobe recovery files,external Adobe workflow,recovery evidence,quarantine classification
+/home/mak/RD/gotario,23,product and reactive material,route map,product assets,retain and map owner
+/home/mak/RD/prep,20,preparation material,route map,preparation surface,retain and classify
+/home/mak/RD/desde_issues,6,issue-derived material,FLUJO issue chain,provenance,retain and link IDs
+/home/mak/RD/RESULTADOS_MANUAL,3,manual outcomes,human workflow,output evidence,retain
+/home/mak/RD,1743,creative assets code evidence and outputs,multiple consumers,mixed,manifest before consolidation

@@ -1,0 +1,10 @@
+phase,field,result,decision
+195,VERBOS,match 9 entries,keep projection
+195,CADA_MIN,match,keep projection
+195,MAX_DIA,match,keep projection
+195,GAP_MIN,match,keep projection
+195,GAP_MIN_OFFLINE,match,keep projection
+195,LOAD_MAX,match,keep projection
+195,MODULOS,match 6 entries,keep projection
+195,SEMILLAS,match 8 entries,keep projection
+195,process_gate,empty,no persistent process

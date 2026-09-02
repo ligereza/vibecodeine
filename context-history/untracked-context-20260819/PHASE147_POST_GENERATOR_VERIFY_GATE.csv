@@ -1,0 +1,6 @@
+gate,command,result,files_changed,decision
+core verify,/home/mak/venvs/flujo/bin/flujo verify --no-pytest,exit 0,none,pass
+web typecheck,npm run typecheck in /home/mak/flujo/web,exit 0,none,pass
+process gate,ps bounded filter after validation,no matching persistent process,none,pass
+wrong invoker,flujo verify --no-pytest,exit 127,none,corrected without mutation
+legacy dispatcher,python3 scripts/flujo.py verify --no-pytest,exit 2,none,corrected without mutation

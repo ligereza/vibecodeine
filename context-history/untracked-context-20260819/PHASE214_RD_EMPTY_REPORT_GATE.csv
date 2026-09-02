@@ -1,0 +1,8 @@
+check,result,exit_or_value,notes
+"rd-datos informe full",PASS,0,"temporary output outside repository"
+"rd-datos informe 2026-Q3",PASS,0,"temporary output outside repository"
+"mandatory disclaimer",PASS,present,"states no real field data"
+"empty aggregate tables",PASS,"(sin datos)","expected current state"
+"rd.db hash",PASS,unchanged,"before/after report"
+"rd_datos.db hash",PASS,unchanged,"before/after report"
+"CSV ingest",DEFERRED,not_called,"no field authority"

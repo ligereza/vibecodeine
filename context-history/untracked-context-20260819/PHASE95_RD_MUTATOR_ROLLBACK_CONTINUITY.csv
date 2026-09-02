@@ -1,0 +1,6 @@
+item,status,result
+hub_mutator_functions,verified,all five expected functions present
+automation_runner,verified,run_pending_flyers present
+fixture_residue,none,bounded real roots clean of phase/fixture/tmp names
+persistent_process,none,no hub Blender provider or automation process
+production_mutation,deferred,fixture-only evidence retained

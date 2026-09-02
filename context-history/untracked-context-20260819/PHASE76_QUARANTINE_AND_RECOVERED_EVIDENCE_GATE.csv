@@ -1,0 +1,3 @@
+surface,classification,consumer_role,decision
+/home/mak/quarantine,PROTECTED_ROLLBACK_EVIDENCE,rollback and provenance,retain
+/home/mak/flujo/docs/recovered,PROTECTED_HISTORICAL_EVIDENCE,recovered source/data/prototypes,retain

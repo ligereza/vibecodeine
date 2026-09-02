@@ -1,0 +1,4 @@
+path,change,validation,status
+jobs/2026-07-04_eventos-brief/flows/gen_packs.py,absolute MAK paths main guard and bounded output flags,compile and isolated generation pass,LINUX_RUNTIME_VERIFIED_TEMP_OUTPUT
+jobs/2026-07-04_eventos-brief,live RD job outputs,unchanged,PROTECTED_DELIVERABLE
+svg/eventos_rd,live visualizer outputs,unchanged,PROTECTED_DELIVERABLE

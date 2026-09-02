@@ -1,0 +1,2 @@
+source,projection,consumers,parity,fixture,side_effects,decision
+cultura/mak_plataforma/contrato_archivo.py,/home/mak/plataforma/contrato_archivo.py,hub laser entregar_micelio,exact,portfolio contract and invalid input,none,PROJECTION_PARITY_VERIFIED

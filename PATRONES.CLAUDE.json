@@ -1,0 +1,216 @@
+{
+  "esquema": "mak-patrones-de-error-v1",
+  "fecha": "2026-08-31",
+  "para": "El agente que va a tocar MAK. Cargar esto antes de actuar, no despues de romper algo.",
+  "como_usarlo": "Cada patron tiene un sintoma observable. Si tu situacion calza con el sintoma, tu resultado probablemente es falso. Aplica 'correcto' antes de reportar o de mover nada.",
+  "regla_general": "Un resultado demasiado limpio -- cero de algo, todos ausentes, doce negativos identicos -- es motivo de desconfianza del instrumento, no de satisfaccion. Verifica a mano un caso, incluido uno que tu metodo haya marcado como sano.",
+  "patrones": [
+    {
+      "id": "alcance-repo",
+      "sintoma": "Buscaste algo y no aparece. Buscaste dentro de /home/mak/flujo.",
+      "equivocado": "grep -r X /home/mak/flujo",
+      "correcto": "MAK es /home/mak. El repo es UN directorio dentro. Buscar tambien en los siete organos, indexes/, state/, labs/, src/.",
+      "caso_real": "Declare inexistentes research/ y labs/. Existen un nivel mas arriba. Tres veces en un dia.",
+      "gravedad": "alta"
+    },
+    {
+      "id": "una-sola-forma",
+      "sintoma": "Cero consumidores para un archivo .py.",
+      "equivocado": "grep -r 'nombre.py'",
+      "correcto": "Buscar TRES formas: (1) nombre con extension, (2) nombre sin extension, para 'from tools.nombre import X', (3) carga dinamica: spec_from_file_location, sys.path.insert + import, subprocess.",
+      "caso_real": "Reporte 24 herramientas sin consumidor. Con las tres formas eran 13. Y venv-providers dio cero por ruta completa pero dos tests lo nombran suelto.",
+      "gravedad": "alta"
+    },
+    {
+      "id": "preguntarle-al-texto",
+      "sintoma": "Cero coincidencias en el codigo, y concluiste que algo no existe en la maquina.",
+      "equivocado": "grep -r postgres /home/mak/flujo /home/mak/plataforma ...",
+      "correcto": "Preguntarle al SISTEMA: systemctl list-units --type=service --state=running (usuario Y sistema), docker ps, ss -ltnp, dpkg -l. Un servicio no se menciona a si mismo en el codigo.",
+      "caso_real": "Retire venvs/knowledge-migration afirmando 'no hay PostgreSQL en MAK'. postgresql@15-main.service corria activo con una base de 21 MB y credenciales de un dia antes. Casi retiro searxng por lo mismo: corre en docker.",
+      "gravedad": "critica"
+    },
+    {
+      "id": "cron-pausado-no-es-muerto",
+      "sintoma": "Encontraste que algo solo lo invoca una linea comentada del crontab.",
+      "equivocado": "Tratar la linea pausada como si no existiera.",
+      "correcto": "Las 23 lineas estan pausadas A PROPOSITO desde 2026-08-14: MAK fue detenido para ser ordenado y se va a reanudar. Una linea pausada SIGUE SIENDO un consumidor.",
+      "caso_real": "Regla que se respeto y evito varios retiros equivocados.",
+      "gravedad": "critica"
+    },
+    {
+      "id": "apagado-no-es-roto",
+      "sintoma": "Un organo o servicio esta caido y quieres arreglarlo.",
+      "equivocado": "Asumir averia y encenderlo.",
+      "correcto": "Buscar su interruptor primero. MAK tiene al menos tres apagados deliberados: ~/curatoria/AUTONOMY_ENABLE (debe existir y no existe), ~/codex/.token.disabled, ~/research/.cola.disabled.missing_ntfy. Ver tabla 'gate' en procesos.sqlite.",
+      "caso_real": "xio_puente sigue sin diagnosticar por esta misma razon: no se sabe si es averia o decision.",
+      "gravedad": "alta"
+    },
+    {
+      "id": "shim-sin-literal",
+      "sintoma": "Buscaste el string '/home/mak/flujo' dentro de los shims y aparecen 5 de 107.",
+      "equivocado": "grep '/home/mak/flujo' en los directorios de organo.",
+      "correcto": "102 de 107 construyen la ruta: Path(__file__).resolve().parents[1] / 'flujo' / 'cultura' / 'mak_X' / 'y.py'. Evaluar la expresion, o regex con re.S sobre '\"cultura\"\\s*/\\s*\"(mak_\\w+)\"\\s*/\\s*\"([\\w.]+)\"'.",
+      "caso_real": "Un agente cayo en esto y lo reconocio: habria reportado 102 archivos sin clasificar.",
+      "gravedad": "media"
+    },
+    {
+      "id": "grep-multilinea",
+      "sintoma": "Un patron que cruza lineas devuelve cero.",
+      "equivocado": "grep -P con un patron que abarca dos lineas.",
+      "correcto": "grep trabaja linea a linea. Usar Python con re.S.",
+      "caso_real": "Devolvio 'SIN DESTINO' para los 30 shims que llaman _MODULE.main().",
+      "gravedad": "media"
+    },
+    {
+      "id": "basename-en-grep",
+      "sintoma": "Demasiadas coincidencias, muchas en .pyc.",
+      "equivocado": "grep \"$ruta\\|$(basename $ruta)\" -- el basename convierte 'venvs/flujo' en 'flujo' y matchea todo.",
+      "correcto": "Buscar la ruta completa, y por separado el nombre suelto, sabiendo cual es cual.",
+      "caso_real": "Busque 'flujo' en todo MAK sin darme cuenta.",
+      "gravedad": "media"
+    },
+    {
+      "id": "negativos-uniformes",
+      "sintoma": "Doce comprobaciones seguidas dan el mismo negativo.",
+      "equivocado": "Creerle al resultado.",
+      "correcto": "Revisar el instrumento. Casos reales: 'plano.py, render.py, knowledge.py no existen' -- son PAQUETES, no archivos. '[ -e MAK_DB_PATH ]' sobre nombres de variables de entorno dio 82 de 97 ausentes y era un sinsentido.",
+      "gravedad": "alta"
+    },
+    {
+      "id": "defecto-vacio",
+      "sintoma": "Detectaste variables de entorno 'sin valor por defecto'.",
+      "equivocado": "Probar la verdad del texto capturado: os.environ.get('X', '') captura '' que es falso.",
+      "correcto": "Ausencia del argumento es 'm.group(2) is None', no falsedad.",
+      "caso_real": "Reporte MAK_REPO_ROOT y CODER_CHAIN como bloqueantes. No bloquean nada.",
+      "gravedad": "baja"
+    },
+    {
+      "id": "lock-viejo",
+      "sintoma": "Archivos .lock de cientos de horas.",
+      "equivocado": "Asumir que traban y borrarlos.",
+      "correcto": "Distinguir flock (el kernel lo libera al morir el proceso: inofensivo) de un lock por existencia (ese si traba). Los 22 de MAK son flock.",
+      "gravedad": "media"
+    },
+    {
+      "id": "hardlink-sobre-escritura",
+      "sintoma": "Encontraste archivos identicos y quieres ahorrar disco.",
+      "equivocado": "ln para deduplicar.",
+      "correcto": "NUNCA hardlinkear contenido que algun proceso reescribe: write_text y write_bytes truncan en sitio y corrompen al gemelo. Mover o dejar quieto.",
+      "caso_real": "Hice 176 hardlinks en research/corpus con el organo corriendo. Deshechos.",
+      "gravedad": "critica"
+    },
+    {
+      "id": "identidad-por-nombre",
+      "sintoma": "Dos cosas parecen la misma por nombre, tamano o fecha.",
+      "equivocado": "Comparar nombres o tamanos.",
+      "correcto": "Hash del contenido, siempre. Y para un clon de un repo git, la pregunta no es si el contenido esta en el arbol vivo sino si git tiene el objeto.",
+      "caso_real": "Nombres que parecian hashear el contenido hasheaban la URL: 109 discrepancias falsas.",
+      "gravedad": "alta"
+    },
+    {
+      "id": "nombre-no-es-tema",
+      "sintoma": "Agrupaste archivos porque comparten una palabra en el nombre.",
+      "equivocado": "Concluir que son el mismo tema o que se repiten.",
+      "correcto": "Resolver a que modulo apunta cada uno. Los 11 tests de 'research' cargan once modulos distintos.",
+      "gravedad": "media"
+    },
+    {
+      "id": "duplicado-aparente",
+      "sintoma": "Dos cosas exponen la misma interfaz y parecen duplicadas.",
+      "equivocado": "Llamarlo duplicado y proponer fusion.",
+      "correcto": "Leer que hace cada una. En MAK: :8900 EMBEBE a :8765 en iframes; los endpoints compartidos delegan en flujo.knowledge.project_api o uno consume al otro por urlopen; los tres 'portfolios' hacen tres cosas distintas; hub.py IMPORTA route_payload con fallback, no lo reimplementa.",
+      "gravedad": "alta"
+    },
+    {
+      "id": "worktree-en-head",
+      "sintoma": "Verificas un arreglo en un worktree y sigue fallando igual.",
+      "equivocado": "git worktree add --detach /tmp/x HEAD con cambios sin commitear.",
+      "correcto": "El worktree sale de HEAD. Commitear primero, o copiar los archivos modificados.",
+      "gravedad": "media"
+    },
+    {
+      "id": "suite-como-evidencia",
+      "sintoma": "Vas a decir 'la suite pasa, entonces el cambio es seguro'.",
+      "equivocado": "Usar 3741 passed como prueba de que MAK funciona o de que retirar algo estuvo bien.",
+      "correcto": "La suite estuvo verde sobre una maquina completamente detenida dos semanas. Confirma consistencia interna. Para saber si MAK funciona: medir_organismo.py y medir_procesos.py. Para saber si retirar algo estuvo bien: buscar consumidores aparte, en tres formas, incluyendo al sistema.",
+      "gravedad": "critica"
+    },
+    {
+      "id": "lista-ajena",
+      "sintoma": "Otro agente te dio una lista de N cosas a arreglar.",
+      "equivocado": "Arreglar las N.",
+      "correcto": "Medir la lista primero. De seis suites que me dieron, dos no lo necesitaban y una de las cuatro reales tenia un segundo punto de lectura que la lista no mencionaba.",
+      "gravedad": "media"
+    },
+    {
+      "id": "reversion-prometida",
+      "sintoma": "Retiraste algo a _archive.",
+      "equivocado": "Dar por hecho que queda revertible.",
+      "correcto": "Escribir la fila en mapa-de-retiro.csv EN EL MISMO MOVIMIENTO. Verificar despues que no hay nada en por-razon/ sin fila, ni fila apuntando al vacio.",
+      "caso_real": "24 archivos quedaron archivados sin fila, y una fila restauraba contenido equivocado. Lo encontro un auditor, no yo.",
+      "gravedad": "alta"
+    },
+    {
+      "id": "corregir-historia",
+      "sintoma": "Un documento viejo dice algo que ya no es cierto.",
+      "equivocado": "Corregir la linea.",
+      "correcto": "La historia no se corrige: se fecha y se supera. Si un handoff se contradice entre la linea 1 y la 1000, arreglar la linea 1 no arregla nada. Y la prosa que afirma cifras se reemplaza por un comando que las mide.",
+      "gravedad": "media"
+    },
+    {
+      "id": "worktree-no-es-entorno",
+      "sintoma": "Verificaste en un `git worktree` limpio y dio verde, pero CI falla.",
+      "equivocado": "git worktree add /tmp/x HEAD && /home/mak/flujo/.venv/bin/python -m pytest",
+      "correcto": "El worktree da los ARCHIVOS limpios, NO el entorno limpio. Usar el .venv de MAK arrastra todo lo que esta instalado aqui y no declarado. CI hace `python -m pip install -e \".[dev,render]\"` sobre una maquina sin nada. Para verificar de verdad: worktree + venv NUEVO + install desde las dependencias declaradas, y correr ahi.",
+      "caso_real": "Push del 2026-08-29: suite verde en worktree local, CI en rojo con `ModuleNotFoundError: No module named 'psd_tools'`. psd-tools esta instalada en MAK y no declarada; el codigo la trata como opcional y degrada, pero dos tests la importaban sin guarda. Dije que no habia riesgo de pushear y lo habia.",
+      "gravedad": "alta"
+    },
+    {
+      "id": "cifra-repetida-sin-remedir",
+      "sintoma": "Vas a citar una cifra que leiste en un documento o en un handoff.",
+      "equivocado": "Repetirla, y peor, escribirla en un prompt para que otro la persiga.",
+      "correcto": "Volver a medirla con el comando, aunque parezca obvia. Y si el primer intento de medir devuelve algo raro -- 'No data to report', un cero uniforme, una cifra redonda -- eso es la senal de que el instrumento esta mal apuntado, no de que la cifra sea cierta.",
+      "caso_real": "Repeti toda una sesion que ingesta_archivo.py estaba 'al 9% de cobertura' y lo escribi en tres documentos y tres prompts de agentes. Medido de verdad: la linea base era 72%. Dirigi trabajo hacia una deuda que no existia con ese tamano.",
+      "gravedad": "alta"
+    },
+    {
+      "id": "grep-que-matchea-la-prosa",
+      "sintoma": "Grepeas una cadena de codigo para comprobar si un defecto sigue ahi, y aparece.",
+      "equivocado": "grep -q 'runpy.run_path' archivo.py  -> y concluir que el codigo sigue",
+      "correcto": "Grepear el MARCADOR de codigo, no el nombre de la cosa: `^if __name__`, `^def `, `^    return`. El nombre de un defecto sobrevive en el comentario que explica por que se quito, asi que buscarlo encuentra la explicacion y no el defecto.",
+      "caso_real": "Comprobe si 12 bridges seguian con `runpy.run_path` en su bloque __main__ y los 12 dieron positivo. El bloque estaba QUITADO: la cadena sobrevivia en el comentario que documentaba el arreglo. Acuse a un agente de reportar trabajo no hecho y estuve a punto de reescribir doce archivos correctos.",
+      "gravedad": "alta"
+    },
+    {
+      "id": "cov-con-nombre-de-modulo",
+      "sintoma": "`pytest --cov=paquete.modulo` devuelve 'No data to report' o un porcentaje absurdamente bajo.",
+      "equivocado": "--cov=cultura.mak_curatoria.ingesta_archivo",
+      "correcto": "Usar la RUTA real: --cov=cultura/mak_curatoria/ingesta_archivo.py, o el directorio: --cov=cultura. Con el nombre de modulo, pytest-cov lo importa el mismo ANTES de que arranque el rastreador, asi que la ejecucion del archivo queda invisible.",
+      "caso_real": "Es la causa raiz de la cifra falsa del 9%: medi ingesta_archivo.py con el nombre de modulo, el primer intento devolvio 'No data to report', y la cifra baja que salio despues la repeti en tres documentos y tres prompts de agentes. Estaba al 72%. Lo diagnostico un agente cubriendo otro archivo, no yo.",
+      "gravedad": "alta"
+    }
+  ],
+  "antes_de_retirar_algo": [
+    "Buscar consumidores en tres formas, en todo /home/mak, no solo en flujo.",
+    "Preguntarle al sistema: systemctl (usuario y sistema), docker ps, ss -ltnp.",
+    "Revisar el crontab PAUSADO: una linea pausada es un consumidor.",
+    "Revisar ~/.local/share/Trash (cada archivo tiene .trashinfo con Path= y DeletionDate=) y ~/.codex/memories/rollout_summaries/.",
+    "Mover a ~/_archive/orden-limpieza-*/por-razon/<razon>/, nunca borrar.",
+    "Escribir la fila en mapa-de-retiro.csv en el mismo movimiento.",
+    "Escribir en POR-QUE.txt QUE SE MIDIO, no solo la conclusion.",
+    "Antes de pushear: verificar en worktree CON venv nuevo instalado desde las dependencias declaradas, no con el .venv de MAK."
+  ],
+  "instrumentos": {
+    "estado del organismo": "python3 ~/flujo/tools/medir_organismo.py",
+    "que corre y que arrancaria": "python3 ~/indexes/mak-procesos-20260829/medir_procesos.py",
+    "quien consume que": "python3 ~/indexes/mak-conexiones-20260829/medir_conexiones.py",
+    "mapa de la suite por commit": "python3 ~/flujo/tools/medir_tests.py"
+  },
+  "documentos": {
+    "~/APRENDIZAJE.CLAUDE.MD": "como se averigua algo de MAK sin equivocarse",
+    "~/ERRORES.CLAUDE.MD": "la version larga de este JSON, con el relato de cada caso",
+    "~/SONDA.CLAUDE.MD": "CAPACIDADES.md, los 3634 tests, los 122 shims",
+    "~/CAMBIOS.CLAUDE.MD": "que se borro, restauro, movio y corrigio, y como deshacerlo",
+    "~/ANOTACIONES.CLAUDE.MD": "lo que quedo sin saber, sin abrir y sin decidir, mas propuestas"
+  }
+}

@@ -1,0 +1,18 @@
+phase,command,mode,exit,write_effect,next
+230,"python -m flujo --help",help,0,none,continue
+230,"python -m flujo autonomia --help",help,0,none,continue
+230,"python -m flujo micelio --help",help,0,none,continue
+230,"python -m flujo rd-db --help",help,0,none,continue
+230,"python -m flujo rd-datos --help",help,0,none,continue
+230,"python -m flujo airdrop --help",help,0,none,continue
+230,"python -m flujo datadrop --help",help,0,none,continue
+230,"python -m flujo job --help",help,0,none,continue
+230,"python -m flujo privacy --help",help,0,none,continue
+230,"python -m flujo eventos --help",help,0,none,continue
+230,"python -m flujo render --help",help,0,none,continue
+230,"python -m flujo knowledge --help",help,0,none,continue
+230,"python -m flujo health --help",help,0,none,continue
+230,"python -m flujo doctor --help",help,0,none,continue
+230,"python -m flujo verify --help",help,0,none,continue
+230,"python -m flujo version --help",help,0,none,continue
+230,"python -m flujo daily --help",help,0,none,continue

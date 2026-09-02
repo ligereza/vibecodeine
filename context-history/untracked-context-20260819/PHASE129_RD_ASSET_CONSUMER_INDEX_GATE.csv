@@ -1,0 +1,6 @@
+consumer,source_or_target,exists,status
+generator input,datadrops/cotizacion_general_eventos/plano_servicio_completo_generico_dark.svg,yes,VERIFIED
+logo vector,assets/logo/RD_logo_vector_blanco.svg,yes,VERIFIED
+logo mono,assets/logo/RD_logo_A_mono_blanco.png,yes,VERIFIED
+web event dark,/svg/eventos_rd/packs_servicios_rd_dark_editable.svg,yes,VERIFIED
+web event blanco,/svg/eventos_rd/packs_servicios_rd_blanco_editable.svg,yes,VERIFIED

@@ -1,0 +1,2 @@
+active_db,historical_db_1,historical_db_2,backup,merge_status,fk_check,quick_check,http_rd_db,field_db
+/home/mak/flujo/data/rd.db,/home/mak/WIN/flujo/data/rd.db,/home/mak/state/windows-director-20260813/rd/rd.db,/home/mak/flujo/data/rd.db.premerge-20260815,MERGED_ADDITIVE,PASS,PASS,200,UNCHANGED_EMPTY

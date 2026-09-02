@@ -1,0 +1,67 @@
+{
+  "schema": "mak-merge-plan-v1",
+  "generated_at": "2026-08-31T21:16:15+00:00",
+  "destination": "/home/mak/flujo",
+  "sources": [
+    "/home/mak/.cache/rclone/vfs/onedrive/MAK/IA/_flujo_local/VIBECODEINE",
+    "/home/mak/.cache/rclone/vfs/onedrive/MAK/IA/flujo",
+    "/home/mak/.cache/rclone/vfsMeta/onedrive/MAK/IA/_flujo_local/VIBECODEINE",
+    "/home/mak/.cache/rclone/vfsMeta/onedrive/MAK/IA/flujo",
+    "/home/mak/.local/share/Trash/files/rollback.2/ /home/mak/flujo",
+    "/home/mak/actions-runner/_work/_PipelineMapping/ligereza/vibecodeine",
+    "/home/mak/actions-runner/_work/vibecodeine",
+    "/home/mak/state/knowledge-migration-20260813/runner/src/flujo"
+  ],
+  "source_modes": {
+    "/home/mak/.cache/rclone/vfs/onedrive/MAK/IA/_flujo_local/VIBECODEINE": "snapshot",
+    "/home/mak/.cache/rclone/vfs/onedrive/MAK/IA/flujo": "snapshot",
+    "/home/mak/.cache/rclone/vfsMeta/onedrive/MAK/IA/_flujo_local/VIBECODEINE": "snapshot",
+    "/home/mak/.cache/rclone/vfsMeta/onedrive/MAK/IA/flujo": "snapshot",
+    "/home/mak/.local/share/Trash/files/rollback.2/ /home/mak/flujo": "snapshot",
+    "/home/mak/actions-runner/_work/_PipelineMapping/ligereza/vibecodeine": "snapshot",
+    "/home/mak/actions-runner/_work/vibecodeine": "repo",
+    "/home/mak/state/knowledge-migration-20260813/runner/src/flujo": "snapshot"
+  },
+  "excluded_directory_count": 3,
+  "record_count": 6,
+  "python_record_count": 2,
+  "duplicate_hash_groups": {},
+  "actions": [
+    {
+      "operation": "record_snapshot",
+      "source": "/home/mak/actions-runner/_work/_PipelineMapping/ligereza/vibecodeine/PipelineFolder.json",
+      "source_id": "actions-runner-_work-_pipelinemapping-ligereza-vibecodeine",
+      "source_rel": "PipelineFolder.json",
+      "destination": "/home/mak/_archive/merge-20260831/sources/actions-runner-_work-_pipelinemapping-ligereza-vibecodeine/PipelineFolder.json",
+      "destination_rel": "__snapshot__/actions-runner-_work-_pipelinemapping-ligereza-vibecodeine/PipelineFolder.json",
+      "sha256": "2c405ee7ef483f02fd1e777d0b349c7cb8672a7e4879081e61669502d178671d",
+      "size_bytes": 343,
+      "source_mode": "snapshot"
+    },
+    {
+      "operation": "record_snapshot",
+      "source": "/home/mak/state/knowledge-migration-20260813/runner/src/flujo/knowledge/postgres_migration.py",
+      "source_id": "state-knowledge-migration-20260813-runner-src-flujo",
+      "source_rel": "knowledge/postgres_migration.py",
+      "destination": "/home/mak/_archive/merge-20260831/sources/state-knowledge-migration-20260813-runner-src-flujo/knowledge/postgres_migration.py",
+      "destination_rel": "__snapshot__/state-knowledge-migration-20260813-runner-src-flujo/knowledge/postgres_migration.py",
+      "sha256": "cb1f4fc9bb553deb5bced4b3b62e5b5e4817a760e9be281f91ab0f9090959d85",
+      "size_bytes": 36255,
+      "source_mode": "snapshot"
+    },
+    {
+      "operation": "record_snapshot",
+      "source": "/home/mak/state/knowledge-migration-20260813/runner/src/flujo/knowledge/postgres_runtime.py",
+      "source_id": "state-knowledge-migration-20260813-runner-src-flujo",
+      "source_rel": "knowledge/postgres_runtime.py",
+      "destination": "/home/mak/_archive/merge-20260831/sources/state-knowledge-migration-20260813-runner-src-flujo/knowledge/postgres_runtime.py",
+      "destination_rel": "__snapshot__/state-knowledge-migration-20260813-runner-src-flujo/knowledge/postgres_runtime.py",
+      "sha256": "57ff087a1f4991960acb1b852d52acd746174a7eb209fb88c49090ed01017daf",
+      "size_bytes": 8836,
+      "source_mode": "snapshot"
+    }
+  ],
+  "summary": {
+    "record_snapshot": 3
+  }
+}

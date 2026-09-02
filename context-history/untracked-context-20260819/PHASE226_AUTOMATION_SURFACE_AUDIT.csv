@@ -1,0 +1,6 @@
+phase,check,command,exit,result,write_set,risk,next
+226,installed_cron,"crontab -l | awk active/paused counters",0,"active_noncomment=0; paused=24",none,"scheduler remains paused",continue read-only audit
+226,user_units,"systemctl --user is-active for six named units",0,"all inactive",none,"no persistent runtime observed",continue read-only audit
+226,issue_bridge_source,"grep bounded puente_issues references",0,"canonical source exists; provider and writes are known",none,"external/provider side effects if run",keep user-confirmed path without external test
+226,cron_manifest,"static existence/grep of cultura/mak_plataforma/crontab.mak",0,"manifest exists; not installed crontab",none,"template can be mistaken for active schedule",document distinction
+226,deploy_sync,"bounded static audit of /home/mak/bin/mak_sync_safe.py",0,"external deploy sync remains paused",none,"filesystem/Git side effects if enabled",leave paused

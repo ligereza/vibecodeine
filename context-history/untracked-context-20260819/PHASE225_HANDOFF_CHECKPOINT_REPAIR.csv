@@ -1,0 +1,5 @@
+check,result
+current_checkpoint_at_file_start,PASS
+historical_notes_preserved,PASS
+physical_targets_unchanged,PASS
+services_unchanged,PASS

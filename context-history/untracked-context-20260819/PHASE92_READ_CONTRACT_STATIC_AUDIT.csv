@@ -1,0 +1,6 @@
+item,status,result
+ast_scope,verified,src/flujo Python bounded scan
+reader_write_signals,verified,no unlabelled reader mutation found after Phases 90-91
+named_writers,classified,privacy reports job reports Resolume automation
+endpoint_serialization,classified,replace calls are in-memory JSON serialization
+source_mutation,none,no files changed

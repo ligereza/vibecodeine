@@ -1,0 +1,11 @@
+phase,route,kind,status,decision
+201,/api/rd-db,GET read-only,previous foreground pass,keep
+201,/api/rd-packs,GET read-only,previous foreground pass,keep canonical tariff
+201,/api/rd-datos-summary,GET read-only empty DB,previous foreground pass,keep separate
+201,/api/rd-db/logo,GET read-only,not called in this gate,keep no upload
+201,/api/rd-db/logo,POST mutator,deferred,explicit authority required
+201,/api/plano-simbolos,POST mutator,deferred,explicit authority required
+201,/api/plano/render,POST output generator,deferred live output,fixture already passed
+201,/api/cotizacion/render,POST output generator,deferred live output,fixture already passed
+201,rd_datos.db,field data,0 rows,do not promote demo/evidence
+201,db_merge,rd.db plus rd_datos.db,not appropriate,keep roles separate

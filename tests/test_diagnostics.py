@@ -70,6 +70,16 @@ def test_report_is_bounded_and_markdown_copyable(tmp_path):
     assert render_route_markdown(report["route"]).startswith("# MAK context route")
 
 
+def test_report_does_not_call_an_unmeasured_tree_clean(tmp_path):
+    report = build_diagnostic_report(root=tmp_path, area="core")
+
+    assert report["git"]["available"] is False
+    assert report["git"]["dirty"] is None
+    assert report["git"]["changed_entries"] is None
+    markdown = render_markdown(report)
+    assert "working_tree_dirty: `unknown` (unknown entries)" in markdown
+
+
 def test_json_route_script_works_without_package_install():
     proc = subprocess.run(
         [sys.executable, "tools/route_idea.py", "mi portafolio web esta caido", "--format", "json"],

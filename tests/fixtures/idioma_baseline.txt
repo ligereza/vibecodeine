@@ -138,8 +138,11 @@ scripts/hub_smoke.py
 scripts/pdf_probe_basic.py
 scripts/piezas_check_outputs.py
 scripts/piezas_generar.py
+scripts/run_airdrop_checks.py
 scripts/sanitize_sensitive.py
+scripts/validate_airdrop.py
 src/flujo/__init__.py
+src/flujo/airdrop.py
 src/flujo/analyze/__init__.py
 src/flujo/analyze/colors.py
 src/flujo/analyze/export.py
@@ -172,6 +175,7 @@ src/flujo/intake/__init__.py
 src/flujo/intake/email_parser.py
 src/flujo/intake/json_parser.py
 src/flujo/intake/pipeline.py
+src/flujo/intake/reception.py
 src/flujo/jobs/__init__.py
 src/flujo/jobs/brief.py
 src/flujo/jobs/job.py
@@ -179,6 +183,8 @@ src/flujo/jobs/lifecycle.py
 src/flujo/knowledge/__init__.py
 src/flujo/knowledge/__main__.py
 src/flujo/knowledge/store.py
+src/flujo/logos/__init__.py
+src/flujo/logos/vectorizar.py
 src/flujo/plano/__init__.py
 src/flujo/plano/costs.py
 src/flujo/plano/engine.py
@@ -209,6 +215,9 @@ src/flujo/templates/blender_setup.py
 src/flujo/version.py
 src/flujo/web/__init__.py
 src/flujo/web/hub.py
+src/flujo/web/svg_preview.py
+tests/test_airdrop.py
+tests/test_airdrop_checkpoint.py
 tests/test_analyze.py
 tests/test_analyze_export.py
 tests/test_archivo_ensayos.py
@@ -255,6 +264,7 @@ tests/test_ig_download.py
 tests/test_ig_download_parth.py
 tests/test_ig_url_canonica.py
 tests/test_ig_usuario.py
+tests/test_imap_apagado.py
 tests/test_intake.py
 tests/test_iskvw_librerias.py
 tests/test_iskvw_semilla.py
@@ -304,11 +314,13 @@ tests/test_rd_datos.py
 tests/test_rd_db_logos.py
 tests/test_rd_eventos.py
 tests/test_rd_informe.py
+tests/test_reception.py
 tests/test_render_flyer_mak.py
 tests/test_render_formats.py
 tests/test_render_rescale.py
 tests/test_render_video_rd.py
 tests/test_route_resolver.py
+tests/test_run_airdrop_checks.py
 tests/test_smoke.py
 tests/test_steg_changelog.py
 tests/test_svg_index_real.py
@@ -320,6 +332,7 @@ tests/test_tilde_paridad.py
 tests/test_tilde_render.py
 tests/test_tilde_residuo.py
 tests/test_tilde_sobrevivencia.py
+tests/test_un_solo_documento.py
 tests/test_utilidades_mak_sanidad.py
 tests/test_venue.py
 tests/test_vigia.py
@@ -327,8 +340,11 @@ tests/test_wifi_intelligence_plugin.py
 tests/test_xio_superficie.py
 tools/becas_calendario.py
 tools/blender/bridge_blender.py
+tools/bridge_issue_render.py
 tools/context_pack.py
+tools/contexto_repo.py
 tools/cron_nocturno/nocturno.py
+tools/enviar_a_mak.py
 tools/gen_animadas_obras.py
 tools/gen_archivo_iskvw.py
 tools/gen_campo_iskvw.py
@@ -338,10 +354,13 @@ tools/gen_mapa_comandos.py
 tools/gen_presentacion_db.py
 tools/gen_rd_standalone.py
 tools/gen_vocabulario_motor.py
+tools/handoff.py
 tools/iconos_conjunto.py
-tools/mak_ops/check_mak_trabajo.py
+tools/instalar_enviar_a_mak.py
+tools/mak_ops/build_director_context.py
 tools/mak_ops/diagnose_instagram_mirror.py
 tools/mak_ops/director_snapshot.py
+tools/mak_ops/test_issue_render_e2e.py
 tools/piezas_vectoriales/scripts/generar_desde_json.py
 tools/portfolio/empaquetar_assets.py
 tools/portfolio/generar_portfolio.py
@@ -362,6 +381,7 @@ tools/venue_geometria_scd.py
 tools/verify_all.py
 tools/vj_set/git_performance.py
 tools/vj_set/osc_sender.py
+tools/watsonx_smoke.py
 xio/new-plugins/app_freezer/__init__.py
 xio/new-plugins/app_volume/__init__.py
 xio/new-plugins/automation_rules/__init__.py

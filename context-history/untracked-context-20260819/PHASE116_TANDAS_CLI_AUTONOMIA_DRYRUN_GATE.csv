@@ -1,0 +1,2 @@
+phase,scope,action,result,exit_code,changed_files,risk,next_action
+116,tandas CLI and autonomia dry-run,run safe CLI contracts across canonical/root/WIN and local autonomy dry-run,all areas/brief/summary and autonomy preparation passed; no production ledger/provider action,0,none,external execution and tandas semantic fork remain gated,continue full MAK audit and remaining objective closeout

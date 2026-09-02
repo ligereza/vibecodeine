@@ -1,0 +1,2 @@
+phase,scope,action,result,exit_code,changed_files,risk,next_action
+113,platform council/backlog/revision ownership,replace active root exact duplicates with canonical projections,imports pure reads compile passed; no writer/POST/provider execution,0,/home/mak/plataforma/junta.py|/home/mak/plataforma/backlog.py|/home/mak/plataforma/revision.py,stateful writers remain gated,continue platform audit or define tandas reconciliation

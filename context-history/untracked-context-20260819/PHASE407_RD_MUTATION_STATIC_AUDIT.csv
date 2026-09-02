@@ -1,0 +1,6 @@
+"class","routes","durable_effect","status"
+"transient/read","cotizacion/render; parse-pedido; parse-real-pedido; plano-simbolos/trazar; list-datadrops","response or read-only listing","static pass"
+"local output","plano/render; plano-simbolos","render/output or symbol catalog","fixture-gated"
+"job/automation","create-job-draft; auto-pending-flyers; comando; run-safe-command","jobs, commands or automation outputs","authority-gated"
+"asset/datadrop","rd-db/logo; datadrop-upload; datadrop-analyze; datadrop-prepare-package; datadrop-scan-incoming","logos, media, manifests, review or intake","authority-gated"
+"route inventory","16 literal POST routes","no route missing from Phase250 matrix","pass"

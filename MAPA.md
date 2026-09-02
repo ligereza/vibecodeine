@@ -43,7 +43,7 @@ in parallel Git trunks.
 
 <!-- COMANDOS:INICIO -- generado por tools/gen_mapa_comandos.py, no editar a mano -->
 
-Medido sobre el CLI real: **90 comandos** (25 sueltos + 65 dentro de 16 grupos).
+Medido sobre el CLI real: **98 comandos** (25 sueltos + 73 dentro de 17 grupos).
 
 ### Comandos sueltos
 
@@ -58,7 +58,7 @@ Medido sobre el CLI real: **90 comandos** (25 sueltos + 65 dentro de 16 grupos).
 | `py -m flujo daily` | Generar reporte diario (md + html). | nada |
 | `py -m flujo delegate` | Genera prompt preciso para delegar a agente especializado (5 roles; soporta paralelo via hub o clones). Salida lista para copiar a otra sesión IA. Ideal para multi-agente workflow. | nada |
 | `py -m flujo diagnose` | Genera un reporte local, sanitizado y copiable para otro agente. | nada |
-| `py -m flujo doctor` | Diagnóstico humano del entorno local: Python, Git, encoding, index y hub. | nada |
+| `py -m flujo doctor` | Diagnóstico humano del entorno local: Python, Git, encoding, index, hub y airdrop. | nada |
 | `py -m flujo export` | Exportar ZIP listo para tus herramientas (AI / PS / Blender). | nada |
 | `py -m flujo flyer-import` | Importar flyers desde correo con links de Instagram. | casilla de correo: `FLUJO_IMAP_HOST`, `FLUJO_IMAP_USER`, `FLUJO_IMAP_PASSWORD`, `FLUJO_IMAP_ALLOWED_SENDERS` |
 | `py -m flujo flyer-list` | Listar flyers indexados. | nada |
@@ -74,6 +74,19 @@ Medido sobre el CLI real: **90 comandos** (25 sueltos + 65 dentro de 16 grupos).
 | `py -m flujo tapiz` | Ecosistema Tapiz<->Psicosis<->Fungi: pipeline generativo (tools/compete_engine.py). | nada |
 | `py -m flujo verify` | Verificación integral local/CI: compileall, tests, health, version y hub smoke. | nada |
 | `py -m flujo version` | Muestra versión y changelog. | nada |
+
+### Grupo `airdrop` -- Sistema de actualización profesional (airdrops).
+
+| Comando | Que hace | Que necesita antes |
+|---|---|---|
+| `py -m flujo airdrop status` | Muestra la versión actual del sistema flujo. | nada |
+| `py -m flujo airdrop list` | Lista los archivos pendientes de aplicar en _airdrop/. | nada |
+| `py -m flujo airdrop dry-run` | Simula la aplicación del airdrop sin realizar cambios. | nada |
+| `py -m flujo airdrop sign` | Genera el manifiesto SHA-256 y la firma HMAC del payload de _airdrop/. | nada |
+| `py -m flujo airdrop verify` | Verifica la firma HMAC y los hashes SHA-256 del payload de _airdrop/. | nada |
+| `py -m flujo airdrop apply` | Aplica los archivos de _airdrop/, crea backup y dispara checkpoint + push. | nada |
+| `py -m flujo airdrop rollback` | Revierte los cambios al último backup de airdrop. | nada |
+| `py -m flujo airdrop finish` | Finaliza el proceso de airdrop (estatus y sugerencias). | nada |
 
 ### Grupo `autonomia` -- Orquestacion externa MAK: estado, tandas, ledger y juez local.
 
@@ -256,6 +269,10 @@ repositorio. Las credenciales y tokens se mantienen fuera de Git.
 | `MAK_RESEARCH_REGISTRY` | Ruta opcional del registro SQLite de jobs de Research; por defecto usa `/home/mak/research/jardines_interpretativos/jardines_interpretativos.sqlite`. |
 | `MAK_LEARNING_DB` | Ruta opcional del ledger SQLite de Project IR y contratos; por defecto usa `data/mak_knowledge.db`. |
 | `MAK_HEARTBEAT_NTFY_TOPIC` | Tema ntfy opcional para `tools/mak_heartbeat.py`; si falta, cae a `NTFY_TOPIC_OUT` de `research.env`. |
+| `MAK_DEPLOY_REPO`, `MAK_USER_REPO` | Rutas opcionales del repositorio de despliegue/sincronizacion local. |
+| `MAK_SYNC_BACKUP_ROOT`, `MAK_SYNC_RECOVERY_ROOT`, `MAK_SYNC_STAGING_ROOT` | Directorios de backup, recuperacion y staging del puente de sincronizacion. |
+| `MAK_SYNC_LOCK`, `MAK_SYNC_MANIFEST` | Rutas de bloqueo y manifiesto de una corrida de sincronizacion. |
+| `WATSONX_MODEL`, `WATSONX_URL` | Configuracion opcional del backend WatsonX conservado para benchmarks/manual. |
 
 Every active topic branch must carry its own scoped contract and handoff,
 created from `contracts/BRANCH_AGENTS_TEMPLATE.md` and

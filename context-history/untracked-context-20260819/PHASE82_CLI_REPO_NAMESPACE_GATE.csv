@@ -1,0 +1,7 @@
+item,status,path_or_command,result
+namespace_adapter,integrated,src/flujo/cli.py,repo-level cultura exposed to installed CLI
+compile,verified,venvs/flujo/bin/python -m py_compile,exit 0
+autonomia_status,verified,venvs/flujo/bin/flujo autonomia status,exit 0 JSON contract
+knowledge_list,verified,venvs/flujo/bin/flujo knowledge list productoras,exit 0 3 entities
+provider_or_ssh,not_called,autonomia status,local status only
+git_mutation,none,MAK repo,not executed

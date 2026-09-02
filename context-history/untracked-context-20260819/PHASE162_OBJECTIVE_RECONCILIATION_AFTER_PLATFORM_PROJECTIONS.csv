@@ -1,0 +1,14 @@
+objective,status,evidence,open_gate
+rd_field_data,DEFERRED_EMPTY_DATA,rd_datos.db empty,no real records
+rd_database,VERIFIED_READONLY_SOURCE_RECONCILED,rd.db read-only gates,mutator boundary
+rd_mutators,DEFERRED_AUTHORITY,not called,explicit authority/provider
+flujo_automation,FIXTURE_VERIFIED,local EVENTO fixture,external issue/email bridge
+nonserve_cli,VERIFIED_READONLY,version health doctor rd-db,pytest unavailable
+rd_assets,CANONICAL_GENERATOR_VERIFIED_PARTIAL,JSON/SVG promotion,PDF renderer unavailable
+dependencies,RUNTIME_PARTIAL,per-slice evidence,global conflicts
+folder_architecture,PARTIAL_CLASSIFIED,platform projections,department surfaces
+duplicate_documents,PARTIAL_CLASSIFIED,hash/role manifests,human semantic review
+equivalent_tools,PARTIAL_CONSOLIDATED,tariff issue bridge wrappers,remaining tools
+mak_audit,IN_PROGRESS,physical top-level survey,research curatoria codex vigia
+junk_removal,REVERSIBLE_ONLY,quarantine evidence,no destructive deletion
+git_branches,PROPOSED_NOT_APPLIED,proposal only,no Git mutation

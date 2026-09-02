@@ -1,0 +1,14 @@
+phase,objective,status,evidence,next
+236,1,OPEN_EMPTY_DATA,rd_datos.db valid and empty,real CSV/acta authority
+236,2,PROBED_NO_LIVE_MERGE,temp 23-table candidate no collisions,physical vs logical choice
+236,3,FIXTURE_PASS_LIVE_DEFERRED,mutator fixtures pass,live bounded authority
+236,4,USER_CONFIRMED_PAUSED,EVENTO URL workflow confirmed and cron paused,explicit re-enable if desired
+236,5,READ_DISPATCH_PASS,17 help plus read commands pass,mutating write gates
+236,6,INDEX_RECONCILED,1742 regular files reconcile,semantic duplicate decisions
+236,7,BASE_PASS_OPTIONAL_OPEN,pip check/imports pass,optional provider/GPU
+236,8,PROPOSED_PARTIALLY_APPLIED,architecture maps plus reversible quarantine,final ownership acceptance
+236,9,LEDGER_PARTIAL,research/RD ledgers,remaining document families
+236,10,OWNER_FUSED_PARTIAL,canonical/runtime projections,legacy families
+236,11,LOCAL_HEALTH_PASS_EXTERNAL_OPEN,444/445 AST and health matrix,external/mutator signoff
+236,12,REVERSIBLE_CLEANUP_PASS,empty residue quarantined WIN intact,only exact new candidates
+236,13,PROPOSAL_READY_NO_OPERATION,branch proposal exists,no Git operation without authorization

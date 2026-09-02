@@ -1,0 +1,2 @@
+source,target,consumer,mutation_boundary,decision,status,verification
+/home/mak/flujo/cultura/mak_plataforma/watchdog_mak.sh,/home/mak/plataforma/watchdog_mak.sh,MAK-ORGANISMO watchdog paused cron,guardia/log/lock plus systemd start-restart and HTTP checks,wrapper projection,VERIFIED,"bash -n=0; flock/timeout/curl/systemctl and guardia/unit files present; no live invocation; process gate=0"

@@ -1,0 +1,4 @@
+path,role,action,result
+data/rd_packs.json,canonical tariff source,unchanged,JSON parity fixture pass
+web/src/rdBrand.ts,web tariff consumer,removed duplicate literal and imported JSON,typecheck exit 0
+web/src/main.tsx,runtime override consumer,unchanged,API override contract preserved

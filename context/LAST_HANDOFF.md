@@ -1,6 +1,222 @@
 # Operational Handoff
 
-## Agent bootstrap — CURRENT — 2026-08-31 — CI en verde, siete defectos de la misma familia, MAK listo para reanudar
+## Agent bootstrap — CURRENT — 2026-08-31 — consolidación física posterior y límite documental abierto
+
+Este bloque supera el CURRENT anterior sólo para los hechos medidos el
+2026-08-31; las cifras y afirmaciones anteriores se conservan abajo como
+evidencia fechada, incluso cuando se contradicen.
+
+### Contrato heredado que no se puede perder
+
+- `Stage 2D accepted` permanece aceptado y no se reabre.
+- `171 focused tests` es la medición histórica de aquella etapa.
+- `docs/MAK_SYSTEM_DIRECTIVE.md` sigue vigente.
+- `mak-archive-observation-batch-v1` sigue siendo el esquema de los lotes de
+  observación del archivo.
+
+### Estado físico y Git medidos
+
+- La fusión física quedó registrada por el commit `cd8a9569` (2026-08-31
+  18:06:09-04:00, `fuse MAK project roots into single home root`). La evidencia
+  congelada es `/home/mak/_archive/merge-20260831/`: no es una conclusión de
+  cierre semántico ni una autorización para borrar o promover variantes.
+- `fused/projection3/MANIFEST.json` registra 5.426 rutas `tree_equal`, 813
+  rutas divergentes con `variants_all_preserved` y 2.366 rutas de variantes.
+  La subcarpeta materializada `fused/projection3/variants/` era una segunda
+  copia de los orígenes y se purgó el 2026-09-01 tras verificar hashes; las
+  variantes reales siguen en `fused/origins/`.
+  `fused/root-materialization.json` registra históricamente 6.214
+  `linked_file`, 22 `linked_symlink`, 1 colisión de raíz preservada y 2
+  conflictos reubicados. Esa cifra describe la corrida del 31-08, no el estado
+  actual: el 01-09 se desacoplaron todos los inodos vivos que aún compartían
+  evidencia. La medición directa actual es `live_nlink_gt1=0` y
+  `live_archive_shared=0`; `actions.jsonl` conserva las 5.496 líneas de la
+  corrida original.
+- El árbol vivo es `/home/mak`; `/home/mak/flujo` es ahora un adaptador de
+  directorio no recursivo con 164 enlaces a hermanos, porque el symlink físico
+  a `.` permitía recorridos cíclicos. La medición actual encontró cero enlaces
+  que resuelvan dentro de su propio ancestro. `/home/mak/WIN/flujo` redirige a
+  `../_archive/merge-20260831/fused/origins/win-flujo`. No hay otro directorio
+  `flujo` activo que deba inventarse o tratarse como raíz independiente.
+- El servicio de runner usa `/home/mak/actions-runner`; su checkout de trabajo
+  `/home/mak/actions-runner/_work/vibecodeine/vibecodeine` es un symlink a
+  `.../_archive/merge-20260831/fused/origins/runner-vibecodeine`. El servicio
+  y el alias de ruta no prueban por sí solos una entrega o un runtime sano.
+- El baseline previo de la caja fue `be35fc54499c14b97b00418e528a1d25db631ae2`;
+  la topología actual separa `MAK` en `ccb9b32d`, `FLUJO` en `fa0aede0` y
+  `main`/`historia` como histórico en `ab9afa13`. En
+  `vibecodeine-legacy` están publicados `MAK` y `FLUJO`; `main` permanece en
+  `ab9afa13`, la rama lowercase `flujo` fue retirada y sus tips antiguos se
+  preservan en tags `archive/vibecodeine-*`. `ligereza-mak` no se tocó.
+  La ola local que precedió esta topología está en `32d929d8`, `6166a8b8`,
+  `940d2324`, `111a52e6`, `ac789a31` y `29715450`; no se hizo push de esos
+  nombres a `ligereza-mak`.
+- Revalidación 2026-09-02: el código MAK anterior a este bloque estaba en
+  `39f16c4de32b8751682e068c2d9053b8a9450597`; el tip actual de la rama `MAK`
+  (este bloque incluido) se obtiene con
+  `git rev-parse MAK`, `FLUJO=efeaa8a911d7675bc4cdcd0bf72aeb48b8ca6a9c` y
+  `main=historia=ab9afa13fb4d5cf257d97972c73301b0bc0d78fb`; `git ls-remote`
+  coincide con cada tip local. Esta revalidación sustituye los tips abreviados
+  anteriores, que quedan como historia de la transición.
+
+### Estado documental medido
+
+- El nodo aislado `./.venv/bin/python -m pytest -q
+  tests/test_un_solo_documento.py::test_un_solo_handoff_vivo` pasa (RC 0)
+  después de mover con `git mv` los nueve documentos no vivos a
+  `docs/handoffs/archive/`. `context/LAST_HANDOFF.md` queda como único handoff
+  global versionado. Los tres contratos departamentales siguen siendo
+  consumibles desde sus copias archivadas.
+
+### Revalidación física y carriles — 2026-08-31
+
+- La medición histórica dejó 5.018 archivos vivos con `nlink=1` y 1.270 enlaces
+  compartidos protegidos. El 01-09 se revisaron y desacoplaron esos 1.257
+  archivos que seguían vinculados a `_archive` (22.526.816 bytes), con copia,
+  SHA-256 y reemplazo atómico; la re-medición actual da `nlink_gt1=0` y cero
+  inodos vivos compartidos con `_archive`. Se restauró
+  `cultura/mak_research/fallback_util.py` como copia independiente; ese estado
+  fue superado el 2026-09-01 al retirar la copia duplicada, porque el único
+  consumidor importa `cultura/mak_codex/fallback_util.py`. El legado
+  `tools/mak_ops/repair_mak_sync.py` se retiró porque su reemplazo seguro es
+  `tools/mak_ops/sync_mak_safe.py` y el test prohíbe reactivarlo.
+- Los markers `flujo`, `mak`, `integration` y `repo_hygiene` quedaron declarados
+  en `pyproject.toml`; `tests/conftest.py` aplica el mapa AST de
+  `tools/test_lane_map.py`. Carriles medidos: `flujo` 173 (159 s, RC 0),
+  `mak` 50 (105 s, RC 0), `integration` 10 (10 s, RC 0),
+  `repo_hygiene` 115 (124 s, RC 0), `review` 39 bajo demanda.
+  El mapa de 387 rutas quedó persistido estáticamente en ese archivo para que
+  la colección no recalcule AST en cada corrida (`ac789a31`).
+
+### Revalidación de índice y carriles — 2026-09-01 — CURRENT
+
+Este bloque reemplaza únicamente las cifras operativas anteriores; las
+mediciones del 31-08 permanecen abajo como historia fechada.
+
+- `context/code_structure_index.json` es el índice del código operativo de
+  `/home/mak`, no un censo de toda la caja: 932 archivos Python, 249.626
+  líneas, 10.962 símbolos y 0 errores de sintaxis. Su alcance explícito incluye
+  sólo la raíz Python, `src/`, `cultura/`, `tools/`, `tests/` y `scripts/`.
+  Excluye `_archive`, `WIN`, montajes y árboles de material no-code. Su SHA-256
+  actual es `e8f49ec645eaa9c61d8a61f73a6b597b5e52cc5b12f9cda6758dd7b5af802f2b`.
+- `context/test_lane_map.json` (`mak-test-lane-map-v3`) es el contrato vigente
+  y `tools/test_lane_map.py` lo carga. Conserva 243 acuerdos, 80 carriles
+  respaldados por imports/rutas, mueve 1 caso por import directo y resuelve 56
+  por ruta de módulo única. Los 7 casos que quedaban en `review` se resolvieron
+  por estructura dirigida (3 imports de MAK, 3 tests de activos ISKVW y 1 test
+  de taxonomía); `review=0`. La comparación original conserva 144
+  discrepancias visibles, no las presenta como consenso. SHA del contrato:
+  `984e26ecfb0d6890936156e1e7ed5d6d159e6ab08aa7ffbe6d11511f6a76e977`.
+- Colección actual de casos: `flujo=1.778`, `mak=2.229`,
+  `integration=239`, `repo_hygiene=87`, `review=0`; total `4.333`.
+  Los cuatro carriles operativos cubren todos los casos; los cambios de
+  clasificación sólo redistribuyeron casos, no crearon tests.
+- `lanes_for_changed_paths()` sigue consumidores desde el índice. Cambios en
+  `pyproject.toml`, `tests/conftest.py`, `tools/test_lane_map.py`,
+  `context/code_structure_index.json` o `context/test_lane_map.json` activan
+  todos los carriles; un cambio aislado en `src/flujo/*` activa solo `flujo`
+  cuando no tiene consumidores de otro carril.
+- `mak-hub.service` fue recargado tras resolver la raíz física: `/api/status`
+  devuelve ahora `repo_root=/home/mak` y `physical_root=/home/mak`; el alias
+  `/home/mak/flujo` queda sólo para compatibilidad de rutas heredadas.
+- Validación enfocada actual: `tests/test_code_index.py` (2 passed), los 7
+  archivos que cerraron `review` (49 passed), `tests/test_repo_audit.py` (5
+  passed en 33 s), `py_compile` RC 0 y `git diff --check` RC 0. No se ejecutó
+  la suite completa.
+- Se corrigieron dos escapes `\\s` en el HTML embebido de
+  `cultura/mak_codex/interfaz_codex.py`; la colección limpia dejó de emitir la
+  advertencia `invalid escape sequence`, y las pruebas enfocadas de interfaz
+  quedaron en 67 passed.
+
+### Cierre de `review` y triage de divergencias — 2026-09-01
+
+- Los 39 módulos que estaban en `review` fueron clasificados por evidencia de
+  importación/ruta: `mak` absorbió 36 y `repo_hygiene` 3. El mapa persistido
+  queda en `review=0`, `mak=86`, `repo_hygiene=118`, `flujo=173` e
+  `integration=10`; SETHASH y la lista completa se obtienen con
+  `./.venv/bin/python tools/test_lane_map.py --format text`.
+- La corrida acotada de esos 39 módulos encontró un duplicado real:
+  `cultura/mak_research/fallback_util.py`. No tenía consumidores directos;
+  `research_lib.py` y `expulsion.py` importan el único
+  `cultura/mak_codex/fallback_util.py`. Se retiró sólo la copia viva y se
+  preservó la variante en `_archive/`; los contratos
+  `tests/test_mak_salud_proveedores.py` y `tests/test_mak_fallback.py` pasan
+  juntos (17 tests, RC 0). La suite completa no se volvió a ejecutar.
+- Las 813 divergencias quedaron triadas, sin fusión semántica inventada, en
+  `context/mak-merge-20260831/divergence-triage.json` y su resumen
+  `DIVERGENCE_TRIAGE.md`: 712 tienen consenso byte a byte de dos orígenes (653
+  ya coinciden con el baseline activo; 59 lo tienen como outlier), 73 son
+  conflictos de dos fuentes/tipo y 28 tienen tres contenidos únicos. No existe
+  base común de tres vías en el manifiesto; por eso el arreglo correcto es
+  revisión manual por esos grupos, no elegir un ganador automáticamente.
+
+### Reconciliación de variantes — 2026-09-01
+
+- Se ejecutó una reconciliación real de tres vías contra la base común
+  `4b8453cbf17b25431e091a4a6fe3f09a819a0ffb`, usando las copias congeladas de
+  `active-flujo`, `win-flujo` y `runner-vibecodeine`. El resultado fue 482
+  archivos fusionados limpiamente, con reemplazo atómico y sin escribir bajo
+  `_archive/`.
+- La medición dejó explícitos los límites: 46 conflictos de contenido, 55
+  rutas sin base común, 22 conflictos de tipo (archivo/symlink) y 18 rutas cuyo
+  contenido vivo había cambiado desde el manifiesto. Esos 151 casos no se
+  declaran resueltos por prosa; siguen trazados en
+  `context/mak-merge-20260831/reconcile-20260901.json`.
+- En los conflictos donde `active-flujo` y `runner-vibecodeine` coincidían,
+  se aceptó ese consenso y se conservó `win-flujo` sólo como evidencia. Los 15
+  conflictos sin consenso (incluido el digest que requirió una integración
+  manual) permanecen deliberadamente para revisión manual;
+  incluyen `.gitignore`, `Makefile`, el crontab, los hubs, `src/flujo/autonomia.py`
+  y `src/flujo/paths.py`. No se inventaron ejecutables ni se editaron tests para
+  ocultar diferencias.
+- Se corrigió manualmente el digest de `tools/update_readme_svg.py` para que
+  filtre la declaración obsoleta de cuatro ramas y exprese la autoridad MAK/
+  runtime. Se mantuvieron los contratos existentes de cron pausado y de
+  automerge; una variante que refería `/home/mak/bin/mak_sync_safe.py` no se
+  adoptó porque ese archivo no existe en ningún origen.
+- Validación enfocada posterior: 87 tests pasaron en 62.89 s con
+  `pytest -o addopts=''`; no se ejecutó la suite completa. Los cambios
+  puramente de fin de línea de 134 rutas se descartaron para que el commit
+  sólo contenga deltas semánticos.
+
+### Revalidación documental previa al traslado — 2026-08-31
+
+- Línea base histórica estable, con el mismo comando literal ejecutado dos veces:
+  `./.venv/bin/python -m pytest -q tests/test_un_solo_documento.py::test_un_solo_handoff_vivo`.
+  ANTES histórico: `N=1` ruta exigida. En ese momento el árbol tenía `N=10`,
+  RC 1 en ambas corridas y la misma lista; la diferencia quedó explicada por
+  definición y alcance del test, no por una variación de la medición.
+- Clasificación literal de las diez rutas: vivo provisional único:
+  `context/LAST_HANDOFF.md`; histórico: `context-history/untracked-context-20260819/PHASE225_HANDOFF_CHECKPOINT_REPAIR.md`,
+  `context-history/untracked-context-20260819/PHASE268_RESIDUAL_BOUNDARY_AND_ARCHITECTURE_HANDOFF.md`,
+  `context-history/untracked-context-20260819/PHASE405_OWNER_CLEANUP_BRANCH_HANDOFF.md`
+  y `context-history/untracked-context-20260819/quarantine/LAST_HANDOFF.pre-803d2e5-20260818.md`;
+  plantilla: `context/BRANCH_HANDOFF_TEMPLATE.md`; paquete previo/duplicado:
+  `docs/handoffs/archive/MAK_CODEX_HANDOFF.md`; departamentales no globales: `context/handoffs/cultura.md`,
+  `context/handoffs/iskvw.md` y `context/handoffs/rd.md`.
+- El contrato no distingue global de departamental: captura los tres estados
+  departamentales por contener `handoff` en sus rutas. Su política literal
+  exige que también salgan de la zona viva. En la ola posterior se trasladaron
+  los nueve no vivos con `git mv` a `docs/handoffs/archive/`; el test aislado
+  pasó con RC 0 y los bytes quedaron preservados.
+- Hardlinks comprobados antes de esta escritura: `context/LAST_HANDOFF.md`
+  tenía `nlink=1`, inode `30303228` y SHA-256
+  `b43b16e6852ecdd64124ddd40517c4ac0a896feb96d529dc8224245548880e42`;
+  por tanto no requirió desaliasado. Los otros documentos no se editaron
+  (varios conservan `nlink=4`). Esta pasada no ejecutó reset, push, commit ni
+  operación Git mutante.
+
+### Estado después de la ola
+
+El write-set ya incluyó `docs/handoffs/archive/`; no se modificó el test. La
+decisión aplicada fue un handoff global vivo más estados departamentales
+archivados, con los contratos departamentales apuntando a sus copias históricas.
+No inferir de la fusión que toda variante tenga ruta viva ni que sus diferencias
+estén cerradas.
+
+---
+
+## Agent bootstrap — CURRENT — 2026-08-31 — estado medido, familia fail-closed y MAK pausado bajo control
 
 Lee esto y `docs/MAK_CURRENT_STATE.md` seccion 12. Lo de abajo, fechado
 2026-08-29 y anterior, es evidencia historica: no se corrige, se supera.
@@ -24,9 +240,9 @@ tener huecos, y esto es lo que lo garantiza.**
 - `write_set=experiments/cycles/C04/media_observer/` -- el write-set declarado
   del ciclo C04.
 - `Stage 2D accepted`: la etapa 2D quedo aceptada y no se reabre.
-- `171 focused tests` fue la medicion de aquella etapa. Hoy la suite completa
-  esta en **4174 passed**, que no la contradice: aquella cifra era de un
-  subconjunto enfocado, no del total.
+- `171 focused tests` fue la medicion de aquella etapa. La medicion completa
+  actual es **4204 pasadas, 5 skips, 0 fallos** (4209 recolectados), que no la
+  contradice: aquella cifra era de un subconjunto enfocado, no del total.
 - `mak-archive-observation-batch-v1` sigue siendo el esquema de los lotes de
   observacion del archivo.
 
@@ -37,26 +253,67 @@ tener huecos, y esto es lo que lo garantiza.**
   varias suites lo leian sin guarda, asi que **la suite certificaba la maquina y
   no el repositorio**. Guardas puestas con el patron que salta NOMBRANDO lo que
   falta.
-- **Suite: 4174 passed, 0 failed** (empezo la jornada en 3741).
+- **Suite medida por Codex: 4204 pasadas, 5 skips, 0 fallos** (4209
+  recolectados; empezó la jornada documentada en 3741). El SSD estaba montado
+  durante esta corrida. El recibo completo y su hash están en el dossier
+  `/home/mak/state/codex-retomar-20260831/BASELINE.md`.
+  Son 373 archivos y 4080 nodos base; 129 casos adicionales provienen de
+  parametrización. Este conteo de casos no equivale a 4209 propiedades
+  independientes ni a salud de la caja MAK completa.
+- `./.venv/bin/python -m flujo verify` también salió con exit `0`; ejecutó su
+  cadena de pytest/compilación y un Hub smoke que devolvió `OK` con versión
+  `0.56.1`. `_run_verify_subprocess` ahora corta con exit `1` ante cualquier
+  fallo de compileall, pytest, health, version o smoke; antes sólo imprimía el
+  error y terminaba en `verify OK`. El recibo está en el dossier; esto no
+  convierte una salida verde en prueba de entrega externa ni remide cobertura.
+- El write-set de esta toma permanece **sin commit y sin push** hasta terminar
+  la revisión: `src/flujo/cli.py`, `src/flujo/diagnostics.py`,
+  `src/flujo/knowledge/system_status.py`, `tools/repo_audit.py`,
+  `CAPACIDADES.md` y sus pruebas asociadas, incluidas `tests/test_cli_smoke.py`
+  y `tests/test_repo_audit.py`.
+  Un `git
+  status` limpio no es una afirmación válida mientras este write-set exista.
 - **Verificacion en entorno CI-equivalente real**: worktree + venv nuevo con
   `pip install -e ".[dev,render]"`. Un worktree da los archivos limpios, **no el
   entorno limpio**: el `.venv` de MAK arrastra lo instalado y no declarado.
-- **Cobertura**: `cli.py` 29→45%, `web/hub.py` 29→38%,
-  `cultura/mak_plataforma/hub.py` 62→73%. Total del repo 71%.
+- **Cobertura heredada, no re-medida en esta toma**: `cli.py` 29→45%,
+  `web/hub.py` 29→38%, `cultura/mak_plataforma/hub.py` 62→73%. Total del repo
+  71%. Es contexto histórico hasta que un comando nuevo lo confirme.
 - **`~/state/reanudacion-20260830/` esta preparado y verificado.** Reanudar es
   un comando del operador; un agente no puede instalar un crontab.
 
 ### La familia de defecto que hay que reconocer
 
 `subprocess.run(...).stdout.strip()` **pliega "el comando fallo" y "no hay nada"
-en el mismo vacio**. Se encontraron **siete** casos en sitios sin relacion:
-`flujo doctor`, `github-sync --status`, dos rutas del hub de plataforma,
-`autonomia.py`, `runrecord.py`, `check_mak_trabajo.py`, `png_xmp_witness.py` y
-`substrate_scan.py`.
+en el mismo vacio**. El conteo anterior de "siete" no es fiable: la inspección
+actual localiza **ocho puntos en siete archivos** (`flujo doctor` y
+`github-sync --status` en `src/flujo/cli.py`, más `autonomia.py`, `runrecord.py`,
+`check_mak_trabajo.py`, `png_xmp_witness.py`, `substrate_scan.py`), y añade
+`src/flujo/diagnostics.py` como un noveno punto confirmado por una prueba nueva.
+No se mantiene la afirmación de "dos rutas del hub de plataforma" sin un
+call-site local que la respalde.
 
 La distincion que lo resuelve: **`None` cuando no se midio, `False` cuando se
 midio y no esta sucio.** Un arbol sin medir no es un arbol limpio. Si escribes
 codigo que mide algo, esta es la trampa que te va a tocar.
+
+### Verificación Codex de continuidad — 2026-08-31
+
+- `flujo doctor` ahora nombra el fallo de `git status` como `AVISO` y nunca como
+  `limpio`; `diagnostics` conserva `dirty=None`/`changed_entries=None` si no
+  pudo medir. Las pruebas de caracterización ya no bendicen el defecto.
+- `tools/medir_organismo.py` conserva `available=false` y valores `null` cuando
+  fallan sus probes de `crontab`, GitHub o systemd; ya no lee un vacío como
+  cero, inactivo o sin protección. Un `inactive` explícito de systemd sí es un
+  estado medido. Las regresiones están en `tests/test_medir_organismo.py`.
+- Los wrappers físicos de Research/Codex y sus fuentes canónicas son
+  candidatos explícitos. Tras un reinicio controlado del servicio existente,
+  `/api/status` observó las tres fuentes realmente ejecutadas y devolvió HTTP
+  200; el estado `attention` restante corresponde a evidencia ledger pendiente,
+  no a un fallo del runtime.
+- El proceso Claude que estaba reinyectando el job interno `56bfb309` y sus
+  hijos quedaron `SIGSTOP` (reversible, no eliminados) para mantener un solo
+  escritor durante esta toma. No se activó cron, XIO ni un worker permanente.
 
 ### Dos practicas que salieron de esta jornada y conviene repetir
 
@@ -73,7 +330,7 @@ codigo que mide algo, esta es la trampa que te va a tocar.
   instrumento: `--cov=paquete.modulo` devuelve "No data to report" porque
   pytest-cov importa el modulo antes de que arranque el rastreador. **Usa la
   ruta real.**
-- "24 modulos bajo 40%" eran 32. "119 herramientas en tools/" son 116. "122
+- "24 modulos bajo 40%" eran 32. "119 herramientas en tools/" son 117. "122
   puentes" son 130.
 
 ### El instrumento unico
@@ -85,12 +342,15 @@ dato**, para que una cifra vieja se vea vieja. No mide nada nuevo.
 
 ### Lo retirado, y donde consta
 
-`~/_archive/orden-limpieza-20260828/mapa-de-retiro.csv`, **253 filas**, ninguna
-apuntando al vacio. Se borro de verdad solo lo re-obtenible y con su comando de
+`~/_archive/orden-limpieza-20260828/mapa-de-retiro.csv`, **252 filas de datos
+(253 líneas con cabecera)**, ninguna apuntando al vacío. Se borró de verdad
+solo lo re-obtenible y con su comando de
 recuperacion escrito: clones publicos, un instalador, una descarga incompleta,
 una version vieja de Blender, un venv sin consumidor, y 602 MB de papelera
 **tras comprobar los 2012 blobs de su HEAD uno por uno contra `flujo/.git`**.
 Los 4 que no estaban en ningun commit se preservaron.
+El resumen `exact-duplicate-decision-summary-v2.json` conserva el snapshot
+anterior de 231 retiros; no se debe mezclar con este CSV físico más reciente.
 
 Un retiro se revirtio por error propio: `venvs/knowledge-migration`. Se afirmo
 "no hay PostgreSQL en MAK" y si lo hay. **Cero coincidencias en un grep no
@@ -105,6 +365,21 @@ prueba ausencia**: preguntale a `systemctl`, `docker ps`, `ss`.
 - `NTFY_TOPIC_OUT` no esta configurado: el canal saliente de MAK esta mudo. El
   nombre de un tema de ntfy es su contrasena, asi que elegirlo no es de un
   agente.
+- **Índice de tests no secuencial**: `tests/conftest.py` asigna marcadores
+  automáticos `topic_*` (tema exacto), `area_*` (área solapable) y `role_*`
+  (rol transversal). `tools/medir_test_overlap.py` mide candidatos de
+  solapamiento AST sin borrar ni fusionar tests; el recibo está en
+  `/home/mak/state/codex-retomar-20260831/evidence/mak-test-overlap-20260831.txt`.
+- **Deuda estructural abierta**: `CAPACIDADES.md` conserva el registro
+  declarativo y un overlay manual; su 5-bis queda explicitamente como snapshot
+  historico. `repo_audit.py --format json` emite el resultado read-only
+  `mak-tool-consumer-inventory-v1` (117 herramientas), y `--format markdown`
+  genera la tabla reproducible conservada en
+  `/home/mak/state/codex-retomar-20260831/evidence/repo-audit-tools-20260831.md`.
+  El medidor endurecido devuelve 46 referencias de produccion, 39 solo en tests
+  y 32 sin referencia directa; el overlay manual de `CAPACIDADES.md` cubre los
+  32 tras clasificar los seis casos que faltaban. No se debe llamar a esto
+  "fuente unica" ni retirar una herramienta por nombre o ausencia de referencia.
 
 ---
 
@@ -114,7 +389,7 @@ This is the only current operational packet. The material below the marked
 historical boundary is retained evidence and must not override this packet.
 
 Detailed current handoff for this consolidation:
-`/home/mak/MAK_CODEX_HANDOFF.md`.
+`/home/mak/docs/handoffs/archive/MAK_CODEX_HANDOFF.md`.
 
 ### Standing contract, carried forward unchanged
 
@@ -198,7 +473,7 @@ changed history, branch or remote state. The organism measurement now offers
 `--cron-detail` for 23 static cron preflights and `--json` for
 `mak-organism-heartbeat-v1`. The valid test-overlap evidence is in
 `/home/mak/indexes/mak-solape-tests-20260829/`; see
-`/home/mak/MAK_CODEX_HANDOFF.md` for its counts and limits.
+`/home/mak/docs/handoffs/archive/MAK_CODEX_HANDOFF.md` for its historical counts and limits.
 
 The first opening of all previously uninspected local roots is complete. The
 system-level GitHub runner is enabled and active; `actions-runner` is therefore

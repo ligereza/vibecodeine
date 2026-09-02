@@ -1,0 +1,2 @@
+phase,scope,action,result,exit_code,changed_files,risk,next_action
+112,platform tandas semantic ownership,compare canonical/root/WIN contracts with isolated pure fixtures,no merge; all basic fixtures passed but evidence/payload semantics diverge,0,none,blind merge would lose provenance or external dispatch metadata,move to next read-only platform slice or explicit tandas reconciliation

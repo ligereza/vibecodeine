@@ -1,0 +1,7 @@
+phase,path,role,result,decision
+200,/home/mak/flujo/data/rd_packs.json,canonical tariff,250/300/500 numeric contract,keep owner
+200,/home/mak/RD/packs_servicios_rd.json,delivery snapshot,exact with RD New Folder copy,preserve delivery evidence
+200,/home/mak/flujo/jobs/2026-07-04_eventos-brief/packs_servicios_rd.json,job snapshot,same numeric contract different wording,preserve job evidence
+200,/home/mak/RD/*/plano_rider*.pdf,delivery artifact,exact variants across RD/job,preserve role
+200,/home/mak/flujo/svg/eventos_rd,editable runtime asset,distinct SVG variant,keep consumer path
+200,merge_or_delete,none,not authorized,no mutation

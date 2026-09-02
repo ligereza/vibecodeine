@@ -1,0 +1,14 @@
+id,objective,status,evidence,next_action
+1,RD field data,DEFERRED_EMPTY_DATA,PHASE40+83,approved real dataset
+2,rd.db merge,VERIFIED,PHASE54,provenance preservation
+3,RD mutators,FIXTURE_VERIFIED,PHASE56-60,authorized production run
+4,FLUJO automation,CONTRACT_ACCEPTED,PHASE61,user/provider authority
+5,non-serve CLI,RUNTIME_VERIFIED_PARTIAL,PHASE81-85+89,pytest and bounded mutators
+6,RD assets,CLASSIFIED_PARTIAL,PHASE62+78+79,deliverable ownership
+7,dependencies,CORE_VERIFIED_WEB_BLOCKED,PHASE80+85,Node/Rollup recovery
+8,folder architecture,DESIGNED,PHASE63+68,ownership adapters
+9,duplicate docs,PARTIAL_CONSOLIDATED,PHASE64+86+87,semantic decisions
+10,equivalent tools,PARTIAL_VERIFIED,PHASE66-68+86,consumer merges
+11,full MAK audit,RUNTIME_PARTIAL,PHASE70+89+92,pytest/departments
+12,cleanup+WIN,PARTIAL_CONFIRMED,PHASE71+72+76+86,path-level gate
+13,Git branches,PROPOSED_NOT_APPLIED,PHASE77,authority after closure

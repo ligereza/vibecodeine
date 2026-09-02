@@ -1,0 +1,6 @@
+scope,files,success,failure,decision
+"research/codex/curatoria/plataforma/vigia/lenguaje Python",110,109,"panel_directivo.py SyntaxError line 145","preserve incomplete evidence; no active consumer"
+"flujo health",1,1,0,KEEP
+"flujo rd-db packs",1,1,0,KEEP
+"flujo job status real job",1,1,0,KEEP
+"flujo datadrop list",1,1,0,KEEP

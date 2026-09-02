@@ -1,0 +1,2 @@
+route,method,source,target,inputs,expected_output,validation,result,write_observation,decision
+/api/rd-datos-summary,GET,src/flujo/web/hub.py -> src/flujo/rd/informe.py -> src/flujo/rd/datos.py,/home/mak/flujo/data/rd_datos.db,empty zero-byte field-data SQLite file,truthful unavailable summary without schema creation,AST/import + SQLite mode=ro + guarded connector + temporary localhost HTTP,HTTP 200 guarded fallback; zero SQLite objects; no normal connector call,no writes; no seed/demo import/upload; normal connector explicitly blocked,DEFERRED_EMPTY_DATA_SOURCE

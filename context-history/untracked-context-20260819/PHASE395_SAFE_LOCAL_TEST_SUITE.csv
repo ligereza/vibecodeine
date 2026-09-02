@@ -1,0 +1,7 @@
+"metric","value","scope"
+"safe test files","68","current conservative marker filter"
+"safe test items","485","pytest collect and run"
+"collect exit","0","research venv"
+"run exit","0","research venv"
+"excluded risk surface","177 files from historical inventory","not executed as batch"
+"external state changes","0","no providers/services/network/Git/live writes"

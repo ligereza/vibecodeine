@@ -1,0 +1,2 @@
+phase,scope,action,result,exit_code,changed_files,risk,next_action
+108,curatoria ingestion/report/orders ownership,replace active root exact duplicates with canonical projections,imports help compile passed; no ingestion/report/process mutation,0,/home/mak/curatoria/ingesta_archivo.py|/home/mak/curatoria/reporter.py|/home/mak/curatoria/ordenes.py,extraccion_db.py canonical/root divergence remains open; mutating boundaries not run,audit extraccion_db semantics

@@ -1,0 +1,14 @@
+objective,status,open_gate
+1,DEFERRED_EMPTY_DATA,authorized real field dataset
+2,VERIFIED,provenance preservation
+3,FIXTURE_VERIFIED_WITH_ROLLBACK,authorized production foreground run
+4,DRYRUN_VERIFIED_CONTRACT_ACCEPTED,provider-backed authorized run
+5,RUNTIME_VERIFIED_PARTIAL,pytest full test dependency
+6,CLASSIFIED_PARTIAL,human source delivery ownership
+7,CORE_VERIFIED_WEB_BLOCKED,supported Node and native Rollup
+8,PROJECTION_OWNERSHIP_CLOSED_PARTIAL,path-level data output placement
+9,PARTIAL_CONSOLIDATED,semantic source output comparison
+10,PROJECTION_OWNERSHIP_CLOSED_PARTIAL,external and RD consumer gates
+11,RUNTIME_PARTIAL,remaining read-only surfaces and pytest
+12,PARTIAL_CONFIRMED,92 DS_Store quarantined and other candidates protected
+13,PROPOSED_NOT_APPLIED,apply only after physical gates

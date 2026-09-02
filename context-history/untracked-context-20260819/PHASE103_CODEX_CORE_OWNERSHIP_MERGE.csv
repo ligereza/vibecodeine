@@ -1,0 +1,2 @@
+phase,scope,action,result,exit_code,changed_files,risk,next_action
+103,CODEX core ownership,replace active root codex_lib and generar duplicates with canonical projections,import help compile passed; no external execution,0,/home/mak/codex/codex_lib.py|/home/mak/codex/generar.py,WIN codex_lib semantic divergence and provider/sandbox boundary remain open,continue CODEX consumer audit

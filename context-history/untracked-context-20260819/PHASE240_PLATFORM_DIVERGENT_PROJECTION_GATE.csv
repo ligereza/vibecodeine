@@ -1,0 +1,5 @@
+phase,type,count,validation,decision,next
+240,divergent_python,17,AST all pass,retain projections/per-file owner map,external gates
+240,divergent_shell,2,non-empty wrapper surfaces,retain runtime entrypoints,external gates
+240,divergent_text,1,non-empty backlog data,retain data contract,external gates
+240,divergent_total,20,"all classified; no quarantine",no-change,external gates

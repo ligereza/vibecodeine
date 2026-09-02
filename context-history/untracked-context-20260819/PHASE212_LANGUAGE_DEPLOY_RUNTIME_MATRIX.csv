@@ -1,0 +1,4 @@
+slice,inputs,dependencies,side_effects,static_result
+/home/mak/lenguaje,"dictionaries, lexicon, Research/Codex outputs","stdlib; local research_lib for correction","hook append; lexicon output; corrected sibling file","compile/import/shell syntax pass"
+/home/mak/flujo/cultura/mak_lenguaje,"canonical language source","stdlib; local research_lib","same write-capable behavior; cron paused","compile/import/shell syntax pass"
+/home/mak/flujo-deploy + /home/mak/bin/mak_sync_safe.py,"deploy worktree and runtime projections","stdlib; git CLI; fcntl; filesystem","fetch/reset/backup/copy/manifest; not called","compile pass; no execution"
