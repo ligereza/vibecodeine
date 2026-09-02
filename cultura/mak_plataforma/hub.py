@@ -2784,6 +2784,21 @@ def _portfolio_scene(item_id, limit=10, focus_facet="", shuffle=False,
         for row in map_surface.get("items", [])
         if isinstance(row, dict) and row.get("item_id")
     }
+    # What the active record HAS and LACKS, so a person is not deciding blind.
+    # The seed rows already carried has_description/has_vision/review_scope and
+    # the interface read none of them. `unknown` is kept apart from `absent`:
+    # the perception index covers a small share of the field, so "no vision
+    # record" is usually "not measured", not "has no perception".
+    vision_rows = _portfolio_vision()
+    active_record = next(
+        (row for row in scene.get("records", [])
+         if str(row.get("role") or "") == "active"), None)
+    scene["evidence_readiness"] = copilot.evidence_readiness(
+        active_record if isinstance(active_record, dict) else source,
+        vision=vision_rows.get(str(item_id)),
+        vision_indexed=vision_rows.keys(),
+        relations=scene.get("relations", []),
+    )
     scene["map"] = {
         "schema": map_surface.get("schema", copilot.GTM_SCHEMA),
         "engine": map_surface.get("engine", "not_requested"),

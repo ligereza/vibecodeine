@@ -1,6 +1,7 @@
 from cultura.mak_plataforma.copilot import (active_ordering_seed,
                                              build_gtm_map, build_suggestions,
                                              evaluate_feedback, group_suggestions,
+                                             evidence_readiness,
                                              external_evidence_profile,
                                              inference_prompt,
                                              learning_profile,
@@ -11,6 +12,7 @@ from cultura.mak_plataforma.copilot import (active_ordering_seed,
                                              normalize_vision,
                                              ordering_distance_profile,
                                              replay_ordering_evaluation,
+                                             READINESS_SCHEMA,
                                              _vector_distance)
 
 import json
@@ -555,3 +557,97 @@ def test_inference_quality_keeps_only_evidenced_hypotheses_ready_for_human_gate(
     assert quality["valid_hypotheses"] == 1
     assert quality["missing_evidence"] == ["c"]
     assert quality["promotion"] == "none"
+
+
+# ---------------------------------------------------------------------------
+# Evidence readiness: what a record has and lacks before a human labels it
+# ---------------------------------------------------------------------------
+#
+# Added 2026-09-02 from a measurement, not a hunch. Of 7044 records, 116 are
+# labelled and 6928 are not, and the ordering model predicts none of them with
+# high confidence (alta=0, media=4156, baja=2772), so every case is still a
+# human look. The frontier rows already carried has_description / has_vision /
+# review_scope and the interface read none of them: the operator decided
+# without seeing what the case contained, and `review` -- the label that means
+# "not decidable yet" -- was used once in 116 decisions.
+
+
+def _record(**overrides):
+    row = {
+        "source_id": "x.jpg", "asset_available": True, "asset_path": "/p/x.jpg",
+        "description": "una pieza", "date": "2021-10-03",
+        "classification": {}, "work_group": None,
+    }
+    row.update(overrides)
+    return row
+
+
+def _status(report, channel):
+    return next(row["status"] for row in report["channels"]
+                if row["channel"] == channel)
+
+
+def test_readiness_separates_not_measured_from_measured_absent():
+    """`unknown` and `absent` are different claims and must not collapse.
+
+    The perception index covered 100 of 7044 records, so a missing vision row
+    is almost always "not indexed", not "this record has no perception".
+    Reading that absence as a finding is how a gap becomes a fact.
+    """
+    outside = evidence_readiness(_record(), vision=None,
+                                         vision_indexed=["other.jpg"])
+    assert _status(outside, "perception") == "unknown"
+    assert "perception" in outside["unmeasured"]
+    assert "perception" not in outside["missing"]
+
+    indexed = evidence_readiness(_record(), vision=None,
+                                         vision_indexed=["x.jpg"])
+    assert _status(indexed, "perception") == "absent"
+    assert "perception" in indexed["missing"]
+
+    seen = evidence_readiness(
+        _record(), vision={"features": {"a": 1}, "confidence": "low"},
+        vision_indexed=["x.jpg"])
+    assert _status(seen, "perception") == "present"
+
+
+def test_readiness_abstains_when_the_minimum_is_missing():
+    """No asset or no description means the label has nothing to rest on."""
+    blind = evidence_readiness(_record(asset_available=False,
+                                               description=""))
+    assert blind["decision"] == "abstain"
+    assert blind["blocking"] == ["asset", "description"]
+    assert "review" in blind["next_action"]
+    assert "review" in blind["labels"]
+
+
+def test_readiness_never_promotes_and_keeps_the_human_as_owner():
+    """A readout is not a decision. It says what is there, nothing more."""
+    for report in (evidence_readiness(_record()),
+                   evidence_readiness(_record(asset_available=False))):
+        assert report["promotion"] == "none"
+        assert report["owner"] == "human"
+        assert report["producer"] == "local_readiness_report"
+        assert report["next_action"].strip()
+        assert report["schema"] == READINESS_SCHEMA
+
+
+def test_readiness_reports_reservations_without_blocking_the_label():
+    """Missing enrichment is declared, not resolved, and does not stop a
+    defensible label from being possible."""
+    report = evidence_readiness(_record(), relations=[{"item_id": "y"}])
+    assert report["decision"] == "decidable_con_reservas"
+    assert report["blocking"] == []
+    assert set(report["missing"]) == {"classification", "work_group"}
+    assert _status(report, "relations") == "present"
+    assert "relacion" in next(row["detail"] for row in report["channels"]
+                              if row["channel"] == "relations")
+
+
+def test_readiness_survives_a_record_it_cannot_read():
+    """Fail closed: an unusable record reports unknowns, never invented values."""
+    report = evidence_readiness(None)
+    assert report["decision"] == "abstain"
+    assert report["item_id"] == ""
+    assert all(row["status"] in ("present", "absent", "unknown")
+               for row in report["channels"])
