@@ -1,5 +1,6 @@
 """Guard the Git web boundary for the Linux MAK publisher."""
 
+import re
 from pathlib import Path
 
 
@@ -11,13 +12,32 @@ def _workflow(name: str) -> str:
     return (WORKFLOWS / name).read_text(encoding="utf-8")
 
 
-def test_ci_targets_linux_and_canonical_branches_only():
-    text = _workflow("ci.yml")
+def test_ci_targets_linux_and_its_own_operational_branch_only():
+    """The monolithic `ci.yml` was retired on 2026-09-02.
 
-    assert "windows-latest" not in text
-    assert "os: [ubuntu-latest]" in text
-    assert "branches: [main]" in text
-    assert "mejoras" not in text
+    It was replaced by one workflow per lane, and the branch assertion had to
+    invert with it: the old test demanded `branches: [main]`, and under the
+    current topology main is a historical aggregate that is never a deployment
+    target. Each operational CI now triggers on the branch that owns its
+    surface -- ci-mak on MAK, ci-integration on MAK because the integration
+    lane is the composition of both checkouts, and ci-flujo on FLUJO from the
+    FLUJO checkout.
+    """
+    for name in ("ci-mak.yml", "ci-integration.yml"):
+        text = _workflow(name)
+        assert "windows-latest" not in text, name
+        assert "runs-on: ubuntu-latest" in text, name
+        assert "mejoras" not in text, name
+
+        # The trigger lists carry only operational branches. ci-integration
+        # names both on purpose: the lane is the composition, so a change on
+        # either side can break it.
+        listas = re.findall(r"branches: \[([^\]]*)\]", text)
+        assert listas, name
+        for lista in listas:
+            refs = {ref.strip() for ref in lista.split(",") if ref.strip()}
+            assert refs <= {"MAK", "FLUJO"}, (name, sorted(refs))
+            assert refs, name
 
 
 def test_git_topology_guard_requires_one_trunk_and_archive_tag():
@@ -40,7 +60,9 @@ def test_automated_gates_cannot_publish_repo_changes():
     only run on `workflow_dispatch` are excluded -- a person pressed the button.
     """
     automated = (
-        "ci.yml",
+        # `ci.yml` until 2026-09-02, when it was split per lane.
+        "ci-mak.yml",
+        "ci-integration.yml",
         "seguridad.yml",
         "git-topology.yml",
         "validar-piezas.yml",

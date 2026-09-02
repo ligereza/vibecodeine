@@ -47,9 +47,16 @@ def test_physical_candidate_is_not_mislabeled_as_small() -> None:
 
 
 def test_optional_dependency_is_its_own_environment_lane() -> None:
-    _size, _scope, environment = classify_test_axes(
-        "tests/test_archive_toolchain.py"
-    )
+    """Probed `test_archive_toolchain.py` until 2026-09-02.
+
+    That file left MAK for FLUJO in the separation, and the classifier reads
+    the SOURCE to find the signal, so a path that no longer exists yields no
+    signals and falls back to `unknown` -- the probe stopped measuring the
+    property it names. `test_laser.py` replaces it: it lives here, its stem
+    says nothing about optionality, and vpype is the optional dependency the
+    signal comes from. A stem-named probe would have proved nothing.
+    """
+    _size, _scope, environment = classify_test_axes("tests/test_laser.py")
     assert environment == "optional"
 
 
