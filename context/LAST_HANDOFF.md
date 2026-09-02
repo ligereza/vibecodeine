@@ -46,6 +46,13 @@ evidencia fechada, incluso cuando se contradicen.
   La ola local que precedió esta topología está en `32d929d8`, `6166a8b8`,
   `940d2324`, `111a52e6`, `ac789a31` y `29715450`; no se hizo push de esos
   nombres a `ligereza-mak`.
+- Revalidación 2026-09-02 para FLUJO: `context/code_structure_index.json`
+  describe el árbol `/home/mak/flujo`, excluye `context-history` histórico y
+  registra 1.096 Python, 280.430 líneas, 12.557 símbolos y 0 errores de
+  sintaxis (SHA-256 `fe4df3b6624751051b87bf6b477498ab34675edefec976cddd061cef40495909`).
+  El tip actual de `FLUJO` y su igualdad con `git ls-remote` se comprueban con
+  `git rev-parse FLUJO` y la referencia remota; los tips antiguos de arriba
+  quedan como historia de transición.
 
 ### Estado documental medido
 
