@@ -1,0 +1,556 @@
+{
+  "schema": "mak-flujo-closeout-v1",
+  "task_id": "mak-flujo-closeout-20260902",
+  "status": "CLOSURE_IN_PROGRESS",
+  "date": "2026-09-02T10:39:53.936720+00:00",
+  "branch_shas_before": {
+    "MAK": "a62f9019585f9c80a749dae7383f3a519f2efdf5",
+    "FLUJO": "ad9ee8811325ee8661023312cd1d4a419407f547",
+    "main": "3d83ed606f9ce27a1a410860a0380de684524898",
+    "historia": "09f7e7d9059db286bb1fa44de322139e2b5d1d68"
+  },
+  "branch_shas_after": {
+    "MAK": "82210a741eabc664e6c6521c34f9ee3f0e5df514",
+    "FLUJO": "0dc99a25ae12ab6550a0e81ee287c05762c43952",
+    "main": "3d83ed606f9ce27a1a410860a0380de684524898",
+    "historia": "09f7e7d9059db286bb1fa44de322139e2b5d1d68"
+  },
+  "commits_created": [
+    {
+      "branch": "MAK",
+      "sha": "d6b120da",
+      "parent": "a62f9019585f9c80a749dae7383f3a519f2efdf5",
+      "subject": "feat(mak): prove executed source and gate local release state",
+      "paths": [
+        "tools/runtime_preflight.py",
+        "tools/release_gate.py",
+        "tests/test_runtime_preflight.py"
+      ],
+      "worktree": ".claude/worktrees/mak-closeout"
+    },
+    {
+      "branch": "MAK",
+      "sha": "d133c2af",
+      "parent": "d6b120da",
+      "subject": "chore(mak): declare the shared consumers the hub imports and own its test",
+      "paths": [
+        "branch_profile.json",
+        "tools/test_lane_map.py",
+        "context/test_lane_map.json"
+      ],
+      "worktree": ".claude/worktrees/mak-closeout"
+    },
+    {
+      "branch": "FLUJO",
+      "sha": "84048afe",
+      "parent": "ad9ee8811325ee8661023312cd1d4a419407f547",
+      "subject": "fix(flujo): honour the contracted port and own the port test",
+      "paths": [
+        "src/flujo/web/hub.py",
+        "src/flujo/cli.py",
+        "tests/test_flujo_port_contract.py",
+        "tools/test_lane_map.py",
+        "context/test_lane_map.json"
+      ],
+      "worktree": ".claude/worktrees/flujo-closeout"
+    }
+  ],
+  "changed_paths": {
+    "main_checkout": [
+      "tools/release_gate.py"
+    ],
+    "MAK": [
+      "tools/runtime_preflight.py",
+      "tools/release_gate.py",
+      "tests/test_runtime_preflight.py",
+      "branch_profile.json",
+      "tools/test_lane_map.py",
+      "context/test_lane_map.json"
+    ],
+    "FLUJO": [
+      "src/flujo/web/hub.py",
+      "src/flujo/cli.py",
+      "tests/test_flujo_port_contract.py",
+      "tools/test_lane_map.py",
+      "context/test_lane_map.json"
+    ]
+  },
+  "ownership_decisions": [
+    {
+      "path": "tools/runtime_preflight.py",
+      "category": "MAK_ONLY",
+      "target_branch": "MAK",
+      "consumers": [
+        "tools/release_gate.py",
+        "tests/test_runtime_preflight.py"
+      ],
+      "evidence": "reads /home/mak/.config/systemd/user, /proc/<pid>/cmdline and the box adapter; meaningless on a portable FLUJO checkout"
+    },
+    {
+      "path": "tools/release_gate.py",
+      "category": "MAK_ONLY",
+      "target_branch": "MAK",
+      "consumers": [
+        "operator, from the box"
+      ],
+      "evidence": "inspects both refs but runs on the box, calls systemctl and reads the venv .pth"
+    },
+    {
+      "path": "tests/test_runtime_preflight.py",
+      "category": "MAK_ONLY",
+      "target_branch": "MAK",
+      "consumers": [
+        "pytest -m mak"
+      ],
+      "evidence": "declared mak in context/test_lane_map.json; asserts adapter_report over PHYSICAL_ROOT"
+    },
+    {
+      "path": "src/flujo/web/hub.py",
+      "category": "FLUJO_ONLY",
+      "target_branch": "FLUJO",
+      "consumers": [
+        "src/flujo/cli.py serve/app",
+        "live pid 809778"
+      ],
+      "evidence": "declared hub.module of the FLUJO profile"
+    },
+    {
+      "path": "src/flujo/cli.py",
+      "category": "FLUJO_ONLY",
+      "target_branch": "FLUJO",
+      "consumers": [
+        "project.scripts flujo = flujo.cli:app"
+      ],
+      "evidence": "entrypoint of the portable motor"
+    },
+    {
+      "path": "tests/test_flujo_port_contract.py",
+      "category": "FLUJO_ONLY",
+      "target_branch": "FLUJO",
+      "consumers": [
+        "pytest -m flujo"
+      ],
+      "evidence": "declared flujo in context/test_lane_map.json"
+    },
+    {
+      "path": "src/flujo/diagnostics.py",
+      "category": "SHARED_CONTRACT",
+      "target_branch": "both",
+      "consumers": [
+        "cultura/mak_plataforma/hub.py"
+      ],
+      "evidence": "AST of the MAK hub imports flujo.diagnostics; now declared in MAK shared_consumers"
+    },
+    {
+      "path": "src/flujo/knowledge/project_context.py",
+      "category": "SHARED_CONTRACT",
+      "target_branch": "both",
+      "consumers": [
+        "cultura/mak_plataforma/hub.py"
+      ],
+      "evidence": "same AST scan; declared"
+    },
+    {
+      "path": "src/flujo/knowledge/product_view.py",
+      "category": "SHARED_CONTRACT",
+      "target_branch": "both",
+      "consumers": [
+        "cultura/mak_plataforma/hub.py"
+      ],
+      "evidence": "same AST scan; declared"
+    },
+    {
+      "path": "src/flujo/knowledge/contracurator.py",
+      "category": "SHARED_CONTRACT",
+      "target_branch": "both",
+      "consumers": [
+        "cultura/mak_plataforma/hub.py"
+      ],
+      "evidence": "same AST scan; declared"
+    },
+    {
+      "path": "plataforma/hub.py",
+      "category": "SHARED_RUNTIME",
+      "target_branch": "none",
+      "consumers": [
+        "mak-hub.service WorkingDirectory"
+      ],
+      "evidence": "1044-byte shim, excluded in .git/info/exclude line 81; runtime projection, never release material"
+    },
+    {
+      "path": "inventario_mak.sh",
+      "category": "OPERATOR_OWNED",
+      "target_branch": "none",
+      "consumers": [],
+      "evidence": "untracked operator script; excluded from every push plan"
+    },
+    {
+      "path": "inventario_externo.sh",
+      "category": "OPERATOR_OWNED",
+      "target_branch": "none",
+      "consumers": [],
+      "evidence": "untracked operator script; excluded from every push plan"
+    },
+    {
+      "path": "context/python_census_20260901.json",
+      "category": "GENERATED",
+      "target_branch": "none",
+      "consumers": [],
+      "evidence": "generated census; excluded"
+    },
+    {
+      "path": "context/git_history_local_20260814_20260901.json",
+      "category": "GENERATED",
+      "target_branch": "none",
+      "consumers": [],
+      "evidence": "generated history export; excluded"
+    },
+    {
+      "path": "context/LAST_HANDOFF.md",
+      "category": "OPERATOR_OWNED",
+      "target_branch": "none",
+      "consumers": [],
+      "evidence": "pre-existing modification in the main checkout; not attributed by this session"
+    },
+    {
+      "path": "cultura/mak_codex/interfaz_codex.py",
+      "category": "UNRESOLVED_IRREVERSIBLE",
+      "target_branch": "MAK",
+      "consumers": [
+        "mak-codex.service ExecStart"
+      ],
+      "evidence": "modified in the main checkout before this session; runtime proves the live process at 04:13:56 runs these bytes, but no session or commit explains the diff, so attribution belongs to its author, not to me"
+    },
+    {
+      "path": "docs/MAK_CURRENT_STATE.md",
+      "category": "UNRESOLVED_IRREVERSIBLE",
+      "target_branch": "MAK",
+      "consumers": [
+        "agents reading current state"
+      ],
+      "evidence": "pre-existing modification; same reason"
+    }
+  ],
+  "tools_reused": [
+    {
+      "path": "tools/test_lane_map.py",
+      "decision": "USAR",
+      "why": "its JSON contract context/test_lane_map.json is the lane authority; both new tests were registered there instead of inventing a mapping"
+    },
+    {
+      "path": "tools/runtime_preflight.py",
+      "decision": "USAR",
+      "why": "release_gate calls it for runtime and adapter evidence"
+    },
+    {
+      "path": "tools/capabilities.py",
+      "decision": "REFERENCIA",
+      "why": "surface registry and probe style reused conceptually; not duplicated"
+    },
+    {
+      "path": "tools/mak_triangulate_roots.py",
+      "decision": "REFERENCIA",
+      "why": "documents that /home/mak is the physical checkout and flujo is the adapter"
+    },
+    {
+      "path": "tools/inspect_operational_memberships.py",
+      "decision": "IRRELEVANTE",
+      "why": "scanned in discovery; does not change any decision in this closeout"
+    },
+    {
+      "path": "tools/classification_review.py",
+      "decision": "REFERENCIA",
+      "why": "carries the same physical-root vs adapter distinction"
+    }
+  ],
+  "tools_rejected_as_obsolete": [
+    {
+      "path": "tools/mak_ops/check_mak_mirror.py",
+      "why": "builds /home/mak/flujo/cultura/... paths and asks two of three hashes over SSH to a host that no longer answers; contradicts the current runtime, so it is not an authority here"
+    }
+  ],
+  "runtime_before_after": {
+    "before": {
+      "flujo_app": "pid 809778, requested 8765, bound 8766, source /home/mak/flujo/src/flujo/web/hub.py",
+      "mak_hub": "pid 854934 :8900 200",
+      "mak_research": "pid 854932 :8890 200",
+      "mak_codex": "pid 854933 :8891 200"
+    },
+    "after": {
+      "flujo_app": "pid 897766, bound 8765 (contract port), HTTP 200, PYTHONPATH=/home/mak/.claude/worktrees/flujo-closeout/src, cwd=the FLUJO worktree",
+      "mak_hub": "pid 854934 :8900 200 (untouched)",
+      "mak_research": "pid 854932 :8890 200 (untouched)",
+      "mak_codex": "pid 854933 :8891 200 (untouched)"
+    },
+    "flujo_left_running": true,
+    "mak_services_restarted": false,
+    "rollback_used": false,
+    "note": "the redeployed process serves the worktree repo context, not /home/mak's; flags are identical and switching the context back is a one-flag change once the branch is pushed"
+  },
+  "adapter_before_after": {
+    "cause": "editable install run from the adapter: direct_url.json url=file:///home/mak/flujo",
+    "resolved_as": "the module-level cultura imports that actually tied the motor to this box are now optional peers (MAK_BOX_AVAILABLE / MAK_RESEARCH_AVAILABLE)",
+    "live_pth_untouched": true,
+    "remaining": "the venv .pth still reads /home/mak/flujo/src, so the gate keeps reporting one adapter_dependency; it is a property of the installation, not of either branch"
+  },
+  "port_before_after": {
+    "contract": 8765,
+    "before": "declared 8765, bound 8766",
+    "after": "declared 8765, bound 8765",
+    "8766_now_free": true
+  },
+  "tests_executed": [
+    {
+      "command": "pytest tests/test_flujo_port_contract.py (FLUJO worktree, -m flujo)",
+      "exit": 0,
+      "passed": 6
+    },
+    {
+      "command": "pytest tests/test_runtime_preflight.py (MAK worktree, -m mak)",
+      "exit": 0,
+      "passed": 14
+    },
+    {
+      "command": "compileall src/flujo tools (both worktrees)",
+      "exit": 0
+    },
+    {
+      "command": "import probe of the MAK contract surface from the MAK branch alone",
+      "exit": 0
+    },
+    {
+      "command": "python -m flujo --help with PYTHONPATH=<FLUJO worktree>/src",
+      "exit": 0
+    },
+    {
+      "command": "tools/release_gate.py --check",
+      "exit": 5,
+      "meaning": "IMPLEMENTATION_COMPLETE_TESTS_DEFERRED"
+    },
+    {
+      "command": "HTTP 8765 8900 8890 8891",
+      "result": "200 on all four"
+    }
+  ],
+  "tests_deferred": [
+    {
+      "command": "python3 -m pytest tests/ -m mak -q",
+      "where": ".claude/worktrees/mak-closeout",
+      "why": "precondition suite for pushing MAK; ~199 files, not run here"
+    },
+    {
+      "command": "python3 -m pytest tests/ -m flujo -q",
+      "where": ".claude/worktrees/flujo-closeout",
+      "why": "precondition suite for pushing FLUJO; ~183 files, not run here"
+    },
+    {
+      "scope": "CI matrix ubuntu+windows",
+      "why": "only a PR produces it; nothing was pushed"
+    }
+  ],
+  "unresolved_irreversible": [
+    {
+      "paths": "17 test files needing both trees",
+      "why": "cannot run in either branch after separation; kept in main and historia"
+    },
+    {
+      "path": "tools/capture_opportunity_validity.py",
+      "why": "imports both flujo.knowledge and cultura.mak_research; needs both trees"
+    },
+    {
+      "paths": "context/LAST_HANDOFF.md, cultura/mak_codex/interfaz_codex.py, docs/MAK_CURRENT_STATE.md",
+      "why": "pre-existing uncommitted work in the main checkout, not this session's to attribute"
+    }
+  ],
+  "rollback_commands": [
+    "git -C /home/mak update-ref refs/heads/MAK a62f9019585f9c80a749dae7383f3a519f2efdf5",
+    "git -C /home/mak update-ref refs/heads/FLUJO ad9ee8811325ee8661023312cd1d4a419407f547",
+    "git -C /home/mak worktree remove .claude/worktrees/mak-closeout",
+    "git -C /home/mak worktree remove .claude/worktrees/flujo-closeout",
+    "kill 897766 && nohup .venv/bin/python -m flujo app --no-abrir --host 127.0.0.1 --port 8765 &"
+  ],
+  "exact_push_commands_not_executed": [
+    "cd /home/mak/.claude/worktrees/mak-closeout && PYTHONPATH=src /home/mak/.venv/bin/python -m pytest -o addopts='' -q -m mak",
+    "git -C /home/mak push vibecodeine-legacy MAK:MAK",
+    "cd /home/mak/.claude/worktrees/flujo-closeout && PYTHONPATH=src /home/mak/.venv/bin/python -m pytest -o addopts='' -q -m flujo",
+    "git -C /home/mak push vibecodeine-legacy FLUJO:FLUJO"
+  ],
+  "push_preconditions": {
+    "MAK": {
+      "ahead": 4,
+      "behind": 0,
+      "fast_forwardable": true
+    },
+    "FLUJO": {
+      "ahead": 2,
+      "behind": 0,
+      "fast_forwardable": true
+    },
+    "main": "not a deployment target",
+    "historia": "not a deployment target"
+  },
+  "writes_outside_scope": [],
+  "current_phase": "collection_repaired",
+  "current_action": "done",
+  "next_action": "measure hub reachability from the shared knowledge surface",
+  "last_update": "2026-09-02T12:32:29.456276+00:00",
+  "separation_metrics": {
+    "common_paths_before": 3617,
+    "common_paths_after": 2840,
+    "unjustified_common_paths_after": 0,
+    "MAK_only_before": 6,
+    "MAK_only_after": 376,
+    "FLUJO_only_before": 3,
+    "FLUJO_only_after": 392,
+    "MAK_test_files_before": 388,
+    "MAK_test_files_after": 196,
+    "FLUJO_test_files_before": 388,
+    "FLUJO_test_files_after": 186,
+    "shared_test_files_before": 387,
+    "shared_test_files_after": 10,
+    "foreign_tests_in_MAK": 0,
+    "foreign_tests_in_FLUJO": 0,
+    "foreign_hub_implementations_in_MAK": 0,
+    "foreign_hub_implementations_in_FLUJO": 0,
+    "undeclared_cross_imports": 0,
+    "unresolved_ownership_count": 18,
+    "commits_MAK": 12,
+    "commits_FLUJO": 10,
+    "MAK_src_files_after": 32,
+    "MAK_src_files_before": 226,
+    "cultura_files_in_FLUJO_after": 10,
+    "cultura_files_in_FLUJO_before": 190,
+    "MAK_collection_rc": 0,
+    "FLUJO_collection_rc": 0,
+    "MAK_tests_collected": 2162,
+    "FLUJO_tests_collected": 1713
+  },
+  "common_path_justification": {
+    "declared_shared_contract": 27,
+    "shared_test_both_lanes": 10,
+    "neutral_tool_imports_no_hub": 236,
+    "non_executable_shared_material": 735,
+    "artistic_dataset_material": 1029,
+    "historical_evidence_non_executable": 805,
+    "method": "every common .py was AST-parsed against the other branch's tracked tree; a file importing a module the branch no longer carries was removed, which is how the count reached zero unjustified"
+  },
+  "verdicts": {
+    "verdict_MAK": "IMPLEMENTATION_COMPLETE_TESTS_DEFERRED",
+    "verdict_FLUJO": "IMPLEMENTATION_COMPLETE_TESTS_DEFERRED",
+    "verdict_overall": "IMPLEMENTATION_COMPLETE_TESTS_DEFERRED",
+    "gate_check_exit": 5,
+    "blockers": 0,
+    "unknowns": 0
+  },
+  "collection_repair": {
+    "reported_before": {
+      "MAK": "2162 collected, 3 errors, RC=2",
+      "FLUJO": "1618 collected, 1 error, RC=2"
+    },
+    "measured_after": {
+      "MAK": "2162 collected, 0 errors, RC=0",
+      "FLUJO": "1713 collected, 0 errors, RC=0"
+    },
+    "commands": {
+      "MAK": "PYTHONPATH=src /home/mak/.venv/bin/python -m pytest -o addopts='' --collect-only -q -m mak",
+      "FLUJO": "PYTHONPATH=src /home/mak/.venv/bin/python -m pytest -o addopts='' --collect-only -q -m flujo"
+    },
+    "cases": [
+      {
+        "error": "tests/test_campo_filtro.py ModuleNotFoundError: gen_campo_iskvw",
+        "decision": "misclassified_test_moved_to_FLUJO",
+        "evidence": "tools/gen_campo_iskvw.py imports flujo.plano.trazador; the tool and flujo/plano/ are carried by FLUJO, absent from MAK",
+        "action": "git rm from MAK, lane entry removed; git restore --source=main into FLUJO, lane=flujo"
+      },
+      {
+        "error": "tests/test_venue.py ModuleNotFoundError: venue",
+        "decision": "misclassified_test_moved_to_FLUJO",
+        "evidence": "tools/venue.py imports flujo.venues.resolume_screen_setup; both carried by FLUJO only",
+        "action": "same"
+      },
+      {
+        "error": "tests/test_vj_git_performance.py missing tools/vj_set/git_performance.py",
+        "decision": "misclassified_test_moved_to_FLUJO",
+        "evidence": "tools/vj_set/git_performance.py imports flujo.resolume.automator at MODULE scope; restoring it into MAK would have dragged the VJ/Resolume motor back into the box branch",
+        "action": "same"
+      },
+      {
+        "error": "FLUJO tests/test_autonomia_cli.py: RunOptions evaluated tandas.COMMON_LEDGER with tandas=None",
+        "decision": "implementation_fixed_not_test",
+        "evidence": "dataclass field defaults and the autonomy_status signature are evaluated at import time, so the optional-peer guard was defeated by its own defaults",
+        "action": "COMMON_LEDGER_PATH / BATCH_LEDGER_PATH / KNOWN_AREAS module constants resolved once; autonomy_status raises MakBoxUnavailable by name"
+      }
+    ],
+    "lane_map_corrections": {
+      "MAK": "199 -> 196 assignments",
+      "FLUJO": "183 -> 186 assignments"
+    },
+    "tests_not_edited_to_pass": true,
+    "directories_restored_wholesale": 0,
+    "foreign_hubs_still_absent": true
+  },
+  "closure_items": [
+    {
+      "id": "C01",
+      "title": "preserve main dirty state and switch the primary checkout to MAK",
+      "status": "done"
+    },
+    {
+      "id": "C02",
+      "title": "make /home/mak/flujo the real FLUJO checkout",
+      "status": "done"
+    },
+    {
+      "id": "C03",
+      "title": "move every runtime out of .claude/worktrees",
+      "status": "done"
+    },
+    {
+      "id": "C04",
+      "title": "pyproject and requirements verified by real installs",
+      "status": "done"
+    },
+    {
+      "id": "C05",
+      "title": "validate the new layout: collections, focal tests, four ports",
+      "status": "done"
+    },
+    {
+      "id": "C06",
+      "title": "resolve the 18 orphans into MAK, FLUJO or integration",
+      "status": "done"
+    },
+    {
+      "id": "C07",
+      "title": "extend the gate into an automatic ratchet",
+      "status": "done"
+    },
+    {
+      "id": "C08",
+      "title": "CI per lane",
+      "status": "done"
+    },
+    {
+      "id": "C09",
+      "title": "fix the contradictory lines of the operative docs",
+      "status": "in_progress"
+    },
+    {
+      "id": "C10",
+      "title": "remove concrete leftovers: worktrees, root copies, operator scripts",
+      "status": "todo"
+    },
+    {
+      "id": "C11",
+      "title": "closure condition: evidence for all eleven",
+      "status": "todo"
+    }
+  ],
+  "closure_decision": {
+    "/home/mak": "physical MAK checkout",
+    "/home/mak/flujo": "physical FLUJO checkout",
+    "main_historia": "historical, not runtime",
+    ".claude/worktrees": "never runtime",
+    "consumption": "MAK consumes FLUJO from /home/mak/flujo/src without copying src/flujo"
+  }
+}
