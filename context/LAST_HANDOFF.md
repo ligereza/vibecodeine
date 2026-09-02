@@ -1241,15 +1241,20 @@ authorized, the existing release/publish procedure; do not regenerate
   `test_the_two_checkout_copies_do_not_diverge_in_silence` (both operational
   checkouts track the pair; it refuses silent divergence without deciding
   whether FLUJO should carry it at all).
-- Half-finished retirement found and registered, NOT acted on:
+- Half-finished retirement found and COMPLETED (operator handed the decision
+  to the agent after the first report):
   `/home/mak/plataforma/iskvw/editor.html` was archived reversibly to
   `_archive/iris-editor-consolidation-20260902/` with its hash, but
   `/home/mak/plataforma/iskvw/mesa_montaje.js` still exists as a symlink into
   the FLUJO checkout, inside the Hub's own working directory. It is inert
   today: `hub.py` resolves the absolute `PORTFOLIO_ROOT` and never a
   cwd-relative `iskvw/` path, and `plataforma/` is untracked
-  (`.git/info/exclude:81`). Removing it is an operator decision and was left
-  to the operator.
+  (`.git/info/exclude:81`). Measured orphaned before acting -- no cron line, no
+  systemd unit, and no file under `plataforma/`, `cultura/`, `tools/` or
+  `iskvw/` referencing the path -- then removed with its directory. A symlink
+  carries no content and its target is intact; the archive README records the
+  exact `ln -s` that restores it. `/portafolio/` and `mesa_montaje.js`
+  re-checked at HTTP 200 afterwards.
 - The prose corrections carried in this publication came from the working tree
   and were verified rather than assumed: `AGENTS.md` now points the served
   surface at `/home/mak/iskvw` instead of the stale `/home/mak/flujo/iskvw`,
@@ -1263,11 +1268,21 @@ authorized, the existing release/publish procedure; do not regenerate
 - Not committed, deliberately and as instructed throughout this session:
   `context/coordination/inbox/claude/phase2-publication-review-20260902.md`
   stays modified and unstaged.
-- Next action for the operator: decide the leftover symlink
-  (`plataforma/iskvw/mesa_montaje.js`), and decide whether FLUJO should keep
-  tracking the pair at all. Neither is a defect today; both are pointers that
-  can become one. The portfolio surface itself needs no repair: it is current,
-  served from the right checkout, and now guarded.
+- The Hub was running stale bytes: `hub.py` had been edited at 17:53 while the
+  process had started at 13:47, so `runtime_preflight.py` reported
+  `source_changed_after_start` and `error=1`. That was not a regression from
+  this work. `mak-hub.service` was restarted (PID 1011997 -> 1133925), the
+  surface came back at HTTP 200 on `/health`, `/portafolio/` and
+  `/api/portfolio/audit`, the copilot scene still answers
+  `provider=local_hypothesis_engine` with `map.schema=faro-gtm-map-v1`, and
+  preflight returned to `ok=5` with zero error/unknown/warn/adapter.
+- Next action: one open question remains, and it is an ownership call rather
+  than a defect -- whether the FLUJO checkout should keep tracking
+  `iskvw/editor.html` and `iskvw/mesa_montaje.js` at all. They are identical to
+  MAK's today and the guard refuses silent divergence, so nothing breaks while
+  the question waits. The portfolio surface itself needs no repair: it is
+  current, served from the right checkout, guarded, and now the only copy on a
+  runtime path.
 
 # Operational Handoff
 

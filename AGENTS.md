@@ -153,14 +153,13 @@ blindly: preserve its work, compare hashes, then reconcile deliberately.
   not a second runtime; it may change only through an explicit branch/transport
   decision. The former `/home/mak/plataforma/iskvw/editor.html` copy was
   retired reversibly to `_archive/iris-editor-consolidation-20260902/` and is
-  not served by the measured route. That retirement is HALF done: measured
-  2026-09-02, `/home/mak/plataforma/iskvw/mesa_montaje.js` still exists as a
-  symlink into the FLUJO checkout (`/home/mak/flujo/iskvw/mesa_montaje.js`),
-  inside the Hub's own working directory. It is inert today because `hub.py`
-  resolves the absolute `PORTFOLIO_ROOT` and never a cwd-relative `iskvw/`
-  path, and `plataforma/` is untracked (`.git/info/exclude:81`). It is a live
-  pointer at the sibling tree all the same, and removing it is an operator
-  decision, not an agent's.
+  not served by the measured route. That retirement was completed on
+  2026-09-02: `/home/mak/plataforma/iskvw/mesa_montaje.js` was a symlink into
+  the FLUJO checkout sitting inside the Hub's own working directory, orphaned
+  (no cron line, no unit, no file referencing the path) and unreachable because
+  `hub.py` resolves the absolute `PORTFOLIO_ROOT` and never a cwd-relative
+  `iskvw/` path. It was removed with its directory and `/portafolio/` re-checked
+  at HTTP 200; the archive README carries the exact restore command.
   The surface is a PAIR: `iskvw/editor.html` is the shell and
   `iskvw/mesa_montaje.js` draws the interface. Searching the HTML alone for
   what the screen shows returns zero and reads like a stale deployment; the
