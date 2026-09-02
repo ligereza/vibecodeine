@@ -50,6 +50,31 @@ to 871 is a deliberate data operation (regenerate campo, then capas, then
 animadas, then re-pin the piel meter FROM THE FIXTURE'S OWN measurement) and it
 is a separate task, not part of closing a session.
 
+### CI, the real verdict: the per-lane workflows had NEVER run
+
+They were written earlier this session and only reached the remote on
+2026-09-02 ~16:58. Their first execution failed on both branches, at the
+`Structural gate` step, with 12 blockers on MAK and the equivalent on FLUJO --
+`mak_checkout_not_on_mak`, `flujo_checkout_not_on_flujo`, `lane_map_missing`,
+`runtime_preflight_missing`, `worktree_status_failed: cannot change to
+'/home/mak'`, plus `own_hub_absent` and `hub_archive_failed` because the local
+refs `MAK:` and `FLUJO:` do not resolve in a CI checkout.
+
+Cause, and it is this agent's: `tools/release_gate.py` is a BOX-LOCAL
+instrument. It resolves `/home/mak` and `/home/mak/flujo` as physical checkouts
+on their branches, and **it exits 5 even with zero blockers**, because
+READY_TO_PUSH requires evidence that the lane suites ran green. So it can never
+pass as a step that runs BEFORE the suite. In CI the suite is the verdict; the
+gate there was both redundant and structurally impossible.
+
+Fixed by removing the step from `ci-mak.yml` and `ci-flujo.yml`, with the
+reason written in the workflow so nobody re-adds it. `ci-integration.yml` never
+had it. The gate stays as the local pre-push instrument it was designed to be.
+
+The lesson, and it is the same one as everything else in this session: **a
+tool was wired into a place whose assumptions were never measured.** Writing a
+workflow is not validating it. These two had never executed once.
+
 ### Observations for whoever comes next
 
 Things measured in passing, not chased, one line each. None was requested.
