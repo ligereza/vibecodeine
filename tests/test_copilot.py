@@ -2,6 +2,9 @@ from cultura.mak_plataforma.copilot import (active_ordering_seed,
                                              build_gtm_map, build_suggestions,
                                              evaluate_feedback, group_suggestions,
                                              evidence_readiness,
+                                             OVERLAP_FACETS,
+                                             _explicit_overlap,
+                                             _folded_facet_index,
                                              external_evidence_profile,
                                              inference_prompt,
                                              learning_profile,
@@ -651,3 +654,31 @@ def test_readiness_survives_a_record_it_cannot_read():
     assert report["item_id"] == ""
     assert all(row["status"] in ("present", "absent", "unknown")
                for row in report["channels"])
+
+
+def test_hoisting_the_source_facets_changes_speed_and_not_results():
+    """`_explicit_overlap` recomputed the SOURCE side once per candidate.
+
+    Profiled 2026-09-02: one scene called `_facet_values` 83772 times against
+    41886 `_explicit_overlap` calls, so half of them re-derived and re-folded
+    values that cannot differ across the loop. Hoisting halved the calls. What
+    this test guards is the part that matters: the answer is identical.
+    """
+    source = {"id": "s", "artista": ["DrefQuila", "Harry Nach"],
+              "venue": "Teatro Caupolicán", "evento": ["Festival Sentir"]}
+    candidates = [
+        {"id": "a", "artista": ["Harry Nach"]},
+        {"id": "b", "venue": "Teatro Caupolicán", "evento": ["otro"]},
+        {"id": "c", "artista": [], "venue": ""},
+        {"id": "d", "evento": ["Festival Sentir"], "artista": ["DrefQuila"]},
+    ]
+    index = _folded_facet_index(source)
+    for candidate in candidates:
+        for facet in OVERLAP_FACETS:
+            assert _explicit_overlap(source, candidate, facet) == \
+                _explicit_overlap(source, candidate, facet,
+                                  source_folded=index.get(facet)), (candidate, facet)
+    # The hoist is optional, so every caller that never heard of it still works.
+    assert _explicit_overlap(source, candidates[0], "artist") == ["Harry Nach"]
+    assert _explicit_overlap(source, candidates[2], "artist") == []
+    assert set(index) == set(OVERLAP_FACETS)

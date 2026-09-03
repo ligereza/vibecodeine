@@ -1763,6 +1763,31 @@ authorized, the existing release/publish procedure; do not regenerate
   actual defect, and passing one computed surface down instead of recomputing
   it would remove the reads without caching anything.
 
+### Loop-invariant hoisted out of the suggestion builder -- 2026-09-02
+
+- With the inbox cached, the profile changed shape: `build_suggestions` became
+  65% of a scene, and inside it `_facet_values` ran 83772 times against 41886
+  `_explicit_overlap` calls. Exactly half of those re-derived and re-folded the
+  SOURCE side of a comparison that cannot differ across the candidate loop.
+- `_explicit_overlap(source, candidate, facet)` gained an optional
+  `source_folded` argument and `build_suggestions` computes
+  `_folded_facet_index(source)` once before the loop. The argument is optional
+  on purpose: every existing caller keeps working untouched, and passing it
+  only skips work that was already redundant.
+- Equivalence was proven before speed was claimed: over 2394 real comparisons
+  drawn from the archive, hoisted and unhoisted results differed ZERO times,
+  and a scene rendered twice is byte-identical. A test pins the equivalence on
+  fixed input rather than on the tree being fast.
+- Measured: `_facet_values` 83772 -> 41892 calls, `build_suggestions` 0.529 s
+  -> 0.407 s, the profiled scene 0.817 s -> 0.697 s, and 405 thousand fewer
+  function calls per scene. Over HTTP a warm scene is ~0.27 s.
+- This is what the previous section said the honest shape would be -- less
+  work, not a cache -- and unlike the rejected ledger cache it carries no
+  staleness risk at all, because it removes a recomputation rather than
+  remembering an answer.
+- `tests/test_copilot.py` `43 passed`; `mak` `2188 passed, 5 skipped`;
+  `repo_hygiene` `100 passed`; preflight `ok=5`.
+
 # Operational Handoff
 
 ## Agent bootstrap -- CURRENT -- 2026-09-02 (later) -- the suites, and the boundary the operator corrected
