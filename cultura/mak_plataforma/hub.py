@@ -4780,8 +4780,11 @@ def _relevo_page():
     source = RELEVO
     source_label = "RELEVO_MAK.md"
     if not os.path.isfile(source):
-        source = os.path.join(_REPO_ROOT, "context", "LAST_HANDOFF.md")
-        source_label = "context/LAST_HANDOFF.md"
+        # Renamed 2026-09-03: it is a record, not the state, and the label has
+        # to say so on the page. The active document is DECISIONES.md and the
+        # facts come from tools/mak_status.py.
+        source = os.path.join(_REPO_ROOT, "context", "HANDOFF_HISTORICO.md")
+        source_label = "context/HANDOFF_HISTORICO.md (registro, no estado)"
     try:
         with open(source, encoding="utf-8") as f:
             cuerpo = _md_html(f.read())
@@ -4816,7 +4819,7 @@ un mapa de runtime: el trabajo actual comienza en la cara del Hub y en sus
 </div>
 <p style="color:#9db67c">El documento original queda conservado abajo como
 evidencia histórica. No debe usarse como contrato operativo si contradice
-<code>agents.md</code> o <code>LAST_HANDOFF.md</code>.</p>
+<code>AGENTS.md</code> o <code>context/HANDOFF_HISTORICO.md</code>.</p>
 <details><summary>ver GENESIS.md histórico</summary>
 <article style="margin-top:16px">%s</article>
 </details>

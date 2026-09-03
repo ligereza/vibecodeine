@@ -607,7 +607,6 @@ tabla; archivo sin entrada = ratchet rojo.
 | `build_duplicate_decision_report.py` | REVISAR | informe manual de duplicados; se conserva como herramienta de operador, sin caller automatico medido | 2026-08-31 |
 | `consolidate_static_duplicates.py` | REVISAR | consolidacion manual de artefactos estaticos; sin caller automatico medido | 2026-08-31 |
 | `enviar_a_mak.py` | REVISAR | puente manual de entrega; conservado durante la fusion, sin caller automatico medido | 2026-08-31 |
-| `handoff.py` | REVISAR | generador manual de continuidad; sin caller automatico medido | 2026-08-31 |
 | `instalar_enviar_a_mak.py` | REVISAR | instalacion/envio manual; conservado durante la fusion, sin caller automatico medido | 2026-08-31 |
 | `mak_materialize_fused_root.py` | VIVO | materializa una sola raiz fisica en `/home/mak` sin sobrescribir ni borrar; consumidor: operador, a mano | 2026-08-31 |
 | `mak_fuse_roots.py` | VIVO | construye la proyeccion lossless de las tres raices y registra igualdad/divergencia sin elegir fuente; consumidor: `mak_materialize_fused_root.py` y operador | 2026-08-31 |
@@ -615,7 +614,6 @@ tabla; archivo sin entrada = ratchet rojo.
 | `watsonx_smoke.py` | REVISAR | smoke manual preservado como evidencia; sin caller automatico medido | 2026-08-31 |
 | `watsonx_vision_bench.py` | REVISAR | benchmark manual preservado como evidencia; sin caller automatico medido | 2026-08-31 |
 | `watsonx_vision_smoke.py` | REVISAR | smoke manual preservado como evidencia; sin caller automatico medido | 2026-08-31 |
-| `agent_bootstrap.py` | VIVO | emits the bounded current-state packet required by `agents.md`; consumed by delegated MAK work and `tests/test_agent_bootstrap.py` | 2026-08-25 |
 | `compile_contracurator.py` | VIVO | compila la exposicion falsable del Contracurador sobre la vista de archivo ya proyectada; consumidor `tests/test_contracurator.py` y el Hub en `/api/portfolio/archive-view` | 2026-08-28 |
 | `medir_organismo.py` | VIVO | mide el organismo MAK y lo imprime: lineas de cron activas/pausadas, cuales de los cinco organos de `/home/mak/GENESIS.md` responden, si `main` tiene proteccion de rama (hay un cron que mergea), cuantas lineas arrancarian al reanudar, y los entornos Python. Solo lectura: no toca crontab, servicios ni archivos. Existe para que `docs/MAK_ORGANISMO.md` no vuelva a cargar esas cifras en prosa -- la regla 3 de `docs/AUTORIDAD.md` dice que lo medido se mide, no se escribe. Consumidor: una persona, a mano | 2026-08-28 |
 | `capabilities.py` | VIVO | contrasta nueve superficies declaradas de MAK/FLUJO con sus fuentes, unidades systemd, listeners/endpoints locales, modelos Ollama y rutas consumidoras; emite `mak-capabilities-runtime-v1` en texto/JSON/Markdown y falla con `--check` si falta una fila, fuente, modelo, consumidor o servicio requerido. `--check-branch` contrasta además `branch_profile.json` con el checkout y el selector pytest (excepto perfiles históricos). No reescribe `CAPACIDADES.md`; consumidor: operador y CI acotado | 2026-09-02 |
@@ -866,7 +864,6 @@ count was the one line that commit missed.
 
 | archivo | existe | refs produccion | refs test | disparador |
 |---|:-:|---:|---:|---|
-| `tools/agent_bootstrap.py` | si | 0 | 1 | -- |
 | `tools/archive_observer.py` | si | 0 | 1 | -- |
 | `tools/arica01_portfolio.py` | si | 0 | 0 | -- |
 | `tools/build_evidence_return.py` | si | 1 | 2 | -- |

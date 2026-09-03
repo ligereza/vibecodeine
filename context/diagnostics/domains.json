@@ -6,9 +6,9 @@
       "branch_prefix": "maintenance",
       "keywords": ["repo", "git", "hub", "puerto", "dependencia", "runtime", "diagnostico", "error", "roto", "instalacion", "cli", "architecture", "branch", "deployment"],
       "contract": "context/diagnostics/contracts/core.md",
-      "read_paths": ["AGENTS.md", "pyproject.toml", "context/LAST_HANDOFF.md", "cultura/mak_plataforma/hub.py", "context/test_lane_map.json"],
+      "read_paths": ["AGENTS.md", "DECISIONES.md", "pyproject.toml", "cultura/mak_plataforma/hub.py", "context/test_lane_map.json"],
       "checks": [".venv/bin/python -m flujo health", ".venv/bin/python -m flujo diagnose --area core"],
-      "do_not_read": ["WIN raw archive", "large databases", "virtual environments"]
+      "do_not_read": ["mounted SSD raw archive", "large databases", "virtual environments"]
     },
     "rd": {
       "branch_prefix": "rd",
@@ -16,7 +16,7 @@
       "contract": "context/diagnostics/contracts/rd.md",
       "read_paths": ["svg/suplementos_rd", "docs/rd", "web/src/components/PlanoTool.tsx", "web/src/components/RdDbPanel.tsx", "data/rd_packs.json"],
       "checks": [".venv/bin/python -m pytest -q tests/test_gen_propuestas_rd.py", ".venv/bin/python -m flujo rd-db --help"],
-      "do_not_read": ["WIN raw archive", "RD media", "live provider credentials"]
+      "do_not_read": ["mounted SSD raw archive", "RD media", "live provider credentials"]
     },
     "portfolio": {
       "branch_prefix": "portfolio",
@@ -24,7 +24,7 @@
       "contract": "context/diagnostics/contracts/portfolio.md",
       "read_paths": ["iskvw/editor.html", "iskvw/mesa_montaje.js", "iskvw", "web", "data/portfolio_formats", ".github/workflows/publicar_iskvw.yml", "tools/portfolio", "web/package.json"],
       "checks": ["npm run typecheck --prefix web", "npm run build --prefix web"],
-      "do_not_read": ["WIN raw archive", "RD databases", "private media originals"]
+      "do_not_read": ["mounted SSD raw archive", "RD databases", "private media originals"]
     },
     "cultura": {
       "branch_prefix": "cultura",
@@ -32,7 +32,7 @@
       "contract": "context/diagnostics/contracts/cultura.md",
       "read_paths": ["cultura", "web/src/components/CulturaPanel.tsx", "docs/cultura", "context/diagnostics"],
       "checks": [".venv/bin/python -m pytest -q tests/test_archivo_ensayos.py", ".venv/bin/python -m compileall -q cultura"],
-      "do_not_read": ["WIN raw archive", "RD runtime data", "unrelated departments"]
+      "do_not_read": ["mounted SSD raw archive", "RD runtime data", "unrelated departments"]
     },
     "research": {
       "branch_prefix": "research",
@@ -40,7 +40,7 @@
       "contract": "context/diagnostics/contracts/research.md",
       "read_paths": ["cultura/mak_research", "tools", "context/diagnostics", "web/src/components/CulturaPanel.tsx"],
       "checks": [".venv/bin/python -m pytest -q tests/test_mak_research_router.py", ".venv/bin/python -m flujo diagnose --area research"],
-      "do_not_read": ["WIN raw archive", "private source exports", "provider secrets"]
+      "do_not_read": ["mounted SSD raw archive", "private source exports", "provider secrets"]
     }
   }
 }
