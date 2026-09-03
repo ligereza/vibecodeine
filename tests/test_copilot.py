@@ -16,6 +16,9 @@ from cultura.mak_plataforma.copilot import (active_ordering_seed,
                                              ordering_distance_profile,
                                              replay_ordering_evaluation,
                                              READINESS_SCHEMA,
+                                             SLOT_CANDIDATES_SCHEMA,
+                                             slot_candidates,
+                                             _caption_gaps,
                                              _vector_distance)
 
 import json
@@ -614,14 +617,42 @@ def test_readiness_separates_not_measured_from_measured_absent():
     assert _status(seen, "perception") == "present"
 
 
-def test_readiness_abstains_when_the_minimum_is_missing():
-    """No asset or no description means the label has nothing to rest on."""
-    blind = evidence_readiness(_record(asset_available=False,
-                                               description=""))
-    assert blind["decision"] == "abstain"
-    assert blind["blocking"] == ["asset", "description"]
-    assert "review" in blind["next_action"]
+def test_a_piece_never_blocks_a_decision_by_itself():
+    """The report describes the piece; the FORMAT is what decides.
+
+    Operator's correction, 2026-09-02, in his words: the system creates
+    portfolio formats first and then decides how to order the works; it does
+    not look for the perfect order of one work. `READINESS_REQUIRED` was
+    `("asset", "description")`, which made 3556 of 7044 records report
+    `abstain` -- half the archive declared undecidable for lacking a caption
+    the work may never have had, against 21 that lack an asset.
+
+    What the channels say is kept, because seeing what a record holds before
+    looking at it is worth having. What is gone is the verdict.
+    """
+    blind = evidence_readiness(_record(asset_available=False, description=""))
+    assert blind["decision"] != "abstain"
+    assert blind["blocking"] == []
+    # The absence is still reported, exactly as measured.
+    assert _status(blind, "asset") == "absent"
+    assert _status(blind, "description") == "absent"
+    assert {"asset", "description"} <= set(blind["missing"])
+    assert blind["promotion"] == "none" and blind["owner"] == "human"
+    # `review` stays available as a label; it is no longer prescribed.
     assert "review" in blind["labels"]
+
+
+def test_a_record_with_no_subject_still_fails_closed():
+    """Removing the caption gate must not remove fail-closed on an unusable row.
+
+    A record without `source_id` has no subject to report on, which is a
+    different claim from "this piece lacks a caption".
+    """
+    for unusable in (None, {}, {"source_id": ""}, {"source_id": "   "}):
+        report = evidence_readiness(unusable)
+        assert report["decision"] == "abstain", unusable
+        assert report["item_id"] == ""
+        assert "ilegible" in report["next_action"]
 
 
 def test_readiness_never_promotes_and_keeps_the_human_as_owner():
@@ -746,3 +777,155 @@ def test_the_hoisted_facet_index_cannot_be_paired_with_the_wrong_facet():
     # A bare list for the RIGHT facet stays supported, so no caller breaks.
     assert _explicit_overlap(source, candidate, "artist",
                              source_folded=index["artist"]) == ["Tal Artista"]
+
+
+# ---------------------------------------------------------------------------
+# Format-first: what a blocked slot asks the archive for
+# ---------------------------------------------------------------------------
+#
+# `slot_candidates` takes the eligibility rule as an argument because the rule
+# belongs to the motor and must keep living in one place. These tests exercise
+# the AGGREGATION with a stand-in that implements the documented contract --
+# accept the claim, or report the first condition that stopped it. Agreement
+# with the real rule over the real format files is a separate test in the
+# `integration` lane, which is where a FLUJO import is declared.
+
+_STATES = ("observed", "candidate", "supported_candidate")
+
+
+def _fake_eligible(slot, claims):
+    """The motor's contract: stop at the first failure, count that one reason."""
+    rejected = {"wrong_verb": 0, "wrong_layer": 0, "state_too_low": 0,
+                "permission_too_low": 0, "caption_incomplete": 0,
+                "field_value_not_allowed": 0}
+    rows = []
+    for claim in claims:
+        if claim.get("verb") != slot["claim"]:
+            rejected["wrong_verb"] += 1
+            continue
+        if claim.get("layer") != slot["layer"]:
+            rejected["wrong_layer"] += 1
+            continue
+        if _STATES.index(claim["state"]) < _STATES.index(slot["min_state"]):
+            rejected["state_too_low"] += 1
+            continue
+        if _caption_gaps(slot.get("caption_grammar"), claim.get("caption_fields")):
+            rejected["caption_incomplete"] += 1
+            continue
+        rows.append(dict(claim))
+    return rows, rejected
+
+
+def _slot(**overrides):
+    row = {"slot_id": "consistencia", "claim": "puedo", "layer": "process",
+           "min_state": "candidate", "min_permission": "aggregate_only",
+           "required": True, "count": {"min": 1, "max": 4},
+           "caption_grammar": "{tool} durante {year}"}
+    row.update(overrides)
+    return row
+
+
+def _claim(subject, **overrides):
+    row = {"claim_id": "claim:" + subject, "verb": "puedo", "layer": "process",
+           "subject": subject, "scope": "archive", "state": "candidate",
+           "permission": "unnamed",
+           "caption_fields": {"tool": subject, "year": 2025}}
+    row.update(overrides)
+    return row
+
+
+def test_a_blocked_slot_names_the_claims_that_are_one_condition_short():
+    """"No factible" was a dead end; the format asks and the archive answers.
+
+    Measured against the live chain, `F2-capacidad-barberia` blocks on
+    `consistencia`, which needs 1 claim, while 214 claims are the same verb and
+    layer -- 175 stopped only because their state is `observed` where the slot
+    asks for `candidate`. That is one confirmation away, and nothing said so.
+    """
+    claims = [
+        _claim("Blender", state="observed"),
+        _claim("Krita", state="observed"),
+        _claim("Illustrator", caption_fields={"tool": "Illustrator"}),
+        # Not about this slot at all, and must not appear.
+        _claim("un contexto", verb="ocurrio", layer="context"),
+        _claim("un rol", verb="hice_esta_parte", layer="role"),
+    ]
+    report = slot_candidates(_slot(), claims, _fake_eligible)
+
+    assert report["schema"] == SLOT_CANDIDATES_SCHEMA
+    assert report["kind"] == "one_condition_short"
+    assert report["slot_id"] == "consistencia"
+    assert report["needs"] == 1
+    assert report["eligible_now"] == 0
+    # Three of the right kind; the two off-slot claims are not counted.
+    assert report["on_slot_total"] == 3
+    assert report["by_condition"] == {"caption_incomplete": 1, "state_too_low": 2}
+    subjects = [row["subject"] for row in report["candidates"]]
+    assert "un contexto" not in subjects and "un rol" not in subjects
+    # A state an operator can raise comes before a caption someone must write.
+    assert subjects == ["Blender", "Krita", "Illustrator"]
+    assert report["candidates"][0]["condition"] == "state_too_low"
+    assert "confirmar" in report["candidates"][0]["what_to_do"]
+    # The caption case names the field, so the next step is an action.
+    assert report["candidates"][-1]["missing_caption_fields"] == ["year"]
+    assert "175" not in report["next_action"], "no invented numbers"
+    assert "state_too_low" in report["next_action"]
+    assert report["promotion"] == "none" and report["owner"] == "human"
+
+
+def test_a_slot_with_no_claim_of_its_kind_does_not_read_as_missing_evidence():
+    """`F7-lectura-curatorial` needs `significa` claims in the `curatorial`
+    layer and the archive produces none at all: 0 of the right kind, measured.
+
+    That is not "add more evidence", it is "this asks for a kind of statement
+    nothing produces yet", and the two must never read alike.
+    """
+    claims = [_claim("Blender"), _claim("un contexto", verb="ocurrio",
+                                        layer="context")]
+    report = slot_candidates(
+        _slot(slot_id="lecturas", claim="significa", layer="curatorial",
+              count={"min": 2, "max": 6}), claims, _fake_eligible)
+
+    assert report["kind"] == "no_claim_of_this_kind"
+    assert report["on_slot_total"] == 0
+    assert report["candidates"] == []
+    assert report["by_condition"] == {}
+    assert "significa" in report["next_action"]
+    assert "curatorial" in report["next_action"]
+    assert "TIPO" in report["next_action"]
+
+
+def test_the_candidate_list_is_bounded_and_says_how_much_it_hid():
+    claims = [_claim("t%02d" % index, state="observed") for index in range(12)]
+    report = slot_candidates(_slot(), claims, _fake_eligible, limit=3)
+    assert len(report["candidates"]) == 3
+    assert report["on_slot_total"] == 12
+    assert report["truncated"] == 9
+
+
+def test_an_already_satisfied_slot_is_reported_as_such():
+    report = slot_candidates(_slot(), [_claim("Blender")], _fake_eligible)
+    assert report["eligible_now"] == 1
+    assert report["kind"] == "satisfied"
+
+
+def test_a_rule_that_raises_never_takes_the_read_down():
+    """The eligibility rule belongs to the motor. A read-only report must
+    degrade to saying nothing rather than break the surface that shows it."""
+    def explodes(slot, claims):
+        raise RuntimeError("motor cambio de forma")
+
+    report = slot_candidates(_slot(), [_claim("Blender")], explodes)
+    assert report["candidates"] == []
+    assert report["kind"] == "no_claim_of_this_kind"
+
+
+def test_caption_gaps_names_the_declared_field_that_is_absent():
+    grammar = "{tool} durante {year} en {venue}"
+    assert _caption_gaps(grammar, {"tool": "Blender", "year": 2025,
+                                   "venue": "Sala"}) == []
+    assert _caption_gaps(grammar, {"tool": "Blender"}) == ["year", "venue"]
+    # Declared but empty is still a gap: a caption cannot carry a blank.
+    assert _caption_gaps(grammar, {"tool": "Blender", "year": 2025,
+                                   "venue": "   "}) == ["venue"]
+    assert _caption_gaps("sin campos", {}) == []

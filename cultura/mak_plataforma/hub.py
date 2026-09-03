@@ -2891,7 +2891,8 @@ def _portfolio_production(format_id="", refresh=False):
     try:
         from flujo.knowledge.portfolio_claims import compile_portfolio_claims
         from flujo.knowledge.portfolio_format import load_format_library
-        from flujo.knowledge.portfolio_render import (assess_feasibility,
+        from flujo.knowledge.portfolio_render import (_eligible,
+                                                      assess_feasibility,
                                                       render_markdown,
                                                       render_portfolio)
     except ImportError as exc:
@@ -2939,6 +2940,20 @@ def _portfolio_production(format_id="", refresh=False):
             "control": payload.get("control", {}),
             "feasibility": assess_feasibility(spec, claims),
         }
+        # A blocked slot named the shortfall and stopped there, so "no factible"
+        # read as a dead end. The format is what asks, and the archive can
+        # answer: for every slot that blocks, say which claims are the right
+        # kind of statement and what single condition stops each. The motor's
+        # own `_eligible` is what decides, passed in rather than reimplemented,
+        # so this can never contradict the feasibility verdict beside it.
+        slots_by_id = {str(slot.get("slot_id")): slot
+                       for slot in spec.get("slots", [])}
+        row["slot_candidates"] = [
+            copilot.slot_candidates(slots_by_id[str(entry.get("slot_id"))],
+                                    claims.get("claims") or [], _eligible)
+            for entry in row["feasibility"].get("blocking", [])
+            if str(entry.get("slot_id")) in slots_by_id
+        ]
         if format_id:
             row["markdown"] = render_markdown(payload)
         formats.append(row)

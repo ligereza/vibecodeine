@@ -1483,6 +1483,28 @@
   // "tecnicas · escala · consistencia" -- two of them already satisfied. With
   // the first three shown, a blocker declared fourth or later disappeared
   // entirely. The verdict layer is `blocking`, never the declaration layer.
+  // A blocked slot used to name the shortfall and stop. The format is what
+  // asks, so the archive answers: `/api/portfolio/production` now carries, per
+  // blocking slot, which claims are the right KIND of statement and the single
+  // condition stopping each. Two answers that must never look alike --
+  // `F2-capacidad-barberia` needs 1 and has 214 of the right kind, 175 of them
+  // one confirmation away; `F7-lectura-curatorial` has 0, because it asks for a
+  // kind of statement the archive does not produce yet. The first is work, the
+  // second is a decision about what the archive should say at all.
+  function purposeSlotMarkup(entry) {
+    if (!entry || !entry.slot_id) return "";
+    const absent = entry.kind === "no_claim_of_this_kind";
+    const named = (entry.candidates || []).slice(0, 3)
+      .map((candidate) => escMesa(candidate.subject)).join(" · ");
+    const more = entry.truncated ? ` (+${escMesa(entry.truncated)} más)` : "";
+    return `<div class="mesa-purpose-slot ${absent ? "is-absent" : "is-near"}">`
+      + `<b>${escMesa(entry.slot_id)}</b>`
+      + `<span>pide ${escMesa(entry.needs)}</span>`
+      + `<p>${escMesa(entry.next_action || "")}</p>`
+      + (absent || !named ? "" : `<small>${named}${more}</small>`)
+      + `</div>`;
+  }
+
   function purposeRow(row) {
     const rendered = row.status === "rendered";
     const feasibility = row.feasibility || {};
@@ -1508,7 +1530,8 @@
           + ` · ${escMesa(gaps.length)} de ${escMesa(declared.length)} declaradas</small>`
           + (remedy
             ? `<small class="mesa-purpose-remedy">lo que la cerraría: ${remedy}</small>`
-            : ""))
+            : "")
+          + (row.slot_candidates || []).map(purposeSlotMarkup).join(""))
       + `</article>`;
   }
 

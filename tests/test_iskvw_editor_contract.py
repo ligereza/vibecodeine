@@ -430,18 +430,24 @@ def test_the_declared_purposes_are_readable_from_the_interface():
 # panel printed "tecnicas · escala · consistencia" -- two of them satisfied.
 # So this one runs the real function in node against the real response shape.
 
-def _run_purpose_row(row):
-    """Execute the shipped `purposeRow` on one format row and return its HTML."""
-    node = shutil.which("node")
-    mesa = MESA.read_text(encoding="utf-8")
+def _purpose_js():
+    """The shipped source of the panel's renderers, taken from the file itself.
 
+    The slice starts at `purposeSlotMarkup` because `purposeRow` calls it, so
+    extracting only the second would leave the first undefined.
+    """
+    mesa = MESA.read_text(encoding="utf-8")
     start = mesa.index("const escMesa =")
     esc = mesa[start:mesa.index("}[character]));", start) + len("}[character]));")]
-    start = mesa.index("  function purposeRow(")
-    fn = mesa[start:mesa.index("\n  function purposesMarkup(", start)]
+    start = mesa.index("  function purposeSlotMarkup(")
+    fns = mesa[start:mesa.index("\n  function purposesMarkup(", start)]
+    return esc + "\n" + fns + "\n"
 
-    driver = (esc + "\n" + fn + "\n"
-              + "process.stdout.write(purposeRow(" + json.dumps(row) + "));\n")
+
+def _run_purpose(call):
+    """Run one shipped renderer in node and return the HTML it produced."""
+    node = shutil.which("node")
+    driver = _purpose_js() + "process.stdout.write(" + call + ");\n"
     with tempfile.TemporaryDirectory() as work:
         script = Path(work) / "driver.mjs"
         script.write_text(driver, encoding="utf-8")
@@ -449,6 +455,16 @@ def _run_purpose_row(row):
                                 text=True, timeout=60)
     assert result.returncode == 0, (result.stdout, result.stderr)
     return result.stdout
+
+
+def _run_purpose_row(row):
+    """Execute the shipped `purposeRow` on one format row and return its HTML."""
+    return _run_purpose("purposeRow(" + json.dumps(row) + ")")
+
+
+def _run_purpose_slot(entry):
+    """Execute the shipped `purposeSlotMarkup` on one slot answer."""
+    return _run_purpose("purposeSlotMarkup(" + json.dumps(entry) + ")")
 
 
 @pytest.mark.skipif(shutil.which("node") is None, reason="node no esta en PATH")
@@ -520,3 +536,99 @@ def test_a_blocker_declared_late_does_not_fall_off_the_panel():
     })
     assert "el_que_falta" in fallback
     assert "tres" not in fallback
+
+
+# ---------------------------------------------------------------------------
+# What a blocked slot asks the archive for, and the two answers it can give
+# ---------------------------------------------------------------------------
+#
+# Operator's correction, 2026-09-02: the format asks and the ordering of works
+# is the ANSWER. So a blocked slot now carries `slot_candidates` from
+# /api/portfolio/production, and the panel has to keep two answers apart:
+# `F2-capacidad-barberia` needs 1 and has 214 claims of the right kind, 175 one
+# confirmation away, which is work; `F7-lectura-curatorial` has 0 of its kind,
+# which is a decision about what the archive should say at all. Rendering them
+# alike would put the operator back to reading "no factible" as a dead end.
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node no esta en PATH")
+def test_a_slot_one_step_away_names_the_works_and_the_step():
+    html = _run_purpose_slot({
+        "slot_id": "consistencia",
+        "needs": 1,
+        "kind": "one_condition_short",
+        "on_slot_total": 214,
+        "by_condition": {"state_too_low": 175, "caption_incomplete": 39},
+        "candidates": [
+            {"subject": "archive#tool_total:After Effects", "state": "observed",
+             "condition": "state_too_low", "what_to_do": "confirmar"},
+            {"subject": "archive#tool_total:Blender", "state": "observed",
+             "condition": "state_too_low", "what_to_do": "confirmar"},
+        ],
+        "truncated": 206,
+        "next_action": "214 afirmaciones son del tipo que esta ranura pide",
+    })
+
+    assert "is-near" in html and "is-absent" not in html
+    assert "consistencia" in html
+    assert "pide 1" in html
+    assert "214" in html, "the sentence the engine wrote has to reach the screen"
+    # The works are named, which is the whole point: a short list to decide on.
+    assert "After Effects" in html and "Blender" in html
+    assert "+206" in html, "and it says how many it did not show"
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node no esta en PATH")
+def test_a_slot_with_no_claim_of_its_kind_is_marked_apart():
+    html = _run_purpose_slot({
+        "slot_id": "lecturas",
+        "needs": 2,
+        "kind": "no_claim_of_this_kind",
+        "on_slot_total": 0,
+        "by_condition": {},
+        "candidates": [],
+        "truncated": 0,
+        "next_action": ("el archivo no produce todavia afirmaciones "
+                        "`significa` en la capa `curatorial`"),
+    })
+
+    assert "is-absent" in html and "is-near" not in html
+    assert "lecturas" in html
+    assert "significa" in html and "curatorial" in html
+    # Nothing to offer, and it must not fabricate a list to look busy.
+    assert "<small>" not in html
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node no esta en PATH")
+def test_the_two_answers_are_visually_distinguishable_in_the_shell():
+    shell = EDITOR.read_text(encoding="utf-8")
+    assert ".mesa-purpose-slot.is-absent" in shell
+    assert ".mesa-purpose-slot{" in shell
+    # A blocked purpose renders its slot answers inside its own article.
+    row = _run_purpose_row({
+        "format_id": "F2", "title": "Barberia", "purpose": "p",
+        "status": "infeasible",
+        "feasibility": {"feasible": False,
+                        "slots": [{"slot_id": "consistencia", "ok": False}],
+                        "blocking": [{"slot_id": "consistencia"}]},
+        "slot_candidates": [{
+            "slot_id": "consistencia", "needs": 1,
+            "kind": "one_condition_short", "on_slot_total": 214,
+            "by_condition": {"state_too_low": 175}, "truncated": 0,
+            "candidates": [{"subject": "Blender", "state": "observed",
+                            "condition": "state_too_low",
+                            "what_to_do": "confirmar"}],
+            "next_action": "175 detenidas por state_too_low",
+        }],
+    })
+    assert "mesa-purpose-slot" in row
+    assert "Blender" in row
+    # A row with no slot answers still renders, so an older payload is safe.
+    plain = _run_purpose_row({
+        "format_id": "F2", "title": "Barberia", "purpose": "p",
+        "status": "infeasible",
+        "feasibility": {"feasible": False,
+                        "slots": [{"slot_id": "consistencia", "ok": False}],
+                        "blocking": [{"slot_id": "consistencia"}]},
+    })
+    assert "mesa-purpose-slot" not in plain
+    assert "consistencia" in plain
