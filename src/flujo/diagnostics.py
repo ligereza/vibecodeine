@@ -33,7 +33,7 @@ _DEFAULT_DOMAINS: dict[str, dict[str, Any]] = {
         ],
         "contract": "context/diagnostics/contracts/core.md",
         "read_paths": [
-            "agents.md", "pyproject.toml", "src/flujo/cli.py",
+            "AGENTS.md", "pyproject.toml", "src/flujo/cli.py",
             "src/flujo/diagnostics.py", "context/LAST_HANDOFF.md",
         ],
         "checks": [

@@ -97,8 +97,11 @@ def catalog(root: Path) -> dict[str, Any]:
         areas[key] = {
             **raw,
             "root_checks": checks,
+            # No `agents` entry: the per-department `agents.md` files were
+            # deleted 2026-09-03 with every other contract file. Reporting a
+            # permanent False invites the next agent to "fix" it by recreating
+            # a document nobody asked for.
             "contract_files": {
-                "agents": (contract_dir / "agents.md").is_file(),
                 "requirements": (contract_dir / "requirements.txt").is_file(),
                 "env_example": (contract_dir / ".env.example").is_file(),
             },

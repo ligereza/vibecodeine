@@ -165,7 +165,12 @@ def _motor_root(repo: Path) -> Path:
 def _repo_component(repo: Path) -> dict[str, Any]:
     motor = _motor_root(repo)
     required = {
-        "agents": repo / "agents.md",
+        # 2026-09-03: the lowercase `agents.md` was deleted by the operator's
+        # order along with every other contract file. The one contract is
+        # `AGENTS.md`. Requiring the old name made this status -- the command
+        # the contract itself points at for facts -- report a file missing
+        # that was removed on purpose.
+        "contract": repo / "AGENTS.md",
         "hub_source": repo / "cultura" / "mak_plataforma" / "hub.py",
         "knowledge_api": motor / "knowledge" / "project_api.py",
         "web_source": repo / "web" / "package.json",
