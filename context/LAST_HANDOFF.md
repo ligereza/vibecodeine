@@ -1591,6 +1591,57 @@ authorized, the existing release/publish procedure; do not regenerate
   (they are optional), but a production input living in a temp directory is a
   source that can vanish without anyone noticing.
 
+### Fondart application started -- 2026-09-02
+
+- Run produced at `experiments/pilots/ARICA-FONDART-2027/runs/postulacion-20260902/`,
+  which is gitignored (`.gitignore:108`) and stays that way on purpose: the
+  repository is public and the pilot holds captured bases and archive
+  observation. The run has `ESTADO.md`, `curriculum-viabilidad.md`,
+  `render.json` and `cobertura-requisitos.json`.
+- The deadline governs everything and was read from the hashed bases, not from
+  memory: **2026-09-10, 15:00 America/Santiago**, eight days from today.
+  Execution window 2027-03-01 to 2027-04-30, maximum 12 months, CLP 500.000 to
+  15.000.000 per project. Source package
+  `sha256:9da0ab5f0850fdad354415448829fd88fa1e61beee5fd048c90a4a5b4c418af2`,
+  19 requirements and 26 evidences with page anchors.
+- What the system produced: `F4-fondart-nacional-investigacion-2027` renders
+  28 items, status `rendered`, from the claim base compiled off the eight real
+  sources. Each item carries its evidence route, an independent second route
+  and its refutation condition, and the document declares its own "no sirve
+  para" listing the eight hard gates and eight required documents it does not
+  cover.
+- What the system does NOT produce, measured against the bases rather than
+  assumed: of the 19 admission requirements it answers ZERO. Six hard gates,
+  one eligibility clause, two dates, one duration, one budget and eight signed
+  documents are all acts of the applicant -- an archive does not declare
+  co-financing or sign a consent. On the evaluation side the archive can feed
+  Curriculo (0.20) and part of Viabilidad (0.10); Calidad (0.30) and Impacto de
+  transferencia (0.40) depend on the proposed project. The archive-backed
+  ceiling is 30% of the weighting.
+- The applicant's own words were found rather than invented, in his web export
+  (`WIN/claude_sesiones/claude_web_export_2026-08-11/conversations.json`,
+  conversation of 2026-08-08): he wants "un portafolio artistico automatizado,
+  considerando carpetas y archivos desordenados: ordenarlos y curarlos", with
+  an ordering method that is "optimo, tipo bubble sort o algoritmos de
+  searching". That question -- which ordering method is optimal -- is the
+  research problem, and `docs/DIMENSIONES_DEL_ORDEN.md` already carries its
+  negative answer: there is no correct order, there is `O_G` relative to a
+  purpose, and six purposes are declared with four rendering today.
+- `ESTADO.md` states plainly that this is not yet the required 15-page research
+  advance: the problem is formulated and there is a result and a running
+  system, but object of study, methodology, theoretical framework, state of the
+  art and references are the seven parts the bases demand and none of them can
+  come out of the archive. Nothing was written in the applicant's voice beyond
+  the quoted passage, which carries its source.
+- Nothing was submitted, signed or published. `control` on the render and the
+  coverage file: `submission: false`, `signed_document: false`,
+  `authorship_claimed: false`, `promotion: none`. `repo_hygiene` `100 passed`
+  and `git diff --check` exit 0 after the run.
+- Next action, and it is the applicant's alone: the eight documents and six
+  hard gates. The system contributes the Curriculo section already rendered and
+  can regenerate it at any time from
+  `GET /api/portfolio/production?format_id=F4-fondart-nacional-investigacion-2027`.
+
 # Operational Handoff
 
 ## Agent bootstrap -- CURRENT -- 2026-09-02 (later) -- the suites, and the boundary the operator corrected
