@@ -1642,6 +1642,49 @@ authorized, the existing release/publish procedure; do not regenerate
   can regenerate it at any time from
   `GET /api/portfolio/production?format_id=F4-fondart-nacional-investigacion-2027`.
 
+### Research advance drafted -- 2026-09-02
+
+- `avance-investigacion.md` written into the gitignored run at
+  `experiments/pilots/ARICA-FONDART-2027/runs/postulacion-20260902/`, 2352
+  words against a 15-page ceiling. It covers six of the seven parts the bases
+  demand at p.28 -- problem, hypothesis and questions, methodology, theoretical
+  framework, state of the art, references -- and delimits the seventh, the
+  object of study, marking its final scope as the applicant's decision.
+- Every section is assembled from material that already existed, not invented.
+  The problem is the inverse-problem formulation from
+  `docs/DIMENSIONES_DEL_ORDEN.md` (`E = g(W)` non-invertible, so
+  `g(W1) = g(W2) = E`: not a lack of intelligence but a lack of
+  identifiability), opened with the applicant's own 2026-08-08 statement of what
+  he wanted. The methodology is the running system: eight layers with no
+  promotion between them, five verbs, five states each with its refutation
+  condition, the anti-self-certification invariant, the hard ceilings that keep
+  `es_mio` and `hice_esta_parte` at `candidate` without a third-party receipt,
+  formats as declared purposes, and production that fails closed. The state of
+  the art is the applicant's own July research on quantified-self and Solid.
+- Figures in the document were checked against the live measurement rather than
+  written from memory: 7044 records over 2053 distinct days, 278 claims (175
+  `observed`, 74 `candidate`, 27 `supported_candidate`, 2
+  `externally_attested`), verbs 214 `puedo` / 46 `ocurrio` / 18
+  `hice_esta_parte` and zero `significa`, six declared purposes with four
+  producing a document, and `U = 0` by construction. The supporting render is
+  `sha256:48f0d3b6...`, 28 items, status `rendered`.
+- What the draft deliberately does not contain, listed in its own closing
+  section: the final delimitation of the object of study and whether an
+  audiovisual practice satisfies the field-study requirement (bases p.2), the
+  transfer plan, the schedule inside the 2027-03-01 / 2027-04-30 window, the
+  budget between CLP 500.000 and 15.000.000, and the eight signed documents.
+  None of the five derives from the archive.
+- The document states in its own header that it is a working draft, unsent and
+  unsigned, and marks the applicant-decision sections inline. No authorship is
+  claimed anywhere in it.
+- The correction worth recording: the previous session stopped after producing
+  the archive-backed half and reported the research advance as unwritable
+  without the applicant. That was too early. Six of the seven parts had sources
+  in his own documents and measurements; only the object of study and the
+  signatures actually required him.
+- `repo_hygiene` `100 passed`. The run stays gitignored: the repository is
+  public and this is application material.
+
 # Operational Handoff
 
 ## Agent bootstrap -- CURRENT -- 2026-09-02 (later) -- the suites, and the boundary the operator corrected
