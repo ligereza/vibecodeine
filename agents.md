@@ -1,4 +1,29 @@
-# MAK AGENT CONTRACT
+# MAK AGENT CONTRACT -- SUPERSEDED 2026-09-02, KEPT AS EVIDENCE
+
+> **Do not start here. The current contract is `AGENTS.md`, uppercase, in this
+> same directory.**
+>
+> Linux is case-sensitive, so `agents.md` and `AGENTS.md` are two tracked files
+> at this root, each written as an entry point, and both were reachable. This
+> one is the 2026-08-31 version; `AGENTS.md` carries the 2026-09-02 topology
+> correction. Nothing below has been removed: it is preserved because the repo
+> does not delete historical work for being out of date, it classifies it.
+>
+> What specifically no longer holds:
+>
+> - The line below claiming `/home/mak/flujo/agents.md` is canonical. The
+>   current entry point is `/home/mak/AGENTS.md` for the MAK box, and
+>   `/home/mak/flujo/AGENTS.md` for the motor.
+> - Anything below treating `/home/mak/flujo` as "the authoring and integration
+>   baseline" for everything. `MAK` and `FLUJO` are now two operational
+>   branches, each a physical checkout: `/home/mak` owns the box (departments,
+>   services, Hub) and `/home/mak/flujo` owns the portable motor. Each pushes
+>   its own ref and nothing returns through `main`.
+>
+> Cause of this header: `context/diagnostics/domains.json` routed every fresh
+> agent's `core` reading to this lowercase file, so the superseded contract was
+> the one being handed out. Retirement: when one contract file remains at this
+> root and no case-variant of it is tracked.
 
 This is the operational contract for the MAK Linux box. Linux paths are
 case-sensitive. This lowercase file is canonical:
