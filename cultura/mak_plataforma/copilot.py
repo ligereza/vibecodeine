@@ -161,10 +161,16 @@ def _folded_facet_index(item, facets=OVERLAP_FACETS):
 def _explicit_overlap(source, candidate, facet, source_folded=None):
     """Declared values shared by source and candidate for one facet.
 
-    `source_folded` is the hoisted `(folded, value)` list for this facet. It is
+    `source_folded` is the hoisted `(folded, value)` list for this facet, or the
+    whole `_folded_facet_index` dict, in which case this facet is looked up
+    here. Passing the dict is preferred: nothing outside stops a caller from
+    pairing one facet's folded values with another facet's comparison, and the
+    lookup happening here makes that mismatch structurally impossible. It stays
     optional so every existing caller keeps working unchanged; passing it only
     avoids recomputing something that cannot differ.
     """
+    if isinstance(source_folded, dict):
+        source_folded = source_folded.get(facet)
     if source_folded is None:
         source_folded = [(_fold(value), value)
                          for value in _facet_values(source, facet)]
@@ -1375,7 +1381,7 @@ def build_suggestions(source, items, selections=None, feedback=None, context=Non
         for facet, base_score in (("artist", 11), ("venue", 10), ("event", 10),
                                   ("client", 10), ("collab", 9), ("period", 6)):
             overlap = _explicit_overlap(source, candidate, facet,
-                                        source_folded=source_facets.get(facet))
+                                        source_folded=source_facets)
             if not overlap:
                 continue
             result.append(dict(
@@ -1694,7 +1700,11 @@ def evidence_readiness(record, vision=None, vision_indexed=None,
     Pure: it receives what was already measured elsewhere and invents nothing.
     `vision_indexed` is the set of ids the perception index actually covers;
     without it, a missing vision record stays `unknown`, because the index
-    covered 100 of 7044 records and "not indexed" is not "has no perception".
+    holds 30 of 7044 records and "not indexed" is not "has no perception".
+    (The 100-record figure belongs to the CLIP visual index in
+    `derived/visual-index/neighbors.json`, a different surface; the set this
+    argument receives is `vision_features.jsonl`, measured 2026-09-02 at 33
+    appended lines over 30 distinct ids.)
     """
     record = record if isinstance(record, dict) else {}
     rows = []
@@ -1719,12 +1729,26 @@ def evidence_readiness(record, vision=None, vision_indexed=None,
         record.get("publication_id", "")))
 
     item_id = str(record.get("source_id") or "")
-    if isinstance(vision, dict) and vision.get("features"):
+    # The truth of a reading is its CONTENT, not the presence of a container.
+    # `normalize_vision` always emits the four feature keys, so a read that
+    # returned nothing is stored as `{"visual_terms": [], ...}`: a truthy dict
+    # with nothing in it. Measured 2026-09-02 on the real index, 2 of its 30
+    # records read that way and were reported `present` with `confidence: low`,
+    # which lifted them to `decidable`. The `absent` branch below was
+    # unreachable from the only caller, because `hub.py` takes `vision` and
+    # `vision_indexed` from the same dict: if the id is indexed, `vision` is
+    # never None. An empty reading is a measured absence, never evidence.
+    features = vision.get("features") if isinstance(vision, dict) else None
+    usable_reading = isinstance(features, dict) and any(features.values())
+    if usable_reading:
         rows.append(_readiness_row(
             "perception", "present",
             "confianza declarada: %s" % (vision.get("confidence") or "low"),
             item_id))
-    elif vision_indexed is not None and item_id in set(vision_indexed):
+    elif isinstance(vision, dict) or (
+            vision_indexed is not None and item_id in set(vision_indexed)):
+        # Holding the row is itself proof the record was indexed, so this stays
+        # `absent` even for a caller that passes no `vision_indexed` set.
         rows.append(_readiness_row(
             "perception", "absent",
             "indexado y sin lectura utilizable", item_id))

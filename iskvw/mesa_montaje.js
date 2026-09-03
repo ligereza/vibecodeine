@@ -1475,14 +1475,28 @@
   // `/api/portfolio/production`, que declara `promotion: none` y `owner:
   // human`, y muestra lo que cada propósito produjo o qué lo bloquea.
 
+  // `feasibility.slots` is every DECLARED slot of the format; the ones that
+  // actually lack evidence are `feasibility.blocking`, which also carries the
+  // shortfall, the reason and what would close it. Reading `slots` here named
+  // satisfied slots as missing: measured 2026-09-02, F2-capacidad-barberia
+  // declares 5 slots, only `consistencia` blocks, and the panel printed
+  // "tecnicas · escala · consistencia" -- two of them already satisfied. With
+  // the first three shown, a blocker declared fourth or later disappeared
+  // entirely. The verdict layer is `blocking`, never the declaration layer.
   function purposeRow(row) {
     const rendered = row.status === "rendered";
-    const gaps = ((row.feedback || row.feasibility || {}).gaps
-      || (row.feasibility || {}).slots || []);
-    const missing = Array.isArray(gaps)
-      ? gaps.filter((gap) => gap && gap.slot_id).slice(0, 3)
-        .map((gap) => escMesa(gap.slot_id)).join(" · ")
-      : "";
+    const feasibility = row.feasibility || {};
+    const declared = Array.isArray(feasibility.slots) ? feasibility.slots : [];
+    const blocking = Array.isArray(feasibility.blocking)
+      ? feasibility.blocking
+      : declared.filter((slot) => slot && slot.ok === false);
+    const gaps = blocking.filter((gap) => gap && gap.slot_id);
+    const missing = gaps.slice(0, 3).map((gap) => escMesa(gap.slot_id)).join(" · ");
+    const more = gaps.length > 3 ? ` (+${escMesa(gaps.length - 3)} más)` : "";
+    // What would close it is already served by the engine; showing the slot id
+    // alone left the operator with a name and no next step.
+    const remedy = escMesa(String(
+      gaps[0] && (gaps[0].what_would_close_it || gaps[0].reason) || ""));
     return `<article class="mesa-purpose ${rendered ? "is-rendered" : "is-blocked"}">`
       + `<header><b>${escMesa(row.title || row.format_id)}</b>`
       + `<span class="mesa-purpose-state">${rendered
@@ -1490,7 +1504,11 @@
       + `<p>${escMesa(row.purpose || "")}</p>`
       + (rendered
         ? `<div class="mesa-purpose-actions"><button type="button" data-pop-action="purpose-open" data-format-id="${escMesa(row.format_id)}">leer el documento</button></div>`
-        : `<small>ranuras sin evidencia suficiente: ${missing || "declaradas en el formato"}</small>`)
+        : `<small>ranuras sin evidencia suficiente: ${missing || "declaradas en el formato"}${more}`
+          + ` · ${escMesa(gaps.length)} de ${escMesa(declared.length)} declaradas</small>`
+          + (remedy
+            ? `<small class="mesa-purpose-remedy">lo que la cerraría: ${remedy}</small>`
+            : ""))
       + `</article>`;
   }
 

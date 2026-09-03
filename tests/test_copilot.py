@@ -593,7 +593,7 @@ def _status(report, channel):
 def test_readiness_separates_not_measured_from_measured_absent():
     """`unknown` and `absent` are different claims and must not collapse.
 
-    The perception index covered 100 of 7044 records, so a missing vision row
+    The perception index holds 30 of 7044 records, so a missing vision row
     is almost always "not indexed", not "this record has no perception".
     Reading that absence as a finding is how a gap becomes a fact.
     """
@@ -682,3 +682,67 @@ def test_hoisting_the_source_facets_changes_speed_and_not_results():
     assert _explicit_overlap(source, candidates[0], "artist") == ["Harry Nach"]
     assert _explicit_overlap(source, candidates[2], "artist") == []
     assert set(index) == set(OVERLAP_FACETS)
+
+
+def test_a_perception_read_that_returned_nothing_is_not_evidence():
+    """An empty reading is a measured absence, never `present`.
+
+    `normalize_vision` always emits its four feature keys, so a read that came
+    back with nothing is stored as `{"visual_terms": [], ...}`: a truthy dict
+    holding nothing. Deciding on the container instead of its content reported
+    exactly that as evidence. Measured 2026-09-02 on the real index, 2 of its
+    30 records carried an empty reading, were reported `present` with
+    `confidence: low`, and so reached `decision: decidable`.
+
+    The shape comes from `normalize_vision` itself rather than being written
+    out here, so this test cannot drift from what the writer actually stores.
+    """
+    empty = normalize_vision("not json at all", "x.jpg", "ollama")
+    assert empty["features"], "the writer always emits its four keys"
+    assert not any(empty["features"].values()), "and here they are all empty"
+
+    report = evidence_readiness(_record(), vision=empty,
+                                vision_indexed=["x.jpg"])
+    assert _status(report, "perception") == "absent"
+    assert "perception" in report["missing"]
+    assert "perception" not in report["unmeasured"]
+
+    # Holding the row is itself proof the record was indexed, so a caller that
+    # passes no index still gets `absent` and never `unknown`.
+    assert _status(evidence_readiness(_record(), vision=empty),
+                   "perception") == "absent"
+
+    # The correction does not over-reach: one real term is still evidence.
+    seen = normalize_vision('{"visual_terms": ["trama"]}', "x.jpg", "ollama")
+    assert _status(evidence_readiness(_record(), vision=seen,
+                                      vision_indexed=["x.jpg"]),
+                   "perception") == "present"
+
+
+def test_the_hoisted_facet_index_cannot_be_paired_with_the_wrong_facet():
+    """The hoist must not open a way to compare one facet against another.
+
+    Nothing outside `_explicit_overlap` stopped a caller from handing it the
+    `artist` values for a `venue` comparison, which returns a shared value that
+    is not shared on that facet at all. Taking the whole folded index and
+    looking the facet up inside makes that mismatch impossible to express.
+    """
+    source = {"id": "s", "artist": ["Tal Artista"], "venue": ["Un Lugar"]}
+    candidate = {"id": "c", "artist": ["Tal Artista"], "venue": ["Tal Artista"]}
+    index = _folded_facet_index(source)
+
+    # The lookup finds the right facet: this pair really does share an artist.
+    assert _explicit_overlap(source, candidate, "artist",
+                             source_folded=index) == ["Tal Artista"]
+    # And it does not reach across: the candidate's venue matches the source's
+    # ARTIST, which is not a venue in common.
+    assert _explicit_overlap(source, candidate, "venue", source_folded=index) == []
+    assert _explicit_overlap(source, candidate, "venue") == [], "unhoisted agrees"
+    # The shape of the mistake this closes: the wrong facet's folded values
+    # invent an overlap. Reachable only by writing it out by hand, never by
+    # passing the index.
+    assert _explicit_overlap(source, candidate, "venue",
+                             source_folded=index["artist"]) == ["Tal Artista"]
+    # A bare list for the RIGHT facet stays supported, so no caller breaks.
+    assert _explicit_overlap(source, candidate, "artist",
+                             source_folded=index["artist"]) == ["Tal Artista"]

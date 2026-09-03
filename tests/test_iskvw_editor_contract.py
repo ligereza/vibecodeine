@@ -1,4 +1,10 @@
+import json
+import shutil
+import subprocess
+import tempfile
 from pathlib import Path
+
+import pytest
 
 
 EDITOR = Path(__file__).parents[1] / "iskvw" / "editor.html"
@@ -410,3 +416,107 @@ def test_the_declared_purposes_are_readable_from_the_interface():
     assert "method:" not in body, "the purposes panel must not POST"
     assert "promotion" in mesa[mesa.index("function purposesMarkup("):
                                 mesa.index("function purposeDocumentMarkup(")]
+
+
+# ---------------------------------------------------------------------------
+# The blocked purpose has to name the slots that actually lack evidence
+# ---------------------------------------------------------------------------
+#
+# The tests above assert that strings are present in the source, which cannot
+# tell whether the panel names the RIGHT slots. It did not: `feasibility.slots`
+# is every DECLARED slot and the ones lacking evidence are
+# `feasibility.blocking`. Measured 2026-09-02 against the live route,
+# F2-capacidad-barberia declares 5 slots, only `consistencia` blocks, and the
+# panel printed "tecnicas · escala · consistencia" -- two of them satisfied.
+# So this one runs the real function in node against the real response shape.
+
+def _run_purpose_row(row):
+    """Execute the shipped `purposeRow` on one format row and return its HTML."""
+    node = shutil.which("node")
+    mesa = MESA.read_text(encoding="utf-8")
+
+    start = mesa.index("const escMesa =")
+    esc = mesa[start:mesa.index("}[character]));", start) + len("}[character]));")]
+    start = mesa.index("  function purposeRow(")
+    fn = mesa[start:mesa.index("\n  function purposesMarkup(", start)]
+
+    driver = (esc + "\n" + fn + "\n"
+              + "process.stdout.write(purposeRow(" + json.dumps(row) + "));\n")
+    with tempfile.TemporaryDirectory() as work:
+        script = Path(work) / "driver.mjs"
+        script.write_text(driver, encoding="utf-8")
+        result = subprocess.run([node, str(script)], capture_output=True,
+                                text=True, timeout=60)
+    assert result.returncode == 0, (result.stdout, result.stderr)
+    return result.stdout
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node no esta en PATH")
+def test_a_blocked_purpose_names_only_the_slots_that_lack_evidence():
+    """A satisfied slot must never be printed as a missing one.
+
+    The shape is the one the live `/api/portfolio/production` returns: every
+    declared slot in `slots`, the shortfall in `blocking`, and the sentence
+    that would close it alongside.
+    """
+    html = _run_purpose_row({
+        "format_id": "F2-capacidad-barberia",
+        "title": "Capacidad barberia",
+        "purpose": "declarar una capacidad tecnica",
+        "status": "infeasible",
+        "item_count": 0,
+        "feasibility": {
+            "feasible": False,
+            "status": "infeasible",
+            "slots": [
+                {"slot_id": "tecnicas", "ok": True},
+                {"slot_id": "escala", "ok": True},
+                {"slot_id": "consistencia", "ok": False},
+                {"slot_id": "para_quien", "ok": True},
+                {"slot_id": "proceso", "ok": True},
+            ],
+            "blocking": [{"slot_id": "consistencia", "shortfall": 1,
+                          "reason": "la ranura obligatoria pide 1 afirmacion; hay 0",
+                          "what_would_close_it": "una afirmacion puedo mas"}],
+        },
+    })
+
+    assert "consistencia" in html, "the real blocker has to be named"
+    for satisfied in ("tecnicas", "escala", "para_quien", "proceso"):
+        assert satisfied not in html, (
+            "%s has its evidence and must not read as missing" % satisfied)
+    # The count keeps the proportion honest: one of five, not five of five.
+    assert "1 de 5 declaradas" in html
+    # And the operator gets a next step, not only a slot name.
+    assert "lo que la cerraría" in html
+    assert "una afirmacion puedo mas" in html
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node no esta en PATH")
+def test_a_blocker_declared_late_does_not_fall_off_the_panel():
+    """Only three gaps are shown, so the list must be gaps and never declarations.
+
+    Reading `slots` meant a format whose blocker sits fourth or later showed
+    three satisfied slots and hid the real reason completely.
+    """
+    slots = [{"slot_id": "uno", "ok": True}, {"slot_id": "dos", "ok": True},
+             {"slot_id": "tres", "ok": True}, {"slot_id": "el_que_falta",
+                                              "ok": False}]
+    html = _run_purpose_row({
+        "format_id": "F9-prueba", "title": "Prueba", "purpose": "p",
+        "status": "infeasible",
+        "feasibility": {"feasible": False, "slots": slots,
+                        "blocking": [{"slot_id": "el_que_falta"}]},
+    })
+    assert "el_que_falta" in html
+    assert "uno" not in html and "dos" not in html
+
+    # With `blocking` absent the fallback filters the declarations by verdict,
+    # so an engine that stops sending it degrades instead of lying.
+    fallback = _run_purpose_row({
+        "format_id": "F9-prueba", "title": "Prueba", "purpose": "p",
+        "status": "infeasible",
+        "feasibility": {"feasible": False, "slots": slots},
+    })
+    assert "el_que_falta" in fallback
+    assert "tres" not in fallback
