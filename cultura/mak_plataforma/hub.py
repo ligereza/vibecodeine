@@ -2811,53 +2811,115 @@ def _portfolio_scene(item_id, limit=10, focus_facet="", shuffle=False,
     return scene
 
 
+# The production chain already existed, whole, in the FLUJO motor:
+# `compile_portfolio_claims` -> `assess_feasibility` -> `render_portfolio` ->
+# `render_markdown`. Nothing ran it from here, so the six declared formats sat
+# inert and looked unbuildable. They were not: measured 2026-09-02, four of the
+# six render today, including the Fondart one. What was missing was the wire.
+#
+# The claim base is the input, NOT the archive rows: a claim carries verb,
+# layer, state, permission, the route that supports it and what would refute
+# it, which is exactly what a slot declares. Feeding the raw inbox instead is
+# what made every format look blocked on a permission "nobody records".
+PORTFOLIO_PRODUCTION_SOURCES = {
+    "index": "/home/mak/labs/portable-ssd-index-20260813/archivo_index.sqlite",
+    "authority": os.path.join(_REPO_ROOT, "data", "artist_discographies.json"),
+    "archive": os.path.join(_REPO_ROOT, "iskvw", "datos", "archivo.json"),
+    "practices": os.path.join(_REPO_ROOT, "data", "portfolio_practices.json"),
+    "attestations": os.path.join(_REPO_ROOT, "data", "portfolio_attestations.json"),
+    "declared_inputs": "/home/mak/.claude/jobs/3428381a/tmp/declared_inputs.json",
+    "blend_targets": "/home/mak/.claude/jobs/3428381a/tmp/blend_dependency_targets.json",
+    "screen_setup_root": "/media/mak/PortableSSD",
+}
 PORTFOLIO_FORMATS_DIR = os.path.join(_REPO_ROOT, "data", "portfolio_formats")
+_PORTFOLIO_PRODUCTION_CACHE = {}
 
 
-def _portfolio_formats():
-    """The declared purposes. `G` in docs/DIMENSIONES_DEL_ORDEN.md."""
-    specs = []
-    try:
-        names = sorted(os.listdir(PORTFOLIO_FORMATS_DIR))
-    except OSError:
-        return specs
-    for name in names:
-        if not name.endswith(".json"):
-            continue
-        try:
-            with open(os.path.join(PORTFOLIO_FORMATS_DIR, name),
-                      encoding="utf-8") as fh:
-                spec = json.load(fh)
-        except (OSError, ValueError):
-            continue
-        if isinstance(spec, dict) and spec.get("slots"):
-            specs.append(spec)
-    return specs
+def _portfolio_production_sources():
+    """Which inputs of the chain are physically present right now."""
+    return {name: {"path": path, "present": os.path.exists(path)}
+            for name, path in sorted(PORTFOLIO_PRODUCTION_SOURCES.items())}
 
 
-def _portfolio_order_compositions(limit_per_slot=30):
-    """N defensible orders, one per declared purpose. None of them is THE order.
+def _portfolio_production(format_id="", refresh=False):
+    """Run the existing production chain and report what it renders.
 
-    This is `F` in the theory: the piece that did not exist, because the system
-    emitted a single verdict instead of N orders.
+    Read-only by contract: every renderer returns a `control` block with
+    publication, submission, signed_document, authorship_claimed and
+    database_write false. This route neither promotes nor publishes.
     """
-    specs = _portfolio_formats()
-    if not specs:
-        return {"ok": False, "error": "sin formatos declarados", "orders": []}
-    items = _portfolio_inbox().get("items", [])
-    orders = copilot.compose_orders(items, specs, limit_per_slot=limit_per_slot)
+    try:
+        from flujo.knowledge.portfolio_claims import compile_portfolio_claims
+        from flujo.knowledge.portfolio_format import load_format_library
+        from flujo.knowledge.portfolio_render import (assess_feasibility,
+                                                      render_markdown,
+                                                      render_portfolio)
+    except ImportError as exc:
+        return {"ok": False, "error": "motor_no_disponible:%s" % exc,
+                "sources": _portfolio_production_sources()}
+
+    sources = _portfolio_production_sources()
+    missing = [name for name, row in sources.items() if not row["present"]]
+    if "index" in missing or "archive" in missing:
+        return {"ok": False, "error": "fuentes_ausentes", "missing": missing,
+                "sources": sources,
+                "next_action": "montar el indice del SSD antes de producir"}
+
+    claims = None if refresh else _PORTFOLIO_PRODUCTION_CACHE.get("claims")
+    if claims is None:
+        def _optional(name):
+            path = PORTFOLIO_PRODUCTION_SOURCES[name]
+            return path if os.path.exists(path) else None
+        claims = compile_portfolio_claims(
+            index_path=PORTFOLIO_PRODUCTION_SOURCES["index"],
+            authority_path=PORTFOLIO_PRODUCTION_SOURCES["authority"],
+            archive_path=PORTFOLIO_PRODUCTION_SOURCES["archive"],
+            declared_inputs_path=_optional("declared_inputs"),
+            blend_targets_path=_optional("blend_targets"),
+            practices_path=PORTFOLIO_PRODUCTION_SOURCES["practices"],
+            attestations_path=PORTFOLIO_PRODUCTION_SOURCES["attestations"],
+            screen_setup_root=_optional("screen_setup_root"),
+        )
+        _PORTFOLIO_PRODUCTION_CACHE["claims"] = claims
+
+    library = load_format_library(PORTFOLIO_FORMATS_DIR)
+    formats = []
+    for spec in library["formats"]:
+        if format_id and spec["format_id"] != format_id:
+            continue
+        payload = render_portfolio(spec, claims)
+        document = payload.get("document") or {}
+        row = {
+            "format_id": spec["format_id"],
+            "title": spec.get("title", ""),
+            "purpose": spec.get("purpose", ""),
+            "status": payload.get("status"),
+            "item_count": document.get("item_count"),
+            "render_hash": payload.get("render_hash", ""),
+            "control": payload.get("control", {}),
+            "feasibility": assess_feasibility(spec, claims),
+        }
+        if format_id:
+            row["markdown"] = render_markdown(payload)
+        formats.append(row)
+
+    rendered = [row["format_id"] for row in formats if row["status"] == "rendered"]
     return {
         "ok": True,
-        "schema": copilot.COMPOSITION_SCHEMA,
-        "corpus": len(items),
-        "orders": orders,
-        "valid_orders": [order["format_id"] for order in orders if order["valid"]],
-        "blocked_orders": [order["format_id"] for order in orders
-                           if not order["valid"]],
+        "schema": "faro-portfolio-production-v1",
+        "claims": claims.get("claim_count", len(claims.get("claims") or [])),
+        "claims_by_state": claims.get("claims_by_state", {}),
+        "claims_by_verb": claims.get("claims_by_verb", {}),
+        "claims_hash": claims.get("claims_hash", ""),
+        "formats": formats,
+        "rendered": rendered,
+        "infeasible": [row["format_id"] for row in formats
+                       if row["status"] != "rendered"],
+        "sources": sources,
         "promotion": "none",
         "owner": "human",
-        "next_action": "elegir un proposito y revisar el orden que propone; "
-                       "ninguno se publica solo",
+        "next_action": "revisar un formato renderizado; ninguno se publica ni "
+                       "se firma desde aqui",
     }
 
 
@@ -5079,13 +5141,11 @@ class H(BaseHTTPRequestHandler):
             return self._json(_portfolio_scene(
                 item_id, limit=limit, focus_facet=focus_facet,
                 shuffle=shuffle, shuffle_seed=shuffle_seed, surface=surface))
-        if p == "/api/portfolio/copilot/orders":
-            raw = (urllib.parse.parse_qs(u.query).get("limit") or ["30"])[0]
-            try:
-                limit = max(1, min(int(raw), 200))
-            except (TypeError, ValueError):
-                limit = 30
-            return self._json(_portfolio_order_compositions(limit_per_slot=limit))
+        if p == "/api/portfolio/production":
+            query = urllib.parse.parse_qs(u.query)
+            return self._json(_portfolio_production(
+                format_id=(query.get("format_id") or [""])[0],
+                refresh=(query.get("refresh") or ["0"])[0] == "1"))
         if p == "/api/portfolio/copilot/map":
             query = urllib.parse.parse_qs(u.query)
             width = (query.get("width") or [8])[0]

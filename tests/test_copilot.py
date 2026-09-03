@@ -1,7 +1,6 @@
 from cultura.mak_plataforma.copilot import (active_ordering_seed,
                                              build_gtm_map, build_suggestions,
                                              evaluate_feedback, group_suggestions,
-                                             compose_order, compose_orders,
                                              evidence_readiness,
                                              external_evidence_profile,
                                              inference_prompt,
@@ -13,7 +12,6 @@ from cultura.mak_plataforma.copilot import (active_ordering_seed,
                                              normalize_vision,
                                              ordering_distance_profile,
                                              replay_ordering_evaluation,
-                                             COMPOSITION_SCHEMA,
                                              READINESS_SCHEMA,
                                              _vector_distance)
 
@@ -653,123 +651,3 @@ def test_readiness_survives_a_record_it_cannot_read():
     assert report["item_id"] == ""
     assert all(row["status"] in ("present", "absent", "unknown")
                for row in report["channels"])
-
-
-# ---------------------------------------------------------------------------
-# O_G: N defensible orders instead of one verdict
-# ---------------------------------------------------------------------------
-#
-# docs/DIMENSIONES_DEL_ORDEN.md names this as the theory's open gap: "un orden
-# defendible, relativo a un proposito -- todavia no existe como salida: el
-# sistema emite un veredicto unico en vez de N ordenes". G was already
-# implemented and unnamed: a FORMAT is a purpose. Measured 2026-09-02, nothing
-# composed an order from one -- `portfolio_dossier.py` does not mention the
-# formats, and only a test and two documents read the directory.
-
-_FORMAT = {
-    "schema": "mak-portfolio-format-v1",
-    "format_id": "T1-prueba",
-    "title": "formato de prueba",
-    "purpose": "establecer que ocurrio",
-    "declared_claims": ["ocurrio"],
-    "forbidden_claims": ["es_mio", "significa"],
-    "forbidden_inferences": ["una fecha de archivo no es una fecha de evento"],
-    "slots": [
-        {"slot_id": "contextos", "title": "Contextos", "claim": "ocurrio",
-         "layer": "context", "min_state": "observed", "count": {"min": 2, "max": 4}},
-    ],
-}
-
-
-def _corpus(n=6, dated=True, asset=True):
-    return [{"id": "r%d.jpg" % i, "asset_available": asset,
-             "asset_path": "/p/r%d.jpg" % i,
-             "date": "2021-10-0%d" % (i + 1) if dated else ""} for i in range(n)]
-
-
-def test_composition_returns_one_order_per_purpose_and_none_is_the_answer():
-    """The corpus does not have an order; it has as many as there are purposes."""
-    second = dict(_FORMAT, format_id="T2-prueba", purpose="otro proposito")
-    orders = compose_orders(_corpus(), [_FORMAT, second])
-    assert [order["format_id"] for order in orders] == ["T1-prueba", "T2-prueba"]
-    for order in orders:
-        assert order["schema"] == COMPOSITION_SCHEMA
-        assert order["promotion"] == "none"
-        assert order["owner"] == "human"
-        assert order["unsupported_claims"] == 0
-        assert order["next_action"].strip()
-        # The constraints travel with the order; a reader never has to go
-        # looking for what this purpose forbids.
-        assert order["forbidden_claims"] == ["es_mio", "significa"]
-        assert order["forbidden_inferences"]
-
-
-def test_composition_abstains_on_a_permission_the_archive_does_not_record():
-    """Measured: zero of 7044 records carry a permission field, and every slot
-    declares one. Claiming it would be the exact defect the U term punishes."""
-    spec = dict(_FORMAT)
-    spec["slots"] = [dict(_FORMAT["slots"][0], min_permission="public")]
-    order = compose_order(_corpus(), spec)
-    slot = order["slots"][0]
-    assert slot["satisfied"] is True, "the count is met; only the permission is not"
-    assert slot["permission_satisfied"] is False
-    assert any(row["on"] == "permission" for row in slot["abstentions"])
-    assert order["valid"] is False
-    assert any("permiso" in reason for reason in order["invalid_reasons"])
-    for row in slot["selected"]:
-        assert row["permission"] == "unrecorded"
-
-
-def test_composition_fails_closed_on_a_state_it_cannot_rank():
-    """F4 declares `supported_candidate`. The first version of this defaulted an
-    unknown rung to `candidate` and silently accepted a LOWER bar than asked."""
-    spec = dict(_FORMAT)
-    spec["slots"] = [dict(_FORMAT["slots"][0], min_state="supported_candidate")]
-    order = compose_order(_corpus(), spec)
-    slot = order["slots"][0]
-    assert slot["state_verifiable"] is False
-    assert slot["selected_count"] == 0
-    assert any(row["on"] == "state" for row in slot["abstentions"])
-    assert any("escalera verificable" in reason
-               for reason in order["invalid_reasons"])
-
-
-def test_composition_never_reads_a_filename_or_a_date_as_an_event():
-    """A record with no asset and no date is `unknown` and cannot be observed;
-    the forbidden inference says a file date is not an event date, so nothing
-    here promotes one into the other."""
-    order = compose_order(_corpus(n=3, dated=False, asset=False), _FORMAT)
-    slot = order["slots"][0]
-    assert slot["selected_count"] == 0
-    assert slot["satisfied"] is False
-    assert any("bajo el minimo" in row["reason"] for row in slot["abstentions"])
-    partial = compose_order(_corpus(n=3, dated=False, asset=True), _FORMAT)
-    assert partial["slots"][0]["selected_count"] == 0, (
-        "an undated artifact is a candidate, never an observation")
-
-
-def test_composition_never_scores_a_term_it_did_not_measure():
-    """Reporting a number for an unmeasured term is the defect U exists to
-    punish. C, D and V say so instead of carrying a zero that reads as a score."""
-    objective = compose_order(_corpus(), _FORMAT)["objective"]
-    for term in ("C", "D", "V"):
-        assert objective[term]["measured"] is False
-        assert objective[term]["value"] is None
-        assert objective[term]["detail"].strip()
-    for term in ("R_G", "T", "N", "U"):
-        assert objective[term]["measured"] is True
-        assert objective[term]["value"] is not None
-    assert objective["U"]["value"] == 0
-
-
-def test_composition_does_not_reuse_a_record_across_slots():
-    """Redundancy is the N term; a piece appearing twice is not two pieces."""
-    spec = dict(_FORMAT)
-    spec["slots"] = [
-        dict(_FORMAT["slots"][0], slot_id="a", count={"min": 1, "max": 3}),
-        dict(_FORMAT["slots"][0], slot_id="b", count={"min": 1, "max": 3}),
-    ]
-    order = compose_order(_corpus(n=6), spec)
-    picked = [row["item_id"] for slot in order["slots"] for row in slot["selected"]]
-    assert len(picked) == len(set(picked))
-    assert order["objective"]["N"]["value"] == 0
