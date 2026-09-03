@@ -1279,7 +1279,47 @@ def _portfolio_vision():
     return result
 
 
+# Measured 2026-09-02: one `/api/portfolio/copilot/scene` call reached
+# `_portfolio_inbox()` SEVEN times, and each one reopened the 3.8 MB inbox,
+# rebuilt 7044 dictionaries and read four more files -- 0.41 s of the 1.19 s a
+# warm scene costs. The interface calls that route on every piece the operator
+# selects, and 6928 records are still undecided.
+#
+# The key is the SOURCE MTIMES, not a clock. A TTL would be the wrong contract
+# here: this data changes when the operator decides something, and a stale
+# window would show a person their own decision not applied. Keyed this way the
+# cache is invalidated by the write itself and can never be stale.
+_PORTFOLIO_INBOX_CACHE = {}
+_PORTFOLIO_INBOX_SOURCES = (
+    "PORTFOLIO_INBOX", "PORTFOLIO_SELECTIONS", "PORTFOLIO_CLASSIFICATIONS",
+    "PORTFOLIO_DRAFTS", "PORTFOLIO_VISION",
+)
+
+
+def _portfolio_inbox_signature():
+    """(path, mtime_ns, size) per source; a missing file is part of the key."""
+    signature = []
+    for name in _PORTFOLIO_INBOX_SOURCES:
+        path = globals().get(name) or ""
+        try:
+            stat = os.stat(path)
+            signature.append((name, stat.st_mtime_ns, stat.st_size))
+        except OSError:
+            signature.append((name, None, None))
+    return tuple(signature)
+
+
 def _portfolio_inbox(compact=False):
+    signature = _portfolio_inbox_signature()
+    cached = _PORTFOLIO_INBOX_CACHE.get(bool(compact))
+    if cached is not None and cached[0] == signature:
+        return cached[1]
+    payload = _portfolio_inbox_uncached(compact=compact)
+    _PORTFOLIO_INBOX_CACHE[bool(compact)] = (signature, payload)
+    return payload
+
+
+def _portfolio_inbox_uncached(compact=False):
     try:
         with open(PORTFOLIO_INBOX, encoding="utf-8") as fh:
             payload = json.load(fh)
