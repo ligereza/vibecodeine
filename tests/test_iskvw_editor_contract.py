@@ -381,3 +381,32 @@ def test_the_interface_shows_what_the_record_has_and_lacks():
     assert '.mesa-readiness[data-decision="abstain"]' in shell
     # And the label that means "not decidable yet" stays one click away.
     assert 'data-order-action="review"' in mesa
+
+
+def test_the_declared_purposes_are_readable_from_the_interface():
+    """The production chain rendered four documents that a person could only
+    reach by curling a JSON route.
+
+    A purpose is a declared format (`data/portfolio_formats/*.json`), and the
+    whole point of `O_G` is that one corpus yields several defensible orders.
+    Leaving them invisible made the system look like it produced nothing.
+    """
+    mesa = MESA.read_text(encoding="utf-8")
+    shell = EDITOR.read_text(encoding="utf-8")
+
+    assert 'id="mesa-purposes"' in mesa, "the toolbar must offer the panel"
+    assert "loadPurposes" in mesa
+    assert "/api/portfolio/production" in mesa
+    # A blocked purpose has to look different from a producing one, or "no
+    # factible" reads as "empty" and the reason disappears.
+    assert ".mesa-purpose.is-rendered" in shell
+    assert ".mesa-purpose.is-blocked" in shell
+    # The document itself is readable, not just its status.
+    assert "purposeDocumentMarkup" in mesa
+    assert ".mesa-purpose-doc" in shell
+    # It reads; it does not decide. No write action is wired into this panel.
+    start = mesa.index("async function loadPurposes(")
+    body = mesa[start:mesa.index("\n  async function ", start + 10)]
+    assert "method:" not in body, "the purposes panel must not POST"
+    assert "promotion" in mesa[mesa.index("function purposesMarkup("):
+                                mesa.index("function purposeDocumentMarkup(")]

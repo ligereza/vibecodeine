@@ -791,7 +791,7 @@
     if (!app) return false;
     app.hidden = false;
     document.body.classList.add("mesa-active");
-    app.innerHTML = `<div class="mesa-shell mesa-engine" data-field-mode="uncertainty"><header class="mesa-header"><div><div class="mesa-kicker">MAK · atlas vivo</div><h2>campo de orden</h2><p>La geometría permanece. Tus decisiones cambian el campo, no borran la ambigüedad.</p></div><div class="mesa-header-stats"><b id="mesa-visible-count">0</b><span>nodos</span><b id="mesa-relation-count">0</b><span>vínculos</span><span id="mesa-map-engine" class="mesa-map-engine">GTM · cargando</span><button type="button" id="mesa-external-queue" class="mesa-external-queue">evidencia externa · <b>0</b></button></div></header><div class="mesa-toolbar"><div class="mesa-mode-switch" role="toolbar" aria-label="Modo del editor"><button type="button" class="is-active" data-editor-mode="order">ordenar</button><button type="button" data-editor-mode="relate">relacionar</button><button type="button" class="mesa-seed-control" data-learning-action="next-seed" title="llevar el caso más informativo al centro">siguiente frontera</button></div><div class="mesa-field-switch" role="toolbar" aria-label="Campo visible"><button type="button" class="is-active" data-field-mode="uncertainty">incertidumbre</button><button type="button" data-field-mode="coverage">vacíos</button><button type="button" data-field-mode="evidence">evidencia</button><button type="button" data-field-mode="resonance">resonancia</button></div><div class="mesa-camera-actions"><button type="button" data-camera="reset">mapa</button><button type="button" data-camera="zoom-out">−</button><button type="button" data-camera="zoom-in">+</button><button type="button" id="mesa-audit" class="mesa-audit-button">auditoría</button></div></div><div class="mesa-lenses" role="toolbar" aria-label="Lentes de relación"><button type="button" class="is-active" data-lens="all">copiloto</button><button type="button" data-lens="date">fecha</button><button type="button" data-lens="publication">publicación</button><button type="button" data-lens="event">evento</button><button type="button" data-lens="venue">venue</button><button type="button" data-lens="artist">artista</button><button type="button" data-lens="client">cliente</button><button type="button" data-lens="text">concepto</button></div><div class="mesa-map-legend" aria-label="Lectura del campo"><span class="is-field">halo = información pendiente</span><span class="is-evidence">línea continua = evidencia</span><span class="is-resonance">línea discontinua = resonancia</span><em id="mesa-map-fit">proyección GTM</em></div><main class="mesa-main mesa-engine-main"><div class="mesa-stage" id="mesa-stage" data-flow-render="canvas-progressive" aria-label="Atlas GTM; arrastra el espacio para mover la cámara y selecciona piezas para ordenar"><canvas class="mesa-flow-canvas" id="mesa-flow-canvas" aria-hidden="true"></canvas><div class="mesa-world" id="mesa-world"><svg class="mesa-field-layer" id="mesa-field-layer" viewBox="0 0 100 100" preserveAspectRatio="none"></svg><svg class="mesa-edges" id="mesa-edges" viewBox="0 0 100 100" preserveAspectRatio="none"></svg><div class="mesa-card-layer" id="mesa-card-layer"></div></div><div class="mesa-field-readout" id="mesa-field-readout" aria-live="polite"></div><div class="mesa-order-hud" id="mesa-order-hud" aria-live="polite"></div><div class="mesa-popover" id="mesa-popover" hidden></div><div class="mesa-stage-help">click: elegir · rueda: acercar · arrastra el vacío: recorrer el atlas</div></div><nav class="mesa-timeline" id="mesa-timeline" aria-label="Nodos de esta ventana"></nav><div class="mesa-live-status" id="mesa-status" aria-live="polite"></div></main></div>`;
+    app.innerHTML = `<div class="mesa-shell mesa-engine" data-field-mode="uncertainty"><header class="mesa-header"><div><div class="mesa-kicker">MAK · atlas vivo</div><h2>campo de orden</h2><p>La geometría permanece. Tus decisiones cambian el campo, no borran la ambigüedad.</p></div><div class="mesa-header-stats"><b id="mesa-visible-count">0</b><span>nodos</span><b id="mesa-relation-count">0</b><span>vínculos</span><span id="mesa-map-engine" class="mesa-map-engine">GTM · cargando</span><button type="button" id="mesa-external-queue" class="mesa-external-queue">evidencia externa · <b>0</b></button></div></header><div class="mesa-toolbar"><div class="mesa-mode-switch" role="toolbar" aria-label="Modo del editor"><button type="button" class="is-active" data-editor-mode="order">ordenar</button><button type="button" data-editor-mode="relate">relacionar</button><button type="button" class="mesa-seed-control" data-learning-action="next-seed" title="llevar el caso más informativo al centro">siguiente frontera</button></div><div class="mesa-field-switch" role="toolbar" aria-label="Campo visible"><button type="button" class="is-active" data-field-mode="uncertainty">incertidumbre</button><button type="button" data-field-mode="coverage">vacíos</button><button type="button" data-field-mode="evidence">evidencia</button><button type="button" data-field-mode="resonance">resonancia</button></div><div class="mesa-camera-actions"><button type="button" data-camera="reset">mapa</button><button type="button" data-camera="zoom-out">−</button><button type="button" data-camera="zoom-in">+</button><button type="button" id="mesa-purposes" class="mesa-audit-button">propósitos</button><button type="button" id="mesa-audit" class="mesa-audit-button">auditoría</button></div></div><div class="mesa-lenses" role="toolbar" aria-label="Lentes de relación"><button type="button" class="is-active" data-lens="all">copiloto</button><button type="button" data-lens="date">fecha</button><button type="button" data-lens="publication">publicación</button><button type="button" data-lens="event">evento</button><button type="button" data-lens="venue">venue</button><button type="button" data-lens="artist">artista</button><button type="button" data-lens="client">cliente</button><button type="button" data-lens="text">concepto</button></div><div class="mesa-map-legend" aria-label="Lectura del campo"><span class="is-field">halo = información pendiente</span><span class="is-evidence">línea continua = evidencia</span><span class="is-resonance">línea discontinua = resonancia</span><em id="mesa-map-fit">proyección GTM</em></div><main class="mesa-main mesa-engine-main"><div class="mesa-stage" id="mesa-stage" data-flow-render="canvas-progressive" aria-label="Atlas GTM; arrastra el espacio para mover la cámara y selecciona piezas para ordenar"><canvas class="mesa-flow-canvas" id="mesa-flow-canvas" aria-hidden="true"></canvas><div class="mesa-world" id="mesa-world"><svg class="mesa-field-layer" id="mesa-field-layer" viewBox="0 0 100 100" preserveAspectRatio="none"></svg><svg class="mesa-edges" id="mesa-edges" viewBox="0 0 100 100" preserveAspectRatio="none"></svg><div class="mesa-card-layer" id="mesa-card-layer"></div></div><div class="mesa-field-readout" id="mesa-field-readout" aria-live="polite"></div><div class="mesa-order-hud" id="mesa-order-hud" aria-live="polite"></div><div class="mesa-popover" id="mesa-popover" hidden></div><div class="mesa-stage-help">click: elegir · rueda: acercar · arrastra el vacío: recorrer el atlas</div></div><nav class="mesa-timeline" id="mesa-timeline" aria-label="Nodos de esta ventana"></nav><div class="mesa-live-status" id="mesa-status" aria-live="polite"></div></main></div>`;
     state.root = app;
     state.root.dataset.editorMode = state.editorMode;
     state.root.dataset.fieldMode = state.fieldMode;
@@ -826,6 +826,7 @@
     if (allButton) allButton.textContent = "copiloto";
     state.root.querySelector("#mesa-external-queue")?.addEventListener("click", openNextExternalCandidate);
     state.root.querySelector("#mesa-audit")?.addEventListener("click", () => loadAuditSummary());
+    state.root.querySelector("#mesa-purposes")?.addEventListener("click", () => loadPurposes());
     state.root.querySelectorAll("[data-editor-mode]").forEach((button) => {
       button.addEventListener("click", () => setEditorMode(button.dataset.editorMode));
     });
@@ -1467,6 +1468,85 @@
     return `<div class="mesa-popover-head"><span>pieza auditada</span><button type="button" class="mesa-popover-close" data-pop-action="close" aria-label="cerrar">×</button></div><div class="mesa-popover-flow mesa-audit"><div class="mesa-audit-title"><h3>${escMesa(item.source_id || "pieza")}</h3><p class="mesa-popover-meta">${escMesa(item.date || "sin fecha")} · ${escMesa(item.content_type || "registro")}</p></div><section class="mesa-audit-section"><h4>Estado actual</h4><div class="mesa-audit-current"><span>selección: <b>${escMesa(current.selection || "pendiente")}</b></span><span>triage: <b>${escMesa(current.triage_label || "unlabeled")}</b> · ${escMesa(current.triage_source || "sin origen")}</span><span>clasificación: <b>${escMesa(JSON.stringify(current.classification || {}))}</b></span></div></section><section class="mesa-audit-section"><h4>Línea temporal · ${escMesa(item.timeline_total || 0)} eventos</h4><ol class="mesa-audit-timeline">${timelineMarkup}</ol></section><div class="mesa-audit-actions"><button type="button" data-pop-action="audit-summary">volver al resumen</button></div></div>`;
   }
 
+  // Un propósito declarado es un formato: `data/portfolio_formats/*.json`. La
+  // cadena que los produce ya existía entera en el motor y no se veía desde
+  // aquí -- cuatro de seis producen documento hoy y el operador tenía que
+  // consultar una ruta JSON para saberlo. Esto no decide ni publica nada: lee
+  // `/api/portfolio/production`, que declara `promotion: none` y `owner:
+  // human`, y muestra lo que cada propósito produjo o qué lo bloquea.
+
+  function purposeRow(row) {
+    const rendered = row.status === "rendered";
+    const gaps = ((row.feedback || row.feasibility || {}).gaps
+      || (row.feasibility || {}).slots || []);
+    const missing = Array.isArray(gaps)
+      ? gaps.filter((gap) => gap && gap.slot_id).slice(0, 3)
+        .map((gap) => escMesa(gap.slot_id)).join(" · ")
+      : "";
+    return `<article class="mesa-purpose ${rendered ? "is-rendered" : "is-blocked"}">`
+      + `<header><b>${escMesa(row.title || row.format_id)}</b>`
+      + `<span class="mesa-purpose-state">${rendered
+        ? `${escMesa(row.item_count ?? 0)} piezas` : "no factible"}</span></header>`
+      + `<p>${escMesa(row.purpose || "")}</p>`
+      + (rendered
+        ? `<div class="mesa-purpose-actions"><button type="button" data-pop-action="purpose-open" data-format-id="${escMesa(row.format_id)}">leer el documento</button></div>`
+        : `<small>ranuras sin evidencia suficiente: ${missing || "declaradas en el formato"}</small>`)
+      + `</article>`;
+  }
+
+  function purposesMarkup(data) {
+    const rows = (data.formats || []).map(purposeRow).join("");
+    const states = Object.entries(data.claims_by_state || {})
+      .map(([k, v]) => `<span>${escMesa(k)}: <b>${escMesa(v)}</b></span>`).join("");
+    return `<div class="mesa-popover-head"><span>propósitos declarados</span>`
+      + `<button type="button" class="mesa-popover-close" data-pop-action="close" aria-label="cerrar">×</button></div>`
+      + `<div class="mesa-popover-flow mesa-audit"><div class="mesa-audit-title">`
+      + `<h3>Un mismo archivo, varios órdenes defendibles</h3>`
+      + `<p class="mesa-popover-meta">${escMesa(data.rendered?.length || 0)} de `
+      + `${escMesa((data.formats || []).length)} propósitos producen documento · `
+      + `${escMesa(data.claims || 0)} afirmaciones · promoción: `
+      + `${escMesa(data.promotion || "none")}</p></div>`
+      + `<section class="mesa-audit-section"><h4>Estado de las afirmaciones</h4>`
+      + `<div class="mesa-audit-history">${states}</div></section>`
+      + `<section class="mesa-audit-section">${rows}</section>`
+      + `<small>${escMesa(data.next_action || "")}</small></div>`;
+  }
+
+  function purposeDocumentMarkup(row) {
+    const text = String(row.markdown || "").slice(0, 24000);
+    return `<div class="mesa-popover-head"><span>${escMesa(row.format_id)}</span>`
+      + `<button type="button" class="mesa-popover-close" data-pop-action="close" aria-label="cerrar">×</button></div>`
+      + `<div class="mesa-popover-flow mesa-audit"><div class="mesa-audit-title">`
+      + `<h3>${escMesa(row.title || row.format_id)}</h3>`
+      + `<p class="mesa-popover-meta">${escMesa(row.item_count ?? 0)} piezas · `
+      + `${escMesa(row.render_hash || "")}</p></div>`
+      + `<pre class="mesa-purpose-doc">${escMesa(text)}</pre>`
+      + `<div class="mesa-audit-actions"><button type="button" data-pop-action="purposes">volver a los propósitos</button></div></div>`;
+  }
+
+  async function loadPurposes(formatId = "") {
+    const wanted = String(formatId || "").trim();
+    setStatus(wanted ? "componiendo el documento…" : "leyendo los propósitos declarados…");
+    try {
+      const query = wanted ? `?format_id=${encodeURIComponent(wanted)}` : "";
+      const response = await fetch(`/api/portfolio/production${query}`, { cache: "no-store" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      if (!data.ok) throw new Error(data.error || "producción no disponible");
+      if (wanted) {
+        const row = (data.formats || [])[0];
+        if (!row) throw new Error("ese propósito no está declarado");
+        openPopover(purposeDocumentMarkup(row));
+        setStatus("documento compuesto; no se publicó ni se firmó nada.");
+        return;
+      }
+      openPopover(purposesMarkup(data));
+      setStatus(`${data.rendered?.length || 0} de ${(data.formats || []).length} propósitos producen documento.`);
+    } catch (error) {
+      setStatus("No se pudieron leer los propósitos: " + error.message);
+    }
+  }
+
   async function loadAuditSummary(sourceId = "") {
     const requested = String(sourceId || "").trim();
     setStatus(requested ? "cargando la trazabilidad de la pieza…" : "cargando el atlas verificable…");
@@ -2054,6 +2134,8 @@
     const note = state.popover.querySelector("[data-pop-note]")?.value?.trim() || "";
     if (action === "close") return closePopover();
     if (action === "audit-summary") return loadAuditSummary();
+    if (action === "purposes") return loadPurposes();
+    if (action === "purpose-open") return loadPurposes(button.dataset.formatId);
     if (action === "audit-item") return loadAuditSummary(button.dataset.auditItem || state.selectedId);
     if (action === "back") return showRecordPopover();
     if (action === "classify-axis") {

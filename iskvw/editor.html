@@ -862,6 +862,19 @@
   .mesa-readiness-chips .is-unknown{border-color:#5a5570;color:#b9b3cf;font-style:italic}
   .mesa-readiness small{display:block;margin-top:3px;color:#9cb09e;font-size:.4rem;line-height:1.3}
   .mesa-readiness[data-decision="abstain"] small{color:#e0b3b3}
+  .mesa-purpose{margin:0 0 8px;padding:8px 10px;border:1px solid #403743;border-left-width:2px;background:#100e12}
+  .mesa-purpose.is-rendered{border-left-color:#78c78b}
+  .mesa-purpose.is-blocked{border-left-color:#7a4a4a}
+  .mesa-purpose header{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+  .mesa-purpose header b{color:#d9f1dc;font-size:.62rem;letter-spacing:.04em;text-transform:uppercase}
+  .mesa-purpose-state{color:#9cb09e;font-size:.5rem;white-space:nowrap}
+  .mesa-purpose.is-blocked .mesa-purpose-state{color:#e0b3b3}
+  .mesa-purpose p{margin:4px 0 0;color:#9cb09e;font-size:.52rem;line-height:1.45}
+  .mesa-purpose small{display:block;margin-top:5px;color:#b98f8f;font-size:.46rem}
+  .mesa-purpose-actions{margin-top:6px}
+  .mesa-purpose-actions button{padding:3px 9px;border:1px solid #55735c;border-radius:999px;background:rgba(11,18,13,.9);color:#c9e5cb;font:inherit;font-size:.5rem;cursor:pointer}
+  .mesa-purpose-actions button:hover{border-color:#b4e7bc;background:#17291b;color:#f3fff4}
+  .mesa-purpose-doc{max-height:52vh;margin:8px 0 0;padding:10px;overflow:auto;border:1px solid #403743;background:#0c0b0e;color:#cfd8d0;font-size:.5rem;line-height:1.55;white-space:pre-wrap;word-break:break-word}
   .mesa-order-compass .mesa-order-actions{position:absolute;left:50%;top:18%;z-index:4;display:flex;max-width:360px;transform:translateX(-50%);pointer-events:auto}
   .mesa-order-compass>button{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;width:66px;aspect-ratio:1;border:1px solid #55735c;border-radius:50%;background:rgba(11,18,13,.94);color:#c9e5cb;font:inherit;font-size:.48rem;cursor:pointer;pointer-events:auto;box-shadow:0 12px 25px rgba(0,0,0,.52);transition:transform .16s ease,border-color .16s ease,background .16s ease}
   .mesa-order-compass>button:hover{transform:scale(1.1);border-color:#b4e7bc;background:#17291b;color:#f3fff4}
