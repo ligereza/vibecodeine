@@ -143,10 +143,33 @@ def _facet_values(item, facet):
     return result
 
 
-def _explicit_overlap(source, candidate, facet):
-    target = {_fold(value): value for value in _facet_values(candidate, facet)}
-    return [value for value in _facet_values(source, facet)
-            if _fold(value) in target]
+# Facets whose overlap is computed for every candidate. The SOURCE side of that
+# comparison does not change across the loop, and recomputing it there cost
+# real time: profiled 2026-09-02, one scene called `_facet_values` 83772 times
+# and `_explicit_overlap` 41886, so half of those calls re-derived and re-folded
+# the same source values once per candidate.
+OVERLAP_FACETS = ("artist", "venue", "event", "client", "collab", "period")
+
+
+def _folded_facet_index(item, facets=OVERLAP_FACETS):
+    """Fold one item's facet values once, for reuse across a candidate loop."""
+    return {facet: [(_fold(value), value)
+                    for value in _facet_values(item, facet)]
+            for facet in facets}
+
+
+def _explicit_overlap(source, candidate, facet, source_folded=None):
+    """Declared values shared by source and candidate for one facet.
+
+    `source_folded` is the hoisted `(folded, value)` list for this facet. It is
+    optional so every existing caller keeps working unchanged; passing it only
+    avoids recomputing something that cannot differ.
+    """
+    if source_folded is None:
+        source_folded = [(_fold(value), value)
+                         for value in _facet_values(source, facet)]
+    target = {_fold(value) for value in _facet_values(candidate, facet)}
+    return [value for folded, value in source_folded if folded in target]
 
 
 def _fold(value):
@@ -1299,6 +1322,10 @@ def build_suggestions(source, items, selections=None, feedback=None, context=Non
     result = []
     suppressed_scope = 0
     suppressed_carousel = 0
+    # Hoisted out of the candidate loop: the source's declared facet values
+    # cannot differ per candidate, and folding them once removes half of the
+    # `_facet_values` calls a scene used to make.
+    source_facets = _folded_facet_index(source)
     for candidate in items:
         candidate_id = str(candidate.get("id", ""))
         if not candidate_id or candidate_id == source_id:
@@ -1347,7 +1374,8 @@ def build_suggestions(source, items, selections=None, feedback=None, context=Non
                                }], reasons=["misma fecha"]))
         for facet, base_score in (("artist", 11), ("venue", 10), ("event", 10),
                                   ("client", 10), ("collab", 9), ("period", 6)):
-            overlap = _explicit_overlap(source, candidate, facet)
+            overlap = _explicit_overlap(source, candidate, facet,
+                                        source_folded=source_facets.get(facet))
             if not overlap:
                 continue
             result.append(dict(
