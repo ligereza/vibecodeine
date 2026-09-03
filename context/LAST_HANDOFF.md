@@ -1788,6 +1788,44 @@ authorized, the existing release/publish procedure; do not regenerate
 - `tests/test_copilot.py` `43 passed`; `mak` `2188 passed, 5 skipped`;
   `repo_hygiene` `100 passed`; preflight `ok=5`.
 
+### The declared purposes became readable in the mesa -- 2026-09-02
+
+- The gap I had named myself and left open: the production chain renders four
+  documents and a person could only reach them by curling a JSON route. A
+  purpose is a declared format, and the whole point of `O_G` is that one corpus
+  yields several defensible orders -- leaving them invisible made the system
+  look like it produced nothing.
+- Added to the existing toolbar next to `auditoría`: a `propósitos` button that
+  opens the same popover surface the audit already uses, with the Hub's own
+  visual language. It lists every declared purpose with its state, and for a
+  producing one offers the rendered document; for a blocked one it names the
+  slots that lack evidence instead of showing an empty panel. A rendered
+  purpose and a blocked one are visually distinct, so "no factible" cannot read
+  as "vacío".
+- It reads and decides nothing. The panel consumes
+  `GET /api/portfolio/production`, which declares `promotion: none` and
+  `owner: human`, and a test asserts the loader contains no `method:` -- it
+  cannot POST. The document view shows the render hash alongside the item
+  count, so what is on screen is traceable to what was composed.
+- Live end to end after the restart: the served `mesa_montaje.js` carries the
+  panel, the served `editor.html` carries its 13 style rules, the route reports
+  4 of 6 purposes producing over 278 claims (`F1-trayectoria` 30 pieces,
+  `F2-capacidad-visual-musica-eventos` 24, `F3-rol-tecnico` 16,
+  `F4-fondart-nacional-investigacion-2027` 28), and `?format_id=F1-trayectoria`
+  returns 7764 characters of markdown beginning `# Registro de trayectoria`.
+- `tests/test_iskvw_editor_contract.py` `8 passed`, `repo_hygiene`
+  `101 passed`, `mak` `2189 passed, 5 skipped`, preflight `ok=5`,
+  `git diff --check` exit 0.
+- A detour worth recording as a refusal rather than a finding: a disk audit was
+  started because the root is at 80%, and it ended with no safe win. The 852 MB
+  of exact duplicates are all judged non-consolidatable by the repo's own tool
+  (67 preserve a semantic path, 44 are live runtime). And `mak descargas`,
+  which I was about to recommend deleting on the strength of its NAME, holds 10
+  zips that expand to 67.9 GB across 6206 files, of which 57.4 GB is the
+  operator's own work with no extracted copy anywhere and `MODELOS 3D` absent
+  from the SSD index entirely. The 80% is his archive stored compressed, not
+  disorder. Nothing was deleted.
+
 # Operational Handoff
 
 ## Agent bootstrap -- CURRENT -- 2026-09-02 (later) -- the suites, and the boundary the operator corrected
