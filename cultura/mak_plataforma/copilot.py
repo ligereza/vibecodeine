@@ -1675,8 +1675,26 @@ READINESS_SCHEMA = "faro-evidence-readiness-v1"
 READINESS_CHANNELS = ("asset", "description", "date", "perception",
                       "classification", "relations", "work_group")
 
-# The minimum a defensible label rests on. Everything else enriches.
-READINESS_REQUIRED = ("asset", "description")
+# NOTHING about a single piece blocks a decision any more. Operator's
+# correction, 2026-09-02, in his words: the system creates portfolio FORMATS
+# first and then decides how to order the works; it does not look for the
+# perfect order of one work.
+#
+# This tuple used to be `("asset", "description")`. Measured over the archive,
+# that made 3556 of 7044 records report `abstain` -- half the field declared
+# undecidable for lacking a caption the work may never have had, while only 21
+# lack an asset. Worse, it was the wrong question: whether a piece can be
+# labelled in isolation is not what anyone needs answered. A declared format
+# asks for claims, and the order of works is the ANSWER to that question.
+#
+# So the readiness report stays DESCRIPTIVE -- what this record has and lacks
+# is worth seeing before a human looks -- and the verdict belongs to the
+# format, where `assess_feasibility` and `slot_candidates` already live. The
+# mechanism stays in place so a future channel can be required deliberately;
+# nothing is required today.
+#
+# Retirement: none. This is the operator's architecture, not an optimisation.
+READINESS_REQUIRED = ()
 
 
 def _readiness_row(channel, status, detail="", source_ref=""):
@@ -1728,7 +1746,9 @@ def evidence_readiness(record, vision=None, vision_indexed=None,
         "date", "present" if date else "absent", date or "sin fecha declarada",
         record.get("publication_id", "")))
 
-    item_id = str(record.get("source_id") or "")
+    # Stripped: a whitespace-only id is not a subject, and the fail-closed
+    # branch below has to see it as absent rather than as a name.
+    item_id = str(record.get("source_id") or "").strip()
     # The truth of a reading is its CONTENT, not the presence of a container.
     # `normalize_vision` always emits the four feature keys, so a read that
     # returned nothing is stored as `{"visual_terms": [], ...}`: a truthy dict
@@ -1782,7 +1802,14 @@ def evidence_readiness(record, vision=None, vision_indexed=None,
     blocking = [name for name in READINESS_REQUIRED
                 if by_channel[name]["status"] != "present"]
 
-    if blocking:
+    # Fail closed on a record that cannot be read at all. That is a different
+    # claim from "this piece lacks a caption": an unusable row means the report
+    # itself has no subject, and inventing channels for it would be fabrication.
+    if not item_id:
+        decision = "abstain"
+        next_action = ("registro ilegible: no hay `source_id` sobre el que "
+                       "informar; registrar `review` con la fuente")
+    elif blocking:
         decision = "abstain"
         next_action = ("falta lo minimo para etiquetar (%s): registrar `review` "
                        "con la evidencia que falta" % ", ".join(blocking))
@@ -1807,6 +1834,163 @@ def evidence_readiness(record, vision=None, vision_indexed=None,
         "owner": "human",
         "producer": "local_readiness_report",
         "next_action": next_action,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Format-first: what a blocked slot is actually asking the archive for
+# ---------------------------------------------------------------------------
+#
+# Operator's correction, 2026-09-02: a declared format asks, and the ordering
+# of works is the ANSWER. `assess_feasibility` already answers "can this format
+# be filled" and, when it cannot, names the slot and the shortfall. What it
+# never said is WHICH claims are the right kind of statement for that slot and
+# what single condition stops each one -- `_eligible` counts its rejection
+# reasons and throws the identities away.
+#
+# That gap is why "no factible" read as a dead end. Measured against the live
+# chain: `F2-capacidad-barberia` blocks on `consistencia`, which needs 1 claim,
+# and 214 claims are the same verb and layer -- 175 of them stopped only
+# because their state is `observed` and the slot asks for `candidate`. That is
+# one confirmation away, not a missing archive. `F7-lectura-curatorial` is the
+# opposite and must not read the same: 0 claims of its verb and layer exist at
+# all, so it is asking for a kind of statement nothing produces yet.
+#
+# Retirement: when a format can request its own claims and this becomes the
+# input to that request rather than a report about it.
+SLOT_CANDIDATES_SCHEMA = "mak-portfolio-slot-candidates-v1"
+
+# A claim rejected for one of these is not about this slot at all.
+_OFF_SLOT_CONDITIONS = ("wrong_verb", "wrong_layer")
+
+# What a person would DO about each condition the motor can stop a claim for.
+# Read by a human, so correct Spanish with diacritics.
+_SLOT_CONDITION_ACTION = {
+    "state_too_low": "confirmar la afirmación para que alcance el estado que pide la ranura",
+    "permission_too_low": "declarar el permiso de uso que la ranura exige",
+    "caption_incomplete": "completar el pie que el formato declara",
+    "field_value_not_allowed": "el valor declarado no está entre los que la ranura acepta",
+    "duplicate_caption": "ya hay otra afirmación con el mismo pie; esta se plegó en ella",
+}
+
+
+def _caption_gaps(grammar, fields):
+    """Name the declared caption fields a claim does not carry.
+
+    The motor decides eligibility; this only names the gap, so the next step is
+    an action instead of a category. It reads the same `{field}` grammar the
+    motor fills and never re-decides anything.
+    """
+    fields = fields if isinstance(fields, dict) else {}
+    gaps, name, depth = [], "", 0
+    for char in str(grammar or ""):
+        if char == "{":
+            depth, name = 1, ""
+        elif char == "}":
+            depth = 0
+            key = name.strip()
+            value = fields.get(key)
+            empty = key not in fields or value is None or (
+                isinstance(value, str) and not value.strip())
+            if key and empty and key not in gaps:
+                gaps.append(key)
+        elif depth:
+            name += char
+    return gaps
+
+
+def slot_candidates(slot, claims, eligible, limit=8):
+    """Which claims could fill one slot, and the single condition stopping each.
+
+    `eligible` is the MOTOR'S own eligibility rule, injected instead of
+    reimplemented. Called with a single claim it either accepts it or reports
+    the one condition that stopped it, because it returns at the first failure.
+    So this explanation can never disagree with the feasibility verdict it
+    explains, and the ranks, the grammar and the field rules keep living in one
+    place.
+
+    Pure and read-only: it proposes nothing, promotes nothing and decides
+    nothing. Every row is a candidate for a human to accept or ignore.
+    """
+    slot = slot if isinstance(slot, dict) else {}
+    slot_id = str(slot.get("slot_id") or "")
+    needs = slot.get("count", {}) if isinstance(slot.get("count"), dict) else {}
+    needs = int(needs.get("min") or 0)
+
+    rows, by_condition, already = [], {}, 0
+    for claim in claims or []:
+        if not isinstance(claim, dict):
+            continue
+        try:
+            accepted, rejected = eligible(slot, [claim])
+        except Exception:  # noqa: BLE001 - a rule we do not own must not crash the read
+            continue
+        if accepted:
+            already += 1
+            continue
+        rejected = rejected if isinstance(rejected, dict) else {}
+        condition = next((name for name, count in sorted(rejected.items())
+                          if count), "")
+        if not condition or condition in _OFF_SLOT_CONDITIONS:
+            continue
+        by_condition[condition] = by_condition.get(condition, 0) + 1
+        row = {
+            "claim_id": str(claim.get("claim_id") or ""),
+            "subject": str(claim.get("subject") or ""),
+            "scope": str(claim.get("scope") or ""),
+            "state": str(claim.get("state") or ""),
+            "permission": str(claim.get("permission") or ""),
+            "condition": condition,
+            "what_to_do": _SLOT_CONDITION_ACTION.get(
+                condition, "revisar la afirmación contra lo que pide la ranura"),
+        }
+        if condition == "caption_incomplete":
+            row["missing_caption_fields"] = _caption_gaps(
+                slot.get("caption_grammar"), claim.get("caption_fields"))
+        rows.append(row)
+
+    # A state an operator can raise comes before a caption someone has to
+    # write, and that before a value the format refuses outright. Within a
+    # condition, the subject orders it, so the list is never an artifact of
+    # the order claims happened to be compiled in.
+    priority = {"state_too_low": 0, "permission_too_low": 1,
+                "caption_incomplete": 2, "field_value_not_allowed": 3}
+    rows.sort(key=lambda row: (priority.get(row["condition"], 4),
+                               row["subject"], row["claim_id"]))
+
+    if already >= needs and needs:
+        kind = "satisfied"
+        next_action = "la ranura ya tiene lo que pide"
+    elif not rows:
+        kind = "no_claim_of_this_kind"
+        next_action = (
+            "el archivo no produce todavía afirmaciones `%s` en la capa `%s`: "
+            "esta ranura pide un TIPO de afirmación que no existe, no más "
+            "evidencia de las que hay"
+            % (slot.get("claim") or "?", slot.get("layer") or "?"))
+    else:
+        kind = "one_condition_short"
+        head = min(by_condition, key=lambda name: priority.get(name, 4))
+        next_action = (
+            "%d afirmaciones son del tipo que esta ranura pide y ninguna pasa; "
+            "la vía más corta son las %d detenidas por `%s`: %s"
+            % (len(rows), by_condition[head], head,
+               _SLOT_CONDITION_ACTION.get(head, "revisarlas")))
+
+    return {
+        "schema": SLOT_CANDIDATES_SCHEMA,
+        "slot_id": slot_id,
+        "needs": needs,
+        "eligible_now": already,
+        "kind": kind,
+        "on_slot_total": len(rows),
+        "by_condition": dict(sorted(by_condition.items())),
+        "candidates": rows[:max(0, int(limit))],
+        "truncated": max(0, len(rows) - max(0, int(limit))),
+        "next_action": next_action,
+        "promotion": "none",
+        "owner": "human",
+        "producer": "local_slot_candidates",
     }
 
 

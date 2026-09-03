@@ -1928,11 +1928,69 @@ the pre-fix routing map.
   diagnoses the motor and never the box. The Hub route is the only consumer
   that reports MAK. Same shape as the doctrine caveat about a local verify
   measuring the wrong tree.
-- Open, and the operator's call, not a defect: `READINESS_REQUIRED` is
-  `("asset", "description")`, and 3548 of 7044 records have no description
-  against 21 with no asset. So half the archive reports `abstain`, "falta lo
-  minimo para etiquetar". The code does what it declares; whether a piece with
-  no written caption is undecidable is a decision about the archive.
+### The operator settled the architecture: the format asks, the works answer -- 2026-09-02
+
+He answered the open question above himself, and corrected the premise behind
+it. In his words: the system creates portfolio FORMATS first and then decides
+how to order the works; it does not look for the perfect order of one work. He
+called the per-piece rule stupid, and he is right -- it was answering a
+question nobody needs answered.
+
+- `READINESS_REQUIRED` is now `()`. It was `("asset", "description")`, which
+  made 3556 of 7044 records report `abstain` -- half the archive declared
+  undecidable for lacking a caption the work may never have had, against 21
+  that lack an asset. The report keeps its channels, because seeing what a
+  record holds before looking at it is worth having; what is gone is its
+  verdict. The mechanism stays so a channel can be required deliberately later.
+- Fail-closed is preserved where it belongs: a record with no `source_id` has
+  no subject to report on, which is a different claim from "this piece has no
+  caption", and it still abstains. `source_id` is stripped now, so a
+  whitespace-only id is an absence rather than a name.
+- The verdict lives with the format, and the format now gets an answer instead
+  of a dead end. `assess_feasibility` already said "this slot needs 1 and has
+  0"; `_eligible` counted its rejection reasons and threw the identities away.
+  New `copilot.slot_candidates(slot, claims, eligible)` reports, for a slot
+  that blocks, WHICH claims are the right kind of statement and the single
+  condition stopping each.
+- It takes the motor's `_eligible` as an argument rather than reimplementing
+  it. Called with one claim the motor either accepts it or names the first
+  condition that stopped it, so the explanation can never disagree with the
+  verdict beside it, and the ranks, the caption grammar and the field rules
+  keep living in one place.
+- Two answers that must never look alike, both measured against the live chain
+  over 278 claims:
+  - `F2-capacidad-barberia` blocks on `consistencia`, which needs 1. 214
+    claims are the same verb and layer; 175 are stopped only because their
+    state is `observed` where the slot asks for `candidate`, and they are
+    named: After Effects, Blender, Cinema 4D, Illustrator, Krita. That is one
+    confirmation away from rendering the format.
+  - `F7-lectura-curatorial` has 0 claims of its verb and layer. It is not
+    short of evidence: it asks for a KIND of statement the archive does not
+    produce yet (`significa` in the `curatorial` layer). That is a decision
+    about what the archive should say, not work on what it already says.
+- Visible in the mesa: each blocking slot renders its own block under the
+  purpose, `is-near` for the first case with the works named and how many were
+  not shown, `is-absent` with a different edge for the second and no list at
+  all, because fabricating one to look busy is what made "no factible" read as
+  a dead end.
+- Pinned: 6 tests in `tests/test_copilot.py` for the aggregation, with a
+  stand-in that implements the motor's documented contract; 4 in the new
+  `tests/test_portfolio_slot_candidates.py` (`integration` lane, registered)
+  that run the REAL `_eligible` over the REAL declared formats and assert the
+  report never contradicts it, needing no SSD index or archive so CI can run
+  them; 3 node-executed tests that render the two answers and assert they are
+  distinguishable.
+- `mak` `2198 passed, 6 skipped`; `repo_hygiene` `111 passed, 1 skipped`;
+  `integration` in `/home/mak` `373 passed`. In a worktree the integration lane
+  reports 14 failures that also pass in `/home/mak` and name none of this code:
+  they need generated material and `.claude` job directories that only exist
+  there. Same class as the `repo_audit` defect fixed above, 14 more instances,
+  recorded and not chased.
+- What is NOT done, so nobody reports it as finished: nothing writes claims
+  yet. Raising a claim's state, completing a declared caption or authoring a
+  `significa` reading are all still human acts with no surface in the mesa --
+  the panel says what would close a slot and names the candidates, and the
+  operator acts elsewhere. That is the next real step in his architecture.
 
 # Operational Handoff
 

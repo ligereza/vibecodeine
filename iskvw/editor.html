@@ -874,6 +874,15 @@
   /* The remedy is guidance, not alarm: the engine already says what would close
      the slot, so it must not read in the same red as the shortfall itself. */
   .mesa-purpose small.mesa-purpose-remedy{color:#9cb09e;line-height:1.5}
+  /* One block per blocking slot. `is-near` is work waiting for a decision;
+     `is-absent` is the archive not producing that kind of statement at all.
+     They carry different edges on purpose: the second is not more evidence. */
+  .mesa-purpose-slot{margin:6px 0 0;padding:6px 8px;border-left:2px solid #55735c;background:#0c0b0e}
+  .mesa-purpose-slot.is-absent{border-left-color:#7a6a4a}
+  .mesa-purpose-slot b{color:#d9f1dc;font-size:.5rem;letter-spacing:.04em;text-transform:uppercase}
+  .mesa-purpose-slot span{margin-left:6px;color:#9cb09e;font-size:.46rem}
+  .mesa-purpose-slot p{margin:3px 0 0;color:#c9e5cb;font-size:.48rem;line-height:1.45}
+  .mesa-purpose-slot small{display:block;margin-top:3px;color:#9cb09e;font-size:.44rem;word-break:break-word}
   .mesa-purpose-actions{margin-top:6px}
   .mesa-purpose-actions button{padding:3px 9px;border:1px solid #55735c;border-radius:999px;background:rgba(11,18,13,.9);color:#c9e5cb;font:inherit;font-size:.5rem;cursor:pointer}
   .mesa-purpose-actions button:hover{border-color:#b4e7bc;background:#17291b;color:#f3fff4}
