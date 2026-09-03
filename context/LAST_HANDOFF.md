@@ -1453,6 +1453,144 @@ authorized, the existing release/publish procedure; do not regenerate
   measurement exposed: recording permission, without which no format can be
   declared valid.
 
+### A format written against what the archive has -- 2026-09-02
+
+- The operator's correction, and it reversed the approach: "no se busca llegar
+  al 99%, se crean los formatos de portafolio, y para cada formato sus
+  requerimientos y asi se hace trampa; tu dejas de luchar con lo falso y pasas
+  a ser artista, crea". Every existing format composed as invalid because it
+  demanded a `min_permission` no record carries, and the reflex -- mine -- was
+  to go fix the archive until it met the formats. But he authors the formats.
+  The frame is his to set, and a format that declares requirements the corpus
+  already meets is not a concession; it is the decision about who defines
+  sufficiency.
+- Two instruments were built before that correction landed and both were
+  measuring, not producing. `copilot.friction_map()` reports coverage and
+  normalised Shannon entropy per dimension -- the operator's own July research
+  named the output first: "un mapa de friccion, no una puntuacion de
+  productividad", in `solid_hpi_quantified_self/`, researched and never
+  implemented. Its finding on the real corpus: `date` and `directory` are the
+  only axes that order, `directory` is itself a projection of date
+  (`stories/YYYYMM`), and `status` covers 7044 of 7044 records with a single
+  value -- perfectly clean, ordering nothing, which is exactly "limpio pero
+  desordenado" made computable.
+- The map refuted itself once and was corrected: `publication` scored entropy
+  0.986 across 6586 distinct values over 7044 records and was reported as an
+  ordering axis. Maximum entropy is not maximum order -- it is one drawer per
+  object, which is the filesystem's own illusion. A `granularity` term now
+  separates `identifica` from `ordena`, and under it the archive has two real
+  axes, not three.
+- `F8-temporada` is the created format: four slots standing only on a dated
+  artifact on disk, the two dimensions with full coverage, and asking for no
+  permission at all. `picos` orders by density of registro, `continuidad` by
+  unbroken runs, `silencios` by the borders of the longest gaps, and `voz` by
+  the pieces the author actually wrote about. It declares `ocurrio` and forbids
+  `es_mio`, `significa`, `hice_esta_parte` and `vale_mas`, and its forbidden
+  inferences carry the ones this particular format could invite: a silence in
+  the archive is not an absence of work, density of registro is not intensity
+  of work, a publishing run is not a production run.
+- It composes VALID on the real archive: 72 pieces, four slots satisfied, zero
+  invalid reasons, `R_G` 1.0, `T` 1.0, redundancy 0, `U` 0. The first portfolio
+  format this system can actually produce. Its reading of the corpus is real:
+  the day 27 things were registered (2020-09-08), the 39-day unbroken stretch
+  from 2020-06-28, the borders of the 69-day silence between 2018-12-13 and
+  2019-02-21, and the pieces carrying the longest text.
+- `compose_order` gained declared ordering criteria -- `density`, `run`, `gap`,
+  `voice`, with chronology as the fallback -- taken from the operator's own list
+  of ways to order. A criterion the engine does not know falls back to
+  chronology and SAYS SO in `criterion_applied`, because silently ordering by
+  something other than what was asked is the defect, not the fallback.
+- A silence is shown by its borders and never filled: the evidence of a gap is
+  the last record before it and the first after, so the slot exhibits the
+  interval without claiming anything happened inside it. A test pins that
+  nothing may be invented in there.
+- Known and declared behaviour, found by a test rather than in production:
+  composition is greedy in declaration order and never reuses a piece, so a
+  corpus smaller than the sum of the slot maxima starves the later slots. It
+  fails loudly -- every starved slot reports its own shortfall and the format
+  reports invalid -- and the real archive holds 7044 against a maximum of 72.
+- Figures: `tests/test_copilot.py` `53 passed`; `mak` `2193 passed, 5 skipped`;
+  `repo_hygiene` `100 passed`; `integration` `373 passed`; `git diff --check`
+  exit 0.
+- Nothing was published, promoted or written to the archive. The composition
+  carries `promotion: none` and `owner: human`; no record was labelled or
+  linked to produce it.
+- What this leaves for the operator: F8 is one format and the point is that
+  there are N. The engine now takes a declared purpose with declared criteria
+  and returns an order it can defend, so writing the next format is an
+  authoring act, not an engineering one.
+
+### The production chain was whole; only the wire was missing -- 2026-09-02
+
+- The operator said it twice and was right both times: "eres el eslabon, lo mas
+  probable que todo ya exista y solo faltaba conectar". This section records a
+  duplication I built and then retired, and the connection that was the actual
+  work.
+- What already existed, entire, in the FLUJO motor:
+  `portfolio_claims.compile_portfolio_claims()` ->
+  `portfolio_render.assess_feasibility()` -> `render_portfolio()` ->
+  `render_markdown()`, with `portfolio_format.validate_portfolio_format()` /
+  `load_format_library()` policing the format schema. Nothing in MAK ran it.
+- What I built instead, and removed: `copilot.compose_order()` /
+  `compose_orders()`, `friction_map()`, the ordering criteria, the
+  `/api/portfolio/copilot/orders` route and a format `F8-temporada`. The
+  composer reimplemented `render_portfolio` worse -- the real one assigns each
+  claim to the slot that fits fewest, which solves the starvation I had
+  declared as "known greedy behaviour". All of it is gone; a parallel engine is
+  the thing `AGENTS.md` forbids before checking the existing implementation.
+- The search that produced the duplication was incomplete, and that is the
+  lesson worth keeping. I grepped `cultura/`, `tools/`, `tests/`, `docs/` and
+  `portfolio_dossier.py`, found no consumer of `data/portfolio_formats`, and
+  concluded "nothing composes an order from them". The composer was in
+  `portfolio_render.py`, one file over in the sibling checkout. Concluding
+  absence from a bounded search is the defect this repo names most often, and I
+  committed it after writing a memory about it.
+- The measurement that inverted everything: the chain's input is the CLAIM
+  BASE, not the archive rows. A claim carries `verb`, `layer`, `state`,
+  `permission`, `supported_by`, `independent_route_count` and what would refute
+  it -- exactly what a slot declares with `claim`, `min_state` and
+  `min_permission`. My earlier finding that "zero of 7044 records carry a
+  permission, so all six formats are invalid" was measuring the wrong layer:
+  every compiled claim carries one. The formats were never blocked.
+- Run today against the real sources, all eight present: 278 claims
+  (`observed` 175, `candidate` 74, `supported_candidate` 27,
+  `externally_attested` 2; verbs `puedo` 214, `ocurrio` 46, `hice_esta_parte`
+  18). Four of six formats RENDER: `F1-trayectoria` 30 pieces,
+  `F2-capacidad-visual-musica-eventos` 24, `F3-rol-tecnico` 16, and
+  `F4-fondart-nacional-investigacion-2027` 28. The two that do not fail for
+  honest reasons: barberia has no observed `puedo` evidence, and
+  `F7-lectura-curatorial` needs `significa` claims, which the compiler never
+  produces because meaning is not derivable from archive evidence.
+- The rendered Fondart document is already what it should be: every item
+  carries its evidence route, its second route and its refutation condition
+  ("se refuta si..."), plus a `No sirve para` section naming the eight hard
+  gates and eight required documents it does not cover, and a `control` block
+  with source_rescan, physical_mutation, database_write, network_called,
+  publication, submission, signed_document, authorship_claimed and
+  training_permitted all false.
+- The wire: `GET /api/portfolio/production` in `hub.py` compiles the claim base
+  once, caches it, renders the library and reports per format its status, item
+  count, render hash, feasibility and control block; `?format_id=` adds the
+  rendered markdown and `?refresh=1` recompiles. It names all eight sources and
+  reports each as present or absent instead of treating a missing one as empty.
+- Tests in `tests/test_hub_second_witness_routes.py` (lane `mak`): the Hub
+  consumes the four engine entry points and defines no second composer; every
+  source is named and checked; and the route performs no write -- checked by
+  AST over calls, because the first version grepped the body for "publish" and
+  failed on the very keys that declare it does not publish, which is the third
+  time today I read a mention as a use.
+- Figures: `tests/test_copilot.py` `42 passed` after the removals;
+  `tests/test_hub_second_witness_routes.py` `14 passed`; `mak` `2185 passed,
+  5 skipped`; `repo_hygiene` `100 passed`; `integration` `373 passed` -- the
+  lane my format file had broken by adding an unknown field to a schema the
+  motor validates strictly.
+- Nothing was published, signed or promoted. The chain is read-only by its own
+  contract and the route adds no way around it.
+- Next: the two `.claude/jobs/3428381a/tmp/` inputs are scratch paths from a
+  past agent job. They exist today and the chain degrades honestly without them
+  (they are optional), but a production input living in a temp directory is a
+  source that can vanish without anyone noticing.
+
 # Operational Handoff
 
 ## Agent bootstrap -- CURRENT -- 2026-09-02 (later) -- the suites, and the boundary the operator corrected

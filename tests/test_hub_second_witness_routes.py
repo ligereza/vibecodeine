@@ -253,3 +253,77 @@ class TestPortfolioAuditMissingItem:
         assert code == 404
         assert payload == {"ok": False, "error": "item_no_encontrado",
                            "source_id": "does-not-exist"}
+
+
+# ---------------------------------------------------------------------------
+# The production chain was whole; only the wire was missing
+# ---------------------------------------------------------------------------
+#
+# `compile_portfolio_claims` -> `assess_feasibility` -> `render_portfolio` ->
+# `render_markdown` already existed in the FLUJO motor and nothing ran it from
+# the Hub, so six declared formats looked unbuildable. Measured 2026-09-02:
+# eight of eight sources are present and four of the six render, the Fondart one
+# among them. The input is the CLAIM BASE, never the archive rows -- a claim
+# carries verb, layer, state, permission, its supporting route and what would
+# refute it, which is exactly what a slot declares. Feeding raw inbox records
+# instead is what made every format look blocked on a permission nobody records.
+
+
+def test_the_hub_wires_the_existing_production_chain():
+    from pathlib import Path
+
+    source = (Path(__file__).parents[1] / "cultura" / "mak_plataforma"
+              / "hub.py").read_text(encoding="utf-8")
+    assert '"/api/portfolio/production"' in source
+    assert "def _portfolio_production(" in source
+    # The chain is consumed, not reimplemented: no second composer lives here.
+    for engine in ("compile_portfolio_claims", "render_portfolio",
+                   "assess_feasibility", "load_format_library"):
+        assert engine in source, engine
+    assert "def compose_order" not in source
+
+
+def test_every_source_of_the_chain_is_named_and_checked():
+    """A missing source must be reported, never silently treated as empty."""
+    from cultura.mak_plataforma import hub
+
+    assert set(hub.PORTFOLIO_PRODUCTION_SOURCES) == {
+        "index", "authority", "archive", "practices", "attestations",
+        "declared_inputs", "blend_targets", "screen_setup_root"}
+    reported = hub._portfolio_production_sources()
+    assert set(reported) == set(hub.PORTFOLIO_PRODUCTION_SOURCES)
+    for name, row in reported.items():
+        assert set(row) == {"path", "present"}
+        assert isinstance(row["present"], bool), name
+
+
+def test_the_route_never_publishes_or_signs():
+    """Production is a reading. The renderers already return a control block
+    with everything false; the wire must not add a way around it.
+
+    Checked as WRITES, not as words: the first version grepped the body for
+    "publish" and failed on the very keys that declare it does not publish --
+    the same confusion as reading a comment as a call.
+    """
+    import ast
+    from pathlib import Path
+
+    source = (Path(__file__).parents[1] / "cultura" / "mak_plataforma"
+              / "hub.py").read_text(encoding="utf-8")
+    tree = ast.parse(source)
+    function = next(node for node in ast.walk(tree)
+                    if isinstance(node, ast.FunctionDef)
+                    and node.name == "_portfolio_production")
+    body = ast.unparse(function)
+    assert '"promotion": "none"' in body.replace("'", '"')
+    assert '"owner": "human"' in body.replace("'", '"')
+    # No write of any kind: no file opened for writing, no append, no commit.
+    for call in ast.walk(function):
+        if not isinstance(call, ast.Call):
+            continue
+        target = ast.unparse(call.func)
+        assert not target.endswith((".write", ".writelines", ".commit",
+                                    ".append_item", ".append_review")), target
+        if target == "open":
+            modes = [ast.unparse(a) for a in call.args[1:]]
+            assert not any("w" in m or "a" in m for m in modes), modes
