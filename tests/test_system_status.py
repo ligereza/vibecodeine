@@ -30,7 +30,7 @@ def test_system_status_is_read_only_and_redacts_provider_values(tmp_path: Path, 
     repo = tmp_path / "flujo"
     physical = tmp_path / "mak"
     for relative in (
-        "agents.md",
+        "AGENTS.md",
         "cultura/mak_plataforma/hub.py",
         "src/flujo/knowledge/project_api.py",
         "web/package.json",
@@ -78,10 +78,14 @@ def test_system_status_is_read_only_and_redacts_provider_values(tmp_path: Path, 
     assert before == after
 
 
+# The fixtures below name `AGENTS.md`: the lowercase `agents.md` was deleted on
+# 2026-09-03 with every other contract file, and `_repo_component` now requires
+# the one contract that exists. A fixture keeping the old name would assert a
+# file the repo deliberately no longer has.
 def test_repo_component_finds_motor_in_the_sibling_flujo_checkout(tmp_path: Path) -> None:
     repo = tmp_path / "mak"
     for relative in (
-        "agents.md",
+        "AGENTS.md",
         "cultura/mak_plataforma/hub.py",
         "flujo/src/flujo/knowledge/project_api.py",
         "web/package.json",
