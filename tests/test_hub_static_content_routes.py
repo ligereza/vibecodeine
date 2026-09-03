@@ -175,19 +175,19 @@ class TestRelevoPage:
         assert "RELEVO_MAK.md" in body
         assert "<h1>Estado</h1>" in body
 
-    def test_relevo_falls_back_to_last_handoff_when_primary_is_missing(
+    def test_relevo_falls_back_to_the_historical_record_when_primary_is_missing(
             self, tmp_path, monkeypatch):
         monkeypatch.setattr(hub, "RELEVO", str(tmp_path / "does-not-exist.md"))
         monkeypatch.setattr(hub, "_REPO_ROOT", str(tmp_path))
         context_dir = tmp_path / "context"
         context_dir.mkdir()
-        (context_dir / "LAST_HANDOFF.md").write_text("# Fallback\n\nresumen", encoding="utf-8")
+        (context_dir / "HANDOFF_HISTORICO.md").write_text("# Fallback\n\nresumen", encoding="utf-8")
 
         handler = _get("/relevo")
 
         kind, body, code = handler.last
         assert code == 200
-        assert "context/LAST_HANDOFF.md" in body
+        assert "context/HANDOFF_HISTORICO.md" in body
         assert "<h1>Fallback</h1>" in body
 
     def test_relevo_without_any_source_says_so_instead_of_failing(self, tmp_path, monkeypatch):

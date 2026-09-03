@@ -127,7 +127,6 @@ NO_REFERENCE_CLASSIFICATIONS = {
     "gen_dashboard_productoras": {"status": "manual_only", "source": "capabilities_5_ter"},
     "gen_iskvw_prototipo": {"status": "manual_only", "source": "capabilities_5_ter"},
     "gen_presentacion_db": {"status": "manual_only", "source": "capabilities_5_ter"},
-    "handoff": {"status": "manual_only", "source": "cli_declared"},
     "instalar_enviar_a_mak": {"status": "historical_support", "source": "cli_declared"},
     "mak_fuse_roots": {"status": "historical_support", "source": "cli_declared"},
     "mak_materialize_fused_root": {"status": "historical_support", "source": "cli_declared"},

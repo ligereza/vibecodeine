@@ -72,7 +72,15 @@ def test_tool_consumer_inventory_is_explicit_and_bounded():
     # 105 -> 106 on 2026-09-02: `gen_campo_iskvw.py` came back to MAK by
     # consumer (commit ea847e0b), after this pin was written (4bba4e98). The
     # ratchet did its job -- it caught a real inventory move.
-    assert result["count"] == 106
+    #
+    # 106 -> 104 on 2026-09-03: `agent_bootstrap.py` and `handoff.py` were
+    # deleted by the operator's order. Both existed to manufacture "current
+    # state" out of documents -- the first emitted a hash-pinned packet from
+    # `agents.md` plus the handoff, the second printed a template to paste into
+    # the handoff. The active document is now `DECISIONES.md`, which holds
+    # decisions and no facts, and the facts come from `tools/mak_status.py`.
+    # Neither tool had a consumer other than its own test.
+    assert result["count"] == 104
     assert len(result["files"]) == result["count"]
     summary = result["summary"]
     assert summary["with_production_reference"] + summary["tests_only"] \

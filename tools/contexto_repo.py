@@ -93,15 +93,15 @@ _TASK_ROUTES = [
     (("flyer", "suplemento", "dark", "vectoriz", "logo", "pieza", "brief", "packs", "svg"),
      [".claude/skills/entregas-rd/", ".claude/skills/taller-svg-rd/SKILL.md",
       "assets/logo/", "svg/suplementos_rd/ (derivar: muchos SVG)"]),
-    (("voz", "gemini", "agente", "handoff", "contexto"),
-     ["CLAUDE.md (seccion 'Equipo multi-agente')", "context/LAST_HANDOFF.md"]),
+    (("voz", "agente", "handoff", "contexto"),
+     ["AGENTS.md", "DECISIONES.md"]),
     (("resolume", "chataigne", "noisette"),
      ["flujo/src/flujo/resolume/automator.py",
-      "BLOQUEADOR: sin .noisette real; no adivinar el schema (ver LAST_HANDOFF)"]),
+      "BLOQUEADOR: sin .noisette real; no adivinar el schema"]),
     (("airdrop", "entrega", "release"),
      ["docs/AGENT_AIRDROP_PROTOCOL.md", "scripts/validate_airdrop.py"]),
     (("test", "pytest"),
-     ["tests/", "CLAUDE.md (seccion 'Verificacion minima')"]),
+     ["tests/", "context/test_lane_map.json"]),
 ]
 
 
@@ -109,7 +109,7 @@ def _task(keywords: str):
     kw = keywords.lower()
     print(f"# CONTEXTO PARA LA TAREA: {keywords}\n")
     print("== LEER PRIMERO (fuente de verdad, barato) ==")
-    for r in ("CLAUDE.md", "context/LAST_HANDOFF.md"):
+    for r in ("AGENTS.md", "DECISIONES.md"):
         print(f"  {r}")
     hits = [routes for keys, routes in _TASK_ROUTES if any(k in kw for k in keys)]
     print("\n== RUTAS RELEVANTES A LA TAREA ==")

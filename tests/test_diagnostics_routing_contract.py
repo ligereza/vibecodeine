@@ -79,28 +79,56 @@ def test_a_declared_check_never_names_a_test_file_this_branch_lacks():
                     assert (ROOT / token).is_file(), (name, check, token)
 
 
-def test_the_core_domain_routes_to_the_uppercase_contract():
+def test_the_core_domain_routes_to_the_only_contract_that_exists():
+    """`AGENTS.md` is the single contract file, created from zero 2026-09-03.
+
+    Every previous one was deleted by the operator's order: `CLAUDE.md`, the
+    old `AGENTS.md`, the lowercase `agents.md`, and the three
+    `contracts/departments/*/agents.md`, in both operational checkouts. Routing
+    `core` at any of them would send an agent to a file that is gone, and a
+    routed absence reads as a lost file rather than as a decision.
+    """
     core = _domains()["core"]
     assert "AGENTS.md" in core["read_paths"], core["read_paths"]
-    assert "agents.md" not in core["read_paths"], (
-        "the lowercase file is the superseded 2026-08-31 contract")
+    assert "DECISIONES.md" in core["read_paths"], core["read_paths"]
+    for deleted in ("CLAUDE.md", "agents.md", "context/LAST_HANDOFF.md"):
+        assert deleted not in core["read_paths"], deleted
+    assert not (ROOT / "CLAUDE.md").exists(), "it was deleted, not renamed"
+    assert not (ROOT / "agents.md").exists()
+    # History is not a first read. Routing the record as reading turns it back
+    # into state, which is exactly what renaming it was meant to stop.
+    for name, cfg in _domains().items():
+        assert "context/HANDOFF_HISTORICO.md" not in cfg["read_paths"], name
 
 
-def test_a_case_variant_of_the_contract_declares_that_it_is_superseded():
-    """Two entry points differing only in case is a trap, so the loser says so.
+def test_no_domain_tells_an_agent_to_avoid_a_machine_that_is_gone():
+    """`WIN raw archive` sat in all five `do_not_read` lists.
 
-    Both `AGENTS.md` and `agents.md` are tracked at this root and each was
-    written as the entry point. They are not deleted -- the repo classifies
-    historical work instead of removing it -- so the older one carries a header
-    naming the current file. On a case-insensitive filesystem only one of the
-    two lands, and then there is nothing to disambiguate.
+    There is no Windows node: the operator confirmed on 2026-09-03 that it was
+    an old computer and is gone. An instruction to avoid a surface that does
+    not exist teaches the topology wrong, and the real bulk surface to keep out
+    of a first read is the mounted SSD.
+    """
+    for name, cfg in _domains().items():
+        avoid = cfg.get("do_not_read", [])
+        assert avoid, "%s must still declare what to keep out of a first read" % name
+        for entry in avoid:
+            assert "WIN" not in entry, (name, entry)
+            assert "Windows" not in entry, (name, entry)
+
+
+def test_there_is_exactly_one_contract_file_and_no_case_variant():
+    """Two entry points differing only in case was the trap; it is gone.
+
+    `AGENTS.md` and `agents.md` were both tracked at this root and each was
+    written as the entry point, so on a case-sensitive filesystem they were two
+    files and an agent could be routed to either. On 2026-09-03 the operator
+    ordered every contract file deleted and one `AGENTS.md` written from zero.
+    What this pins is the property, not the names: one contract, no variant.
     """
     variants = sorted(path.name for path in ROOT.iterdir()
-                      if path.is_file() and path.name.lower() == "agents.md")
-    assert "AGENTS.md" in variants, variants
-    for name in variants:
-        if name == "AGENTS.md":
-            continue
-        head = (ROOT / name).read_text(encoding="utf-8")[:1200]
-        assert "SUPERSEDED" in head, name
-        assert "AGENTS.md" in head, name
+                      if path.is_file() and path.name.lower() in
+                      ("agents.md", "claude.md"))
+    assert variants == ["AGENTS.md"], variants
+    # And the departments no longer carry their own competing copies.
+    assert not sorted((ROOT / "contracts").rglob("[aA][gG][eE][nN][tT][sS].md"))

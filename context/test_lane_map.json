@@ -15,21 +15,6 @@
       "resolution_evidence": "reads only tools/adobe_panel assets and docs; no local import",
       "status": "resolved"
     },
-    "tests/test_agent_bootstrap.py": {
-      "ast_lane": "mak",
-      "ast_reason": "imports box layer",
-      "imports": [
-        "__future__",
-        "pathlib",
-        "tools.agent_bootstrap",
-        "unittest"
-      ],
-      "lane": "mak",
-      "path_inference_lane": "mak",
-      "reason": "persisted AST assignment",
-      "resolution": "agreement",
-      "status": "agreement"
-    },
     "tests/test_archive_portfolio_department.py": {
       "imports": [
         "src.flujo.departments"
@@ -3112,21 +3097,6 @@
       "resolution": "agreement",
       "status": "agreement"
     },
-    "tests/test_un_solo_documento.py": {
-      "ast_lane": "repo_hygiene",
-      "ast_reason": "no local import; tree/git/docs signal",
-      "imports": [
-        "__future__",
-        "pathlib",
-        "re",
-        "subprocess"
-      ],
-      "lane": "repo_hygiene",
-      "path_inference_lane": "repo_hygiene",
-      "reason": "persisted AST assignment",
-      "resolution": "agreement",
-      "status": "agreement"
-    },
     "tests/test_utilidades_mak_sanidad.py": {
       "ast_lane": "review",
       "ast_reason": "mapping incomplete",
@@ -3353,7 +3323,7 @@
     }
   },
   "generated_at_utc": "2026-09-02T00:44:00+00:00",
-  "reconciled_at_utc": "2026-09-02T15:41:44Z",
+  "reconciled_at_utc": "2026-09-03T00:00:00Z",
   "root": "/home/mak",
   "schema": "mak-test-lane-map-v3",
   "source": {

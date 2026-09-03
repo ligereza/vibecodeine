@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo \"THE ONE RULE (2026-07-26, user's words): the user is NOT a software expert, he IS an expert on what he wants. A path that is optimal for TECHNICAL reasons: go ahead without asking (code, rules, config). Assuming a style, an aesthetic, or what the user wants: that is the error, ask instead. Corollaries: THERE IS NO DELIVERABLE, do what was asked and nothing more; a finding along the way gets one line and you move on, never chase it; big steps, not commit+CI every two changes; the repo is a USB stick, the conversation is the center. State: context/LAST_HANDOFF.md (single checkpoint, stores ANSWERS not questions). LANGUAGE: speak Spanish to the user, write everything else in English (code, memory, docs, commits, PRs); the ONLY exception is what a human reads as a product -- RD pieces and data, iskvw curation -- which must be correct Spanish WITH diacritics, because a title reading 'reduciendo ano' instead of 'reduciendo dano' can cost the user his job. Personal data (absolute paths, IPs, phone numbers, credentials) goes to local memory, NEVER to the repo: it is public.\""
+            "command": "echo \"AGENTS.md is the only contract: read it. Decisions: DECISIONES.md. Facts: .venv/bin/python tools/mak_status.py -- never a document. context/HANDOFF_HISTORICO.md is a record, not the state. The authority is the operator: ask him, or measure the machine.\""
           }
         ]
       }
