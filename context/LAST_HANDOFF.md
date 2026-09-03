@@ -1731,6 +1731,38 @@ authorized, the existing release/publish procedure; do not regenerate
   child. Recorded in the assistant's memory with the rule: bound searches to
   the directories that rule, never `/home/mak` whole, never `-L`.
 
+### A ledger cache tried and rejected -- 2026-09-02
+
+- Recorded so nobody repeats it. After the inbox cache cut a warm scene from
+  1.19 s to 0.30 s, the remaining repetition was the append-only ledger: one
+  scene read the whole 729 KB file eight times -- `_portfolio_external_candidates()`
+  runs four times per scene and each run reads it twice, once directly and once
+  through `_portfolio_external_review_rows()`. A cache keyed the same way as
+  the inbox brought a warm scene to 0.221 s.
+- It was reverted. Two defects, both real and neither confined to tests:
+  1. **Mtime and size are not a sufficient key for this file.** An idempotent
+     retry rewrites the same bytes, so two writes of equal size inside one
+     filesystem timestamp tick produce an identical signature and the next read
+     serves the pre-write rows. Making the Hub's two writers clear the cache
+     fixed part of it and took the failures from 11 to 8.
+  2. **The key ignores the identity of the reader.** Several tests substitute
+     `hub._ledger` with an in-memory double that never touches the filesystem,
+     and the cache keeps answering from the real file's stat. Keying on the
+     reader too would be cleverness layered on a cache that was already
+     guessing.
+- The trade decided it: 77 ms on a route already at 0.30 s, against a cache
+  over the file that records the operator's own decisions, with two
+  demonstrated staleness paths. Showing a person a decision they just made as
+  not yet made is worse than 77 ms, and the eleven failures were the suite
+  saying so.
+- The tree is byte-identical to `d4ee909b`; only the inbox cache remains. `mak`
+  `2188 passed, 5 skipped`, `repo_hygiene` `100 passed`, and warm scenes over
+  HTTP at 0.287-0.313 s.
+- If this is attempted again, the honest shape is not a cache but fewer calls:
+  `_portfolio_external_candidates()` running four times inside one scene is the
+  actual defect, and passing one computed surface down instead of recomputing
+  it would remove the reads without caching anything.
+
 # Operational Handoff
 
 ## Agent bootstrap -- CURRENT -- 2026-09-02 (later) -- the suites, and the boundary the operator corrected
