@@ -20,6 +20,9 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[1]
+# The FLUJO checkout, as seen from this one. It is a separate worktree excluded
+# from this branch, so a path under it resolves on the box and nowhere else.
+PEER_CHECKOUT = "flujo"
 WEB_SRC = ROOT / "web" / "src"
 MODULE_SUFFIXES = {".ts", ".tsx"}
 STALE_TOKENS = (
@@ -424,9 +427,23 @@ def _db_inventory() -> list[dict[str, Any]]:
             "exists": path.is_file(),
             "consumers": list(DB_CONSUMERS.get(relative, ())),
         }
+        # Most declared consumers of these databases are motor files under
+        # `flujo/`, which is the FLUJO checkout: a separate worktree, excluded
+        # from this branch, present on the box and absent from a fresh clone or
+        # any agent worktree. Checking them as if they were tracked content
+        # reported four consumers "missing" and flipped `ok` to False, so the
+        # audit read as a broken inventory whenever it ran anywhere but
+        # /home/mak. Measured 2026-09-02. Absent-because-elsewhere is not a
+        # finding; it is the topology, and it gets its own field.
+        peer = [consumer for consumer in item["consumers"]
+                if Path(consumer).parts[:1] == (PEER_CHECKOUT,)]
+        peer_present = (ROOT / PEER_CHECKOUT).is_dir()
+        item["peer_consumers"] = list(peer)
+        item["unverifiable_consumers"] = [] if peer_present else list(peer)
         item["missing_consumers"] = [
             consumer for consumer in item["consumers"]
             if not (ROOT / consumer).is_file()
+            and consumer not in item["unverifiable_consumers"]
         ]
         if not path.is_file():
             inventory.append(item)

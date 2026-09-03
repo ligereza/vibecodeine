@@ -1826,6 +1826,114 @@ authorized, the existing release/publish procedure; do not regenerate
   from the SSD index entirely. The 80% is his archive stored compressed, not
   disorder. Nothing was deleted.
 
+### Adversarial pass over the same session, then the routing layer -- 2026-09-02
+
+Run from the operator's own inbox note, which asked a fresh agent to attack the
+previous session rather than continue it. Two defects were confirmed against
+real data with the suite green beside them, so the green suite was not
+measuring either one. Both are fixed and pinned; nothing was deleted or moved.
+
+- **An empty visual reading was reported as evidence PRESENT.**
+  `normalize_vision` always emits its four feature keys, so a read that
+  returned nothing is stored as `{"visual_terms": [], ...}`: a truthy dict
+  holding nothing. `evidence_readiness` decided on the container, so 2 of the
+  30 records in the real perception index reported `perception: present`,
+  `missing: []`, `decision: decidable`. The branch written for exactly this
+  case (`indexado y sin lectura utilizable` -> `absent`) was unreachable from
+  the only caller, because `hub.py` passes `vision` and `vision_indexed` from
+  the same dict: if the id is indexed, `vision` is never `None`. Introduced by
+  `a4fa8f59`. Fixed by measuring the content (`any(features.values())`), and
+  `absent` now also holds when the row itself is in hand. The two rows move to
+  `absent` / `decidable_con_reservas`; the other 28 do not move.
+- **The purposes panel named satisfied slots as lacking evidence.**
+  `feasibility.slots` is every DECLARED slot; the ones lacking evidence are
+  `feasibility.blocking`, which also carries `shortfall`, `reason` and
+  `what_would_close_it`. Measured against the live route,
+  `F2-capacidad-barberia` declares 5 slots and only `consistencia` blocks,
+  while the panel printed `tecnicas - escala - consistencia`, two of them
+  satisfied; with only three shown, a blocker declared fourth or later
+  disappeared. Introduced by `bd68366e`, the commit that closed the previous
+  session. Fixed to read the verdict layer, to show `1 de 5 declaradas`, and to
+  print what would close it, which the engine was already serving.
+- **The number cited to justify that logic belonged to another index.** "The
+  perception index covered 100 of 7044 records" appeared in `copilot.py`,
+  `hub.py` and a test docstring. Measured: `vision_features.jsonl` holds 33
+  lines over 30 distinct ids. The 100 is `derived/visual-index/neighbors.json`,
+  the CLIP index -- a different surface. Corrected where it justified code.
+- **A latent hazard closed at no cost.** `_explicit_overlap` accepted a bare
+  hoisted list, so nothing stopped a caller pairing one facet's folded values
+  with another facet's comparison. It now takes the whole folded index and
+  looks the facet up itself, which makes the mismatch impossible to express; a
+  bare list still works, so `e6c37c4c`'s existing caller and test are untouched.
+- **Refuted, with the measurement, so it is not re-attacked.** The inbox cache
+  (`d4ee909b`) does not carry the ledger's same-size-rewrite flaw: all five
+  sources are append-only, so size strictly grows and the signature always
+  changes. Its real structural risk is the shared mutable payload its own test
+  asserts by identity, and nine consumers were compared before and after
+  (`_portfolio_scene`, `_portfolio_audit`, `_portfolio_suggestions`,
+  `_portfolio_identity_graph`, `_portfolio_organism_projection`,
+  `_portfolio_learning`, `_portfolio_external_candidates`,
+  `_portfolio_metadata_index`, `_portfolio_item`): zero mutations.
+- **A layer trap avoided by measuring instead of reading.** Inbox items carry
+  `descripcion_original` and `evidence_readiness` reads `description`, which
+  looks like a third defect. It is not: the record it receives comes from the
+  contract, not the raw inbox, and does carry a normalized `description`.
+  Confirmed on the live route, not by reading code.
+
+Then the area asked for next: something still broken. The Hub API is not it --
+all 59 routes answer and the 7 that error only want a parameter. The broken
+layer is the one that tells a fresh agent what to read.
+
+- `context/diagnostics/domains.json` is MAK's own routing table, read by
+  `/api/diagnostics` and by `flujo diagnose`, and it was a verbatim copy of the
+  motor's built-in defaults. 4 of its 23 `read_paths` did not exist here (all
+  `src/flujo/*`, which MAK by contract cannot carry) and the report published
+  them as `missing_read_paths` -- an absence presented as a finding, which is
+  how an agent concludes a file was lost and rebuilds it. Fixed to MAK's real
+  surfaces; `missing_read_paths` is now empty for all five domains.
+- `core` routed the first read to the lowercase `agents.md`. **Both
+  `AGENTS.md` and `agents.md` are tracked at this root**, differ only in case,
+  and each was written as the entry point; the lowercase one is the 2026-08-31
+  contract and says `/home/mak/flujo` is the baseline, which the 2026-09-02
+  topology replaced. Neither file was deleted or moved: the lowercase one now
+  opens with a dated supersession header naming the current file and the two
+  claims that no longer hold, and `core.md` explains that the motor lives in
+  the FLUJO checkout rather than being missing.
+- 7 of 10 declared `checks` could not run on this box: 6 invoke
+  `python3 -m flujo` or `python3 -m pytest`, neither of which resolves with the
+  system interpreter, and one named `tests/test_rd_informe.py`, absent from
+  this branch. All corrected and each one run before being declared.
+- `tools/repo_audit.py` had the same defect and it was making the `mak` lane
+  RED in every agent worktree while green in `/home/mak`: four declared
+  database consumers are `flujo/src/flujo/*`, absent wherever the sibling
+  checkout is not on disk, including a fresh clone. Absence-because-elsewhere
+  is now its own field (`peer_consumers` / `unverifiable_consumers`) and
+  `missing_consumers` keeps its teeth -- a new test adds a consumer outside the
+  peer checkout and asserts `ok` still goes False.
+
+Pinned so none of it can regress in silence: the new readiness test takes its
+shape from `normalize_vision` itself rather than hardcoding it, so it cannot
+drift from what the writer stores; two node-executed tests run the shipped
+`purposeRow` against the live response shape (skipped if `node` is absent,
+never faked);
+`tests/test_diagnostics_routing_contract.py` (6 tests, registered in
+`context/test_lane_map.json` as `repo_hygiene`) raises 10 assertions against
+the pre-fix routing map.
+
+- `mak` `2191 passed, 6 skipped` in a worktree, which was `1 failed` before the
+  audit fix; `repo_hygiene` `108 passed, 1 skipped`; the 8 new tests collected
+  in their declared lane. The verdict is still the CI matrix, not this run.
+- Open, for the FLUJO side, not fixed here: `flujo diagnose` resolves
+  `repo_root()` to `/home/mak/flujo` from any cwd, so on this box the CLI
+  diagnoses the motor and never the box. The Hub route is the only consumer
+  that reports MAK. Same shape as the doctrine caveat about a local verify
+  measuring the wrong tree.
+- Open, and the operator's call, not a defect: `READINESS_REQUIRED` is
+  `("asset", "description")`, and 3548 of 7044 records have no description
+  against 21 with no asset. So half the archive reports `abstain`, "falta lo
+  minimo para etiquetar". The code does what it declares; whether a piece with
+  no written caption is undecidable is a decision about the archive.
+
 # Operational Handoff
 
 ## Agent bootstrap -- CURRENT -- 2026-09-02 (later) -- the suites, and the boundary the operator corrected

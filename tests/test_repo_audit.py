@@ -22,6 +22,42 @@ def test_database_inventory_is_read_only_and_declares_consumers():
         assert item["missing_consumers"] == []
         if item["exists"]:
             assert item.get("integrity") == "ok"
+        # A consumer that cannot be checked here is only ever a motor file in
+        # the FLUJO checkout, never a MAK path. Measured 2026-09-02: this test
+        # passed in /home/mak and failed in every agent worktree, because four
+        # `flujo/src/flujo/*` consumers are absent wherever that sibling
+        # checkout is not on disk -- which includes a fresh clone. An absence
+        # that is the topology must not read as a broken inventory.
+        for consumer in item.get("unverifiable_consumers", []):
+            assert consumer.startswith("flujo/"), consumer
+            assert consumer in item["peer_consumers"], consumer
+
+
+def test_a_consumer_outside_the_peer_checkout_is_still_a_finding():
+    """The exemption is for the sibling checkout only, not for absence at large.
+
+    Softening the check into "absent is fine" would have hidden the very thing
+    it exists to catch: a database whose declared reader no longer exists in
+    this branch.
+    """
+    from pathlib import Path
+
+    from tools import repo_audit
+
+    original = repo_audit.DB_CONSUMERS
+    patched = dict(original)
+    first = sorted(patched)[0]
+    patched[first] = (*patched[first], "cultura/no_existe_este_consumidor.py")
+    repo_audit.DB_CONSUMERS = patched
+    try:
+        result = repo_audit.audit()
+    finally:
+        repo_audit.DB_CONSUMERS = original
+
+    item = next(row for row in result["databases"] if row["path"] == first)
+    assert "cultura/no_existe_este_consumidor.py" in item["missing_consumers"]
+    assert result["ok"] is False
+    assert not Path("cultura/no_existe_este_consumidor.py").exists()
 
 
 def test_tool_consumer_inventory_is_explicit_and_bounded():

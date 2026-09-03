@@ -744,6 +744,20 @@
       "lane": "integration",
       "reason": "reaches both physical checkouts; runs with PYTHONPATH=/home/mak:/home/mak/flujo/src"
     },
+    "tests/test_diagnostics_routing_contract.py": {
+      "ast_lane": "repo_hygiene",
+      "ast_reason": "no local import; reads the routing map and the root contracts",
+      "imports": [
+        "__future__",
+        "json",
+        "pathlib"
+      ],
+      "lane": "repo_hygiene",
+      "path_inference_lane": "repo_hygiene",
+      "reason": "reads context/diagnostics/domains.json and the root contract files; no local import and no CLI",
+      "resolution": "agreement",
+      "status": "agreement"
+    },
     "tests/test_empaquetar_assets.py": {
       "ast_lane": "mak",
       "ast_reason": "imports box layer",
