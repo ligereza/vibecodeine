@@ -39,6 +39,14 @@ decision no envejece, porque paso. Los hechos se preguntan a la maquina:
 - **Un test que defiende un modelo de documentos que ya no existe se borra**, no
   se le cambia el string para que deje de gritar.
 
+- **Nomenclatura fijada.** `MAK` solo, sin apellido, es el computador Linux.
+  La rama y el directorio se dicen completos: "la rama MAK", "el checkout MAK".
+  El repositorio se llama `vibecodeine`. Queda escrita en `AGENTS.md`.
+
+- **Separar el sistema en repos propios es lo proximo, despues de ordenar.**
+  `ligereza/MAK`, `ligereza/flujo` y `ligereza/IRIS` se dejan reservados y
+  vacios a proposito; no se borran.
+
 ---
 
 ## Anteriores, traidas a proposito
