@@ -15,6 +15,7 @@ import io
 import json
 import os
 import sys
+from pathlib import Path
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "cultura", "mak_plataforma"))
 
@@ -327,3 +328,66 @@ def test_the_route_never_publishes_or_signs():
         if target == "open":
             modes = [ast.unparse(a) for a in call.args[1:]]
             assert not any("w" in m or "a" in m for m in modes), modes
+
+
+# ---------------------------------------------------------------------------
+# The inbox cache is keyed on writes, not on a clock
+# ---------------------------------------------------------------------------
+#
+# Measured 2026-09-02: one `/api/portfolio/copilot/scene` call reached
+# `_portfolio_inbox()` seven times, each reopening the 3.8 MB inbox, rebuilding
+# 7044 dictionaries and reading four more files -- 0.41 s of the 1.19 s a warm
+# scene cost, and the interface calls that route on every piece the operator
+# selects with 6928 records still undecided. After the cache a scene is 0.30 s
+# over HTTP.
+#
+# The key is deliberately NOT a TTL, which is the convention used elsewhere in
+# this file for a graph and a rendered page. This data changes when the
+# operator decides something, so a stale window would show a person their own
+# decision not applied. Keyed on source mtimes, the write invalidates it.
+
+
+def test_the_inbox_cache_is_keyed_on_its_sources_not_on_time():
+    assert set(hub._PORTFOLIO_INBOX_SOURCES) == {
+        "PORTFOLIO_INBOX", "PORTFOLIO_SELECTIONS", "PORTFOLIO_CLASSIFICATIONS",
+        "PORTFOLIO_DRAFTS", "PORTFOLIO_VISION"}
+    signature = hub._portfolio_inbox_signature()
+    assert len(signature) == len(hub._PORTFOLIO_INBOX_SOURCES)
+    for name, mtime, size in signature:
+        assert name in hub._PORTFOLIO_INBOX_SOURCES
+        # A missing source is part of the key, so its appearance invalidates too.
+        assert (mtime is None) == (size is None)
+    assert hub._portfolio_inbox_signature() == signature, "must be stable"
+
+
+def test_a_write_to_any_source_invalidates_the_inbox_cache(tmp_path, monkeypatch):
+    """A decision must be visible on the very next read, never one window late."""
+    inbox = tmp_path / "inbox.json"
+    inbox.write_text(json.dumps({"schema": "faro-portfolio-inbox-v1",
+                                 "items": [{"id": "a.jpg"}]}), encoding="utf-8")
+    selections = tmp_path / "selections.json"
+    selections.write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(hub, "PORTFOLIO_INBOX", str(inbox))
+    monkeypatch.setattr(hub, "PORTFOLIO_SELECTIONS", str(selections))
+    monkeypatch.setattr(hub, "_PORTFOLIO_INBOX_CACHE", {})
+
+    first = hub._portfolio_inbox()
+    assert hub._portfolio_inbox() is first, "an unchanged tree must not re-read"
+
+    os.utime(selections, (0, 0))
+    assert hub._portfolio_inbox() is not first, (
+        "a write to a source must invalidate the cache")
+
+
+def test_the_uncached_reader_is_still_the_one_that_fills_the_cache():
+    """The cache wraps the reader; it does not become a second reader."""
+    source = (Path(__file__).parents[1] / "cultura" / "mak_plataforma"
+              / "hub.py").read_text(encoding="utf-8")
+    assert "def _portfolio_inbox_uncached(" in source
+    assert "_portfolio_inbox_uncached(compact=compact)" in source
+    # No clock in this cache: the other caches in the Hub may use one, this must
+    # not, because its data changes by human decision.
+    start = source.index("def _portfolio_inbox(compact=False):")
+    body = source[start:source.index("\ndef _portfolio_inbox_uncached")]
+    for clock in ("time.time", "time.monotonic", "TTL"):
+        assert clock not in body, clock

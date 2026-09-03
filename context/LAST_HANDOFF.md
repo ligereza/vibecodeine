@@ -1685,6 +1685,52 @@ authorized, the existing release/publish procedure; do not regenerate
 - `repo_hygiene` `100 passed`. The run stays gitignored: the repository is
   public and this is application material.
 
+### Hub scene latency, measured and cut -- 2026-09-02
+
+- Measured before touching anything, one pass per route: `/health` 0.0006 s,
+  `/api/status` 0.039 s, `/portafolio/` 0.003 s, `/api/portfolio/inbox`
+  0.071 s, `/api/portfolio/audit` 0.308 s, `/api/portfolio/copilot/learning`
+  0.224 s -- and `/api/portfolio/copilot/scene` **5.87 s**. Everything else was
+  under a third of a second. The scene is the route the mesa calls on every
+  piece the operator selects, with 6928 records still undecided.
+- Profiled in-process rather than guessed. Warm, a scene cost 1.186 s, of which
+  `_portfolio_suggestions` was 0.952 s. The waste was repetition, not
+  algorithm: `_portfolio_inbox()` was called SEVEN times in a single scene,
+  `_portfolio_external_candidates()` four and `_portfolio_human_context_records()`
+  three, each returning the same thing. `_portfolio_inbox` had no cache at all,
+  so every one of those seven calls reopened the 3.8 MB inbox, rebuilt 7044
+  dictionaries and read four more files -- 0.41 s of the 1.19 s.
+- The fix is a cache keyed on the SOURCE MTIMES of its five inputs
+  (`PORTFOLIO_INBOX`, `SELECTIONS`, `CLASSIFICATIONS`, `DRAFTS`, `VISION`),
+  with a missing file part of the key so its appearance invalidates too.
+  Deliberately NOT the TTL convention used elsewhere in `hub.py` for a graph
+  and a rendered page: this data changes when the operator decides something,
+  and a stale window would show a person their own decision not applied. Keyed
+  this way the write invalidates the cache and it can never be stale.
+- Result over HTTP, four consecutive real scenes: 0.295 s, 0.307 s, 0.266 s,
+  0.306 s. From 1.19 s warm to ~0.30 s, and the cold first call after a restart
+  stays around 6 s. For the operator's loop that is 6928 pending records at
+  0.3 s -- about 35 minutes of waiting instead of 2.3 hours at the old warm
+  cost, or 11.5 hours at the cold one.
+- Three tests pin the contract in `tests/test_hub_second_witness_routes.py`:
+  the key is the five named sources and is stable across calls; a write to any
+  source invalidates on the very next read, so a decision is never one window
+  late; and the cache wraps `_portfolio_inbox_uncached` instead of becoming a
+  second reader, with no clock allowed in its body.
+- `mak` `2188 passed, 5 skipped`; `repo_hygiene` `100 passed`; preflight `ok=5`
+  with zero conditions; `/portafolio/` HTTP 200 after the restart that picked
+  the change up.
+- Left measured but not acted on: `_portfolio_external_candidates` and
+  `_portfolio_human_context_records` are still called four and three times per
+  scene. They are cheaper than the inbox was and the same mtime treatment would
+  apply, but the scene is now fast enough that further work there is
+  optimisation without a complaint behind it.
+- Also cleaned this session: an orphaned `find -L /home/mak` from a killed
+  background task had been running 2 h 54 min at 35.9% CPU, descending into the
+  rclone OneDrive FUSE mount. Killing a background task does not kill its
+  child. Recorded in the assistant's memory with the rule: bound searches to
+  the directories that rule, never `/home/mak` whole, never `-L`.
+
 # Operational Handoff
 
 ## Agent bootstrap -- CURRENT -- 2026-09-02 (later) -- the suites, and the boundary the operator corrected
