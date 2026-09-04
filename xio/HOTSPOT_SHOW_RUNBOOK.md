@@ -16,7 +16,7 @@ Capa 3  internet 5G + LLM operador (futuro)       <- solo cuando hay señal (ven
 The show can use the server in two different ways: `foh_monitor` is passive
 observation, while `showcontrol` is active network control. This runbook's
 historical show path uses the passive monitor unless a show brief explicitly
-authorizes the active plugin. Check `xio/XIO_CAPABILITIES.md`; do not infer Xiaomi
+authorizes the active plugin. Check `../../CAPACIDADES_MAK.md`; do not infer Xiaomi
 installation from repository files.
 
 El show robusto corre sobre la **Capa 1**. El server y el internet son capas opcionales
