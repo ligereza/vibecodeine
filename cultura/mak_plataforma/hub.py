@@ -3019,8 +3019,17 @@ PORTFOLIO_PRODUCTION_SOURCES = {
     "archive": os.path.join(_REPO_ROOT, "iskvw", "datos", "archivo.json"),
     "practices": os.path.join(_REPO_ROOT, "data", "portfolio_practices.json"),
     "attestations": os.path.join(_REPO_ROOT, "data", "portfolio_attestations.json"),
-    "declared_inputs": "/home/mak/.claude/jobs/3428381a/tmp/declared_inputs.json",
-    "blend_targets": "/home/mak/.claude/jobs/3428381a/tmp/blend_dependency_targets.json",
+    # These two lived in `/home/mak/.claude/jobs/3428381a/tmp/` -- the scratch
+    # directory of an agent session from 2026-08-23, which the harness deletes
+    # with the job. The production chain that backs a funding application would
+    # have started answering `fuentes_ausentes` the day that cleanup ran, with
+    # nothing to say why. They are measurements of the archive (48 asset paths
+    # referenced by Blender scenes, and a per-filename count of declared
+    # inputs), so `data/` beside the other production inputs is where they
+    # belong. The originals were copied, not moved.
+    "declared_inputs": os.path.join(_REPO_ROOT, "data", "portfolio_declared_inputs.json"),
+    "blend_targets": os.path.join(
+        _REPO_ROOT, "data", "portfolio_blend_dependency_targets.json"),
     "screen_setup_root": "/media/mak/PortableSSD",
 }
 PORTFOLIO_FORMATS_DIR = os.path.join(_REPO_ROOT, "data", "portfolio_formats")

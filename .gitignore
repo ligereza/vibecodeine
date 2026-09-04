@@ -88,6 +88,11 @@ data/*.json
 # el costo es una decision. `tests/test_hub_payload_budget.py` no tiene contra
 # que comparar sin el, y sin comparacion el ratchet pasa siempre.
 !data/hub_payload_budget.json
+# Insumos de la cadena de produccion de portafolio. Vivian en el scratch de una
+# sesion de agente, que el harness borra con el job: sin ellos la cadena
+# responde `fuentes_ausentes` y no dice por que.
+!data/portfolio_declared_inputs.json
+!data/portfolio_blend_dependency_targets.json
 context/DAILY.md
 context/PIPELINE_RESULT.md
 context/dashboard.html
