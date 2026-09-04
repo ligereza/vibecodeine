@@ -116,8 +116,18 @@ class TestTheRatchetActuallyCatches:
                                             measurable: bool) -> None:
         if not measurable:
             pytest.skip("archive too small to judge")
-        fat = [row for row in measured["routes"] if "bytes_per_item" in row]
-        assert fat, "nothing was measured"
+        # Pick a route the rule will actually judge, not simply the first
+        # one measured. Since the item minimum became per route, a route
+        # holding a handful of entries comes back `sin_medir` -- correctly.
+        # Taking `fat[0]` made this test depend on route order and on how
+        # much data the checkout happens to hold: it passed on the box and
+        # failed in CI, where the first route is small.
+        fat = [
+            row for row in measured["routes"]
+            if "bytes_per_item" in row and row["items"] >= MIN_ITEMS_TO_JUDGE
+        ]
+        if not fat:
+            pytest.skip("no route holds enough entries to be judged")
         route = fat[0]["route"]
 
         tightened = {
