@@ -46,6 +46,11 @@ SCHEMA = "mak-hub-payload-budget-v1"
 # Below this the per-item figure is noise, not a measurement.
 MIN_ITEMS_TO_JUDGE = 20
 
+# Kinds that are a verdict about the code. `sin_medir` is not one: it
+# says the measurement could not mean anything, which is a fact about
+# the checkout and must not turn a gate red.
+VERDICT_KINDS = ("sobre_presupuesto", "sin_declarar")
+
 # A route whose biggest value is a list of this many entries is a collection
 # route: the per-item cost is the thing worth watching.
 MIN_ITEMS_TO_REPORT = 5
@@ -172,7 +177,32 @@ def findings(measured: dict, budget: dict) -> list[dict]:
             })
             continue
         cap = rule.get("max_bytes_per_item")
-        if cap is not None and row["bytes_per_item"] > cap:
+        if cap is None:
+            continue
+        # The minimum is per route, not per run. `_too_small_to_judge`
+        # asks whether ANY route has enough entries, so a route holding
+        # one entry was judged against a per-item ceiling anyway. On a
+        # handful of entries the ratio is fixed overhead, not per-item
+        # cost, and it climbs as the collection shrinks:
+        # `/api/portfolio/production` names its ABSENT sources, so it
+        # measured 15.4 b/item in CI, where sources are missing, and
+        # 3302.4 on the operator's box, where they are all present. The
+        # verdict tracked failure inversely. Reported, never judged --
+        # silence here would read as a pass.
+        if row["items"] < MIN_ITEMS_TO_JUDGE:
+            out.append({
+                "route": route,
+                "kind": "sin_medir",
+                "detail": (
+                    f"{row['items']} items en `{row['collection']}`, "
+                    f"menos de {MIN_ITEMS_TO_JUDGE}: "
+                    f"{row['bytes_per_item']} bytes por item es gasto "
+                    "fijo, no gasto por item. No se juzga contra el "
+                    "techo declarado."
+                ),
+            })
+            continue
+        if row["bytes_per_item"] > cap:
             out.append({
                 "route": route,
                 "kind": "sobre_presupuesto",
@@ -272,7 +302,8 @@ def main(argv: list[str] | None = None) -> int:
     for finding in found:
         print(f"  ! {finding['route']}: {finding['detail']}")
 
-    return 1 if (args.fail_on_findings and found) else 0
+    verdicts = [f for f in found if f["kind"] in VERDICT_KINDS]
+    return 1 if (args.fail_on_findings and verdicts) else 0
 
 
 if __name__ == "__main__":
