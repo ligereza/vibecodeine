@@ -4547,6 +4547,24 @@ def _call_state(closes: str, today: date | None = None):
     return "abierta", remaining
 
 
+def _regional_extension(deadlines):
+    """A declared deadline extension, or None. Never inferred.
+
+    An extension only exists here if a resolution was read and recorded with
+    the regions it covers. Applying one to the wrong region would be worse than
+    not showing it: the operator would believe they had a week they do not.
+    """
+    extension = deadlines.get("regional_extension")
+    if not isinstance(extension, dict) or not extension.get("extended_closes"):
+        return None
+    return {
+        "cierra": extension["extended_closes"],
+        "regiones": list(extension.get("applies_to_regions", [])),
+        "resolucion": extension.get("url", ""),
+        "leido": extension.get("read_on", ""),
+    }
+
+
 def _convocatorias(today: date | None = None):
     """The declared calls in data/, with how long each one has left.
 
@@ -4597,6 +4615,16 @@ def _convocatorias(today: date | None = None):
             "bases_url": source.get("bases_pdf") or source.get("portal", ""),
             "leido": source.get("read_on", ""),
             "archivo": bases.get("_file", ""),
+            # Provenance is per field, not per file. The Fondart bases PDF
+            # states the amounts and the criteria and contains no date at all,
+            # so its deadline came from a portal summary. A surface that showed
+            # one confidence for the whole entry would hide exactly the part
+            # the operator is about to act on.
+            "fuente_plazo": (deadlines.get("source") or {}).get(
+                "kind", source.get("kind", "official_bases")),
+            "plazo_por_confirmar": bool(
+                (deadlines.get("source") or {}).get("todo")),
+            "ampliacion_regional": _regional_extension(deadlines),
         })
 
     orden = {"cerrada": 3, "sin_fecha": 4, "fecha_invalida": 5}

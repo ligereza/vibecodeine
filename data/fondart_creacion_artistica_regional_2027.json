@@ -5,6 +5,8 @@
   "edition": "Concurso General 2027",
   "authority": "Ministerio de las Culturas, las Artes y el Patrimonio",
   "source": {
+    "kind": "official_bases",
+    "covers": "objetivo, áreas, montos, topes de presupuesto, duración máxima, criterios con sus ponderaciones, secciones y documentos. NO cubre las fechas de apertura y cierre: el PDF no contiene ninguna. Ver `deadlines.source`.",
     "bases_pdf": "https://www.fondosdecultura.cl/wp-content/uploads/2026/08/CreacionArtistica-Regional2027.pdf",
     "portal": "https://www.fondosdecultura.gob.cl",
     "read_on": "2026-09-04",
@@ -14,7 +16,30 @@
     "opens": "2026-07-31",
     "closes": "2026-09-08",
     "max_duration_months": 12,
-    "source_section": "I.9 Duración y ejecución de los proyectos"
+    "source_section": "I.9 Duración y ejecución de los proyectos (solo max_duration_months)",
+    "source": {
+      "kind": "portal_and_press",
+      "verified": "2026-09-04",
+      "note": "CORRECCION 2026-09-04: `opens` y `closes` NO salen del PDF de bases. Se comprobó buscando cualquier fecha con el patrón `N de MES de 2026|2027` en el texto extraído del PDF: cero coincidencias. El PDF fija la duración del proyecto (12 meses), no el calendario. Estas dos fechas venían de resúmenes de portal y prensa y quedaron atribuidas por error a las bases. Lo único que el PDF sostiene aquí es `max_duration_months`.",
+      "official_document_consulted": "https://www.fondosdecultura.cl/wp-content/uploads/2026/07/Amplia-plazo-de-postulacion-concurso-2027.pdf",
+      "what_that_document_states": "Los cierres de las convocatorias 2027 caen «entre los días 31 de agosto y 10 de septiembre de 2026». No fija por sí solo el día exacto de esta línea.",
+      "todo": "Confirmar el día exacto en el portal antes de postular. La fecha de abajo es la mejor disponible, no una lectura del documento oficial."
+    },
+    "regional_extension": {
+      "resolution": "AMPLÍA PLAZO DE POSTULACIÓN EN EL MARCO DE LOS CONCURSOS PÚBLICOS, convocatorias 2027",
+      "url": "https://www.fondosdecultura.cl/wp-content/uploads/2026/07/Amplia-plazo-de-postulacion-concurso-2027.pdf",
+      "read_on": "2026-09-04",
+      "applies_to_regions": [
+        "Arica y Parinacota",
+        "Tarapacá",
+        "Antofagasta",
+        "Atacama"
+      ],
+      "extended_closes": "2026-09-16",
+      "quote": "ARTÍCULO PRIMERO: AMPLÍASE el plazo de postulación [...] en relación a aquellos responsables de proyectos pertenecientes a las regiones de Arica y Parinacota, Tarapacá, Antofagasta y Atacama, hasta las siguientes fechas: [...] 16 de septiembre de 2026 (Demás líneas del Fondo Nacional de Desarrollo Cultural y las Artes, ámbito nacional y regional de financiamiento).",
+      "note": "Fondart es el Fondo Nacional de Desarrollo Cultural y las Artes, y esta línea no es Becas Chile Crea, así que cae en «demás líneas»: 16 de septiembre para esas cuatro regiones. El documento NO menciona Coquimbo ni Magallanes; un resumen de prensa afirmaba una ampliación de dos días hábiles para ese tramo y la resolución leída no la respalda.",
+      "reason": "condiciones climáticas adversas en la zona norte"
+    }
   },
   "amounts": {
     "currency": "CLP",

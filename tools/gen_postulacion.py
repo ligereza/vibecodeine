@@ -200,6 +200,29 @@ def review(bases: dict, project: dict) -> list[dict]:
         add(BLOCKING, "title", "sin título")
 
     deadlines = bases.get("deadlines", {})
+
+    # Provenance is per field, not per file. The Fondart bases PDF states the
+    # amounts and the criteria and contains no date at all, so its deadline
+    # came from a portal summary. Warning on the file as a whole would say
+    # nothing here, because the file *is* the official bases.
+    deadline_source = deadlines.get("source") or {}
+    if deadline_source.get("todo"):
+        add(
+            WARNING,
+            "deadline.source",
+            f"la fecha de cierre no se leyó del documento oficial "
+            f"({deadline_source.get('kind', 'sin declarar')}): {deadline_source['todo']}",
+        )
+    extension = deadlines.get("regional_extension") or {}
+    if extension.get("extended_closes"):
+        add(
+            WARNING,
+            "deadline.regional_extension",
+            f"hay una ampliación declarada al {extension['extended_closes']} para "
+            f"{', '.join(extension.get('applies_to_regions', []))}: si el proyecto "
+            "pertenece a una de esas regiones, el plazo es ese y no el de arriba",
+        )
+
     max_months = deadlines.get("max_duration_months")
     duration = project.get("duration_months") or 0
     if max_months and duration > max_months:
