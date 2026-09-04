@@ -14,6 +14,12 @@
       "items_at_capture": 591,
       "note": ""
     },
+    "/api/convocatorias": {
+      "max_bytes_per_item": 800,
+      "collection": "items",
+      "items_at_capture": 2,
+      "note": "Medido el 2026-09-04: 605.5 bytes por convocatoria, con dos declaradas. El techo de 800 deja sitio a una ficha con mas criterios sin tapar un crecimiento real de la fila. Declarada por adelantado porque el presupuesto solo mira colecciones de cinco o mas: sin esta entrada, la quinta convocatoria haria fallar el ratchet por aparecer, no por crecer."
+    },
     "/api/cultura/capabilities": {
       "max_bytes_per_item": 17,
       "collection": "output_formats",
