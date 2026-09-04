@@ -85,7 +85,9 @@ TOOL_SKIP_DIRS = {
 # operator-facing MAK tool.  Keep it out of the consumer inventory so adding
 # a classifier does not change the inventory contract or count it as its own
 # consumer.
-TOOL_INVENTORY_EXCLUDE = {"test_lane_map.py"}
+# `__init__.py` is the package marker that pins `tools.__path__` to this
+# repository; it declares no capability and has no consumer to name.
+TOOL_INVENTORY_EXCLUDE = {"test_lane_map.py", "__init__.py"}
 
 # A missing in-tree reference is not a consumer decision.  The paths below are
 # the explicit disposition for every current zero-reference top-level tool.
@@ -128,6 +130,7 @@ NO_REFERENCE_CLASSIFICATIONS = {
     "gen_iskvw_prototipo": {"status": "manual_only", "source": "capabilities_5_ter"},
     "gen_presentacion_db": {"status": "manual_only", "source": "capabilities_5_ter"},
     "instalar_enviar_a_mak": {"status": "historical_support", "source": "cli_declared"},
+    "link_motor_checkout": {"status": "manual_only", "source": "cli_declared"},
     "mak_fuse_roots": {"status": "historical_support", "source": "cli_declared"},
     "mak_materialize_fused_root": {"status": "historical_support", "source": "cli_declared"},
     "mak_status": {"status": "manual_only", "source": "runtime_status_cli"},
