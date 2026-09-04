@@ -17,6 +17,7 @@ Rutas: / (cara) · /research-garden/ · /health · /api/organismo · /api/miceli
 import html
 import json
 import math
+from datetime import date
 import mimetypes
 import os
 import re
@@ -207,6 +208,14 @@ except Exception as _departments_exc:  # noqa: BLE001 - hub remains available
     _DEPARTMENTS_IMPORT_ERROR = type(_departments_exc).__name__
 else:
     _DEPARTMENTS_IMPORT_ERROR = ""
+
+try:
+    from tools.gen_postulacion import load_calls as _load_calls  # noqa: E402
+except Exception as _calls_exc:  # noqa: BLE001 - hub remains available
+    _load_calls = None
+    _CALLS_IMPORT_ERROR = type(_calls_exc).__name__
+else:
+    _CALLS_IMPORT_ERROR = ""
 
 try:
     from flujo.knowledge.project_api import (  # noqa: E402
@@ -1487,6 +1496,8 @@ _ERROR_STATUS = {
     "fuentes_ausentes": 503,
     "ledger_unavailable": 503,
     "xio_evidence_unavailable": 503,
+    "convocatorias_unavailable": 503,
+    "convocatorias_ilegibles": 503,
 }
 _ERROR_STATUS_PREFIXES = (
     ("motor_no_disponible", 503),
@@ -4514,6 +4525,100 @@ def _decisiones():
     }
 
 
+CONVOCATORIA_SCHEMA = "mak-convocatoria-surface-v1"
+# A week is when a call stops being something to plan and starts being
+# something to finish. Below this the surface says so instead of only
+# printing a date the reader has to subtract from today.
+CONVOCATORIA_URGENT_DAYS = 7
+
+
+def _call_state(closes: str, today: date | None = None):
+    """(state, days_remaining) for a closing date, or ('sin_fecha', None)."""
+    if not closes:
+        return "sin_fecha", None
+    try:
+        remaining = (date.fromisoformat(closes) - (today or date.today())).days
+    except (TypeError, ValueError):
+        return "fecha_invalida", None
+    if remaining < 0:
+        return "cerrada", remaining
+    if remaining <= CONVOCATORIA_URGENT_DAYS:
+        return "urgente", remaining
+    return "abierta", remaining
+
+
+def _convocatorias(today: date | None = None):
+    """The declared calls in data/, with how long each one has left.
+
+    They live in `data/*.json` under `mak-convocatoria-bases-v1` and were only
+    reachable by running `python -m tools.gen_postulacion --list`. A deadline
+    that only exists in a terminal is a deadline the operator meets by
+    remembering it.
+
+    Read-only and derived: this projects the declared bases and computes days
+    remaining. It does not decide whether to apply, and it does not read a
+    project.
+    """
+    if _load_calls is None:
+        return {"ok": False, "error": "convocatorias_unavailable",
+                "detail": _CALLS_IMPORT_ERROR, "schema": CONVOCATORIA_SCHEMA,
+                "items": []}
+    try:
+        declared = _load_calls()
+    except Exception as exc:  # noqa: BLE001 - a bad file is not a hub failure
+        return {"ok": False, "error": "convocatorias_ilegibles",
+                "detail": str(exc)[:200], "schema": CONVOCATORIA_SCHEMA, "items": []}
+
+    items = []
+    for identifier, bases in declared.items():
+        deadlines = bases.get("deadlines", {}) or {}
+        amounts = bases.get("amounts", {}) or {}
+        source = bases.get("source", {}) or {}
+        closes = str(deadlines.get("closes") or "")
+        state, remaining = _call_state(closes, today)
+        items.append({
+            "id": identifier,
+            "nombre": bases.get("name", ""),
+            "edicion": bases.get("edition", ""),
+            "organismo": bases.get("authority", ""),
+            "cierra": closes,
+            "estado": state,
+            "dias_restantes": remaining,
+            "moneda": amounts.get("currency", ""),
+            "monto_maximo": amounts.get("max_per_project"),
+            "criterios": [
+                {"nombre": c.get("name", ""), "pondera": c.get("weight")}
+                for c in bases.get("criteria", [])
+            ],
+            # A ficha transcribed from press coverage carries the deadline and
+            # not the taxative document list. Saying which is which is the
+            # difference between a reminder and a false sense of readiness.
+            "fuente": source.get("kind", "official_bases"),
+            "bases_url": source.get("bases_pdf") or source.get("portal", ""),
+            "leido": source.get("read_on", ""),
+            "archivo": bases.get("_file", ""),
+        })
+
+    orden = {"cerrada": 3, "sin_fecha": 4, "fecha_invalida": 5}
+    items.sort(key=lambda row: (
+        orden.get(row["estado"], 0),
+        row["dias_restantes"] if row["dias_restantes"] is not None else 10**6,
+        row["id"],
+    ))
+    return {
+        "ok": True,
+        "schema": CONVOCATORIA_SCHEMA,
+        "items": items,
+        "counts": {
+            "total": len(items),
+            "abiertas": sum(1 for row in items if row["estado"] == "abierta"),
+            "urgentes": sum(1 for row in items if row["estado"] == "urgente"),
+            "cerradas": sum(1 for row in items if row["estado"] == "cerrada"),
+        },
+        "urgent_days": CONVOCATORIA_URGENT_DAYS,
+    }
+
+
 def _oportunidades():
     """Expose opportunity candidates without exposing raw ledger history."""
     if _ledger is None:
@@ -5462,6 +5567,8 @@ class H(BaseHTTPRequestHandler):
                 return self._json({"error": str(e)[:200], "total": 0,
                                    "by_lane": {}, "by_decision": {},
                                    "pending_human": 0})
+        if p == "/api/convocatorias":
+            return _answer(self, _convocatorias())
         if p == "/api/oportunidades":
             try:
                 return self._json(_oportunidades())
