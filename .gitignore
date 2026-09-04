@@ -297,3 +297,6 @@ web/venues/index.html
 # provider-retirement-20260820, group4-reverted-20260821 y
 # shadow-copies-20260821. El de esta sesion:
 # /home/mak/_archive/orden-limpieza-20260828/ (935 MB + su MANIFEST.md).
+
+# scratch de sesiones de trabajo automatizado (no forma parte del contrato)
+.scratch/
