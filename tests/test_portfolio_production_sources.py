@@ -33,34 +33,75 @@ REPO = Path(__file__).resolve().parents[1]
 EPHEMERAL = ("/.claude/", "/tmp/", "/var/tmp/", "/.cache/", "/scratch/")
 
 
+def ephemeral_markers(path: str, repo: Path = REPO) -> list[str]:
+    """Markers left in the part of the path the repository does not account for.
+
+    `is_relative_to(repo)` cannot answer this alone, and getting it wrong is
+    silent in both directions:
+
+    * The MAK checkout is `/home/mak`, so the scratch path
+      `/home/mak/.claude/jobs/<id>/tmp/x.json` sits "inside the repository" by
+      prefix while being exactly the directory this module exists to reject.
+      Exempting everything inside the repository disarms the guard there.
+    * A worktree lives under `.claude/worktrees/`, so every repository path
+      carries `/.claude/`. Matching the raw string flags the repository itself.
+
+    Both disappear once the repository root is removed first and only the
+    remainder is read. Whatever the repository lives in is as durable as the
+    repository; what hangs off it is not.
+    """
+    candidate = Path(str(path))
+    if candidate.is_relative_to(repo):
+        rest = "/" + candidate.relative_to(repo).as_posix()
+    else:
+        rest = str(path).replace("\\", "/")
+    lowered = rest.lower()
+    return [marker for marker in EPHEMERAL if marker in lowered]
+
+
 class TestNoInputLivesSomewhereTemporary:
     @pytest.mark.parametrize(
         "name,path", sorted(hub.PORTFOLIO_PRODUCTION_SOURCES.items())
     )
     def test_the_path_is_not_in_a_scratch_directory(self, name: str, path: str) -> None:
-        # Only paths *outside* the repository are checked. A checkout can sit
-        # anywhere -- this one is a git worktree under `.claude/worktrees/`, so
-        # every repository path contains `/.claude/` and a naive marker match
-        # flags the repository itself. Whatever the repository lives in is as
-        # durable as the repository.
-        candidate = Path(str(path))
-        if candidate.is_relative_to(REPO):
-            return
-        lowered = str(path).replace("\\", "/").lower()
-        offending = [marker for marker in EPHEMERAL if marker in lowered]
+        offending = ephemeral_markers(path)
         assert not offending, (
-            f"production input {name!r} points outside the repository into "
-            f"{offending[0]!r}: {path}\n"
+            f"production input {name!r} hangs off {offending[0]!r}: {path}\n"
             "That directory is not promised to survive, and the chain reports "
             "its loss as `fuentes_ausentes` without naming the cause."
         )
 
-    def test_the_check_still_catches_a_scratch_path(self) -> None:
-        # The exemption above must not turn the guard off. This is the exact
-        # shape that was in the table until 2026-09-04.
-        outside = "/home/mak/.claude/jobs/3428381a/tmp/declared_inputs.json"
-        assert not Path(outside).is_relative_to(REPO)
-        assert any(marker in outside.lower() for marker in EPHEMERAL)
+    # The exact shape that was in the table until 2026-09-04, checked from
+    # both places this repository is checked out. The first parameter is the
+    # MAK checkout, where the scratch path is *inside* the repository by
+    # prefix -- that case shipped green on 2026-09-04 and failed the moment
+    # the merge reached `/home/mak`, because the guard exempted it.
+    @pytest.mark.parametrize("repo", [
+        Path("/home/mak"),
+        Path("/home/mak/.claude/worktrees/mak-nocturno-mejoras"),
+        Path("/home/runner/work/vibecodeine/vibecodeine"),
+    ])
+    def test_the_check_still_catches_a_scratch_path(self, repo: Path) -> None:
+        scratch = "/home/mak/.claude/jobs/3428381a/tmp/declared_inputs.json"
+        # Two markers match this shape -- `/.claude/` and the `/tmp/` inside
+        # the job directory. Asserting the exact list would be asserting the
+        # order of a constant, so require the one that carries the meaning.
+        found = ephemeral_markers(scratch, repo)
+        assert "/.claude/" in found, (
+            f"the guard is disarmed when the checkout is {repo}: {found}"
+        )
+
+    # ...and it must still let the repository's own files through, wherever
+    # the repository happens to live.
+    @pytest.mark.parametrize("repo,path", [
+        (Path("/home/mak"), "/home/mak/data/portfolio_practices.json"),
+        (Path("/home/mak/.claude/worktrees/x"),
+         "/home/mak/.claude/worktrees/x/data/portfolio_practices.json"),
+    ])
+    def test_it_does_not_flag_the_repository_itself(
+        self, repo: Path, path: str
+    ) -> None:
+        assert ephemeral_markers(path, repo) == []
 
     def test_the_two_recovered_inputs_are_in_the_repository(self) -> None:
         for name in ("declared_inputs", "blend_targets"):
@@ -102,9 +143,16 @@ class TestTheRemainingInputsAreDeclaredHonestly:
         # Two inputs are physical by nature: the portable SSD and the index
         # built from it. Everything else belongs to the repository, and a new
         # outside path should be a deliberate decision rather than a drift.
+        #
+        # Asked as `is_relative_to(REPO)` this was checkout-dependent: the
+        # MAK checkout is `/home/mak`, so `index` at `/home/mak/labs/...`
+        # reads as inside the repository there and outside it in a worktree.
+        # The invariant that does not move is which trees the repository
+        # actually owns.
+        owned = (REPO / "data", REPO / "iskvw")
         outside = sorted(
             name for name, path in hub.PORTFOLIO_PRODUCTION_SOURCES.items()
-            if not Path(str(path)).is_relative_to(REPO)
+            if not any(Path(str(path)).is_relative_to(tree) for tree in owned)
         )
         assert outside == ["index", "screen_setup_root"], (
             f"unexpected production input outside the repository: {outside}"
