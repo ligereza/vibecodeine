@@ -85,13 +85,42 @@ def _routes_in(function: ast.FunctionDef) -> list[dict[str, object]]:
     return routes
 
 
+def _query_readers(dispatcher: ast.FunctionDef, source: str) -> set[str]:
+    """Literal paths whose own branch reads the request query string.
+
+    Most branches ignore the query entirely, and a hostile-query contract that
+    parametrises over all of them pays each route's full cost to prove
+    something the branch cannot get wrong. Measured on `do_GET`: 21 branches of
+    83 read it.
+    """
+    reading: set[str] = set()
+    for node in ast.walk(dispatcher):
+        if not isinstance(node, ast.If):
+            continue
+        body_text = "\n".join(
+            ast.get_source_segment(source, statement) or "" for statement in node.body
+        )
+        if "parse_qs" not in body_text and "u.query" not in body_text:
+            continue
+        for child in ast.walk(node.test):
+            if isinstance(child, ast.Constant) and isinstance(child.value, str):
+                if child.value.startswith("/"):
+                    reading.add(child.value)
+    return reading
+
+
 def inventory(hub_path: Path = HUB) -> dict[str, object]:
-    tree = ast.parse(hub_path.read_text(encoding="utf-8"), filename=str(hub_path))
+    source = hub_path.read_text(encoding="utf-8")
+    tree = ast.parse(source, filename=str(hub_path))
     by_method: dict[str, list[dict[str, object]]] = {}
     for node in ast.walk(tree):
         if isinstance(node, ast.FunctionDef) and node.name in DISPATCHERS:
             method = node.name.removeprefix("do_")
-            by_method.setdefault(method, []).extend(_routes_in(node))
+            rows = _routes_in(node)
+            readers = _query_readers(node, source)
+            for row in rows:
+                row["reads_query"] = str(row["path"]) in readers
+            by_method.setdefault(method, []).extend(rows)
     return {
         "schema": "mak-hub-route-inventory-v1",
         "hub": str(hub_path.relative_to(ROOT)),
