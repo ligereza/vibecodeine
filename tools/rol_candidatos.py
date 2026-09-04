@@ -196,7 +196,7 @@ def worksheet(rows: list[dict]) -> str:
         ) or f"{row['assets']} activos"
         label = row["context"]
         if row["kind"] == "software_de_terceros":
-            label = f"{row['context']} ⚠ software de terceros"
+            label = f"{row['context']} (!) software de terceros"
         lines.append(
             f"| {index} | {label} | `{row['path']}` | {evidence} |  |  |"
         )
@@ -210,7 +210,7 @@ def worksheet(rows: list[dict]) -> str:
     lines.append("`invalid_if` rechaza.")
     lines.append("")
     lines.append(
-        "Las filas marcadas ⚠ son producto de otra gente. Van al final y no se"
+        "Las filas marcadas (!) son producto de otra gente. Van al final y no se"
     )
     lines.append(
         "borran: lo que no es tuyo es justamente el material de la columna de"
