@@ -31,6 +31,36 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "cultura", "mak
 import hub  # noqa: E402
 
 
+def _status_agrees_with_the_body(payload: dict, code: int) -> None:
+    """The status must match whatever error came back, not only the hoped-for one.
+
+    The two 404 cases below used to `pytest.skip` when the route refused with a
+    different error than the one they were written for. That switched the
+    contract off exactly when the route took a path the test did not predict,
+    which is when it is worth checking -- and one of them did take another
+    path, so its rule went unverified from the day it was written.
+
+    Which error arrives is data. The agreement between that error and the HTTP
+    status is the contract, and it holds for every error the table names.
+    """
+    error = payload.get("error")
+    assert error, f"expected a refusal, got {payload!r} with status {code}"
+    if error in hub._ERROR_STATUS_LEFT_AT_200:
+        assert code == 200, (
+            f"{error!r} is a documented exclusion and must stay 200, got {code}"
+        )
+        return
+    expected = hub._ERROR_STATUS.get(error)
+    assert expected is not None, (
+        f"the route answered {error!r} and no rule says what status that is. "
+        "Add it to `_ERROR_STATUS`, or to `_ERROR_STATUS_LEFT_AT_200` with the "
+        "reason it is not an error."
+    )
+    assert code == expected, (
+        f"{error!r} is declared as {expected} and the route answered {code}"
+    )
+
+
 class FakeHandler:
     """Capture what the dispatcher answers without opening a socket."""
 
@@ -95,24 +125,32 @@ class TestStatusTable:
 
 class TestNotFoundAnswers404:
     def test_dispatch_of_an_unknown_item(self) -> None:
+        # `depto` had to be a real department. `_portfolio_dispatch`
+        # checks it before it looks the item up, so the old `"cultura"`
+        # was refused as `departamento_invalido` and this test skipped
+        # every run since it was written: it never reached its subject.
         payload, code = _post(
             "/api/portfolio/dispatch",
-            {"item_id": "no-existe-en-ningun-inbox", "depto": "cultura", "texto": "x"},
+            {"item_id": "no-existe-en-ningun-inbox", "depto": "research",
+             "texto": "x"},
         )
-        if payload.get("error") == "item_no_encontrado":
-            assert code == 404
-        else:
-            pytest.skip(f"the route refused earlier with {payload.get('error')!r}")
+        assert payload.get("error") == "item_no_encontrado", (
+            f"the route refused before reaching the lookup: {payload!r}"
+        )
+        _status_agrees_with_the_body(payload, code)
+        assert code == 404
 
     def test_board_action_on_an_unknown_board(self) -> None:
         payload, code = _post(
             "/api/portfolio/board",
-            {"accion": "renombrar", "board_id": "tablero-que-no-existe", "nombre": "x"},
+            {"accion": "renombrar", "board_id": "tablero-que-no-existe",
+             "nombre": "x"},
         )
-        if payload.get("error") == "tablero_no_encontrado":
-            assert code == 404
-        else:
-            pytest.skip(f"the route refused earlier with {payload.get('error')!r}")
+        assert payload.get("error") == "tablero_no_encontrado", (
+            f"the route refused before reaching the lookup: {payload!r}"
+        )
+        _status_agrees_with_the_body(payload, code)
+        assert code == 404
 
 
 class TestBadRequestAnswers400:
