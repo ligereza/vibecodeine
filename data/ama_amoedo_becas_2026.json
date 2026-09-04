@@ -22,11 +22,20 @@
   "deadlines": {
     "opens": "2026-07-07",
     "closes": "2026-09-09",
+    "closes_time": "23:59",
+    "closes_timezone": "America/Montevideo",
     "results": "2026-11-20",
     "projects_start": "2027-01",
     "max_duration_months": null,
-    "source_section": "convocatoria publicada (prensa)"
-  },
+    "source_section": "convocatoria publicada (prensa)",
+    "regional_extensions": [],
+    "extensions_checked": {
+      "on": "2026-09-04",
+      "found": "ninguna",
+      "note": "Se buscó explícitamente una prórroga y no la hay. Se registra la búsqueda, no solo el resultado: `regional_extensions: []` puede significar «no existe» o «nadie miró», y a cuatro días de un cierre esas dos cosas no valen lo mismo."
+    },
+    "timezone_note": "El cierre es a las 23:59 hora de Uruguay, no del postulante. Comprobado el 2026-09-04 con tzdata IANA: Chile entra en horario de verano el 2026-09-06, así que el día 9 tanto America/Montevideo como America/Santiago están en UTC-3 y las 23:59 coinciden. Por poco: un cierre el día 5 habrían sido las 22:59 en Chile, una hora antes de lo que un lector local supondría. Si la fecha se mueve, rehacer la conversión en vez de arrastrar esta conclusión."
+    },
   "amounts": {
     "currency": "USD",
     "min_per_project": null,

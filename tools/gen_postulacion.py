@@ -236,6 +236,18 @@ def review(bases: dict, project: dict) -> list[dict]:
             "pertenece ahí, ese es el plazo y no el de arriba",
         )
 
+    # A deadline expressed in someone else's clock is a deadline the applicant
+    # can miss while believing they made it.
+    closing_zone = deadlines.get("closes_timezone")
+    if closing_zone:
+        add(
+            WARNING,
+            "deadline.timezone",
+            f"el cierre es a las {deadlines.get('closes_time', '?')} de "
+            f"{closing_zone}, no de la zona del postulante: convertir antes de "
+            "confiar en la hora local",
+        )
+
     max_months = deadlines.get("max_duration_months")
     duration = project.get("duration_months") or 0
     if max_months and duration > max_months:
