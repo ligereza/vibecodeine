@@ -268,6 +268,63 @@ class TestDeadline:
         assert "deadline" not in _fields(findings, BLOCKING)
 
 
+class TestPartialBases:
+    """A convocatoria whose official document could not be read.
+
+    The Ama Amoedo file carries the deadline and the amount from corroborated
+    press coverage, and deliberately leaves `criteria` empty because
+    transcribing evaluation criteria from a press summary would be inventing
+    them. The tool has to stay useful and stay honest at the same time.
+    """
+
+    CALL = "ama-amoedo-becas-2026"
+
+    @pytest.fixture(scope="class")
+    @classmethod
+    def partial(cls) -> dict:
+        calls = load_calls()
+        assert cls.CALL in calls
+        return calls[cls.CALL]
+
+    def test_it_warns_that_the_bases_are_not_official(self, partial) -> None:
+        findings = review(partial, template(partial))
+        assert "bases" in _fields(findings, WARNING)
+        assert "bases.criteria" in _fields(findings, WARNING)
+
+    def test_it_does_not_claim_a_weight_it_cannot_know(self, partial) -> None:
+        findings = review(partial, template(partial))
+        empty = [f for f in findings if f["field"].startswith("sections.")]
+        assert empty, "the empty sections still have to be reported"
+        for finding in empty:
+            assert "0%" not in finding["detail"], (
+                "reporting 0% would read as measured, not as unknown"
+            )
+
+    def test_it_does_not_demand_a_duration_the_bases_never_set(self, partial) -> None:
+        # Over-demanding is how a checker teaches the operator to skim past it.
+        assert partial["deadlines"]["max_duration_months"] is None
+        assert "duration_months" not in _fields(review(partial, template(partial)))
+
+    def test_it_does_not_demand_a_minimum_that_does_not_exist(self, partial) -> None:
+        assert partial["amounts"]["min_per_project"] is None
+        assert "budget.requested_from_fund" not in _fields(review(partial, template(partial)))
+
+    def test_the_ceiling_it_does_know_still_applies(self, partial) -> None:
+        project = template(partial)
+        project["budget"]["requested_from_fund"] = partial["amounts"]["max_per_project"] + 1
+        assert "budget.requested_from_fund" in _fields(review(partial, project), BLOCKING)
+
+    def test_it_records_which_official_urls_failed(self, partial) -> None:
+        # Without this the next reader repeats the same dead links.
+        assert partial["source"]["official_bases_unreachable"]
+        assert partial["source"]["corroborated_by"]
+
+    def test_the_fondart_bases_are_not_marked_partial(self, bases) -> None:
+        findings = review(bases, template(bases))
+        assert "bases" not in _fields(findings, WARNING)
+        assert "bases.criteria" not in _fields(findings, WARNING)
+
+
 class TestTemplate:
     def test_the_template_is_serializable_and_carries_every_section(self, bases) -> None:
         empty = template(bases)

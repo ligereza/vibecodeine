@@ -176,6 +176,26 @@ def review(bases: dict, project: dict) -> list[dict]:
             f"contra {bases['id']!r}",
         )
 
+    # A bases file transcribed from press coverage can carry the deadline and
+    # the amount and still be missing the taxative document list that decides
+    # admissibility. Saying so is the difference between a check and a false
+    # sense of one.
+    source = bases.get("source", {})
+    if source.get("kind", "official_bases") != "official_bases":
+        add(
+            WARNING,
+            "bases",
+            f"estas bases se transcribieron de {source['kind']}, no del documento "
+            "oficial: la revisión no cubre lo que ahí no está",
+        )
+    if not bases.get("criteria"):
+        add(
+            WARNING,
+            "bases.criteria",
+            "sin criterios de evaluación transcritos: no se puede decir cuánto "
+            "puntaje cuesta una sección vacía",
+        )
+
     if _blank(project.get("title")):
         add(BLOCKING, "title", "sin título")
 
@@ -184,7 +204,10 @@ def review(bases: dict, project: dict) -> list[dict]:
     duration = project.get("duration_months") or 0
     if max_months and duration > max_months:
         add(BLOCKING, "duration_months", f"{duration} meses supera el máximo de {max_months}")
-    if not duration:
+    # Only demanded where the bases set a limit. Blocking on a field the
+    # convocatoria never asks for is the kind of over-demand that teaches the
+    # operator to skim past the findings.
+    if max_months and not duration:
         add(BLOCKING, "duration_months", "sin duración declarada")
 
     closes = deadlines.get("closes")
@@ -232,12 +255,15 @@ def review(bases: dict, project: dict) -> list[dict]:
     sections = project.get("sections", {}) or {}
     weights = weight_by_section(bases)
     empty = [s for s in bases["form_sections"] if _blank(sections.get(s["id"]))]
+    scored = bool(bases.get("criteria"))
     for section in sorted(empty, key=lambda s: -weights.get(s["id"], 0)):
-        add(
-            BLOCKING,
-            f"sections.{section['id']}",
-            f"vacía; alimenta criterios que pesan {weights.get(section['id'], 0)}%",
+        weight = weights.get(section["id"], 0)
+        detail = (
+            f"vacía; alimenta criterios que pesan {weight}%"
+            if scored
+            else "vacía; el peso no se puede decir sin los criterios de las bases"
         )
+        add(BLOCKING, f"sections.{section['id']}", detail)
 
     declared = {str(item) for item in project.get("declared_documents", [])}
     for document in required_documents(bases, project):
