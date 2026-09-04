@@ -224,7 +224,7 @@ ocho: se resuelve acá, porque éste ya es el que enlaza a los demás.
 
 2. **Se consulta cuando la tarea lo toca, no de punta a punta:**
    - `SONDA.CLAUDE.MD` -- tareas dentro de `flujo/tools`, `tests/` o
-     `CAPACIDADES.md`.
+     `CAPACIDADES_MAK.md`.
    - `CAMBIOS.CLAUDE.MD` -- para saber si algo ya se movió, restauró o
      corrigió, y cómo devolverlo.
    - `ANOTACIONES.CLAUDE.MD` -- antes de asumir que algo quedó resuelto, o de
@@ -256,7 +256,9 @@ en sus propios documentos, y no acá:
   son 32, medidos con la suite completa.
 - `SONDA.CLAUDE.MD`: "119 archivos en tools/ / 87 VIVO" estaba **vieja** --
   hoy son 116 archivos y 117 filas VIVO. Creció; las dos tablas de
-  `CAPACIDADES.md` siguen sin cuadrar entre sí, por la razón que el propio
+  `CAPACIDADES_MAK.md` sigue siendo la matriz consolidada de MAK; las
+  diferencias históricas entre matrices antiguas se conservaron como fuente,
+  no como una tercera autoridad. Por la razón que el propio
   documento ya daba.
 - `SONDA.CLAUDE.MD` y `APRENDIZAJE.CLAUDE.MD`: "122 shims" / "107" estaba
   **vieja** -- `medir_bridges.py`, que no existía cuando se escribió esto,

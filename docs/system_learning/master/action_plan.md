@@ -655,7 +655,7 @@ fusionan sus bases o semánticas con Curatoria.
 ### Gate
 
 Cada entrada tiene path, owner, consumer y prueba foreground. Una fila de
-`CAPACIDADES.md`, una key configurada o un módulo importable no bastan.
+`CAPACIDADES_MAK.md`, una key configurada o un módulo importable no bastan.
 
 ## Piso 6 — Curaduría comparativa y productos multiarchivo
 
