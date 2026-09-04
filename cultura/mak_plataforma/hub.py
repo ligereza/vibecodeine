@@ -1511,6 +1511,35 @@ _ERROR_STATUS_LEFT_AT_200 = (
 )
 
 
+# Measured 2026-09-04: `/api/portfolio/copilot/map` answers 4,367,883 bytes,
+# and `items` is 100.0% of it -- 7044 rows carrying `triage_prediction` (412
+# bytes each) and `features` on top of the position. Its only consumer,
+# `iskvw/editor.html`, reads `item_id`, `x` and `y`, computes its own distance,
+# and never touches the rest: about 4% of what it receives. The panel calls
+# this route while the operator moves through pieces.
+#
+# `fields=map` ships the positions only. The default shape is unchanged on
+# purpose -- the engine's own contract is tested against the full item in
+# tests/test_copilot.py, and a caller that wants the predictions still gets
+# them by not asking for the projection.
+_GTM_MAP_ITEM_FIELDS = ("item_id", "x", "y")
+
+
+def _gtm_map_positions_only(payload):
+    """The same map answer with each item reduced to what a map needs."""
+    items = payload.get("items")
+    if not isinstance(items, list):
+        return payload
+    lean = dict(payload)
+    lean["items"] = [
+        {key: row[key] for key in _GTM_MAP_ITEM_FIELDS if key in row}
+        for row in items
+        if isinstance(row, dict)
+    ]
+    lean["fields"] = "map"
+    return lean
+
+
 def _answer(handler, payload):
     """Send `payload` with the status `_status_for` derives from it.
 
@@ -5328,9 +5357,12 @@ class H(BaseHTTPRequestHandler):
                 width, height = int(width), int(height)
             except (TypeError, ValueError):
                 width, height = 8, 6
-            return self._json(_portfolio_gtm_map(
+            payload = _portfolio_gtm_map(
                 _portfolio_inbox().get("items", []),
-                feedback=_portfolio_feedback(), width=width, height=height))
+                feedback=_portfolio_feedback(), width=width, height=height)
+            if (query.get("fields") or [""])[0] == "map":
+                payload = _gtm_map_positions_only(payload)
+            return self._json(payload)
         if p == "/api/portfolio/copilot/vision":
             item_id = (urllib.parse.parse_qs(u.query).get("item_id") or [""])[0]
             item = _portfolio_item(item_id)

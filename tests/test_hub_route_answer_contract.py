@@ -105,6 +105,30 @@ def test_get_route_answers_without_raising(path: str) -> None:
     assert handler.answered, f"GET {path} returned without answering anything"
 
 
+# Query values are caller input. A route that assumes they parse is a 500
+# waiting for a typo -- the same assumption that made a non-numeric
+# Content-Length crash seven POST routes.
+HOSTILE_QUERIES = {
+    "no numerico": "limit=abc&width=abc&height=abc&seed=abc&id=abc&offset=abc&n=abc",
+    "vacio": "limit=&width=&height=&seed=&id=&offset=&n=",
+    "negativo": "limit=-5&width=-5&height=-5&offset=-5&n=-5",
+    "enorme": "limit=99999999999999999999&width=99999999999999999999&offset=99999999999999999999",
+}
+
+
+@pytest.mark.parametrize("label,query", sorted(HOSTILE_QUERIES.items()))
+@pytest.mark.parametrize("path", GET_ROUTES)
+def test_get_route_survives_a_hostile_query(path: str, label: str, query: str) -> None:
+    handler = FakeHandler(f"{path}?{query}")
+
+    try:
+        hub.H.do_GET(handler)
+    except Exception as error:  # noqa: BLE001 - that would be the defect
+        pytest.fail(f"GET {path}?{query} ({label}) raised {type(error).__name__}: {error}")
+
+    assert handler.answered, f"GET {path}?{query} ({label}) answered nothing"
+
+
 @pytest.mark.parametrize("path", GET_ROUTES)
 def test_get_route_status_agrees_with_its_own_body(path: str) -> None:
     """A route that says it failed must not answer 200.
