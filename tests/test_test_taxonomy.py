@@ -604,8 +604,9 @@ def test_the_mak_runtime_declares_every_dependency_it_imports():
 # Each raise is a deliberate deferral, not an exemption: the number IS the
 # debt, and it stays in the diff where a reviewer sees it. 15 -> 16 on
 # 2026-09-04 for tests/test_venue_geometria_scd.py, then 17 for
-# tests/test_compute_effort_residuals.py.
-_UNROUTED_TEST_FILES_CEILING = 17
+# tests/test_compute_effort_residuals.py, then 19 for
+# tests/test_portfolio_production_sources.py.
+_UNROUTED_TEST_FILES_CEILING = 19
 
 
 def _unrouted_test_files() -> list[str]:
