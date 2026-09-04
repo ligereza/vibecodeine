@@ -235,6 +235,47 @@ class TestContentLengthIsNeverTrusted:
             )
 
 
+# Every field the POST dispatcher reads out of a body, so one hostile body
+# reaches whichever fields a given route uses.
+BODY_FIELDS = [
+    "item_id", "board_id", "decision", "accion", "nombre", "items", "grupo",
+    "clasificacion", "depto", "texto", "note", "session_id", "pass_size",
+    "decision_scope", "reason_code", "target_id", "source_id", "segment_id",
+    "work_id", "proveedor", "scope", "video", "episodio", "modo", "densidad",
+    "question", "project_id", "format_id", "text", "context_id",
+]
+
+# A field the handler reads as text can arrive as any JSON type. None of these
+# is a valid request; all of them must be refused rather than raise.
+CONFUSED_VALUES = {
+    "numero": 7,
+    "lista": [1, 2],
+    "objeto": {"a": 1},
+    "nulo": None,
+    "booleano": True,
+    "cadena vacia": "",
+}
+
+
+class TestTypeConfusedBodies:
+    @pytest.mark.parametrize("label,value", sorted(CONFUSED_VALUES.items(), key=str))
+    @pytest.mark.parametrize("path", POST_PATHS)
+    def test_a_body_of_the_wrong_types_is_refused_not_raised(
+        self, path: str, label: str, value: object
+    ) -> None:
+        handler = FakeHandler(path, {field: value for field in BODY_FIELDS})
+
+        try:
+            hub.H.do_POST(handler)
+        except Exception as error:  # noqa: BLE001 - that would be the defect
+            pytest.fail(
+                f"POST {path} raised {type(error).__name__} on a body whose "
+                f"fields are {label}: {error}"
+            )
+
+        assert handler.calls, f"POST {path} answered nothing for a {label} body"
+
+
 class TestSuccessIsStillTwoHundred:
     def test_a_route_that_does_not_refuse_keeps_its_two_hundred(self) -> None:
         # `_status_for` only looks at bodies that declare failure, so an `ok`
