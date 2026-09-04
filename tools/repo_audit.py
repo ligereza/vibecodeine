@@ -122,7 +122,11 @@ NO_REFERENCE_CLASSIFICATIONS = {
     "build_mak_canonical_map": {"status": "manual_only", "source": "capabilities_5_ter"},
     "compile_contracurator": {"status": "manual_only", "source": "capabilities_5_ter"},
     "compute_effort_residuals": {"status": "manual_only", "source": "capabilities_5_ter"},
-    "consolidate_static_duplicates": {"status": "historical_support", "source": "cli_declared"},
+    # `consolidate_static_duplicates` left this table on 2026-09-04: it now has
+    # a consumer, `tests/test_consolidate_static_duplicates.py`, which measures
+    # the `check_path` gate that keeps the tool out of WIN, GoogleDrive,
+    # OneDrive and the flujo checkout. A zero-reference classification for a
+    # referenced tool is exactly the staleness this table's own check reports.
     "context_pack": {"status": "manual_only", "source": "cli_declared"},
     "drenar_material": {"status": "manual_only", "source": "capabilities_5_ter"},
     "execute_research_job": {"status": "manual_only", "source": "capabilities_5_ter"},
