@@ -560,3 +560,132 @@ def test_the_mak_runtime_declares_every_dependency_it_imports():
         "_RUNTIME_PROVIDED / _GUARANTEED_BY_DECLARED / "
         "_CALLER_HANDLED_OPTIONAL with the reason:\n  "
         + "\n  ".join(offenders))
+
+
+# A test file the generated contract does not know is routed to `review`, and
+# `pytest_ignore_collect` makes the default `-m mak` run skip it entirely. The
+# file docstring above records that as the reason both contracts live here
+# rather than in a new module.
+#
+# What it did not record is that the drift is silent. `tools.test_lane_map`'s
+# `report()` iterates the contract, so a file absent from it is absent from the
+# report too: `review: N=0` and `not_covered=` are answers about the contract,
+# not about the tests directory. Measured 2026-09-04: 234 test files on disk,
+# 219 in the contract, and `-m mak` collected 2202 of 3561 cases.
+#
+# `tools/release_gate.py` asks a different question -- whether tests declared
+# for the *other* branch's lane are present -- and while doing so it records
+# both `own_tests_declared` and `test_files_tracked` in the same row without
+# ever comparing them. The two numbers that reveal this gap were already being
+# collected; the subtraction was not.
+#
+# Do NOT close the gap by re-running the classifier over the tree. Measured
+# 2026-09-04, before and after fixing `_is_local_box_import` to resolve bare
+# imports against the directories tests actually put on sys.path:
+#
+#   before   `mak` 172 -> 64, 154 files move, 108 leave the default run
+#   after    `mak` 172 -> 128, 69 leave
+#
+# The fix was worth making and does not make regeneration safe. Of the 69 that
+# still move, 55 import nothing outside the standard library: they exercise the
+# tree through files, subprocesses and git rather than by importing it, so the
+# AST has nothing to classify them by and they fall to `repo_hygiene` on a
+# text signal. No amount of extra sys.path roots recovers them, because the
+# information is not in the source.
+#
+# That is what `reconciled_at_utc` records: a pass that knew what a test
+# exercises without being told by an import. Regeneration must reproduce that
+# pass. An AST-only regeneration cannot, by construction.
+#
+# The pin is an upper bound, not an equality, so regenerating the contract --
+# which lowers the count -- passes, and adding another unrouted file without
+# regenerating fails. `tests/test_render_flyer_mak.py` was already in this
+# state before the rest, so the number is not one session's debt.
+# Each raise is a deliberate deferral, not an exemption: the number IS the
+# debt, and it stays in the diff where a reviewer sees it. 15 -> 16 on
+# 2026-09-04 for tests/test_venue_geometria_scd.py, then 17 for
+# tests/test_compute_effort_residuals.py, then 19 for
+# tests/test_portfolio_production_sources.py.
+_UNROUTED_TEST_FILES_CEILING = 19
+
+
+def _unrouted_test_files() -> list[str]:
+    on_disk = {
+        str(path.relative_to(REPO))
+        for path in (REPO / "tests").rglob("test_*.py")
+    }
+    return sorted(on_disk - set(TEST_LANE_MAP))
+
+
+def test_the_lane_contract_knows_about_the_tests_on_disk() -> None:
+    unrouted = _unrouted_test_files()
+    assert len(unrouted) <= _UNROUTED_TEST_FILES_CEILING, (
+        "%d test files are absent from context/test_lane_map.json, above the "
+        "declared ceiling of %d. They are routed to `review`, so the default "
+        "`-m mak` run never executes them -- green in a full run and invisible "
+        "in the one an operator makes. The contract is generated and must not "
+        "be hand-edited; regenerate it, then lower the ceiling.\n  %s"
+        % (len(unrouted), _UNROUTED_TEST_FILES_CEILING, "\n  ".join(unrouted))
+    )
+
+
+def test_the_unrouted_count_is_measured_not_assumed() -> None:
+    # A ceiling nobody can reach is not a ratchet. If the contract is ever
+    # regenerated to completeness this fails, and the ceiling should drop to 0.
+    on_disk = {
+        str(path.relative_to(REPO))
+        for path in (REPO / "tests").rglob("test_*.py")
+    }
+    assert on_disk, "no test files found: the measurement is meaningless"
+    assert TEST_LANE_MAP, "the lane contract is empty"
+    assert len(_unrouted_test_files()) < len(on_disk), (
+        "the contract knows none of the tests on disk"
+    )
+
+
+def test_a_bare_import_of_a_subdirectory_module_reads_as_a_box_import() -> None:
+    """`import coherence` means `cultura/mak_plataforma/coherence.py`.
+
+    Resolving against the repository root alone said no, which dropped the
+    importing test out of the `mak` lane. Measured across the 108
+    `sys.path.insert` calls under tests/: the directories they name are the
+    ones `_BOX_IMPORT_ROOTS` now carries.
+    """
+    from tools.test_lane_map import _BOX_IMPORT_ROOTS, _is_local_box_import
+
+    assert (REPO / "cultura" / "mak_plataforma" / "coherence.py").is_file(), (
+        "the module this case is built on has moved; pick another"
+    )
+    assert _is_local_box_import("coherence")
+    assert "cultura/mak_plataforma" in _BOX_IMPORT_ROOTS
+
+
+def test_every_declared_box_import_root_exists() -> None:
+    from tools.test_lane_map import _BOX_IMPORT_ROOTS
+
+    for relative in _BOX_IMPORT_ROOTS:
+        if not relative:
+            continue
+        assert (REPO / relative).is_dir(), (
+            f"{relative} is declared as an import root and is not a directory; "
+            "a root that cannot match makes the classifier quietly stricter"
+        )
+
+
+def test_the_motor_is_still_not_a_box_import() -> None:
+    # Widening the roots must not swallow the MAK/FLUJO boundary the lanes
+    # exist to keep.
+    from tools.test_lane_map import _is_local_box_import
+
+    assert not _is_local_box_import("flujo")
+    assert not _is_local_box_import("flujo.knowledge.replay")
+    assert not _is_local_box_import("src.flujo.cli")
+
+
+def test_a_third_party_name_is_not_a_box_import() -> None:
+    from tools.test_lane_map import _is_local_box_import
+
+    for name in ("pytest", "flask", "PIL", "requests"):
+        assert not _is_local_box_import(name), (
+            f"{name} resolved as local; a root is matching too broadly"
+        )

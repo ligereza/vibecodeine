@@ -80,7 +80,44 @@ def test_tool_consumer_inventory_is_explicit_and_bounded():
     # the handoff. The active document is now `DECISIONES.md`, which holds
     # decisions and no facts, and the facts come from `tools/mak_status.py`.
     # Neither tool had a consumer other than its own test.
-    assert result["count"] == 104
+    #
+    # 104 -> 106 on 2026-09-03: `motor_checkout.py` and `link_motor_checkout.py`
+    # were added. The suite located the FLUJO motor by assuming `<raiz>/flujo`,
+    # so every test that reads motor sources failed on a missing path in any
+    # checkout that is not the operator's home one -- a worktree or a CI clone
+    # read as a broken contract. The first resolves the motor instead of
+    # assuming it and is imported by `tests/conftest.py` and
+    # `tests/integration_paths.py`; the second creates the composed layout that
+    # `flujo.departments.catalog` and `replay_suite_v1.json` are written
+    # against, and never deletes or overwrites to do it.
+    #
+    # 106 -> 107 on 2026-09-04: `hub_route_inventory.py` was added. The hub
+    # dispatches from a 458-line if-chain and nothing listed what it answers;
+    # the first measurement found 35 of 100 routes with no mention anywhere in
+    # the suite. Consumed by `tests/test_hub_route_answer_contract.py`, which
+    # takes its route list from the tool instead of a hardcoded copy.
+    #
+    # 107 -> 108 on 2026-09-04: `gen_postulacion.py` was added. It checks a
+    # funding application against the bases of its own convocatoria -- budget
+    # floor and ceiling, percentage caps, duration, empty sections ordered by
+    # the score they cost, and the mandatory documents the project's own
+    # declared conditions trigger. Consumed by `tests/test_gen_postulacion.py`.
+    #
+    # 108 -> 109 on 2026-09-04: `hub_payload_budget.py` was added. Nothing
+    # watched response size, which is how `/api/portfolio/copilot/map` came to
+    # answer 4,367,883 bytes so its only consumer could read three fields per
+    # row. It pins bytes per item, not total bytes, so the ratchet survives an
+    # archive of any size. Consumed by `tests/test_hub_payload_budget.py`.
+    #
+    # 109 -> 110 on 2026-09-04: `rol_candidatos.py` was added. The F5 format
+    # requires a `rol_y_exclusiones` slot and the archive cannot supply it:
+    # measured against the portable-SSD index, `owner_status` is `unknown`
+    # for all 917 projects and `owner_evidence_json` is empty for all 917.
+    # Nothing recorded who did what. It ranks where declaring a role pays
+    # off and emits a blank worksheet; it never writes a role, because a
+    # role is a claim a person makes about their own work. Consumed by
+    # `tests/test_rol_candidatos.py`.
+    assert result["count"] == 110
     assert len(result["files"]) == result["count"]
     summary = result["summary"]
     assert summary["with_production_reference"] + summary["tests_only"] \

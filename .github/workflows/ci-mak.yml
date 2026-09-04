@@ -57,3 +57,23 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/flujo/src
         run: python -m pytest -o addopts='' -q -m repo_hygiene
+      # The `review` lane had no job either, for the same reason the hygiene
+      # lane had none: one job was created per *operational* lane, and `review`
+      # reads like a holding pen rather than a lane. It is not. A test file the
+      # generated contract does not know is routed there, so `review` is where
+      # every test written since the contract was last reconciled lives --
+      # measured 2026-09-04: 891 cases across 16 files, none of them running in
+      # any job, and none in the operator's default `-m mak` either. Tests that
+      # run nowhere are the shape of problem this file already records once.
+      #
+      # The lane is green standalone in 82 s. Its files use tmp_path or pure
+      # functions; the two that mention /home/mak call name-only checks that
+      # touch no filesystem, which their own landmine tests assert.
+      #
+      # This job is a gate on the debt, not a home for it. When the lane
+      # contract is reconciled these files move to their real lanes and the
+      # job goes quiet on its own.
+      - name: review lane
+        env:
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/flujo/src
+        run: python -m pytest -o addopts='' -q -m review

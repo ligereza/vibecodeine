@@ -53,11 +53,34 @@ def _is_motor_path(path: str) -> bool:
     return path.startswith(("src/flujo/", "flujo/src/flujo/"))
 
 
+# Directories the tests themselves put on sys.path, so a bare `import
+# coherence` resolves to `tools/coherence.py`. Measured 2026-09-04 across the
+# 108 `sys.path.insert` calls under tests/: these are every repository
+# directory they name. Resolving against the root alone made such an import
+# read as "not a box import", which drops the file to `repo_hygiene` -- 108 of
+# the 172 files the contract assigns to `mak` classify that way from the AST
+# alone, which is why the contract carries a reconciliation pass and must not
+# be regenerated from the classifier without one.
+_BOX_IMPORT_ROOTS = (
+    "",
+    "tools",
+    "cultura",
+    "cultura/mak_plataforma",
+    "cultura/mak_research",
+    "cultura/mak_codex",
+    "cultura/mak_curatoria",
+)
+
+
 def _is_local_box_import(name: str) -> bool:
     top = name.split(".", 1)[0]
     if _is_motor(name) or top in {"__future__", "tests"}:
         return False
-    return (REPO / f"{top}.py").is_file() or (REPO / top).is_dir()
+    for relative in _BOX_IMPORT_ROOTS:
+        base = REPO / relative if relative else REPO
+        if (base / f"{top}.py").is_file() or (base / top).is_dir():
+            return True
+    return False
 
 
 def classify(path: Path) -> LaneRecord:
