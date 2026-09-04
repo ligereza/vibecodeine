@@ -22,6 +22,14 @@ ACTIVE_SKIP = {
     ".cache", ".codex", ".config", ".local", ".npm", ".ollama", ".lmstudio",
     ".venvs", "venvs", "venv-providers", "models", "WIN", "node_modules",
     "__pycache__",
+    # `consolidate_static_duplicates.PROTECTED_TOPS` already names these four
+    # together with WIN; only WIN was listed here. Two of them, GoogleDrive and
+    # OneDrive, are `fuse.rclone` mounts: walking them hashes every file, and
+    # hashing a file on an rclone mount downloads it. On the operator's box
+    # processes have been observed stuck in FUSE wait for hours, so the default
+    # `--active-root /home/mak` would both stall the scan and pull the whole
+    # cloud through it.
+    "GoogleDrive", "OneDrive", "curatoria_inbox",
 }
 HISTORY_SKIP = {
     ".git", ".cache", "node_modules", "__pycache__", ".venv", "venv",
@@ -270,15 +278,20 @@ def is_virtual_environment(path):
 
 
 def should_skip_dir(path, root_kind):
+    # Name-based decisions come first because they cost nothing. The
+    # `pyvenv.cfg` test below stats the directory, and two of the names in
+    # ACTIVE_SKIP are `fuse.rclone` mounts: asking the cloud whether it holds a
+    # virtualenv marker, in order to decide never to read the cloud, is one
+    # network round trip -- or one hang -- per mount.
     if path.name.startswith("."):
         return True
-    if is_virtual_environment(path):
+    if path.name in (ACTIVE_SKIP if root_kind == "active" else HISTORY_SKIP):
         return True
     if path.name in {"site-packages", "dist-packages"}:
         # Reached when the environment root is above the scan root, so the
         # pyvenv.cfg test never sees it.
         return True
-    return path.name in (ACTIVE_SKIP if root_kind == "active" else HISTORY_SKIP)
+    return is_virtual_environment(path)
 
 
 def iter_files(root, root_kind):
