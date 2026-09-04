@@ -102,7 +102,13 @@ def test_tool_consumer_inventory_is_explicit_and_bounded():
     # floor and ceiling, percentage caps, duration, empty sections ordered by
     # the score they cost, and the mandatory documents the project's own
     # declared conditions trigger. Consumed by `tests/test_gen_postulacion.py`.
-    assert result["count"] == 108
+    #
+    # 108 -> 109 on 2026-09-04: `hub_payload_budget.py` was added. Nothing
+    # watched response size, which is how `/api/portfolio/copilot/map` came to
+    # answer 4,367,883 bytes so its only consumer could read three fields per
+    # row. It pins bytes per item, not total bytes, so the ratchet survives an
+    # archive of any size. Consumed by `tests/test_hub_payload_budget.py`.
+    assert result["count"] == 109
     assert len(result["files"]) == result["count"]
     summary = result["summary"]
     assert summary["with_production_reference"] + summary["tests_only"] \
