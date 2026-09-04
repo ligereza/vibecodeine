@@ -90,7 +90,13 @@ def test_tool_consumer_inventory_is_explicit_and_bounded():
     # `tests/integration_paths.py`; the second creates the composed layout that
     # `flujo.departments.catalog` and `replay_suite_v1.json` are written
     # against, and never deletes or overwrites to do it.
-    assert result["count"] == 106
+    #
+    # 106 -> 107 on 2026-09-04: `hub_route_inventory.py` was added. The hub
+    # dispatches from a 458-line if-chain and nothing listed what it answers;
+    # the first measurement found 35 of 100 routes with no mention anywhere in
+    # the suite. Consumed by `tests/test_hub_route_answer_contract.py`, which
+    # takes its route list from the tool instead of a hardcoded copy.
+    assert result["count"] == 107
     assert len(result["files"]) == result["count"]
     summary = result["summary"]
     assert summary["with_production_reference"] + summary["tests_only"] \
