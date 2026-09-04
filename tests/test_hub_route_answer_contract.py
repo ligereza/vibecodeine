@@ -116,8 +116,58 @@ HOSTILE_QUERIES = {
 }
 
 
+def _query_reading_routes() -> list[str]:
+    """The exact GET routes whose own branch reads the query string.
+
+    Only 21 of 76 do. Driving the other 55 with a hostile query pays each
+    route's full cost -- one of them takes 2.75 s -- to prove something its
+    branch cannot get wrong, because it never looks at the query. The list
+    comes from the inventory, so a route that starts reading one is covered
+    without editing this file.
+    """
+    rows = inventory()["methods"].get("GET", [])
+    prefixes = _proxy_prefixes()
+    paths = sorted(
+        {
+            str(row["path"])
+            for row in rows
+            if row["match"] == "exact"
+            and row["reads_query"]
+            and not any(str(row["path"]).startswith(prefix) for prefix in prefixes)
+        }
+    )
+    assert paths, "no route reads the query: the inventory stopped detecting them"
+    return paths
+
+
+QUERY_ROUTES = _query_reading_routes()
+
+
+def test_the_query_filter_narrows_without_emptying() -> None:
+    """The filter has to cut, and has to keep the routes that matter.
+
+    A detector that silently matched nothing would turn this contract into 0
+    cases and still report green; one that matched everything would give back
+    the cost it was written to remove.
+    """
+    assert set(QUERY_ROUTES) <= set(GET_ROUTES)
+    assert len(QUERY_ROUTES) < len(GET_ROUTES), "the filter removed nothing"
+    assert len(QUERY_ROUTES) >= 15, f"only {len(QUERY_ROUTES)} routes read a query"
+    # Routes whose whole behaviour depends on a query parameter.
+    for known in ("/api/portfolio/copilot/map", "/api/research/job", "/pieza"):
+        assert known in QUERY_ROUTES, f"{known} reads a query and was filtered out"
+
+
+def test_routes_that_ignore_the_query_are_still_covered() -> None:
+    """Dropping them here loses nothing: they are driven by the other three."""
+    ignoring = set(GET_ROUTES) - set(QUERY_ROUTES)
+    assert ignoring, "every route reads the query, which contradicts the inventory"
+    # Those three contracts parametrise over GET_ROUTES, not QUERY_ROUTES.
+    assert ignoring <= set(GET_ROUTES)
+
+
 @pytest.mark.parametrize("label,query", sorted(HOSTILE_QUERIES.items()))
-@pytest.mark.parametrize("path", GET_ROUTES)
+@pytest.mark.parametrize("path", QUERY_ROUTES)
 def test_get_route_survives_a_hostile_query(path: str, label: str, query: str) -> None:
     handler = FakeHandler(f"{path}?{query}")
 
