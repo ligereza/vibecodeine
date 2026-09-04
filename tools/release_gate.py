@@ -1043,7 +1043,7 @@ def check_adapter_dependency(gate: Gate, root: Path, runtime: dict[str, object])
 DIRTY_RULES = (
     ("context/coordination/", "session_dossier", "coordination dossier written this session"),
     (".github/workflows/", "release_candidate", "workflow contract"),
-    ("CAPACIDADES.md", "durable_doc", "MAK capability contract"),
+    ("CAPACIDADES_MAK.md", "durable_doc", "MAK capability contract"),
     ("requirements-integration.txt", "release_candidate", "integration dependency contract"),
     ("tests/", "release_candidate", "regression and contract tests"),
     ("scripts/", "release_candidate", "operator and workflow scripts"),

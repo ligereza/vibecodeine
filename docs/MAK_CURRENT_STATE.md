@@ -570,14 +570,14 @@ handoff. Sus conclusiones durables se pueden entender por familias:
    demuestra que no tienen consumidores legítimos.
 5. Revisar dominio/hosting del Portfolio en una tarea aparte; no mezclarlo con
    el runtime local ni con el catálogo RD.
-6. **Deuda estructural de `CAPACIDADES.md`**: la sección 5 sigue siendo el
+6. **Deuda estructural de `CAPACIDADES_MAK.md`**: la sección 5 sigue siendo el
    registro declarativo y 5-ter el overlay interpretativo; 5-bis queda marcado
    como snapshot histórico. `repo_audit` emite la medición read-only
    `mak-tool-consumer-inventory-v1` (117 herramientas) y ahora puede proyectarla
    como tabla reproducible con `--format markdown`; la salida fechada está en
    `/home/mak/state/codex-retomar-20260831/evidence/repo-audit-tools-20260831.md`.
    La medición actual devuelve 46 con referencia de producción, 39 sólo en tests
-   y 32 sin referencia directa. El overlay manual de `CAPACIDADES.md` cubre los
+   y 32 sin referencia directa. El overlay manual de `CAPACIDADES_MAK.md` cubre los
    32 casos tras clasificar también `certified_query.py`, `drenar_material.py`,
    `ig_metadatos.py`, `medir_test_overlap.py`, `medir_tests.py` y
    `venue_screen_setup.py`. No se debe llamar a esto una fuente única ni retirar
@@ -686,7 +686,7 @@ reciente (**4200/5/0**). No se hizo
 commit, push, activación de cron ni reanudación de XIO. El write-set local
 permanece deliberadamente sin commit hasta cerrar la revisión: `src/flujo/cli.py`,
 `src/flujo/diagnostics.py`, `src/flujo/knowledge/system_status.py`,
-`tools/repo_audit.py`, `CAPACIDADES.md` y sus pruebas asociadas, incluidas `tests/test_cli_smoke.py`
+`tools/repo_audit.py`, `CAPACIDADES_MAK.md` y sus pruebas asociadas, incluidas `tests/test_cli_smoke.py`
 y `tests/test_repo_audit.py`.
 
 La cadena `flujo verify` también quedó fail-closed: cada subproceso fallido
@@ -812,7 +812,7 @@ reanudar** o gritará que esperaba 0 activas y hay 23.
   resto es evidencia histórica)
 - `context/OWNER_MANIFEST.md`
 - `context/VIDEO_WORKFLOW_MAK_20260817.md`
-- `CAPACIDADES.md`
+- `CAPACIDADES_MAK.md`
 - `MAPA.md`
 - `docs/AUTORIDAD.md` (qué documento manda sobre cuál, y por qué)
 - sección `Historical checkpoint — Phase 495` y fases posteriores en

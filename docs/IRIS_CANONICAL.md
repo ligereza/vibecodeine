@@ -243,7 +243,7 @@ FLUJO consumer.
   mounted curation panel at `/portafolio/` is an internal interface with a
   historical name; the public site in `iskvw/` is a separate output product.
 - Compile, render, opportunity fit: FLUJO (`flujo/tools/`, 35 tools, listed in
-  `CAPACIDADES.md` section 5-quater).
+  `CAPACIDADES_MAK.md` section 5-quater).
 - Knowledge layer: FLUJO (`flujo/src/flujo/knowledge/`), consumed by MAK tools
   through `FLUJO_SOURCE_ROOT` (default `/home/mak/flujo/src`). The retired
   dotted spelling `from src.flujo.` is now a ratchet in

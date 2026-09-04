@@ -5,7 +5,7 @@ The registry in this file is deliberately small and explicit: a path or a
 process name is not treated as a capability by itself.  The command compares
 the registry with the capability documents, then (optionally) probes the
 current user services and local listeners.  It emits evidence; it never edits
-CAPACIDADES.md automatically.
+the capability documents automatically.
 
 Examples::
 
@@ -207,7 +207,13 @@ def _probe_http(port: int, paths: Iterable[str]) -> dict[str, object]:
 
 
 def _declared(docs: list[Path], anchors: tuple[str, ...]) -> list[str]:
-    """Find rows where the label and canonical source occur together."""
+    """Find current rows where the label and canonical source co-occur.
+
+    Capability documents retain historical material below their current audit
+    card. Searching the whole file made an old cross-check look like current
+    ownership, so prefer the bounded ``Auditoría vigente`` section and only
+    fall back to the whole document for older document shapes.
+    """
 
     hits: list[str] = []
     lowered = tuple(anchor.lower() for anchor in anchors)
@@ -216,7 +222,16 @@ def _declared(docs: list[Path], anchors: tuple[str, ...]) -> list[str]:
             lines = doc.read_text(encoding="utf-8", errors="replace").splitlines()
         except OSError:
             continue
-        if any(all(anchor in line.lower() for anchor in lowered) for line in lines):
+        current = lines
+        for index, line in enumerate(lines):
+            if line.strip().lower().startswith("## auditoría vigente"):
+                current = []
+                for candidate in lines[index:]:
+                    if candidate.startswith("## ") and candidate != line:
+                        break
+                    current.append(candidate)
+                break
+        if any(all(anchor in line.lower() for anchor in lowered) for line in current):
             hits.append(str(doc))
     return hits
 
@@ -469,7 +484,7 @@ def main(argv: list[str] | None = None) -> int:
         "--docs",
         type=Path,
         action="append",
-        help="capability document(s), relative to --root; defaults to existing CAPACIDADES files",
+        help="capability document(s), relative to --root; defaults to MAK and FLUJO matrices",
     )
     parser.add_argument("--format", choices=("text", "json", "markdown"), default="text")
     parser.add_argument("--output", type=Path, help="write the selected report atomically")
@@ -484,11 +499,7 @@ def main(argv: list[str] | None = None) -> int:
 
     root = args.root.resolve()
     doc_paths = args.docs or [
-        Path("CAPACIDADES.md"),
         Path("CAPACIDADES_MAK.md"),
-        # The FLUJO capability document lives in the sibling checkout, not
-        # here: this branch does not carry it. Without this path the FLUJO
-        # surfaces report capability_row_missing while their document exists.
         Path("flujo/CAPACIDADES_FLUJO.md"),
     ]
     docs = [(path if path.is_absolute() else root / path) for path in doc_paths]

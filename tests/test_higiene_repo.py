@@ -13,7 +13,7 @@ from pathlib import Path
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-CAPACIDADES = REPO_ROOT / "CAPACIDADES.md"
+CAPACIDADES = REPO_ROOT / "CAPACIDADES_MAK.md"
 TOOLS_DIR = REPO_ROOT / "tools"
 
 # El tope de 350 lineas se RETIRO el 2026-07-30, y esta es su acta.
@@ -85,7 +85,7 @@ def test_tools_en_registro():
     ]
     assert not faltantes, (
         "tools/<x>.py sin entrada en registro VIVO/MUERTO de "
-        "CAPACIDADES.md: toda herramienta declara consumidor o no entra "
+        "CAPACIDADES_MAK.md: toda herramienta declara consumidor o no entra "
         "(regla 2026-07-25). Faltan: " + ", ".join(faltantes)
     )
 
@@ -110,13 +110,13 @@ def test_registro_sin_herramientas_fantasma():
                                 re.MULTILINE))
     existentes = {p.name for p in TOOLS_DIR.glob("*.py") if p.is_file()}
     assert declaradas, (
-        "el registro de CAPACIDADES.md no declaro ninguna fila `x.py`: si la "
+        "el registro de CAPACIDADES_MAK.md no declaro ninguna fila `x.py`: si la "
         "tabla cambia de formato el regex deja de matchear y este ratchet pasa "
         "sin medir nada")
     assert existentes, "no hay herramientas en tools/: nada que contrastar"
     fantasmas = sorted(declaradas - existentes)
     assert not fantasmas, (
-        "el registro de CAPACIDADES.md declara herramientas que no existen en "
+        "el registro de CAPACIDADES_MAK.md declara herramientas que no existen en "
         "tools/: se borro el archivo y quedo la fila. Retirar la fila o "
         "restaurar la herramienta. Fantasmas: " + ", ".join(fantasmas)
     )
@@ -236,7 +236,7 @@ def test_toda_excepcion_de_glifo_apunta_a_un_archivo_real_y_con_razon():
 # A VIVO claim has to survive being invoked
 # ---------------------------------------------------------------------------
 #
-# test_tools_en_registro checks that a tool's NAME appears in CAPACIDADES.md. It
+# test_tools_en_registro checks that a tool's NAME appears in CAPACIDADES_MAK.md. It
 # does not check that the tool still runs, so a row can keep claiming VIVO for a
 # script that crashes on import. Measured on 2026-08-21 across the 40 VIVO rows:
 # all 40 compile, 39 answer --help, and the one that does not (system_map.py)
