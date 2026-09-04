@@ -45,44 +45,62 @@ def write_action_log(action_log: list[dict]) -> None:
     ACTION_LOG.write_text(json.dumps(payload, ensure_ascii=True, indent=2) + "\n", encoding="utf-8")
 
 
+def _refuse_for(path: Path, candidate: Path, root: Path) -> str | None:
+    """The reason `candidate` is out of bounds, or None. Pure: no filesystem."""
+    if candidate != root and root not in candidate.parents:
+        return "path outside MAK"
+    try:
+        relative = candidate.relative_to(root)
+    except ValueError:
+        return "path outside MAK"
+    top = relative.parts[0] if relative.parts else ""
+    if top in PROTECTED_TOPS:
+        return "protected root"
+    if top in GIT_TOPS:
+        return "Git root"
+    if ".git" in relative.parts:
+        return "Git internals"
+    return None
+
+
 def check_path(path: Path) -> None:
     """Refuse anything outside MAK, or inside a protected or Git root.
 
-    The check resolves the path first. It used to read the parts as written,
-    and `Path` normalises a `.` but never a `..` -- it cannot, because with a
-    symlink in the way the two are not the same place. So the gate that exists
-    to keep this tool out of WIN, GoogleDrive, OneDrive and the flujo checkout
-    let `/home/mak/proyecto/../WIN/a.txt` through as if its top component were
-    `proyecto`, and `/home/mak/../etc/passwd` as if it were under MAK at all.
-    Both are measured in tests/test_consolidate_static_duplicates.py.
+    Two passes, in this order for a reason.
 
-    Resolving also collapses a symlink that points into a protected root, which
-    `validate_file` catches only for the file itself, not for its parents.
+    First the path is collapsed lexically with `os.path.normpath`, which is
+    string work: no stat, no readlink. `Path` normalises a `.` but never a
+    `..` -- it cannot, because with a symlink in the way the two are not the
+    same place -- so the gate used to accept `/home/mak/proyecto/../WIN/a.txt`
+    as if its top component were `proyecto`, and `/home/mak/../etc/passwd` as
+    if it were under MAK at all.
+
+    Then, and only if the lexical form is allowed, the path is resolved, to
+    catch a symlink whose parent points into a protected root --
+    `validate_file` catches a symlinked file, never a symlinked parent.
+
+    The order is what makes this safe to call. Two of the protected roots,
+    GoogleDrive and OneDrive, are `fuse.rclone` mounts: resolving a path under
+    them blocks on the network. Refusing them lexically means the gate answers
+    instantly for exactly the paths it exists to refuse, instead of hanging on
+    the cloud to decide it will not touch the cloud.
 
     Errors name the path the caller passed, since that is the one they can fix,
     and the resolved form when the two differ.
     """
-    root = ROOT.resolve()
+    root = Path(os.path.normpath(str(ROOT)))
+    lexical = Path(os.path.normpath(str(path)))
+
+    reason = _refuse_for(path, lexical, root)
+    if reason is not None:
+        if lexical != path:
+            raise RuntimeError(f"{reason}: {path} (resuelve a {lexical})")
+        raise RuntimeError(f"{reason}: {path}")
+
     resolved = path.resolve()
-
-    def named(reason: str) -> RuntimeError:
-        if resolved != path:
-            return RuntimeError(f"{reason}: {path} (resuelve a {resolved})")
-        return RuntimeError(f"{reason}: {path}")
-
-    if resolved != root and root not in resolved.parents:
-        raise named("path outside MAK")
-    try:
-        relative = resolved.relative_to(root)
-    except ValueError as exc:
-        raise named("path outside MAK") from exc
-    top = relative.parts[0] if relative.parts else ""
-    if top in PROTECTED_TOPS:
-        raise named("protected root")
-    if top in GIT_TOPS:
-        raise named("Git root")
-    if ".git" in relative.parts:
-        raise named("Git internals")
+    reason = _refuse_for(path, resolved, ROOT.resolve())
+    if reason is not None:
+        raise RuntimeError(f"{reason}: {path} (resuelve a {resolved})")
 
 
 def validate_file(path: Path) -> None:

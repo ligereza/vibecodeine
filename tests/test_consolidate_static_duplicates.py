@@ -92,6 +92,66 @@ class TestTheGateStillRefusesWhatItAlwaysDid:
             check_path(Path("/home/mak/./WIN/a.txt"))
 
 
+class TestRefusingCostsNoFilesystem:
+    """Two protected roots are cloud mounts. Refusing them must not touch them.
+
+    `/home/mak/GoogleDrive` and `/home/mak/OneDrive` are `fuse.rclone` mounts.
+    The first version of this gate resolved the path before deciding, so
+    checking a path under them blocked on the network -- hanging on the cloud
+    in order to decide it would not touch the cloud. It was measured: this
+    module took 8.42 s, and a full-suite run stalled in FUSE wait
+    (`request_wait_answer`) for ten minutes without advancing.
+
+    The refusal is lexical now. `Path.resolve` is replaced with a landmine
+    here: if the gate reaches for the filesystem to refuse an out-of-bounds
+    path, the test fails instead of hanging.
+    """
+
+    @pytest.fixture
+    def no_filesystem(self, monkeypatch):
+        def landmine(self, *args, **kwargs):
+            raise AssertionError(f"the gate resolved {self} to refuse it")
+
+        monkeypatch.setattr(Path, "resolve", landmine)
+
+    @pytest.mark.parametrize("protected", sorted(PROTECTED_TOPS))
+    def test_a_protected_root_is_refused_without_resolving(
+        self, no_filesystem, protected: str
+    ) -> None:
+        with pytest.raises(RuntimeError, match="protected root"):
+            check_path(Path(f"/home/mak/{protected}/archivo.txt"))
+
+    @pytest.mark.parametrize("protected", sorted(PROTECTED_TOPS))
+    def test_traversal_into_a_protected_root_is_refused_without_resolving(
+        self, no_filesystem, protected: str
+    ) -> None:
+        with pytest.raises(RuntimeError, match="protected root"):
+            check_path(Path(f"/home/mak/proyecto/../{protected}/archivo.txt"))
+
+    def test_a_path_outside_mak_is_refused_without_resolving(
+        self, no_filesystem
+    ) -> None:
+        with pytest.raises(RuntimeError, match="path outside MAK"):
+            check_path(Path("/home/mak/../etc/passwd"))
+
+    def test_a_git_root_is_refused_without_resolving(self, no_filesystem) -> None:
+        with pytest.raises(RuntimeError, match="Git root"):
+            check_path(Path("/home/mak/flujo/src/x.py"))
+
+    def test_the_landmine_is_armed(self) -> None:
+        # Without this, the tests above would pass on a gate that never
+        # refuses anything, and the fixture would be decorative.
+        with pytest.raises(AssertionError, match="resolved"):
+            with pytest.MonkeyPatch.context() as patch:
+                patch.setattr(
+                    Path, "resolve",
+                    lambda self, *a, **k: (_ for _ in ()).throw(
+                        AssertionError(f"the gate resolved {self} to refuse it")
+                    ),
+                )
+                Path("/home/mak/proyecto/a.txt").resolve()
+
+
 class TestTheGateStillLetsRealWorkThrough:
     """A gate that refuses everything is not a gate, it is a wall."""
 
