@@ -201,33 +201,56 @@ class TestPerFieldProvenance:
         else:
             pytest.fail("every entry is flagged, so the flag distinguishes nothing")
 
-    def test_a_declared_extension_is_carried_with_its_regions(
-        self, surface: dict
-    ) -> None:
+    def test_both_declared_extensions_are_carried(self, surface: dict) -> None:
+        # Two of them cover the country between them: showing one would give
+        # most of Chile the wrong date.
         fondart = next(
             row for row in surface["items"] if row["id"].startswith("fondart")
         )
-        extension = fondart["ampliacion_regional"]
-        assert extension is not None
-        assert extension["cierra"] == "2026-09-16"
-        assert "Atacama" in extension["regiones"]
-        assert extension["resolucion"].startswith("http")
+        by_id = {e["id"]: e for e in fondart["ampliaciones_regionales"]}
+        assert set(by_id) == {"norte-clima", "coquimbo-magallanes"}
+        assert by_id["norte-clima"]["cierra"] == "2026-09-16"
+        assert "Atacama" in by_id["norte-clima"]["regiones"]
 
-    def test_an_entry_without_an_extension_reports_none(self, surface: dict) -> None:
-        # Inferring one for the wrong region would hand the operator a week
-        # they do not have.
+    def test_a_shift_is_carried_as_a_shift(self, surface: dict) -> None:
+        fondart = next(
+            row for row in surface["items"] if row["id"].startswith("fondart")
+        )
+        south = next(
+            e for e in fondart["ampliaciones_regionales"]
+            if e["id"] == "coquimbo-magallanes"
+        )
+        assert south["cierra"] is None
+        assert south["dias_habiles"] == 2
+        assert south["resolucion"] == "Rex 2596"
+
+    def test_every_extension_says_where_it_was_read(self, surface: dict) -> None:
+        for row in surface["items"]:
+            for extension in row["ampliaciones_regionales"]:
+                assert extension["fuente"], f"{extension['id']} has no source kind"
+                assert extension["leido"]
+
+    def test_an_entry_without_extensions_reports_an_empty_list(
+        self, surface: dict
+    ) -> None:
+        # Inferring one for the wrong region would hand the operator days they
+        # do not have.
         others = [
             row for row in surface["items"] if not row["id"].startswith("fondart")
         ]
         assert others, "nothing to check"
-        assert all(row["ampliacion_regional"] is None for row in others)
+        assert all(row["ampliaciones_regionales"] == [] for row in others)
 
-    def test_the_extension_does_not_move_the_declared_close(self, surface: dict) -> None:
+    def test_no_extension_moves_the_declared_close(self, surface: dict) -> None:
         fondart = next(
             row for row in surface["items"] if row["id"].startswith("fondart")
         )
         assert fondart["cierra"] == "2026-09-08"
-        assert fondart["ampliacion_regional"]["cierra"] != fondart["cierra"]
+        assert all(
+            e["cierra"] != fondart["cierra"]
+            for e in fondart["ampliaciones_regionales"]
+            if e["cierra"]
+        )
 
 
 class TestDegradation:

@@ -305,37 +305,63 @@ class TestProvenanceIsPerField:
         assert "deadline.source" not in _fields(review(confirmed, valid_project))
 
 
-class TestRegionalExtension:
-    """An extension is shown only where a resolution was read and recorded."""
+class TestRegionalExtensions:
+    """Two of them, covering the country between them.
 
-    def test_the_declared_extension_is_surfaced(self, bases, valid_project) -> None:
-        findings = review(bases, valid_project)
-        assert "deadline.regional_extension" in _fields(findings, WARNING)
+    The northern regions were extended by resolution to a fixed date; Coquimbo
+    to Magallanes by two working days, under Rex 2596. Reporting one would give
+    most applicants the wrong date, and collapsing them into a single
+    "extended" figure would give all of them the wrong date.
+    """
 
-    def test_it_names_the_regions_it_covers(self, bases) -> None:
-        extension = bases["deadlines"]["regional_extension"]
-        assert extension["applies_to_regions"] == [
+    def _extensions(self, bases) -> list[dict]:
+        return bases["deadlines"]["regional_extensions"]
+
+    def test_both_declared_extensions_are_surfaced(self, bases, valid_project) -> None:
+        fields = _fields(review(bases, valid_project), WARNING)
+        assert "deadline.extension.norte-clima" in fields
+        assert "deadline.extension.coquimbo-magallanes" in fields
+
+    def test_the_northern_one_names_a_date_and_its_regions(self, bases) -> None:
+        north = next(e for e in self._extensions(bases) if e["id"] == "norte-clima")
+        assert north["extended_closes"] == "2026-09-16"
+        assert north["applies_to_regions"] == [
             "Arica y Parinacota", "Tarapacá", "Antofagasta", "Atacama",
         ]
-        assert extension["extended_closes"] == "2026-09-16"
+        assert "ARTÍCULO PRIMERO" in north["quote"]
 
-    def test_it_cites_the_resolution_and_quotes_it(self, bases) -> None:
-        extension = bases["deadlines"]["regional_extension"]
-        assert extension["url"].startswith("http")
-        assert extension["read_on"]
-        assert "ARTÍCULO PRIMERO" in extension["quote"]
+    def test_the_southern_one_declares_a_shift_not_an_invented_date(
+        self, bases
+    ) -> None:
+        # The notice gives "two working days", and `closes` itself is not
+        # confirmed. Computing a date from an unconfirmed base and printing it
+        # as fact is the failure this whole entry was corrected for.
+        south = next(
+            e for e in self._extensions(bases) if e["id"] == "coquimbo-magallanes"
+        )
+        assert south["extended_closes"] is None
+        assert south["extension_business_days"] == 2
+        assert south["regions_as_quoted"] == "de Coquimbo a Magallanes"
 
-    def test_the_extension_never_moves_the_declared_close(self, bases) -> None:
-        # Applying it to the wrong region would hand the operator a week they
-        # do not have. It is reported beside the date, never instead of it.
+    def test_every_extension_cites_where_it_was_read(self, bases) -> None:
+        for extension in self._extensions(bases):
+            assert extension["url"].startswith("http")
+            assert extension["read_on"]
+            assert extension["source_kind"]
+            assert extension["quote"]
+
+    def test_no_extension_moves_the_declared_close(self, bases) -> None:
+        # They are reported beside the date, never instead of it: applying the
+        # wrong region's extension hands the applicant days they do not have.
         assert bases["deadlines"]["closes"] == "2026-09-08"
 
-    def test_a_call_without_an_extension_says_nothing_about_one(
+    def test_a_call_without_extensions_says_nothing_about_one(
         self, bases, valid_project
     ) -> None:
         plain = copy.deepcopy(bases)
-        plain["deadlines"].pop("regional_extension", None)
-        assert "deadline.regional_extension" not in _fields(review(plain, valid_project))
+        plain["deadlines"].pop("regional_extensions", None)
+        fields = _fields(review(plain, valid_project))
+        assert not any(field.startswith("deadline.extension.") for field in fields)
 
 
 class TestPartialBases:

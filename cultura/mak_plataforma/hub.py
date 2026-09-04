@@ -4547,22 +4547,41 @@ def _call_state(closes: str, today: date | None = None):
     return "abierta", remaining
 
 
-def _regional_extension(deadlines):
-    """A declared deadline extension, or None. Never inferred.
+def _regional_extensions(deadlines):
+    """Every declared deadline extension. Never inferred, never merged.
 
-    An extension only exists here if a resolution was read and recorded with
-    the regions it covers. Applying one to the wrong region would be worse than
-    not showing it: the operator would believe they had a week they do not.
+    Fondart 2027 has two, and between them they cover the whole country: the
+    northern regions were extended by resolution to a fixed date, and Coquimbo
+    to Magallanes by two working days. Showing one would give the wrong date to
+    most of the country; collapsing them into a single "extended" date would
+    give the wrong date to all of it.
+
+    An extension appears only if a resolution or an official notice was read
+    and recorded with the regions it covers, and one that declares a shift
+    rather than a date says so instead of having a date computed for it.
     """
-    extension = deadlines.get("regional_extension")
-    if not isinstance(extension, dict) or not extension.get("extended_closes"):
-        return None
-    return {
-        "cierra": extension["extended_closes"],
-        "regiones": list(extension.get("applies_to_regions", [])),
-        "resolucion": extension.get("url", ""),
-        "leido": extension.get("read_on", ""),
-    }
+    declared = deadlines.get("regional_extensions")
+    if not isinstance(declared, list):
+        return []
+    out = []
+    for extension in declared:
+        if not isinstance(extension, dict):
+            continue
+        if not extension.get("extended_closes") and not extension.get(
+                "extension_business_days"):
+            continue
+        out.append({
+            "id": extension.get("id", ""),
+            "cierra": extension.get("extended_closes"),
+            "dias_habiles": extension.get("extension_business_days"),
+            "regiones": list(extension.get("applies_to_regions", [])),
+            "regiones_citadas": extension.get("regions_as_quoted", ""),
+            "resolucion": extension.get("resolution", ""),
+            "url": extension.get("url", ""),
+            "fuente": extension.get("source_kind", ""),
+            "leido": extension.get("read_on", ""),
+        })
+    return out
 
 
 def _convocatorias(today: date | None = None):
@@ -4624,7 +4643,7 @@ def _convocatorias(today: date | None = None):
                 "kind", source.get("kind", "official_bases")),
             "plazo_por_confirmar": bool(
                 (deadlines.get("source") or {}).get("todo")),
-            "ampliacion_regional": _regional_extension(deadlines),
+            "ampliaciones_regionales": _regional_extensions(deadlines),
         })
 
     orden = {"cerrada": 3, "sin_fecha": 4, "fecha_invalida": 5}

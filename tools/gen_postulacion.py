@@ -213,14 +213,27 @@ def review(bases: dict, project: dict) -> list[dict]:
             f"la fecha de cierre no se leyó del documento oficial "
             f"({deadline_source.get('kind', 'sin declarar')}): {deadline_source['todo']}",
         )
-    extension = deadlines.get("regional_extension") or {}
-    if extension.get("extended_closes"):
+    # Two extensions cover the whole country between them, so reporting only
+    # one would give most applicants the wrong date. Each is reported as
+    # declared: one names a date, the other a shift in working days, and
+    # neither is turned into the other.
+    for extension in deadlines.get("regional_extensions") or []:
+        if not isinstance(extension, dict):
+            continue
+        regions = extension.get("regions_as_quoted") or ", ".join(
+            extension.get("applies_to_regions", []))
+        if extension.get("extended_closes"):
+            moved = f"al {extension['extended_closes']}"
+        elif extension.get("extension_business_days"):
+            moved = f"en {extension['extension_business_days']} días hábiles"
+        else:
+            continue
         add(
             WARNING,
-            "deadline.regional_extension",
-            f"hay una ampliación declarada al {extension['extended_closes']} para "
-            f"{', '.join(extension.get('applies_to_regions', []))}: si el proyecto "
-            "pertenece a una de esas regiones, el plazo es ese y no el de arriba",
+            f"deadline.extension.{extension.get('id', 'sin_id')}",
+            f"ampliación declarada {moved} para {regions} "
+            f"({extension.get('resolution', 'sin resolución')}): si el proyecto "
+            "pertenece ahí, ese es el plazo y no el de arriba",
         )
 
     max_months = deadlines.get("max_duration_months")
