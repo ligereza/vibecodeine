@@ -1,0 +1,209 @@
+{
+  "schema": "mak-convocatoria-bases-v1",
+  "id": "fondart-regional-creacion-artistica-2027",
+  "name": "Fondart Regional — Línea Creación Artística: Innovación y Nuevos Formatos Creativos",
+  "edition": "Concurso General 2027",
+  "authority": "Ministerio de las Culturas, las Artes y el Patrimonio",
+  "source": {
+    "kind": "official_bases",
+    "covers": "objetivo, áreas, montos, topes de presupuesto, duración máxima, criterios con sus ponderaciones, secciones y documentos. NO cubre las fechas de apertura y cierre: el PDF no contiene ninguna. Ver `deadlines.source`.",
+    "bases_pdf": "https://www.fondosdecultura.cl/wp-content/uploads/2026/08/CreacionArtistica-Regional2027.pdf",
+    "portal": "https://www.fondosdecultura.gob.cl",
+    "read_on": "2026-09-04",
+    "note": "Values transcribed from the bases PDF on the date above, each citing the section it comes from. Verify against the current PDF before applying: the authority can replace it without notice."
+  },
+  "deadlines": {
+    "opens": "2026-07-31",
+    "closes": "2026-09-08",
+    "max_duration_months": 12,
+    "source_section": "I.9 Duración y ejecución de los proyectos (solo max_duration_months)",
+    "source": {
+      "kind": "portal_and_press",
+      "verified": "2026-09-04",
+      "note": "CORRECCION 2026-09-04: `opens` y `closes` NO salen del PDF de bases. Se comprobó buscando cualquier fecha con el patrón `N de MES de 2026|2027` en el texto extraído del PDF: cero coincidencias. El PDF fija la duración del proyecto (12 meses), no el calendario. Estas dos fechas venían de resúmenes de portal y prensa y quedaron atribuidas por error a las bases. Lo único que el PDF sostiene aquí es `max_duration_months`.",
+      "official_document_consulted": "https://www.fondosdecultura.cl/wp-content/uploads/2026/07/Amplia-plazo-de-postulacion-concurso-2027.pdf",
+      "what_that_document_states": "Los cierres de las convocatorias 2027 caen «entre los días 31 de agosto y 10 de septiembre de 2026». No fija por sí solo el día exacto de esta línea.",
+      "todo": "Confirmar el día exacto en el portal antes de postular. La fecha de abajo es la mejor disponible, no una lectura del documento oficial."
+    },
+    "regional_extensions_note": "Son DOS ampliaciones distintas, y entre ambas cubren el país entero: casi ningún postulante se rige por `closes` a secas. Se registran como lista y nunca reemplazan a `closes`, porque aplicar la ampliación de la región equivocada le daría al postulante días que no tiene.",
+    "regional_extensions": [
+      {
+        "id": "norte-clima",
+        "resolution": "AMPLÍA PLAZO DE POSTULACIÓN EN EL MARCO DE LOS CONCURSOS PÚBLICOS, convocatorias 2027",
+        "url": "https://www.fondosdecultura.cl/wp-content/uploads/2026/07/Amplia-plazo-de-postulacion-concurso-2027.pdf",
+        "read_on": "2026-09-04",
+        "source_kind": "official_resolution",
+        "applies_to_regions": [
+          "Arica y Parinacota",
+          "Tarapacá",
+          "Antofagasta",
+          "Atacama"
+        ],
+        "extended_closes": "2026-09-16",
+        "quote": "ARTÍCULO PRIMERO: AMPLÍASE el plazo de postulación [...] en relación a aquellos responsables de proyectos pertenecientes a las regiones de Arica y Parinacota, Tarapacá, Antofagasta y Atacama, hasta las siguientes fechas: [...] 16 de septiembre de 2026 (Demás líneas del Fondo Nacional de Desarrollo Cultural y las Artes, ámbito nacional y regional de financiamiento).",
+        "note": "Fondart es el Fondo Nacional de Desarrollo Cultural y las Artes, y esta línea no es Becas Chile Crea, así que cae en «demás líneas»: 16 de septiembre.",
+        "reason": "condiciones climáticas adversas en la zona norte"
+      },
+      {
+        "id": "coquimbo-magallanes",
+        "resolution": "Rex 2596",
+        "url": "https://www.fondosdecultura.cl/",
+        "read_on": "2026-09-04",
+        "source_kind": "official_portal_notice",
+        "applies_to_regions": [
+          "Coquimbo",
+          "Valparaíso",
+          "Metropolitana",
+          "O'Higgins",
+          "Maule",
+          "Ñuble",
+          "Biobío",
+          "La Araucanía",
+          "Los Ríos",
+          "Los Lagos",
+          "Aysén",
+          "Magallanes"
+        ],
+        "regions_as_quoted": "de Coquimbo a Magallanes",
+        "extended_closes": null,
+        "extension_business_days": 2,
+        "quote": "se amplía en dos días hábiles el plazo de cierre de Fondos Cultura 2027 para las regiones de Coquimbo a Magallanes. – Rex 2596",
+        "note": "El aviso da un desplazamiento («dos días hábiles»), no una fecha, y `closes` mismo no está confirmado, así que aquí no se escribe una fecha calculada: sería aritmética sobre una base insegura presentada como dato. La lista de regiones expande el tramo citado; si el desglose por región importa, verificar contra la resolución.",
+        "reason": "facilitar el proceso de postulación"
+      }
+    ]
+  },
+  "amounts": {
+    "currency": "CLP",
+    "min_per_project": 500000,
+    "max_per_project": 18000000,
+    "source_section": "I.6 Montos"
+  },
+  "budget_caps": [
+    {
+      "id": "imprevistos_max_2pct",
+      "description": "Imprevistos no puede exceder el 2% del valor total solicitado al Fondo.",
+      "field": "contingency",
+      "base": "requested_from_fund",
+      "max_percent": 2.0,
+      "source_section": "I.7 Gastos Financiables — Imprevistos"
+    },
+    {
+      "id": "responsable_max_40pct",
+      "description": "El tope para la asignación del responsable será de 40% del monto del proyecto postulado.",
+      "field": "lead_fee",
+      "base": "requested_from_fund",
+      "max_percent": 40.0,
+      "source_section": "I.7 Gastos Financiables — Honorarios"
+    }
+  ],
+  "objective": "Otorgar financiamiento total o parcial a proyectos individuales o colectivos de creación artística en las áreas de Artes de la Visualidad, Artesanía, Diseño y Arquitectura, orientados desde la innovación al desarrollo y producción de obras originales.",
+  "declared_priority": "Se priorizarán los proyectos cuyos creadores soliciten financiamiento para la realización de su primera obra artística, lo que se refleja en el primer criterio de selección.",
+  "disciplines": [
+    "Artes de la Visualidad",
+    "Artesanía",
+    "Diseño",
+    "Arquitectura"
+  ],
+  "score_bands": [
+    {"from": 10, "to": 44, "label": "Muy Insuficiente"},
+    {"from": 45, "to": 54, "label": "Insuficiente"},
+    {"from": 55, "to": 64, "label": "Regular"},
+    {"from": 65, "to": 74, "label": "Aceptable"},
+    {"from": 75, "to": 84, "label": "Bueno"},
+    {"from": 85, "to": 94, "label": "Muy Bueno"},
+    {"from": 95, "to": 100, "label": "Excelente"}
+  ],
+  "criteria": [
+    {
+      "id": "viabilidad",
+      "name": "VIABILIDAD",
+      "weight": 10,
+      "assesses": "La factibilidad técnica, operativa y financiera del proyecto, considerando la coherencia entre planificación, recursos solicitados y condiciones de ejecución.",
+      "dimensions": [
+        "Coherencia Técnica y Operativa",
+        "Viabilidad Financiera"
+      ],
+      "indicators": [
+        "Existe coherencia entre la fundamentación, los objetivos, la propuesta creativa, las actividades y los resultados esperados.",
+        "La metodología y la planificación son pertinentes para el desarrollo del proceso creativo y permiten alcanzar los objetivos.",
+        "La propuesta considera los requerimientos técnicos necesarios para la ejecución de las actividades comprometidas.",
+        "El presupuesto es coherente con las actividades propuestas y los costos están adecuadamente estimados."
+      ],
+      "fed_by_sections": ["fundamentacion", "objetivos", "metodologia", "cronograma", "presupuesto", "requerimientos_tecnicos"]
+    },
+    {
+      "id": "curriculo",
+      "name": "CURRÍCULO",
+      "weight": 20,
+      "assesses": "Las competencias y la experiencia acreditadas del responsable e integrantes del equipo de trabajo en relación con las actividades a desarrollar por cada uno en el proyecto.",
+      "dimensions": [
+        "Currículo, experiencias o competencias"
+      ],
+      "indicators": [
+        "El responsable y su equipo demuestran las competencias técnicas, teóricas y disciplinarias y la experiencia necesaria para cumplir con los objetivos y administrar los recursos solicitados."
+      ],
+      "fed_by_sections": ["equipo", "trayectoria_responsable"]
+    },
+    {
+      "id": "calidad",
+      "name": "CALIDAD",
+      "weight": 30,
+      "assesses": "La solidez conceptual, artística y técnica de la propuesta de creación, considerando su coherencia interna, el carácter innovador, la consistencia metodológica y su aporte al desarrollo artístico y disciplinar.",
+      "dimensions": [
+        "Innovación y aporte al desarrollo artístico"
+      ],
+      "indicators": [
+        "La propuesta incorpora elementos de innovación pertinentes a su naturaleza.",
+        "La propuesta presenta potencial para contribuir al desarrollo artístico y disciplinar."
+      ],
+      "fed_by_sections": ["propuesta_creativa", "innovacion", "metodologia"]
+    },
+    {
+      "id": "potencial",
+      "name": "POTENCIAL",
+      "weight": 40,
+      "assesses": "La proyección, alcance e incidencia potencial del proyecto de creación en el ámbito artístico, cultural o territorial.",
+      "dimensions": [
+        "Aporte al ecosistema cultural",
+        "Exhibición, circulación y vinculación con públicos"
+      ],
+      "indicators": [
+        "La incorporación de elementos de innovación constituye un aporte pertinente al desarrollo de la disciplina y/o de los procesos creativos asociados al proyecto.",
+        "La propuesta contempla estrategias pertinentes de exhibición, circulación y vinculación con públicos."
+      ],
+      "fed_by_sections": ["aporte_ecosistema", "exhibicion_circulacion", "publicos", "territorio"]
+    }
+  ],
+  "form_sections": [
+    {"id": "fundamentacion", "title": "Fundamentación", "guidance": "Por qué este proyecto y por qué ahora. Debe encadenar con los objetivos y la propuesta creativa."},
+    {"id": "objetivos", "title": "Objetivos", "guidance": "Objetivo general y específicos. Cada uno debe tener actividades que lo realicen."},
+    {"id": "propuesta_creativa", "title": "Propuesta creativa", "guidance": "Concepto y características de la obra o resultado esperado: formato, lenguaje, soporte."},
+    {"id": "innovacion", "title": "Innovación", "guidance": "Qué es nuevo en metodologías, materialidades, formatos, soportes, lenguajes, procesos o tecnologías, y por qué es pertinente."},
+    {"id": "metodologia", "title": "Metodología", "guidance": "Cómo se hace. Debe permitir alcanzar los objetivos declarados."},
+    {"id": "cronograma", "title": "Cronograma", "guidance": "Actividades en el tiempo, dentro del máximo de meses permitido."},
+    {"id": "equipo", "title": "Equipo de trabajo", "guidance": "Quién hace qué. Cada integrante con rol y competencia acreditada."},
+    {"id": "trayectoria_responsable", "title": "Trayectoria del responsable", "guidance": "Experiencia acreditada del responsable en relación con las actividades que asume."},
+    {"id": "requerimientos_tecnicos", "title": "Requerimientos técnicos", "guidance": "Qué hace falta materialmente para ejecutar las actividades comprometidas."},
+    {"id": "presupuesto", "title": "Presupuesto", "guidance": "Costos por actividad, coherentes con el cronograma."},
+    {"id": "exhibicion_circulacion", "title": "Exhibición y circulación", "guidance": "Dónde y cómo se muestra. Justificar pertinencia respecto de la naturaleza de la obra."},
+    {"id": "publicos", "title": "Públicos", "guidance": "A quién se dirige y cómo se vincula con ellos."},
+    {"id": "territorio", "title": "Territorio", "guidance": "Contexto territorial donde se desarrolla y qué aporta ahí."},
+    {"id": "aporte_ecosistema", "title": "Aporte al ecosistema cultural", "guidance": "Qué deja instalado en la disciplina o el ecosistema más allá de la obra."}
+  ],
+  "mandatory_documents": [
+    {"id": "autorizacion_derechos_autor", "name": "Autorización de derechos de autor", "conditional": true, "condition": "El proyecto usa obras protegidas por derecho de autor o derechos conexos."},
+    {"id": "individualizacion_socios", "name": "Individualización de directores, administradores, representantes, constituyentes, accionistas y/o socios titulares", "conditional": true, "condition": "Postula una persona jurídica con fines de lucro."},
+    {"id": "cartas_compromiso_equipo", "name": "Cartas de compromiso de los integrantes del equipo de trabajo", "conditional": true, "condition": "El proyecto declara un equipo de trabajo."},
+    {"id": "consentimiento_comunidad_indigena", "name": "Carta de consentimiento de Comunidad Indígena", "conditional": true, "condition": "Hay actividades en territorios habitados por algún pueblo originario."},
+    {"id": "estatutos_persona_juridica", "name": "Estatutos o acta de constitución", "conditional": true, "condition": "El responsable es una persona jurídica privada."},
+    {"id": "certificado_inhabilidades_menores", "name": "Certificado de inhabilidades para trabajar con menores de edad", "conditional": true, "condition": "El proyecto contempla mediación o trabajo directo con menores de edad."}
+  ],
+  "evaluation_documents": [
+    {"id": "descripcion_propuesta", "name": "Descripción de la propuesta de creación artística", "criterion": "calidad", "conditional": false},
+    {"id": "compromisos_exhibicion", "name": "Compromisos de exhibición y/o difusión", "criterion": "viabilidad", "conditional": true, "condition": "La estrategia de difusión nombra espacios, infraestructuras o medios existentes."},
+    {"id": "permiso_espacio_publico", "name": "Permiso para uso de espacio público", "criterion": "viabilidad", "conditional": true, "condition": "Hay actividades en la vía pública."},
+    {"id": "anteproyecto_arquitectura", "name": "Anteproyecto de arquitectura temporal o efímera", "criterion": "viabilidad-calidad-potencial", "conditional": true, "condition": "Proyecto de arquitectura temporal y efímera en espacio público o de uso público."}
+  ],
+  "mandatory_documents_warning": "Son de carácter taxativo: si falta cualquiera de los que corresponden, la postulación es declarada fuera de convocatoria."
+}

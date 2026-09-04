@@ -23,6 +23,7 @@ import sys
 from pathlib import Path
 
 import pytest
+from tools.motor_checkout import motor_src, motor_tests
 from tools.test_lane_map import LANES as TEST_LANES
 from tools.test_lane_map import lane_for_test_path
 
@@ -32,13 +33,15 @@ if (_SRC / "flujo" / "__init__.py").is_file() and str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 # MAK carries no src/flujo copy: the motor is consumed from the FLUJO checkout
 # (contract 2026-09-02).  Without this the departments tests fail at collection.
-_MOTOR_SRC = _REPO / "flujo" / "src"
-if _MOTOR_SRC.is_dir() and str(_MOTOR_SRC) not in sys.path:
+# The location is resolved rather than assumed: `<repo>/flujo` holds only in
+# the operator's home checkout, not in a worktree or a CI clone.
+_MOTOR_SRC = motor_src(_REPO)
+if _MOTOR_SRC is not None and _MOTOR_SRC.is_dir() and str(_MOTOR_SRC) not in sys.path:
     sys.path.insert(0, str(_MOTOR_SRC))
 # Integration tests intentionally compose the two physical checkouts.  Keep
 # FLUJO's helper tests importable without pretending they belong to MAK.
-_FLUJO_TESTS = _REPO / "flujo" / "tests"
-if _FLUJO_TESTS.is_dir() and str(_FLUJO_TESTS) not in sys.path:
+_FLUJO_TESTS = motor_tests(_REPO)
+if _FLUJO_TESTS is not None and str(_FLUJO_TESTS) not in sys.path:
     sys.path.insert(0, str(_FLUJO_TESTS))
 
 

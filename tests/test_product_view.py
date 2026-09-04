@@ -25,7 +25,7 @@ from flujo.knowledge.product_view import (
 
 
 def _products() -> tuple[dict, dict, dict]:
-    from test_product_plan import _chain
+    from product_chain_fixtures import _chain
 
     opportunity, practice, fit, programs, possibility, frontier, evidence_return = _chain()
     plan = compile_product_plan(opportunity, practice, fit, programs, possibility, frontier, evidence_return)
@@ -35,8 +35,8 @@ def _products() -> tuple[dict, dict, dict]:
 
 
 def _products_with_technical_context() -> tuple[dict, dict, dict]:
-    from test_portfolio_dossier import _technical_context
-    from test_product_plan import _chain
+    from product_chain_fixtures import _technical_context
+    from product_chain_fixtures import _chain
 
     opportunity, practice, fit, programs, possibility, frontier, evidence_return = _chain()
     plan = compile_product_plan(

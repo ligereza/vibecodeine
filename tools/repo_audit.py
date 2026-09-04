@@ -85,7 +85,9 @@ TOOL_SKIP_DIRS = {
 # operator-facing MAK tool.  Keep it out of the consumer inventory so adding
 # a classifier does not change the inventory contract or count it as its own
 # consumer.
-TOOL_INVENTORY_EXCLUDE = {"test_lane_map.py"}
+# `__init__.py` is the package marker that pins `tools.__path__` to this
+# repository; it declares no capability and has no consumer to name.
+TOOL_INVENTORY_EXCLUDE = {"test_lane_map.py", "__init__.py"}
 
 # A missing in-tree reference is not a consumer decision.  The paths below are
 # the explicit disposition for every current zero-reference top-level tool.
@@ -106,11 +108,15 @@ NO_REFERENCE_CLASSIFICATIONS = {
     "compile_research_frontier": {"status": "manual_only", "source": "separation_20260902"},
     "compile_selective_recompute_receipt": {"status": "manual_only", "source": "separation_20260902"},
     "compile_vigia_capture_plans": {"status": "manual_only", "source": "separation_20260902"},
-    "gen_propuesta_directiva": {"status": "manual_only", "source": "separation_20260902"},
+    # `gen_propuesta_directiva` left this table on 2026-09-04: it now has a
+    # consumer, `tests/test_gen_propuesta_directiva.py`, which holds it to the
+    # three promises its docstring makes about a document the board reads.
     "generate_artistic_program_hypotheses": {"status": "manual_only", "source": "separation_20260902"},
     "inspect_operational_memberships": {"status": "manual_only", "source": "separation_20260902"},
     "order_projection": {"status": "manual_only", "source": "separation_20260902"},
-    "substrate_scan": {"status": "manual_only", "source": "separation_20260902"},
+    # `substrate_scan` left this table on 2026-09-04: it now has a consumer,
+    # `tests/test_substrate_scan_manifest.py`, which holds `build_manifest` to
+    # the repeatability contract the module's docstring describes.
     "triangulate_research_evidence": {"status": "manual_only", "source": "separation_20260902"},
     "verify_learning_hashmaps": {"status": "manual_only", "source": "separation_20260902"},
     "aep_reference_scan": {"status": "manual_only", "source": "capabilities_5_ter"},
@@ -119,8 +125,14 @@ NO_REFERENCE_CLASSIFICATIONS = {
     "build_effort_consumer_crosswalk": {"status": "manual_only", "source": "capabilities_5_ter"},
     "build_mak_canonical_map": {"status": "manual_only", "source": "capabilities_5_ter"},
     "compile_contracurator": {"status": "manual_only", "source": "capabilities_5_ter"},
-    "compute_effort_residuals": {"status": "manual_only", "source": "capabilities_5_ter"},
-    "consolidate_static_duplicates": {"status": "historical_support", "source": "cli_declared"},
+    # `compute_effort_residuals` left this table on 2026-09-04: it now has a
+    # consumer, `tests/test_compute_effort_residuals.py`, which holds
+    # `robust_scale` to the robustness its own docstring claims.
+    # `consolidate_static_duplicates` left this table on 2026-09-04: it now has
+    # a consumer, `tests/test_consolidate_static_duplicates.py`, which measures
+    # the `check_path` gate that keeps the tool out of WIN, GoogleDrive,
+    # OneDrive and the flujo checkout. A zero-reference classification for a
+    # referenced tool is exactly the staleness this table's own check reports.
     "context_pack": {"status": "manual_only", "source": "cli_declared"},
     "drenar_material": {"status": "manual_only", "source": "capabilities_5_ter"},
     "execute_research_job": {"status": "manual_only", "source": "capabilities_5_ter"},
@@ -128,6 +140,7 @@ NO_REFERENCE_CLASSIFICATIONS = {
     "gen_iskvw_prototipo": {"status": "manual_only", "source": "capabilities_5_ter"},
     "gen_presentacion_db": {"status": "manual_only", "source": "capabilities_5_ter"},
     "instalar_enviar_a_mak": {"status": "historical_support", "source": "cli_declared"},
+    "link_motor_checkout": {"status": "manual_only", "source": "cli_declared"},
     "mak_fuse_roots": {"status": "historical_support", "source": "cli_declared"},
     "mak_materialize_fused_root": {"status": "historical_support", "source": "cli_declared"},
     "mak_status": {"status": "manual_only", "source": "runtime_status_cli"},

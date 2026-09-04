@@ -1,0 +1,228 @@
+{
+  "schema": "mak-hub-payload-budget-v1",
+  "note": "Techo de bytes por item de cada ruta de coleccion del hub. La medida es por item y no en total, porque el total depende de cuantas piezas tenga el archivo ese dia: pinchar el total fallaria en la maquina del operador y pasaria en vacio en un clon recien hecho. Regenerar con `python -m tools.hub_payload_budget --capture`.",
+  "routes": {
+    "/api/actividad": {
+      "max_bytes_per_item": 225,
+      "collection": "eventos",
+      "items_at_capture": 26,
+      "note": ""
+    },
+    "/api/archivo": {
+      "max_bytes_per_item": 415,
+      "collection": "piezas",
+      "items_at_capture": 591,
+      "note": ""
+    },
+    "/api/convocatorias": {
+      "max_bytes_per_item": 800,
+      "collection": "items",
+      "items_at_capture": 2,
+      "note": "Medido el 2026-09-04: 605.5 bytes por convocatoria, con dos declaradas. El techo de 800 deja sitio a una ficha con mas criterios sin tapar un crecimiento real de la fila. Declarada por adelantado porque el presupuesto solo mira colecciones de cinco o mas: sin esta entrada, la quinta convocatoria haria fallar el ratchet por aparecer, no por crecer."
+    },
+    "/api/cultura/capabilities": {
+      "max_bytes_per_item": 17,
+      "collection": "output_formats",
+      "items_at_capture": 8,
+      "note": ""
+    },
+    "/api/cultura/opportunity-gate": {
+      "max_bytes_per_item": 17,
+      "collection": "required_fields",
+      "items_at_capture": 5,
+      "note": ""
+    },
+    "/api/cultura/sources": {
+      "max_bytes_per_item": 81,
+      "collection": "entries",
+      "items_at_capture": 46,
+      "note": ""
+    },
+    "/api/cuotas": {
+      "max_bytes_per_item": 247,
+      "collection": "modelos",
+      "items_at_capture": 8,
+      "note": ""
+    },
+    "/api/decisiones": {
+      "max_bytes_per_item": 323,
+      "collection": "last",
+      "items_at_capture": 5,
+      "note": ""
+    },
+    "/api/director/capabilities": {
+      "max_bytes_per_item": 15,
+      "collection": "decisions",
+      "items_at_capture": 5,
+      "note": ""
+    },
+    "/api/micelio": {
+      "max_bytes_per_item": 666,
+      "collection": "nodes",
+      "items_at_capture": 600,
+      "note": "Forma interna cruda del micelio. La superficie publica equivalente es /api/archivo, que el propio hub documenta como el mismo micelio servido como piezas y vinculos para que una piel o un agente externo no tenga que conocer el esquema de nodos (iskvw/ESQUEMA_ARCHIVO.md): 377 KB frente a 504 KB. Un consumidor nuevo deberia pedir /api/archivo."
+    },
+    "/api/oportunidades": {
+      "max_bytes_per_item": 160,
+      "collection": "items",
+      "items_at_capture": 178,
+      "note": ""
+    },
+    "/api/portfolio/archive-view": {
+      "max_bytes_per_item": 866,
+      "collection": "items",
+      "items_at_capture": 56,
+      "note": ""
+    },
+    "/api/portfolio/audit": {
+      "max_bytes_per_item": 35,
+      "collection": "sources",
+      "items_at_capture": 6,
+      "note": ""
+    },
+    "/api/portfolio/boards": {
+      "max_bytes_per_item": 292,
+      "collection": "boards",
+      "items_at_capture": 7,
+      "note": ""
+    },
+    "/api/portfolio/classifications": {
+      "max_bytes_per_item": 476,
+      "collection": "items",
+      "items_at_capture": 63,
+      "note": ""
+    },
+    "/api/portfolio/contract": {
+      "max_bytes_per_item": 24,
+      "collection": "source_of_truth",
+      "items_at_capture": 8,
+      "note": ""
+    },
+    "/api/portfolio/copilot/learning": {
+      "max_bytes_per_item": 121,
+      "collection": "boards",
+      "items_at_capture": 7,
+      "note": ""
+    },
+    "/api/portfolio/copilot/map": {
+      "max_bytes_per_item": 775,
+      "collection": "items",
+      "items_at_capture": 7044,
+      "note": "El techo cubre la respuesta por defecto, que sigue llevando triage_prediction y features porque el contrato del motor se testea contra el item completo. El panel pide ?fields=map y recibe 3 campos por fila: 88.6% menos. Si este numero sube, alguien engordo el item."
+    },
+    "/api/portfolio/copilot/xio-evidence": {
+      "max_bytes_per_item": 266,
+      "collection": "segments",
+      "items_at_capture": 21,
+      "note": ""
+    },
+    "/api/portfolio/decision-index": {
+      "max_bytes_per_item": 199,
+      "collection": "selections",
+      "items_at_capture": 68,
+      "note": ""
+    },
+    "/api/portfolio/external-candidates": {
+      "max_bytes_per_item": 1839,
+      "collection": "items",
+      "items_at_capture": 27,
+      "note": ""
+    },
+    "/api/portfolio/identity-graph": {
+      "max_bytes_per_item": 301,
+      "collection": "edges",
+      "items_at_capture": 14101,
+      "note": "Sin consumidor conocido en el repo: solo la definicion de la ruta y el indice de codigo la nombran. Queda medida para que un consumidor futuro sepa lo que cuesta antes de pedirla."
+    },
+    "/api/portfolio/inbox": {
+      "max_bytes_per_item": 678,
+      "collection": "items",
+      "items_at_capture": 7044,
+      "note": "Dos superficies ya declaradas: la de por defecto y ?surface=mesa, que quita 7 campos y ahorra 45.4%. El editor usa la completa porque lee descripcion_original y vision_features, que mesa no manda."
+    },
+    "/api/portfolio/index": {
+      "max_bytes_per_item": 46,
+      "collection": "dates",
+      "items_at_capture": 2053,
+      "note": ""
+    },
+    "/api/portfolio/organism": {
+      "max_bytes_per_item": 1205,
+      "collection": "blocks",
+      "items_at_capture": 7044,
+      "note": "Proyeccion completa a proposito. projects/cultura/PORTAFOLIO_ORGANISMO.md la reserva para clientes que necesitan bloques y relaciones, y manda al editor a /api/portfolio/contract, que es la superficie ligera. El costo por item es alto porque el contrato es el entregable, no un accidente."
+    },
+    "/api/portfolio/production": {
+      "max_bytes_per_item": 60,
+      "collection": "missing",
+      "items_at_capture": 0,
+      "note": "`missing` nombra las fuentes ausentes, una cadena corta por fuente. Igual que /api/status, solo alcanza el umbral donde falta algo: medido en CI el 2026-09-04, 15.4 bytes por item. El techo de 60 cubre un nombre de fuente largo."
+    },
+    "/api/portfolio/review-queue": {
+      "max_bytes_per_item": 1987,
+      "collection": "items",
+      "items_at_capture": 20,
+      "note": ""
+    },
+    "/api/rd/cultura-relations": {
+      "max_bytes_per_item": 330,
+      "collection": "relations",
+      "items_at_capture": 24,
+      "note": ""
+    },
+    "/api/rd/topics": {
+      "max_bytes_per_item": 398,
+      "collection": "topics",
+      "items_at_capture": 5,
+      "note": ""
+    },
+    "/api/render": {
+      "max_bytes_per_item": 486,
+      "collection": "hechos",
+      "items_at_capture": 6,
+      "note": ""
+    },
+    "/api/research/catalog": {
+      "max_bytes_per_item": 521,
+      "collection": "adapters",
+      "items_at_capture": 6,
+      "note": ""
+    },
+    "/api/research/legacy-reports": {
+      "max_bytes_per_item": 1474,
+      "collection": "items",
+      "items_at_capture": 100,
+      "note": ""
+    },
+    "/api/research/rescue": {
+      "max_bytes_per_item": 953,
+      "collection": "items",
+      "items_at_capture": 23,
+      "note": ""
+    },
+    "/api/revision": {
+      "max_bytes_per_item": 777,
+      "collection": "rows",
+      "items_at_capture": 40,
+      "note": ""
+    },
+    "/api/revision/episodios": {
+      "max_bytes_per_item": 2031,
+      "collection": "rows",
+      "items_at_capture": 12,
+      "note": ""
+    },
+    "/api/revision/evidencia": {
+      "max_bytes_per_item": 173,
+      "collection": "cues",
+      "items_at_capture": 21,
+      "note": ""
+    },
+    "/api/status": {
+      "max_bytes_per_item": 400,
+      "collection": "attention",
+      "items_at_capture": 0,
+      "note": "La coleccion `attention` lista lo que falta, asi que crece cuando el entorno esta incompleto: en la caja del operador queda bajo el umbral de cinco entradas y el presupuesto ni la ve, y en un runner limpio aparece. Medido en CI el 2026-09-04: 253.9 bytes por item. El techo de 400 deja sitio a un aviso mas largo sin tapar una fila que engorde."
+    }
+  }
+}

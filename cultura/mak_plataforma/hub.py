@@ -17,6 +17,7 @@ Rutas: / (cara) · /research-garden/ · /health · /api/organismo · /api/miceli
 import html
 import json
 import math
+from datetime import date
 import mimetypes
 import os
 import re
@@ -207,6 +208,14 @@ except Exception as _departments_exc:  # noqa: BLE001 - hub remains available
     _DEPARTMENTS_IMPORT_ERROR = type(_departments_exc).__name__
 else:
     _DEPARTMENTS_IMPORT_ERROR = ""
+
+try:
+    from tools.gen_postulacion import load_calls as _load_calls  # noqa: E402
+except Exception as _calls_exc:  # noqa: BLE001 - hub remains available
+    _load_calls = None
+    _CALLS_IMPORT_ERROR = type(_calls_exc).__name__
+else:
+    _CALLS_IMPORT_ERROR = ""
 
 try:
     from flujo.knowledge.project_api import (  # noqa: E402
@@ -1448,16 +1457,159 @@ def _learning_db_path():
     return Path(configured).expanduser() if configured else Path(_REPO_ROOT) / "data" / "mak_knowledge.db"
 
 
+# Named failures whose status this file already decides somewhere else. Each
+# group follows a precedent set elsewhere in this same module rather than a
+# preference:
+#
+#   404 -- `item_no_encontrado` answers 404 in `/api/portfolio/copilot/vision`
+#          and `/api/portfolio/copilot/manifest`.
+#   400 -- the malformed-input guards in do_POST answer 400 (`json invalido`,
+#          `content_length_invalido`, `falta question`), and
+#          `project_id_requerido` answers 400 in the evidence routes.
+#   503 -- `departments_unavailable`, `diagnostics_unavailable`,
+#          `project_router_unavailable` and `portfolio_evidence_unavailable`
+#          all answer 503; an absent dependency is what `_status_for` is for.
+_ERROR_STATUS = {
+    # A named thing does not exist.
+    "item_no_encontrado": 404,
+    "items_no_encontrados": 404,
+    "tablero_no_encontrado": 404,
+    "grupo_no_encontrado": 404,
+    "candidato_no_encontrado": 404,
+    # The caller sent something this route cannot act on.
+    "accion_invalida": 400,
+    "decision_invalida": 400,
+    "departamento_invalido": 400,
+    "grupo_o_clasificacion_vacios": 400,
+    "grupo_vacio": 400,
+    "items_invalidos": 400,
+    "nombre_vacio": 400,
+    "project_id_requerido": 400,
+    "proveedor_invalido": 400,
+    "segment_id_invalido": 400,
+    "source_id_requerido": 400,
+    "undo_scope_invalid": 400,
+    "valor_de_clasificacion_invalido": 400,
+    "work_contract_invalid": 400,
+    "xio_work_id_invalido": 400,
+    # A dependency this route needs is not answering.
+    "fuentes_ausentes": 503,
+    "ledger_unavailable": 503,
+    "xio_evidence_unavailable": 503,
+    "convocatorias_unavailable": 503,
+    "convocatorias_ilegibles": 503,
+}
+_ERROR_STATUS_PREFIXES = (
+    ("motor_no_disponible", 503),
+)
+
+# Deliberately absent, and why. These are outcomes, not faults: the operator
+# asked for something and the system declined or had nothing to do. The panel
+# reads the body and shows the reason, and no precedent in this file assigns
+# them a code, so promoting them to 4xx would be a guess that changes a working
+# flow.
+#   human_confirmation_required -- a guard, arguably 409 or 428
+#   nothing_to_undo             -- an empty stack is not an error
+#   ledger_rechazo, triage_rechazo, feedback_tablero_rechazado -- policy said no
+#   provider_error              -- upstream failed; 502 and 503 both defensible
+_ERROR_STATUS_LEFT_AT_200 = (
+    "human_confirmation_required",
+    "nothing_to_undo",
+    "ledger_rechazo",
+    "triage_rechazo",
+    "feedback_tablero_rechazado",
+    "provider_error",
+)
+
+
+# Measured 2026-09-04: `/api/portfolio/copilot/map` answers 4,367,883 bytes,
+# and `items` is 100.0% of it -- 7044 rows carrying `triage_prediction` (412
+# bytes each) and `features` on top of the position. Its only consumer,
+# `iskvw/editor.html`, reads `item_id`, `x` and `y`, computes its own distance,
+# and never touches the rest: about 4% of what it receives. The panel calls
+# this route while the operator moves through pieces.
+#
+# `fields=map` ships the positions only. The default shape is unchanged on
+# purpose -- the engine's own contract is tested against the full item in
+# tests/test_copilot.py, and a caller that wants the predictions still gets
+# them by not asking for the projection.
+_GTM_MAP_ITEM_FIELDS = ("item_id", "x", "y")
+
+
+def _gtm_map_positions_only(payload):
+    """The same map answer with each item reduced to what a map needs."""
+    items = payload.get("items")
+    if not isinstance(items, list):
+        return payload
+    lean = dict(payload)
+    lean["items"] = [
+        {key: row[key] for key in _GTM_MAP_ITEM_FIELDS if key in row}
+        for row in items
+        if isinstance(row, dict)
+    ]
+    lean["fields"] = "map"
+    return lean
+
+
+def _answer(handler, payload):
+    """Send `payload` with the status `_status_for` derives from it.
+
+    Every POST handler used to return `self._json(result)` with no status, so a
+    body reading `{"ok": false, "error": "tablero_no_encontrado"}` went out as
+    200. The malformed-input guards in the same dispatcher already answer 400,
+    which left a caller able to tell a broken request from a good one and
+    unable to tell a good request from a refused one.
+
+    A function rather than a handler method, for the same reason as
+    `_body_length`: the hub tests drive the dispatchers with request fakes, and
+    those only implement `_json`.
+    """
+    return handler._json(payload, _status_for(payload))
+
+
+def _body_length(headers, cap):
+    """The capped Content-Length, or None when the header is not a number.
+
+    Four POST routes guarded this and seven did not. On the seven, a
+    non-numeric Content-Length raised ValueError straight out of do_POST, which
+    BaseHTTPRequestHandler answers as a 500 with a traceback in the log -- for
+    a caller error that the guarded routes already answer as a named 400. A
+    header is caller input and cannot be trusted to be a number anywhere.
+
+    Takes the headers rather than the handler so the request fakes the hub
+    tests are built on keep working without growing a new method each time a
+    dispatcher learns something.
+    """
+    try:
+        return min(int(headers.get("Content-Length") or 0), cap)
+    except (TypeError, ValueError):
+        return None
+
+
 def _status_for(payload) -> int:
-    """503 when a payload says its own dependency is absent, else 200.
+    """The status code that agrees with what the payload already says.
 
     A body that reads `{"available": false, "reason": "..."}` under a 200 is
     honest to a human and invisible to a machine: a probe, a watchdog or a
     proxy reads the status code. This keeps the named body and makes the code
     agree with it.
+
+    An `ok: false` whose error is not named here stays 200 on purpose. Guessing
+    a status from an unrecognised string would change routes nobody measured;
+    a new mapping is a line in the table, added when its meaning is known.
     """
-    if isinstance(payload, dict) and payload.get("available") is False:
+    if not isinstance(payload, dict):
+        return 200
+    if payload.get("available") is False:
         return 503
+    if payload.get("ok") is False:
+        error = payload.get("error")
+        if isinstance(error, str):
+            if error in _ERROR_STATUS:
+                return _ERROR_STATUS[error]
+            for prefix, status in _ERROR_STATUS_PREFIXES:
+                if error.startswith(prefix):
+                    return status
     return 200
 
 
@@ -2867,8 +3019,17 @@ PORTFOLIO_PRODUCTION_SOURCES = {
     "archive": os.path.join(_REPO_ROOT, "iskvw", "datos", "archivo.json"),
     "practices": os.path.join(_REPO_ROOT, "data", "portfolio_practices.json"),
     "attestations": os.path.join(_REPO_ROOT, "data", "portfolio_attestations.json"),
-    "declared_inputs": "/home/mak/.claude/jobs/3428381a/tmp/declared_inputs.json",
-    "blend_targets": "/home/mak/.claude/jobs/3428381a/tmp/blend_dependency_targets.json",
+    # These two lived in `/home/mak/.claude/jobs/3428381a/tmp/` -- the scratch
+    # directory of an agent session from 2026-08-23, which the harness deletes
+    # with the job. The production chain that backs a funding application would
+    # have started answering `fuentes_ausentes` the day that cleanup ran, with
+    # nothing to say why. They are measurements of the archive (48 asset paths
+    # referenced by Blender scenes, and a per-filename count of declared
+    # inputs), so `data/` beside the other production inputs is where they
+    # belong. The originals were copied, not moved.
+    "declared_inputs": os.path.join(_REPO_ROOT, "data", "portfolio_declared_inputs.json"),
+    "blend_targets": os.path.join(
+        _REPO_ROOT, "data", "portfolio_blend_dependency_targets.json"),
     "screen_setup_root": "/media/mak/PortableSSD",
 }
 PORTFOLIO_FORMATS_DIR = os.path.join(_REPO_ROOT, "data", "portfolio_formats")
@@ -4373,6 +4534,152 @@ def _decisiones():
     }
 
 
+CONVOCATORIA_SCHEMA = "mak-convocatoria-surface-v1"
+# A week is when a call stops being something to plan and starts being
+# something to finish. Below this the surface says so instead of only
+# printing a date the reader has to subtract from today.
+CONVOCATORIA_URGENT_DAYS = 7
+
+
+def _call_state(closes: str, today: date | None = None):
+    """(state, days_remaining) for a closing date, or ('sin_fecha', None)."""
+    if not closes:
+        return "sin_fecha", None
+    try:
+        remaining = (date.fromisoformat(closes) - (today or date.today())).days
+    except (TypeError, ValueError):
+        return "fecha_invalida", None
+    if remaining < 0:
+        return "cerrada", remaining
+    if remaining <= CONVOCATORIA_URGENT_DAYS:
+        return "urgente", remaining
+    return "abierta", remaining
+
+
+def _regional_extensions(deadlines):
+    """Every declared deadline extension. Never inferred, never merged.
+
+    Fondart 2027 has two, and between them they cover the whole country: the
+    northern regions were extended by resolution to a fixed date, and Coquimbo
+    to Magallanes by two working days. Showing one would give the wrong date to
+    most of the country; collapsing them into a single "extended" date would
+    give the wrong date to all of it.
+
+    An extension appears only if a resolution or an official notice was read
+    and recorded with the regions it covers, and one that declares a shift
+    rather than a date says so instead of having a date computed for it.
+    """
+    declared = deadlines.get("regional_extensions")
+    if not isinstance(declared, list):
+        return []
+    out = []
+    for extension in declared:
+        if not isinstance(extension, dict):
+            continue
+        if not extension.get("extended_closes") and not extension.get(
+                "extension_business_days"):
+            continue
+        out.append({
+            "id": extension.get("id", ""),
+            "cierra": extension.get("extended_closes"),
+            "dias_habiles": extension.get("extension_business_days"),
+            "regiones": list(extension.get("applies_to_regions", [])),
+            "regiones_citadas": extension.get("regions_as_quoted", ""),
+            "resolucion": extension.get("resolution", ""),
+            "url": extension.get("url", ""),
+            "fuente": extension.get("source_kind", ""),
+            "leido": extension.get("read_on", ""),
+        })
+    return out
+
+
+def _convocatorias(today: date | None = None):
+    """The declared calls in data/, with how long each one has left.
+
+    They live in `data/*.json` under `mak-convocatoria-bases-v1` and were only
+    reachable by running `python -m tools.gen_postulacion --list`. A deadline
+    that only exists in a terminal is a deadline the operator meets by
+    remembering it.
+
+    Read-only and derived: this projects the declared bases and computes days
+    remaining. It does not decide whether to apply, and it does not read a
+    project.
+    """
+    if _load_calls is None:
+        return {"ok": False, "error": "convocatorias_unavailable",
+                "detail": _CALLS_IMPORT_ERROR, "schema": CONVOCATORIA_SCHEMA,
+                "items": []}
+    try:
+        declared = _load_calls()
+    except Exception as exc:  # noqa: BLE001 - a bad file is not a hub failure
+        return {"ok": False, "error": "convocatorias_ilegibles",
+                "detail": str(exc)[:200], "schema": CONVOCATORIA_SCHEMA, "items": []}
+
+    items = []
+    for identifier, bases in declared.items():
+        deadlines = bases.get("deadlines", {}) or {}
+        amounts = bases.get("amounts", {}) or {}
+        source = bases.get("source", {}) or {}
+        closes = str(deadlines.get("closes") or "")
+        state, remaining = _call_state(closes, today)
+        items.append({
+            "id": identifier,
+            "nombre": bases.get("name", ""),
+            "edicion": bases.get("edition", ""),
+            "organismo": bases.get("authority", ""),
+            "cierra": closes,
+            # A date alone loses the half of the deadline that decides the day:
+            # Ama Amoedo closes 23:59 Uruguay time, which is not the
+            # applicant's clock unless it happens to be.
+            "cierra_hora": deadlines.get("closes_time", ""),
+            "cierra_zona": deadlines.get("closes_timezone", ""),
+            "estado": state,
+            "dias_restantes": remaining,
+            "moneda": amounts.get("currency", ""),
+            "monto_maximo": amounts.get("max_per_project"),
+            "criterios": [
+                {"nombre": c.get("name", ""), "pondera": c.get("weight")}
+                for c in bases.get("criteria", [])
+            ],
+            # A ficha transcribed from press coverage carries the deadline and
+            # not the taxative document list. Saying which is which is the
+            # difference between a reminder and a false sense of readiness.
+            "fuente": source.get("kind", "official_bases"),
+            "bases_url": source.get("bases_pdf") or source.get("portal", ""),
+            "leido": source.get("read_on", ""),
+            "archivo": bases.get("_file", ""),
+            # Provenance is per field, not per file. The Fondart bases PDF
+            # states the amounts and the criteria and contains no date at all,
+            # so its deadline came from a portal summary. A surface that showed
+            # one confidence for the whole entry would hide exactly the part
+            # the operator is about to act on.
+            "fuente_plazo": (deadlines.get("source") or {}).get(
+                "kind", source.get("kind", "official_bases")),
+            "plazo_por_confirmar": bool(
+                (deadlines.get("source") or {}).get("todo")),
+            "ampliaciones_regionales": _regional_extensions(deadlines),
+        })
+
+    orden = {"cerrada": 3, "sin_fecha": 4, "fecha_invalida": 5}
+    items.sort(key=lambda row: (
+        orden.get(row["estado"], 0),
+        row["dias_restantes"] if row["dias_restantes"] is not None else 10**6,
+        row["id"],
+    ))
+    return {
+        "ok": True,
+        "schema": CONVOCATORIA_SCHEMA,
+        "items": items,
+        "counts": {
+            "total": len(items),
+            "abiertas": sum(1 for row in items if row["estado"] == "abierta"),
+            "urgentes": sum(1 for row in items if row["estado"] == "urgente"),
+            "cerradas": sum(1 for row in items if row["estado"] == "cerrada"),
+        },
+        "urgent_days": CONVOCATORIA_URGENT_DAYS,
+    }
+
+
 def _oportunidades():
     """Expose opportunity candidates without exposing raw ledger history."""
     if _ledger is None:
@@ -4887,6 +5194,7 @@ class H(BaseHTTPRequestHandler):
         self._send(json.dumps(obj, ensure_ascii=False),
                    "application/json; charset=utf-8", code)
 
+
     def _proxy_service(self, prefix, method, body=None):
         """Forward one internal service route without exposing its port."""
         u = urllib.parse.urlparse(self.path)
@@ -4948,14 +5256,16 @@ class H(BaseHTTPRequestHandler):
                 return self._send("research UI missing", "text/plain; charset=utf-8", 404)
         if p == "/api/research/catalog":
             try:
-                return self._json(_research_catalog())
+                return _answer(self, _research_catalog())
             except Exception as exc:
-                return self._json({"available": False, "adapters": [], "error": str(exc)[:200]})
+                return self._json(
+                    {"available": False, "adapters": [], "error": str(exc)[:200]}, 503)
         if p == "/api/research/jobs":
             try:
-                return self._json(_research_jobs())
+                return _answer(self, _research_jobs())
             except Exception as exc:
-                return self._json({"available": False, "jobs": [], "error": str(exc)[:200]})
+                return self._json(
+                    {"available": False, "jobs": [], "error": str(exc)[:200]}, 503)
         if p == "/api/research/job":
             query = urllib.parse.parse_qs(u.query)
             raw_id = (query.get("id") or [""])[0].strip()
@@ -5182,8 +5492,9 @@ class H(BaseHTTPRequestHandler):
             focus_facet = (query.get("facet") or [""])[0]
             shuffle = (query.get("mode") or [""])[0] == "shuffle"
             shuffle_seed = (query.get("seed") or [""])[0]
-            return self._json(_portfolio_suggestions(
-                item_id, board_id, include_map, focus_facet, shuffle, shuffle_seed))
+            payload = _portfolio_suggestions(
+                item_id, board_id, include_map, focus_facet, shuffle, shuffle_seed)
+            return self._json(payload, _status_for(payload))
         if p == "/api/portfolio/copilot/scene":
             query = urllib.parse.parse_qs(u.query)
             item_id = (query.get("item_id") or [""])[0]
@@ -5196,14 +5507,16 @@ class H(BaseHTTPRequestHandler):
             shuffle = (query.get("mode") or [""])[0] == "shuffle"
             shuffle_seed = (query.get("seed") or [""])[0]
             surface = (query.get("surface") or [""])[0]
-            return self._json(_portfolio_scene(
+            payload = _portfolio_scene(
                 item_id, limit=limit, focus_facet=focus_facet,
-                shuffle=shuffle, shuffle_seed=shuffle_seed, surface=surface))
+                shuffle=shuffle, shuffle_seed=shuffle_seed, surface=surface)
+            return self._json(payload, _status_for(payload))
         if p == "/api/portfolio/production":
             query = urllib.parse.parse_qs(u.query)
-            return self._json(_portfolio_production(
+            payload = _portfolio_production(
                 format_id=(query.get("format_id") or [""])[0],
-                refresh=(query.get("refresh") or ["0"])[0] == "1"))
+                refresh=(query.get("refresh") or ["0"])[0] == "1")
+            return self._json(payload, _status_for(payload))
         if p == "/api/portfolio/copilot/map":
             query = urllib.parse.parse_qs(u.query)
             width = (query.get("width") or [8])[0]
@@ -5212,9 +5525,12 @@ class H(BaseHTTPRequestHandler):
                 width, height = int(width), int(height)
             except (TypeError, ValueError):
                 width, height = 8, 6
-            return self._json(_portfolio_gtm_map(
+            payload = _portfolio_gtm_map(
                 _portfolio_inbox().get("items", []),
-                feedback=_portfolio_feedback(), width=width, height=height))
+                feedback=_portfolio_feedback(), width=width, height=height)
+            if (query.get("fields") or [""])[0] == "map":
+                payload = _gtm_map_positions_only(payload)
+            return self._json(payload)
         if p == "/api/portfolio/copilot/vision":
             item_id = (urllib.parse.parse_qs(u.query).get("item_id") or [""])[0]
             item = _portfolio_item(item_id)
@@ -5245,7 +5561,7 @@ class H(BaseHTTPRequestHandler):
                                "relations": surface.get("relations", []),
                                "reason": surface.get("reason", "")})
         if p == "/api/portfolio/copilot/xio-evidence":
-            return self._json(_portfolio_xio_evidence())
+            return _answer(self, _portfolio_xio_evidence())
         if p == "/api/portfolio/copilot/status":
             providers.load_env()
             visual = _portfolio_visual_surface()
@@ -5314,6 +5630,8 @@ class H(BaseHTTPRequestHandler):
                 return self._json({"error": str(e)[:200], "total": 0,
                                    "by_lane": {}, "by_decision": {},
                                    "pending_human": 0})
+        if p == "/api/convocatorias":
+            return _answer(self, _convocatorias())
         if p == "/api/oportunidades":
             try:
                 return self._json(_oportunidades())
@@ -5412,8 +5730,14 @@ class H(BaseHTTPRequestHandler):
             result, code = _project_route_request(body)
             return self._json(result, code)
         if u.path == "/api/project/probe":
+            # The header and the body were parsed under one `except`, so a
+            # non-numeric Content-Length was reported as `json invalido` and
+            # sent the caller to debug a body that was fine. Both neighbours,
+            # `/api/project/route` and `/api/research/jobs`, name them apart.
+            length = _body_length(self.headers, 30000)
+            if length is None:
+                return self._json({"ok": False, "error": "content_length_invalido"}, 400)
             try:
-                length = min(int(self.headers.get("Content-Length") or 0), 30000)
                 body = json.loads(self.rfile.read(length).decode("utf-8", "replace") or "{}")
             except (TypeError, ValueError, json.JSONDecodeError):
                 return self._json({"ok": False, "error": "json invalido"}, 400)
@@ -5462,17 +5786,21 @@ class H(BaseHTTPRequestHandler):
             return self._json(payload, code)
         for prefix in SERVICE_PROXY_PREFIXES:
             if u.path.startswith("/" + prefix + "/"):
-                length = min(int(self.headers.get("Content-Length") or 0),
-                             SERVICE_PROXY_MAX_BYTES + 1)
+                length = _body_length(self.headers, SERVICE_PROXY_MAX_BYTES + 1)
+                if length is None:
+                    return self._json(
+                        {"ok": False, "error": "content_length_invalido"}, 400)
                 body = self.rfile.read(length)
                 return self._proxy_service(prefix, "POST", body)
         if u.path == "/api/revision/episodios" and _episode_revision is not None:
-            largo = min(int(self.headers.get("Content-Length") or 0), 12000)
+            largo = _body_length(self.headers, 12000)
+            if largo is None:
+                return self._json({"ok": False, "error": "content_length_invalido"}, 400)
             try:
                 body = json.loads(self.rfile.read(largo).decode("utf-8", "replace"))
             except (ValueError, TypeError):
                 return self._json({"ok": False, "error": "json invalido"}, 400)
-            return self._json(_episode_revision.record(
+            return _answer(self, _episode_revision.record(
                 body.get("episodio", ""), body.get("decision", ""), body.get("note", "")))
         if u.path in ("/api/director/work", "/api/director/decision",
                       "/api/portfolio/select", "/api/portfolio/classify",
@@ -5487,63 +5815,69 @@ class H(BaseHTTPRequestHandler):
                       "/api/portfolio/copilot/external",
                       "/api/portfolio/copilot/vision",
                       "/api/portfolio/external-candidates/review"):
-            largo = min(int(self.headers.get("Content-Length") or 0), 12000)
+            largo = _body_length(self.headers, 12000)
+            if largo is None:
+                return self._json({"ok": False, "error": "content_length_invalido"}, 400)
             try:
                 body = json.loads(self.rfile.read(largo).decode("utf-8", "replace"))
             except (ValueError, TypeError):
                 return self._json({"ok": False, "error": "json invalido"}, 400)
             if u.path == "/api/director/work":
-                return self._json(_director_work(body))
+                return _answer(self, _director_work(body))
             if u.path == "/api/director/decision":
-                return self._json(_director_decision(body))
+                return _answer(self, _director_decision(body))
             if u.path.endswith("/draft"):
-                return self._json(_portfolio_draft(body))
+                return _answer(self, _portfolio_draft(body))
             if u.path.endswith("/commit"):
-                return self._json(_portfolio_commit(body))
+                return _answer(self, _portfolio_commit(body))
             if u.path.endswith("/undo"):
-                return self._json(_portfolio_undo(body))
+                return _answer(self, _portfolio_undo(body))
             if u.path.endswith("/select"):
-                return self._json(_portfolio_select(
+                return _answer(self, _portfolio_select(
                     body.get("item_id"), body.get("decision"),
                     body.get("board_id", ""), body.get("session_id", ""),
                     body.get("pass_size", 0), body.get("decision_scope", "selection"),
                     body.get("reason_code", ""), body.get("target_id", ""),
                     body.get("note", "")))
             if u.path.endswith("/classify"):
-                return self._json(_portfolio_classify(body))
+                return _answer(self, _portfolio_classify(body))
             if u.path.endswith("/classify-batch"):
-                return self._json(_portfolio_classify_batch(body))
+                return _answer(self, _portfolio_classify_batch(body))
             if u.path.endswith("/board"):
-                return self._json(_portfolio_board_action(body))
+                return _answer(self, _portfolio_board_action(body))
             if u.path.endswith("/connect"):
-                return self._json(_portfolio_connect(body))
+                return _answer(self, _portfolio_connect(body))
             if u.path.endswith("/feedback"):
-                return self._json(_portfolio_feedback_record(body))
+                return _answer(self, _portfolio_feedback_record(body))
             if u.path.endswith("/triangulation/review"):
-                return self._json(_portfolio_triage_record(body))
+                return _answer(self, _portfolio_triage_record(body))
             if u.path.endswith("/triangulation/context-link"):
-                return self._json(_portfolio_context_link(body))
+                return _answer(self, _portfolio_context_link(body))
             if u.path.endswith("/copilot/xio-link"):
-                return self._json(_portfolio_xio_link(body))
+                return _answer(self, _portfolio_xio_link(body))
             if u.path.endswith("/external"):
-                return self._json(_portfolio_external_review(body))
+                return _answer(self, _portfolio_external_review(body))
             if u.path.endswith("/vision"):
-                return self._json(_portfolio_vision_read(body))
+                return _answer(self, _portfolio_vision_read(body))
             if u.path.endswith("/external-candidates/review"):
-                return self._json(_portfolio_external_candidate_review(body))
-            return self._json(_portfolio_dispatch(body.get("item_id"), body.get("depto"),
-                                                   body.get("texto", "")))
+                return _answer(self, _portfolio_external_candidate_review(body))
+            return _answer(self, _portfolio_dispatch(
+                body.get("item_id"), body.get("depto"), body.get("texto", "")))
         if u.path == "/api/revision" and _revision is not None:
-            largo = min(int(self.headers.get("Content-Length") or 0), 5000)
+            largo = _body_length(self.headers, 5000)
+            if largo is None:
+                return self._json({"ok": False, "error": "content_length_invalido"}, 400)
             try:
                 body = json.loads(self.rfile.read(largo).decode("utf-8", "replace"))
             except (ValueError, TypeError):
                 return self._json({"ok": False, "error": "json invalido"}, 400)
-            return self._json(_revision.record(body.get("video"),
-                                               body.get("decision"),
-                                               body.get("note", "")))
+            return _answer(self, _revision.record(body.get("video"),
+                                                     body.get("decision"),
+                                                     body.get("note", "")))
         if u.path == "/api/ejecutar":
-            largo = min(int(self.headers.get("Content-Length") or 0), 12000)
+            largo = _body_length(self.headers, 12000)
+            if largo is None:
+                return self._json({"ok": False, "error": "content_length_invalido"}, 400)
             try:
                 body = json.loads(self.rfile.read(largo).decode("utf-8", "replace"))
             except (ValueError, TypeError):
@@ -5556,7 +5890,9 @@ class H(BaseHTTPRequestHandler):
                 densidad = "medio"
             return self._json(_ejecutar(depto, modo, texto, densidad))
         if u.path == "/api/ideas":
-            largo = min(int(self.headers.get("Content-Length") or 0), 12000)
+            largo = _body_length(self.headers, 12000)
+            if largo is None:
+                return self._json({"ok": False, "error": "content_length_invalido"}, 400)
             try:
                 body = json.loads(self.rfile.read(largo).decode("utf-8", "replace"))
             except (ValueError, TypeError):
@@ -5577,7 +5913,9 @@ class H(BaseHTTPRequestHandler):
                 return self._json({"ok": False, "error": str(e)[:200]}, 500)
             return self._json({"ok": False, "error": "accion desconocida"}, 400)
         if u.path == "/api/render":
-            largo = min(int(self.headers.get("Content-Length") or 0), 4000)
+            largo = _body_length(self.headers, 4000)
+            if largo is None:
+                return self._json({"ok": False, "error": "content_length_invalido"}, 400)
             try:
                 body = json.loads(self.rfile.read(largo).decode("utf-8", "replace"))
             except (ValueError, TypeError):

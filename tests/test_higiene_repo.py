@@ -73,7 +73,13 @@ def test_utilidades_inertes_no_aumentan():
 
 def test_tools_en_registro():
     capacidades = CAPACIDADES.read_text(encoding="utf-8")
-    archivos = sorted(p for p in TOOLS_DIR.glob("*.py") if p.is_file())
+    # `__init__.py` es el marcador que fija `tools.__path__` a este repositorio
+    # para que el `tools/` del motor no lo eclipse via sys.path. No declara
+    # capacidad ni tiene consumidor que nombrar, asi que no entra al registro.
+    archivos = sorted(
+        p for p in TOOLS_DIR.glob("*.py")
+        if p.is_file() and p.name != "__init__.py"
+    )
     # El cero silencioso (memoria de direccion 2.3): si tools/ se mueve o se
     # vacia, la lista queda vacia y el ratchet informa "nada falta" para
     # siempre. Cero medido es un ERROR, no un silencio.

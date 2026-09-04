@@ -595,6 +595,10 @@ def export_csv(conn: sqlite3.Connection, output_dir: Path) -> None:
             ["process_key", "label_es", "input_semantics", "output_semantics", "output_kind", "policy"],
         ),
     }
+    # `main` creates the directory before calling this, so the CLI path was
+    # fine; called as a library function it failed with FileNotFoundError on a
+    # path it was handed and could have made.
+    output_dir.mkdir(parents=True, exist_ok=True)
     for filename, (query, headers) in specs.items():
         with (output_dir / filename).open("w", encoding="utf-8", newline="") as handle:
             writer = csv.writer(handle)
@@ -606,7 +610,14 @@ def validate(conn: sqlite3.Connection) -> list[str]:
     required = ["metadata", "documents", "topics", "claims", "entities", "claim_entities", "contexts", "relations", "interpretations", "states", "results", "sources", "tools", "process_semantics", "correlations", "constraints", "experiments", "audit_events"]
     existing = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
     errors = [f"missing table: {name}" for name in required if name not in existing]
+    # Counting rows in a table just reported missing raises OperationalError,
+    # so the validator died on exactly the malformed model it exists to
+    # describe -- and the caller got a traceback instead of the list of what
+    # was wrong. A table that is absent is already reported; it cannot also be
+    # empty.
     for table in ("topics", "claims", "entities", "relations", "interpretations", "states", "results", "sources", "process_semantics", "correlations", "constraints"):
+        if table not in existing:
+            continue
         if conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0] == 0:
             errors.append(f"empty table: {table}")
     return errors
