@@ -364,6 +364,55 @@ class TestRegionalExtensions:
         assert not any(field.startswith("deadline.extension.") for field in fields)
 
 
+class TestClosingTimeAndZone:
+    """A deadline in someone else's clock can be missed while feeling met.
+
+    Ama Amoedo closes 23:59 Uruguay time. Chile enters DST on 2026-09-06 per
+    IANA tzdata, so on the 9th both are UTC-3 and the two coincide -- but a
+    close on the 5th would have been 22:59 in Chile. The entry records the
+    zone; the checker says so; neither converts silently.
+    """
+
+    CALL = "ama-amoedo-becas-2026"
+
+    @pytest.fixture(scope="class")
+    @classmethod
+    def timed(cls) -> dict:
+        return load_calls()[cls.CALL]
+
+    def test_the_entry_records_the_hour_and_the_zone(self, timed) -> None:
+        assert timed["deadlines"]["closes_time"] == "23:59"
+        assert timed["deadlines"]["closes_timezone"] == "America/Montevideo"
+
+    def test_a_foreign_zone_is_warned_about(self, timed) -> None:
+        findings = review(timed, template(timed))
+        assert "deadline.timezone" in _fields(findings, WARNING)
+
+    def test_the_warning_names_the_zone_rather_than_converting(self, timed) -> None:
+        # Converting for the applicant means guessing where they are.
+        finding = next(
+            f for f in review(timed, template(timed))
+            if f["field"] == "deadline.timezone"
+        )
+        assert "America/Montevideo" in finding["detail"]
+        assert "23:59" in finding["detail"]
+
+    def test_a_call_without_a_declared_zone_says_nothing(self, bases) -> None:
+        # Fondart declares no closing time, so inventing a warning would be
+        # noise on the entry that matters most.
+        assert "closes_timezone" not in bases["deadlines"]
+        assert "deadline.timezone" not in _fields(review(bases, template(bases)))
+
+    def test_the_absence_of_extensions_records_that_it_was_checked(
+        self, timed
+    ) -> None:
+        # An empty list can mean "none exist" or "nobody looked", and four days
+        # from a close those are not worth the same.
+        checked = timed["deadlines"]["extensions_checked"]
+        assert checked["on"] and checked["found"]
+        assert timed["deadlines"]["regional_extensions"] == []
+
+
 class TestPartialBases:
     """A convocatoria whose official document could not be read.
 

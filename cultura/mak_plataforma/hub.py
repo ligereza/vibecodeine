@@ -4619,6 +4619,11 @@ def _convocatorias(today: date | None = None):
             "edicion": bases.get("edition", ""),
             "organismo": bases.get("authority", ""),
             "cierra": closes,
+            # A date alone loses the half of the deadline that decides the day:
+            # Ama Amoedo closes 23:59 Uruguay time, which is not the
+            # applicant's clock unless it happens to be.
+            "cierra_hora": deadlines.get("closes_time", ""),
+            "cierra_zona": deadlines.get("closes_timezone", ""),
             "estado": state,
             "dias_restantes": remaining,
             "moneda": amounts.get("currency", ""),
