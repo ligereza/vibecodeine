@@ -25,21 +25,53 @@
       "what_that_document_states": "Los cierres de las convocatorias 2027 caen «entre los días 31 de agosto y 10 de septiembre de 2026». No fija por sí solo el día exacto de esta línea.",
       "todo": "Confirmar el día exacto en el portal antes de postular. La fecha de abajo es la mejor disponible, no una lectura del documento oficial."
     },
-    "regional_extension": {
-      "resolution": "AMPLÍA PLAZO DE POSTULACIÓN EN EL MARCO DE LOS CONCURSOS PÚBLICOS, convocatorias 2027",
-      "url": "https://www.fondosdecultura.cl/wp-content/uploads/2026/07/Amplia-plazo-de-postulacion-concurso-2027.pdf",
-      "read_on": "2026-09-04",
-      "applies_to_regions": [
-        "Arica y Parinacota",
-        "Tarapacá",
-        "Antofagasta",
-        "Atacama"
-      ],
-      "extended_closes": "2026-09-16",
-      "quote": "ARTÍCULO PRIMERO: AMPLÍASE el plazo de postulación [...] en relación a aquellos responsables de proyectos pertenecientes a las regiones de Arica y Parinacota, Tarapacá, Antofagasta y Atacama, hasta las siguientes fechas: [...] 16 de septiembre de 2026 (Demás líneas del Fondo Nacional de Desarrollo Cultural y las Artes, ámbito nacional y regional de financiamiento).",
-      "note": "Fondart es el Fondo Nacional de Desarrollo Cultural y las Artes, y esta línea no es Becas Chile Crea, así que cae en «demás líneas»: 16 de septiembre para esas cuatro regiones. El documento NO menciona Coquimbo ni Magallanes; un resumen de prensa afirmaba una ampliación de dos días hábiles para ese tramo y la resolución leída no la respalda.",
-      "reason": "condiciones climáticas adversas en la zona norte"
-    }
+    "regional_extensions_note": "Son DOS ampliaciones distintas, y entre ambas cubren el país entero: casi ningún postulante se rige por `closes` a secas. Se registran como lista y nunca reemplazan a `closes`, porque aplicar la ampliación de la región equivocada le daría al postulante días que no tiene.",
+    "regional_extensions": [
+      {
+        "id": "norte-clima",
+        "resolution": "AMPLÍA PLAZO DE POSTULACIÓN EN EL MARCO DE LOS CONCURSOS PÚBLICOS, convocatorias 2027",
+        "url": "https://www.fondosdecultura.cl/wp-content/uploads/2026/07/Amplia-plazo-de-postulacion-concurso-2027.pdf",
+        "read_on": "2026-09-04",
+        "source_kind": "official_resolution",
+        "applies_to_regions": [
+          "Arica y Parinacota",
+          "Tarapacá",
+          "Antofagasta",
+          "Atacama"
+        ],
+        "extended_closes": "2026-09-16",
+        "quote": "ARTÍCULO PRIMERO: AMPLÍASE el plazo de postulación [...] en relación a aquellos responsables de proyectos pertenecientes a las regiones de Arica y Parinacota, Tarapacá, Antofagasta y Atacama, hasta las siguientes fechas: [...] 16 de septiembre de 2026 (Demás líneas del Fondo Nacional de Desarrollo Cultural y las Artes, ámbito nacional y regional de financiamiento).",
+        "note": "Fondart es el Fondo Nacional de Desarrollo Cultural y las Artes, y esta línea no es Becas Chile Crea, así que cae en «demás líneas»: 16 de septiembre.",
+        "reason": "condiciones climáticas adversas en la zona norte"
+      },
+      {
+        "id": "coquimbo-magallanes",
+        "resolution": "Rex 2596",
+        "url": "https://www.fondosdecultura.cl/",
+        "read_on": "2026-09-04",
+        "source_kind": "official_portal_notice",
+        "applies_to_regions": [
+          "Coquimbo",
+          "Valparaíso",
+          "Metropolitana",
+          "O'Higgins",
+          "Maule",
+          "Ñuble",
+          "Biobío",
+          "La Araucanía",
+          "Los Ríos",
+          "Los Lagos",
+          "Aysén",
+          "Magallanes"
+        ],
+        "regions_as_quoted": "de Coquimbo a Magallanes",
+        "extended_closes": null,
+        "extension_business_days": 2,
+        "quote": "se amplía en dos días hábiles el plazo de cierre de Fondos Cultura 2027 para las regiones de Coquimbo a Magallanes. – Rex 2596",
+        "note": "El aviso da un desplazamiento («dos días hábiles»), no una fecha, y `closes` mismo no está confirmado, así que aquí no se escribe una fecha calculada: sería aritmética sobre una base insegura presentada como dato. La lista de regiones expande el tramo citado; si el desglose por región importa, verificar contra la resolución.",
+        "reason": "facilitar el proceso de postulación"
+      }
+    ]
   },
   "amounts": {
     "currency": "CLP",
