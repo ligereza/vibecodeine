@@ -46,19 +46,43 @@ def write_action_log(action_log: list[dict]) -> None:
 
 
 def check_path(path: Path) -> None:
-    if path.is_absolute() and path != ROOT and ROOT not in path.parents:
-        raise RuntimeError(f"path outside MAK: {path}")
+    """Refuse anything outside MAK, or inside a protected or Git root.
+
+    The check resolves the path first. It used to read the parts as written,
+    and `Path` normalises a `.` but never a `..` -- it cannot, because with a
+    symlink in the way the two are not the same place. So the gate that exists
+    to keep this tool out of WIN, GoogleDrive, OneDrive and the flujo checkout
+    let `/home/mak/proyecto/../WIN/a.txt` through as if its top component were
+    `proyecto`, and `/home/mak/../etc/passwd` as if it were under MAK at all.
+    Both are measured in tests/test_consolidate_static_duplicates.py.
+
+    Resolving also collapses a symlink that points into a protected root, which
+    `validate_file` catches only for the file itself, not for its parents.
+
+    Errors name the path the caller passed, since that is the one they can fix,
+    and the resolved form when the two differ.
+    """
+    root = ROOT.resolve()
+    resolved = path.resolve()
+
+    def named(reason: str) -> RuntimeError:
+        if resolved != path:
+            return RuntimeError(f"{reason}: {path} (resuelve a {resolved})")
+        return RuntimeError(f"{reason}: {path}")
+
+    if resolved != root and root not in resolved.parents:
+        raise named("path outside MAK")
     try:
-        relative = path.relative_to(ROOT)
+        relative = resolved.relative_to(root)
     except ValueError as exc:
-        raise RuntimeError(f"path outside MAK: {path}") from exc
+        raise named("path outside MAK") from exc
     top = relative.parts[0] if relative.parts else ""
     if top in PROTECTED_TOPS:
-        raise RuntimeError(f"protected root: {path}")
+        raise named("protected root")
     if top in GIT_TOPS:
-        raise RuntimeError(f"Git root: {path}")
+        raise named("Git root")
     if ".git" in relative.parts:
-        raise RuntimeError(f"Git internals: {path}")
+        raise named("Git internals")
 
 
 def validate_file(path: Path) -> None:
