@@ -268,6 +268,76 @@ class TestDeadline:
         assert "deadline" not in _fields(findings, BLOCKING)
 
 
+class TestProvenanceIsPerField:
+    """A file can be the official bases and still carry a borrowed date.
+
+    The Fondart bases PDF states the amounts and the criteria and contains no
+    date at all -- checked by searching the extracted text for any
+    `N de MES de 2026|2027`: zero matches. The opening and closing dates came
+    from a portal summary and had been attributed to the PDF. Warning on the
+    file as a whole would say nothing, because the file *is* the official
+    bases; the warning has to be about the field.
+    """
+
+    def test_the_fondart_deadline_declares_its_own_weaker_source(self, bases) -> None:
+        source = bases["deadlines"].get("source") or {}
+        assert source.get("kind") and source["kind"] != "official_bases"
+        assert source.get("todo"), "a borrowed date must say it needs confirming"
+
+    def test_the_bases_still_own_the_criteria_and_the_amounts(self, bases) -> None:
+        # The correction must not throw away what the PDF does support.
+        assert bases["source"]["kind"] == "official_bases"
+        assert bases["criteria"] and bases["amounts"]["max_per_project"]
+        assert bases["deadlines"]["max_duration_months"] == 12
+
+    def test_a_borrowed_deadline_is_warned_about(self, bases, valid_project) -> None:
+        findings = review(bases, valid_project)
+        assert "deadline.source" in _fields(findings, WARNING)
+        assert "deadline.source" not in _fields(findings, BLOCKING), (
+            "an unconfirmed date is a warning: blocking would stop a real application"
+        )
+
+    def test_a_deadline_read_from_the_document_is_not_warned_about(
+        self, bases, valid_project
+    ) -> None:
+        confirmed = copy.deepcopy(bases)
+        confirmed["deadlines"].pop("source", None)
+        assert "deadline.source" not in _fields(review(confirmed, valid_project))
+
+
+class TestRegionalExtension:
+    """An extension is shown only where a resolution was read and recorded."""
+
+    def test_the_declared_extension_is_surfaced(self, bases, valid_project) -> None:
+        findings = review(bases, valid_project)
+        assert "deadline.regional_extension" in _fields(findings, WARNING)
+
+    def test_it_names_the_regions_it_covers(self, bases) -> None:
+        extension = bases["deadlines"]["regional_extension"]
+        assert extension["applies_to_regions"] == [
+            "Arica y Parinacota", "Tarapacá", "Antofagasta", "Atacama",
+        ]
+        assert extension["extended_closes"] == "2026-09-16"
+
+    def test_it_cites_the_resolution_and_quotes_it(self, bases) -> None:
+        extension = bases["deadlines"]["regional_extension"]
+        assert extension["url"].startswith("http")
+        assert extension["read_on"]
+        assert "ARTÍCULO PRIMERO" in extension["quote"]
+
+    def test_the_extension_never_moves_the_declared_close(self, bases) -> None:
+        # Applying it to the wrong region would hand the operator a week they
+        # do not have. It is reported beside the date, never instead of it.
+        assert bases["deadlines"]["closes"] == "2026-09-08"
+
+    def test_a_call_without_an_extension_says_nothing_about_one(
+        self, bases, valid_project
+    ) -> None:
+        plain = copy.deepcopy(bases)
+        plain["deadlines"].pop("regional_extension", None)
+        assert "deadline.regional_extension" not in _fields(review(plain, valid_project))
+
+
 class TestPartialBases:
     """A convocatoria whose official document could not be read.
 

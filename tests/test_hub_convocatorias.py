@@ -175,6 +175,61 @@ class TestProvenanceSurvives:
             assert sum(c["pondera"] for c in row["criterios"]) == 100
 
 
+class TestPerFieldProvenance:
+    """The surface must not show one confidence for a whole entry.
+
+    The Fondart bases PDF states the amounts and the criteria and contains no
+    date at all, so its deadline came from a portal summary. An entry marked
+    `official_bases` end to end would hide exactly the field the operator is
+    about to act on.
+    """
+
+    def test_a_deadline_from_a_weaker_source_says_so(self, surface: dict) -> None:
+        fondart = next(
+            row for row in surface["items"] if row["id"].startswith("fondart")
+        )
+        assert fondart["fuente"] == "official_bases"
+        assert fondart["fuente_plazo"] != "official_bases"
+        assert fondart["plazo_por_confirmar"] is True
+
+    def test_an_entry_whose_deadline_is_as_solid_as_its_bases_is_not_flagged(
+        self, surface: dict
+    ) -> None:
+        for row in surface["items"]:
+            if row["fuente_plazo"] == row["fuente"] and not row["plazo_por_confirmar"]:
+                break
+        else:
+            pytest.fail("every entry is flagged, so the flag distinguishes nothing")
+
+    def test_a_declared_extension_is_carried_with_its_regions(
+        self, surface: dict
+    ) -> None:
+        fondart = next(
+            row for row in surface["items"] if row["id"].startswith("fondart")
+        )
+        extension = fondart["ampliacion_regional"]
+        assert extension is not None
+        assert extension["cierra"] == "2026-09-16"
+        assert "Atacama" in extension["regiones"]
+        assert extension["resolucion"].startswith("http")
+
+    def test_an_entry_without_an_extension_reports_none(self, surface: dict) -> None:
+        # Inferring one for the wrong region would hand the operator a week
+        # they do not have.
+        others = [
+            row for row in surface["items"] if not row["id"].startswith("fondart")
+        ]
+        assert others, "nothing to check"
+        assert all(row["ampliacion_regional"] is None for row in others)
+
+    def test_the_extension_does_not_move_the_declared_close(self, surface: dict) -> None:
+        fondart = next(
+            row for row in surface["items"] if row["id"].startswith("fondart")
+        )
+        assert fondart["cierra"] == "2026-09-08"
+        assert fondart["ampliacion_regional"]["cierra"] != fondart["cierra"]
+
+
 class TestDegradation:
     def test_an_absent_tool_answers_503_and_names_the_cause(self, monkeypatch) -> None:
         monkeypatch.setattr(hub, "_load_calls", None)
