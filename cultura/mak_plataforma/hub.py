@@ -5247,14 +5247,16 @@ class H(BaseHTTPRequestHandler):
                 return self._send("research UI missing", "text/plain; charset=utf-8", 404)
         if p == "/api/research/catalog":
             try:
-                return self._json(_research_catalog())
+                return _answer(self, _research_catalog())
             except Exception as exc:
-                return self._json({"available": False, "adapters": [], "error": str(exc)[:200]})
+                return self._json(
+                    {"available": False, "adapters": [], "error": str(exc)[:200]}, 503)
         if p == "/api/research/jobs":
             try:
-                return self._json(_research_jobs())
+                return _answer(self, _research_jobs())
             except Exception as exc:
-                return self._json({"available": False, "jobs": [], "error": str(exc)[:200]})
+                return self._json(
+                    {"available": False, "jobs": [], "error": str(exc)[:200]}, 503)
         if p == "/api/research/job":
             query = urllib.parse.parse_qs(u.query)
             raw_id = (query.get("id") or [""])[0].strip()
@@ -5550,7 +5552,7 @@ class H(BaseHTTPRequestHandler):
                                "relations": surface.get("relations", []),
                                "reason": surface.get("reason", "")})
         if p == "/api/portfolio/copilot/xio-evidence":
-            return self._json(_portfolio_xio_evidence())
+            return _answer(self, _portfolio_xio_evidence())
         if p == "/api/portfolio/copilot/status":
             providers.load_env()
             visual = _portfolio_visual_surface()

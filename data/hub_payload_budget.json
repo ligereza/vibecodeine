@@ -152,6 +152,12 @@
       "items_at_capture": 7044,
       "note": "Proyeccion completa a proposito. projects/cultura/PORTAFOLIO_ORGANISMO.md la reserva para clientes que necesitan bloques y relaciones, y manda al editor a /api/portfolio/contract, que es la superficie ligera. El costo por item es alto porque el contrato es el entregable, no un accidente."
     },
+    "/api/portfolio/production": {
+      "max_bytes_per_item": 60,
+      "collection": "missing",
+      "items_at_capture": 0,
+      "note": "`missing` nombra las fuentes ausentes, una cadena corta por fuente. Igual que /api/status, solo alcanza el umbral donde falta algo: medido en CI el 2026-09-04, 15.4 bytes por item. El techo de 60 cubre un nombre de fuente largo."
+    },
     "/api/portfolio/review-queue": {
       "max_bytes_per_item": 1987,
       "collection": "items",
@@ -211,6 +217,12 @@
       "collection": "cues",
       "items_at_capture": 21,
       "note": ""
+    },
+    "/api/status": {
+      "max_bytes_per_item": 400,
+      "collection": "attention",
+      "items_at_capture": 0,
+      "note": "La coleccion `attention` lista lo que falta, asi que crece cuando el entorno esta incompleto: en la caja del operador queda bajo el umbral de cinco entradas y el presupuesto ni la ve, y en un runner limpio aparece. Medido en CI el 2026-09-04: 253.9 bytes por item. El techo de 400 deja sitio a un aviso mas largo sin tapar una fila que engorde."
     }
   }
 }

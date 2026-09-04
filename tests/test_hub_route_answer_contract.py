@@ -191,6 +191,20 @@ def test_get_route_status_agrees_with_its_own_body(path: str) -> None:
     `/api/portfolio/production` -- still answered 200 while their bodies said
     `ok: false`, two of them with the same `item_no_encontrado` that their
     sibling routes `vision` and `manifest` answer 404 for.
+
+    Three more were found only by CI, and could not have been found here: on
+    the operator's box `/api/research/jobs`, `/api/research/catalog` and
+    `/api/portfolio/copilot/xio-evidence` have their dependency present, answer
+    `available: true`, and pass. The defect exists only where the dependency is
+    missing, which is what a bare runner is.
+
+    Do NOT close the remaining 29 bare `self._json(<call>)` sites in `do_GET`
+    by converting them all. `available: false` is overloaded:
+    `/api/portfolio/copilot/vision` returns `"available": bool(record)`, where
+    false means "this item has no vision record yet" -- a successful answer
+    about an empty result, not a missing dependency. Routing that through
+    `_answer` would answer 503 to a normal empty read. Each site needs its own
+    judgement, and this test is what surfaces them as environments vary.
     """
     handler = FakeHandler(path)
     hub.H.do_GET(handler)

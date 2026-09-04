@@ -125,7 +125,9 @@ NO_REFERENCE_CLASSIFICATIONS = {
     "build_effort_consumer_crosswalk": {"status": "manual_only", "source": "capabilities_5_ter"},
     "build_mak_canonical_map": {"status": "manual_only", "source": "capabilities_5_ter"},
     "compile_contracurator": {"status": "manual_only", "source": "capabilities_5_ter"},
-    "compute_effort_residuals": {"status": "manual_only", "source": "capabilities_5_ter"},
+    # `compute_effort_residuals` left this table on 2026-09-04: it now has a
+    # consumer, `tests/test_compute_effort_residuals.py`, which holds
+    # `robust_scale` to the robustness its own docstring claims.
     # `consolidate_static_duplicates` left this table on 2026-09-04: it now has
     # a consumer, `tests/test_consolidate_static_duplicates.py`, which measures
     # the `check_path` gate that keeps the tool out of WIN, GoogleDrive,

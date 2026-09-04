@@ -36,7 +36,13 @@ SIGN = {
     "fuentes": -1,
     "duracion_ms": 1,
 }
-DATE_PREFIX = re.compile(r"^20\d{6}(?:[-_]\d{4,6})?-")
+# The separator after the date is `-` or `_`: both are in use on disk, 13
+# files against 8 as of 2026-09-04. Accepting only `-` left the date inside the
+# topic for the other form, so `20260726_estudio` and `20260801-estudio` read
+# as two topics instead of one. Residuals are grouped by topic and scaled by a
+# median, so splitting a group is not cosmetic: it computes the scale from
+# fewer samples than the archive actually holds.
+DATE_PREFIX = re.compile(r"^20\d{6}(?:[-_]\d{4,6})?[-_]")
 
 
 def robust_scale(values: list[float]) -> float:
