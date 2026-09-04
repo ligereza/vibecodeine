@@ -106,6 +106,37 @@ def test_get_route_answers_without_raising(path: str) -> None:
 
 
 @pytest.mark.parametrize("path", GET_ROUTES)
+def test_get_route_status_agrees_with_its_own_body(path: str) -> None:
+    """A route that says it failed must not answer 200.
+
+    hub.py already records this as a measured defect: a body reading
+    `{"available": false}` under a 200 is honest to a human and invisible to a
+    machine, because a probe, a watchdog or a proxy reads the status code.
+    `_status_for` was written for it and two routes were fixed; three more --
+    `/api/portfolio/copilot/scene`, `/api/portfolio/copilot/suggestions` and
+    `/api/portfolio/production` -- still answered 200 while their bodies said
+    `ok: false`, two of them with the same `item_no_encontrado` that their
+    sibling routes `vision` and `manifest` answer 404 for.
+    """
+    handler = FakeHandler(path)
+    hub.H.do_GET(handler)
+
+    if not handler.calls:
+        return
+    kind, payload, code = handler.calls[-1]
+    if kind != "json" or not isinstance(payload, dict):
+        return
+
+    declares_failure = payload.get("available") is False or payload.get("ok") is False
+    if declares_failure and code == 200:
+        pytest.fail(
+            f"GET {path} answered 200 with a body that says it failed "
+            f"({ {k: payload[k] for k in list(payload)[:3]} }). "
+            "Name the error in hub._ERROR_STATUS so the code agrees with the body."
+        )
+
+
+@pytest.mark.parametrize("path", GET_ROUTES)
 def test_get_route_never_answers_500(path: str) -> None:
     handler = FakeHandler(path)
     hub.H.do_GET(handler)

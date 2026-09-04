@@ -1448,16 +1448,44 @@ def _learning_db_path():
     return Path(configured).expanduser() if configured else Path(_REPO_ROOT) / "data" / "mak_knowledge.db"
 
 
+# Named failures whose status this file already decides somewhere else.
+# `item_no_encontrado` answers 404 in `/api/portfolio/copilot/vision` and
+# `/api/portfolio/copilot/manifest`; their siblings `scene` and `suggestions`
+# answered 200 for the identical condition. A dependency that is not mounted
+# is the 503 case `_status_for` was written for.
+_ERROR_STATUS = {
+    "item_no_encontrado": 404,
+    "fuentes_ausentes": 503,
+}
+_ERROR_STATUS_PREFIXES = (
+    ("motor_no_disponible", 503),
+)
+
+
 def _status_for(payload) -> int:
-    """503 when a payload says its own dependency is absent, else 200.
+    """The status code that agrees with what the payload already says.
 
     A body that reads `{"available": false, "reason": "..."}` under a 200 is
     honest to a human and invisible to a machine: a probe, a watchdog or a
     proxy reads the status code. This keeps the named body and makes the code
     agree with it.
+
+    An `ok: false` whose error is not named here stays 200 on purpose. Guessing
+    a status from an unrecognised string would change routes nobody measured;
+    a new mapping is a line in the table, added when its meaning is known.
     """
-    if isinstance(payload, dict) and payload.get("available") is False:
+    if not isinstance(payload, dict):
+        return 200
+    if payload.get("available") is False:
         return 503
+    if payload.get("ok") is False:
+        error = payload.get("error")
+        if isinstance(error, str):
+            if error in _ERROR_STATUS:
+                return _ERROR_STATUS[error]
+            for prefix, status in _ERROR_STATUS_PREFIXES:
+                if error.startswith(prefix):
+                    return status
     return 200
 
 
@@ -5182,8 +5210,9 @@ class H(BaseHTTPRequestHandler):
             focus_facet = (query.get("facet") or [""])[0]
             shuffle = (query.get("mode") or [""])[0] == "shuffle"
             shuffle_seed = (query.get("seed") or [""])[0]
-            return self._json(_portfolio_suggestions(
-                item_id, board_id, include_map, focus_facet, shuffle, shuffle_seed))
+            payload = _portfolio_suggestions(
+                item_id, board_id, include_map, focus_facet, shuffle, shuffle_seed)
+            return self._json(payload, _status_for(payload))
         if p == "/api/portfolio/copilot/scene":
             query = urllib.parse.parse_qs(u.query)
             item_id = (query.get("item_id") or [""])[0]
@@ -5196,14 +5225,16 @@ class H(BaseHTTPRequestHandler):
             shuffle = (query.get("mode") or [""])[0] == "shuffle"
             shuffle_seed = (query.get("seed") or [""])[0]
             surface = (query.get("surface") or [""])[0]
-            return self._json(_portfolio_scene(
+            payload = _portfolio_scene(
                 item_id, limit=limit, focus_facet=focus_facet,
-                shuffle=shuffle, shuffle_seed=shuffle_seed, surface=surface))
+                shuffle=shuffle, shuffle_seed=shuffle_seed, surface=surface)
+            return self._json(payload, _status_for(payload))
         if p == "/api/portfolio/production":
             query = urllib.parse.parse_qs(u.query)
-            return self._json(_portfolio_production(
+            payload = _portfolio_production(
                 format_id=(query.get("format_id") or [""])[0],
-                refresh=(query.get("refresh") or ["0"])[0] == "1"))
+                refresh=(query.get("refresh") or ["0"])[0] == "1")
+            return self._json(payload, _status_for(payload))
         if p == "/api/portfolio/copilot/map":
             query = urllib.parse.parse_qs(u.query)
             width = (query.get("width") or [8])[0]
