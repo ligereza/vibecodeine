@@ -1,0 +1,60 @@
+{
+  "schema": "mak-convocatoria-bases-v1",
+  "id": "ama-amoedo-becas-2026",
+  "name": "Becas Fundación Ama Amoedo 2026 — categoría Artistas",
+  "edition": "Cuarta edición",
+  "authority": "Fundación Ama Amoedo",
+  "source": {
+    "kind": "press_coverage",
+    "portal": "https://fundacionamaamoedo.org/programas/becas",
+    "read_on": "2026-09-04",
+    "corroborated_by": [
+      "https://es.artealdia.com/Convocatorias/CONVOCATORIA-ABIERTA-PARA-LAS-BECAS-FUNDACION-AMA-AMOEDO-2026",
+      "https://bogota.gov.co/boletin-oferta-internacional/becas-fundacion-ama-amoedo-2026-para-artistas-latinoamericanos",
+      "https://hipermedula.org/2026/07/becas-fundacion-ama-amoedo-2/"
+    ],
+    "official_bases_unreachable": [
+      "https://fundacionamaamoedo.org/uploads/docs/ESP_Bases_y_condiciones_Becas_Fundaci%C3%B3n_Ama_Amoedo.pdf",
+      "https://fundacionamaamoedo.org/uploads/docs/FAA_Bases_y_condiciones_Becas_Fundacio%CC%81n_Ama_Amoedo_ESP.pdf"
+    ],
+    "note": "Las fechas, montos, categorías y elegibilidad de abajo están corroboradas por tres fuentes de prensa independientes. Los criterios de evaluación y la lista taxativa de documentos NO se pudieron leer del PDF oficial de bases: ambas URL publicadas devuelven 404 y el sitio se renderiza por JavaScript. Por eso `criteria` va vacío: transcribir criterios de un resumen de prensa sería inventarlos. Antes de postular hay que abrir las bases en el navegador y completar este archivo."
+  },
+  "deadlines": {
+    "opens": "2026-07-07",
+    "closes": "2026-09-09",
+    "results": "2026-11-20",
+    "projects_start": "2027-01",
+    "max_duration_months": null,
+    "source_section": "convocatoria publicada (prensa)"
+  },
+  "amounts": {
+    "currency": "USD",
+    "min_per_project": null,
+    "max_per_project": 10000,
+    "grants_in_this_category": 4,
+    "source_section": "categoría Artistas: 4 becas de USD 10.000"
+  },
+  "budget_caps": [],
+  "objective": "Becas a proyectos de investigación o creación en artes visuales que impliquen un aporte significativo en la trayectoria de artistas o colectivos.",
+  "eligibility": [
+    "Ser mayor de 18 años.",
+    "Artistas, colectivos artísticos o profesionales del arte.",
+    "Poseer una conexión significativa con América Latina: por nacionalidad, herencia cultural y/o el sitio donde se realizará el proyecto."
+  ],
+  "other_categories": [
+    {"name": "Arte y Compromiso Social", "grants": 2, "amount": 10000},
+    {"name": "Organizaciones", "grants": 2, "amount": 10000},
+    {"name": "Publicaciones", "grants": 2, "amount": 10000, "note": "plazo máximo de ejecución: 2 años"}
+  ],
+  "criteria": [],
+  "form_sections": [
+    {"id": "informacion_personal", "title": "Información personal", "guidance": "Datos del postulante o del colectivo, y la conexión con América Latina que da la elegibilidad."},
+    {"id": "descripcion_proyecto", "title": "Descripción del proyecto", "guidance": "Proyecto de investigación o creación en artes visuales. Debe quedar claro el aporte significativo a la trayectoria."},
+    {"id": "presupuesto", "title": "Presupuesto", "guidance": "Uso de los USD 10.000. Verificar en las bases oficiales qué gastos se aceptan."},
+    {"id": "cv", "title": "CV", "guidance": "Trayectoria del artista o colectivo."},
+    {"id": "referencias_trabajos", "title": "Referencias de trabajos anteriores", "guidance": "Obra previa que respalda la propuesta."}
+  ],
+  "mandatory_documents": [],
+  "evaluation_documents": [],
+  "mandatory_documents_warning": "La lista taxativa de documentos no se pudo leer del PDF oficial. No confiar en esta ficha para el cierre: abrir las bases en fundacionamaamoedo.org."
+}

@@ -83,6 +83,7 @@ data/*.json
 # contra el que `tools/gen_postulacion.py` revisa una postulacion, y sus tests
 # no tienen nada que verificar sin ellas. El mismo defecto que `rd_packs.json`.
 !data/fondart_creacion_artistica_regional_2027.json
+!data/ama_amoedo_becas_2026.json
 context/DAILY.md
 context/PIPELINE_RESULT.md
 context/dashboard.html
