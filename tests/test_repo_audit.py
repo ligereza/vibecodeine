@@ -108,7 +108,16 @@ def test_tool_consumer_inventory_is_explicit_and_bounded():
     # answer 4,367,883 bytes so its only consumer could read three fields per
     # row. It pins bytes per item, not total bytes, so the ratchet survives an
     # archive of any size. Consumed by `tests/test_hub_payload_budget.py`.
-    assert result["count"] == 109
+    #
+    # 109 -> 110 on 2026-09-04: `rol_candidatos.py` was added. The F5 format
+    # requires a `rol_y_exclusiones` slot and the archive cannot supply it:
+    # measured against the portable-SSD index, `owner_status` is `unknown`
+    # for all 917 projects and `owner_evidence_json` is empty for all 917.
+    # Nothing recorded who did what. It ranks where declaring a role pays
+    # off and emits a blank worksheet; it never writes a role, because a
+    # role is a claim a person makes about their own work. Consumed by
+    # `tests/test_rol_candidatos.py`.
+    assert result["count"] == 110
     assert len(result["files"]) == result["count"]
     summary = result["summary"]
     assert summary["with_production_reference"] + summary["tests_only"] \
