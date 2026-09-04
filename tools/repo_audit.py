@@ -108,7 +108,9 @@ NO_REFERENCE_CLASSIFICATIONS = {
     "compile_research_frontier": {"status": "manual_only", "source": "separation_20260902"},
     "compile_selective_recompute_receipt": {"status": "manual_only", "source": "separation_20260902"},
     "compile_vigia_capture_plans": {"status": "manual_only", "source": "separation_20260902"},
-    "gen_propuesta_directiva": {"status": "manual_only", "source": "separation_20260902"},
+    # `gen_propuesta_directiva` left this table on 2026-09-04: it now has a
+    # consumer, `tests/test_gen_propuesta_directiva.py`, which holds it to the
+    # three promises its docstring makes about a document the board reads.
     "generate_artistic_program_hypotheses": {"status": "manual_only", "source": "separation_20260902"},
     "inspect_operational_memberships": {"status": "manual_only", "source": "separation_20260902"},
     "order_projection": {"status": "manual_only", "source": "separation_20260902"},
