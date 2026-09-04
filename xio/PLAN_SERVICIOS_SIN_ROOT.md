@@ -5,7 +5,7 @@
 Fecha: 2026-07-13. Rama: claude/vola-cultura-portfolio-20260712.
 
 This is a service and battery plan, not proof that every XIO plugin is deployed
-on the Xiaomi. Runtime claims must be checked against `xio/XIO_CAPABILITIES.md`.
+on the Xiaomi. Runtime claims must be checked against `../../CAPACIDADES_MAK.md`.
 The passive FOH monitor and active `showcontrol` surface are separate
 capabilities with separate security requirements.
 

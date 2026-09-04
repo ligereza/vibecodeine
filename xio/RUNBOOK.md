@@ -12,7 +12,7 @@ Written 2026-07-16 by consolidating xio/**/*.md + the real scripts under xio/new
 Capability boundary: this runbook covers both the passive `foh_monitor` and the
 active `showcontrol` plugin. The former observes UDP traffic; the latter can
 send or receive show-control traffic when installed, enabled and authorized.
-Repository code is not runtime proof. Use [CAPACIDADES.md](CAPACIDADES.md) as
+Repository code is not runtime proof. Use [CAPACIDADES_MAK.md](../../CAPACIDADES_MAK.md) as
 the status matrix before a show.
 
 ## Index

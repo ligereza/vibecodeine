@@ -66,7 +66,7 @@ selected tests cover an entire area.
 | `src/flujo/` | runtime and CLI. Implementation authority |
 | `src/flujo/knowledge/` | archive, portfolio, evidence, `mak-*-v1` schemas |
 | `cultura/mak_*/` | in-house subsystems, including the human Hub (`cultura/mak_plataforma/hub.py`) |
-| `tools/` | tools, each registered in `CAPACIDADES.md` with its consumer |
+| `tools/` | tools, each registered in `CAPACIDADES_FLUJO.md` with its consumer |
 | `tests/` | suites by domain |
 | `docs/` | doctrine and dated evidence. Start at `docs/AUTORIDAD.md` |
 | `context/` | operational continuity. `LAST_HANDOFF.md` is the state authority |

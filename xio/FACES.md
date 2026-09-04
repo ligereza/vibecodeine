@@ -123,5 +123,5 @@ This lets us design each face independently:
 **See also:**
 - `xio/RUNBOOK.md` section 5 (Security -- aislar MAK) for on-phone source denylist + guarded endpoints
 - `xio/HOTSPOT_SHOW_RUNBOOK.md` for full Face B show-day architecture and self-heal loops
-- `xio/XIO_CAPABILITIES.md` for the distinction between repository capability and Xiaomi runtime verification
+- `../../CAPACIDADES_MAK.md` for the distinction between repository capability and Xiaomi runtime verification
 - `cultura/mak_plataforma/GENESIS.md` "Las reglas de vida" rule 2 (El teléfono es sagrado) — describes Face A's relationship to MAK

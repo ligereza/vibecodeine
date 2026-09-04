@@ -5,7 +5,7 @@ The registry in this file is deliberately small and explicit: a path or a
 process name is not treated as a capability by itself.  The command compares
 the registry with the capability documents, then (optionally) probes the
 current user services and local listeners.  It emits evidence; it never edits
-CAPACIDADES.md automatically.
+the capability documents automatically.
 
 Examples::
 
@@ -207,7 +207,13 @@ def _probe_http(port: int, paths: Iterable[str]) -> dict[str, object]:
 
 
 def _declared(docs: list[Path], anchors: tuple[str, ...]) -> list[str]:
-    """Find rows where the label and canonical source occur together."""
+    """Find current rows where the label and canonical source co-occur.
+
+    Capability documents retain historical material below their current audit
+    card. Searching the whole file made an old cross-check look like current
+    ownership, so prefer the bounded ``Auditoría vigente`` section and only
+    fall back to the whole document for older document shapes.
+    """
 
     hits: list[str] = []
     lowered = tuple(anchor.lower() for anchor in anchors)
@@ -216,7 +222,16 @@ def _declared(docs: list[Path], anchors: tuple[str, ...]) -> list[str]:
             lines = doc.read_text(encoding="utf-8", errors="replace").splitlines()
         except OSError:
             continue
-        if any(all(anchor in line.lower() for anchor in lowered) for line in lines):
+        current = lines
+        for index, line in enumerate(lines):
+            if line.strip().lower().startswith("## auditoría vigente"):
+                current = []
+                for candidate in lines[index:]:
+                    if candidate.startswith("## ") and candidate != line:
+                        break
+                    current.append(candidate)
+                break
+        if any(all(anchor in line.lower() for anchor in lowered) for line in current):
             hits.append(str(doc))
     return hits
 
@@ -444,7 +459,15 @@ def _write_atomic(path: Path, payload: str) -> None:
 
 
 def build_report(root: Path, docs: list[Path], live: bool) -> dict[str, object]:
-    results = [_surface_result(root, docs, surface, live) for surface in SURFACES]
+    # This checker also ships in the MAK checkout as a shared implementation.
+    # When run from the FLUJO checkout, report only FLUJO-owned surfaces: MAK
+    # sources deliberately do not exist in that checkout.
+    branch = _git_value(root, "branch", "--show-current")
+    surfaces = tuple(
+        surface for surface in SURFACES
+        if branch != "FLUJO" or surface.owner == "flujo"
+    )
+    results = [_surface_result(root, docs, surface, live) for surface in surfaces]
     return {
         "schema": "mak-capabilities-runtime-v1",
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -469,7 +492,7 @@ def main(argv: list[str] | None = None) -> int:
         "--docs",
         type=Path,
         action="append",
-        help="capability document(s), relative to --root; defaults to existing CAPACIDADES files",
+        help="capability document(s), relative to --root; defaults to the FLUJO matrix",
     )
     parser.add_argument("--format", choices=("text", "json", "markdown"), default="text")
     parser.add_argument("--output", type=Path, help="write the selected report atomically")
@@ -484,8 +507,6 @@ def main(argv: list[str] | None = None) -> int:
 
     root = args.root.resolve()
     doc_paths = args.docs or [
-        Path("CAPACIDADES.md"),
-        Path("CAPACIDADES_MAK.md"),
         Path("CAPACIDADES_FLUJO.md"),
     ]
     docs = [(path if path.is_absolute() else root / path) for path in doc_paths]
