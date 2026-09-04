@@ -1,0 +1,275 @@
+#!/usr/bin/env python3
+"""Contracts for `tools/gen_postulacion.py`.
+
+The tool exists to catch, before a deadline, the failures that put a public
+application out of the competition without anyone reading it: a budget over
+the ceiling, a percentage cap exceeded, a mandatory document missing. Those
+checks are only worth having if they actually fire, so each one is asserted
+against a project that breaks it on purpose.
+
+The other half of the contract is what the tool must *not* do: it must never
+write the applicant's prose. A section left empty comes out marked, not
+filled.
+"""
+from __future__ import annotations
+
+import copy
+from datetime import date, timedelta
+import json
+
+import pytest
+
+from tools.gen_postulacion import (
+    BLOCKING,
+    WARNING,
+    load_calls,
+    render,
+    review,
+    template,
+)
+
+CALL = "fondart-regional-creacion-artistica-2027"
+
+
+@pytest.fixture(scope="module")
+def bases() -> dict:
+    calls = load_calls()
+    assert CALL in calls, f"{CALL} is not in data/: without bases there is nothing to check"
+    return calls[CALL]
+
+
+@pytest.fixture
+def valid_project(bases: dict) -> dict:
+    """A project that satisfies every rule, so a finding means what it says."""
+    project = template(bases)
+    project["title"] = "Obra de prueba"
+    project["duration_months"] = 10
+    project["budget"].update(
+        requested_from_fund=5_000_000,
+        contingency=50_000,
+        lead_fee=1_500_000,
+    )
+    project["declared_documents"] = ["descripcion_propuesta"]
+    for section in project["sections"]:
+        project["sections"][section] = f"contenido de {section}"
+    return project
+
+
+def _fields(findings: list[dict], level: str | None = None) -> set[str]:
+    return {f["field"] for f in findings if level is None or f["level"] == level}
+
+
+class TestDeclaredBases:
+    def test_criteria_weights_sum_to_one_hundred(self, bases: dict) -> None:
+        total = sum(int(c["weight"]) for c in bases["criteria"])
+        assert total == 100, f"the weights add up to {total}"
+
+    def test_every_criterion_names_sections_that_exist(self, bases: dict) -> None:
+        declared = {s["id"] for s in bases["form_sections"]}
+        for criterion in bases["criteria"]:
+            for section in criterion["fed_by_sections"]:
+                assert section in declared, (
+                    f"{criterion['name']} claims to be fed by {section!r}, "
+                    "which is not a form section"
+                )
+
+    def test_the_bases_cite_their_source(self, bases: dict) -> None:
+        source = bases.get("source", {})
+        assert source.get("bases_pdf", "").startswith("http")
+        assert source.get("read_on")
+
+    def test_every_conditional_document_has_a_trigger(self, bases: dict) -> None:
+        # A conditional document with no way to fire is a check that can never
+        # run: it would read as covered while never demanding anything.
+        from tools.gen_postulacion import DOCUMENT_TRIGGERS
+
+        known = set(DOCUMENT_TRIGGERS) | {"individualizacion_socios"}
+        catalogue = bases["mandatory_documents"] + bases["evaluation_documents"]
+        for document in catalogue:
+            if document.get("conditional", True):
+                assert document["id"] in known, (
+                    f"{document['id']} is conditional but nothing can trigger it"
+                )
+
+
+class TestValidProject:
+    def test_a_complete_project_does_not_block(self, bases, valid_project) -> None:
+        assert [f for f in review(bases, valid_project) if f["level"] == BLOCKING] == []
+
+    def test_the_empty_template_blocks_on_everything(self, bases) -> None:
+        # A freshly requested template is not an application. If it passed the
+        # review, the tool would be calling a blank sheet ready to submit.
+        findings = review(bases, template(bases))
+        assert any(f["level"] == BLOCKING for f in findings)
+        assert "title" in _fields(findings)
+
+
+class TestBudgetCaps:
+    def test_over_the_ceiling_blocks(self, bases, valid_project) -> None:
+        project = copy.deepcopy(valid_project)
+        project["budget"]["requested_from_fund"] = bases["amounts"]["max_per_project"] + 1
+        assert "budget.requested_from_fund" in _fields(review(bases, project), BLOCKING)
+
+    def test_under_the_floor_blocks(self, bases, valid_project) -> None:
+        project = copy.deepcopy(valid_project)
+        project["budget"]["requested_from_fund"] = bases["amounts"]["min_per_project"] - 1
+        assert "budget.requested_from_fund" in _fields(review(bases, project), BLOCKING)
+
+    def test_contingency_over_two_percent_blocks(self, bases, valid_project) -> None:
+        project = copy.deepcopy(valid_project)
+        requested = project["budget"]["requested_from_fund"]
+        project["budget"]["contingency"] = int(requested * 0.021)
+        assert "budget.contingency" in _fields(review(bases, project), BLOCKING)
+
+    def test_contingency_exactly_at_the_cap_does_not_block(self, bases, valid_project) -> None:
+        project = copy.deepcopy(valid_project)
+        requested = project["budget"]["requested_from_fund"]
+        project["budget"]["contingency"] = int(requested * 0.02)
+        assert "budget.contingency" not in _fields(review(bases, project), BLOCKING)
+
+    def test_lead_fee_over_forty_percent_blocks(self, bases, valid_project) -> None:
+        project = copy.deepcopy(valid_project)
+        requested = project["budget"]["requested_from_fund"]
+        project["budget"]["lead_fee"] = int(requested * 0.41)
+        assert "budget.lead_fee" in _fields(review(bases, project), BLOCKING)
+
+
+class TestDuration:
+    def test_over_the_month_limit_blocks(self, bases, valid_project) -> None:
+        project = copy.deepcopy(valid_project)
+        project["duration_months"] = bases["deadlines"]["max_duration_months"] + 1
+        assert "duration_months" in _fields(review(bases, project), BLOCKING)
+
+
+class TestRequiredDocuments:
+    @pytest.mark.parametrize(
+        "condition,document",
+        [
+            ("uses_third_party_works", "documents.autorizacion_derechos_autor"),
+            ("has_team", "documents.cartas_compromiso_equipo"),
+            ("activities_in_indigenous_territory", "documents.consentimiento_comunidad_indigena"),
+            ("works_with_minors", "documents.certificado_inhabilidades_menores"),
+            ("activities_in_public_space", "documents.permiso_espacio_publico"),
+            ("ephemeral_architecture", "documents.anteproyecto_arquitectura"),
+            ("outreach_in_existing_venues", "documents.compromisos_exhibicion"),
+        ],
+    )
+    def test_a_declared_condition_demands_its_document(
+        self, bases, valid_project, condition: str, document: str
+    ) -> None:
+        project = copy.deepcopy(valid_project)
+        project["conditions"][condition] = True
+        assert document in _fields(review(bases, project), BLOCKING)
+
+    def test_an_undeclared_condition_invents_no_obligation(self, bases, valid_project) -> None:
+        # The valid project declares no condition beyond the proposal itself,
+        # so demanding a public-space permit would be inventing a formality its
+        # own declared conditions never triggered.
+        fields = _fields(review(bases, valid_project), BLOCKING)
+        assert "documents.permiso_espacio_publico" not in fields
+        assert "documents.autorizacion_derechos_autor" not in fields
+
+    def test_declaring_the_document_lifts_the_block(self, bases, valid_project) -> None:
+        project = copy.deepcopy(valid_project)
+        project["conditions"]["uses_third_party_works"] = True
+        assert "documents.autorizacion_derechos_autor" in _fields(review(bases, project))
+
+        project["declared_documents"].append("autorizacion_derechos_autor")
+        assert "documents.autorizacion_derechos_autor" not in _fields(review(bases, project))
+
+    def test_the_unconditional_document_is_always_demanded(self, bases, valid_project) -> None:
+        project = copy.deepcopy(valid_project)
+        project["declared_documents"] = []
+        assert "documents.descripcion_propuesta" in _fields(review(bases, project), BLOCKING)
+
+    def test_a_for_profit_legal_entity_must_list_its_partners(
+        self, bases, valid_project
+    ) -> None:
+        project = copy.deepcopy(valid_project)
+        project["lead"]["is_legal_entity"] = True
+        project["lead"]["is_for_profit"] = True
+        fields = _fields(review(bases, project), BLOCKING)
+        assert "documents.individualizacion_socios" in fields
+        assert "documents.estatutos_persona_juridica" in fields
+
+    def test_a_non_profit_legal_entity_owes_statutes_but_not_the_partner_list(
+        self, bases, valid_project
+    ) -> None:
+        project = copy.deepcopy(valid_project)
+        project["lead"]["is_legal_entity"] = True
+        project["lead"]["is_for_profit"] = False
+        fields = _fields(review(bases, project), BLOCKING)
+        assert "documents.estatutos_persona_juridica" in fields
+        assert "documents.individualizacion_socios" not in fields
+
+
+class TestEmptySections:
+    def test_an_empty_section_blocks_and_says_what_it_costs(
+        self, bases, valid_project
+    ) -> None:
+        project = copy.deepcopy(valid_project)
+        project["sections"]["aporte_ecosistema"] = "   "
+        findings = [f for f in review(bases, project) if f["field"].endswith("aporte_ecosistema")]
+        assert findings, "a blank section has to show up as a finding"
+        assert "40%" in findings[0]["detail"]
+
+    def test_empty_sections_are_ordered_by_the_score_they_cost(
+        self, bases, valid_project
+    ) -> None:
+        project = copy.deepcopy(valid_project)
+        project["sections"]["objetivos"] = ""          # 10%
+        project["sections"]["aporte_ecosistema"] = ""  # 40%
+        empty = [f for f in review(bases, project) if f["field"].startswith("sections.")]
+        assert empty[0]["field"] == "sections.aporte_ecosistema", (
+            "what costs the most score comes first"
+        )
+
+
+class TestDraft:
+    def test_it_does_not_write_the_applicants_text(self, bases, valid_project) -> None:
+        project = copy.deepcopy(valid_project)
+        project["sections"]["innovacion"] = ""
+        assert "[FALTA]" in render(bases, project)
+
+    def test_it_keeps_the_text_the_applicant_did_write(self, bases, valid_project) -> None:
+        project = copy.deepcopy(valid_project)
+        project["sections"]["fundamentacion"] = "una frase inconfundible del autor"
+        assert "una frase inconfundible del autor" in render(bases, project)
+
+    def test_every_section_states_the_criterion_that_scores_it(
+        self, bases, valid_project
+    ) -> None:
+        text = render(bases, valid_project)
+        for section in bases["form_sections"]:
+            assert section["title"] in text
+        for criterion in bases["criteria"]:
+            assert f"{criterion['name']} {criterion['weight']}%" in text
+
+    def test_it_cites_the_source_of_the_bases(self, bases, valid_project) -> None:
+        assert bases["source"]["bases_pdf"] in render(bases, valid_project)
+
+
+class TestDeadline:
+    def test_a_closed_call_blocks(self, bases, valid_project) -> None:
+        closed = copy.deepcopy(bases)
+        closed["deadlines"]["closes"] = "2000-01-01"
+        assert "deadline" in _fields(review(closed, valid_project), BLOCKING)
+
+    def test_a_distant_close_says_nothing(self, bases, valid_project) -> None:
+        distant = copy.deepcopy(bases)
+        distant["deadlines"]["closes"] = "2099-12-31"
+        assert "deadline" not in _fields(review(distant, valid_project))
+
+    def test_an_imminent_close_warns_without_blocking(self, bases, valid_project) -> None:
+        soon = copy.deepcopy(bases)
+        soon["deadlines"]["closes"] = (date.today() + timedelta(days=3)).isoformat()
+        findings = review(soon, valid_project)
+        assert "deadline" in _fields(findings, WARNING)
+        assert "deadline" not in _fields(findings, BLOCKING)
+
+
+class TestTemplate:
+    def test_the_template_is_serializable_and_carries_every_section(self, bases) -> None:
+        empty = template(bases)
+        json.dumps(empty)
+        assert set(empty["sections"]) == {s["id"] for s in bases["form_sections"]}

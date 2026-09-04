@@ -96,7 +96,13 @@ def test_tool_consumer_inventory_is_explicit_and_bounded():
     # the first measurement found 35 of 100 routes with no mention anywhere in
     # the suite. Consumed by `tests/test_hub_route_answer_contract.py`, which
     # takes its route list from the tool instead of a hardcoded copy.
-    assert result["count"] == 107
+    #
+    # 107 -> 108 on 2026-09-04: `gen_postulacion.py` was added. It checks a
+    # funding application against the bases of its own convocatoria -- budget
+    # floor and ceiling, percentage caps, duration, empty sections ordered by
+    # the score they cost, and the mandatory documents the project's own
+    # declared conditions trigger. Consumed by `tests/test_gen_postulacion.py`.
+    assert result["count"] == 108
     assert len(result["files"]) == result["count"]
     summary = result["summary"]
     assert summary["with_production_reference"] + summary["tests_only"] \
