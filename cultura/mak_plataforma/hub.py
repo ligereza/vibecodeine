@@ -1448,18 +1448,102 @@ def _learning_db_path():
     return Path(configured).expanduser() if configured else Path(_REPO_ROOT) / "data" / "mak_knowledge.db"
 
 
-# Named failures whose status this file already decides somewhere else.
-# `item_no_encontrado` answers 404 in `/api/portfolio/copilot/vision` and
-# `/api/portfolio/copilot/manifest`; their siblings `scene` and `suggestions`
-# answered 200 for the identical condition. A dependency that is not mounted
-# is the 503 case `_status_for` was written for.
+# Named failures whose status this file already decides somewhere else. Each
+# group follows a precedent set elsewhere in this same module rather than a
+# preference:
+#
+#   404 -- `item_no_encontrado` answers 404 in `/api/portfolio/copilot/vision`
+#          and `/api/portfolio/copilot/manifest`.
+#   400 -- the malformed-input guards in do_POST answer 400 (`json invalido`,
+#          `content_length_invalido`, `falta question`), and
+#          `project_id_requerido` answers 400 in the evidence routes.
+#   503 -- `departments_unavailable`, `diagnostics_unavailable`,
+#          `project_router_unavailable` and `portfolio_evidence_unavailable`
+#          all answer 503; an absent dependency is what `_status_for` is for.
 _ERROR_STATUS = {
+    # A named thing does not exist.
     "item_no_encontrado": 404,
+    "items_no_encontrados": 404,
+    "tablero_no_encontrado": 404,
+    "grupo_no_encontrado": 404,
+    "candidato_no_encontrado": 404,
+    # The caller sent something this route cannot act on.
+    "accion_invalida": 400,
+    "decision_invalida": 400,
+    "departamento_invalido": 400,
+    "grupo_o_clasificacion_vacios": 400,
+    "grupo_vacio": 400,
+    "items_invalidos": 400,
+    "nombre_vacio": 400,
+    "project_id_requerido": 400,
+    "proveedor_invalido": 400,
+    "segment_id_invalido": 400,
+    "source_id_requerido": 400,
+    "undo_scope_invalid": 400,
+    "valor_de_clasificacion_invalido": 400,
+    "work_contract_invalid": 400,
+    "xio_work_id_invalido": 400,
+    # A dependency this route needs is not answering.
     "fuentes_ausentes": 503,
+    "ledger_unavailable": 503,
+    "xio_evidence_unavailable": 503,
 }
 _ERROR_STATUS_PREFIXES = (
     ("motor_no_disponible", 503),
 )
+
+# Deliberately absent, and why. These are outcomes, not faults: the operator
+# asked for something and the system declined or had nothing to do. The panel
+# reads the body and shows the reason, and no precedent in this file assigns
+# them a code, so promoting them to 4xx would be a guess that changes a working
+# flow.
+#   human_confirmation_required -- a guard, arguably 409 or 428
+#   nothing_to_undo             -- an empty stack is not an error
+#   ledger_rechazo, triage_rechazo, feedback_tablero_rechazado -- policy said no
+#   provider_error              -- upstream failed; 502 and 503 both defensible
+_ERROR_STATUS_LEFT_AT_200 = (
+    "human_confirmation_required",
+    "nothing_to_undo",
+    "ledger_rechazo",
+    "triage_rechazo",
+    "feedback_tablero_rechazado",
+    "provider_error",
+)
+
+
+def _answer(handler, payload):
+    """Send `payload` with the status `_status_for` derives from it.
+
+    Every POST handler used to return `self._json(result)` with no status, so a
+    body reading `{"ok": false, "error": "tablero_no_encontrado"}` went out as
+    200. The malformed-input guards in the same dispatcher already answer 400,
+    which left a caller able to tell a broken request from a good one and
+    unable to tell a good request from a refused one.
+
+    A function rather than a handler method, for the same reason as
+    `_body_length`: the hub tests drive the dispatchers with request fakes, and
+    those only implement `_json`.
+    """
+    return handler._json(payload, _status_for(payload))
+
+
+def _body_length(headers, cap):
+    """The capped Content-Length, or None when the header is not a number.
+
+    Four POST routes guarded this and seven did not. On the seven, a
+    non-numeric Content-Length raised ValueError straight out of do_POST, which
+    BaseHTTPRequestHandler answers as a 500 with a traceback in the log -- for
+    a caller error that the guarded routes already answer as a named 400. A
+    header is caller input and cannot be trusted to be a number anywhere.
+
+    Takes the headers rather than the handler so the request fakes the hub
+    tests are built on keep working without growing a new method each time a
+    dispatcher learns something.
+    """
+    try:
+        return min(int(headers.get("Content-Length") or 0), cap)
+    except (TypeError, ValueError):
+        return None
 
 
 def _status_for(payload) -> int:
@@ -4915,6 +4999,7 @@ class H(BaseHTTPRequestHandler):
         self._send(json.dumps(obj, ensure_ascii=False),
                    "application/json; charset=utf-8", code)
 
+
     def _proxy_service(self, prefix, method, body=None):
         """Forward one internal service route without exposing its port."""
         u = urllib.parse.urlparse(self.path)
@@ -5443,8 +5528,14 @@ class H(BaseHTTPRequestHandler):
             result, code = _project_route_request(body)
             return self._json(result, code)
         if u.path == "/api/project/probe":
+            # The header and the body were parsed under one `except`, so a
+            # non-numeric Content-Length was reported as `json invalido` and
+            # sent the caller to debug a body that was fine. Both neighbours,
+            # `/api/project/route` and `/api/research/jobs`, name them apart.
+            length = _body_length(self.headers, 30000)
+            if length is None:
+                return self._json({"ok": False, "error": "content_length_invalido"}, 400)
             try:
-                length = min(int(self.headers.get("Content-Length") or 0), 30000)
                 body = json.loads(self.rfile.read(length).decode("utf-8", "replace") or "{}")
             except (TypeError, ValueError, json.JSONDecodeError):
                 return self._json({"ok": False, "error": "json invalido"}, 400)
@@ -5493,17 +5584,21 @@ class H(BaseHTTPRequestHandler):
             return self._json(payload, code)
         for prefix in SERVICE_PROXY_PREFIXES:
             if u.path.startswith("/" + prefix + "/"):
-                length = min(int(self.headers.get("Content-Length") or 0),
-                             SERVICE_PROXY_MAX_BYTES + 1)
+                length = _body_length(self.headers, SERVICE_PROXY_MAX_BYTES + 1)
+                if length is None:
+                    return self._json(
+                        {"ok": False, "error": "content_length_invalido"}, 400)
                 body = self.rfile.read(length)
                 return self._proxy_service(prefix, "POST", body)
         if u.path == "/api/revision/episodios" and _episode_revision is not None:
-            largo = min(int(self.headers.get("Content-Length") or 0), 12000)
+            largo = _body_length(self.headers, 12000)
+            if largo is None:
+                return self._json({"ok": False, "error": "content_length_invalido"}, 400)
             try:
                 body = json.loads(self.rfile.read(largo).decode("utf-8", "replace"))
             except (ValueError, TypeError):
                 return self._json({"ok": False, "error": "json invalido"}, 400)
-            return self._json(_episode_revision.record(
+            return _answer(self, _episode_revision.record(
                 body.get("episodio", ""), body.get("decision", ""), body.get("note", "")))
         if u.path in ("/api/director/work", "/api/director/decision",
                       "/api/portfolio/select", "/api/portfolio/classify",
@@ -5518,63 +5613,69 @@ class H(BaseHTTPRequestHandler):
                       "/api/portfolio/copilot/external",
                       "/api/portfolio/copilot/vision",
                       "/api/portfolio/external-candidates/review"):
-            largo = min(int(self.headers.get("Content-Length") or 0), 12000)
+            largo = _body_length(self.headers, 12000)
+            if largo is None:
+                return self._json({"ok": False, "error": "content_length_invalido"}, 400)
             try:
                 body = json.loads(self.rfile.read(largo).decode("utf-8", "replace"))
             except (ValueError, TypeError):
                 return self._json({"ok": False, "error": "json invalido"}, 400)
             if u.path == "/api/director/work":
-                return self._json(_director_work(body))
+                return _answer(self, _director_work(body))
             if u.path == "/api/director/decision":
-                return self._json(_director_decision(body))
+                return _answer(self, _director_decision(body))
             if u.path.endswith("/draft"):
-                return self._json(_portfolio_draft(body))
+                return _answer(self, _portfolio_draft(body))
             if u.path.endswith("/commit"):
-                return self._json(_portfolio_commit(body))
+                return _answer(self, _portfolio_commit(body))
             if u.path.endswith("/undo"):
-                return self._json(_portfolio_undo(body))
+                return _answer(self, _portfolio_undo(body))
             if u.path.endswith("/select"):
-                return self._json(_portfolio_select(
+                return _answer(self, _portfolio_select(
                     body.get("item_id"), body.get("decision"),
                     body.get("board_id", ""), body.get("session_id", ""),
                     body.get("pass_size", 0), body.get("decision_scope", "selection"),
                     body.get("reason_code", ""), body.get("target_id", ""),
                     body.get("note", "")))
             if u.path.endswith("/classify"):
-                return self._json(_portfolio_classify(body))
+                return _answer(self, _portfolio_classify(body))
             if u.path.endswith("/classify-batch"):
-                return self._json(_portfolio_classify_batch(body))
+                return _answer(self, _portfolio_classify_batch(body))
             if u.path.endswith("/board"):
-                return self._json(_portfolio_board_action(body))
+                return _answer(self, _portfolio_board_action(body))
             if u.path.endswith("/connect"):
-                return self._json(_portfolio_connect(body))
+                return _answer(self, _portfolio_connect(body))
             if u.path.endswith("/feedback"):
-                return self._json(_portfolio_feedback_record(body))
+                return _answer(self, _portfolio_feedback_record(body))
             if u.path.endswith("/triangulation/review"):
-                return self._json(_portfolio_triage_record(body))
+                return _answer(self, _portfolio_triage_record(body))
             if u.path.endswith("/triangulation/context-link"):
-                return self._json(_portfolio_context_link(body))
+                return _answer(self, _portfolio_context_link(body))
             if u.path.endswith("/copilot/xio-link"):
-                return self._json(_portfolio_xio_link(body))
+                return _answer(self, _portfolio_xio_link(body))
             if u.path.endswith("/external"):
-                return self._json(_portfolio_external_review(body))
+                return _answer(self, _portfolio_external_review(body))
             if u.path.endswith("/vision"):
-                return self._json(_portfolio_vision_read(body))
+                return _answer(self, _portfolio_vision_read(body))
             if u.path.endswith("/external-candidates/review"):
-                return self._json(_portfolio_external_candidate_review(body))
-            return self._json(_portfolio_dispatch(body.get("item_id"), body.get("depto"),
-                                                   body.get("texto", "")))
+                return _answer(self, _portfolio_external_candidate_review(body))
+            return _answer(self, _portfolio_dispatch(
+                body.get("item_id"), body.get("depto"), body.get("texto", "")))
         if u.path == "/api/revision" and _revision is not None:
-            largo = min(int(self.headers.get("Content-Length") or 0), 5000)
+            largo = _body_length(self.headers, 5000)
+            if largo is None:
+                return self._json({"ok": False, "error": "content_length_invalido"}, 400)
             try:
                 body = json.loads(self.rfile.read(largo).decode("utf-8", "replace"))
             except (ValueError, TypeError):
                 return self._json({"ok": False, "error": "json invalido"}, 400)
-            return self._json(_revision.record(body.get("video"),
-                                               body.get("decision"),
-                                               body.get("note", "")))
+            return _answer(self, _revision.record(body.get("video"),
+                                                     body.get("decision"),
+                                                     body.get("note", "")))
         if u.path == "/api/ejecutar":
-            largo = min(int(self.headers.get("Content-Length") or 0), 12000)
+            largo = _body_length(self.headers, 12000)
+            if largo is None:
+                return self._json({"ok": False, "error": "content_length_invalido"}, 400)
             try:
                 body = json.loads(self.rfile.read(largo).decode("utf-8", "replace"))
             except (ValueError, TypeError):
@@ -5587,7 +5688,9 @@ class H(BaseHTTPRequestHandler):
                 densidad = "medio"
             return self._json(_ejecutar(depto, modo, texto, densidad))
         if u.path == "/api/ideas":
-            largo = min(int(self.headers.get("Content-Length") or 0), 12000)
+            largo = _body_length(self.headers, 12000)
+            if largo is None:
+                return self._json({"ok": False, "error": "content_length_invalido"}, 400)
             try:
                 body = json.loads(self.rfile.read(largo).decode("utf-8", "replace"))
             except (ValueError, TypeError):
@@ -5608,7 +5711,9 @@ class H(BaseHTTPRequestHandler):
                 return self._json({"ok": False, "error": str(e)[:200]}, 500)
             return self._json({"ok": False, "error": "accion desconocida"}, 400)
         if u.path == "/api/render":
-            largo = min(int(self.headers.get("Content-Length") or 0), 4000)
+            largo = _body_length(self.headers, 4000)
+            if largo is None:
+                return self._json({"ok": False, "error": "content_length_invalido"}, 400)
             try:
                 body = json.loads(self.rfile.read(largo).decode("utf-8", "replace"))
             except (ValueError, TypeError):
