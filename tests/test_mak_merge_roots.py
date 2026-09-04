@@ -232,6 +232,59 @@ class TestRetirementIsGatedOnSuccess:
         )
 
 
+class TestRetirementRefusesWhatIsAlreadyInside:
+    """The one place that moves a directory asks the stricter question.
+
+    `is_under` compares paths as written, which is what root discovery wants:
+    a link-only compat root is not the tree it points at, and
+    `is_compat_adapter` depends on that distinction. But a source symlink whose
+    target sits inside the destination read as *not* under it, so retirement
+    would relocate the link and leave a chain pointing at content that never
+    moved. Skipping is always the safe answer where a move is involved.
+    """
+
+    def test_a_source_inside_the_destination_is_not_retired(
+        self, tmp_path: Path
+    ) -> None:
+        destination = tmp_path / "destino"
+        inner = destination / "dentro" / "flujo"
+        inner.mkdir(parents=True)
+        (inner / "a.txt").write_text("dato", encoding="utf-8")
+
+        plan = build_plan([inner], destination)
+        result = apply_plan(plan, retire_sources=True)
+
+        assert result["retired"] == 0
+        assert inner.is_dir() and not inner.is_symlink()
+
+    def test_a_source_symlinked_into_the_destination_is_not_retired(
+        self, tmp_path: Path
+    ) -> None:
+        destination = tmp_path / "destino"
+        inner = destination / "dentro" / "flujo"
+        inner.mkdir(parents=True)
+        (inner / "a.txt").write_text("dato", encoding="utf-8")
+        alias = tmp_path / "flujo"
+        alias.symlink_to(inner, target_is_directory=True)
+
+        plan = build_plan([alias], destination)
+        result = apply_plan(plan, retire_sources=True)
+
+        assert result["retired"] == 0, (
+            "a link pointing inside the destination was retired into the "
+            "destination's own archive"
+        )
+        assert alias.is_symlink(), "the alias was replaced"
+        assert alias.resolve() == inner.resolve(), "the alias now points elsewhere"
+        assert (inner / "a.txt").read_text(encoding="utf-8") == "dato"
+
+    def test_a_genuinely_external_source_is_still_retired(self, roots) -> None:
+        # The hardening must not turn retirement off altogether.
+        source, destination = roots
+        result = apply_plan(build_plan([source], destination), retire_sources=True)
+        assert result["retired"] == 1
+
+
 class TestArchiveLocation:
     def test_a_test_destination_never_reaches_the_real_home_archive(
         self, tmp_path: Path

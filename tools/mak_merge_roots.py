@@ -501,7 +501,19 @@ def apply_plan(plan: dict, *, retire_sources: bool = False) -> dict:
         merge_sources = archive_run(destination) / "sources"
         for source in plan["sources"]:
             source_path = Path(source)
-            if not source_path.exists() or is_under(source_path, destination):
+            # `is_under` compares the paths as written, which is what root
+            # discovery wants: a link-only compat root is not the tree it
+            # points at, and `is_compat_adapter` depends on that distinction.
+            # Retirement is the one place that moves a directory, so it asks
+            # the stricter question too. A source whose resolved location sits
+            # inside the destination is part of the destination, and moving it
+            # into the destination's own archive would relocate a link chain
+            # for nothing. Skipping is always the safe answer here.
+            if not source_path.exists():
+                continue
+            if is_under(source_path, destination) or is_under(
+                source_path.resolve(), destination.resolve()
+            ):
                 continue
             relocated = merge_sources / source_id(source_path)
             try:
