@@ -25,6 +25,7 @@ from tools.hub_payload_budget import (
     BUDGET_FILE,
     MIN_ITEMS_TO_JUDGE,
     SCHEMA,
+    VERDICT_KINDS,
     capture,
     findings,
     load_budget,
@@ -115,8 +116,18 @@ class TestTheRatchetActuallyCatches:
                                             measurable: bool) -> None:
         if not measurable:
             pytest.skip("archive too small to judge")
-        fat = [row for row in measured["routes"] if "bytes_per_item" in row]
-        assert fat, "nothing was measured"
+        # Pick a route the rule will actually judge, not simply the first
+        # one measured. Since the item minimum became per route, a route
+        # holding a handful of entries comes back `sin_medir` -- correctly.
+        # Taking `fat[0]` made this test depend on route order and on how
+        # much data the checkout happens to hold: it passed on the box and
+        # failed in CI, where the first route is small.
+        fat = [
+            row for row in measured["routes"]
+            if "bytes_per_item" in row and row["items"] >= MIN_ITEMS_TO_JUDGE
+        ]
+        if not fat:
+            pytest.skip("no route holds enough entries to be judged")
         route = fat[0]["route"]
 
         tightened = {
@@ -156,3 +167,56 @@ class TestTheRatchetActuallyCatches:
         fresh = capture(measured, budget)
         for route in annotated:
             assert fresh["routes"][route].get("note"), f"--capture dropped {route}'s note"
+
+
+class TestASmallCollectionIsNotJudged:
+    """A ratio over a handful of entries is fixed overhead, not per-item cost.
+
+    `/api/portfolio/production` names its ABSENT sources. In CI, where sources
+    are missing, `missing` held several short strings and measured 15.4 bytes
+    per item, so a ceiling of 60 was captured. On the operator's box every
+    source is present, `missing` holds one entry, and the whole body divided by
+    that entry gives 3302.4 -- the verdict rose as the situation improved.
+
+    The minimum existed already and was asked of the run, not of the route:
+    `_too_small_to_judge` returns False as soon as ANY route is big enough. So
+    the rule passed in CI and in a worktree and failed in the only checkout the
+    operator actually works in.
+    """
+
+    BUDGET = {"schema": SCHEMA, "routes": {
+        "/api/x": {"max_bytes_per_item": 60, "collection": "missing"},
+    }}
+
+    def _measured(self, items: int, per_item: float) -> dict:
+        return {"routes": [{
+            "route": "/api/x", "status": 200, "collection": "missing",
+            "items": items, "bytes": int(items * per_item),
+            "bytes_per_item": per_item,
+        }]}
+
+    def test_a_wild_ratio_over_one_entry_is_not_a_verdict(self) -> None:
+        found = findings(self._measured(1, 3302.4), self.BUDGET)
+        kinds = [f["kind"] for f in found]
+        assert "sobre_presupuesto" not in kinds, (
+            "one entry cannot put a route over a per-item budget"
+        )
+
+    def test_it_is_reported_rather_than_dropped(self) -> None:
+        # Silence here would read as a pass, which is the failure this whole
+        # module is about. It says it measured nothing.
+        found = findings(self._measured(1, 3302.4), self.BUDGET)
+        assert [f["kind"] for f in found] == ["sin_medir"]
+        assert "no se juzga" in found[0]["detail"].lower()
+
+    def test_saying_nothing_was_measured_is_not_a_failure(self) -> None:
+        assert "sin_medir" not in VERDICT_KINDS
+
+    def test_a_full_collection_is_still_judged(self) -> None:
+        # The exemption must not become the rule: at the threshold the ceiling
+        # applies again.
+        found = findings(self._measured(MIN_ITEMS_TO_JUDGE, 3302.4), self.BUDGET)
+        assert [f["kind"] for f in found] == ["sobre_presupuesto"]
+
+    def test_a_full_collection_under_its_ceiling_passes(self) -> None:
+        assert findings(self._measured(MIN_ITEMS_TO_JUDGE, 12.0), self.BUDGET) == []
