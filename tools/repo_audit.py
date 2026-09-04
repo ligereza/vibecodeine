@@ -112,7 +112,9 @@ NO_REFERENCE_CLASSIFICATIONS = {
     "generate_artistic_program_hypotheses": {"status": "manual_only", "source": "separation_20260902"},
     "inspect_operational_memberships": {"status": "manual_only", "source": "separation_20260902"},
     "order_projection": {"status": "manual_only", "source": "separation_20260902"},
-    "substrate_scan": {"status": "manual_only", "source": "separation_20260902"},
+    # `substrate_scan` left this table on 2026-09-04: it now has a consumer,
+    # `tests/test_substrate_scan_manifest.py`, which holds `build_manifest` to
+    # the repeatability contract the module's docstring describes.
     "triangulate_research_evidence": {"status": "manual_only", "source": "separation_20260902"},
     "verify_learning_hashmaps": {"status": "manual_only", "source": "separation_20260902"},
     "aep_reference_scan": {"status": "manual_only", "source": "capabilities_5_ter"},
