@@ -80,7 +80,17 @@ def test_tool_consumer_inventory_is_explicit_and_bounded():
     # the handoff. The active document is now `DECISIONES.md`, which holds
     # decisions and no facts, and the facts come from `tools/mak_status.py`.
     # Neither tool had a consumer other than its own test.
-    assert result["count"] == 104
+    #
+    # 104 -> 106 on 2026-09-03: `motor_checkout.py` and `link_motor_checkout.py`
+    # were added. The suite located the FLUJO motor by assuming `<raiz>/flujo`,
+    # so every test that reads motor sources failed on a missing path in any
+    # checkout that is not the operator's home one -- a worktree or a CI clone
+    # read as a broken contract. The first resolves the motor instead of
+    # assuming it and is imported by `tests/conftest.py` and
+    # `tests/integration_paths.py`; the second creates the composed layout that
+    # `flujo.departments.catalog` and `replay_suite_v1.json` are written
+    # against, and never deletes or overwrites to do it.
+    assert result["count"] == 106
     assert len(result["files"]) == result["count"]
     summary = result["summary"]
     assert summary["with_production_reference"] + summary["tests_only"] \
