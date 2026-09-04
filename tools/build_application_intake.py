@@ -258,15 +258,15 @@ def scan_project_folder(source_root: Path, index_path: Path) -> tuple[Path, str,
     con = sqlite3.connect(index_path)
     con.executescript(
         """
-        CREATE TABLE projects(project_id TEXT PRIMARY KEY, project_path TEXT, dimensionality TEXT,
+        CREATE TABLE IF NOT EXISTS projects(project_id TEXT PRIMARY KEY, project_path TEXT, dimensionality TEXT,
             strategy TEXT, asset_count INTEGER, bytes INTEGER, confidence REAL, diagnostic_json TEXT);
-        CREATE TABLE assets(asset_id TEXT PRIMARY KEY, source_key TEXT, relative_path TEXT, extension TEXT,
+        CREATE TABLE IF NOT EXISTS assets(asset_id TEXT PRIMARY KEY, source_key TEXT, relative_path TEXT, extension TEXT,
             media_kind TEXT, bytes INTEGER, mtime_ns INTEGER, full_sha256 TEXT);
-        CREATE TABLE families(family_id TEXT PRIMARY KEY, project_id TEXT, family_key TEXT, member_count INTEGER,
+        CREATE TABLE IF NOT EXISTS families(family_id TEXT PRIMARY KEY, project_id TEXT, family_key TEXT, member_count INTEGER,
             bytes INTEGER, strategy TEXT, representative_asset_id TEXT);
-        CREATE TABLE project_members(asset_id TEXT PRIMARY KEY, project_id TEXT, family_id TEXT,
+        CREATE TABLE IF NOT EXISTS project_members(asset_id TEXT PRIMARY KEY, project_id TEXT, family_id TEXT,
             member_role TEXT, is_representative INTEGER);
-        CREATE TABLE relations(relation_id TEXT PRIMARY KEY, left_id TEXT, relation TEXT, right_id TEXT,
+        CREATE TABLE IF NOT EXISTS relations(relation_id TEXT PRIMARY KEY, left_id TEXT, relation TEXT, right_id TEXT,
             confidence REAL, evidence_json TEXT);
         """
     )
@@ -286,19 +286,19 @@ def scan_project_folder(source_root: Path, index_path: Path) -> tuple[Path, str,
             else "2d"
         )
         confidence = 0.8
-    con.execute("INSERT INTO projects VALUES (?,?,?,?,?,?,?,?)",
+    con.execute("INSERT OR REPLACE INTO projects VALUES (?,?,?,?,?,?,?,?)",
                 (project_id, project_path, dimensionality, "bounded_folder_scan", len(rows), total_bytes, confidence,
                  stable_json({"source": str(source_root), "content_read": "hash_only_for_small_files"})))
     for row in rows:
-        con.execute("INSERT INTO assets VALUES (?,?,?,?,?,?,?,?)",
+        con.execute("INSERT OR REPLACE INTO assets VALUES (?,?,?,?,?,?,?,?)",
                     (row[0], str(source_root), row[1], row[2], row[3], row[4], row[5], row[6]))
     for index, (family_key, members) in enumerate(sorted(family_groups.items()), 1):
         family_id = f"family_{index:06d}"
-        con.execute("INSERT INTO families VALUES (?,?,?,?,?,?,?)",
+        con.execute("INSERT OR REPLACE INTO families VALUES (?,?,?,?,?,?,?)",
                     (family_id, project_id, family_key, len(members), sum(row[4] for row in members),
                      "folder_group", members[0][0]))
         for member_index, row in enumerate(members):
-            con.execute("INSERT INTO project_members VALUES (?,?,?,?,?)",
+            con.execute("INSERT OR REPLACE INTO project_members VALUES (?,?,?,?,?)",
                         (row[0], project_id, family_id, "representative" if member_index == 0 else "member",
                          1 if member_index == 0 else 0))
     con.commit()

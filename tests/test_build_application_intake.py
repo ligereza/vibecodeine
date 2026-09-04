@@ -253,6 +253,48 @@ class TestEndToEnd:
         assert first["run_id"] == second["run_id"]
         assert first["selected"][0]["score"] == second["selected"][0]["score"]
 
+    def test_the_same_folder_can_be_scanned_again_into_the_same_index(
+        self, tmp_path: Path, project: Path
+    ) -> None:
+        # `create_schema` uses CREATE TABLE IF NOT EXISTS; the inline DDL in
+        # `scan_project_folder` did not, so the second scan died on
+        # "table projects already exists" before reaching a single insert.
+        index = tmp_path / "out" / "source_index.sqlite"
+        scan_project_folder(project, index)
+        scan_project_folder(project, index)
+
+    def test_a_rescan_does_not_duplicate_index_rows(
+        self, tmp_path: Path, project: Path
+    ) -> None:
+        index = tmp_path / "out" / "source_index.sqlite"
+        counts = []
+        for _ in range(2):
+            scan_project_folder(project, index)
+            con = sqlite3.connect(index)
+            try:
+                counts.append(tuple(
+                    con.execute(f"select count(*) from {table}").fetchone()[0]
+                    for table in ("projects", "assets", "families", "project_members")
+                ))
+            finally:
+                con.close()
+        assert counts[0] == counts[1], f"a rescan changed the row counts: {counts}"
+
+    def test_a_rescan_picks_up_a_new_file(self, tmp_path: Path, project: Path) -> None:
+        # Idempotent must not mean inert: the point of scanning again is to see
+        # what changed.
+        index = tmp_path / "out" / "source_index.sqlite"
+        scan_project_folder(project, index)
+        (project / "nueva.mp4").write_bytes(b"otro video")
+        scan_project_folder(project, index)
+
+        con = sqlite3.connect(index)
+        try:
+            paths = {row[0] for row in con.execute("select relative_path from assets")}
+        finally:
+            con.close()
+        assert "nueva.mp4" in paths
+
     def test_it_can_be_run_again_over_the_same_index(
         self, tmp_path: Path, project: Path
     ) -> None:
