@@ -1,0 +1,9 @@
+{
+  "source_file": "../../../data/ama_amoedo_becas_2026.json",
+  "copied_from": "data/ama_amoedo_becas_2026.json",
+  "purpose": "Referencia estructurada de la convocatoria; criterios y documentos taxativos requieren confirmación en la fuente vigente.",
+  "base_pdf": null,
+  "base_pdf_status": "not_found_official_url_returns_404",
+  "portal": "https://www.fundacionamaamoedo.org/programas/becas",
+  "public_text_copy": "https://es.scribd.com/document/1079178273/ESP-Bases-y-Condiciones-Becas-Fundacion-Ama-Amoedo-2026-Docx-1"
+}

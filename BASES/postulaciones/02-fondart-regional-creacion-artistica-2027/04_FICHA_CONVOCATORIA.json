@@ -1,0 +1,8 @@
+{
+  "source_file": "../../../data/fondart_creacion_artistica_regional_2027.json",
+  "copied_from": "data/fondart_creacion_artistica_regional_2027.json",
+  "purpose": "Referencia estructurada de la convocatoria; el cierre operativo depende de la ampliación regional vigente.",
+  "base_pdf": "01_BASE_ORIGINAL_FONDART_REGIONAL_CREACION_2027.pdf",
+  "base_sha256": "55efacab049c0ba90fb2a59ddaed4ee5ee00eed7f4887bea57c237e736ddfb71",
+  "portal": "https://www.fondosdecultura.cl/area/diseno/creacion-artistica-innovacion-y-nuevos-formatos-creativos-fondart-regional-2027/"
+}
