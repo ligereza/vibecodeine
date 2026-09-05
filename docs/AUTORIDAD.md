@@ -1,5 +1,15 @@
 # Document authority in MAK
 
+> **Superseded on 2026-09-03, and there is no successor.** This file is kept as
+> the record of a real measurement -- nine documents in this repo declared
+> themselves canonical while the loader read three -- and it is no longer the
+> answer to "which document is authoritative". Nothing is: `AGENTS.md` replaced
+> it that day and the operator deleted `AGENTS.md` too on 2026-09-05. Decisions
+> live in `DECISIONES.md`; facts are asked of `tools/mak_status.py`, not of a
+> document, this one included. The read order below is history -- it names
+> `agents.md`, deleted with the other self-declared contracts. **The absence of
+> a contract file is the decision, not a gap to fill.**
+
 Measured and written 2026-08-28. This file exists because **nine documents in
 this repo declared themselves canonical and the loader reads three.**
 
