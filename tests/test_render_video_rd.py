@@ -31,6 +31,27 @@ def test_expr_max_frames_cap():
     assert "compute_device_type = 'OPTIX'" in expr
 
 
+def _string_literals(expr: str) -> str:
+    """The string literals the expression carries, as Python reads them."""
+    import ast
+
+    tree = ast.parse(expr)
+    return "".join(
+        node.value for node in ast.walk(tree)
+        if isinstance(node, ast.Constant) and isinstance(node.value, str)
+    )
+
+
 def test_expr_rutas_escapadas():
+    # `compile("")` succeeds, so compiling on its own would keep passing if
+    # `build_expr` ever returned nothing: the check has to say the paths
+    # arrived and survived escaping, not only that the result parses.
     expr = rvr.build_expr(r"C:\rd\reel.mp4", r"C:\rd\out.mp4", "CPU", None)
     compile(expr, "<expr>", "exec")  # el expr debe ser python valido con rutas win
+    assert expr.strip(), "build_expr devolvio un expr vacio"
+    assert "reel.mp4" in expr and "out.mp4" in expr
+    # An unescaped backslash before `rd` turns into a carriage return, and the
+    # expression still compiles -- it just renders to the wrong directory.
+    assert "\r" not in _string_literals(expr), (
+        "la ruta se escapo mal: quedo un retorno de carro en vez de `\\rd`"
+    )

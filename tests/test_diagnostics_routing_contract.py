@@ -10,7 +10,8 @@ the motor's built-in defaults:
   report published them under `missing_read_paths` -- an absence presented as a
   finding, which is how an agent concludes a file was lost and rebuilds it.
 - `core` routed the first read to the lowercase `agents.md`, the 2026-08-31
-  contract, while `AGENTS.md` holds the current one.
+  contract, and later to `AGENTS.md`. Both are gone: the operator deleted the
+  last contract file on 2026-09-05 and did not replace it.
 - 1 of 10 `checks` named `tests/test_rd_informe.py`, which is not in this
   branch, and 6 more invoked `python3 -m flujo` / `python3 -m pytest`, neither
   of which resolves on this box.
@@ -80,18 +81,22 @@ def test_a_declared_check_never_names_a_test_file_this_branch_lacks():
 
 
 def test_the_core_domain_routes_to_the_only_contract_that_exists():
-    """`AGENTS.md` is the single contract file, created from zero 2026-09-03.
+    """There is no contract file at the root, and `core` must not name one.
 
-    Every previous one was deleted by the operator's order: `CLAUDE.md`, the
-    old `AGENTS.md`, the lowercase `agents.md`, and the three
-    `contracts/departments/*/agents.md`, in both operational checkouts. Routing
-    `core` at any of them would send an agent to a file that is gone, and a
-    routed absence reads as a lost file rather than as a decision.
+    Every contract this repository had was deleted by the operator's order:
+    `CLAUDE.md`, the lowercase `agents.md` and the three
+    `contracts/departments/*/agents.md` on 2026-09-03, and `AGENTS.md` itself on
+    2026-09-05. Routing `core` at any of them sends an agent to a file that is
+    gone, and a routed absence reads as a lost file rather than as a decision.
+
+    Nothing replaced it on purpose. Decisions live in `DECISIONES.md`; facts are
+    asked of `tools/mak_status.py`, not of a document.
     """
     core = _domains()["core"]
-    assert "AGENTS.md" in core["read_paths"], core["read_paths"]
+    assert "AGENTS.md" not in core["read_paths"], core["read_paths"]
     assert "DECISIONES.md" in core["read_paths"], core["read_paths"]
-    for deleted in ("CLAUDE.md", "agents.md", "context/LAST_HANDOFF.md"):
+    for deleted in ("CLAUDE.md", "agents.md", "AGENTS.md",
+                    "context/LAST_HANDOFF.md"):
         assert deleted not in core["read_paths"], deleted
     assert not (ROOT / "CLAUDE.md").exists(), "it was deleted, not renamed"
     assert not (ROOT / "agents.md").exists()
@@ -123,12 +128,16 @@ def test_there_is_exactly_one_contract_file_and_no_case_variant():
     `AGENTS.md` and `agents.md` were both tracked at this root and each was
     written as the entry point, so on a case-sensitive filesystem they were two
     files and an agent could be routed to either. On 2026-09-03 the operator
-    ordered every contract file deleted and one `AGENTS.md` written from zero.
-    What this pins is the property, not the names: one contract, no variant.
+    ordered every contract file deleted and one `AGENTS.md` written from zero;
+    on 2026-09-05 he ordered that one deleted too.
+
+    What this pins is the property and not the names, and the property is now
+    stronger: no contract file at the root, in any case variant. Zero is a
+    decision, so a new one appearing is what should fail here.
     """
     variants = sorted(path.name for path in ROOT.iterdir()
                       if path.is_file() and path.name.lower() in
                       ("agents.md", "claude.md"))
-    assert variants == ["AGENTS.md"], variants
+    assert variants == [], variants
     # And the departments no longer carry their own competing copies.
     assert not sorted((ROOT / "contracts").rglob("[aA][gG][eE][nN][tT][sS].md"))

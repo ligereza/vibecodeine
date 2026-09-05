@@ -84,6 +84,11 @@ data/*.json
 # no tienen nada que verificar sin ellas. El mismo defecto que `rd_packs.json`.
 !data/fondart_creacion_artistica_regional_2027.json
 !data/ama_amoedo_becas_2026.json
+# Son DOS lineas de Fondart y solo una tenia sus bases versionadas. Las de
+# la linea Nacional Investigacion, que el formato F4 comprueba, vivian solo
+# bajo experiments/pilots/, ignorado entero mas abajo: no viajaban con el
+# repositorio. Rescatadas el 2026-09-05, el original sigue en su ruta.
+!data/fondart_nacional_investigacion_2027_captura.json
 # El techo de bytes por item de cada ruta del hub, con la razon escrita donde
 # el costo es una decision. `tests/test_hub_payload_budget.py` no tiene contra
 # que comparar sin el, y sin comparacion el ratchet pasa siempre.

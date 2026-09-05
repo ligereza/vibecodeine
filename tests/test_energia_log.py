@@ -237,17 +237,37 @@ class TestResumen:
 class TestMain:
     """Test CLI main()."""
 
-    def test_main_muestra(self, tmp_path, monkeypatch):
-        """CLI: muestra crea entrada."""
-        ruta = tmp_path / "energia.jsonl"
-        monkeypatch.setattr(
-            "energia_log.Path.__new__",
-            lambda cls, *args, **kwargs: ruta if not args or args[0] == ruta else Path(*args, **kwargs)
-        )
+    def test_main_muestra(self, monkeypatch):
+        """CLI: the `muestra` command accumulates one entry and answers 0."""
+        # This body was scaffolding. It patched `Path.__new__`, set up a mock,
+        # said in a comment that it needed more mocking, and then returned
+        # without ever calling `main()` or asserting anything. It has counted
+        # as a passing test since the day it was written, and nothing in this
+        # file would have failed if `main` had stopped dispatching `muestra`.
+        #
+        # `main("muestra")` calls `acumular` against the module's own directory,
+        # so what gets checked is the call, not a file written into the
+        # repository during a test run.
+        called = []
+        monkeypatch.setattr("energia_log.acumular", lambda ruta: called.append(ruta))
+        monkeypatch.setattr("sys.argv", ["energia_log.py", "muestra"])
 
-        with patch("energia_log.muestrear") as mock_muestra:
-            mock_muestra.return_value = {"ts": "2026-07-22T12:00:00Z", "gpu_w": 50.0, "cpu_w": 10.0}
-            # Skip el test de CLI muestra porque requiere mas mocking
+        assert energia_log.main() == 0
+        assert len(called) == 1, "main did not dispatch `muestra` to acumular"
+        assert called[0].endswith("energia.jsonl")
+
+    def test_a_sensor_failure_comes_back_as_one_not_zero(self, monkeypatch):
+        """A failing sample must exit 1, not report success to cron."""
+        # `main` wraps `acumular` in a bare `except Exception`. Without this
+        # witness the whole command could fail on every run and still answer
+        # the shell that it succeeded, which is what cron would believe.
+        def sin_sensor(ruta):
+            raise OSError("sin sensor")
+
+        monkeypatch.setattr("energia_log.acumular", sin_sensor)
+        monkeypatch.setattr("sys.argv", ["energia_log.py", "muestra"])
+
+        assert energia_log.main() == 1
 
     def test_main_sin_args(self):
         """CLI sin argumentos -> codigo 2."""
