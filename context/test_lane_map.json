@@ -3320,6 +3320,22 @@
       "reason": "resolved from imports/source paths",
       "resolution": "persisted_supported_by_path",
       "status": "disagreement"
+    },
+    "tests/test_rd_tariff_single_source.py": {
+      "ast_lane": "repo_hygiene",
+      "ast_reason": "no local import; reads two data files of this checkout",
+      "imports": [
+        "__future__",
+        "json",
+        "pathlib",
+        "pytest",
+        "sqlite3"
+      ],
+      "lane": "mak",
+      "path_inference_lane": "mak",
+      "reason": "subject is MAK data: data/rd_packs.json against data/rd.db (2026-09-05)",
+      "resolution": "assigned_by_subject",
+      "status": "agreement"
     }
   },
   "generated_at_utc": "2026-09-02T00:44:00+00:00",
