@@ -1,0 +1,11 @@
+left_topic,right_topic,relation,basis,confidence
+knowledge_model,research_pipeline,feeds,claims and provenance become the memory of research,0.98
+analogy_interpretation,garden_simulation,maps_to,"an analogy can become a rule or field, never a fact",0.95
+garden_simulation,visual_generation,drives,states and trajectories become visual behavior,0.92
+research_pipeline,reference_tools,selects,tools are selected by pipeline stage and constraints,0.93
+risks_ethics,domain_adapters,constrains,the substance domain requires hard safety and non-operationalization rules,0.99
+product_economics,portfolio_publication,proves,public work and dossier provide evidence of a service,0.84
+portfolio_publication,visual_generation,exposes,"the portfolio presents the result, not the entire private corpus",0.89
+existing_funding_lab,research_pipeline,consumes,funding-lab demonstrates deterministic rules and ledgers but stays separate,0.81
+domain_adapters,knowledge_model,instantiates,"plant, food and substance domains share a schema but retain local constraints",0.91
+analogy_interpretation,risks_ethics,limits,metaphor needs a declared break point to avoid false equivalence,0.96

@@ -36,7 +36,7 @@
 
 - Se evalúa la correlación con los objetivos de la categoría, el aporte al desarrollo artístico y la factibilidad de realización.
 - Sólo se consideran propuestas que no atenten contra derechos humanos ni contengan sesgos discriminatorios.
-- **Alerta de fuente:** el PDF oficial indexado por el buscador devuelve 404 en su URL directa al 5 de septiembre de 2026. La ficha local fue corroborada con fuentes de prensa y con una copia pública textual, pero la lista taxativa de documentos debe confirmarse desde el formulario/bases vigentes.
+- **Alerta de fuente resuelta:** la URL antigua del PDF oficial devuelve 404, pero la base 2026 fue recuperada desde el enlace público de bases asociado a la convocatoria en Google Drive. El archivo local tiene 4 páginas A4 y hash `f170821183f299bace4b502d83d12efe113f81034701325de11a925de166f501`. La ficha local y la lista de documentos fueron contrastadas con el PDF recuperado y con fuentes de corroboración.
 - **Alerta de expediente:** no existe todavía una propuesta única cerrada ni un portfolio final con 10-20 imágenes/epígrafes o enlaces públicos equivalentes.
 - **Alerta de encaje:** Tapiz es el mejor antecedente, pero sus fuentes siguen sin verificar y falta documentar una pieza final o piloto. Jardines y Grados no deben presentarse como obra acabada.
 - **Alerta de plazo:** el cierre es el 9 de septiembre a las 23:59; no dejar la verificación de documentos para el último día.
@@ -46,7 +46,7 @@
 
 - Página oficial del programa: <https://www.fundacionamaamoedo.org/programas/becas>.
 - URL de PDF oficial indexada y actualmente no disponible: <https://fundacionamaamoedo.org/uploads/docs/ESP_Bases_y_condiciones_Becas_Fundaci%C3%B3n_Ama_Amoedo.pdf>.
+- Enlace público de bases asociado a la convocatoria: <https://drive.google.com/file/d/1uSJGbuSd5EonyNgt1Jx2Pgr9glbR0iCI/view?usp=drive_link>.
 - Copia pública consultada para verificar el texto 2026: <https://es.scribd.com/document/1079178273/ESP-Bases-y-Condiciones-Becas-Fundacion-Ama-Amoedo-2026-Docx-1>.
-- **Estado:** falta incorporar el PDF original descargado por el operador o recuperar una descarga oficial funcional. No se crea un sustituto y no se etiqueta como original una copia de tercero.
+- **Estado:** PDF incorporado como `01_BASE_ORIGINAL_AMA_AMOEDO_2026.pdf`, sin editar. Se verificó con `pdfinfo`, extracción de texto y render visual de sus cuatro páginas.
 - Ficha estructurada: `04_FICHA_CONVOCATORIA.json`.
-
