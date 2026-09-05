@@ -2594,9 +2594,9 @@
         "subprocess",
         "sys"
       ],
-      "lane": "mak",
+      "lane": "integration",
       "path_inference_lane": "mak",
-      "reason": "resolved from imports/source paths",
+      "reason": "subject is the motor's plano wrapper, input stays in MAK: needs both checkouts (2026-09-04)",
       "resolution": "persisted_supported_by_path",
       "status": "disagreement"
     },
