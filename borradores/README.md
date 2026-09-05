@@ -6,6 +6,11 @@ las tres postulaciones prioritarias. No es un paquete de envio y ningun archivo
 de esta carpeta debe presentarse como version final sin una revision de
 direccion.
 
+`00_COMPARTIDO/` contiene la matriz de propuestas, formatos de antecedentes,
+radar y plantillas comunes. En Ama Amoedo, la propuesta está por confirmar:
+Tapiz fue separado como material no seleccionado y Grados de desacuerdo quedó
+como candidato pendiente de decisión.
+
 ## Expedientes
 
 | Carpeta | Concurso | Proyecto principal | Estado directivo |

@@ -1,0 +1,173 @@
+{
+  "schema": "mak-portfolio-format-v1",
+  "format_id": "F5-fondart-regional-creacion-2027",
+  "family": "fondo_publico",
+  "vertical_grammar": "practica_o_corpus",
+  "title": "Antecedentes para Fondart Regional Linea Creacion Artistica 2027",
+  "purpose": "Aportar SOLO la parte que el archivo puede sostener de la postulacion a fondart-regional-creacion-artistica-2027 (Innovacion y Nuevos Formatos Creativos), transcrita de las bases leidas el 2026-09-04 y declaradas en data/fondart_creacion_artistica_regional_2027.json. La convocatoria pondera Potencial 0.40, Calidad 0.30, Curriculo 0.20 y Viabilidad 0.10. El archivo puede alimentar Curriculo y la parte tecnica de Viabilidad, o sea 30 de los 100 puntos; Calidad y Potencial evaluan la obra propuesta y su proyeccion, que no existen todavia y no se derivan de lo ya hecho. Esa mitad mayor del puntaje no se genera aqui. Ademas las bases priorizan a quien pide financiamiento para su PRIMERA obra artistica, de modo que una trayectoria extensa acreditada por el archivo puede restar en ese primer criterio en vez de sumar: el ajuste a la linea es una decision del postulante, no un resultado de este documento.",
+  "consumer": {
+    "kind": "jurado_fondo_publico",
+    "examples": [
+      "evaluador Fondart Regional Linea Creacion Artistica",
+      "seccion Antecedentes del postulante del formulario"
+    ],
+    "decision_it_supports": "puntuar el criterio Curriculo y la parte tecnica de Viabilidad con evidencia trazable",
+    "does_not_support": [
+      "el criterio Calidad, que evalua la solidez conceptual y el caracter innovador de la obra propuesta",
+      "el criterio Potencial, que evalua proyeccion, exhibicion, circulacion y vinculacion con publicos de una obra que aun no existe",
+      "la prioridad declarada por primera obra artistica: el archivo acredita lo contrario de una primera obra",
+      "la coherencia entre fundamentacion, objetivos, metodologia y cronograma, que es la mitad de Viabilidad y vive en el formulario",
+      "los documentos minimos, que son taxativos: autorizacion de derechos de autor, cartas de compromiso del equipo, consentimiento de comunidad indigena, estatutos, certificado de inhabilidades y permiso de espacio publico",
+      "reclamar autoria de una obra en un documento firmado"
+    ]
+  },
+  "language": "es",
+  "limits": {
+    "max_items_total": 24,
+    "max_bytes": 4000000,
+    "max_slots_rendered": 4
+  },
+  "declared_claims": [
+    "ocurrio",
+    "puedo",
+    "hice_esta_parte"
+  ],
+  "forbidden_claims": [
+    "es_mio",
+    "significa"
+  ],
+  "forbidden_inferences": [
+    "una postulacion es un documento firmado: la autoria no se reclama desde evidencia de archivo",
+    "un contenedor con proyectos nativos no implica autoria de lo que renderizan",
+    "una fecha de archivo no es una fecha de actividad declarable ante un jurado",
+    "haber ejecutado una tecnica no implica que la obra propuesta sea innovadora: Calidad evalua la propuesta, no el historial",
+    "una trayectoria acreditada no implica ajuste a una linea que prioriza la primera obra",
+    "una capacidad tecnica demostrada no es una estrategia de exhibicion ni de vinculacion con publicos",
+    "el plazo y los montos de esta ficha se leyeron el 2026-09-04: verificar contra el PDF vigente antes de postular"
+  ],
+  "slots": [
+    {
+      "slot_id": "curriculum_contextos",
+      "title": "Curriculo: contextos de trabajo acreditables",
+      "count": {
+        "min": 4,
+        "max": 12
+      },
+      "claim": "ocurrio",
+      "layer": "context",
+      "min_state": "supported_candidate",
+      "min_permission": "unnamed",
+      "caption_grammar": "{context_label} — {kind}, {span}",
+      "allowed_caption_fields": [
+        "context_label",
+        "kind",
+        "span",
+        "year"
+      ],
+      "required": true,
+      "evidence_kinds": [
+        "container_root",
+        "external_authority",
+        "live_screen_setup",
+        "third_party_receipt"
+      ],
+      "prefer_scope": "container"
+    },
+    {
+      "slot_id": "curriculum_capacidad_visual",
+      "title": "Curriculo: capacidad sostenida en artes de la visualidad",
+      "count": {
+        "min": 3,
+        "max": 8
+      },
+      "claim": "puedo",
+      "layer": "process",
+      "min_state": "observed",
+      "min_permission": "unnamed",
+      "caption_grammar": "{technique} — {artifact_count} {scope_note}, {span}",
+      "allowed_caption_fields": [
+        "technique",
+        "artifact_count",
+        "span",
+        "tool",
+        "context_label",
+        "scope_note"
+      ],
+      "required": true,
+      "evidence_kinds": [
+        "native_project_file",
+        "media_kind_distribution"
+      ],
+      "prefer_scope": "archive"
+    },
+    {
+      "slot_id": "viabilidad_requerimientos_tecnicos",
+      "title": "Viabilidad: requerimientos tecnicos ya resueltos antes",
+      "count": {
+        "min": 2,
+        "max": 4
+      },
+      "claim": "puedo",
+      "layer": "process",
+      "min_state": "observed",
+      "min_permission": "unnamed",
+      "caption_grammar": "{structure_note} · {artifact_kind}",
+      "allowed_caption_fields": [
+        "structure_note",
+        "artifact_kind",
+        "declared_input_count"
+      ],
+      "required": true,
+      "evidence_kinds": [
+        "live_screen_setup",
+        "declared_inputs",
+        "scene_graph",
+        "native_project_file"
+      ],
+      "prefer_scope": "container"
+    },
+    {
+      "slot_id": "rol_y_exclusiones",
+      "title": "Rol declarado y lo que no es propio",
+      "count": {
+        "min": 2,
+        "max": 6
+      },
+      "claim": "hice_esta_parte",
+      "layer": "role",
+      "min_state": "candidate",
+      "min_permission": "unnamed",
+      "caption_grammar": "{context_label}: {part_done}. No propio: {part_not_done}.",
+      "allowed_caption_fields": [
+        "context_label",
+        "part_done",
+        "part_not_done",
+        "span"
+      ],
+      "required": true,
+      "evidence_kinds": [
+        "container_root",
+        "external_authority",
+        "third_party_receipt"
+      ],
+      "prefer_scope": "container"
+    }
+  ],
+  "invalid_if": [
+    "una ranura obligatoria queda bajo su count minimo",
+    "una afirmacion excede su min_state declarado",
+    "un epigrafe usa un campo fuera de allowed_caption_fields",
+    "una pieza con permission=prohibited o aggregate_only aparece por caso",
+    "el documento afirma es_mio en cualquier ranura",
+    "el documento se presenta como la postulacion completa en vez de un insumo de antecedentes",
+    "la ranura rol_y_exclusiones queda vacia: declarar rol sin declarar exclusiones es sobreafirmar en un documento firmado",
+    "el documento se presenta como evidencia de Calidad o de Potencial: esos 70 puntos evaluan la obra propuesta, no el archivo"
+  ],
+  "control": {
+    "publication": false,
+    "submission": false,
+    "signed_document": false,
+    "authorship_claimed": false,
+    "training_permitted": false
+  }
+}

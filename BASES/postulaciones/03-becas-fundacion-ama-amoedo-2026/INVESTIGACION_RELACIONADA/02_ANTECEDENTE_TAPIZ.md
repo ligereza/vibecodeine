@@ -1,4 +1,8 @@
-# Dossier: tapiz — carpet design, psychedelia, the craft today
+# Material no seleccionado - Tapiz
+
+> Decisión de dirección del 2026-09-05: Tapiz no será la propuesta para Ama
+> Amoedo. Este documento se conserva como referencia histórica y no como
+> expediente activo.
 
 Status: INVESTIGADO (Gemini API 2026-07-10, fuentes sin verificar) + curado al telar.
 Method: dossier -> instrumento (projects/tapiz/vibecode) -> material -> pieza.

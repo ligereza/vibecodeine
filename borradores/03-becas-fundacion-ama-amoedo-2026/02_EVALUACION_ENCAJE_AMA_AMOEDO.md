@@ -1,52 +1,33 @@
-# Becas Fundación Ama Amoedo 2026 — evaluación de encaje
+# Becas Fundación Ama Amoedo 2026 - evaluación de encaje
 
 **Fecha de corte:** 2026-09-05 · **Cierre declarado:** 2026-09-09, 23:59
-America/Montevideo (coincide con Santiago ese día según `data/ama_amoedo_becas_2026.json`).
+hora de Uruguay/Argentina según la base recuperada y las fuentes de
+corroboración.
 
 ## Veredicto
 
-Hay un encaje temático preliminar, pero no un expediente listo para postular. **No
-vale la pena abrir una postulación en los cuatro días restantes.** La beca ofrece
-USD 10.000 para proyectos de investigación o creación en artes visuales y exige
-ser mayor de 18 años y demostrar una conexión significativa con América Latina;
-la ficha local no pudo leer los criterios ni la lista taxativa de documentos del
-PDF oficial. Las dos URL oficiales de bases constan como 404 y el sitio depende de
-JavaScript (`data/ama_amoedo_becas_2026.json`, campos `source` y
-`mandatory_documents_warning`). Por tanto no es seguro afirmar elegibilidad ni
-completitud.
+La base de la convocatoria está recuperada y verificada, pero todavía no hay
+un proyecto seleccionado para Ama Amoedo. **Tapiz queda descartado por decisión
+de dirección.** El material de `Grados de desacuerdo` queda como candidato por
+confirmar, no como postulación aprobada.
 
-## Qué material existente serviría
+## Material que queda en revisión
 
-- `projects/cultura/dossiers/tapiz.md` es el mejor antecedente visual: contiene
-  una investigación de motivos, una traducción a instrumento de VibeCode y una
-  relación explícita con la línea textil andina en Chile. No está listo como
-  postulación: sus fuentes siguen sin verificar y falta decidir y documentar una
-  pieza final.
-- `projects/cultura/dossiers/grados_de_desacuerdo.md` puede aportar una posición
-  artística sobre archivo, navegación y experiencia. El propio documento lo marca
-  como propuesta en desarrollo, no obra terminada ni investigación factual; no
-  debe presentarse como resultado acreditado.
-- `projects/cultura/dossiers/FONDART_2027_JARDINES_POSTULACION.md` ofrece la
-  pregunta y el método de un proyecto de investigación visual, además de código
-  ejecutable. Todavía declara `[FALTA]` para identidad, corpus, bibliografía,
-  muestra y anexos; sirve como material de trabajo, no como expediente Ama Amoedo.
+- `10_CANDIDATO_POR_CONFIRMAR_GRADOS_DE_DESACUERDO/` contiene un brief artístico
+  en desarrollo, el documento de portafolio organismo y el prototipo doublecup.
+- `01-fondart-nacional-investigacion-2027-jardines/` y
+  `02-fondart-regional-creacion-artistica-2027-iris/` son expedientes Fondart
+  independientes y no deben trasladarse automáticamente a Ama Amoedo.
+- `99_MATERIAL_NO_SELECCIONADO_TAPIZ/` conserva Tapiz fuera del expediente
+  activo; no es un candidato vigente.
 
-IRIS y los dossiers `precursor`/`psicosis` no son una base prudente para esta
-beca ahora: el primero tiene cartas e identidad pendientes, y los segundos tienen
-alcance cultural o límites clínicos que no corresponden a una propuesta visual
-cerrada.
+## Faltantes antes de decidir
 
-## Qué falta y si alcanza el tiempo
+Elegir o descartar formalmente Grados de desacuerdo, cerrar una propuesta única,
+definir su aporte a la trayectoria, comprobar conexión latinoamericana, preparar
+CV y portfolio público, seleccionar una obra concreta, presupuestar en USD y
+revisar el formulario online.
 
-Faltan confirmar la conexión latinoamericana concreta, el nombre y CV del artista
-o colectivo, una propuesta única con aporte demostrable a la trayectoria, obra y
-enlaces públicos vigentes, presupuesto en USD, referencias de trabajos anteriores,
-los criterios/documentos del formulario oficial y cualquier traducción o formato
-exigido. También habría que elegir entre Tapiz y Jardines, verificar sus fuentes,
-cerrar una pieza o piloto, y preparar la evidencia sin convertir un borrador en una
-afirmación de obra terminada. Cuatro días no alcanzan para hacerlo con trazabilidad.
+**Decisión actual:** mantener la oportunidad y su base ordenadas, sin enviar una
+postulación hasta que exista una propuesta artística confirmada.
 
-**Decisión:** no postular Ama Amoedo 2026. Reabrir la oportunidad sólo cuando las
-bases oficiales sean accesibles y exista una obra visual final, CV/Perfil Cultura,
-conexión latinoamericana y dossier verificable; conservar Tapiz como candidato
-principal y Jardines como investigación separada.
