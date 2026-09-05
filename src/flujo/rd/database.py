@@ -1108,6 +1108,73 @@ def _insert_testing_evidence(conn: sqlite3.Connection, doc: dict[str, Any]) -> N
         )
 
 
+def _rescatar_acumulativas(path: Path) -> dict[str, list[tuple]]:
+    """Las filas de terreno que un rebuild no debe destruir.
+
+    `build_rd_db()` borra el archivo y lo reescribe: eso esta bien para lo
+    derivado de fuentes canonicas, que se puede volver a derivar, y seria
+    destructivo para `registros_testeo`, `atenciones` y `encuestas`, que son
+    registros de terreno que no existen en ninguna otra parte.
+
+    Hasta el 2026-09-05 el problema se evitaba teniendolas en otro archivo,
+    `data/rd_datos.db`. El operador pidio una sola base, asi que se rescatan
+    aqui y se reponen despues del `CREATE`. Si `rd.db` todavia no las tiene y
+    la DB previa si, se traen de ahi una sola vez: esa es la migracion.
+
+    Devuelve por tabla la lista de filas, con las columnas en el orden en que
+    el archivo las declara, para que la reinsercion no dependa del schema
+    nuevo coincidiendo por posicion.
+    """
+    from . import datos as _datos
+
+    rescatadas: dict[str, list[tuple]] = {}
+    columnas: dict[str, list[str]] = {}
+    for origen in (path, _datos.LEGACY_DB_PATH):
+        if not origen.exists():
+            continue
+        conn = sqlite3.connect(f"file:{origen}?mode=ro", uri=True)
+        try:
+            for tabla in _datos.TABLAS_ACUMULATIVAS:
+                if rescatadas.get(tabla):
+                    continue  # ya vino de una fuente anterior; no se duplica
+                try:
+                    cols = [r[1] for r in conn.execute(f"PRAGMA table_info({tabla})")]
+                    if not cols:
+                        continue
+                    filas = list(conn.execute(f'SELECT * FROM "{tabla}"'))
+                except sqlite3.DatabaseError:
+                    continue
+                if filas:
+                    rescatadas[tabla] = filas
+                    columnas[tabla] = cols
+        finally:
+            conn.close()
+    _RESCATE_COLUMNAS.clear()
+    _RESCATE_COLUMNAS.update(columnas)
+    return rescatadas
+
+
+_RESCATE_COLUMNAS: dict[str, list[str]] = {}
+
+
+def _reponer_acumulativas(
+    conn: sqlite3.Connection, rescatadas: dict[str, list[tuple]]
+) -> None:
+    """Crea las tablas acumulativas y devuelve sus filas al archivo nuevo."""
+    from . import datos as _datos
+
+    conn.executescript(_datos.SCHEMA_ACUMULATIVO)
+    for tabla, filas in rescatadas.items():
+        cols = _RESCATE_COLUMNAS.get(tabla)
+        if not cols or not filas:
+            continue
+        marcas = ",".join("?" for _ in cols)
+        nombres = ",".join(f'"{c}"' for c in cols)
+        conn.executemany(
+            f'INSERT INTO "{tabla}" ({nombres}) VALUES ({marcas})', filas
+        )
+
+
 def build_rd_db(
     db_path: str | Path | None = None,
     *,
@@ -1125,12 +1192,15 @@ def build_rd_db(
     prod_dir = Path(productoras_dir) if productoras_dir is not None else _PRODUCTORAS_DIR
     ven_dir = Path(venues_dir) if venues_dir is not None else _VENUES_DIR
     path.parent.mkdir(parents=True, exist_ok=True)
+    # Antes de borrar nada: lo acumulado no se puede volver a derivar.
+    acumuladas = _rescatar_acumulativas(path)
     if path.exists():
         path.unlink()
 
     conn = sqlite3.connect(path)
     try:
         conn.executescript(_SCHEMA)
+        _reponer_acumulativas(conn, acumuladas)
 
         # meta + reactivos
         reactivos_doc = json.loads(_REACTIVOS_JSON.read_text(encoding="utf-8"))

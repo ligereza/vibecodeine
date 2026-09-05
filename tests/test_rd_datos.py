@@ -68,9 +68,23 @@ def test_conectar_crea_schema_no_destructivo(tmp_path: Path):
     assert n == 1
 
 
-def test_default_db_path_es_hermana_de_rd_db():
-    assert DEFAULT_DB_PATH.name == "rd_datos.db"
+def test_los_datos_de_terreno_van_a_la_unica_base():
+    """Una sola base, por orden del operador el 2026-09-05.
+
+    Antes esto exigia `rd_datos.db`, hermana de `rd.db`. La separacion existia
+    porque `build_rd_db()` borra el archivo y lo reescribe, asi que un rebuild
+    habria destruido registros de terreno. Eso se resolvio en el rebuild --ver
+    `test_un_rebuild_no_destruye_los_datos_de_terreno`-- y no ya con dos
+    archivos.
+    """
+    from flujo.rd.datos import LEGACY_DB_PATH, TABLAS_ACUMULATIVAS
+
+    assert DEFAULT_DB_PATH.name == "rd.db"
     assert DEFAULT_DB_PATH.parent.name == "data"
+    # La base previa se conserva: es la fuente de la migracion y no se borra.
+    assert LEGACY_DB_PATH.name == "rd_datos.db"
+    assert DEFAULT_DB_PATH != LEGACY_DB_PATH
+    assert set(TABLAS_ACUMULATIVAS) == {"registros_testeo", "atenciones", "encuestas"}
 
 
 # ---------------------------------------------------------------------------
