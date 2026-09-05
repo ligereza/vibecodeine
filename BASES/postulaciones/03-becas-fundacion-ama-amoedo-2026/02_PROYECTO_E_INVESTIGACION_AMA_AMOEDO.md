@@ -1,29 +1,36 @@
-# Becas Fundación Ama Amoedo 2026 - categoría Artistas
+# Material de proyecto - Becas Fundación Ama Amoedo 2026
 
 ## Identificación
 
 - **Convocatoria:** Becas Fundación Ama Amoedo 2026, categoría Artistas.
 - **Tipo:** convocatoria independiente; no es Fondart.
-- **Objeto:** proyectos específicos de investigación o creación en artes visuales que aporten significativamente a la trayectoria.
-- **Monto publicado:** 4 becas de USD 10.000 para la categoría Artistas.
-- **Cierre informado:** 9 de septiembre de 2026, 23:59, hora de Uruguay; la ficha local registra que coincide con Santiago en esa fecha.
-- **Anuncio de resultados:** 20 de noviembre de 2026.
+- **Estado:** proyecto artístico todavía por confirmar.
+- **Decisión vigente:** Tapiz no será la propuesta.
 
-## Encaje de trabajo
+## Material disponible para revisión
 
-El mejor antecedente existente es `projects/cultura/dossiers/tapiz.md`: conecta investigación de motivos, traducción a instrumento de VibeCode y una relación explícita con la línea textil andina en Chile. También puede aportar una posición artística `projects/cultura/dossiers/grados_de_desacuerdo.md`, pero no debe presentarse como obra terminada ni como investigación factual cerrada.
+`10_CANDIDATO_POR_CONFIRMAR_GRADOS_DE_DESACUERDO/` reúne un brief artístico,
+el portafolio organismo y el prototipo doublecup. Esa carpeta contiene la línea
+con mayor continuidad autoral visible en el material actual, pero todavía no es
+una postulación cerrada ni una obra terminada.
 
-`projects/cultura/dossiers/FONDART_2027_JARDINES_POSTULACION.md` contiene una pregunta y método de investigación visual, pero no debe trasladarse automáticamente a Ama Amoedo: sus fuentes, identidad, muestra, bibliografía y anexos aún están incompletos.
+Jardines interpretativos e IRIS permanecen en sus expedientes Fondart. Tapiz se
+conserva solo como material no seleccionado en la carpeta de archivo
+correspondiente.
 
-## Investigación relacionada reunida
+## Faltantes antes de postular
 
-- `projects/cultura/dossiers/AMA_AMOEDO_2026_EVALUACION.md`: evaluación de encaje y decisión local.
-- `projects/cultura/dossiers/tapiz.md`: antecedente visual principal.
-- `projects/cultura/dossiers/grados_de_desacuerdo.md`: antecedente conceptual secundario.
-- `projects/cultura/dossiers/FONDART_2027_JARDINES_POSTULACION.md`: referencia de investigación visual, sólo como material de trabajo.
-- `data/ama_amoedo_becas_2026.json`: ficha estructurada y procedencia.
+Elegir formalmente el proyecto, cerrar título y resultado artístico, definir el
+aporte a la trayectoria, verificar conexión latinoamericana, preparar CV y
+portfolio público, cerrar presupuesto en USD, documentar fuentes y revisar el
+formulario online contra la base original.
 
-## Lectura directiva
+## Investigación relacionada
 
-Esta oportunidad vence primero, pero no debe absorber las dos postulaciones Fondart por ansiedad de cierre. El expediente no está listo: falta una propuesta única, CV, portfolio/obra pública, conexión latinoamericana concreta, presupuesto en USD, antecedentes de trayectoria y confirmar la lista taxativa de documentos. La decisión responsable es **go/no-go inmediato** después de verificar la base y el formulario; no convertir un dossier en desarrollo en una afirmación de obra terminada.
+- `01_BASE_ORIGINAL_AMA_AMOEDO_2026.pdf`: bases recuperadas y verificadas.
+- `03_REQUISITOS_CONDICIONES_ALERTAS.md`: requisitos, restricciones y alertas.
+- `05_INVESTIGACION_WEB_AMA_AMOEDO_2026-09-05.md`: procedencia web y
+  corroboraciones.
+- `10_CANDIDATO_POR_CONFIRMAR_GRADOS_DE_DESACUERDO/`: candidato pendiente.
+- `99_MATERIAL_NO_SELECCIONADO_TAPIZ/`: referencia histórica excluida.
 

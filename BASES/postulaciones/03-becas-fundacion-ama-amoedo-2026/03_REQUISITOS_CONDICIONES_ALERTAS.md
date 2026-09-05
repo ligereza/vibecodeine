@@ -38,7 +38,7 @@
 - Sólo se consideran propuestas que no atenten contra derechos humanos ni contengan sesgos discriminatorios.
 - **Alerta de fuente resuelta:** la URL antigua del PDF oficial devuelve 404, pero la base 2026 fue recuperada desde el enlace público de bases asociado a la convocatoria en Google Drive. El archivo local tiene 4 páginas A4 y hash `f170821183f299bace4b502d83d12efe113f81034701325de11a925de166f501`. La ficha local y la lista de documentos fueron contrastadas con el PDF recuperado y con fuentes de corroboración.
 - **Alerta de expediente:** no existe todavía una propuesta única cerrada ni un portfolio final con 10-20 imágenes/epígrafes o enlaces públicos equivalentes.
-- **Alerta de encaje:** Tapiz es el mejor antecedente, pero sus fuentes siguen sin verificar y falta documentar una pieza final o piloto. Jardines y Grados no deben presentarse como obra acabada.
+- **Alerta de encaje:** Tapiz queda descartado por dirección. No hay proyecto Ama Amoedo seleccionado todavía; `Grados de desacuerdo` permanece como candidato por confirmar y no debe presentarse como obra acabada. Jardines e IRIS son expedientes Fondart separados.
 - **Alerta de plazo:** el cierre es el 9 de septiembre a las 23:59; no dejar la verificación de documentos para el último día.
 - **Alerta financiera:** el monto es USD 10.000; presupuestar en dólares y revisar gastos permitidos directamente en el formulario/base.
 
