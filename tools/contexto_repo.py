@@ -94,7 +94,7 @@ _TASK_ROUTES = [
      [".claude/skills/entregas-rd/", ".claude/skills/taller-svg-rd/SKILL.md",
       "assets/logo/", "svg/suplementos_rd/ (derivar: muchos SVG)"]),
     (("voz", "agente", "handoff", "contexto"),
-     ["AGENTS.md", "DECISIONES.md"]),
+     ["DECISIONES.md"]),
     (("resolume", "chataigne", "noisette"),
      ["flujo/src/flujo/resolume/automator.py",
       "BLOQUEADOR: sin .noisette real; no adivinar el schema"]),
@@ -109,7 +109,10 @@ def _task(keywords: str):
     kw = keywords.lower()
     print(f"# CONTEXTO PARA LA TAREA: {keywords}\n")
     print("== LEER PRIMERO (fuente de verdad, barato) ==")
-    for r in ("AGENTS.md", "DECISIONES.md"):
+    # AGENTS.md se retiro el 2026-09-05 por orden del operador y no se
+    # reemplazo. Las decisiones estan en DECISIONES.md; los hechos se piden a
+    # tools/mak_status.py, no a un documento.
+    for r in ("DECISIONES.md",):
         print(f"  {r}")
     hits = [routes for keys, routes in _TASK_ROUTES if any(k in kw for k in keys)]
     print("\n== RUTAS RELEVANTES A LA TAREA ==")

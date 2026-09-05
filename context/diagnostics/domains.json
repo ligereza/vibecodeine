@@ -4,43 +4,196 @@
   "domains": {
     "core": {
       "branch_prefix": "maintenance",
-      "keywords": ["repo", "git", "hub", "puerto", "dependencia", "runtime", "diagnostico", "error", "roto", "instalacion", "cli", "architecture", "branch", "deployment"],
+      "keywords": [
+        "repo",
+        "git",
+        "hub",
+        "puerto",
+        "dependencia",
+        "runtime",
+        "diagnostico",
+        "error",
+        "roto",
+        "instalacion",
+        "cli",
+        "architecture",
+        "branch",
+        "deployment"
+      ],
       "contract": "context/diagnostics/contracts/core.md",
-      "read_paths": ["AGENTS.md", "DECISIONES.md", "pyproject.toml", "cultura/mak_plataforma/hub.py", "context/test_lane_map.json"],
-      "checks": [".venv/bin/python -m flujo health", ".venv/bin/python -m flujo diagnose --area core"],
-      "do_not_read": ["mounted SSD raw archive", "large databases", "virtual environments"]
+      "read_paths": [
+        "DECISIONES.md",
+        "pyproject.toml",
+        "cultura/mak_plataforma/hub.py",
+        "context/test_lane_map.json"
+      ],
+      "checks": [
+        ".venv/bin/python -m flujo health",
+        ".venv/bin/python -m flujo diagnose --area core"
+      ],
+      "do_not_read": [
+        "mounted SSD raw archive",
+        "large databases",
+        "virtual environments"
+      ],
+      "read_paths_note": "AGENTS.md se retiro el 2026-09-05 por orden del operador. No se reemplaza por otro documento: los hechos se piden a tools/mak_status.py y las decisiones estan en DECISIONES.md."
     },
     "rd": {
       "branch_prefix": "rd",
-      "keywords": ["rd", "reducir dano", "plano", "rider", "cotizacion", "pack", "reactivo", "suplemento", "venue", "productora", "evento", "logo", "tarifa", "base de datos"],
+      "keywords": [
+        "rd",
+        "reducir dano",
+        "plano",
+        "rider",
+        "cotizacion",
+        "pack",
+        "reactivo",
+        "suplemento",
+        "venue",
+        "productora",
+        "evento",
+        "logo",
+        "tarifa",
+        "base de datos"
+      ],
       "contract": "context/diagnostics/contracts/rd.md",
-      "read_paths": ["svg/suplementos_rd", "docs/rd", "web/src/components/PlanoTool.tsx", "web/src/components/RdDbPanel.tsx", "data/rd_packs.json"],
-      "checks": [".venv/bin/python -m pytest -q tests/test_gen_propuestas_rd.py", ".venv/bin/python -m flujo rd-db --help"],
-      "do_not_read": ["mounted SSD raw archive", "RD media", "live provider credentials"]
+      "read_paths": [
+        "svg/suplementos_rd",
+        "docs/rd",
+        "web/src/components/PlanoTool.tsx",
+        "web/src/components/RdDbPanel.tsx",
+        "data/rd_packs.json"
+      ],
+      "checks": [
+        ".venv/bin/python -m pytest -q tests/test_gen_propuestas_rd.py",
+        ".venv/bin/python -m flujo rd-db --help"
+      ],
+      "do_not_read": [
+        "mounted SSD raw archive",
+        "RD media",
+        "live provider credentials"
+      ]
     },
     "portfolio": {
       "branch_prefix": "portfolio",
-      "keywords": ["portafolio", "portfolio", "iskvw", "web", "sitio", "dominio", "cloudflare", "dns", "deploy", "publicar", "publicacion", "frontend", "pagina", "certificado", "hosting"],
+      "keywords": [
+        "portafolio",
+        "portfolio",
+        "iskvw",
+        "web",
+        "sitio",
+        "dominio",
+        "cloudflare",
+        "dns",
+        "deploy",
+        "publicar",
+        "publicacion",
+        "frontend",
+        "pagina",
+        "certificado",
+        "hosting"
+      ],
       "contract": "context/diagnostics/contracts/portfolio.md",
-      "read_paths": ["iskvw/editor.html", "iskvw/mesa_montaje.js", "iskvw", "web", "data/portfolio_formats", ".github/workflows/publicar_iskvw.yml", "tools/portfolio", "web/package.json"],
-      "checks": ["npm run typecheck --prefix web", "npm run build --prefix web"],
-      "do_not_read": ["mounted SSD raw archive", "RD databases", "private media originals"]
+      "read_paths": [
+        "iskvw/editor.html",
+        "iskvw/mesa_montaje.js",
+        "iskvw",
+        "web",
+        "data/portfolio_formats",
+        ".github/workflows/publicar_iskvw.yml",
+        "tools/portfolio",
+        "web/package.json"
+      ],
+      "checks": [
+        "npm run typecheck --prefix web",
+        "npm run build --prefix web"
+      ],
+      "do_not_read": [
+        "mounted SSD raw archive",
+        "RD databases",
+        "private media originals"
+      ]
     },
     "cultura": {
       "branch_prefix": "cultura",
-      "keywords": ["cultura", "obra", "arte", "artistico", "artista", "ensayo", "tilde", "psicosis", "tapiz", "precursor", "ascii", "semilla", "planta", "plantas", "cultivo", "escultura", "3d", "visual"],
+      "keywords": [
+        "cultura",
+        "obra",
+        "arte",
+        "artistico",
+        "artista",
+        "ensayo",
+        "tilde",
+        "psicosis",
+        "tapiz",
+        "precursor",
+        "ascii",
+        "semilla",
+        "planta",
+        "plantas",
+        "cultivo",
+        "escultura",
+        "3d",
+        "visual"
+      ],
       "contract": "context/diagnostics/contracts/cultura.md",
-      "read_paths": ["cultura", "web/src/components/CulturaPanel.tsx", "docs/cultura", "context/diagnostics"],
-      "checks": [".venv/bin/python -m pytest -q tests/test_archivo_ensayos.py", ".venv/bin/python -m compileall -q cultura"],
-      "do_not_read": ["mounted SSD raw archive", "RD runtime data", "unrelated departments"]
+      "read_paths": [
+        "cultura",
+        "web/src/components/CulturaPanel.tsx",
+        "docs/cultura",
+        "context/diagnostics"
+      ],
+      "checks": [
+        ".venv/bin/python -m pytest -q tests/test_archivo_ensayos.py",
+        ".venv/bin/python -m compileall -q cultura"
+      ],
+      "do_not_read": [
+        "mounted SSD raw archive",
+        "RD runtime data",
+        "unrelated departments"
+      ]
     },
     "research": {
       "branch_prefix": "research",
-      "keywords": ["research", "investigacion", "scraping", "scraper", "fuente", "fuentes", "manual", "manuales", "web", "url", "crawl", "crawl4ai", "firecrawl", "fondart", "postulacion", "catalogo", "triangulacion", "busqueda", "documentacion", "extraccion", "corpus"],
+      "keywords": [
+        "research",
+        "investigacion",
+        "scraping",
+        "scraper",
+        "fuente",
+        "fuentes",
+        "manual",
+        "manuales",
+        "web",
+        "url",
+        "crawl",
+        "crawl4ai",
+        "firecrawl",
+        "fondart",
+        "postulacion",
+        "catalogo",
+        "triangulacion",
+        "busqueda",
+        "documentacion",
+        "extraccion",
+        "corpus"
+      ],
       "contract": "context/diagnostics/contracts/research.md",
-      "read_paths": ["cultura/mak_research", "tools", "context/diagnostics", "web/src/components/CulturaPanel.tsx"],
-      "checks": [".venv/bin/python -m pytest -q tests/test_mak_research_router.py", ".venv/bin/python -m flujo diagnose --area research"],
-      "do_not_read": ["mounted SSD raw archive", "private source exports", "provider secrets"]
+      "read_paths": [
+        "cultura/mak_research",
+        "tools",
+        "context/diagnostics",
+        "web/src/components/CulturaPanel.tsx"
+      ],
+      "checks": [
+        ".venv/bin/python -m pytest -q tests/test_mak_research_router.py",
+        ".venv/bin/python -m flujo diagnose --area research"
+      ],
+      "do_not_read": [
+        "mounted SSD raw archive",
+        "private source exports",
+        "provider secrets"
+      ]
     }
   }
 }

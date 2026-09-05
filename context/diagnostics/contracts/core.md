@@ -2,18 +2,19 @@
 
 Use this packet for repo, Git, dependency, hub, runtime or CLI incidents.
 
-Read first: `AGENTS.md`, `DECISIONES.md`, `pyproject.toml`,
+Read first: `DECISIONES.md`, `pyproject.toml`,
 `cultura/mak_plataforma/hub.py` and `context/test_lane_map.json`.
 
 Four notes on that list, because earlier versions of it sent a fresh agent to
 files this checkout cannot contain:
 
-- **`AGENTS.md` is the only contract file** (2026-09-03). Every previous one
-  was deleted by the operator's order: `CLAUDE.md`, the old `AGENTS.md`, the
-  lowercase `agents.md`, and the three `contracts/departments/*/agents.md`, in
-  both operational checkouts. It holds three pointers and no facts;
-  `DECISIONES.md` holds what the operator decided. Do not reconstruct a
-  contract from anything else you find.
+- **There is no contract file, and that is the decision** (2026-09-05). Every
+  one this repository had was deleted by the operator's order: `CLAUDE.md`, the
+  lowercase `agents.md` and the three `contracts/departments/*/agents.md` on
+  2026-09-03, and `AGENTS.md` itself on 2026-09-05. Nothing replaced it.
+  `DECISIONES.md` holds what the operator decided, and a decision does not age
+  because it already happened. **Do not reconstruct a contract from anything
+  you find, and do not write a new one.** The absence is not a gap to fill.
 - **Facts come from the machine, not from a document**:
   `.venv/bin/python tools/mak_status.py`. `context/HANDOFF_HISTORICO.md` was
   `LAST_HANDOFF.md` and is a record only -- for finding information that is

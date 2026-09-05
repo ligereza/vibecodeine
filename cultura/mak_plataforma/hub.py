@@ -5126,7 +5126,7 @@ un mapa de runtime: el trabajo actual comienza en la cara del Hub y en sus
 </div>
 <p style="color:#9db67c">El documento original queda conservado abajo como
 evidencia histórica. No debe usarse como contrato operativo si contradice
-<code>AGENTS.md</code> o <code>context/HANDOFF_HISTORICO.md</code>.</p>
+<code>DECISIONES.md</code> o <code>context/HANDOFF_HISTORICO.md</code>.</p>
 <details><summary>ver GENESIS.md histórico</summary>
 <article style="margin-top:16px">%s</article>
 </details>
