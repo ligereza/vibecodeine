@@ -123,7 +123,10 @@ def rd_summary(root: Path) -> dict[str, Any]:
     result: dict[str, Any] = {
         "schema": "mak-rd-summary-v1",
         "canonical_projection": "data/rd.db",
-        "empty_runtime_boundary": "data/rd_datos.db",
+        # Una sola base desde el 2026-09-05. `rd_datos.db` se conserva como
+        # origen de la migracion y ya no recibe escrituras.
+        "runtime_tables_in_projection": ["registros_testeo", "atenciones", "encuestas"],
+        "legacy_runtime_boundary": "data/rd_datos.db",
         "databases": {},
     }
     for relative in ("data/rd.db", "data/rd_datos.db"):
@@ -303,7 +306,9 @@ def rd_topics(root: Path) -> dict[str, Any]:
     """Return the RD data separated by operational theme.
 
     This is a bounded read-only index, not a second database. The canonical
-    projection remains ``data/rd.db`` and ``data/rd_datos.db`` remains an
+    projection remains ``data/rd.db``, which since 2026-09-05 also carries the
+    accumulative field tables; ``data/rd_datos.db`` is kept as the migration
+    source and remains an
     empty runtime boundary. Counts come from the existing summary and the
     cross-domain bridge reports only expose status and bounded totals.
     """
@@ -376,7 +381,8 @@ def rd_topics(root: Path) -> dict[str, Any]:
         "read_only": True,
         "mutation": "disabled",
         "canonical_projection": "data/rd.db",
-        "runtime_boundary": "data/rd_datos.db",
+        "runtime_tables_in_projection": ["registros_testeo", "atenciones", "encuestas"],
+        "legacy_runtime_boundary": "data/rd_datos.db",
         "topics": topics,
         "bridges": {
             "portfolio_crosswalk": {

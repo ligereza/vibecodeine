@@ -628,10 +628,10 @@ def rd_datos_ingest(
     policy: str = typer.Option(
         "strict", "--policy", "-p", help="strict (rechaza cualquier PII) | sanitize (sanitiza y persiste)"
     ),
-    db: Optional[str] = typer.Option(None, "--db", help="Ruta a la DB (default data/rd_datos.db)"),
+    db: Optional[str] = typer.Option(None, "--db", help="Ruta a la DB (default data/rd.db)"),
 ):
     """Ingesta un CSV de datos de campo (testeo de reactivos, atenciones o
-    encuestas) a la DB privacy-first data/rd_datos.db. Toda fila pasa por
+    encuestas) a la DB privacy-first data/rd.db. Toda fila pasa por
     flujo.privacy.scan_text ANTES de persistir: RUT chileno o numero de
     tarjeta detectados rechazan la fila SIEMPRE (nunca se loguea el
     contenido)."""
@@ -663,7 +663,7 @@ def rd_datos_informe(
     trimestre: Optional[str] = typer.Option(
         None, "--trimestre", "-t", help="Filtrar un trimestre: 'YYYY-Q1'..'YYYY-Q4' (default: todo el historico)"
     ),
-    db: Optional[str] = typer.Option(None, "--db", help="Ruta a la DB (default data/rd_datos.db)"),
+    db: Optional[str] = typer.Option(None, "--db", help="Ruta a la DB (default data/rd.db)"),
 ):
     """Genera el informe trimestral de datos de campo RD (markdown): 3 tablas
     (tendencias por sustancia/mes, tasa de no-coincidencia por sustancia,

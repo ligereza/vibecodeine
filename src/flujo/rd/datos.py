@@ -1,11 +1,23 @@
 """Ingesta privacy-first de datos de campo RD (testeo/atenciones/encuestas).
 
-DB HERMANA de rd.db: `data/rd_datos.db` (gitignored, patron `*.db`). A
-diferencia de rd.db (proyeccion regenerable de fuentes canonicas -- su
-`build_rd_db()` BORRA y reescribe todo, ver `src/flujo/rd/database.py`),
-esta DB es un registro ACUMULATIVO de datos reales de terreno: nunca se
-borra ni se reconstruye. `conectar()` solo crea el schema si falta
-(`CREATE TABLE IF NOT EXISTS`) y jamas toca `rd.db`.
+Escribe en `data/rd.db`, la unica DB de RD. Hasta el 2026-09-05 estas tres
+tablas vivian aparte en `data/rd_datos.db`, y la razon era real: `rd.db` es una
+proyeccion regenerable cuyo `build_rd_db()` BORRA el archivo y lo reescribe
+entero, asi que un rebuild habria destruido registros de terreno que no existen
+en ninguna otra parte.
+
+El operador pidio una sola base. La separacion no se resolvio moviendo el
+problema sino quitandolo: `build_rd_db()` ahora RESCATA las filas de estas tres
+tablas antes de borrar el archivo y las REINSERTA despues, de modo que la
+reconstruccion sigue siendo idempotente para lo derivado y no destructiva para
+lo acumulado. Ver `_rescatar_acumulativas` en `src/flujo/rd/database.py`.
+
+Lo acumulativo sigue siendo acumulativo: `conectar()` usa
+`CREATE TABLE IF NOT EXISTS` y nunca borra filas.
+
+El diseno de privacidad de abajo NO cambia con la fusion, porque nada de el
+dependia del nombre del archivo: vive en el schema (que no tiene columnas de
+identidad) y en el scan que corre antes de cada insercion.
 
 Diseno de privacidad (no negociable, ver F3a del plan de liberacion):
 
@@ -41,7 +53,16 @@ from ..privacy import scan_text
 from ..privacy.sanitize import REPLACEMENTS
 
 _REPO = Path(__file__).resolve().parents[3]
-DEFAULT_DB_PATH = _REPO / "data" / "rd_datos.db"
+DEFAULT_DB_PATH = _REPO / "data" / "rd.db"
+# La DB previa, conservada: es la fuente de migracion y no se borra. Si tiene
+# filas y `rd.db` no, `build_rd_db()` las trae una sola vez.
+LEGACY_DB_PATH = _REPO / "data" / "rd_datos.db"
+# Las tres tablas que se acumulan. `build_rd_db()` las preserva por nombre.
+TABLAS_ACUMULATIVAS: tuple[str, ...] = (
+    "registros_testeo",
+    "atenciones",
+    "encuestas",
+)
 
 # Vocabulario cerrado de `atenciones.tipo`
 TIPOS_ATENCION: tuple[str, ...] = ("hidratacion", "escucha", "derivacion", "informacion")
@@ -56,7 +77,7 @@ _CAMPOS_OBLIGATORIOS: dict[str, tuple[str, ...]] = {
     "encuesta": ("pregunta_id", "respuesta"),
 }
 
-_SCHEMA = """
+SCHEMA_ACUMULATIVO = """
 CREATE TABLE IF NOT EXISTS registros_testeo (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     fecha TEXT NOT NULL,               -- YYYY-MM-DD, nunca hora: k-anonimato
@@ -123,7 +144,7 @@ def conectar(db: str | Path | None = None) -> sqlite3.Connection:
     path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(path)
     conn.row_factory = sqlite3.Row
-    conn.executescript(_SCHEMA)
+    conn.executescript(SCHEMA_ACUMULATIVO)
     conn.commit()
     return conn
 
