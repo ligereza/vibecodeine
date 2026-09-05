@@ -1,0 +1,13 @@
+process_key,label_es,input_semantics,output_semantics,output_kind,policy
+discover,descubrir,idea o pregunta,candidates,candidate,No afirmar existencia; registrar consulta y cobertura.
+capture,capturar,URL o archivo,source_snapshot,source,"Conservar URL, hash, fecha y tipo de fuente."
+extract,extraer,fuente capturada,"claims, entities, citations",extracted_fact,Marcar automatico y guardar evidencia exacta.
+normalize,normalizar,entidad o termino,canonical entity,canonical_entity,No inferir significado por similitud nominal.
+relate,relacionar,entidades + evidencia,typed relation,inferred_relation,"Toda relacion necesita base, confianza y fuente."
+contextualize,contextualizar,relacion + tiempo/lugar/dominio,context,contextualized_claim,Separar el contexto de la interpretacion.
+interpret,interpretar,contexto + correspondencia,interpretation hypothesis,hypothesis_or_metaphor,"Declarar correspondencia, quiebre y no-equivalencia."
+simulate,simular,reglas + semilla + ambiente,states and trajectories,observed_model_result,El comportamiento del modelo no prueba el mundo real.
+validate,validar,"claim, relation o experimento",decision,validated_or_uncertain,"Usar pass, fail o uncertain; nunca completar vacios con prosa."
+curate,curar,material validado o incierto,selection and decision,curatorial_decision,La seleccion humana queda separada de la extraccion automatica.
+publish,publicar,seleccion + assets,public work or dossier,published_artifact,Publicar evidencia suficiente sin exponer secretos ni datos privados.
+audit,auditar,todos los eventos,provenance ledger,audit_event,"Cada salida debe poder volver a fuente, proceso y version."

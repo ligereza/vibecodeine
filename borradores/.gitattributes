@@ -1,0 +1,2 @@
+# Preserve copied SVG artwork byte-for-byte in this snapshot.
+**/*.svg -text
