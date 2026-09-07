@@ -1,7 +1,7 @@
 # Wachuma leído por su público: procedencia visible en un jardín digital
 
 **Convocatoria:** Fondart Nacional — Línea Investigación — Concurso General 2027
-**Cierre:** 2026-09-10, 15:00 hora de Santiago — **verificar en el portal antes de enviar**: la fecha no sale del PDF de bases, viene de una captura del portal y está declarada `UNRESOLVED` en `data/fondart_nacional_investigacion_2027.json`
+**Cierre:** **lunes 14 de septiembre de 2026, 15:00** hora de Santiago, según Rex 2596, que amplía el plazo de esta línea (Res. Ex. 2166) en su tabla de ámbito nacional. No aplica a responsables de Arica y Parinacota, Tarapacá, Antofagasta ni Atacama. El PDF de bases no trae fecha —verificado sobre sus 38 páginas— pero sí fija la hora: las 15:00 de Santiago del último día hábil.
 **Solicitado al fondo:** $12.000.000 CLP
 **Duración:** 12 meses
 
