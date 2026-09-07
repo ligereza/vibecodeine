@@ -13,7 +13,7 @@
 
 Fuente: `docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-regional-creacion-artistica-2027.pdf`
 (571.863 bytes, sha256 `55efacab049c0ba90fb2a59ddaed4ee5ee00eed7f4887bea57c237e736ddfb71`,
-44 páginas, extraído con `pdftotext -layout` el 2026-09-02).
+40 páginas, extraído con `pdftotext -layout` el 2026-09-05).
 
 | Punto | Lo que dice |
 |---|---|
@@ -49,20 +49,21 @@ y fuera de territorio de pueblo originario debe **cero** documentos del Anexo 2.
 Si el proyecto incorpora artistas invitados al taller, aparecen las cartas de
 compromiso y hay que producirlas.
 
-## 1-bis. El cierre, verificado en la fuente oficial (2026-09-02)
+## 1-bis. El cierre, verificado en la fuente oficial (2026-09-05)
 
 El PDF de bases no trae calendario. Se verificó en el sitio del Ministerio.
 
 | Dato | Valor |
 |---|---|
 | Apertura | 05-08-2026 |
-| **Cierre general** | **miércoles 9 de septiembre de 2026, 15:00 hrs de Santiago** |
+| **Cierre general para la Región Metropolitana** | **viernes 11 de septiembre de 2026, 15:00 hrs de Santiago** |
 | Cierre para Arica y Parinacota, Tarapacá, Antofagasta y Atacama | **16 de septiembre de 2026, 15:00 hrs** |
 | Resolución que aprobó estas bases | Rex 2262 de 2026 |
 | Resolución que amplió el plazo | «Amplía plazo de postulación concurso 2027» |
 | Verificación del PDF local | sha256 **idéntico** al del PDF vivo del Ministerio: cada cifra de este dossier está medida contra las bases vigentes |
 
-**Desde hoy quedan 7 días.**
+**Desde hoy quedan 6 días.** La hora y el estado del formulario deben reconfirmarse
+en el portal antes de enviar.
 
 La ampliación al 16 de septiembre no es opcional ni general: aplica sólo a
 «aquellos responsables de proyectos **pertenecientes a las regiones** de Arica
@@ -180,7 +181,7 @@ pero un documento **puede** contener links referenciales que deben estar
 **vigentes y libres de clave al momento de la evaluación**— el proyecto hoy no
 tiene **nada** habilitado para mostrarse afuera. Si la postulación va a incluir
 un link a la obra viva, hay que declarar elegibilidad pública de un subconjunto
-antes del 9 de septiembre. Es trabajo de curatoría y de permisos, no de código.
+antes del cierre vigente. Es trabajo de curatoría y de permisos, no de código.
 
 ## 3. La obra
 
@@ -389,14 +390,15 @@ obligaciones laborales y previsionales.
 
 ## 8. Decisiones que faltan, y son del operador
 
-Resuelto: la fecha de cierre ya no es un UNKNOWN. **9 de septiembre de 2026,
-15:00 hrs.** Ver sección 1-bis.
+Resuelto provisionalmente: la página oficial vigente informa **11 de septiembre
+de 2026, 15:00 hrs.** para la Región Metropolitana. Ver sección 1-bis y
+reconfirmar antes de enviar.
 
 1. **Región.** Es la primera decisión y ordena todas las demás, porque decide
-   si hay 7 días o 14. Metropolitana concentra $800.000.000 y cierra el 9;
+   qué cierre aplica. Metropolitana concentra $800.000.000 y cierra el 11;
    Arica y Parinacota tiene $85.000.000 y cierra el 16, y ya existe el piloto
-   `ARICA-FONDART-2027`. Pero se postula donde se ejecuta de verdad: los siete
-   días extra exigen ejecutar allá, con espacio anfitrión y pasajes en
+   `ARICA-FONDART-2027`. Pero se postula donde se ejecuta de verdad: los días
+   extra exigen ejecutar allá, con espacio anfitrión y pasajes en
    Operación.
 2. **Registro en Perfil Cultura.** Verificar hoy si existe. Es trámite, no
    decisión, y si falta bloquea todo lo demás.
@@ -418,12 +420,12 @@ Resuelto: la fecha de cierre ya no es un UNKNOWN. **9 de septiembre de 2026,
 8. **Espacio anfitrión con carta.** Es lo que sostiene el 40% de Impacto y no
    se consigue en un día.
 
-### El orden en que conviene hacerlo, dados 7 días
+### El orden en que conviene hacerlo, dados 6 días
 
 1. Verificar Perfil Cultura y la región. 2. Pedir la carta del espacio
 anfitrión, que es lo que depende de terceros. 3. Cotizar montaje y espacio.
 4. Declarar elegibilidad pública del subconjunto que se va a mostrar.
-5. Redactar el FUP. 6. Enviar **antes** del 9, porque el desempate premia el
+5. Redactar el FUP. 6. Enviar **antes** del 11, porque el desempate premia el
 tiempo de sobra.
 
 ## 9. Lo que esta postulación NO debe decir

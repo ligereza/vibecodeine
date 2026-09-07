@@ -133,6 +133,44 @@ class TestBudgetCaps:
         project["budget"]["lead_fee"] = int(requested * 0.41)
         assert "budget.lead_fee" in _fields(review(bases, project), BLOCKING)
 
+    def test_a_minimum_percentage_cap_blocks_when_underfunded(
+        self, bases, valid_project
+    ) -> None:
+        capped = copy.deepcopy(bases)
+        capped["budget_caps"] = [{
+            "id": "transferencia_5_a_10_pct",
+            "field": "knowledge_transfer",
+            "base": "requested_from_fund",
+            "min_percent": 5.0,
+            "max_percent": 10.0,
+        }]
+        project = copy.deepcopy(valid_project)
+        project["budget"]["knowledge_transfer"] = int(
+            project["budget"]["requested_from_fund"] * 0.049
+        )
+        assert "budget.knowledge_transfer" in _fields(
+            review(capped, project), BLOCKING
+        )
+
+    def test_a_minimum_percentage_cap_allows_its_exact_floor(
+        self, bases, valid_project
+    ) -> None:
+        capped = copy.deepcopy(bases)
+        capped["budget_caps"] = [{
+            "id": "transferencia_5_a_10_pct",
+            "field": "knowledge_transfer",
+            "base": "requested_from_fund",
+            "min_percent": 5.0,
+            "max_percent": 10.0,
+        }]
+        project = copy.deepcopy(valid_project)
+        project["budget"]["knowledge_transfer"] = int(
+            project["budget"]["requested_from_fund"] * 0.05
+        )
+        assert "budget.knowledge_transfer" not in _fields(
+            review(capped, project), BLOCKING
+        )
+
 
 class TestDuration:
     def test_over_the_month_limit_blocks(self, bases, valid_project) -> None:
@@ -308,10 +346,11 @@ class TestProvenanceIsPerField:
 class TestRegionalExtensions:
     """Two of them, covering the country between them.
 
-    The northern regions were extended by resolution to a fixed date; Coquimbo
-    to Magallanes by two working days, under Rex 2596. Reporting one would give
-    most applicants the wrong date, and collapsing them into a single
-    "extended" figure would give all of them the wrong date.
+    The northern regions were extended by resolution to a fixed date. Rex 2596
+    records a two-working-day shift for Coquimbo to Magallanes, and the official
+    line page subsequently records its exact 11 September close. Reporting one
+    would give most applicants the wrong date, and collapsing them into a
+    single "extended" figure would give all of them the wrong date.
     """
 
     def _extensions(self, bases) -> list[dict]:
@@ -330,18 +369,32 @@ class TestRegionalExtensions:
         ]
         assert "ARTÍCULO PRIMERO" in north["quote"]
 
-    def test_the_southern_one_declares_a_shift_not_an_invented_date(
+    def test_the_southern_one_keeps_its_shift_and_cites_the_exact_portal_date(
         self, bases
     ) -> None:
-        # The notice gives "two working days", and `closes` itself is not
-        # confirmed. Computing a date from an unconfirmed base and printing it
-        # as fact is the failure this whole entry was corrected for.
+        # Rex 2596 gives the shift. The exact date comes from the official line
+        # page, not arithmetic applied to the generic `closes` value.
         south = next(
             e for e in self._extensions(bases) if e["id"] == "coquimbo-magallanes"
         )
-        assert south["extended_closes"] is None
+        assert south["extended_closes"] == "2026-09-11"
         assert south["extension_business_days"] == 2
         assert south["regions_as_quoted"] == "de Coquimbo a Magallanes"
+        source = south["extended_closes_source"]
+        assert source["kind"] == "official_line_page"
+        assert source["url"].startswith("https://www.fondosdecultura.cl/area/")
+        assert "todas las regiones, excepto" in source["quote"]
+
+    def test_an_exact_extension_warning_names_its_own_source(
+        self, bases, valid_project
+    ) -> None:
+        finding = next(
+            f for f in review(bases, valid_project)
+            if f["field"] == "deadline.extension.coquimbo-magallanes"
+        )
+        assert "2026-09-11" in finding["detail"]
+        assert "official_line_page" in finding["detail"]
+        assert "creacion-artistica-innovacion-y-nuevos-formatos-creativos" in finding["detail"]
 
     def test_every_extension_cites_where_it_was_read(self, bases) -> None:
         for extension in self._extensions(bases):
