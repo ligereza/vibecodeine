@@ -153,10 +153,11 @@
       "note": "Proyeccion completa a proposito. projects/cultura/PORTAFOLIO_ORGANISMO.md la reserva para clientes que necesitan bloques y relaciones, y manda al editor a /api/portfolio/contract, que es la superficie ligera. El costo por item es alto porque el contrato es el entregable, no un accidente."
     },
     "/api/portfolio/production": {
-      "max_bytes_per_item": 60,
-      "collection": "missing",
-      "items_at_capture": 0,
-      "note": "`missing` nombra las fuentes ausentes, una cadena corta por fuente. Igual que /api/status, solo alcanza el umbral donde falta algo: medido en CI el 2026-09-04, 15.4 bytes por item. El techo de 60 cubre un nombre de fuente largo."
+      "max_bytes_per_item": null,
+      "per_item_budgetable": false,
+      "collection": "formats",
+      "items_at_capture": 7,
+      "note": "CORRECCIÓN 2026-09-05: esta no es una colección cuyo costo crezca por fila. La respuesta exitosa lleva un resumen fijo de claims, fuentes y controles, además de los siete formatos; el 2026-09-05 midió 24.552 bytes / 7 formatos = 3.302,4 bytes por formato. El cociente aumenta cuando hay menos formatos y, en la respuesta de error, la lista `missing` crece cuando faltan fuentes. Por eso un techo por ítem premiaría una degradación o mediría sobrecarga fija como si fuera una fila. Se conserva la ruta declarada para que el capturador documente su forma, pero `per_item_budgetable: false` declara que no admite este ratchet; si se necesita limitarla, debe diseñarse un presupuesto de respuesta/contrato distinto, no elevar este techo. Medición: `PYTHONPATH=/home/mak /home/mak/.venv/bin/python -m tools.hub_payload_budget --all`."
     },
     "/api/portfolio/review-queue": {
       "max_bytes_per_item": 1987,
