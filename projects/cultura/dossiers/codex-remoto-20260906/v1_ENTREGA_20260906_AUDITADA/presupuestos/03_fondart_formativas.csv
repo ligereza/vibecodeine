@@ -1,0 +1,15 @@
+item_base,categoria,concepto,cantidad,unidad,precio_unitario,subtotal,fundamento,origen_del_valor
+Personal,Personal,"Asignacion del responsable: diseno del programa, 8 sesiones y 64 h de tutoria",1,global,5400000,5400000,Tope 40% del solicitado,"Asignacion del responsable, bases cap.I.7"
+Personal,Personal,Co-facilitacion en sala (dos grupos de 8),8,sesion,180000,1440000,El trabajo practico en dos grupos requiere apoyo,Honorarios brutos estimados
+Personal,Personal,"Coordinacion y produccion: convocatoria, logistica, registro y rendicion",8,mes,300000,2400000,"Gestion de cohorte, asistencia y verificadores",Honorarios brutos estimados
+Personal,Personal,Edicion y diseno de la guia transferible publicada,1,trabajo,700000,700000,Principal verificador de transferencia,Estimacion
+Operacion,Operacion,Arriendo de sala de trabajo con conectividad,8,sesion,180000,1440000,8 sesiones presenciales de 3 horas,Estimacion; se reemplaza por cotizacion (R-3)
+Operacion,Operacion,Arriendo de sala para tutorias individuales,16,jornada,45000,720000,64 horas de tutoria distribuidas,Estimacion
+Operacion,Operacion,Materiales de trabajo y fichas de archivo impresas,16,participante,25000,400000,Fichas de diagnostico inicial y final por participante,Referencia de imprenta y libreria
+Operacion,Operacion,Alimentacion en sesiones de 3 horas,128,racion,4500,576000,8 sesiones x 16 participantes,Referencia de mercado
+Operacion,Operacion,Difusion de la convocatoria abierta,1,global,450000,450000,"Cohorte abierta, no por invitacion",Estimacion
+Operacion,Operacion,Registro fotografico y documental de las sesiones,1,global,400000,400000,Verificador de ejecucion,Estimacion
+Operacion,Operacion,Apoyo de traslado para participantes con dificultad de acceso,1,fondo,350000,350000,"Gratuidad efectiva, no solo nominal",Supuesto declarado: fondo de apoyo a demanda
+Operacion,Operacion,Publicacion en linea de la guia: hosting y dominio,12,mes,30000,360000,La guia queda publicada y libre,Referencia de mercado
+Imprevistos,Imprevistos,Imprevistos de ejecucion (item de ajuste),1,global,264000,264000,Tope 2% del solicitado,Bases cap.I.7
+,TOTAL,Total solicitado,,,,14900000,Tope de la convocatoria: 15000000 CLP,

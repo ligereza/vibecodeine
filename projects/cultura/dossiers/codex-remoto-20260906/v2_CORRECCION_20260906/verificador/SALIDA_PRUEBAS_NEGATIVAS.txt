@@ -1,0 +1,23 @@
+# Pruebas negativas del verificador de presupuestos
+
+## Control positivo (los CSV entregados deben pasar)
+  ok     CSV entregados pasan la verificacion
+
+## Defectos inyectados (cada uno debe hacer fallar al verificador)
+  ok     subtotal que no cuadra con cantidad x precio         detectado
+  ok     total por sobre el tope de la convocatoria           detectado
+  ok     asignacion del responsable sobre el 40%              detectado
+  ok     imprevistos sobre el 2%                              detectado
+  ok     item Inversion en una linea que no lo contempla      detectado
+  ok     categoria inexistente                                detectado
+  ok     id_coste duplicado dentro del mismo archivo          detectado
+  ok     mismo id_coste pagado por dos proyectos              detectado
+  ok     cantidad cero                                        detectado
+  ok     cantidad no numerica                                 detectado
+  ok     unidad vacia                                         detectado
+  ok     origen_del_valor invalido                            detectado
+  ok     columna faltante                                     detectado
+  ok     archivo de presupuesto ausente                       detectado
+
+detectados: 15    no detectados: 0
+RESULTADO: OK, control positivo mas los 14 defectos inyectados

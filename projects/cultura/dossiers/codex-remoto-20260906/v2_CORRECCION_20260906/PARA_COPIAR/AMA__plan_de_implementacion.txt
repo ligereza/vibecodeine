@@ -1,0 +1,25 @@
+Plan de implementación
+======================
+[147 palabras · 976 caracteres · corte 2026-09-06]
+[pegar desde la linea siguiente]
+
+Meses 1-2 · Unificación de los dos inventarios y curaduría del conjunto.
+Reconciliar identificadores para que una decisión y una lectura puedan recaer
+sobre la misma pieza; localizar los archivos de las piezas que tienen título
+propio y no tienen imagen. Continuar el registro de decisiones ya iniciado,
+con su motivo y su reverso. Producto: inventario unificado y decidido.
+
+Meses 3-4 · Normalización del vocabulario visual y de las relaciones.
+Reprocesamiento y comparación del orden antes y después. Producto: vocabulario
+consistente y comparación documentada.
+
+Meses 5-7 · Construcción de la exportación: de selección decidida a artefacto
+de portafolio y a archivo preservado. Producto: exportador funcionando.
+
+Meses 8-9 · Primera edición del portafolio y prueba de acceso. Producto:
+portafolio.
+
+Meses 10-11 · Segunda vuelta de curaduría sobre lo publicado y documentación
+del método. Producto: método escrito.
+
+Mes 12 · Cierre, respaldo e informe de uso a la Fundación.

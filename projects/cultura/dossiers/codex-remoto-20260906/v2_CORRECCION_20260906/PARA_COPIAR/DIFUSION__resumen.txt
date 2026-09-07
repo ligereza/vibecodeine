@@ -1,0 +1,40 @@
+Resumen — versión extendida
+===========================
+[327 palabras · 2054 caracteres · corte 2026-09-06]
+[pegar desde la linea siguiente]
+
+Las obras existen. Están en un archivo propio que hoy vive en un servicio
+local, en la dirección 127.0.0.1, es decir en ninguna parte para cualquiera
+que no sea yo. Sobre ese archivo hay trabajo curatorial real y verificable:
+entre agosto y septiembre de 2026 registré 87 decisiones en 14 sesiones —13
+selecciones, 65 descartes con motivo y 9 reversiones—, y el inventario está
+explícitamente marcado como no público.
+
+Este proyecto difunde esas obras ya creadas construyendo la superficie que hoy
+no existe.
+
+No es un catálogo en línea. Un catálogo ordena por fecha o por categoría y
+sirve para encontrar lo que ya se busca. Esta superficie propone recorridos
+por relación: qué se parece a qué, qué se repite, qué quedó suelto. Y hace
+algo que casi ninguna interfaz hace: muestra la evidencia de cada relación que
+propone y publica cuánto destruye al ordenarla. La proyección que usa conserva
+0,4855 de la vecindad original —menos de la mitad— y esa cifra va a la vista
+del visitante, no escondida en una nota técnica.
+
+La difusión no termina en publicar. El proyecto contempla una auditoría
+externa de accesibilidad con informe, descripciones alternativas pieza por
+pieza para quien no accede por la vista, un recorrido guiado dentro de la
+propia superficie para quien no quiera explorar por su cuenta, una edición
+imprimible de la guía de lectura para quien no tenga conectividad, y una
+convocatoria dirigida a quienes reconocen el problema: artistas, diseñadores y
+trabajadores de la cultura que mantienen archivos propios.
+
+El proyecto es enteramente digital y deliberadamente. No contempla actividades
+presenciales: el soporte es la superficie que se desarrolla, y añadir eventos
+exigiría comprometer espacios de terceros sin mejorar lo que esta línea
+evalúa.
+
+Lo que queda funcionando después es una superficie pública con obra propia
+accesible, un registro de circulación que permite saber si sirvió, y un método
+publicado. El instrumento seguirá funcionando localmente aunque el hosting
+termine, porque hoy ya funciona sin financiamiento alguno.

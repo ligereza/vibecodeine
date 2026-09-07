@@ -1,0 +1,35 @@
+Resumen — versión extendida
+===========================
+[314 palabras · 1903 caracteres · corte 2026-09-06]
+[pegar desde la linea siguiente]
+
+Un artista con diez años de trabajo tiene miles de archivos y ninguna forma de
+recorrerlos. Sabe lo que busca cuando lo busca; no sabe lo que tiene. Cuando
+llega una postulación, una muestra o una entrevista, el problema aparece de
+golpe: hay que elegir doce piezas de mil y no hay criterio, sólo memoria.
+
+Este laboratorio enseña un método para ese momento. No enseña un software:
+enseña a hacerle preguntas a un archivo y a decidir con ellas. Son seis pasos,
+practicados sobre el material de cada participante.
+
+Distinguir obra de contexto, porque el registro del evento no es la obra
+aunque esté en la misma carpeta. Formular una pregunta de orden: no "cómo
+ordeno esto" sino "qué quiero ver", porque cada pregunta produce un orden
+distinto y ninguno es el verdadero. Leer críticamente lo que una máquina
+propone cuando mira imágenes, incluidos sus errores. Mirar cuánto pierde ese
+orden, con un instrumento que publica esa cifra en vez de esconderla. Decidir
+—aceptar, descartar, dejar en duda— sabiendo que toda decisión es reversible.
+Y llegar a una selección que sirva para algo concreto que la persona declare.
+
+Son ocho sesiones de tres horas —cuatro presenciales y cuatro en línea— más
+cuatro horas de tutoría individual remota, gratuitas, para dieciséis personas.
+Cada participante trabaja sobre su propio material. La guía puede ejecutarse
+manualmente sin entregar archivos a nadie; si se usa el software, su ejecución
+local se probará durante el proyecto, no se presenta como capacidad autónoma
+ya validada en dieciséis computadores. Esa condición no es un detalle de
+privacidad: es parte del método, porque la primera resistencia a ordenar un
+archivo es no querer mostrarlo.
+
+El resultado no es un certificado: las bases lo prohíben y con razón. Es que
+doce personas terminen con su archivo ordenado por primera vez, una guía
+ejecutable sin software, y un método que puedan enseñar a otro.

@@ -1,0 +1,32 @@
+Producción y pruebas
+====================
+[244 palabras · 1508 caracteres · corte 2026-09-06]
+[pegar desde la linea siguiente]
+
+Qué existe y qué se produce, separado sin ambigüedad.
+
+Existe y está verificado al 6 de septiembre de 2026: el servicio corriendo en
+local; un inventario de 2.034 piezas con 5.812 relaciones; lectura visual
+sobre 219 piezas con su métrica de pérdida publicada; y un subsistema de
+decisión curatorial con 87 decisiones registradas en 14 sesiones, 65 descartes
+con motivo y 9 reversiones reales.
+
+No existe y se produce con este financiamiento: la salida de sesión que el
+visitante se lleva; la versión instalable y estable para público; la
+accesibilidad verificada por auditoría externa; y el archivo demostrativo
+delimitado con derechos resueltos.
+
+Plan de pruebas, en tres cortes. Prueba de contrato, mes 4: se ejecuta el
+circuito completo con archivo controlado y se verifica que cada propuesta
+muestre su evidencia y su límite, que ninguna decisión se publique sola y que
+toda decisión sea reversible. Prueba de accesibilidad, mes 5: auditoría
+externa con informe, y corrección de los hallazgos dentro del periodo. Prueba
+de sala, mes 6, antes de abrir: recorridos completos con el montaje instalado,
+midiendo tiempo de sesión, puntos de abandono y si el documento de salida se
+genera sin fallo.
+
+Criterio de aceptación declarado: la obra abre al público sólo si el circuito
+completo se ejecuta sin fallo en veinte recorridos consecutivos y si el
+informe de accesibilidad no deja hallazgos críticos abiertos. Si no se cumple,
+se retrasa la apertura dentro del periodo de ejecución y se registra el
+motivo.
