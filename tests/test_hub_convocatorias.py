@@ -212,7 +212,7 @@ class TestPerFieldProvenance:
         assert by_id["norte-clima"]["cierra"] == "2026-09-16"
         assert "Atacama" in by_id["norte-clima"]["regiones"]
 
-    def test_a_shift_is_carried_as_a_shift(self, surface: dict) -> None:
+    def test_a_shift_with_an_official_exact_date_carries_both(self, surface: dict) -> None:
         fondart = next(
             row for row in surface["items"] if row["id"].startswith("fondart")
         )
@@ -220,7 +220,7 @@ class TestPerFieldProvenance:
             e for e in fondart["ampliaciones_regionales"]
             if e["id"] == "coquimbo-magallanes"
         )
-        assert south["cierra"] is None
+        assert south["cierra"] == "2026-09-11"
         assert south["dias_habiles"] == 2
         assert south["resolucion"] == "Rex 2596"
 
