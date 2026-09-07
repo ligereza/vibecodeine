@@ -29,7 +29,7 @@ def _skip(d: str) -> bool:
     return d in _SKIP_DIRS or d.startswith(".") or d.startswith("_")
 # carpetas que son SALIDA generada (no tocar / no explorar a mano)
 _GENERADAS = {"jobs", "projects", "datadrops", "context/*.html"}
-_KEY_NAMES = {"README.md", "SKILL.md", "pyproject.toml", "cli.py", "CLAUDE.md"}
+_KEY_NAMES = {"README.md", "SKILL.md", "pyproject.toml", "cli.py", "AGENTS.md"}
 _MAXDEPTH = 3
 
 
@@ -94,14 +94,14 @@ _TASK_ROUTES = [
      [".claude/skills/entregas-rd/", ".claude/skills/taller-svg-rd/SKILL.md",
       "assets/logo/", "svg/suplementos_rd/ (derivar: muchos SVG)"]),
     (("voz", "gemini", "agente", "handoff", "contexto"),
-     ["CLAUDE.md (seccion 'Equipo multi-agente')", "context/LAST_HANDOFF.md"]),
+     ["/home/mak/AGENTS.md", "DECISIONES.md"]),
     (("resolume", "chataigne", "noisette"),
      ["src/flujo/resolume/automator.py",
       "BLOQUEADOR: sin .noisette real; no adivinar el schema (ver LAST_HANDOFF)"]),
     (("airdrop", "entrega", "release"),
-     ["docs/AGENT_AIRDROP_PROTOCOL.md", "scripts/validate_airdrop.py"]),
+     ["scripts/validate_airdrop.py"]),
     (("test", "pytest"),
-     ["tests/", "CLAUDE.md (seccion 'Verificacion minima')"]),
+     ["tests/", "/home/mak/AGENTS.md"]),
 ]
 
 
@@ -109,7 +109,7 @@ def _task(keywords: str):
     kw = keywords.lower()
     print(f"# CONTEXTO PARA LA TAREA: {keywords}\n")
     print("== LEER PRIMERO (fuente de verdad, barato) ==")
-    for r in ("CLAUDE.md", "context/LAST_HANDOFF.md"):
+    for r in ("/home/mak/AGENTS.md", "DECISIONES.md"):
         print(f"  {r}")
     hits = [routes for keys, routes in _TASK_ROUTES if any(k in kw for k in keys)]
     print("\n== RUTAS RELEVANTES A LA TAREA ==")

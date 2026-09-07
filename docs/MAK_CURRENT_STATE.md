@@ -1,18 +1,18 @@
 # Estado actual de MAK
 
-> Fuente canónica de orientación para agentes y colaboradores. Leer primero
-> `/home/mak/flujo/agents.md`, ejecutar `tools/agent_bootstrap.py`, luego este
-> archivo y únicamente el paquete `Agent bootstrap — CURRENT` que emite el
-> bootstrap. No recorrer el cuerpo histórico de `context/LAST_HANDOFF.md` para
-> decidir el estado actual. Verificado el 2026-08-31.
+> Esta es una instantánea narrativa fechada, no la autoridad del estado actual.
+> Para orientarse se lee `/home/mak/AGENTS.md` y se mide con
+> `.venv/bin/python tools/mak_status.py`. La continuidad histórica está en
+> `context/HANDOFF_HISTORICO.md`. Las rutas de contratos retirados que aparezcan
+> más abajo son evidencia histórica, no instrucciones vigentes.
 
 Este documento consolida decisiones durables. No reemplaza la evidencia
 histórica, no convierte cada experimento en una obligación y no afirma que una
 credencial funcione solo porque existe en un archivo de entorno.
 
-El traspaso estructurado de la consolidación local está en
-`/home/mak/MAK_CODEX_HANDOFF.md`. Léelo junto con este estado; no crees otro
-inventario paralelo.
+El traspaso histórico está en `context/HANDOFF_HISTORICO.md`. Este documento
+conserva contexto de mediciones anteriores y no debe usarse para inferir el
+estado presente sin volver a medirlo.
 
 ## Consolidación local completada — 2026-08-29
 
