@@ -64,7 +64,13 @@ def test_testing_evidence_is_isolated_and_traceable(rd_db: Path):
             "testeo_enlaces_revision",
         }
         assert expected <= tables
-        assert "registros_testeo" not in tables
+        # `registros_testeo` vive aqui desde el 2026-09-05: el operador pidio una
+        # sola base. Lo que este test protege no es la separacion de archivos
+        # sino que la evidencia importada siga en sus propias tablas `testeo_*`
+        # y no se mezcle con los registros de terreno, que son otra cosa: una
+        # observacion colorimetrica del cuaderno 2025 no es una atencion.
+        assert {"registros_testeo", "atenciones", "encuestas"} <= tables
+        assert "registros_testeo" not in expected
     finally:
         conn.close()
 
@@ -412,3 +418,86 @@ def test_productora_eventos_persisten_veredicto_de_fuente_primaria(tmp_path: Pat
     assert rows[1]["nombre"] == "Acme sin fuente"
     assert json.loads(rows[1]["fuentes_primarias"]) == []
     assert rows[1]["sin_fuente_primaria"] == 1
+
+
+def test_un_rebuild_no_destruye_los_datos_de_terreno(tmp_path):
+    """Lo derivado se rehace; lo acumulado se conserva. Esa es la fusion.
+
+    `build_rd_db()` borra el archivo y lo reescribe entero, y esta bien: todo lo
+    que produce se puede volver a derivar de fuentes canonicas. `registros_testeo`,
+    `atenciones` y `encuestas` no: son registros de terreno que no existen en
+    ninguna otra parte.
+
+    Hasta el 2026-09-05 el choque se evitaba teniendolas en otro archivo. El
+    operador pidio una sola base, asi que el rebuild las rescata antes de borrar
+    y las repone despues. Este es el test que hace que esa promesa se pueda
+    romper: si alguien quita el rescate, la fila desaparece aqui.
+    """
+    ruta = tmp_path / "rd.db"
+    db.build_rd_db(ruta)
+
+    conn = db.connect(ruta)
+    try:
+        conn.execute(
+            "INSERT INTO registros_testeo"
+            "(fecha, evento, sustancia_declarada, reactivo, familia_detectada, coincide)"
+            " VALUES (?,?,?,?,?,?)",
+            ("2026-09-05", "Evento Real", "MDMA", "Marquis", "MDMA / MDA", 1),
+        )
+        conn.execute(
+            "INSERT INTO atenciones(fecha, evento, tipo, rango_etario) VALUES (?,?,?,?)",
+            ("2026-09-05", "Evento Real", "hidratacion", "18-25"),
+        )
+        conn.execute(
+            "INSERT INTO encuestas(fecha, evento, pregunta_id, respuesta) VALUES (?,?,?,?)",
+            ("2026-09-05", "Evento Real", "p1", "si"),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    db.build_rd_db(ruta)
+
+    conn = db.connect(ruta)
+    try:
+        for tabla in ("registros_testeo", "atenciones", "encuestas"):
+            n = conn.execute(f"SELECT count(*) FROM {tabla}").fetchone()[0]
+            assert n == 1, f"el rebuild borro {tabla}: los datos de terreno no se rederivan"
+        fila = tuple(conn.execute(
+            "SELECT sustancia_declarada, reactivo, coincide FROM registros_testeo"
+        ).fetchone())
+        assert fila == ("MDMA", "Marquis", 1), "la fila sobrevivio pero llego alterada"
+        # Y lo derivado si se rehizo: la fusion no congelo la reconstruccion.
+        assert conn.execute(
+            "SELECT count(*) FROM rd_entidades_candidatas"
+        ).fetchone()[0] > 0
+    finally:
+        conn.close()
+
+
+def test_el_rescate_no_duplica_al_reconstruir_dos_veces(tmp_path):
+    """Dos rebuilds seguidos dejan una fila, no dos.
+
+    Un rescate que reinserta sin cuidado convierte cada reconstruccion en una
+    copia mas, y el conteo de atenciones de terreno se infla solo.
+    """
+    ruta = tmp_path / "rd.db"
+    db.build_rd_db(ruta)
+    conn = db.connect(ruta)
+    try:
+        conn.execute(
+            "INSERT INTO atenciones(fecha, evento, tipo) VALUES (?,?,?)",
+            ("2026-09-05", "Evento Real", "escucha"),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    db.build_rd_db(ruta)
+    db.build_rd_db(ruta)
+
+    conn = db.connect(ruta)
+    try:
+        assert conn.execute("SELECT count(*) FROM atenciones").fetchone()[0] == 1
+    finally:
+        conn.close()
