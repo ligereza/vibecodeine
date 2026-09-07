@@ -189,7 +189,7 @@ Medido sobre el CLI real: **98 comandos** (25 sueltos + 73 dentro de 17 grupos).
 
 | Comando | Que hace | Que necesita antes |
 |---|---|---|
-| `py -m flujo rd-datos ingest` | Ingesta un CSV de datos de campo (testeo de reactivos, atenciones o encuestas) a la DB privacy-first data/rd_datos.db. Toda fila pasa por flujo.privacy.scan_text ANTES de persistir: RUT chileno o n... | un CSV de campo; la DB privacy-first se crea sola |
+| `py -m flujo rd-datos ingest` | Ingesta un CSV de datos de campo (testeo de reactivos, atenciones o encuestas) a la DB privacy-first data/rd.db. Toda fila pasa por flujo.privacy.scan_text ANTES de persistir: RUT chileno o numero... | un CSV de campo; la DB privacy-first se crea sola |
 | `py -m flujo rd-datos informe` | Genera el informe trimestral de datos de campo RD (markdown): 3 tablas (tendencias por sustancia/mes, tasa de no-coincidencia por sustancia, atenciones por tipo) precedidas por el disclaimer obliga... | nada |
 
 ### Grupo `rd-db` -- Base de datos RD: reactivos, packs, suplementos, productoras, eventos.
