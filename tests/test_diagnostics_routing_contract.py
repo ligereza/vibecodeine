@@ -128,16 +128,20 @@ def test_there_is_exactly_one_contract_file_and_no_case_variant():
     `AGENTS.md` and `agents.md` were both tracked at this root and each was
     written as the entry point, so on a case-sensitive filesystem they were two
     files and an agent could be routed to either. On 2026-09-03 the operator
-    ordered every contract file deleted and one `AGENTS.md` written from zero;
-    on 2026-09-05 he ordered that one deleted too.
+    ordered every contract file deleted and one `AGENTS.md` written from zero.
 
-    What this pins is the property and not the names, and the property is now
-    stronger: no contract file at the root, in any case variant. Zero is a
-    decision, so a new one appearing is what should fail here.
+    This test then pinned zero contract files, after that one was deleted too.
+    That state was reversed: `AGENTS.md` was restored as the single entry
+    point, and `CONTRIBUTING.md` names reading it as the mandatory first step.
+    Pinning zero made this fail for holding the decided contract.
+
+    What it pins is the property the trap was about, which the reversal did not
+    touch: exactly one contract at this root, and no second file reachable by
+    changing its case.
     """
     variants = sorted(path.name for path in ROOT.iterdir()
                       if path.is_file() and path.name.lower() in
                       ("agents.md", "claude.md"))
-    assert variants == [], variants
+    assert variants == ["AGENTS.md"], variants
     # And the departments no longer carry their own competing copies.
     assert not sorted((ROOT / "contracts").rglob("[aA][gG][eE][nN][tT][sS].md"))
