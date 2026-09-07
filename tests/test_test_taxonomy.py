@@ -492,8 +492,12 @@ def test_agent_skills_are_out_of_scope_and_the_policy_is_the_reason():
     scope IS an offence, so the skill cannot become a silent runtime
     dependency by being moved.
     """
+    # The script this classification was decided on may or may not be on disk:
+    # the operator deleted the entregas-rd skill and staged the removal. Its
+    # presence was pinned here until 2026-09-05, which made a deliberate
+    # deletion look like a broken gate. What must survive the file is the
+    # policy, and that is what the assertions below hold.
     vectorizer = ".claude/skills/entregas-rd/generadores/gen_vectorizar.py"
-    assert (REPO / vectorizer).is_file(), "the audited script must still exist"
     assert not _is_mak_runtime_scope(vectorizer)
     assert ".claude/" in _OUT_OF_SCOPE
     declared = _distributions_declared_by(_MAK_PROFILE)
