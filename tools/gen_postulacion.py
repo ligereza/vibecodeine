@@ -96,6 +96,7 @@ def template(bases: dict) -> dict:
             "items": [],
             "contingency": 0,
             "lead_fee": 0,
+            "knowledge_transfer": 0,
         },
         "conditions": {
             "uses_third_party_works": False,
@@ -215,8 +216,8 @@ def review(bases: dict, project: dict) -> list[dict]:
         )
     # Two extensions cover the whole country between them, so reporting only
     # one would give most applicants the wrong date. Each is reported as
-    # declared: one names a date, the other a shift in working days, and
-    # neither is turned into the other.
+    # declared: a date is only used when its own source records it; a working-
+    # day shift is never silently turned into a date.
     for extension in deadlines.get("regional_extensions") or []:
         if not isinstance(extension, dict):
             continue
@@ -224,15 +225,32 @@ def review(bases: dict, project: dict) -> list[dict]:
             extension.get("applies_to_regions", []))
         if extension.get("extended_closes"):
             moved = f"al {extension['extended_closes']}"
+            date_source = extension.get("extended_closes_source") or extension
         elif extension.get("extension_business_days"):
             moved = f"en {extension['extension_business_days']} días hábiles"
+            date_source = extension
         else:
             continue
+        if not isinstance(date_source, dict):
+            date_source = extension
+        source_kind = (
+            date_source.get("kind")
+            or date_source.get("source_kind")
+            or extension.get("source_kind")
+            or "sin declarar"
+        )
+        source_url = date_source.get("url") or extension.get("url")
+        source_read_on = date_source.get("read_on") or extension.get("read_on")
+        provenance = f"fuente: {source_kind}"
+        if source_url:
+            provenance += f", {source_url}"
+        if source_read_on:
+            provenance += f", leída el {source_read_on}"
         add(
             WARNING,
             f"deadline.extension.{extension.get('id', 'sin_id')}",
             f"ampliación declarada {moved} para {regions} "
-            f"({extension.get('resolution', 'sin resolución')}): si el proyecto "
+            f"({extension.get('resolution', 'sin resolución')}; {provenance}): si el proyecto "
             "pertenece ahí, ese es el plazo y no el de arriba",
         )
 
@@ -290,8 +308,20 @@ def review(bases: dict, project: dict) -> list[dict]:
     for cap in bases.get("budget_caps", []):
         base_value = budget.get(cap.get("base", "requested_from_fund")) or 0
         value = budget.get(cap["field"]) or 0
+        if base_value and "min_percent" in cap:
+            floor = base_value * (cap["min_percent"] / 100.0)
+            if value < floor:
+                share = value / base_value * 100.0
+                add(
+                    BLOCKING,
+                    f"budget.{cap['field']}",
+                    f"{_thousands(value)} es {share:.1f}% de la base; el mínimo es "
+                    f"{cap['min_percent']}% ({_thousands(floor)})",
+                )
+        if not (base_value and "max_percent" in cap):
+            continue
         ceiling = base_value * (cap["max_percent"] / 100.0)
-        if base_value and value > ceiling:
+        if value > ceiling:
             share = value / base_value * 100.0
             add(
                 BLOCKING,

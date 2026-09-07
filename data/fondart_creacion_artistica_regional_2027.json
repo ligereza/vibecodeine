@@ -9,7 +9,7 @@
     "covers": "objetivo, áreas, montos, topes de presupuesto, duración máxima, criterios con sus ponderaciones, secciones y documentos. NO cubre las fechas de apertura y cierre: el PDF no contiene ninguna. Ver `deadlines.source`.",
     "bases_pdf": "https://www.fondosdecultura.cl/wp-content/uploads/2026/08/CreacionArtistica-Regional2027.pdf",
     "portal": "https://www.fondosdecultura.gob.cl",
-    "read_on": "2026-09-04",
+    "read_on": "2026-09-05",
     "note": "Values transcribed from the bases PDF on the date above, each citing the section it comes from. Verify against the current PDF before applying: the authority can replace it without notice."
   },
   "deadlines": {
@@ -20,12 +20,12 @@
     "source": {
       "kind": "portal_and_press",
       "verified": "2026-09-04",
-      "note": "CORRECCION 2026-09-04: `opens` y `closes` NO salen del PDF de bases. Se comprobó buscando cualquier fecha con el patrón `N de MES de 2026|2027` en el texto extraído del PDF: cero coincidencias. El PDF fija la duración del proyecto (12 meses), no el calendario. Estas dos fechas venían de resúmenes de portal y prensa y quedaron atribuidas por error a las bases. Lo único que el PDF sostiene aquí es `max_duration_months`.",
+      "note": "CORRECCION 2026-09-04, complementada 2026-09-05: `opens` y el cierre general `closes` NO salen del PDF de bases. Se comprobó buscando cualquier fecha con el patrón `N de MES de 2026|2027` en el texto extraído del PDF: cero coincidencias. El PDF fija la duración del proyecto (12 meses), no el calendario. Estas dos fechas venían de resúmenes de portal y prensa y quedaron atribuidas por error a las bases. `closes` conserva el 8 de septiembre de 2026 como fecha general original registrada el 2026-09-04; no es un cierre final aplicable a una región con ampliación. Las fechas regionales posteriores se declaran separadamente en `regional_extensions`, con su propia fuente. La URL exacta del resumen original de 8 de septiembre no quedó registrada: UNRESOLVED.",
       "official_document_consulted": "https://www.fondosdecultura.cl/wp-content/uploads/2026/07/Amplia-plazo-de-postulacion-concurso-2027.pdf",
-      "what_that_document_states": "Los cierres de las convocatorias 2027 caen «entre los días 31 de agosto y 10 de septiembre de 2026». No fija por sí solo el día exacto de esta línea.",
-      "todo": "Confirmar el día exacto en el portal antes de postular. La fecha de abajo es la mejor disponible, no una lectura del documento oficial."
+      "what_that_document_states": "La resolución de ampliación de norte dice que los cierres originales de las convocatorias 2027 caían «entre los días 31 de agosto y 10 de septiembre de 2026», a las 15:00 de Santiago. No fija por sí sola el día exacto de esta línea ni los cierres posteriores de cada ampliación regional.",
+      "todo": "Antes de postular, identificar la región y reconfirmar en el portal la ampliación que le corresponde; `closes` es la fecha general original y no sustituye una ampliación regional."
     },
-    "regional_extensions_note": "Son DOS ampliaciones distintas, y entre ambas cubren el país entero: casi ningún postulante se rige por `closes` a secas. Se registran como lista y nunca reemplazan a `closes`, porque aplicar la ampliación de la región equivocada le daría al postulante días que no tiene.",
+    "regional_extensions_note": "Son DOS ampliaciones distintas, y entre ambas cubren el país entero: casi ningún postulante se rige por `closes` a secas. Se registran como lista y nunca reemplazan a `closes`, porque aplicar la ampliación de la región equivocada le daría al postulante días que no tiene. `closes` conserva el cierre general original; cada ampliación lleva sus regiones y fuente. Una fecha exacta de ampliación solo se escribe cuando su fuente la declara, nunca como cálculo de días hábiles.",
     "regional_extensions": [
       {
         "id": "norte-clima",
@@ -65,10 +65,17 @@
           "Magallanes"
         ],
         "regions_as_quoted": "de Coquimbo a Magallanes",
-        "extended_closes": null,
+        "extended_closes": "2026-09-11",
         "extension_business_days": 2,
         "quote": "se amplía en dos días hábiles el plazo de cierre de Fondos Cultura 2027 para las regiones de Coquimbo a Magallanes. – Rex 2596",
-        "note": "El aviso da un desplazamiento («dos días hábiles»), no una fecha, y `closes` mismo no está confirmado, así que aquí no se escribe una fecha calculada: sería aritmética sobre una base insegura presentada como dato. La lista de regiones expande el tramo citado; si el desglose por región importa, verificar contra la resolución.",
+        "extended_closes_source": {
+          "kind": "official_line_page",
+          "url": "https://www.fondosdecultura.cl/area/diseno/creacion-artistica-innovacion-y-nuevos-formatos-creativos-fondart-regional-2027/",
+          "read_on": "2026-09-05",
+          "quote": "Plazo de postulación todas las regiones, excepto Arica y Parinacota, Tarapacá, Antofagasta y Atacama: 11 de septiembre a las 15:00 horas de Santiago de Chile.",
+          "scope_note": "Metropolitana está en el tramo Coquimbo–Magallanes y no figura entre las cuatro excepciones; por eso esta fecha sí le corresponde."
+        },
+        "note": "El aviso Rex 2596 da un desplazamiento («dos días hábiles»), no una fecha. La ficha oficial de esta línea, leída el 2026-09-05 y citada en `extended_closes_source`, declara después la fecha exacta de 11 de septiembre para todas las regiones fuera del norte, incluida Metropolitana. `extended_closes` transcribe esa declaración; no se calcula a partir de `closes` ni del desplazamiento. La lista de regiones expande el tramo citado; si el desglose por región importa, verificar contra la resolución.",
         "reason": "facilitar el proceso de postulación"
       }
     ]
