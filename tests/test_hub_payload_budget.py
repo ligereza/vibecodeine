@@ -57,9 +57,15 @@ class TestBudgetFile:
         assert data["schema"] == SCHEMA
         assert data["routes"], "an empty budget would pass forever"
 
-    def test_every_declared_route_has_a_ceiling(self, budget: dict) -> None:
+    def test_every_declared_route_has_a_ceiling_or_an_explained_exemption(
+        self, budget: dict
+    ) -> None:
         for route, rule in budget["routes"].items():
             cap = rule.get("max_bytes_per_item")
+            if rule.get("per_item_budgetable") is False:
+                assert cap is None, f"{route} opts out but still declares a ceiling"
+                assert rule.get("note"), f"{route} opts out without saying why"
+                continue
             assert isinstance(cap, int) and cap > 0, f"{route} has no usable ceiling"
 
     def test_the_expensive_routes_at_scale_say_why(self, budget: dict) -> None:
@@ -67,6 +73,8 @@ class TestBudgetFile:
         # thousand is the defect this file exists to catch, and a high ceiling
         # there with no reason is indistinguishable from an oversight.
         for route, rule in budget["routes"].items():
+            if rule.get("per_item_budgetable") is False:
+                continue
             costly = rule["max_bytes_per_item"] > 600
             at_scale = rule.get("items_at_capture", 0) >= 500
             if costly and at_scale:
@@ -167,6 +175,21 @@ class TestTheRatchetActuallyCatches:
         fresh = capture(measured, budget)
         for route in annotated:
             assert fresh["routes"][route].get("note"), f"--capture dropped {route}'s note"
+
+    def test_capture_keeps_an_explicit_per_item_exemption(
+        self, measured: dict, budget: dict
+    ) -> None:
+        exempt = [
+            route for route, rule in budget["routes"].items()
+            if rule.get("per_item_budgetable") is False
+        ]
+        if not exempt:
+            pytest.skip("no explicit per-item exemptions")
+        fresh = capture(measured, budget)
+        for route in exempt:
+            rule = fresh["routes"][route]
+            assert rule.get("per_item_budgetable") is False
+            assert rule.get("max_bytes_per_item") is None
 
 
 class TestASmallCollectionIsNotJudged:

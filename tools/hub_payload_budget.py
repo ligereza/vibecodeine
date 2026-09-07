@@ -9,7 +9,9 @@ Total bytes are the wrong ratchet: they depend on how big the operator's
 archive is that day, so a pin would fail on this machine and pass vacuously on
 a fresh clone. **Bytes per item** is a property of the route's shape. A route
 spending 620 bytes to place a dot on a map is spending them whether the archive
-holds 3 rows or 7044.
+holds 3 rows or 7044. A route can explicitly set ``per_item_budgetable: false``
+when its response is an aggregate with no meaningful per-item growth; that
+exception must carry its reason in the budget file.
 
 The tool drives the dispatcher in-process with a request double -- it starts no
 server, opens no socket, and only issues GETs, which the hub answers read-only.
@@ -176,6 +178,11 @@ def findings(measured: dict, budget: dict) -> list[dict]:
                 ),
             })
             continue
+        # An aggregate response can be declared explicitly outside this
+        # ratchet.  Treating its fixed body as a tiny list's per-item cost
+        # would make the ratio worsen as the response becomes more complete.
+        if rule.get("per_item_budgetable") is False:
+            continue
         cap = rule.get("max_bytes_per_item")
         if cap is None:
             continue
@@ -227,6 +234,18 @@ def capture(measured: dict, budget: dict) -> dict:
         if "bytes_per_item" not in row:
             continue
         previous = declared.get(row["route"], {})
+        # Keep an explicit exemption explicit when refreshing the record.
+        # Otherwise a local measurement of a small aggregate would silently
+        # turn it back into a per-item ceiling and revive the inverse metric.
+        if previous.get("per_item_budgetable") is False:
+            declared[row["route"]] = {
+                "max_bytes_per_item": None,
+                "per_item_budgetable": False,
+                "collection": row["collection"],
+                "items_at_capture": row["items"],
+                "note": previous.get("note", ""),
+            }
+            continue
         declared[row["route"]] = {
             "max_bytes_per_item": int(row["bytes_per_item"] * 1.25) + 1,
             "collection": row["collection"],
