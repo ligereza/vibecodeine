@@ -1,0 +1,53 @@
+Descripción del proyecto — versión extendida
+============================================
+[524 palabras · 2937 caracteres · corte 2026-09-06]
+[pegar desde la linea siguiente]
+
+Un archivo de artista crece sin forma. El mío existe hoy en dos inventarios
+distintos, y conviene decirlo con precisión porque son cosas diferentes.
+
+El primero es un atlas de lectura por máquina: 2.034 piezas y 5.812
+relaciones. Sobre un campo activo de 219 piezas hay una lectura visual
+completa —color, estilo y una descripción automática de lo que se ve— y una
+proyección que dispone lo parecido cerca. Esa proyección publica su propio
+costo: conserva 0,4855 de la vecindad original. Menos de la mitad. El sistema
+lo declara en vez de esconderlo, y esa es la única razón por la que confío en
+él.
+
+El segundo es una bandeja de curaduría con 7.044 registros, marcada como no
+pública. Ahí decido yo. Entre el 7 de agosto y el 2 de septiembre de 2026
+registré 87 decisiones en 14 sesiones sobre 68 registros: 13 selecciones, 65
+descartes y 9 reversiones. Los 65 descartes llevan el mismo motivo, "no es
+obra", que es el juicio más básico y más difícil sobre un archivo propio. De
+103 clasificaciones, sólo 3 llegué a confirmarlas, y ninguna está promovida a
+público.
+
+Ese trabajo existe y no se ve. El editor exporta un archivo de datos. Existe
+además un compilador de dossier que funciona y valida, pero su propio contrato
+lo excluye: no lee el archivo, no abre una base de datos y no publica nada.
+
+Y hay algo peor, que descubrí al intentar armar el portafolio de esta misma
+postulación. Los dos inventarios no se tocan: de las 68 piezas que decidí,
+ninguna aparece entre las 219 que la máquina leyó. Las ocho piezas que sí
+llevan mi título, mi año y mi texto —las únicas con voz de autor en todo el
+archivo— no tienen archivo en disco: sus rutas no existen. De modo que hoy no
+hay una sola pieza que reúna las tres condiciones que un portafolio necesita:
+que yo la haya reconocido como obra, que exista una lectura de lo que se ve, y
+que el archivo esté ahí.
+
+Esta beca financia cerrar esa distancia, y son cuatro cosas concretas. Unir
+los dos inventarios en uno solo, que es la condición para que una decisión y
+una lectura puedan caer sobre la misma pieza. Terminar la curaduría sobre el
+conjunto, en vez de las 68 piezas alcanzadas. Normalizar el vocabulario
+visual, que hoy está sucio —el mismo azul aparece con y sin mayúscula, algunas
+piezas traen los colores en inglés, y hay material tipificado como obra que la
+lectura describe como un tatuaje— porque decidir con qué palabras se describe
+mi trabajo es una decisión de autor y no de mantenimiento. Y construir la
+exportación que convierte una selección decidida en un portafolio publicable y
+en un archivo preservado con su procedencia.
+
+No prometo que la máquina encuentre el orden correcto: su propia métrica dice
+que no puede. Prometo un archivo ordenado por una persona con ayuda de una
+máquina que muestra su trabajo, y un instrumento que después queda documentado
+para que otro artista haga lo mismo con el suyo, sujeto a la prueba de uso y a
+la licencia que yo defina.

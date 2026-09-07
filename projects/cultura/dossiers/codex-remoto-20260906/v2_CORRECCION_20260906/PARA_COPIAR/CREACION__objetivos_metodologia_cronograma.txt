@@ -1,0 +1,40 @@
+Objetivos, metodología y cronograma
+===================================
+[298 palabras · 2105 caracteres · corte 2026-09-06]
+[pegar desde la linea siguiente]
+
+Objetivo general: producir y exhibir un dispositivo de diseño que permita a
+sus públicos recorrer un archivo mediante relaciones visibles, participar en
+su interpretación y salir con un documento propio de lectura.
+
+Específicos: consolidar una versión estable e instalable con archivo
+demostrativo de derechos resueltos; construir la salida de sesión que el
+visitante se lleva; alcanzar accesibilidad verificada por auditoría externa;
+exhibir cuatro semanas en un espacio de acceso público con mediación del
+responsable; y documentar el proceso, sus límites y los casos en que la
+lectura relacional no mejoró la comprensión.
+
+Metodología y cronograma, 12 meses desde el 1 de abril de 2027. Mes 1:
+curaduría del archivo demostrativo y especificación. Producto: ficha de corpus
+con derechos resueltos. Meses 2-3: producción de la versión de exhibición,
+construcción de la salida de sesión e implementación de accesibilidad.
+Producto: versión estable reproducible. Mes 4: prueba interna con archivo
+controlado, registro de fallos y confirmación del espacio. Producto: registro
+de fallos. Mes 5: auditoría externa de accesibilidad y corrección. Producto:
+informe. Meses 6-8: montaje, apertura mediada y cuatro semanas de exhibición
+con acompañamiento del responsable. Producto: obra instalada y registro de
+visitas. Meses 9-12: análisis de recorridos y descartes, documento
+metodológico con resultados negativos, registro audiovisual, rendición y
+cierre.
+
+Protección de participantes. Nadie entrega su archivo: la obra opera sobre el
+archivo demostrativo del proyecto. Del visitante se registran, si consiente,
+decisiones agregadas y anónimas sobre ese archivo demostrativo, nunca material
+propio ni datos personales.
+
+Ejecución sin equipo de trabajo. El responsable asume dirección, diseño,
+implementación, mediación en sala y administración. Los servicios contratados
+son puntuales y con entregable: montaje, impresión, flete, auditoría de
+accesibilidad y registro audiovisual. La mediación no se delega: por eso los
+horarios de acompañamiento son acotados y las metas de público se fijaron en
+consecuencia.

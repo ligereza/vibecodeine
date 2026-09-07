@@ -1,0 +1,25 @@
+Actividades, resultados e indicadores
+=====================================
+[243 palabras · 1513 caracteres · corte 2026-09-06]
+[pegar desde la linea siguiente]
+
+| Actividad | Resultado | Verificador |
+|---|---|---|
+| Selección definitiva y resolución de derechos | Conjunto de obras publicables | Ficha de selección con estado de derechos |
+| Preparación de piezas | Obras en formato publicable | Inventario de piezas preparadas |
+| Sistema visual y plantillas | Superficie diseñada | Entregable del servicio de diseño |
+| Publicación de la superficie | Superficie en línea estable | Dirección pública y registro de disponibilidad |
+| Auditoría externa de accesibilidad | Informe con hallazgos y correcciones | Informe firmado por quien audita |
+| Descripciones alternativas | Alternativa no visual completa | Textos publicados |
+| Convocatoria dirigida | Público alcanzado | Registro de convocatoria |
+| Recorrido guiado publicado | Vía de lectura acompañada | Recorrido en línea |
+| Edición imprimible de la guía | Acceso sin conectividad | Documento descargable y tirada corta |
+| Registro de circulación | Informe de acceso | Informe de acceso y circulación |
+| Publicación del método | Documento con resultados negativos | Documento publicado |
+
+Metas: superficie estable durante al menos 8 de los 12 meses; descripción
+alternativa para el 100% de las obras publicadas; 1 informe de auditoría de
+accesibilidad con correcciones aplicadas; al menos 400 visitas registradas; al
+menos 120 recorridos completos; 1 recorrido guiado publicado; 1 edición
+imprimible de la guía disponible y 200 ejemplares de tirada corta; 1 informe
+de acceso y 1 documento de método publicados.

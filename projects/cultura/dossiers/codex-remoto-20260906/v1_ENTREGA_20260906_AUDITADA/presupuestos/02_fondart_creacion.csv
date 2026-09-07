@@ -1,0 +1,17 @@
+item_base,categoria,concepto,cantidad,unidad,precio_unitario,subtotal,fundamento,origen_del_valor
+Personal,Personal,"Asignacion del responsable: direccion, diseno e implementacion",1,global,7000000,7000000,Tope 40% del solicitado,"Asignacion del responsable, bases cap.I.7"
+Personal,Personal,Mediacion: diseno del protocolo y acompanamiento en sala,5,mes,450000,2250000,Sin mediacion el dispositivo se mira y no se usa,Honorarios brutos estimados
+Personal,Personal,Apoyo tecnico de montaje y revision de accesibilidad,2,mes,500000,1000000,Montaje e implementacion de accesibilidad,Honorarios brutos estimados
+Personal,Personal,"Documentacion, registro y edicion del documento metodologico",3,mes,400000,1200000,Verificador comprometido en el informe final,Honorarios brutos estimados
+Operacion,Operacion,Aporte al espacio anfitrion por 4 semanas de exhibicion,1,global,1000000,1000000,Exhibicion obligatoria segun bases cap.I.3,Estimacion; se reemplaza por cotizacion del espacio (R-3)
+Operacion,Operacion,"Produccion de montaje: iluminacion, cableado, senaletica, adecuacion",1,global,600000,600000,Instalacion segura y legible en sala,Estimacion
+Operacion,Operacion,Impresion de guia de lectura y material de orientacion,300,ejemplar,1200,360000,Alternativa impresa exigida por accesibilidad,Referencia de imprenta
+Operacion,Operacion,Difusion de la exhibicion y registro fotografico,1,global,500000,500000,Convocatoria de publicos y verificador,Estimacion
+Operacion,Operacion,Traslados de montaje y desmontaje,2,servicio,140000,280000,Movimiento de equipamiento y mobiliario,Referencia de flete en RM
+Operacion,Operacion,"Hosting, dominio y respaldo durante la ejecucion",12,mes,30000,360000,Mantencion del entorno de trabajo del proyecto,Referencia de mercado
+Inversion,Inversion,Computador de exhibicion capaz de ejecutar la version local,1,unidad,1300000,1300000,Destino posterior declarado: continuidad de exhibiciones y prestamo,Referencia de retail; se reemplaza por cotizacion
+Inversion,Inversion,Pantalla o proyector de resolucion suficiente,1,unidad,900000,900000,Destino posterior declarado: continuidad de exhibiciones,Referencia de retail
+Inversion,Inversion,"Mesa, soporte y perifericos de navegacion",1,conjunto,650000,650000,Destino posterior declarado: continuidad de exhibiciones,Referencia de retail
+Inversion,Inversion,Almacenamiento de respaldo del proyecto,1,unidad,280000,280000,Destino posterior declarado: respaldo del archivo del artista,Referencia de retail
+Imprevistos,Imprevistos,Imprevistos de ejecucion,1,global,320000,320000,Tope 2% del solicitado,Bases cap.I.7
+,TOTAL,Total solicitado,,,,18000000,Tope de la convocatoria: 18000000 CLP,

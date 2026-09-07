@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Maximiliano Solorza — Artista visual & VJ</title>
+  <style>
+    @page { size: A4; margin: 0; }
+    :root {
+      --ink: #17201f;
+      --muted: #61706d;
+      --line: #dce4e1;
+      --paper: #fffefd;
+      --accent: #0b806f;
+      --accent-pale: #e6f4f0;
+      --canvas: #edf2f0;
+      --ui: #16211f;
+    }
+    * { box-sizing: border-box; }
+    html { background: var(--canvas); }
+    body {
+      margin: 0; padding: 28px 16px 44px;
+      color: var(--ink); background: var(--canvas);
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      font-size: 13px; line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+    button { font: inherit; }
+
+    /* Editor bar — does not print */
+    .toolbar {
+      width: min(210mm, 100%); margin: 0 auto 16px;
+      display: flex; justify-content: space-between; align-items: center; gap: 16px;
+    }
+    .toolbar__note { color: var(--muted); font-size: 12px; }
+    .toolbar__actions { display: flex; gap: 8px; align-items: center; }
+    .button {
+      appearance: none; cursor: pointer; border: 1px solid #cbd6d2; border-radius: 7px;
+      padding: 9px 13px; background: #fff; color: var(--ink); font-size: 12px; font-weight: 700;
+      transition: transform .15s, box-shadow .15s, background .15s;
+    }
+    .button:hover { transform: translateY(-1px); box-shadow: 0 4px 12px #17201f1c; }
+    .button--primary { background: var(--ui); border-color: var(--ui); color: #fff; }
+    .button--icon { width: 35px; padding: 8px 0; font-size: 16px; }
+    .editor-panel { width: min(210mm, 100%); margin: 0 auto 16px; padding: 13px; border: 1px solid #cfdbd7; border-radius: 9px; background: #fff; display: none; grid-template-columns: repeat(4, 1fr); gap: 12px; box-shadow: 0 7px 20px rgba(21,38,34,.07); }
+    .editor-panel.is-open { display: grid; }
+    .tool-group { min-width: 0; }
+    .tool-label { display:block; margin: 0 0 5px; color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: .11em; text-transform: uppercase; }
+    .tool-select { width: 100%; border: 1px solid #cbd6d2; border-radius: 5px; padding: 7px; background: #fff; color: var(--ink); font-size: 11px; }
+    .tool-actions { display:flex; flex-wrap:wrap; gap:5px; }
+    .tool-mini { padding: 6px 7px; border:1px solid #cbd6d2; border-radius: 5px; background:#fff; color:var(--ink); font-size:10px; font-weight:700; cursor:pointer; }
+    .tool-mini.active { border-color:var(--accent); background:var(--accent-pale); color:var(--accent); }
+    .photo { display:none; width: 51px; height:51px; object-fit:cover; border-radius:50%; border:2px solid var(--accent); }
+    .has-photo .photo { display:block; }
+
+    .page {
+      position: relative; width: 210mm; min-height: 297mm; margin: auto; padding: 15mm 16mm 12mm;
+      background: var(--paper); box-shadow: 0 12px 38px rgba(21, 38, 34, .14);
+      overflow: hidden;
+    }
+    .page::before {
+      content: ""; position: absolute; top: 0; right: 0; width: 40%; height: 6px; background: var(--accent);
+    }
+
+    /* Header */
+    .header { display: grid; grid-template-columns: 1fr auto; gap: 24px; padding-bottom: 17px; border-bottom: 1px solid var(--ink); }
+    .eyebrow, .section-title, .contact-label {
+      font-size: 9px; line-height: 1.2; font-weight: 800; letter-spacing: .16em; text-transform: uppercase;
+    }
+    .eyebrow { color: var(--accent); margin-bottom: 6px; }
+    h1 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-weight: 500; font-size: 35px; line-height: 1; letter-spacing: -.035em; }
+    .role { margin: 8px 0 0; color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: .02em; }
+    .contact { align-self: end; display: grid; gap: 4px; text-align: right; color: var(--muted); font-size: 11px; }
+    .contact a { color: inherit; text-decoration: none; }
+    .contact a:hover { color: var(--accent); }
+
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr) 48mm; gap: 13mm; margin-top: 17px; }
+    .section { position: relative; margin-bottom: 19px; }
+    .section-title { display: flex; align-items: center; gap: 9px; color: var(--ink); margin: 0 0 10px; }
+    .section-title::after { content: ""; height: 1px; flex: 1; background: var(--line); }
+    .profile { margin: 0; color: #33413e; font-size: 13px; line-height: 1.7; }
+
+    /* Experience */
+    .entry { position: relative; padding-bottom: 14px; margin-bottom: 14px; border-bottom: 1px solid var(--line); break-inside: avoid; }
+    .entry:last-of-type { margin-bottom: 0; }
+    .entry-head { display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 10px; margin-bottom: 6px; }
+    .entry h3 { margin: 0; font-size: 13px; line-height: 1.28; font-weight: 800; }
+    .date { color: var(--accent); font-size: 10px; font-weight: 800; letter-spacing: .04em; white-space: nowrap; }
+    ul { padding: 0; margin: 0; list-style: none; }
+    li { position: relative; padding-left: 12px; margin: 3px 0; color: #4f5d5a; font-size: 11.5px; line-height: 1.48; }
+    li::before { content: ""; position: absolute; left: 0; top: .6em; width: 4px; height: 4px; background: var(--accent); border-radius: 50%; }
+
+    /* Aside */
+    .aside { padding-left: 12px; border-left: 1px solid var(--line); }
+    .aside .section { margin-bottom: 20px; }
+    .skill { margin-bottom: 12px; }
+    .skill:last-child { margin-bottom: 0; }
+    .skill h3 { margin: 0 0 3px; color: var(--accent); font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; }
+    .skill p { margin: 0; color: #44514e; font-size: 11px; line-height: 1.55; }
+    .education-item + .education-item { margin-top: 12px; }
+    .education-item h3 { margin: 0 0 2px; font-size: 11.5px; line-height: 1.35; }
+    .education-item p { margin: 0; color: var(--muted); font-size: 10.5px; }
+    .course-list li { font-size: 10.5px; }
+
+    .footer { margin-top: 2px; padding-top: 10px; border-top: 1px solid var(--line); color: var(--muted); font-size: 10.5px; }
+    .footer strong { color: var(--accent); }
+
+    /* Editing affordances */
+    [contenteditable="true"] { border-radius: 2px; transition: background .15s, outline-color .15s; }
+    [contenteditable="true"]:hover { background: var(--accent-pale); outline: 1px dashed #80bdb1; }
+    [contenteditable="true"]:focus { background: #f4fbf9; outline: 2px solid var(--accent); outline-offset: 2px; }
+    .entry-controls, .section-controls { display: none; }
+    .editor-on .entry-controls, .editor-on .section-controls { display: flex; }
+    .entry-controls { position: absolute; right: -31px; top: 0; flex-direction: column; gap: 3px; opacity: 0; transition: opacity .15s; }
+    .entry:hover .entry-controls { opacity: 1; }
+    .section-controls { margin-top: 9px; gap: 6px; }
+    .icon-button, .add-button { cursor: pointer; border: 1px solid #bfd3ce; background: #fff; color: var(--accent); border-radius: 4px; font-size: 11px; font-weight: 700; }
+    .icon-button { width: 21px; height: 21px; padding: 0; }
+    .icon-button--delete { color: #a34343; border-color: #e2c7c7; }
+    .add-button { padding: 5px 8px; }
+
+    @media (max-width: 760px) {
+      body { padding: 0; background: var(--paper); }
+      .toolbar { position: sticky; z-index: 2; top: 0; width: 100%; padding: 10px 12px; margin: 0; background: #edf2f0ee; backdrop-filter: blur(8px); }
+      .toolbar__note { display: none; }
+      .toolbar__actions { margin-left: auto; }
+      .editor-panel { width: calc(100% - 24px); grid-template-columns: 1fr 1fr; margin: 0 auto 12px; }
+      .page { width: 100%; min-height: 100vh; padding: 36px 24px; box-shadow: none; }
+      .header, .layout { grid-template-columns: 1fr; }
+      .contact { text-align: left; }
+      .layout { gap: 8px; }
+      .aside { border-left: 0; border-top: 1px solid var(--line); padding: 18px 0 0; }
+      .entry-controls { right: 0; }
+    }
+    @media print {
+      html, body { background: #fff; padding: 0; }
+      .toolbar, .entry-controls, .section-controls { display: none !important; }
+      .page { width: 210mm; min-height: 297mm; margin: 0; box-shadow: none; }
+      [contenteditable="true"] { outline: none !important; background: none !important; }
+      .section, .entry { break-inside: avoid; page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body class="editor-on">
+  <nav class="toolbar" aria-label="Herramientas del currículum">
+    <span class="toolbar__note">Haz clic sobre el texto para editar · Los cambios se guardan en este navegador.</span>
+    <div class="toolbar__actions">
+      <button class="button button--icon" id="undo" type="button" title="Deshacer">↶</button>
+      <button class="button button--icon" id="redo" type="button" title="Rehacer">↷</button>
+      <button class="button" id="tools-toggle" type="button">Herramientas</button>
+      <button class="button" id="reset" type="button">Restablecer</button>
+      <button class="button button--primary" type="button" onclick="window.print()">Exportar PDF</button>
+    </div>
+  </nav>
+  <section class="editor-panel" id="editor-panel" aria-label="Herramientas de edición">
+    <div class="tool-group"><label class="tool-label" for="palette">Paleta</label><select class="tool-select" id="palette"><option value="verde">Verde editorial</option><option value="azul">Azul eléctrico</option><option value="ciruela">Ciruela</option><option value="naranja">Naranja</option><option value="negro">Monocromo</option></select></div>
+    <div class="tool-group"><label class="tool-label" for="typeface">Tipografía</label><select class="tool-select" id="typeface"><option value="editorial">Editorial</option><option value="moderna">Moderna</option><option value="clasica">Clásica</option></select></div>
+    <div class="tool-group"><span class="tool-label">Tamaño de texto</span><div class="tool-actions"><button class="tool-mini" data-scale=".92">Pequeño</button><button class="tool-mini active" data-scale="1">Normal</button><button class="tool-mini" data-scale="1.08">Grande</button></div></div>
+    <div class="tool-group"><span class="tool-label">Contenido</span><div class="tool-actions"><button class="tool-mini" id="add-section">+ Sección</button><button class="tool-mini" id="add-skill">+ Habilidad</button><label class="tool-mini" for="photo-input">+ Foto</label><input id="photo-input" type="file" accept="image/*" hidden><button class="tool-mini" id="remove-photo">Quitar foto</button></div></div>
+  </section>
+
+  <main class="page" id="cv">
+    <header class="header">
+      <div>
+        <img class="photo" id="profile-photo" alt="Foto de perfil">
+        <div class="eyebrow" contenteditable="true">Currículum creativo</div>
+        <h1 contenteditable="true">Maximiliano Solorza</h1>
+        <p class="role" contenteditable="true">Artista visual · VJ · Automatización creativa</p>
+      </div>
+      <address class="contact">
+        <a href="https://instagram.com/iskvw" target="_blank" rel="noopener" contenteditable="true">@ISKVW</a>
+        <span contenteditable="true">Santiago, Chile</span>
+        <span contenteditable="true">Disponible para proyectos locales e internacionales</span>
+      </address>
+    </header>
+
+    <div class="layout">
+      <div>
+        <section class="section">
+          <h2 class="section-title">Perfil</h2>
+          <p class="profile" contenteditable="true">Artista visual y VJ con foco en producción visual en vivo, dirección creativa, escenografía y automatización de flujos de trabajo para proyectos culturales. Desarrollo universos visuales que conectan música, escena y tecnología, trabajando con clientes de Chile y el extranjero en inglés avanzado.</p>
+        </section>
+
+        <section class="section" id="experience-section">
+          <h2 class="section-title">Experiencia seleccionada</h2>
+          <article class="entry">
+            <div class="entry-controls"><button class="icon-button" data-move="up" title="Subir">↑</button><button class="icon-button" data-move="down" title="Bajar">↓</button><button class="icon-button icon-button--delete" data-delete="entry" title="Eliminar">×</button></div>
+            <div class="entry-head"><h3 contenteditable="true">VJ &amp; Artista Visual Independiente</h3><span class="date" contenteditable="true">2022 — PRESENTE</span></div>
+            <ul><li contenteditable="true">VJ residente de Drefquila desde 2024 y de su fiesta Bees and Honey.</li><li contenteditable="true">Producción de visuales para eventos, animaciones para marcas y productos, portadas y piezas animadas para músicos.</li><li contenteditable="true">Gestión directa de clientes internacionales en inglés.</li></ul>
+          </article>
+          <article class="entry">
+            <div class="entry-controls"><button class="icon-button" data-move="up" title="Subir">↑</button><button class="icon-button" data-move="down" title="Bajar">↓</button><button class="icon-button icon-button--delete" data-delete="entry" title="Eliminar">×</button></div>
+            <div class="entry-head"><h3 contenteditable="true">Director de Arte — Reduciendo Daño (ONG)</h3><span class="date" contenteditable="true">2024 — PRESENTE</span></div>
+            <ul><li contenteditable="true">Dirección de arte para una ONG chilena con más de cinco años de trayectoria en reducción de daños.</li><li contenteditable="true">Apoyo a la comunicación de educación digital, intervenciones en terreno y análisis de sustancias.</li><li contenteditable="true">En 2024, la organización analizó 992 muestras en 22 eventos de música electrónica, con equipos en distintas regiones del país.</li></ul>
+          </article>
+          <article class="entry">
+            <div class="entry-controls"><button class="icon-button" data-move="up" title="Subir">↑</button><button class="icon-button" data-move="down" title="Bajar">↓</button><button class="icon-button icon-button--delete" data-delete="entry" title="Eliminar">×</button></div>
+            <div class="entry-head"><h3 contenteditable="true">Automatización &amp; Desarrollo Técnico</h3><span class="date" contenteditable="true">2025 — PRESENTE</span></div>
+            <ul><li contenteditable="true">Creación de propuestas escenográficas y performativas.</li><li contenteditable="true">Automatización de flyers y visuales generativas para acelerar flujos creativos.</li><li contenteditable="true">Diseño web e interfaces para proyectos culturales y creativos.</li></ul>
+          </article>
+          <div class="section-controls"><button class="add-button" data-add="experience" type="button">+ Agregar experiencia</button></div>
+        </section>
+      </div>
+
+      <aside class="aside">
+        <section class="section">
+          <h2 class="section-title">Habilidades</h2>
+          <div class="skill"><h3 contenteditable="true">Dirección visual</h3><p contenteditable="true">Dirección de arte, escenografía, branding y desarrollo de packs visuales.</p></div>
+          <div class="skill"><h3 contenteditable="true">Imagen en movimiento</h3><p contenteditable="true">VJ, animación 2D y 3D, modelado 3D y visuales generativas.</p></div>
+          <div class="skill"><h3 contenteditable="true">Herramientas</h3><p contenteditable="true">Resolume, Blender, Adobe Creative Suite, Illustrator/SVG, automatización y diseño web.</p></div>
+          <div class="skill"><h3 contenteditable="true">Idiomas</h3><p contenteditable="true">Español nativo · Inglés avanzado</p></div>
+        </section>
+
+        <section class="section">
+          <h2 class="section-title">Educación</h2>
+          <div class="education-item"><h3 contenteditable="true">Licenciatura en Artes — PUC</h3><p contenteditable="true">2019 — 2022</p></div>
+          <div class="education-item"><h3 contenteditable="true">Formación complementaria</h3><ul class="course-list"><li contenteditable="true">Animación stop motion</li><li contenteditable="true">Animación tradicional</li><li contenteditable="true">Animación experimental 3D</li></ul></div>
+        </section>
+      </aside>
+    </div>
+    <footer class="footer" contenteditable="true"><strong>Abierto a colaboraciones.</strong> Encargos de dirección visual, visuales en vivo y proyectos técnicos.</footer>
+  </main>
+
+  <template id="entry-template"><article class="entry"><div class="entry-controls"><button class="icon-button" data-move="up" title="Subir">↑</button><button class="icon-button" data-move="down" title="Bajar">↓</button><button class="icon-button icon-button--delete" data-delete="entry" title="Eliminar">×</button></div><div class="entry-head"><h3 contenteditable="true">Nuevo cargo — Organización</h3><span class="date" contenteditable="true">AÑO — PRESENTE</span></div><ul><li contenteditable="true">Describe aquí un logro, responsabilidad o proyecto relevante.</li></ul></article></template>
+
+  <script>
+    const cv = document.getElementById('cv');
+    const storageKey = 'cv-maximiliano-solorza-v3';
+    const settingsKey = storageKey + '-settings';
+    const initial = cv.innerHTML;
+    let history = [], historyIndex = -1, saving = false;
+    const palettes = { verde:['#0b806f','#e6f4f0','#16211f'], azul:['#1769aa','#eaf3fb','#14283c'], ciruela:['#7b3d71','#f7edf5','#30192d'], naranja:['#c25a16','#fff0e4','#3a2416'], negro:['#222222','#f0f0f0','#171717'] };
+    function save() { if (!saving) { localStorage.setItem(storageKey, cv.innerHTML); snapshot(); } }
+    function snapshot() { const state=cv.innerHTML; if(history[historyIndex]===state)return; history=history.slice(0,historyIndex+1); history.push(state); if(history.length>30)history.shift(); historyIndex=history.length-1; }
+    function restore(state) { saving=true; cv.innerHTML=state; saving=false; localStorage.setItem(storageKey,state); }
+    try { const saved=localStorage.getItem(storageKey); if(saved) cv.innerHTML=saved; } catch(_) {} snapshot();
+    cv.addEventListener('input', save);
+    cv.addEventListener('blur', save, true);
+    cv.addEventListener('click', (event) => {
+      const button=event.target.closest('button'); if(!button)return;
+      if(button.dataset.delete==='entry'){ button.closest('.entry').remove(); save(); return; }
+      if(button.dataset.move){ const entry=button.closest('.entry'), sibling=button.dataset.move==='up'?entry.previousElementSibling:entry.nextElementSibling; if(sibling?.classList.contains('entry')) button.dataset.move==='up'?entry.parentNode.insertBefore(entry,sibling):entry.parentNode.insertBefore(sibling,entry); save(); return; }
+      if(button.dataset.add==='experience'){ const node=document.getElementById('entry-template').content.cloneNode(true), entry=node.querySelector('.entry'); button.closest('.section-controls').before(entry); entry.querySelector('h3').focus(); save(); }
+    });
+    document.getElementById('undo').onclick=()=>{if(historyIndex>0)restore(history[--historyIndex]);};
+    document.getElementById('redo').onclick=()=>{if(historyIndex<history.length-1)restore(history[++historyIndex]);};
+    document.getElementById('tools-toggle').onclick=()=>document.getElementById('editor-panel').classList.toggle('is-open');
+    document.getElementById('reset').onclick=()=>{if(confirm('¿Restablecer el CV al contenido original? Se perderán los cambios guardados.')){localStorage.removeItem(storageKey); restore(initial); snapshot();}};
+    const panel=document.getElementById('editor-panel');
+    function applySettings(settings){ const colors=palettes[settings.palette]||palettes.verde; document.documentElement.style.setProperty('--accent',colors[0]);document.documentElement.style.setProperty('--accent-pale',colors[1]);document.documentElement.style.setProperty('--ui',colors[2]); cv.style.fontSize=(13*settings.scale)+'px'; const faces={editorial:'Inter, "Segoe UI", Arial, sans-serif',moderna:'Arial, Helvetica, sans-serif',clasica:'Georgia, "Times New Roman", serif'}; cv.style.fontFamily=faces[settings.typeface]; document.querySelectorAll('[data-scale]').forEach(b=>b.classList.toggle('active',Number(b.dataset.scale)===settings.scale)); document.getElementById('palette').value=settings.palette;document.getElementById('typeface').value=settings.typeface; localStorage.setItem(settingsKey,JSON.stringify(settings)); }
+    let settings={palette:'verde',typeface:'editorial',scale:1}; try{settings={...settings,...JSON.parse(localStorage.getItem(settingsKey))}}catch(_){} applySettings(settings);
+    document.getElementById('palette').onchange=e=>{settings.palette=e.target.value;applySettings(settings)};
+    document.getElementById('typeface').onchange=e=>{settings.typeface=e.target.value;applySettings(settings)};
+    panel.addEventListener('click',e=>{const b=e.target.closest('[data-scale]');if(b){settings.scale=Number(b.dataset.scale);applySettings(settings)}});
+    document.getElementById('add-section').onclick=()=>{const title=prompt('Nombre de la nueva sección:','Proyectos destacados');if(!title)return;const section=document.createElement('section');section.className='section';section.innerHTML=`<h2 class="section-title" contenteditable="true">${title}</h2><p class="profile" contenteditable="true">Escribe aquí el contenido de esta sección.</p>`;cv.querySelector('.layout > div').append(section);section.querySelector('p').focus();save();};
+    document.getElementById('add-skill').onclick=()=>{const section=cv.querySelector('.aside .section');const skill=document.createElement('div');skill.className='skill';skill.innerHTML='<h3 contenteditable="true">Nueva habilidad</h3><p contenteditable="true">Describe esta habilidad o herramienta.</p>';section.append(skill);skill.querySelector('h3').focus();save();};
+    document.getElementById('photo-input').onchange=e=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{const img=cv.querySelector('#profile-photo');img.src=reader.result;cv.classList.add('has-photo');save();};reader.readAsDataURL(file);};
+    document.getElementById('remove-photo').onclick=()=>{const img=cv.querySelector('#profile-photo');img.removeAttribute('src');cv.classList.remove('has-photo');save();};
+  </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1f2f9f91c73e9a8',t:'MTc4NDcyODg3Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
