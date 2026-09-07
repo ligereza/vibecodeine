@@ -1,0 +1,158 @@
+{
+  "schema": "codex-tree-reconciliation-v1",
+  "generated_at_utc": "2026-09-05T10:10:00-04:00",
+  "scope": "Hub, workflow checkout and two iskvw trees",
+  "method": "Read-only path existence, byte count, SHA-256 and workflow source inspection.",
+  "items": [
+    {
+      "relative_path": "CONTRATO.md",
+      "copies": [
+        {
+          "path": "MAK/iskvw/CONTRATO.md",
+          "exists": true,
+          "bytes": 5068,
+          "sha256": "0e6b6708e3318c22cc30578744208ae93da526ff485aae4185ce4d26a34c17c4"
+        },
+        {
+          "path": "FLUJO/iskvw/CONTRATO.md",
+          "exists": true,
+          "bytes": 5068,
+          "sha256": "0e6b6708e3318c22cc30578744208ae93da526ff485aae4185ce4d26a34c17c4"
+        }
+      ]
+    },
+    {
+      "relative_path": "editor.html",
+      "copies": [
+        {
+          "path": "MAK/iskvw/editor.html",
+          "exists": true,
+          "bytes": 256541,
+          "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8"
+        },
+        {
+          "path": "FLUJO/iskvw/editor.html",
+          "exists": true,
+          "bytes": 253564,
+          "sha256": "ed7e3bf2d02a841b52560be007390d78c7aed90c79d46258347b22700f03f331"
+        }
+      ]
+    },
+    {
+      "relative_path": "mesa_montaje.js",
+      "copies": [
+        {
+          "path": "MAK/iskvw/mesa_montaje.js",
+          "exists": true,
+          "bytes": 122282,
+          "sha256": "7a0b308f73a6aabf13d70b714c07128da0a9bc0ea2e5c3d31a6d6f6ab33b926b"
+        },
+        {
+          "path": "FLUJO/iskvw/mesa_montaje.js",
+          "exists": true,
+          "bytes": 113121,
+          "sha256": "d7a50d2722e300f9a42db0584d0480b1d703d9fd158b0f8bcabc038afd64ecb2"
+        }
+      ]
+    },
+    {
+      "relative_path": "datos/archivo.json",
+      "copies": [
+        {
+          "path": "MAK/iskvw/datos/archivo.json",
+          "exists": true,
+          "bytes": 1833824,
+          "sha256": "83cf54902508b3d50ed582fb2aafa307dbde2b83218ad40301ff924080fe0207"
+        },
+        {
+          "path": "FLUJO/iskvw/datos/archivo.json",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "relative_path": "datos/micelio.json",
+      "copies": [
+        {
+          "path": "MAK/iskvw/datos/micelio.json",
+          "exists": true,
+          "bytes": 1431380,
+          "sha256": "a4a056eb3d25a102816a63cafbfcb397e7948540800329040535ffe21bd2cd42"
+        },
+        {
+          "path": "FLUJO/iskvw/datos/micelio.json",
+          "exists": true,
+          "bytes": 1372945,
+          "sha256": "ed255001f56b25cfdd7a5240a8fee904ff90f7bf90a356f4e70853299c5a71f7"
+        }
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "check": "workflow generator path",
+      "path": "FLUJO/.github/workflows/publicar_iskvw.yml:59",
+      "expected": "tools/gen_archivo_iskvw.py",
+      "observed": {
+        "workflow_path_exists": false,
+        "alternate_path_exists": true
+      }
+    },
+    {
+      "check": "Hub portfolio root",
+      "path": "MAK/cultura/mak_plataforma/hub.py:102-103",
+      "observed": "default PORTFOLIO_ROOT=WORKSPACE/iskvw"
+    },
+    {
+      "check": "workflow checkout root",
+      "path": "FLUJO/.github/workflows/publicar_iskvw.yml:40-66",
+      "observed": "actions/checkout runs generator relative to WORKSPACE/flujo"
+    },
+    {
+      "check": "git worktree identity",
+      "path": "FLUJO/.git",
+      "observed": "gitdir=WORKSPACE/.git/worktrees/flujo-closeout; branch FLUJO...vibecodeine-legacy/FLUJO"
+    },
+    {
+      "check": "workflow HEAD completeness",
+      "path": "git -C WORKSPACE/flujo cat-file -e HEAD:tools/gen_archivo_iskvw.py",
+      "observed": "exit 128: generator absent from HEAD while HEAD:.github/workflows/publicar_iskvw.yml invokes it at line 59."
+    }
+  ],
+  "findings": [
+    {
+      "id": "P0-publish-tree-mismatch",
+      "severity": "critical",
+      "statement": "The Hub defaults to WORKSPACE/iskvw, while the workflow runs inside WORKSPACE/flujo and its required generator is absent there.",
+      "evidence": "The generator is absent both from the working tree and from HEAD, so this is not explained by local uncommitted changes."
+    },
+    {
+      "id": "P0-generated-file-location",
+      "severity": "critical",
+      "statement": "MAK/iskvw/datos/archivo.json exists; FLUJO/iskvw/datos/archivo.json is absent. A local Hub snapshot cannot be assumed to be the CI artifact."
+    },
+    {
+      "id": "P1-editor-divergence",
+      "severity": "high",
+      "statement": "editor.html and mesa_montaje.js differ between trees; CONTRATO.md is identical."
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": "P0",
+      "action": "Declare one canonical checkout root and make workflow, Hub, generator and editor resolve it through one explicit configuration."
+    },
+    {
+      "priority": "P0",
+      "action": "Add a preflight that asserts generator, editor, contract and required data paths exist in the checkout being published."
+    },
+    {
+      "priority": "P1",
+      "action": "Emit source_root, input hashes and generator commit/version into archivo.json and the runtime contract."
+    },
+    {
+      "priority": "P1",
+      "action": "Add a permitted-diff manifest if a compatibility mirror must remain; otherwise fail on drift."
+    }
+  ]
+}

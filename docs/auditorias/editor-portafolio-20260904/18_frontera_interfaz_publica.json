@@ -1,0 +1,73 @@
+{
+  "schema": "codex-public-interface-boundary-audit-v1",
+  "audited_at": "2026-09-05T18:58:00-04:00",
+  "scope": "diferencia entre piel pública, editor estático y superficie de operador",
+  "method": "Inspección read-only del workflow committed y búsqueda estática de fetch/POST en los archivos que el workflow copia; no se ejecutó deploy ni se enviaron solicitudes.",
+  "workflow": {
+    "path": "FLUJO/.github/workflows/publicar_iskvw.yml",
+    "lines": "54-70,180-190",
+    "copy_rule": "cp -r iskvw/. _sitio/",
+    "artifact_upload": "_sitio",
+    "explicit_exclusions": false,
+    "implication": "editor.html y mesa_montaje.js quedan dentro del artifact salvo que otra regla los quite; la compuerta no verifica una lista de archivos prohibidos."
+  },
+  "static_surface_scan": {
+    "editor_path": "FLUJO/iskvw/editor.html",
+    "post_fetch_occurrences": 22,
+    "distinct_mutating_endpoints": [
+      "/api/portfolio/select",
+      "/api/portfolio/feedback",
+      "/api/portfolio/classify",
+      "/api/portfolio/copilot/vision",
+      "/api/portfolio/external-candidates/review",
+      "/api/portfolio/dispatch",
+      "/api/portfolio/triangulation/context-link",
+      "/api/portfolio/triangulation/review",
+      "/api/portfolio/copilot/external",
+      "/api/portfolio/board",
+      "/api/portfolio/connect"
+    ],
+    "public_skin_post_fetch_occurrences": 0,
+    "mesa_montaje_post_fetch_occurrences": 0,
+    "direct_dispatch_calls": [
+      {
+        "path": "FLUJO/iskvw/editor.html",
+        "lines": "1857,2231,2374",
+        "finding": "La interfaz ofrece botones que hacen POST a /api/portfolio/dispatch sin enviar confirmed ni idempotency_key."
+      }
+    ]
+  },
+  "boundary_mismatch": [
+    {
+      "severity": "high",
+      "path": "FLUJO/iskvw/editor.html",
+      "lines": "1058-1067",
+      "finding": "El comentario declara editor estático, sin backend y con salida de descarga, pero el mismo archivo carga mesa_montaje.js y contiene numerosos POST al Hub."
+    },
+    {
+      "severity": "high",
+      "finding": "La piel pública no hace POST, pero la regla de copia no distingue piel pública de editor de operador; una URL pública puede servir código de operador aunque el backend no esté disponible."
+    },
+    {
+      "severity": "medium",
+      "finding": "El artifact no genera un manifest de capacidades ni una prueba que demuestre que los archivos con endpoints de operador quedaron fuera de la superficie pública."
+    }
+  ],
+  "recommended_gate": {
+    "priority": "P0",
+    "action": "Separar staging público del staging operador mediante allowlist; prohibir editor.html, mesa_montaje.js y cualquier archivo con fetch POST al construir Pages, salvo aprobación explícita.",
+    "checks": [
+      "inventariar todos los archivos del artifact y emitir manifest con SHA256 y clasificación public/operator",
+      "fallar CI si aparecen nombres o marcadores de endpoints mutantes en la allowlist pública",
+      "fallar CI si la piel pública contiene method POST, /api/portfolio o rutas de Hub",
+      "comprobar que el artifact público no contiene editor, datos de operador, rutas locales ni provenance",
+      "mantener una distribución local/operator separada con autenticación y envelope de mutación"
+    ],
+    "acceptance": "Un artifact limpio contiene solo piel, datos públicos y recursos permitidos; un escaneo reproducible reporta cero endpoints mutantes y el editor operador se entrega por canal separado."
+  },
+  "limitations": [
+    "El conteo es estático y no prueba qué artefacto llegó finalmente a Pages.",
+    "El DNS externo no pudo resolverse en la medición previa; no se afirma exposición pública efectiva.",
+    "No se modificó el workflow ni se detuvo ningún proceso."
+  ]
+}

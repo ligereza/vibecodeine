@@ -1,0 +1,71 @@
+{
+  "schema": "codex-service-proxy-audit-v1",
+  "audited_at": "2026-09-05T19:18:00-04:00",
+  "scope": "proxy same-origin hacia Research/Codex",
+  "method": "Inspección estática read-only de _service_proxy_target, _proxy_service y dispatch de métodos; no se enviaron GET/POST nuevos al proxy.",
+  "configuration": {
+    "path": "MAK/cultura/mak_plataforma/hub.py",
+    "lines": "154-160",
+    "upstreams": {
+      "research": "http://127.0.0.1:8890",
+      "codex": "http://127.0.0.1:8891"
+    },
+    "max_bytes": 2000000,
+    "public_host_observed": "127.0.0.1"
+  },
+  "routing": {
+    "target_builder": {
+      "lines": "5140-5151",
+      "finding": "Construye upstream + cualquier path/query que venga después de /research o /codex; no existe allowlist de rutas o métodos."
+    },
+    "methods": {
+      "GET": "proxyado para todo /research/* y /codex/*",
+      "HEAD": "proxyado para todo /research/* y /codex/*",
+      "POST": "proxyado para todo /research/* y /codex/*",
+      "PUT_PATCH_DELETE": "no tienen handlers explícitos del Hub, pero no deben confundirse con una política de autorización positiva"
+    },
+    "forwarded_headers": ["Content-Type"],
+    "not_forwarded_or_generated": ["Authorization", "actor", "request_id", "operation_id", "idempotency_key", "audit receipt"],
+    "limits": ["request body 2 MB", "response body 2 MB", "timeout 15 s"],
+    "limits_not_present": ["route allowlist", "auth check", "CSRF/origin check", "per-client rate limit", "upstream operation correlation"]
+  },
+  "findings": [
+    {
+      "id": "arbitrary-upstream-route",
+      "severity": "high",
+      "statement": "El prefijo de servicio actúa como namespace abierto: cualquier ruta existente del servicio upstream puede hacerse accesible a través del Hub, incluida una ruta mutante no prevista por el editor."
+    },
+    {
+      "id": "proxy-mutation-bypass",
+      "severity": "critical_if_exposed",
+      "statement": "Un POST a /research/* o /codex/* evita el dispatcher de mutaciones de portfolio y no pasa por confirmed, actor, idempotency ni receipt del Hub."
+    },
+    {
+      "id": "html-rewrite-not-boundary",
+      "severity": "medium",
+      "statement": "La reescritura de fetch en HTML mantiene el origen, pero solo cambia rutas relativas; no autentica, clasifica capacidades ni impide que el HTML solicite rutas mutantes."
+    },
+    {
+      "id": "positive-controls",
+      "severity": "informational",
+      "statement": "El proxy limita tamaño y timeout, conserva los upstream en loopback y no reenvía Authorization automáticamente; esas medidas reducen superficie pero no sustituyen una allowlist/autorización."
+    }
+  ],
+  "recommended_gate": {
+    "priority": "P0",
+    "action": "Convertir el proxy en allowlist explícita de rutas y métodos read-only; cualquier POST debe estar declarado, autenticado, confirmado y envuelto en request/operation/idempotency receipt.",
+    "minimum_tests": [
+      "ruta no allowlisted devuelve 404/405 sin contactar al upstream",
+      "POST a ruta read-only devuelve 405 y no genera efecto",
+      "ruta mutante declarada exige actor, confirmed e idempotency_key",
+      "response y errores contienen correlation ID sin copiar payload sensible",
+      "configuración no-loopback falla cerrada si no existe boundary autenticado"
+    ],
+    "acceptance": "El inventario de rutas upstream está versionado; cada proxy route tiene método/capacidad/política, y una prueba de bypass demuestra cero POST arbitrarios."
+  },
+  "limitations": [
+    "No se consultaron endpoints upstream para evitar actividad adicional; el riesgo proviene del dispatcher y target builder.",
+    "La severidad crítica solo aplica si el Hub queda accesible fuera de loopback o detrás de un proxy sin autenticación.",
+    "No se modificaron código, configuración ni procesos."
+  ]
+}

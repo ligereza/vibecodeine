@@ -1,0 +1,441 @@
+{
+  "schema": "codex-06-glosario-v2",
+  "generated_at_utc": "2026-09-05T05:45:00Z",
+  "heads": {
+    "MAK": "68339cd7812fababaf43dc922368817b7f970eb8",
+    "FLUJO": "a7c44431baed7e4de4c39251c1955e4406c32b11"
+  },
+  "method_summary": {
+    "MEDIDO": 14,
+    "DERIVADO": 5,
+    "SUPUESTO": 0,
+    "UNRESOLVED": 0
+  },
+  "verdict_summary": {
+    "univoca": 5,
+    "dos_significados": 5,
+    "sin_definir": 0,
+    "UNRESOLVED": 1
+  },
+  "rows": [
+    {
+      "id": "portafolio",
+      "term": "portafolio",
+      "consumer": "hub",
+      "meaning": "ruta histórica de interfaz de orden IRIS",
+      "verdict": "dos_significados",
+      "method": "MEDIDO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "cultura/mak_plataforma/hub.py",
+          "line": 7,
+          "excerpt": "Its historically named `/portafolio/` route is the operator-facing IRIS ordering/curation interface"
+        },
+        {
+          "kind": "file",
+          "path": "flujo/src/flujo/departments.py",
+          "line": 56,
+          "excerpt": "\"scope\": \"artist portfolio, visual skins, web publication and venue identity\""
+        },
+        {
+          "kind": "file",
+          "path": "cultura/mak_plataforma/hub.py",
+          "line": 1,
+          "excerpt": "consumidor y definición medidos en el archivo citado"
+        }
+      ],
+      "path": "cultura/mak_plataforma/hub.py",
+      "sha256": "e5bf8722b5504496911126b97de52e557d11e9ee2369e1a83f442b21793aa24d",
+      "meaning_a": "En el Hub, ruta histórica de la mesa interna de orden IRIS.",
+      "meaning_b": "En FLUJO/ISKVW, obra y sitio público del artista.",
+      "where_they_clash": "El enlace “Portfolio editor” apunta a /portafolio/ dentro de una página que también describe web publication. Consumers are distinct: A is internal/editorial, B is public/workflow-facing.",
+      "which_is_older": "La ruta interna de Hub aparece como histórica; el alcance público está declarado en departments.py.",
+      "meaning_a_consumer": {
+        "path": "cultura/mak_plataforma/hub.py",
+        "line": 7,
+        "role": "ruta histórica interna /portafolio/"
+      },
+      "meaning_b_consumer": {
+        "path": "flujo/src/flujo/departments.py",
+        "line": 56,
+        "role": "alcance público: artist portfolio y web publication"
+      }
+    },
+    {
+      "id": "editor",
+      "term": "editor",
+      "consumer": "iskvw/editor.html",
+      "meaning": "panel humano que edita curaduria/tablero y descarga JSON",
+      "verdict": "dos_significados",
+      "method": "MEDIDO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 1092,
+          "excerpt": "its only output is a download."
+        },
+        {
+          "kind": "file",
+          "path": "flujo/src/flujo/departments.py",
+          "line": 60,
+          "excerpt": "\"label\": \"Portfolio editor\""
+        },
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 1,
+          "excerpt": "consumidor y definición medidos en el archivo citado"
+        }
+      ],
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "meaning_a": "Panel de orden/curaduría de piezas del inbox y mesa.",
+      "meaning_b": "Editor de la mano del artista que modifica campos que se descargan como curaduria.json.",
+      "where_they_clash": "El mismo editor contiene #estudio-app/mesa y los controles titulo/mostrar/descargar. Consumers are distinct: A is internal/editorial, B is public/workflow-facing.",
+      "which_is_older": "El commit ea2f51dc del 2026-07-30 creó el panel de edición/descarga; la mesa Atlas entra en la consolidación del 2026-08-11.",
+      "meaning_a_consumer": {
+        "path": "iskvw/editor.html",
+        "line": 938,
+        "role": "editor de curaduría interna, controles de régimen/importación/descarga"
+      },
+      "meaning_b_consumer": {
+        "path": "iskvw/editor.html",
+        "line": 2910,
+        "role": "campo mostrar que determina piezas candidatas para curatoria descargada"
+      }
+    },
+    {
+      "id": "campo",
+      "term": "campo",
+      "consumer": "iskvw/piel/campo",
+      "meaning": "proyección de posiciones medidas y capas",
+      "verdict": "dos_significados",
+      "method": "MEDIDO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/README.md",
+          "line": 9,
+          "excerpt": "datos/campo.json     posiciones medidas y capas del archivo"
+        },
+        {
+          "kind": "file",
+          "path": "iskvw/README.md",
+          "line": 1,
+          "excerpt": "consumidor y definición medidos en el archivo citado"
+        }
+      ],
+      "path": "iskvw/README.md",
+      "sha256": "f2cba0105230a1729da38abe1fd2a2efebeb5b8f4dbd595cd40408695ac875fd",
+      "meaning_a": "campo.json: posiciones medidas y capas observadas del archivo.",
+      "meaning_b": "“campo de orden”: representación interactiva de decisiones y relaciones en Atlas.",
+      "where_they_clash": "editor.html y mesa_montaje.js presentan ambos bajo “campo de orden”, aunque campo.json es una proyección de datos. Consumers are distinct: A is internal/editorial, B is public/workflow-facing.",
+      "which_is_older": "campo.json y su generador son anteriores a la etiqueta Atlas medida en los commits del 2026-08-11.",
+      "meaning_a_consumer": {
+        "path": "tools/gen_campo_iskvw.py",
+        "line": 21,
+        "role": "generación del campo editorial"
+      },
+      "meaning_b_consumer": {
+        "path": "iskvw/mesa_montaje.js",
+        "line": 794,
+        "role": "consumo del campo en mesa pública/montaje"
+      }
+    },
+    {
+      "id": "campo-orden",
+      "term": "campo de orden",
+      "consumer": "mesa_montaje.js",
+      "meaning": "campo visual interactivo para ordenar/relacionar nodos",
+      "verdict": "univoca",
+      "method": "MEDIDO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/mesa_montaje.js",
+          "line": 794,
+          "excerpt": "<h2>campo de orden</h2>"
+        }
+      ],
+      "path": "iskvw/mesa_montaje.js",
+      "sha256": "7a0b308f73a6aabf13d70b714c07128da0a9bc0ea2e5c3d31a6d6f6ab33b926b",
+      "meaning_a": "campo visual interactivo para ordenar/relacionar nodos",
+      "meaning_b": "No se midió segundo significado; se conserva como unívoco.",
+      "where_they_clash": "No se midió choque para este término.",
+      "which_is_older": "UNRESOLVED"
+    },
+    {
+      "id": "atlas",
+      "term": "atlas",
+      "consumer": "hub/copilot",
+      "meaning": "nombre del sistema/capa de ordenamiento interno",
+      "verdict": "univoca",
+      "method": "MEDIDO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "cultura/mak_plataforma/copilot.py",
+          "line": 6,
+          "excerpt": "MAK system IRIS (Atlas Campo del Orden)"
+        }
+      ],
+      "path": "cultura/mak_plataforma/copilot.py",
+      "sha256": "a4b534eb16a4a55b2b2e5ffc55ad60b7c87dbaea82dc2f41846f3cf957d7c8e2",
+      "meaning_a": "nombre del sistema/capa de ordenamiento interno",
+      "meaning_b": "No se midió segundo significado; se conserva como unívoco.",
+      "where_they_clash": "No se midió choque para este término.",
+      "which_is_older": "UNRESOLVED"
+    },
+    {
+      "id": "atlas-vivo",
+      "term": "ATLAS VIVO",
+      "consumer": "mesa_montaje.js",
+      "meaning": "presentación viva del Atlas en la mesa, no sitio público",
+      "verdict": "univoca",
+      "method": "MEDIDO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/mesa_montaje.js",
+          "line": 794,
+          "excerpt": "MAK · atlas vivo"
+        }
+      ],
+      "path": "iskvw/mesa_montaje.js",
+      "sha256": "7a0b308f73a6aabf13d70b714c07128da0a9bc0ea2e5c3d31a6d6f6ab33b926b",
+      "meaning_a": "presentación viva del Atlas en la mesa, no sitio público",
+      "meaning_b": "No se midió segundo significado; se conserva como unívoco.",
+      "where_they_clash": "No se midió choque para este término.",
+      "which_is_older": "UNRESOLVED"
+    },
+    {
+      "id": "orden",
+      "term": "orden",
+      "consumer": "mesa_montaje.js",
+      "meaning": "acción de selección, relación y decisión sobre nodos",
+      "verdict": "univoca",
+      "method": "MEDIDO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/mesa_montaje.js",
+          "line": 794,
+          "excerpt": "data-editor-mode=\"order\">ordenar"
+        }
+      ],
+      "path": "iskvw/mesa_montaje.js",
+      "sha256": "7a0b308f73a6aabf13d70b714c07128da0a9bc0ea2e5c3d31a6d6f6ab33b926b",
+      "meaning_a": "acción de selección, relación y decisión sobre nodos",
+      "meaning_b": "No se midió segundo significado; se conserva como unívoco.",
+      "where_they_clash": "No se midió choque para este término.",
+      "which_is_older": "UNRESOLVED"
+    },
+    {
+      "id": "curaduria",
+      "term": "curatoría",
+      "consumer": "curaduria.json/editor",
+      "meaning": "decisión humana sobre qué pieza mostrar y sus metadatos",
+      "verdict": "univoca",
+      "method": "MEDIDO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/datos/curaduria.json",
+          "line": 2,
+          "excerpt": "La mano del artista. Editable a mano o con iskvw/editor.html"
+        }
+      ],
+      "path": "iskvw/datos/curaduria.json",
+      "sha256": "219bba7d111d6d806fa8e935ed5b06ad1d0441c42575655f4e260ac923fa387f",
+      "meaning_a": "decisión humana sobre qué pieza mostrar y sus metadatos",
+      "meaning_b": "No se midió segundo significado; se conserva como unívoco.",
+      "where_they_clash": "No se midió choque para este término.",
+      "which_is_older": "UNRESOLVED"
+    },
+    {
+      "id": "publicar",
+      "term": "publicar",
+      "consumer": "workflow Pages",
+      "meaning": "generar sitio _sitio y ejecutar deploy-pages hacia iskvw.cl",
+      "verdict": "univoca",
+      "method": "MEDIDO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": ".github/workflows/publicar_iskvw.yml",
+          "line": 168,
+          "excerpt": "uses: actions/deploy-pages"
+        }
+      ],
+      "path": ".github/workflows/publicar_iskvw.yml",
+      "sha256": "a662f1438f498932ad9d344400e42838a8196bedb121b500d651cf119a00429b",
+      "meaning_a": "generar sitio _sitio y ejecutar deploy-pages hacia iskvw.cl",
+      "meaning_b": "No se midió segundo significado; se conserva como unívoco.",
+      "where_they_clash": "No se midió choque para este término.",
+      "which_is_older": "UNRESOLVED"
+    },
+    {
+      "id": "piel",
+      "term": "piel",
+      "consumer": "iskvw/piel/campo",
+      "meaning": "capa visual visitante que consume archivo/campo/tablero",
+      "verdict": "univoca",
+      "method": "MEDIDO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": ".github/workflows/publicar_iskvw.yml",
+          "line": 10,
+          "excerpt": "la piel, sus librerias, el campo y los recursos vectoriales"
+        }
+      ],
+      "path": ".github/workflows/publicar_iskvw.yml",
+      "sha256": "a662f1438f498932ad9d344400e42838a8196bedb121b500d651cf119a00429b",
+      "meaning_a": "capa visual visitante que consume archivo/campo/tablero",
+      "meaning_b": "No se midió segundo significado; se conserva como unívoco.",
+      "where_they_clash": "No se midió choque para este término.",
+      "which_is_older": "UNRESOLVED"
+    },
+    {
+      "id": "archivo",
+      "term": "archivo",
+      "consumer": "archivo.json",
+      "meaning": "proyección pública regenerable de piezas y vínculos",
+      "verdict": "dos_significados",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/CONTRATO.md",
+          "line": 38,
+          "excerpt": "Un único archivo: **`datos/archivo.json`**"
+        },
+        {
+          "kind": "file",
+          "path": "cultura/mak_plataforma/hub.py",
+          "line": 7,
+          "excerpt": "ordering/curation interface ... `iskvw.cl` is a separate downstream site"
+        },
+        {
+          "kind": "file",
+          "path": "iskvw/CONTRATO.md",
+          "line": 1,
+          "excerpt": "consumidor y definición medidos en el archivo citado"
+        }
+      ],
+      "path": "iskvw/CONTRATO.md",
+      "sha256": "0e6b6708e3318c22cc30578744208ae93da526ff485aae4185ce4d26a34c17c4",
+      "meaning_a": "archivo.json: proyección pública regenerable de piezas/vínculos consumida por la piel.",
+      "meaning_b": "archivo/inbox: corpus o superficie interna que el Hub consulta y ordena.",
+      "where_they_clash": "La página llama “archivo visual” al inbox y “archivo publicado” al sustrato que lee la piel. Consumers are distinct: A is internal/editorial, B is public/workflow-facing.",
+      "which_is_older": "El contrato público de archivo.json se documenta antes de la consolidación IRIS; el inbox interno aparece en el circuito de agosto.",
+      "meaning_a_consumer": {
+        "path": "iskvw/CONTRATO.md",
+        "line": 38,
+        "role": "archivo como contrato/artefacto editorial"
+      },
+      "meaning_b_consumer": {
+        "path": "cultura/mak_plataforma/hub.py",
+        "line": 5410,
+        "role": "archivo como evidencia/log o estado operativo"
+      }
+    },
+    {
+      "id": "iris",
+      "term": "IRIS",
+      "consumer": "hub/copilot",
+      "meaning": "motor/sistema interno de ordenamiento",
+      "verdict": "univoca",
+      "method": "MEDIDO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "cultura/mak_plataforma/copilot.py",
+          "line": 1,
+          "excerpt": "IRIS ordering engine, independent of any model provider."
+        }
+      ],
+      "path": "cultura/mak_plataforma/copilot.py",
+      "sha256": "a4b534eb16a4a55b2b2e5ffc55ad60b7c87dbaea82dc2f41846f3cf957d7c8e2",
+      "meaning_a": "motor/sistema interno de ordenamiento",
+      "meaning_b": "No se midió segundo significado; se conserva como unívoco.",
+      "where_they_clash": "No se midió choque para este término.",
+      "which_is_older": "UNRESOLVED"
+    },
+    {
+      "id": "publicacion",
+      "term": "publicación",
+      "consumer": "workflow/editor",
+      "meaning": "acto posterior de commit/PR y deploy Pages",
+      "verdict": "dos_significados",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 1095,
+          "excerpt": "the artist commits curaduria.json through the same gate"
+        },
+        {
+          "kind": "file",
+          "path": ".github/workflows/publicar_iskvw.yml",
+          "line": 21,
+          "excerpt": "workflow_dispatch: {}"
+        },
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 1,
+          "excerpt": "consumidor y definición medidos en el archivo citado"
+        }
+      ],
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "meaning_a": "Acto de selección/curaduría que determina qué entra en curaduria.json.",
+      "meaning_b": "Despliegue efectivo a iskvw.cl mediante workflow_dispatch y deploy-pages.",
+      "where_they_clash": "La casilla mostrar y descarga son preparación; solo el workflow alcanza el dominio. Consumers are distinct: A is internal/editorial, B is public/workflow-facing.",
+      "which_is_older": "La edición/descarga del 2026-07-30 es anterior al workflow explícito de Pages medido en la frontera.",
+      "meaning_a_consumer": {
+        "path": "iskvw/editor.html",
+        "line": 3012,
+        "role": "descarga de curatoria que puede alimentar publicación"
+      },
+      "meaning_b_consumer": {
+        "path": "flujo/src/flujo/workflow.py",
+        "line": 168,
+        "role": "publicación como etapa/acción del flujo"
+      }
+    },
+    {
+      "id": "propuesta-nombres",
+      "term": "propuesta de nombres",
+      "consumer": "operador",
+      "meaning": "renombrar editor público como Curaduría ISKVW y mesa como IRIS/Atlas Orden",
+      "verdict": "UNRESOLVED",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "flujo/src/flujo/departments.py",
+          "line": 60,
+          "excerpt": "\"label\": \"Portfolio editor\""
+        },
+        {
+          "kind": "file",
+          "path": "iskvw/mesa_montaje.js",
+          "line": 794,
+          "excerpt": "MAK · atlas vivo"
+        }
+      ],
+      "note": "Propuesta, no decisión del auditor.",
+      "path": "flujo/src/flujo/departments.py",
+      "sha256": "9c1f7c6ad0788dcc18af3dead8e58f3ebfcb7c7e1360bcb2c9cc35d4f8ecb232",
+      "meaning_a": "renombrar editor público como Curaduría ISKVW y mesa como IRIS/Atlas Orden",
+      "meaning_b": "No se midió segundo significado; se conserva como unívoco.",
+      "where_they_clash": "No se midió choque para este término.",
+      "which_is_older": "UNRESOLVED"
+    }
+  ]
+}

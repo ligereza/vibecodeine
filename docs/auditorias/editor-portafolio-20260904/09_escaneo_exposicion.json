@@ -1,0 +1,367 @@
+{
+  "schema": "codex-public-exposure-scan-v1",
+  "generated_at_utc": "2026-09-05T11:35:00-04:00",
+  "scope": "Files copied by workflow and likely internal candidates",
+  "method": "Read-only regex scan; records counts/lines only and redacts matched values.",
+  "files": [
+    {
+      "path": "editor.html",
+      "exists": true,
+      "bytes": 253564,
+      "sha256": "ed7e3bf2d02a841b52560be007390d78c7aed90c79d46258347b22700f03f331",
+      "matches": {
+        "absolute_local_path": {
+          "count": 0,
+          "lines": []
+        },
+        "api_endpoint": {
+          "count": 40,
+          "lines": [
+            1438,
+            1527,
+            1636,
+            1654,
+            1671,
+            1684,
+            1733,
+            1784,
+            1797,
+            1823,
+            1842,
+            1855,
+            1857,
+            1861,
+            1867,
+            1907,
+            1929,
+            1943,
+            1954,
+            1968,
+            1980,
+            2009,
+            2022,
+            2038,
+            2103,
+            2215,
+            2231,
+            2272,
+            2289,
+            2308,
+            2326,
+            2338,
+            2349,
+            2363,
+            2374,
+            2387,
+            2401,
+            2414,
+            2424,
+            2441
+          ]
+        },
+        "secret_like_key": {
+          "count": 0,
+          "lines": []
+        },
+        "email": {
+          "count": 0,
+          "lines": []
+        },
+        "external_url": {
+          "count": 1,
+          "lines": [
+            6
+          ]
+        }
+      }
+    },
+    {
+      "path": "mesa_montaje.js",
+      "exists": true,
+      "bytes": 113121,
+      "sha256": "d7a50d2722e300f9a42db0584d0480b1d703d9fd158b0f8bcabc038afd64ecb2",
+      "matches": {
+        "absolute_local_path": {
+          "count": 0,
+          "lines": []
+        },
+        "api_endpoint": {
+          "count": 12,
+          "lines": [
+            657,
+            955,
+            1445,
+            1491,
+            1538,
+            1811,
+            1842,
+            1902,
+            1935,
+            1961,
+            2139,
+            2178
+          ]
+        },
+        "secret_like_key": {
+          "count": 0,
+          "lines": []
+        },
+        "email": {
+          "count": 0,
+          "lines": []
+        },
+        "external_url": {
+          "count": 2,
+          "lines": [
+            577,
+            776
+          ]
+        }
+      }
+    },
+    {
+      "path": "datos/curaduria.json",
+      "exists": true,
+      "bytes": 625,
+      "sha256": "219bba7d111d6d806fa8e935ed5b06ad1d0441c42575655f4e260ac923fa387f",
+      "matches": {
+        "absolute_local_path": {
+          "count": 0,
+          "lines": []
+        },
+        "api_endpoint": {
+          "count": 0,
+          "lines": []
+        },
+        "secret_like_key": {
+          "count": 0,
+          "lines": []
+        },
+        "email": {
+          "count": 0,
+          "lines": []
+        },
+        "external_url": {
+          "count": 0,
+          "lines": []
+        }
+      },
+      "json_summary": {
+        "top_keys": [
+          "_doc",
+          "version",
+          "regimen",
+          "piezas"
+        ],
+        "records": 0
+      }
+    },
+    {
+      "path": "datos/tablero.json",
+      "exists": true,
+      "bytes": 3966,
+      "sha256": "7469b79ef6cfbf9a904df31e9dd726a3a3987ada55307033e3d69c8e7a57f852",
+      "matches": {
+        "absolute_local_path": {
+          "count": 0,
+          "lines": []
+        },
+        "api_endpoint": {
+          "count": 0,
+          "lines": []
+        },
+        "secret_like_key": {
+          "count": 0,
+          "lines": []
+        },
+        "email": {
+          "count": 0,
+          "lines": []
+        },
+        "external_url": {
+          "count": 0,
+          "lines": []
+        }
+      },
+      "json_summary": {
+        "top_keys": [
+          "_doc",
+          "version",
+          "mejoras",
+          "_nodo_glifo",
+          "_patch",
+          "_llaves",
+          "efectos",
+          "patch",
+          "_datos",
+          "_efectos",
+          "_reglas"
+        ],
+        "records": 10
+      }
+    },
+    {
+      "path": "datos/micelio.json",
+      "exists": true,
+      "bytes": 1372945,
+      "sha256": "ed255001f56b25cfdd7a5240a8fee904ff90f7bf90a356f4e70853299c5a71f7",
+      "matches": {
+        "absolute_local_path": {
+          "count": 3,
+          "lines": [
+            729,
+            1611,
+            1629
+          ]
+        },
+        "api_endpoint": {
+          "count": 0,
+          "lines": []
+        },
+        "secret_like_key": {
+          "count": 0,
+          "lines": []
+        },
+        "email": {
+          "count": 0,
+          "lines": []
+        },
+        "external_url": {
+          "count": 0,
+          "lines": []
+        }
+      },
+      "json_summary": {
+        "top_keys": [
+          "version",
+          "fuente",
+          "umbral",
+          "generado",
+          "piezas",
+          "vinculos"
+        ],
+        "records": 6451
+      }
+    },
+    {
+      "path": "CONTRATO.md",
+      "exists": true,
+      "bytes": 5068,
+      "sha256": "0e6b6708e3318c22cc30578744208ae93da526ff485aae4185ce4d26a34c17c4",
+      "matches": {
+        "absolute_local_path": {
+          "count": 0,
+          "lines": []
+        },
+        "api_endpoint": {
+          "count": 0,
+          "lines": []
+        },
+        "secret_like_key": {
+          "count": 0,
+          "lines": []
+        },
+        "email": {
+          "count": 0,
+          "lines": []
+        },
+        "external_url": {
+          "count": 0,
+          "lines": []
+        }
+      }
+    },
+    {
+      "path": "MAPA.md",
+      "exists": true,
+      "bytes": 14801,
+      "sha256": "56429a568b9cdaaf7f134b072b5d46435b49119e20903939c69d198dc8234d87",
+      "matches": {
+        "absolute_local_path": {
+          "count": 0,
+          "lines": []
+        },
+        "api_endpoint": {
+          "count": 0,
+          "lines": []
+        },
+        "secret_like_key": {
+          "count": 0,
+          "lines": []
+        },
+        "email": {
+          "count": 0,
+          "lines": []
+        },
+        "external_url": {
+          "count": 0,
+          "lines": []
+        }
+      }
+    },
+    {
+      "path": "README.md",
+      "exists": true,
+      "bytes": 1530,
+      "sha256": "f2cba0105230a1729da38abe1fd2a2efebeb5b8f4dbd595cd40408695ac875fd",
+      "matches": {
+        "absolute_local_path": {
+          "count": 0,
+          "lines": []
+        },
+        "api_endpoint": {
+          "count": 0,
+          "lines": []
+        },
+        "secret_like_key": {
+          "count": 0,
+          "lines": []
+        },
+        "email": {
+          "count": 0,
+          "lines": []
+        },
+        "external_url": {
+          "count": 0,
+          "lines": []
+        }
+      }
+    }
+  ],
+  "findings": [
+    {
+      "id": "internal-api-disclosure",
+      "severity": "medium",
+      "evidence": "editor.html contains API endpoint references; these are static client routes and do not prove authorization."
+    },
+    {
+      "id": "local-path-disclosure",
+      "severity": "high",
+      "evidence": "Candidate files contain local-path-like references; public artifact should not expose machine filesystem topology."
+    },
+    {
+      "id": "research-snapshot-exposure",
+      "severity": "high",
+      "evidence": "datos/micelio.json is a 1.37 MB snapshot with pieces/vinculos and is copied wholesale despite the public contract naming archivo.json as substrate."
+    },
+    {
+      "id": "secret-keyword-review",
+      "severity": "review",
+      "evidence": "Keyword scan is not proof of secrets; matches require manual classification before any artifact approval."
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": "P0",
+      "action": "Make the public artifact manifest explicit and reject internal candidates before upload."
+    },
+    {
+      "priority": "P1",
+      "action": "Add a redacted-content scanner for local paths, credentials, internal API topology and private identifiers."
+    },
+    {
+      "priority": "P1",
+      "action": "Treat micelio snapshot as private/research by default; publish only a deliberately generated projection."
+    }
+  ]
+}

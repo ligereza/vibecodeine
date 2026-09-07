@@ -1,0 +1,293 @@
+{
+  "schema": "codex-05-frontera-publicacion-v1",
+  "generated_at_utc": "2026-09-05T03:43:41Z",
+  "heads": {
+    "MAK": "68339cd7812fababaf43dc922368817b7f970eb8",
+    "FLUJO": "a7c44431baed7e4de4c39251c1955e4406c32b11"
+  },
+  "method_summary": {
+    "MEDIDO": 5,
+    "DERIVADO": 1,
+    "SUPUESTO": 0,
+    "UNRESOLVED": 1
+  },
+  "verdict_summary": {
+    "publica": 1,
+    "prepara_publicacion": 3,
+    "no_alcanza_publico": 2,
+    "UNRESOLVED": 1
+  },
+  "rows": [
+    {
+      "id": "github-pages-iskvw",
+      "path": ".github/workflows/publicar_iskvw.yml",
+      "sha256": "a662f1438f498932ad9d344400e42838a8196bedb121b500d651cf119a00429b",
+      "verdict": "publica",
+      "method": "MEDIDO",
+      "evidence": [
+        {
+          "kind": "command",
+          "value": "nl -ba .github/workflows/publicar_iskvw.yml | sed -n '1,220p'",
+          "result": "workflow_dispatch en línea 21; upload-pages-artifact en 164; deploy-pages en 168"
+        },
+        {
+          "kind": "file",
+          "path": ".github/workflows/publicar_iskvw.yml",
+          "line": 1,
+          "excerpt": "# Publishes iskvw to GitHub Pages (iskvw.cl) only after explicit dispatch."
+        },
+        {
+          "kind": "file",
+          "path": ".github/workflows/publicar_iskvw.yml",
+          "line": 21,
+          "excerpt": "  workflow_dispatch: {}"
+        },
+        {
+          "kind": "file",
+          "path": ".github/workflows/publicar_iskvw.yml",
+          "line": 66,
+          "excerpt": "cp -r iskvw/. _sitio/"
+        },
+        {
+          "kind": "file",
+          "path": ".github/workflows/publicar_iskvw.yml",
+          "line": 164,
+          "excerpt": "      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0"
+        },
+        {
+          "kind": "file",
+          "path": ".github/workflows/publicar_iskvw.yml",
+          "line": 168,
+          "excerpt": "        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0"
+        }
+      ],
+      "note": "El disparo requiere acción humana explícita mediante workflow_dispatch; no se midió una aprobación adicional del environment github-pages."
+    },
+    {
+      "id": "editor-descargas",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "verdict": "prepara_publicacion",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "command",
+          "value": "nl -ba iskvw/editor.html | sed -n '1080,1110p;2985,3025p'",
+          "result": "La página declara salida solo por descarga y descarga curaduria.json/tablero.json."
+        },
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 1092,
+          "excerpt": "its only output is a download."
+        },
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 1095,
+          "excerpt": "the artist commits curaduria.json through the same gate as everything else (branch + PR + green CI)."
+        },
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 3012,
+          "excerpt": "bajar(\"curaduria.json\", d);"
+        },
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 3018,
+          "excerpt": "bajar(\"tablero.json\", d);"
+        }
+      ],
+      "note": "El editor no hace llamadas de despliegue: produce archivos que podrían entrar después al workflow público mediante commit/PR."
+    },
+    {
+      "id": "generador-archivo-iskvw",
+      "path": "tools/gen_archivo_iskvw.py",
+      "sha256": "329d755a4f651b8579ec48f8952ca11ac0c6e9637fae32b857b2c452c0e291f3",
+      "verdict": "prepara_publicacion",
+      "method": "MEDIDO",
+      "evidence": [
+        {
+          "kind": "command",
+          "value": "nl -ba tools/gen_archivo_iskvw.py | sed -n '54,65p;321,379p'",
+          "result": "SALIDA apunta a iskvw/datos/archivo.json y --fuente todo aplica filtro de sustrato público."
+        },
+        {
+          "kind": "file",
+          "path": "tools/gen_archivo_iskvw.py",
+          "line": 56,
+          "excerpt": "SALIDA = RAIZ / \"iskvw\" / \"datos\" / \"archivo.json\""
+        },
+        {
+          "kind": "file",
+          "path": "tools/gen_archivo_iskvw.py",
+          "line": 30,
+          "excerpt": "The 2026-08-05 correction is only the publication boundary"
+        },
+        {
+          "kind": "file",
+          "path": "tools/gen_archivo_iskvw.py",
+          "line": 377,
+          "excerpt": "if args.fuente == \"todo\" and not args.incluir_ensayos:"
+        },
+        {
+          "kind": "file",
+          "path": ".github/workflows/publicar_iskvw.yml",
+          "line": 59,
+          "excerpt": "python3 tools/gen_archivo_iskvw.py --fuente todo"
+        }
+      ],
+      "note": "Genera el sustrato que luego copia el workflow; por sí solo no contacta GitHub Pages."
+    },
+    {
+      "id": "hub-portfolio-ordering",
+      "path": "cultura/mak_plataforma/hub.py",
+      "sha256": "e5bf8722b5504496911126b97de52e557d11e9ee2369e1a83f442b21793aa24d",
+      "verdict": "no_alcanza_publico",
+      "method": "MEDIDO",
+      "evidence": [
+        {
+          "kind": "command",
+          "value": "nl -ba cultura/mak_plataforma/hub.py | sed -n '1,16p;2530,2583p;3045,3051p;5717,5865p'",
+          "result": "El hub se declara ordenamiento interno; board guarda datos locales y production declara publicación/database_write false."
+        },
+        {
+          "kind": "file",
+          "path": "cultura/mak_plataforma/hub.py",
+          "line": 7,
+          "excerpt": "Its historically named `/portafolio/` route is the operator-facing IRIS ordering/curation interface"
+        },
+        {
+          "kind": "file",
+          "path": "cultura/mak_plataforma/hub.py",
+          "line": 9,
+          "excerpt": "`iskvw.cl` is a separate downstream site."
+        },
+        {
+          "kind": "file",
+          "path": "cultura/mak_plataforma/hub.py",
+          "line": 2562,
+          "excerpt": "it never publishes anything."
+        },
+        {
+          "kind": "file",
+          "path": "cultura/mak_plataforma/hub.py",
+          "line": 3048,
+          "excerpt": "Read-only by contract: every renderer returns a `control` block with publication, submission, signed_document, authorship_claimed and database_write false."
+        }
+      ]
+    },
+    {
+      "id": "portfolio-generator-no-workflow",
+      "path": "tools/portfolio/generar_portfolio.py",
+      "sha256": "412d7c3b14716eba085c59a7d29c08b0889bbb6749967185ffefa996d9682592",
+      "verdict": "no_alcanza_publico",
+      "method": "existence check plus consumer/workflow search",
+      "evidence": [
+        {
+          "kind": "command",
+          "value": "rg --files .github/workflows FLUJO/.github/workflows | sort -u",
+          "result": "No existe .github/workflows/portfolio.yml en MAK ni FLUJO."
+        },
+        {
+          "kind": "file",
+          "path": "tools/portfolio/generar_portfolio.py",
+          "line": 14,
+          "excerpt": "Sin red, sin APIs: solo git local y archivos del repo."
+        },
+        {
+          "kind": "file",
+          "path": "tools/portfolio/generar_portfolio.py",
+          "line": 15,
+          "excerpt": "el workflow (necesita el secret PORTFOLIO_TOKEN); este script nunca pushea."
+        },
+        {
+          "kind": "file",
+          "path": "MAK/tools/portfolio/generar_portfolio.py",
+          "line": 1,
+          "excerpt": "archivo vivo confirmado; la conclusión se refiere al consumidor, no a su existencia"
+        }
+      ],
+      "note": "El archivo existe en MAK; lo no encontrado es su consumidor público. No se atribuye ausencia al archivo. La evidencia disponible indica que nunca hace push por sí mismo y no aparece portfolio.yml en MAK ni FLUJO; queda fuera del camino público medido."
+    },
+    {
+      "id": "entrega-micelio-snapshot",
+      "path": "cultura/mak_plataforma/entregar_micelio.py",
+      "sha256": "7cd598b22f65d52077fead472ea4eabeb69545cbab6d6953bc0f45654e4afefd",
+      "verdict": "prepara_publicacion",
+      "method": "MEDIDO",
+      "evidence": [
+        {
+          "kind": "command",
+          "value": "nl -ba cultura/mak_plataforma/entregar_micelio.py | sed -n '1,30p;150,196p'",
+          "result": "La herramienta prepara snapshot mediante rama, commit, push y PR draft; el despliegue sigue siendo el workflow Pages."
+        },
+        {
+          "kind": "file",
+          "path": "cultura/mak_plataforma/entregar_micelio.py",
+          "line": 5,
+          "excerpt": "(.github/workflows/publicar_iskvw.yml) runs on `ubuntu-latest`."
+        },
+        {
+          "kind": "file",
+          "path": "cultura/mak_plataforma/entregar_micelio.py",
+          "line": 168,
+          "excerpt": "git(\"checkout\", \"-B\", branch, \"origin/%s\" % RAMA_BASE, \"--quiet\")"
+        },
+        {
+          "kind": "file",
+          "path": "cultura/mak_plataforma/entregar_micelio.py",
+          "line": 185,
+          "excerpt": "git(\"push\", \"-u\", \"origin\", branch, \"--quiet\")"
+        },
+        {
+          "kind": "file",
+          "path": "cultura/mak_plataforma/entregar_micelio.py",
+          "line": 187,
+          "excerpt": "[\"gh\", \"pr\", \"create\", \"--draft\", \"--base\", RAMA_BASE"
+        }
+      ],
+      "note": "Es un camino de preparación con efectos externos si se ejecuta; no fue ejecutado durante esta auditoría."
+    },
+    {
+      "id": "ancla-flujo-archive-view",
+      "path": "flujo/src/flujo/departments.py",
+      "sha256": "9c1f7c6ad0788dcc18af3dead8e58f3ebfcb7c7e1360bcb2c9cc35d4f8ecb232",
+      "verdict": "no_alcanza_publico",
+      "method": "MEDIDO",
+      "evidence": [
+        {
+          "kind": "command",
+          "value": "nl -ba flujo/src/flujo/departments.py | sed -n '54,75p'",
+          "result": "Archive portfolio view está read_only, draft y publication false; Cloudflare solo en la frontera."
+        },
+        {
+          "kind": "file",
+          "path": "flujo/src/flujo/departments.py",
+          "line": 63,
+          "excerpt": "\"label\": \"Archive portfolio view\""
+        },
+        {
+          "kind": "file",
+          "path": "flujo/src/flujo/departments.py",
+          "line": 65,
+          "excerpt": "\"mode\": \"read_only\""
+        },
+        {
+          "kind": "file",
+          "path": "flujo/src/flujo/departments.py",
+          "line": 67,
+          "excerpt": "\"publication\": False"
+        },
+        {
+          "kind": "file",
+          "path": "flujo/src/flujo/departments.py",
+          "line": 74,
+          "excerpt": "\"api_dependencies\": [\"Cloudflare only at publication boundary\"]"
+        }
+      ]
+    }
+  ]
+}

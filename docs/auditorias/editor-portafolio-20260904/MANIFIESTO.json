@@ -1,0 +1,60 @@
+{
+  "schema": "mak-editor-portfolio-audit-package-v1",
+  "package": "docs/auditorias/editor-portafolio-20260904",
+  "purpose": "documentación versionable de la auditoría del editor/portafolio",
+  "source_archive": "auditoria-editor-20260904 fuera del repositorio",
+  "policy": {
+    "source_copies_preserved": true,
+    "repository_changes_only": "se creó este paquete documental; no se modificaron código, workflows, procesos ni datos operativos",
+    "commit_or_push": false,
+    "paths_redacted_to_portable_aliases": true,
+    "raw_provider_payloads_included": false,
+    "large_runtime_snapshots_included": false
+  },
+  "versionable_files": [
+    "01_superficies.json",
+    "02_editor_controles.json",
+    "03_campo_atlas.json",
+    "04_frontera_publicacion.json",
+    "05_glosario.json",
+    "06_plan_separacion.json",
+    "07_matriz_mutaciones.json",
+    "08_reconciliacion_arboles.json",
+    "09_escaneo_exposicion.json",
+    "10_plan_reparacion_publicacion.json",
+    "11_procedencia.json",
+    "12_reproducibilidad.json",
+    "13_validacion_calidad.json",
+    "14_limite_red.json",
+    "15_headers_http.json",
+    "16_observabilidad.json",
+    "17_integridad_mutaciones.json",
+    "18_frontera_interfaz_publica.json",
+    "19_proxy_servicios.json",
+    "20_errores_respuestas.json",
+    "21_retencion_datos.json",
+    "22_propuestas_mejora.json"
+  ],
+  "excluded_local_only": [
+    "02_origen_confusion_v2.json",
+    "07_recuperables_v2.json",
+    "10_observacion_runtime.json",
+    "13_superficie_artifacto_publico.json",
+    "16_sonda_deploy_externo.json",
+    "20_barrido_contratos_runtime.json",
+    "21_auditoria_privacidad_runtime.json",
+    "_AUTOAUDITORIA.json",
+    "_INDICE.json",
+    "_generate_07.py",
+    "_generate_07_fast.py",
+    "_generate_07_inventory.py",
+    "_generate_07_stat.py",
+    "_resolve_07.py"
+  ],
+  "review_before_commit": [
+    "confirmar que las referencias MAK/ y FLUJO/ coinciden con el árbol objetivo",
+    "revisar si los hashes de evidencia deben congelarse o regenerarse",
+    "decidir si este paquete pertenece al repo MAK o debe replicarse como documentación en FLUJO",
+    "obtener autorización separada antes de hacer commit o push"
+  ]
+}
