@@ -46,7 +46,8 @@ py scripts/validate_airdrop.py
 py scripts/run_airdrop_checks.py "mensaje"
 ```
 
-Ver `docs/AGENT_AIRDROP_PROTOCOL.md` para el detalle completo (que valida, que hace el runner paso a paso, flags).
+La validación vigente está en `scripts/validate_airdrop.py`; el runner histórico
+ya no forma parte del checkout actual.
 
 ## Deuda conocida
 

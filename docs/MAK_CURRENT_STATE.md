@@ -1,18 +1,18 @@
 # Estado actual de MAK
 
-> Fuente canónica de orientación para agentes y colaboradores. Leer primero
-> `/home/mak/flujo/agents.md`, ejecutar `tools/agent_bootstrap.py`, luego este
-> archivo y únicamente el paquete `Agent bootstrap — CURRENT` que emite el
-> bootstrap. No recorrer el cuerpo histórico de `context/LAST_HANDOFF.md` para
-> decidir el estado actual. Verificado el 2026-08-31.
+> Esta es una instantánea narrativa fechada, no la autoridad del estado actual.
+> Para orientarse se lee `/home/mak/AGENTS.md` y se mide con
+> `.venv/bin/python tools/mak_status.py`. La continuidad histórica está en
+> `context/HANDOFF_HISTORICO.md`. Las rutas de contratos retirados que aparezcan
+> más abajo son evidencia histórica, no instrucciones vigentes.
 
 Este documento consolida decisiones durables. No reemplaza la evidencia
 histórica, no convierte cada experimento en una obligación y no afirma que una
 credencial funcione solo porque existe en un archivo de entorno.
 
-El traspaso estructurado vigente está en
-`/home/mak/context/LAST_HANDOFF.md`. Léelo junto con este estado; el antiguo
-`MAK_CODEX_HANDOFF.md` quedó histórico en `docs/handoffs/archive/`.
+El traspaso histórico está en `context/HANDOFF_HISTORICO.md`. Este documento
+conserva contexto de mediciones anteriores y no debe usarse para inferir el
+estado presente sin volver a medirlo.
 
 ## Frontera semántica: IRIS no es el portafolio
 
@@ -536,9 +536,9 @@ requiere demostrar imports, entrypoints, tests, consumidores y rollback.
 - Cada cambio debe tener un consumidor, write set acotado, prueba foreground y
   rollback. Se hace `git add` explícito; no se publica un árbol completo por
   accidente.
-- Un agente externo puede empezar leyendo solo `agents.md`, este documento,
-  `context/OWNER_MANIFEST.md` y el packet producido por `tools/route_idea.py`.
-  Luego lee únicamente el handoff o contrato del área que va a tocar.
+- Un agente externo debe empezar por `/home/mak/AGENTS.md` y medir el estado
+  actual. Este documento y `context/OWNER_MANIFEST.md` son contexto fechado;
+  no sustituyen la medición ni agregan un contrato por área.
 
 ## 10. Qué se aprendió de las fases históricas
 
@@ -643,10 +643,10 @@ las dos listas: más sentencias sin cubrir y **más líneas colgando de un solo
 test (773, ahora 711)**.
 
 **Cifra falsa corregida**: se repitió toda una sesión que `ingesta_archivo.py`
-estaba "al 9%". Estaba al 72%. La causa es de instrumento y quedó en
-`~/PATRONES.CLAUDE.json` como patrón 24: **`--cov=paquete.modulo` devuelve "No
-data to report"** porque pytest-cov importa el módulo antes de que arranque el
-rastreador. Hay que usar la ruta real.
+estaba "al 9%". Estaba al 72%. La causa fue un defecto de instrumento:
+**`--cov=paquete.modulo` devuelve "No data to report"** porque pytest-cov
+importa el módulo antes de que arranque el rastreador. Hay que usar la ruta real;
+la explicación quedó absorbida en `MEMORIAS.md`.
 
 ### El solape entre tests, contestado
 
@@ -805,11 +805,12 @@ El latido (`tools/mak_heartbeat.py`) va **activo**: es lo que faltó el
 grita con deriva y calla sin ella. **Refijar su línea base justo después de
 reanudar** o gritará que esperaba 0 activas y hay 23.
 
-## Referencias canónicas
+## Referencias históricas y de medición
 
-- `agents.md`
+- `AGENTS.md` (contrato vigente, fuera de esta instantánea)
+- `.venv/bin/python tools/mak_status.py` (medición vigente, fuera de esta instantánea)
 - `context/LAST_HANDOFF.md` (solo el paquete `Agent bootstrap — CURRENT`; el
-  resto es evidencia histórica)
+  resto es evidencia histórica de una organización anterior)
 - `context/OWNER_MANIFEST.md`
 - `context/VIDEO_WORKFLOW_MAK_20260817.md`
 - `CAPACIDADES_MAK.md`
