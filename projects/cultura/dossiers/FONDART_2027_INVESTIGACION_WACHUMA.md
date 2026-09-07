@@ -1,11 +1,13 @@
-# Jardines interpretativos: públicos y trazabilidad de una lectura visual
+# Wachuma leído por su público: procedencia visible en un jardín digital
 
 **Convocatoria:** Fondart Nacional — Línea Investigación — Concurso General 2027
-**Cierre:** 2026-09-10
+**Cierre:** 2026-09-10, 15:00 hora de Santiago — **verificar en el portal antes de enviar**: la fecha no sale del PDF de bases, viene de una captura del portal y está declarada `UNRESOLVED` en `data/fondart_nacional_investigacion_2027.json`
 **Solicitado al fondo:** $12.000.000 CLP
 **Duración:** 12 meses
 
-> Borrador generado desde las bases. Las secciones marcadas `[FALTA]` están vacías en el proyecto: la herramienta no escribe el texto de la postulación.
+> Borrador generado desde las bases y reescrito el 2026-09-07 sobre su caso real. Las secciones marcadas `[FALTA]` siguen vacías: la herramienta no escribe el texto de la postulación.
+>
+> Reemplaza al borrador «Jardines interpretativos», que postulaba el método sin caso. Jardines es el método; Wachuma es el caso. Las bases admiten **una sola postulación por línea** (I.4), así que existe este expediente y no los dos.
 
 > **Estado:** borrador de trabajo para revisión humana. El verificador considera
 > declarados el Avance y el Plan para comprobar la estructura; ambos todavía deben
@@ -26,11 +28,11 @@
 
 <!-- Problema, relevancia y aporte al campo disciplinar. -->
 
-Jardines interpretativos investiga qué ocurre cuando un público debe leer una pieza visual construida desde fuentes heterogéneas sin perder la diferencia entre dato, inferencia, analogía y decisión artística. La línea Investigación exige estudios de campo para levantar datos; por eso el objeto de este proyecto no es demostrar una teoría sobre plantas, sino caracterizar cómo personas vinculadas a las artes visuales comprenden, cuestionan y usan la trazabilidad de una interpretación visual. El proyecto se inscribe en el Grupo A, en nuevos medios, y en la temática de caracterización de públicos y consumo cultural.
+Una visualización de relaciones puede resultar convincente sin que se sepa qué proviene de una fuente, qué es inferencia y qué decidió la curaduría. Esta investigación no busca demostrar una tesis botánica: busca caracterizar cómo personas adultas vinculadas a las artes visuales comprenden, cuestionan y usan la procedencia cuando ésta se hace visible. El proyecto se inscribe en el Grupo A, en nuevos medios, y en la temática autorizada de caracterización de públicos y consumo cultural.
 
-El estímulo será un jardín visual interactivo acotado a un caso y una familia de fuentes verificables. Cada entrada mostrará procedencia, tipo de afirmación, incertidumbre y decisión curatorial. Las sesiones de campo recogerán recorridos, preguntas, rechazos y comprensiones de participantes adultos. La pieza no entrega diagnósticos, tratamientos ni instrucciones operativas de cultivo: las referencias botánicas son material cultural y visual, y toda analogía declara su punto de quiebre.
+El estímulo del estudio no se construirá desde cero. Es Wachuma, un jardín digital ya existente sobre *Echinopsis pachanoi* cuyo modelo de datos separa por diseño la fuente de la afirmación: al 7 de septiembre de 2026 registra 28 fuentes, 67 registros de origen, 69 filas de procedencia y 53 revisiones de esos registros, sobre 7 taxones y 7 ejemplares. Cada afirmación cita las fuentes que la sostienen mediante una tabla de relación propia, no por adyacencia. Esa arquitectura, y no una promesa, es lo que permite mostrarle a un público una lectura y su origen al mismo tiempo.
 
-La evidencia de implementación ya existe en el workflow local y en la ruta `/research-garden/` del hub. El financiamiento convertiría esa base técnica en un piloto de investigación con instrumentos, consentimiento, análisis y transferencia, sin presentar como resultado futuro algo que el repositorio ya ejecuta.
+Lo que Wachuma todavía no tiene es contenido curado y una superficie pública: hay una ficha de especie real y el resto de sus piezas de contenido son demostraciones. Esa es exactamente la brecha que este proyecto trabaja, y por eso el objeto evaluable no es la infraestructura sino el estudio de campo: qué comprende, qué rechaza y qué pregunta un público cuando la procedencia está a la vista.
 
 ## Objetivos
 
@@ -42,7 +44,7 @@ Objetivo general:
 Caracterizar, mediante un estudio de campo con públicos adultos de artes visuales, qué formas de comprensión, duda y rechazo aparecen al recorrer un jardín visual interpretativo que conserva la procedencia de sus fuentes.
 
 Objetivos específicos:
-1. Delimitar un caso de estudio y un corpus verificable de fuentes botánicas, culturales y técnicas, separando hecho documentado, inferencia, metáfora y decisión curatorial.
+1. Curar y revisar el corpus publicable del caso Wachuma, elevando las fichas de contenido desde su estado de demostración hasta material verificado, y separando en cada afirmación hecho documentado, inferencia, metáfora y decisión curatorial.
 2. Implementar un prototipo interactivo reproducible que exponga fuente, claim, relación, contexto, interpretación y punto de quiebre.
 3. Diseñar y aplicar sesiones de campo con instrumentos de observación, entrevista breve y registro de decisiones de lectura, sin conservar archivos personales ni datos innecesarios.
 4. Analizar qué comprenden los públicos, qué relaciones rechazan y qué elementos de procedencia ayudan o dificultan la lectura de la pieza.
@@ -68,7 +70,7 @@ Fase 5 — transferencia y cierre (noviembre de 2027-marzo de 2028): realizar un
 
 El estudio de campo se centra en la temática autorizada de caracterización de públicos y consumo cultural en artes de la visualidad. Se convocará una muestra intencional de personas adultas vinculadas a prácticas de arte, diseño, mediación o investigación cultural; el número definitivo y el espacio se fijarán antes del FUP y quedan marcados [FALTA] hasta cerrar la convocatoria.
 
-Cada participante recorrerá una versión acotada del jardín y podrá aceptar, rechazar o dejar abierta una relación entre fuente e interpretación. Se aplicarán observación estructurada, entrevista breve de comprensión y una ficha de salida. Se registrarán sólo decisiones, tiempos aproximados, preguntas y respuestas necesarias para el análisis; no se copiarán archivos personales ni se publicarán datos identificables. La comparación entre una lectura con procedencia visible y una lectura visual sin esa capa permitirá observar qué aporta la trazabilidad.
+Cada participante recorrerá una versión acotada del jardín Wachuma y podrá aceptar, rechazar o dejar abierta una relación entre fuente e interpretación. La versión de campo se sirve desde el repositorio del caso, sin ubicaciones de ejemplares. Se aplicarán observación estructurada, entrevista breve de comprensión y una ficha de salida. Se registrarán sólo decisiones, tiempos aproximados, preguntas y respuestas necesarias para el análisis; no se copiarán archivos personales ni se publicarán datos identificables. La comparación entre una lectura con procedencia visible y una lectura visual sin esa capa permitirá observar qué aporta la trazabilidad.
 
 El protocolo incluirá consentimiento informado, retiro voluntario, anonimización, resguardo local y una devolución agregada. Las hipótesis se tratarán como hipótesis y el comportamiento del modelo como resultado simulado, nunca como evidencia del mundo botánico o de la experiencia de un público completo.
 
@@ -80,12 +82,12 @@ El protocolo incluirá consentimiento informado, retiro voluntario, anonimizaci�
 
 Problema: las piezas generativas y las visualizaciones de relaciones pueden producir una lectura convincente sin dejar claro qué proviene de una fuente, qué es inferencia y qué decidió la curaduría. Esa opacidad vuelve difícil evaluar la experiencia de un público y puede convertir una metáfora en una falsa instrucción.
 
-Objeto de estudio: las formas de comprensión y desacuerdo que aparecen cuando públicos adultos recorren un jardín visual interactivo con procedencia, incertidumbre y punto de quiebre explícitos.
+Objeto de estudio: las formas de comprensión y desacuerdo que aparecen cuando públicos adultos recorren el jardín digital Wachuma con procedencia, incertidumbre y punto de quiebre explícitos. El caso está fijado de antemano y no se elige durante la ejecución: eso permite que el estudio empiece por el instrumento y no por construir el estímulo.
 
 Pregunta: ¿cómo interpretan públicos de artes visuales una pieza de jardín visual cuando cada relación muestra su fuente, nivel de certeza y límite, y qué decisiones de interfaz favorecen una lectura crítica?
 Hipótesis de trabajo: hacer visible la procedencia y la diferencia entre evidencia e interpretación aumentará las preguntas y los rechazos informados, pero puede ralentizar el recorrido; el estudio de campo medirá esa tensión sin asumir de antemano un resultado positivo.
 
-Metodología: seleccionar un caso acotado; capturar fuentes; extraer y normalizar claims; relacionar y contextualizar; construir una interpretación visual; probarla con participantes; comparar observación, entrevistas y decisiones; validar límites; curar y transferir. El workflow `tools/interpretive_garden_workflow.py` ya implementa la cadena de procedencia local y genera SQLite, CSV y un informe; la investigación añadirá el protocolo de campo y su análisis.
+Metodología: seleccionar un caso acotado; capturar fuentes; extraer y normalizar claims; relacionar y contextualizar; construir una interpretación visual; probarla con participantes; comparar observación, entrevistas y decisiones; validar límites; curar y transferir. El workflow `tools/interpretive_garden_workflow.py` implementa la cadena de procedencia local, y el repositorio del caso la tiene en producción sobre PostgreSQL/PostGIS con revisión humana registrada. La investigación añade lo que hoy no existe: el contenido curado, el protocolo de campo y su análisis.
 
 Marco teórico y estado del arte: el proyecto trabaja desde prácticas de archivo, visualización de relaciones, investigación basada en arte y mediación crítica. La bibliografía específica y el corpus final deben cerrarse con fuentes verificadas [FALTA]; el informe local `research/jardines_interpretativos/JARDINES_INTERPRETATIVOS_RESEARCH.md` registra el modelo de datos, la separación entre evidencia, inferencia, metáfora y curaduría, y las restricciones de publicación.
 
@@ -97,13 +99,27 @@ El documento final se maquetará como el Avance de Investigación de 15 páginas
 
 <!-- Fuentes primarias/secundarias, procedencia, claims y límites de interpretación. -->
 
-Fuentes de implementación y procedencia disponibles en MAK:
-- `research/jardines_interpretativos/JARDINES_INTERPRETATIVOS_RESEARCH.md`, informe local con 44 URLs extraídas, 26 claims, 4 relaciones y contratos de seguridad; registra candidatos externos como referencias, no como fuentes verificadas por sí mismas.
-- `tools/interpretive_garden_workflow.py`, workflow offline-first que crea tablas de documentos, fuentes, claims, entidades, relaciones, interpretaciones, resultados y eventos de auditoría.
-- `research/corpus/fondart_annual_2015_2025_20260813_v5/sources.sqlite`, corpus local consultable para antecedentes, sin usar proyectos históricos como prueba de elegibilidad.
-- Ruta `/research-garden/` de `cultura/mak_plataforma/hub.py`, evidencia de un consumidor/entrada local.
+El corpus del caso ya está constituido y es consultable. Medido el 7 de septiembre de 2026 sobre la base PostgreSQL/PostGIS del proyecto:
 
-Cada fuente nueva tendrá URL o ruta, fecha, hash, tipo, cita y estado. Las relaciones llevarán base y confianza; una analogía no se presentará como hecho. La lista primaria y la bibliografía definitiva quedan [FALTA] hasta delimitar el caso.
+| Tabla | Filas | Qué guarda |
+| --- | ---: | --- |
+| `record_provenance` | 69 | de dónde vino cada registro |
+| `source_records` | 67 | el registro tal como lo entregó su fuente |
+| `source_record_reviews` | 53 | la revisión humana de ese registro |
+| `specimen_locations` | 42 | ubicaciones de ejemplares, **no publicables** |
+| `sources` | 28 | las fuentes citables |
+| `claim_sources` | 23 | qué fuente sostiene qué afirmación |
+| `claims` | 21 | las afirmaciones |
+| `observations` | 21 | observaciones de campo |
+| `external_identifiers` | 14 | identificadores en repositorios externos |
+| `growing_guide_claims` | 12 | afirmaciones de guía de cultivo |
+| `taxa` / `specimens` | 7 / 7 | taxones y ejemplares |
+
+El repositorio del caso es `github.com/ligereza/WACHUMA`, con 83 commits, esquemas de contenido vinculantes e importadores versionados.
+
+Lo que **no** puede afirmarse todavía, y el proyecto lo trata como trabajo por hacer y no como logro: de las cinco piezas de contenido publicable, sólo `content/species/echinopsis-pachanoi.json` es material real; la ficha cultural, la escena y una de las dos guías de cultivo están marcadas `demo`, y el registro del jardín es un `example`. Curar y revisar ese contenido es el objetivo específico 1, no un supuesto de partida.
+
+Cada fuente nueva tendrá URL o ruta, fecha, hash, tipo, cita y estado, según el esquema que el repositorio ya hace vinculante. Las relaciones llevarán base y confianza; una analogía no se presentará como hecho. La bibliografía secundaria del Avance queda [FALTA] hasta cerrar la revisión disciplinar.
 
 ## Metodología
 
@@ -154,7 +170,7 @@ Esta decisión mantiene la postulación comprobable sin inventar colaboradores. 
 
 <!-- Experiencia pertinente y antecedentes acreditables. -->
 
-La evidencia técnica local muestra implementación y mantenimiento de `tools/interpretive_garden_workflow.py`, un registro SQLite de procedencia y la ruta `/research-garden/` del hub. El/la responsable ha trabajado con diseño de datos, trazabilidad, curaduría de relaciones, documentación y separación entre evidencia e interpretación en MAK.
+La evidencia técnica local muestra implementación y mantenimiento del repositorio del caso, `github.com/ligereza/WACHUMA`, con 83 commits, base PostgreSQL/PostGIS, importadores, esquemas de contenido vinculantes y un modelo de procedencia con revisión humana registrada; además de `tools/interpretive_garden_workflow.py`, el registro SQLite de procedencia y la ruta `/research-garden/` del hub. El/la responsable ha trabajado con diseño de datos, trazabilidad, curaduría de relaciones, documentación y separación entre evidencia e interpretación en MAK.
 
 El nombre legal, CV, RUT, Perfil Cultura, enlaces públicos vigentes y antecedentes que acrediten la experiencia artística y de investigación deben ser completados y firmados por quien postula [FALTA]. Esta sección no atribuye premios, publicaciones ni selecciones que no estén documentadas.
 
@@ -188,7 +204,7 @@ Se presupuestan $600.000, equivalentes al 5% del monto solicitado, dentro del ra
 
 El estudio se dirige a públicos adultos de artes visuales y nuevos medios: artistas, estudiantes avanzados, mediadores, curadores e investigadores. Se observarán perfiles, recorridos, preguntas, rechazos y comprensión de la procedencia; no se comprará una base de datos ni se guardarán identificadores innecesarios.
 
-La muestra intencional, el número de sesiones y la meta de beneficiarios se fijarán al cerrar el caso y la convocatoria [FALTA]. Se reportarán sólo resultados descriptivos y agregados, con consentimiento y posibilidad de retiro. La actividad de transferencia tendrá además un público profesional ampliado, que recibirá el protocolo y una explicación de sus límites.
+La muestra intencional, el número de sesiones y la meta de beneficiarios quedan [FALTA] hasta confirmar la convocatoria; el caso ya no condiciona esa definición, porque está cerrado. Se reportarán sólo resultados descriptivos y agregados, con consentimiento y posibilidad de retiro. La actividad de transferencia tendrá además un público profesional ampliado, que recibirá el protocolo y una explicación de sus límites.
 
 ## Compromisos de realización y/o difusión
 
@@ -206,9 +222,11 @@ No se declara en esta versión un espacio físico o medio existente como parte d
 
 Riesgos y resguardos: consentimiento informado, retiro voluntario, anonimización, almacenamiento local, no publicación de archivos privados y revisión de derechos de cualquier fuente de terceros. La muestra no incluye menores ni actividades en vía pública o territorios indígenas.
 
+Límite de publicación, explícito por ser el riesgo mayor del caso: la base contiene 42 filas en `specimen_locations`. Las ubicaciones de ejemplares **no se publican, no se muestran al público del estudio y no salen en la pieza**, ni exactas ni aproximadas ni derivables de un mapa. *Echinopsis pachanoi* es una especie con presión de recolección y con significado cultural vivo en los Andes; difundir dónde está un ejemplar es un daño concreto, no un problema de forma. La política de publicación distingue tres niveles —público, restringido y no publicable— y las ubicaciones quedan en el tercero de manera permanente.
+
 Límite disciplinar: el jardín es una interpretación visual; no entrega diagnósticos, tratamientos, instrucciones de cultivo ni recomendaciones de uso de sustancias. Las fuentes botánicas, culturales y técnicas se mantendrán diferenciadas. Una fuente no se transforma en verdad por aparecer en una visualización; cada relación indicará si es documentada, inferida, hipotética o curatorial.
 
-Riesgos pendientes [FALTA]: cerrar caso y bibliografía primaria, revisar derechos, confirmar el instrumento con una persona asesora y obtener identidad/Perfil Cultura del responsable.
+Riesgos pendientes [FALTA]: cerrar la bibliografía secundaria, revisar derechos de las fuentes de terceros, confirmar el instrumento con una persona asesora y obtener identidad/Perfil Cultura del responsable. El caso y su corpus primario ya no figuran aquí: están cerrados.
 
 ## Documentos que este proyecto debe adjuntar
 
@@ -222,8 +240,11 @@ Riesgos pendientes [FALTA]: cerrar caso y bibliografía primaria, revisar derech
 ## Aporte del operador antes del envío
 
 - [FALTA] Nombre legal, RUT, domicilio, Perfil Cultura y acreditación del responsable.
-- [FALTA] Caso único, corpus primario, bibliografía, muestra, lugar/modalidad de
-  campo y número final de sesiones.
+- Caso único y corpus primario: **cerrados**. El caso es Wachuma
+  (*Echinopsis pachanoi*) y su corpus es la base medida en «Fuentes y
+  trazabilidad».
+- [FALTA] Bibliografía secundaria, muestra, lugar/modalidad de campo y número
+  final de sesiones.
 - [FALTA] Cotizaciones o valores verificables y revisión laboral, tributaria y de
   derechos de terceros.
 - [FALTA] Confirmación de la autorización ministerial de difusión y verificación
