@@ -150,7 +150,7 @@ El subcomando `flujo airdrop` ya no existe. La cadena entera se retiro a
 `/home/mak/_archive/orden-limpieza-20260828/por-razon/subsistema-retirado-20260814/`
 tras verificar que estaba muerta desde el 2026-08-14: `_airdrop/`, el
 directorio de staging sobre el que operaba, tiene **cero eventos en toda la
-historia de git**, y `docs/AGENT_AIRDROP_PROTOCOL.md` se borro ese mismo dia
+historia de git**, y el protocolo documental se borro ese mismo dia
 en la purga de las 12:44.
 
 Con la cadena se fueron `src/flujo/airdrop.py`, `src/flujo/intake/reception.py`
