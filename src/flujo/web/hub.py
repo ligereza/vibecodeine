@@ -482,6 +482,15 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 self._send_json({"productoras": [], "venues": [], "error": str(e)}, status=200)
             return
+        if path == "/api/rd/muestras/bootstrap":
+            if not self._xio_authorized():
+                self._send_json({"ok": False, "error": "xio_no_autorizado"}, status=401)
+                return
+            try:
+                self._send_json(self._get_xio_bootstrap())
+            except Exception as exc:
+                self._send_json({"ok": False, "error": str(exc)}, status=503)
+            return
         if path == "/api/rd/topics":
             try:
                 self._send_json(rd_topics(self.root))
@@ -759,6 +768,21 @@ class HubRequestHandler(BaseHTTPRequestHandler):
         p = parsed.path
         if int(self.headers.get("Content-Length", 0) or 0) > MAX_BODY_BYTES:
             self._send_json({"error": "cuerpo demasiado grande"}, status=413)
+            return
+
+        if p == "/api/rd/muestras/sync":
+            if not self._xio_authorized():
+                self._send_json({"ok": False, "error": "xio_no_autorizado"}, status=401)
+                return
+            content_length = int(self.headers.get("Content-Length", 0) or 0)
+            try:
+                payload = json.loads(self.rfile.read(content_length).decode("utf-8") or "{}")
+                result = self._sync_xio_sample(payload)
+                self._send_json(result)
+            except (TypeError, ValueError, json.JSONDecodeError) as exc:
+                self._send_json({"ok": False, "error": str(exc)[:240]}, status=400)
+            except Exception as exc:
+                self._send_json({"ok": False, "error": str(exc)[:240]}, status=500)
             return
 
         if p == "/api/project/route":
@@ -1718,6 +1742,23 @@ class HubRequestHandler(BaseHTTPRequestHandler):
         from ..rd.panel import datos_panel
 
         return datos_panel(self.root)
+
+    def _xio_authorized(self) -> bool:
+        """Optional shared token for the LAN-facing XIO collector."""
+        expected = os.environ.get("XIO_FIELD_TOKEN", "").strip()
+        return not expected or self.headers.get("X-XIO-Token", "") == expected
+
+    def _get_xio_bootstrap(self) -> dict:
+        from ..rd.database import DEFAULT_DB_PATH
+        from ..rd.xio_ingest import bootstrap
+
+        return bootstrap(DEFAULT_DB_PATH)
+
+    def _sync_xio_sample(self, payload: dict) -> dict:
+        from ..rd.database import DEFAULT_DB_PATH
+        from ..rd.xio_ingest import ingest
+
+        return ingest(payload, DEFAULT_DB_PATH, workspace_root() / "xio_evidence")
 
     def _get_rd_datos_summary(self) -> dict:
         """GET /api/rd-datos-summary: resumen de la DB privacy-first de

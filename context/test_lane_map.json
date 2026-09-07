@@ -2150,6 +2150,16 @@
       "lane": "flujo",
       "imports": [],
       "reason": "imports only the motor (flujo.*); no reach into the cultura tree"
+    },
+    "tests/test_rd_espina_relacional.py": {
+      "lane": "flujo",
+      "imports": [
+        "__future__",
+        "flujo.rd",
+        "pathlib",
+        "pytest"
+      ],
+      "reason": "subject is flujo.rd.database: the evento/productora/venue spine (2026-09-05)"
     }
   },
   "summary": {
