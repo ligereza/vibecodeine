@@ -1,0 +1,66 @@
+{
+  "schema": "codex-projection-reproducibility-v1",
+  "tested_at": "2026-09-05T13:10:00-04:00",
+  "scope": "Generator runs isolated to /tmp against WORKSPACE sources; no repository output written.",
+  "runs": [
+    {
+      "command": "python3 MAK/tools/gen_archivo_iskvw.py --fuente todo --salida TEMP/iskvw-repro-todo-p71hqv3v.json",
+      "exit": 0,
+      "output_sha256": "b746fe10c76a53ec5e1ac93a9fa01fd543dafbfba066e0b052ed85bde3a30189",
+      "source": "todo",
+      "generated": "2026-09-05T01:09:21",
+      "pieces": 2034,
+      "links": 5812,
+      "comparison_to_MAK/iskvw/datos/archivo.json": {
+        "version": true,
+        "fuente": true,
+        "piezas": true,
+        "vinculos": true,
+        "meta": true,
+        "only_generated_changed": true
+      }
+    },
+    {
+      "command": "python3 MAK/tools/gen_archivo_iskvw.py --fuente micelio_snapshot --salida TEMP/iskvw-repro-1hrpoon8.json",
+      "exit": 0,
+      "output_sha256": "34f9551a47956e0286a6158742f5be3dc95d830ff7e02bdc649f6d16bbc3914b",
+      "source": "micelio_snapshot",
+      "generated": "2026-09-05T01:09:08",
+      "pieces": 1530,
+      "links": 4921,
+      "comparison_to_MAK/iskvw/datos/archivo.json": {
+        "added_piece_ids": 67,
+        "removed_piece_ids": 571,
+        "common_changed": 0,
+        "same_payload": false
+      }
+    }
+  ],
+  "conclusion": "The projection is reproducible when source=todo and current live micelio responds; snapshot mode is a materially different source and must not be substituted silently.",
+  "findings": [
+    {
+      "id": "source-option-is-semantic",
+      "severity": "high",
+      "statement": "fuente is not metadata-only: it changes the projection by hundreds of pieces/links."
+    },
+    {
+      "id": "timestamp-only-drift-todo",
+      "severity": "medium",
+      "statement": "todo reproduces payload exactly but output hash changes because generated timestamp changes."
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": "P1",
+      "action": "Record source option and input hashes; treat source changes as an explicit versioned projection change."
+    },
+    {
+      "priority": "P1",
+      "action": "For deterministic comparisons, separate generated_at from canonical payload hash or record both."
+    },
+    {
+      "priority": "P2",
+      "action": "Pin/attest whether publication may use live micelio or snapshot fallback; require a visible fallback status."
+    }
+  ]
+}

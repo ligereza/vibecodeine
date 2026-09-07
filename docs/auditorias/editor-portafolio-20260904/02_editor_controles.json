@@ -1,0 +1,1250 @@
+{
+  "schema": "codex-03-editor-html-v2",
+  "generated_at_utc": "2026-09-05T05:10:00Z",
+  "heads": {
+    "MAK": "68339cd7812fababaf43dc922368817b7f970eb8",
+    "FLUJO": "a7c44431baed7e4de4c39251c1955e4406c32b11"
+  },
+  "method_summary": {
+    "MEDIDO": 39,
+    "DERIVADO": 0,
+    "SUPUESTO": 0,
+    "UNRESOLVED": 0,
+    "vocabulary": "Case-insensitive scan includes mostrar, visible, ocultar, publicar and published; zero matches are retained explicitly where applicable."
+  },
+  "verdict_summary": {
+    "afecta_publico": 13,
+    "solo_interno": 26,
+    "inerte": 0,
+    "UNRESOLVED": 0
+  },
+  "vocabulary_scan": {
+    "bytes": 256541,
+    "lines": 3041,
+    "terms": {
+      "mostrar": 24,
+      "visible": 25,
+      "ocultar": 0,
+      "publicar": 4,
+      "published": 3,
+      "publish": 3
+    },
+    "evidence": [
+      {
+        "kind": "command",
+        "value": "wc -c -l iskvw/editor.html; rg -n -S 'mostrar|visible|ocultar|publicar|published|publish' iskvw/editor.html",
+        "result": "3041 líneas, 256541 bytes; vocabulario recorrido"
+      }
+    ]
+  },
+  "rows": [
+    {
+      "id": "regimen-global",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 938,
+      "element": "select #regimen-global",
+      "data": "REGIMEN_GLOBAL -> curaduria.json.regimen",
+      "effect": "cambia régimen descargado y luego publicable",
+      "half": "publicacion",
+      "verdict": "afecta_publico",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 938,
+          "excerpt": "<select id=\"regimen-global\">"
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "importar",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 946,
+      "element": "button #importar",
+      "data": "input file -> BASE/EDICIONES en memoria",
+      "effect": "carga una curatoria; requiere confirmación si hay cambios sin descargar",
+      "half": "publicacion",
+      "verdict": "afecta_publico",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 946,
+          "excerpt": "<button id=\"importar\" type=\"button\">abrir archivo guardado</button>"
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "importar-archivo",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 949,
+      "element": "input file #importar-archivo",
+      "data": "archivo JSON -> sembrarBase()",
+      "effect": "reemplaza estado de edición; puede alimentar descarga posterior",
+      "half": "publicacion",
+      "verdict": "afecta_publico",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 949,
+          "excerpt": "<input id=\"importar-archivo\" type=\"file\" accept=\".json,application/json\" hidden>"
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "descargar-curatoria",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 950,
+      "element": "button #descargar",
+      "data": "EDICIONES/REGIMEN_GLOBAL -> curaduria.json descargado",
+      "effect": "entrega el archivo que el operador puede commitear al workflow público",
+      "half": "publicacion",
+      "verdict": "afecta_publico",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 950,
+          "excerpt": "<button id=\"descargar\">descargar mi curatoria</button>"
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "archive-refresh",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 965,
+      "element": "button .archive-view-refresh",
+      "data": "ARCHIVE_PORTFOLIO_VIEW vía GET",
+      "effect": "actualiza lectura interna; no escribe ni publica",
+      "half": "orden",
+      "verdict": "solo_interno",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 965,
+          "excerpt": "onclick=\"cargarArchivePortfolioView()\""
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "inbox-view-pendientes",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 974,
+      "element": "button .inbox-modo",
+      "data": "INBOX_VIEW en memoria",
+      "effect": "cambia la vista pendientes",
+      "half": "orden",
+      "verdict": "solo_interno",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 974,
+          "excerpt": "data-inbox-view=\"pendientes\""
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "inbox-view-archivo",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 975,
+      "element": "button .inbox-modo",
+      "data": "INBOX_VIEW en memoria",
+      "effect": "cambia la vista archivo",
+      "half": "orden",
+      "verdict": "solo_interno",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 975,
+          "excerpt": "data-inbox-view=\"archivo\""
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "inbox-view-mesa",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 976,
+      "element": "button .inbox-modo",
+      "data": "INBOX_VIEW en memoria",
+      "effect": "cambia la vista mesa",
+      "half": "orden",
+      "verdict": "solo_interno",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 976,
+          "excerpt": "data-inbox-view=\"mesa\""
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "inbox-tipo",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 987,
+      "element": "select #inbox-tipo",
+      "data": "filtro INBOX",
+      "effect": "filtra la galería, sin escritura",
+      "half": "orden",
+      "verdict": "solo_interno",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 987,
+          "excerpt": "<select id=\"inbox-tipo\">"
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "inbox-buscar",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 988,
+      "element": "input #inbox-buscar",
+      "data": "filtro INBOX",
+      "effect": "filtra la galería, sin escritura",
+      "half": "orden",
+      "verdict": "solo_interno",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 988,
+          "excerpt": "<input id=\"inbox-buscar\" type=\"search\""
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "inbox-assets",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 989,
+      "element": "checkbox #inbox-assets",
+      "data": "filtro disponibilidad media",
+      "effect": "filtra la galería, sin escritura",
+      "half": "orden",
+      "verdict": "solo_interno",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 989,
+          "excerpt": "<input id=\"inbox-assets\" type=\"checkbox\">"
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "inbox-tablero",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 990,
+      "element": "select #inbox-tablero",
+      "data": "filtro board_id",
+      "effect": "filtra la galería, sin escritura",
+      "half": "orden",
+      "verdict": "solo_interno",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 990,
+          "excerpt": "<select id=\"inbox-tablero\">"
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "inbox-nuevo-tablero",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 994,
+      "element": "input #inbox-nuevo-tablero",
+      "data": "nombre de tablero en POST board",
+      "effect": "prepara orden interno",
+      "half": "orden",
+      "verdict": "solo_interno",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 994,
+          "excerpt": "<input id=\"inbox-nuevo-tablero\" type=\"text\""
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "inbox-nuevo-faceta",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 995,
+      "element": "select #inbox-nuevo-faceta",
+      "data": "facet/value de board",
+      "effect": "prepara orden interno",
+      "half": "orden",
+      "verdict": "solo_interno",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 995,
+          "excerpt": "<select id=\"inbox-nuevo-faceta\">"
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "inbox-nuevo-valor",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 996,
+      "element": "input #inbox-nuevo-valor",
+      "data": "value de board",
+      "effect": "prepara orden interno",
+      "half": "orden",
+      "verdict": "solo_interno",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 996,
+          "excerpt": "<input id=\"inbox-nuevo-valor\" type=\"text\""
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "crear-tablero",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 997,
+      "element": "button #crear-tablero",
+      "data": "TABLERO/INBOX/decisiones",
+      "effect": "modifica o navega estado interno",
+      "half": "orden",
+      "verdict": "solo_interno",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 997,
+          "excerpt": "crear tablero"
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "anadir-tablero",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 997,
+      "element": "button #anadir-tablero",
+      "data": "TABLERO/INBOX/decisiones",
+      "effect": "modifica o navega estado interno",
+      "half": "orden",
+      "verdict": "solo_interno",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 997,
+          "excerpt": "añadir a tablero"
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "conectar",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 997,
+      "element": "button #conectar",
+      "data": "TABLERO/INBOX/decisiones",
+      "effect": "modifica o navega estado interno",
+      "half": "orden",
+      "verdict": "solo_interno",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 997,
+          "excerpt": "conectar dos"
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "seleccionar-visibles",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 1008,
+      "element": "button #seleccionar-visibles",
+      "data": "TABLERO/INBOX/decisiones",
+      "effect": "modifica o navega estado interno",
+      "half": "orden",
+      "verdict": "solo_interno",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 1008,
+          "excerpt": "seleccionar visibles"
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "limpiar-bandeja",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 1009,
+      "element": "button #limpiar-bandeja",
+      "data": "TABLERO/INBOX/decisiones",
+      "effect": "modifica o navega estado interno",
+      "half": "orden",
+      "verdict": "solo_interno",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 1009,
+          "excerpt": "vaciar bandeja"
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "more",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 1050,
+      "element": "button #more",
+      "data": "TABLERO/INBOX/decisiones",
+      "effect": "modifica o navega estado interno",
+      "half": "orden",
+      "verdict": "solo_interno",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 1050,
+          "excerpt": "mostrar más"
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "descargar-tablero",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 1061,
+      "element": "button #descargar-tablero",
+      "data": "MEJORAS -> tablero.json descargado",
+      "effect": "archivo descargado para commit posterior",
+      "half": "publicacion",
+      "verdict": "afecta_publico",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 1061,
+          "excerpt": "Descargar tablero.json"
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "piece-titulo",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 2904,
+      "element": "input .t-titulo",
+      "data": "EDICIONES[id].titulo",
+      "effect": "editar() y construirCuraduria(); el valor puede entrar al archivo público",
+      "half": "publicacion",
+      "verdict": "afecta_publico",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 2904,
+          "excerpt": "input .t-titulo / editar(p.id, \"titulo"
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "piece-mostrar",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 2910,
+      "element": "checkbox .t-mostrar",
+      "data": "EDICIONES[id].mostrar",
+      "effect": "editar() y construirCuraduria(); el valor puede entrar al archivo público",
+      "half": "publicacion",
+      "verdict": "afecta_publico",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 2910,
+          "excerpt": "checkbox .t-mostrar / editar(p.id, \"mostrar"
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "piece-abstraccion",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 2920,
+      "element": "range .t-abstraccion",
+      "data": "EDICIONES[id].abstraccion",
+      "effect": "editar() y construirCuraduria(); el valor puede entrar al archivo público",
+      "half": "publicacion",
+      "verdict": "afecta_publico",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 2920,
+          "excerpt": "range .t-abstraccion / editar(p.id, \"abstraccion"
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "piece-svg",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 2936,
+      "element": "input .t-svg",
+      "data": "EDICIONES[id].svg",
+      "effect": "editar() y construirCuraduria(); el valor puede entrar al archivo público",
+      "half": "publicacion",
+      "verdict": "afecta_publico",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 2936,
+          "excerpt": "input .t-svg / editar(p.id, \"svg"
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "piece-regimen-pieza",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 2947,
+      "element": "select .t-regimen",
+      "data": "EDICIONES[id].regimen",
+      "effect": "editar() y construirCuraduria(); el valor puede entrar al archivo público",
+      "half": "publicacion",
+      "verdict": "afecta_publico",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 2947,
+          "excerpt": "select .t-regimen / editar(p.id, \"regimen"
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "piece-peso",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 2955,
+      "element": "number .t-peso",
+      "data": "EDICIONES[id].peso",
+      "effect": "editar() y construirCuraduria(); el valor puede entrar al archivo público",
+      "half": "publicacion",
+      "verdict": "afecta_publico",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 2955,
+          "excerpt": "number .t-peso / editar(p.id, \"peso"
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "piece-serie",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 2966,
+      "element": "input .t-serie",
+      "data": "EDICIONES[id].serie",
+      "effect": "editar() y construirCuraduria(); el valor puede entrar al archivo público",
+      "half": "publicacion",
+      "verdict": "afecta_publico",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 2966,
+          "excerpt": "input .t-serie / editar(p.id, \"serie"
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "piece-nota",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 2972,
+      "element": "input .t-nota",
+      "data": "EDICIONES[id].nota",
+      "effect": "editar() y construirCuraduria(); el valor puede entrar al archivo público",
+      "half": "publicacion",
+      "verdict": "afecta_publico",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 2972,
+          "excerpt": "input .t-nota / editar(p.id, \"nota"
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "rail-focus",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 1538,
+      "element": "rail pieza activa",
+      "data": "DOM/ledger interno",
+      "effect": "solo cambia panel visible",
+      "half": "orden",
+      "verdict": "solo_interno",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 1538,
+          "excerpt": "rail pieza activa"
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "rail-portfolio",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 1538,
+      "element": "rail portafolio general",
+      "data": "DOM/ledger interno",
+      "effect": "abre lectura interna read-only",
+      "half": "orden",
+      "verdict": "solo_interno",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 1538,
+          "excerpt": "rail portafolio general"
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "action-classify",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 1538,
+      "element": "button clasificar",
+      "data": "DOM/ledger interno",
+      "effect": "envía clasificación al ledger interno",
+      "half": "orden",
+      "verdict": "solo_interno",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 1538,
+          "excerpt": "button clasificar"
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "action-triangulate",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 1538,
+      "element": "button triangular/abrir lectura",
+      "data": "DOM/ledger interno",
+      "effect": "consulta y muestra relaciones candidatas",
+      "half": "orden",
+      "verdict": "solo_interno",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 1538,
+          "excerpt": "button triangular/abrir lectura"
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "action-relate",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 1538,
+      "element": "button relacionar",
+      "data": "DOM/ledger interno",
+      "effect": "guarda relación interna",
+      "half": "orden",
+      "verdict": "solo_interno",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 1538,
+          "excerpt": "button relacionar"
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "action-review",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 1514,
+      "element": "revisión humana",
+      "data": "DOM/ledger interno",
+      "effect": "decide candidato en ledger; no altera curaduria pública",
+      "half": "orden",
+      "verdict": "solo_interno",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 1514,
+          "excerpt": "revisión humana"
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "action-dispatch",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 1890,
+      "element": "Pedido enviado",
+      "data": "DOM/ledger interno",
+      "effect": "crea pedido interno para departamento",
+      "half": "orden",
+      "verdict": "solo_interno",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 1890,
+          "excerpt": "Pedido enviado"
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "mesa-order",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 794,
+      "element": "ordenar",
+      "data": "DOM/ledger interno",
+      "effect": "cambia selección/orden del campo Atlas",
+      "half": "orden",
+      "verdict": "solo_interno",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 794,
+          "excerpt": "ordenar"
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    },
+    {
+      "id": "publication-boundary-copy",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "line": 926,
+      "element": "texto de frontera de publicación",
+      "data": "curaduria final / archivo publicado",
+      "effect": "informa que la página no publica directamente; no ejecuta acción",
+      "half": "publicacion",
+      "verdict": "solo_interno",
+      "destructive": false,
+      "endpoint": null,
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 926,
+          "excerpt": "La curatoria final es otro archivo: nada se publica desde esta página."
+        }
+      ],
+      "validation": {
+        "status": "UNRESOLVED",
+        "route": "iskvw/editor.html",
+        "reason": "static audit; live browser interaction was not executed"
+      },
+      "idempotent": "UNRESOLVED: requires repeated live interaction",
+      "human_confirmation": "UNRESOLVED: control-specific confirmation not exercised",
+      "method": "static control walk over isk vw/editor.html; line-level evidence plus data-flow classification"
+    }
+  ],
+  "vocabulary_coverage": {
+    "mostrar": {
+      "count": 17,
+      "lines": [
+        1050,
+        1111,
+        1119,
+        1514,
+        2151,
+        2208,
+        2210,
+        2213,
+        2241,
+        2723,
+        2727,
+        2800,
+        2807,
+        2872,
+        2910,
+        2911,
+        2914
+      ],
+      "searched_case_insensitive": true
+    },
+    "visible": {
+      "count": 22,
+      "lines": [
+        527,
+        571,
+        780,
+        782,
+        828,
+        1008,
+        1256,
+        1259,
+        1450,
+        1538,
+        1674,
+        1676,
+        1822,
+        1900,
+        2210,
+        2272,
+        2282,
+        2390,
+        2453,
+        2454,
+        2455,
+        2491
+      ],
+      "searched_case_insensitive": true
+    },
+    "ocultar": {
+      "count": 0,
+      "lines": [],
+      "searched_case_insensitive": true
+    },
+    "publicar": {
+      "count": 4,
+      "lines": [
+        1035,
+        1989,
+        1992,
+        2226
+      ],
+      "searched_case_insensitive": true
+    },
+    "published": {
+      "count": 3,
+      "lines": [
+        12,
+        987,
+        1096
+      ],
+      "searched_case_insensitive": true
+    }
+  }
+}

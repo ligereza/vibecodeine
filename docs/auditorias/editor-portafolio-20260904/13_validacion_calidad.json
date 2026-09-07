@@ -1,0 +1,40 @@
+{
+  "schema": "codex-validation-quality-v1",
+  "validated_at": "2026-09-05T14:10:00-04:00",
+  "scope": "Generator, contract, Hub and current curaduria from WORKSPACE",
+  "checks": [
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 python3 tools/validar_curaduria.py",
+      "status": "PASS",
+      "exit": 0,
+      "output_summary": "2034 ids de referencia; 0 piezas curadas; 0 errores; 0 avisos."
+    },
+    {
+      "command": "compile() for validar_curaduria.py, gen_archivo_iskvw.py, contrato_archivo.py, hub.py",
+      "status": "PASS",
+      "exit": 0,
+      "output_summary": "All four Python sources compile in memory; no pyc written."
+    },
+    {
+      "command": "python3 -m pytest -q tests/test_validar_curaduria.py tests/test_curaduria.py tests/test_gen_archivo_iskvw.py tests/test_curaduria_roundtrip.py",
+      "status": "UNAVAILABLE",
+      "exit": 1,
+      "output_summary": "/usr/bin/python3: No module named pytest; no test result inferred."
+    }
+  ],
+  "interpretation": "The data validator and syntax checks pass. Automated test coverage remains unverified until a pinned pytest environment is available.",
+  "recommendations": [
+    {
+      "priority": "P1",
+      "action": "Pin a project test environment and make one documented command install/execute pytest from a clean checkout."
+    },
+    {
+      "priority": "P1",
+      "action": "Keep validator as CI preflight and fail closed on import/path errors rather than relying on local PYTHONPATH."
+    },
+    {
+      "priority": "P2",
+      "action": "Record validator/test versions and outputs as deployment evidence."
+    }
+  ]
+}

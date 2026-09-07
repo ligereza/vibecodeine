@@ -1,0 +1,70 @@
+{
+  "schema": "codex-mutation-integrity-audit-v1",
+  "audited_at": "2026-09-05T18:42:00-04:00",
+  "scope": "confirmación, atomicidad y efectos encadenados del Hub",
+  "method": "Lectura estática de dispatcher y handlers; no se ejecutaron POST ni se provocaron errores deliberadamente.",
+  "observations": [
+    {
+      "surface": "/api/portfolio/dispatch",
+      "path": "MAK/cultura/mak_plataforma/hub.py",
+      "lines": "5780-5800, 4348-4368, 4917-4938",
+      "finding": "La ruta acepta item_id/depto/texto y llama _ejecutar; _ejecutar envía POST a Research/Codex. No hay confirmed=true, idempotency key ni receipt local antes o después del envío."
+    },
+    {
+      "surface": "/api/ejecutar",
+      "path": "MAK/cultura/mak_plataforma/hub.py",
+      "lines": "5912-5928, 4917-4938",
+      "finding": "La ruta pública del Handler también llama _ejecutar con depto/modo/texto/densidad y no exige confirmación, actor o operación correlacionada."
+    },
+    {
+      "surface": "/research/* y /codex/*",
+      "path": "MAK/cultura/mak_plataforma/hub.py",
+      "lines": "156-158, 5238-5245, 5787-5794",
+      "finding": "SERVICE_PROXY_PREFIXES reenvía POST al servicio interno; el proxy no aparece cubierto por el mismo contrato de confirmación/receipt del editor."
+    },
+    {
+      "surface": "/api/portfolio/commit",
+      "path": "MAK/cultura/mak_plataforma/hub.py",
+      "lines": "2360-2418",
+      "finding": "Tiene confirmed=true y lock de commit, pero ejecuta selección, clasificación y feedback como pasos separados; si uno falla, persiste draft status=partial después de efectos previos."
+    },
+    {
+      "surface": "/api/portfolio/board",
+      "path": "MAK/cultura/mak_plataforma/hub.py",
+      "lines": "2511-2583",
+      "finding": "No tiene lock específico de tablero; board add puede guardar feedback/conexiones antes de _portfolio_save_boards. Un fallo intermedio deja subefectos sin composición durable."
+    },
+    {
+      "surface": "batch classification",
+      "path": "MAK/cultura/mak_plataforma/hub.py",
+      "lines": "2244-2274",
+      "finding": "El batch itera y persiste cada clasificación independientemente; reporta partial, pero no ofrece rollback ni operation_id para reconciliar el conjunto."
+    }
+  ],
+  "invariants_to_require": [
+    "ningún dispatch sale del Hub sin intención/confirmación explícita y actor válido",
+    "cada efecto derivado conserva el mismo operation_id y request_id raíz",
+    "un resultado parcial se distingue de éxito y contiene affected_ids y subresultados redacted",
+    "los reintentos con la misma idempotency_key no vuelven a enviar ni duplicar efectos",
+    "las operaciones compuestas tienen estrategia transaccional o compensación declarada",
+    "la frontera publicación=false no se modifica por dispatch, proxy ni commit"
+  ],
+  "risk_rating": {
+    "dispatch_without_confirmation": "P0",
+    "compound_partial_state": "P1",
+    "batch_without_rollback": "P1",
+    "proxy_contract_gap": "P1_if_reachable_from_public_surface"
+  },
+  "recommended_tests": [
+    "POST dispatch sin confirmed: rechazo antes de contactar al servicio",
+    "retry con idempotency_key: mismo receipt y cero segundo envío",
+    "fallo simulado en segundo subpaso de commit/board: invariant y reconciliación verificables",
+    "batch con fallo intermedio: affected_ids, partial y compensación o plan de reparación",
+    "proxy: allowlist de métodos/rutas y mismo envelope de autorización"
+  ],
+  "limitations": [
+    "No se enviaron solicitudes mutantes, por lo que no se midió el comportamiento real ante reintentos o fallos de red.",
+    "La clasificación de riesgo P1_if_reachable depende de la frontera de red; el Hub observado sigue en loopback.",
+    "No se aplicaron cambios: la evidencia y las mejoras quedan como gate para una intervención autorizada."
+  ]
+}

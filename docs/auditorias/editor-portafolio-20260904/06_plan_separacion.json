@@ -1,0 +1,862 @@
+{
+  "schema": "codex-08-plan-separacion-v1",
+  "generated_at_utc": "2026-09-05T06:45:00Z",
+  "heads": {
+    "MAK": "68339cd7812fababaf43dc922368817b7f970eb8",
+    "FLUJO": "a7c44431baed7e4de4c39251c1955e4406c32b11"
+  },
+  "method_summary": {
+    "MEDIDO": 0,
+    "DERIVADO": 42,
+    "SUPUESTO": 0,
+    "UNRESOLVED": 0
+  },
+  "verdict_summary": {
+    "separable_sin_costo": 2,
+    "separable_con_dependencia": 36,
+    "compartido_inseparable": 4,
+    "UNRESOLVED": 0
+  },
+  "rows": [
+    {
+      "id": "separation-regimen-global",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "regimen-global",
+      "half": "publicacion",
+      "dependency": "comparte BASE/EDICIONES/REGIMEN_GLOBAL y el contrato de JSON",
+      "if_moved_breaks": "se rompe el flujo de descarga/importación y la continuidad de sesión",
+      "shared_by_both": "archivo.json/PIEZAS y la página solo cuando la fila afecta carga o shell",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 938,
+          "excerpt": "<select id=\"regimen-global\">"
+        }
+      ]
+    },
+    {
+      "id": "separation-importar",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "importar",
+      "half": "publicacion",
+      "dependency": "comparte BASE/EDICIONES/REGIMEN_GLOBAL y el contrato de JSON",
+      "if_moved_breaks": "se rompe el flujo de descarga/importación y la continuidad de sesión",
+      "shared_by_both": "archivo.json/PIEZAS y la página solo cuando la fila afecta carga o shell",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 946,
+          "excerpt": "<button id=\"importar\" type=\"button\">abrir archivo guardado</button>"
+        }
+      ]
+    },
+    {
+      "id": "separation-importar-archivo",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "importar-archivo",
+      "half": "publicacion",
+      "dependency": "comparte BASE/EDICIONES/REGIMEN_GLOBAL y el contrato de JSON",
+      "if_moved_breaks": "se rompe el flujo de descarga/importación y la continuidad de sesión",
+      "shared_by_both": "archivo.json/PIEZAS y la página solo cuando la fila afecta carga o shell",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 949,
+          "excerpt": "<input id=\"importar-archivo\" type=\"file\" accept=\".json,application/json\" hidden>"
+        }
+      ]
+    },
+    {
+      "id": "separation-descargar-curatoria",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "descargar-curatoria",
+      "half": "publicacion",
+      "dependency": "comparte BASE/EDICIONES/REGIMEN_GLOBAL y el contrato de JSON",
+      "if_moved_breaks": "se rompe el flujo de descarga/importación y la continuidad de sesión",
+      "shared_by_both": "no se midió dependencia necesaria por ambas mitades",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 950,
+          "excerpt": "<button id=\"descargar\">descargar mi curatoria</button>"
+        }
+      ]
+    },
+    {
+      "id": "separation-archive-refresh",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "archive-refresh",
+      "half": "orden",
+      "dependency": "solo comparte la página estática",
+      "if_moved_breaks": "ninguno medido: bloque informativo/lectura",
+      "shared_by_both": "archivo.json/PIEZAS y la página solo cuando la fila afecta carga o shell",
+      "verdict": "separable_sin_costo",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 965,
+          "excerpt": "onclick=\"cargarArchivePortfolioView()\""
+        }
+      ]
+    },
+    {
+      "id": "separation-inbox-view-pendientes",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "inbox-view-pendientes",
+      "half": "orden",
+      "dependency": "comparte editor.html, INBOX y endpoints del Hub",
+      "if_moved_breaks": "se rompe la navegación o ledger interno de la mesa",
+      "shared_by_both": "no se midió dependencia necesaria por ambas mitades",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 974,
+          "excerpt": "data-inbox-view=\"pendientes\""
+        }
+      ]
+    },
+    {
+      "id": "separation-inbox-view-archivo",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "inbox-view-archivo",
+      "half": "orden",
+      "dependency": "comparte editor.html, INBOX y endpoints del Hub",
+      "if_moved_breaks": "se rompe la navegación o ledger interno de la mesa",
+      "shared_by_both": "no se midió dependencia necesaria por ambas mitades",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 975,
+          "excerpt": "data-inbox-view=\"archivo\""
+        }
+      ]
+    },
+    {
+      "id": "separation-inbox-view-mesa",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "inbox-view-mesa",
+      "half": "orden",
+      "dependency": "comparte editor.html, INBOX y endpoints del Hub",
+      "if_moved_breaks": "se rompe la navegación o ledger interno de la mesa",
+      "shared_by_both": "no se midió dependencia necesaria por ambas mitades",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 976,
+          "excerpt": "data-inbox-view=\"mesa\""
+        }
+      ]
+    },
+    {
+      "id": "separation-inbox-tipo",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "inbox-tipo",
+      "half": "orden",
+      "dependency": "comparte editor.html, INBOX y endpoints del Hub",
+      "if_moved_breaks": "se rompe la navegación o ledger interno de la mesa",
+      "shared_by_both": "no se midió dependencia necesaria por ambas mitades",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 987,
+          "excerpt": "<select id=\"inbox-tipo\">"
+        }
+      ]
+    },
+    {
+      "id": "separation-inbox-buscar",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "inbox-buscar",
+      "half": "orden",
+      "dependency": "comparte editor.html, INBOX y endpoints del Hub",
+      "if_moved_breaks": "se rompe la navegación o ledger interno de la mesa",
+      "shared_by_both": "no se midió dependencia necesaria por ambas mitades",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 988,
+          "excerpt": "<input id=\"inbox-buscar\" type=\"search\""
+        }
+      ]
+    },
+    {
+      "id": "separation-inbox-assets",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "inbox-assets",
+      "half": "orden",
+      "dependency": "comparte editor.html, INBOX y endpoints del Hub",
+      "if_moved_breaks": "se rompe la navegación o ledger interno de la mesa",
+      "shared_by_both": "no se midió dependencia necesaria por ambas mitades",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 989,
+          "excerpt": "<input id=\"inbox-assets\" type=\"checkbox\">"
+        }
+      ]
+    },
+    {
+      "id": "separation-inbox-tablero",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "inbox-tablero",
+      "half": "orden",
+      "dependency": "comparte editor.html, INBOX y endpoints del Hub",
+      "if_moved_breaks": "se rompe la navegación o ledger interno de la mesa",
+      "shared_by_both": "no se midió dependencia necesaria por ambas mitades",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 990,
+          "excerpt": "<select id=\"inbox-tablero\">"
+        }
+      ]
+    },
+    {
+      "id": "separation-inbox-nuevo-tablero",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "inbox-nuevo-tablero",
+      "half": "orden",
+      "dependency": "comparte editor.html, INBOX y endpoints del Hub",
+      "if_moved_breaks": "se rompe la navegación o ledger interno de la mesa",
+      "shared_by_both": "no se midió dependencia necesaria por ambas mitades",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 994,
+          "excerpt": "<input id=\"inbox-nuevo-tablero\" type=\"text\""
+        }
+      ]
+    },
+    {
+      "id": "separation-inbox-nuevo-faceta",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "inbox-nuevo-faceta",
+      "half": "orden",
+      "dependency": "comparte editor.html, INBOX y endpoints del Hub",
+      "if_moved_breaks": "se rompe la navegación o ledger interno de la mesa",
+      "shared_by_both": "no se midió dependencia necesaria por ambas mitades",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 995,
+          "excerpt": "<select id=\"inbox-nuevo-faceta\">"
+        }
+      ]
+    },
+    {
+      "id": "separation-inbox-nuevo-valor",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "inbox-nuevo-valor",
+      "half": "orden",
+      "dependency": "comparte editor.html, INBOX y endpoints del Hub",
+      "if_moved_breaks": "se rompe la navegación o ledger interno de la mesa",
+      "shared_by_both": "no se midió dependencia necesaria por ambas mitades",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 996,
+          "excerpt": "<input id=\"inbox-nuevo-valor\" type=\"text\""
+        }
+      ]
+    },
+    {
+      "id": "separation-crear-tablero",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "crear-tablero",
+      "half": "orden",
+      "dependency": "comparte editor.html, INBOX y endpoints del Hub",
+      "if_moved_breaks": "se rompe la navegación o ledger interno de la mesa",
+      "shared_by_both": "no se midió dependencia necesaria por ambas mitades",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 997,
+          "excerpt": "crear tablero"
+        }
+      ]
+    },
+    {
+      "id": "separation-anadir-tablero",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "anadir-tablero",
+      "half": "orden",
+      "dependency": "comparte editor.html, INBOX y endpoints del Hub",
+      "if_moved_breaks": "se rompe la navegación o ledger interno de la mesa",
+      "shared_by_both": "no se midió dependencia necesaria por ambas mitades",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 997,
+          "excerpt": "añadir a tablero"
+        }
+      ]
+    },
+    {
+      "id": "separation-conectar",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "conectar",
+      "half": "orden",
+      "dependency": "comparte editor.html, INBOX y endpoints del Hub",
+      "if_moved_breaks": "se rompe la navegación o ledger interno de la mesa",
+      "shared_by_both": "no se midió dependencia necesaria por ambas mitades",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 997,
+          "excerpt": "conectar dos"
+        }
+      ]
+    },
+    {
+      "id": "separation-seleccionar-visibles",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "seleccionar-visibles",
+      "half": "orden",
+      "dependency": "comparte editor.html, INBOX y endpoints del Hub",
+      "if_moved_breaks": "se rompe la navegación o ledger interno de la mesa",
+      "shared_by_both": "no se midió dependencia necesaria por ambas mitades",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 1008,
+          "excerpt": "seleccionar visibles"
+        }
+      ]
+    },
+    {
+      "id": "separation-limpiar-bandeja",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "limpiar-bandeja",
+      "half": "orden",
+      "dependency": "comparte editor.html, INBOX y endpoints del Hub",
+      "if_moved_breaks": "se rompe la navegación o ledger interno de la mesa",
+      "shared_by_both": "no se midió dependencia necesaria por ambas mitades",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 1009,
+          "excerpt": "vaciar bandeja"
+        }
+      ]
+    },
+    {
+      "id": "separation-more",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "more",
+      "half": "orden",
+      "dependency": "comparte editor.html, INBOX y endpoints del Hub",
+      "if_moved_breaks": "se rompe la navegación o ledger interno de la mesa",
+      "shared_by_both": "no se midió dependencia necesaria por ambas mitades",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 1050,
+          "excerpt": "mostrar más"
+        }
+      ]
+    },
+    {
+      "id": "separation-descargar-tablero",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "descargar-tablero",
+      "half": "publicacion",
+      "dependency": "comparte BASE/EDICIONES/REGIMEN_GLOBAL y el contrato de JSON",
+      "if_moved_breaks": "se rompe el flujo de descarga/importación y la continuidad de sesión",
+      "shared_by_both": "no se midió dependencia necesaria por ambas mitades",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 1061,
+          "excerpt": "Descargar tablero.json"
+        }
+      ]
+    },
+    {
+      "id": "separation-piece-titulo",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "piece-titulo",
+      "half": "publicacion",
+      "dependency": "comparte PIEZAS y construirCuraduria()",
+      "if_moved_breaks": "se rompe la edición por pieza y la generación de curaduria.json",
+      "shared_by_both": "no se midió dependencia necesaria por ambas mitades",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 2904,
+          "excerpt": "input .t-titulo / editar(p.id, \"titulo"
+        }
+      ]
+    },
+    {
+      "id": "separation-piece-mostrar",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "piece-mostrar",
+      "half": "publicacion",
+      "dependency": "comparte PIEZAS y construirCuraduria()",
+      "if_moved_breaks": "se rompe la edición por pieza y la generación de curaduria.json",
+      "shared_by_both": "no se midió dependencia necesaria por ambas mitades",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 2910,
+          "excerpt": "checkbox .t-mostrar / editar(p.id, \"mostrar"
+        }
+      ]
+    },
+    {
+      "id": "separation-piece-abstraccion",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "piece-abstraccion",
+      "half": "publicacion",
+      "dependency": "comparte PIEZAS y construirCuraduria()",
+      "if_moved_breaks": "se rompe la edición por pieza y la generación de curaduria.json",
+      "shared_by_both": "no se midió dependencia necesaria por ambas mitades",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 2920,
+          "excerpt": "range .t-abstraccion / editar(p.id, \"abstraccion"
+        }
+      ]
+    },
+    {
+      "id": "separation-piece-svg",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "piece-svg",
+      "half": "publicacion",
+      "dependency": "comparte PIEZAS y construirCuraduria()",
+      "if_moved_breaks": "se rompe la edición por pieza y la generación de curaduria.json",
+      "shared_by_both": "no se midió dependencia necesaria por ambas mitades",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 2936,
+          "excerpt": "input .t-svg / editar(p.id, \"svg"
+        }
+      ]
+    },
+    {
+      "id": "separation-piece-regimen-pieza",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "piece-regimen-pieza",
+      "half": "publicacion",
+      "dependency": "comparte PIEZAS y construirCuraduria()",
+      "if_moved_breaks": "se rompe la edición por pieza y la generación de curaduria.json",
+      "shared_by_both": "no se midió dependencia necesaria por ambas mitades",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 2947,
+          "excerpt": "select .t-regimen / editar(p.id, \"regimen"
+        }
+      ]
+    },
+    {
+      "id": "separation-piece-peso",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "piece-peso",
+      "half": "publicacion",
+      "dependency": "comparte PIEZAS y construirCuraduria()",
+      "if_moved_breaks": "se rompe la edición por pieza y la generación de curaduria.json",
+      "shared_by_both": "no se midió dependencia necesaria por ambas mitades",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 2955,
+          "excerpt": "number .t-peso / editar(p.id, \"peso"
+        }
+      ]
+    },
+    {
+      "id": "separation-piece-serie",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "piece-serie",
+      "half": "publicacion",
+      "dependency": "comparte PIEZAS y construirCuraduria()",
+      "if_moved_breaks": "se rompe la edición por pieza y la generación de curaduria.json",
+      "shared_by_both": "no se midió dependencia necesaria por ambas mitades",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 2966,
+          "excerpt": "input .t-serie / editar(p.id, \"serie"
+        }
+      ]
+    },
+    {
+      "id": "separation-piece-nota",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "piece-nota",
+      "half": "publicacion",
+      "dependency": "comparte PIEZAS y construirCuraduria()",
+      "if_moved_breaks": "se rompe la edición por pieza y la generación de curaduria.json",
+      "shared_by_both": "no se midió dependencia necesaria por ambas mitades",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 2972,
+          "excerpt": "input .t-nota / editar(p.id, \"nota"
+        }
+      ]
+    },
+    {
+      "id": "separation-rail-focus",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "rail-focus",
+      "half": "orden",
+      "dependency": "comparte editor.html, INBOX y endpoints del Hub",
+      "if_moved_breaks": "se rompe la navegación o ledger interno de la mesa",
+      "shared_by_both": "no se midió dependencia necesaria por ambas mitades",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 1538,
+          "excerpt": "rail pieza activa"
+        }
+      ]
+    },
+    {
+      "id": "separation-rail-portfolio",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "rail-portfolio",
+      "half": "orden",
+      "dependency": "comparte editor.html, INBOX y endpoints del Hub",
+      "if_moved_breaks": "se rompe la navegación o ledger interno de la mesa",
+      "shared_by_both": "no se midió dependencia necesaria por ambas mitades",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 1538,
+          "excerpt": "rail portafolio general"
+        }
+      ]
+    },
+    {
+      "id": "separation-action-classify",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "action-classify",
+      "half": "orden",
+      "dependency": "comparte editor.html, INBOX y endpoints del Hub",
+      "if_moved_breaks": "se rompe la navegación o ledger interno de la mesa",
+      "shared_by_both": "no se midió dependencia necesaria por ambas mitades",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 1538,
+          "excerpt": "button clasificar"
+        }
+      ]
+    },
+    {
+      "id": "separation-action-triangulate",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "action-triangulate",
+      "half": "orden",
+      "dependency": "comparte editor.html, INBOX y endpoints del Hub",
+      "if_moved_breaks": "se rompe la navegación o ledger interno de la mesa",
+      "shared_by_both": "no se midió dependencia necesaria por ambas mitades",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 1538,
+          "excerpt": "button triangular/abrir lectura"
+        }
+      ]
+    },
+    {
+      "id": "separation-action-relate",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "action-relate",
+      "half": "orden",
+      "dependency": "comparte editor.html, INBOX y endpoints del Hub",
+      "if_moved_breaks": "se rompe la navegación o ledger interno de la mesa",
+      "shared_by_both": "no se midió dependencia necesaria por ambas mitades",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 1538,
+          "excerpt": "button relacionar"
+        }
+      ]
+    },
+    {
+      "id": "separation-action-review",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "action-review",
+      "half": "orden",
+      "dependency": "comparte editor.html, INBOX y endpoints del Hub",
+      "if_moved_breaks": "se rompe la navegación o ledger interno de la mesa",
+      "shared_by_both": "no se midió dependencia necesaria por ambas mitades",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 1514,
+          "excerpt": "revisión humana"
+        }
+      ]
+    },
+    {
+      "id": "separation-action-dispatch",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "action-dispatch",
+      "half": "orden",
+      "dependency": "comparte editor.html, INBOX y endpoints del Hub",
+      "if_moved_breaks": "se rompe la navegación o ledger interno de la mesa",
+      "shared_by_both": "no se midió dependencia necesaria por ambas mitades",
+      "verdict": "separable_con_dependencia",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 1890,
+          "excerpt": "Pedido enviado"
+        }
+      ]
+    },
+    {
+      "id": "separation-mesa-order",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "mesa-order",
+      "half": "orden",
+      "dependency": "comparte #estudio-app, DOM y selección de piezas",
+      "if_moved_breaks": "se rompe la creación/reemplazo de la mesa Atlas dentro del editor",
+      "shared_by_both": "no se midió dependencia necesaria por ambas mitades",
+      "verdict": "compartido_inseparable",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 794,
+          "excerpt": "ordenar"
+        }
+      ]
+    },
+    {
+      "id": "separation-publication-boundary-copy",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "publication-boundary-copy",
+      "half": "publicacion",
+      "dependency": "solo comparte la página estática",
+      "if_moved_breaks": "ninguno medido: bloque informativo/lectura",
+      "shared_by_both": "no se midió dependencia necesaria por ambas mitades",
+      "verdict": "separable_sin_costo",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 926,
+          "excerpt": "La curatoria final es otro archivo: nada se publica desde esta página."
+        }
+      ]
+    },
+    {
+      "id": "shared-source-loader",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "shared-source-loader",
+      "half": "orden+publicacion",
+      "dependency": "cargar(), leerJSON(), PIEZAS y datos/archivo.json",
+      "if_moved_breaks": "ambas superficies pierden su fuente de piezas",
+      "shared_by_both": "sí, dependencia observada",
+      "verdict": "compartido_inseparable",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 1114,
+          "excerpt": "lector común de datos"
+        }
+      ]
+    },
+    {
+      "id": "shared-html-shell",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "shared-html-shell",
+      "half": "orden+publicacion",
+      "dependency": "editor.html / DOM compartido",
+      "if_moved_breaks": "la mesa o la curaduría dejan de montarse",
+      "shared_by_both": "sí, dependencia observada",
+      "verdict": "compartido_inseparable",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 954,
+          "excerpt": "contenedor #estudio-app y script único"
+        }
+      ]
+    },
+    {
+      "id": "shared-public-boundary",
+      "path": "iskvw/editor.html",
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "control_id": "shared-public-boundary",
+      "half": "orden+publicacion",
+      "dependency": "commit/PR y workflow Pages",
+      "if_moved_breaks": "la decisión no llega o llega incompleta al sitio",
+      "shared_by_both": "sí, dependencia observada",
+      "verdict": "compartido_inseparable",
+      "method": "DERIVADO",
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 1094,
+          "excerpt": "curaduria.json/tablero.json como archivos descargables"
+        }
+      ]
+    }
+  ]
+}

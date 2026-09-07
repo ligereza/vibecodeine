@@ -1,0 +1,91 @@
+{
+  "schema": "codex-data-retention-audit-v1",
+  "audited_at": "2026-09-05T20:06:00-04:00",
+  "scope": "persistencia, minimización y retención de registros del editor/portafolio",
+  "method": "Lectura read-only de estadísticas de JSONL, nombres de campos y búsqueda de políticas en código; no se mostraron valores de contenido ni se borró/compactó ningún archivo.",
+  "measured_files": [
+    {
+      "file": "RUNTIME/plataforma/director_runs/portfolio-editor-20260808/selections.jsonl",
+      "rows": 87,
+      "time_span": "2026-08-07T21:28:18-0400 / 2026-09-02T02:53:42-0400",
+      "sensitive_shape": "session_id, note, work y decision metadata"
+    },
+    {
+      "file": "RUNTIME/plataforma/director_runs/portfolio-editor-20260808/classifications.jsonl",
+      "rows": 103,
+      "time_span": "2026-08-09T03:43:11-0400 / 2026-09-02T02:53:42-0400",
+      "sensitive_shape": "source incluye asset_path; evidence/context pueden portar referencias"
+    },
+    {
+      "file": "RUNTIME/plataforma/director_runs/portfolio-editor-20260808/decision_drafts.jsonl",
+      "rows": 3,
+      "time_span": "2026-09-02T02:52:52-0400 / 2026-09-02T02:53:42-0400",
+      "sensitive_shape": "note, context_fields, relations, commit_results y session_id"
+    },
+    {
+      "file": "RUNTIME/plataforma/director_runs/portfolio-editor-20260808/copilot_feedback.jsonl",
+      "rows": 20,
+      "time_span": "2026-08-09T04:40:57-0400 / 2026-08-09T09:34:36-0400",
+      "sensitive_shape": "5 filas tienen note; work conserva fuentes/metadata"
+    },
+    {
+      "file": "RUNTIME/plataforma/director_runs/portfolio-editor-20260808/copilot_external.jsonl",
+      "rows": 32,
+      "time_span": "2026-08-08T00:02:38-0400 / 2026-08-09T21:29:11-0400",
+      "sensitive_shape": "32 filas conservan raw completo del proveedor"
+    },
+    {
+      "file": "RUNTIME/plataforma/director_runs/portfolio-editor-20260808/vision_features.jsonl",
+      "rows": 33,
+      "time_span": "2026-08-09T02:16:30-0400 / 2026-08-09T21:27:20-0400",
+      "sensitive_shape": "33 filas tienen asset_path; se midieron 66 marcadores /portfolio-media/"
+    }
+  ],
+  "policy_search": {
+    "path": "MAK/cultura/mak_plataforma/hub.py",
+    "finding": "No se encontró una política operativa de TTL, retención, rotación, compactación o purga para estos JSONL; sí existen comentarios de cache/TTL para proyecciones, que no sustituyen retención de auditoría.",
+    "delete_or_purge_handlers": "no observados para los registros de portfolio"
+  },
+  "findings": [
+    {
+      "id": "raw-provider-retention",
+      "severity": "high",
+      "statement": "copilot_external.jsonl persiste el campo raw completo de cada respuesta del proveedor; el sistema no declara qué subcampos son necesarios ni cuánto tiempo deben conservarse."
+    },
+    {
+      "id": "operator-path-retention",
+      "severity": "medium",
+      "statement": "vision_features y otras estructuras de trabajo conservan rutas de media/operator; son útiles para operación local, pero no deben cruzar el schema público ni permanecer indefinidamente sin regla."
+    },
+    {
+      "id": "no-lifecycle-contract",
+      "severity": "medium",
+      "statement": "Los registros abarcan semanas y son append-only, sin owner de retención, clasificación, vencimiento o procedimiento de exportación/anonimización verificable."
+    },
+    {
+      "id": "positive-minimization",
+      "severity": "informational",
+      "statement": "Selecciones y conexiones son relativamente compactas y no se observaron file:// en los JSONL medidos; esto no compensa la persistencia de raw, notes y asset paths."
+    }
+  ],
+  "recommended_policy": {
+    "classes": {
+      "audit_minimal": "IDs, operation/request IDs, actor redacted, action, result, timestamps y hashes",
+      "operator_evidence": "rutas y contexto necesarios para operación local, acceso restringido y TTL definido",
+      "provider_raw": "prohibido por defecto; conservar solo digest/subcampos normalizados y referencia segura si existe base legítima",
+      "public_projection": "allowlist sin session_id, notes, asset_root, rutas locales, raw ni provenance operador"
+    },
+    "required_fields": ["retention_class", "created_at", "expires_at_or_review_at", "owner", "redaction_status", "source_hash"],
+    "controls": [
+      "scanner CI que rechace raw y rutas privadas en artefactos públicos",
+      "job/operación documentado para revisión y expiración, sin borrar historia humana automáticamente",
+      "exportación redacted y cadena de custodia antes de archivar",
+      "prueba de acceso que confirme separación operator/public"
+    ]
+  },
+  "limitations": [
+    "Se midieron archivos concretos del editor, no todos los logs del sistema MAK.",
+    "No se inspeccionaron ni reprodujeron contenidos privados en el informe; se reportan formas y conteos.",
+    "No se borró, compactó ni modificó ningún dato o proceso."
+  ]
+}
