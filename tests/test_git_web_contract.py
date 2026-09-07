@@ -57,16 +57,6 @@ def test_pull_request_composition_checks_the_revision_under_review():
     assert "ref: FLUJO" not in text
 
 
-def test_git_topology_guard_requires_one_trunk_and_archive_tag():
-    text = _workflow("git-topology.yml")
-
-    assert "branches: [main]" in text
-    assert "archive/house-history" in text
-    assert "Unexpected permanent remote branch refs" in text
-    assert "contents: write" not in text
-    assert "git push" not in text
-
-
 def test_automated_gates_cannot_publish_repo_changes():
     """No workflow that fires without a person may write to the repo.
 
@@ -81,7 +71,6 @@ def test_automated_gates_cannot_publish_repo_changes():
         "ci-mak.yml",
         "ci-integration.yml",
         "seguridad.yml",
-        "git-topology.yml",
         "validar-piezas.yml",
         "render_piezas_vectoriales.yml",
         "issue_descarga_ig.yml",

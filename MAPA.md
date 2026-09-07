@@ -31,19 +31,18 @@ Machine-facing identifiers and contracts use English ASCII. Human-facing
 products may use correct Spanish. Run `python3 -m flujo --help` for the current
 CLI contract and `python3 -m flujo doctor` for local diagnostics.
 
-Git topology is intentionally small: `main` is the only permanent branch and
-the only deployment trunk. The annotated tag `archive/house-history` is the
-single preservation point; it reaches the historical branch tips without
-keeping those names as live branches. Topic branches are optional and
-short-lived only while a bounded slice is being reviewed (`rd/*`,
-`portfolio/*`, `mak/*`, `tools/*` or `cleanup/*`); they merge directly to
-`main` and are deleted after promotion. There are no permanent domain,
-`source/*`, `work/*`, `develop`, `staging` or release branches.
+The branches are the working shape of the system, not a defect to be gated
+away: MAK and FLUJO are two checkouts of this repository with distinct
+authorities, and the operator's decision of 2026-09-03 names them as such
+while reserving `ligereza/MAK`, `ligereza/flujo` and `ligereza/IRIS` as the
+next step. The annotated tag `archive/house-history` remains the single
+preservation point for the historical branch tips.
 
-`.github/workflows/git-topology.yml` guards this invariant on `main`: remote
-branch refs must contain only `main`, and the preservation tag must exist.
-Domain separation lives in the physical owner/consumer boundaries above, not
-in parallel Git trunks.
+A main-only invariant was written on 2026-08-15 and enforced by
+`.github/workflows/git-topology.yml`. It was retired on 2026-09-06: the
+decision of 2026-09-03 superseded it, 335 commits had landed on MAK since it
+was written, and a gate that fails by design measures nothing. Domain
+separation lives in the physical owner/consumer boundaries above.
 
 <!-- COMANDOS:INICIO -- generado por tools/gen_mapa_comandos.py, no editar a mano -->
 

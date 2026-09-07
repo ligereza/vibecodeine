@@ -69,3 +69,14 @@ se tachan con una linea.
   negociable: todo lo que un humano lee como producto -- piezas y datos de RD,
   curatoria de iskvw, lo que ve un directorio o un cliente -- va en espanol
   correcto CON tildes.
+
+---
+
+## 2026-09-06
+
+- **El guardian de topologia main-only se retira.** `git-topology.yml`, el
+  parrafo de `MAPA.md` que lo declaraba y el test que lo defendia. Se escribio
+  el 2026-08-15 y la decision del 2026-09-03 sobre la nomenclatura de las ramas
+  MAK y FLUJO, y sobre separar el sistema en repos propios, ya lo dejaba
+  obsoleto. El tag `archive/house-history` se conserva: es el punto de
+  preservacion y no depende del guardian.
