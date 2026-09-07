@@ -106,8 +106,15 @@ QUARANTINE_ZONE = (
 # product a human reads to Spanish with diacritics, and a draft he writes for a
 # funding application is that. Policing it would ask him to comment his own work
 # in English so a ratchet about MAK's code stays quiet.
+#
+# `projects/cultura/dossiers/` is the same category under a different name: 230
+# tracked files of which 134 are `.md`, 50 `.txt`, 12 `.csv` and 9 `.pdf`, and
+# the only code is a delivery of scripts that write those documents. Excluding
+# it here rather than lowering the baseline keeps the ratchet policing MAK's own
+# code, which is what it is for.
 AUTHORSHIP_ZONE = (
     "borradores/",
+    "projects/cultura/dossiers/",
 )
 
 # Unambiguous Spanish function words. Deliberately absent: "no" and "a"
