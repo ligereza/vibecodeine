@@ -279,15 +279,10 @@ repositorio. Las credenciales y tokens se mantienen fuera de Git.
 | `MAK_SYNC_LOCK`, `MAK_SYNC_MANIFEST` | Rutas de bloqueo y manifiesto de una corrida de sincronizacion. |
 | `WATSONX_MODEL`, `WATSONX_URL` | Configuracion opcional del backend WatsonX conservado para benchmarks/manual. |
 
-Every active topic branch must carry its own scoped contract and handoff,
-created from `contracts/BRANCH_AGENTS_TEMPLATE.md` and
-`context/BRANCH_HANDOFF_TEMPLATE.md`. The branch contract narrows the global
-`agents.md` rules to one consumer and write set; the branch handoff records
-only that branch's commands, files, risks and next action. The root
-`context/LAST_HANDOFF.md` remains the main continuity record. When a topic is
-merged and deleted, durable facts are promoted there and the temporary branch
-documents disappear with the branch, so stale branch state cannot become a
-new operational map.
+Topic-branch contracts and handoffs were part of the previous organization and
+are not active inputs now. The only current contract is `/home/mak/AGENTS.md`;
+current state is measured with `.venv/bin/python tools/mak_status.py`, and
+historical continuity is kept in `context/HANDOFF_HISTORICO.md`.
 
 Ignored `web/dist*` and `dist_compartir/` files are generated delivery artifacts,
 not sources of truth. If they contain an older snapshot, use the tracked source
