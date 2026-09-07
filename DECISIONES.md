@@ -1,12 +1,6 @@
 # DECISIONES
 
-Lo que el operador decidio, con la fecha en que lo dijo. Se agrega al final;
-no se reescribe, no se resume, no se reordena.
-
-**Aqui no van hechos.** Ni rutas, ni comandos, ni conteos, ni estado del arbol.
-Un hecho escrito envejece y termina mintiendo con cara de medicion; una
-decision no envejece, porque paso. Los hechos se preguntan a la maquina:
-`.venv/bin/python tools/mak_status.py`.
+Lo que el operador decidio, con la fecha en que lo dijo.
 
 ---
 
@@ -49,21 +43,7 @@ decision no envejece, porque paso. Los hechos se preguntan a la maquina:
 
 ---
 
-## Anteriores, traidas a proposito
-
-Estas dos son decisiones suyas de antes de hoy. Se conservan porque son
-decisiones, no hechos, y porque gobiernan como se le trata. Si quiere,
-se tachan con una linea.
-
 ## 2026-07-26
-
-- **La regla unica.** En sus palabras: "el usuario no es experto en software, es
-  experto en lo que quiere. Si el asistente cree que un camino es optimo por
-  razones TECNICAS, adelante, no hace falta preguntar. Si asume un ESTILO, una
-  estetica, o lo que el usuario quiere, eso es un error: preguntar."
-
-- **No hay entregable.** Se hace lo que se pidio. Un hallazgo al pasar recibe
-  una linea y se sigue; no se convierte en tarea.
 
 - **Idioma: espanol al operador, ingles en el codigo.** La excepcion, no
   negociable: todo lo que un humano lee como producto -- piezas y datos de RD,

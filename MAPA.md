@@ -5,18 +5,14 @@ the FLUJO checkout at `/home/mak/flujo` (branch `FLUJO`). This branch is MAK:
 `/home/mak` carries the box departments, services and Hub on `8900`, and
 consumes the motor from `/home/mak/flujo/src`. Every `flujo ...` row below is
 run from the FLUJO checkout, not from here.
-`docs/MAK_CURRENT_STATE.md` is the compact current architecture, and
-`context/LAST_HANDOFF.md` is the continuity record; phase files are evidence
-and must not override either one. The installed CLI may still expose legacy
-commands for compatibility; that does not make them part of the active MAK
-workflow.
+The installed CLI may still expose legacy commands for compatibility; that
+does not make them part of the active MAK workflow.
 The historical tree under `/home/mak/WIN` is the only preserved legacy surface
 and is not current MAK instruction. Use this tree as the sole active authoring
 and integration baseline.
 
 This repository is the reviewed projection of the MAK system.
 
-- `src/flujo/` is the canonical Python runtime and CLI.
 - `web/` is the frontend surface for Main, RD and Portfolio/ISKVW.
 - `cultura/` contains research and curation consumers owned by MAK.
 - `data/` contains bounded read-oriented sources and projections.
@@ -277,11 +273,6 @@ repositorio. Las credenciales y tokens se mantienen fuera de Git.
 | `MAK_SYNC_BACKUP_ROOT`, `MAK_SYNC_RECOVERY_ROOT`, `MAK_SYNC_STAGING_ROOT` | Directorios de backup, recuperacion y staging del puente de sincronizacion. |
 | `MAK_SYNC_LOCK`, `MAK_SYNC_MANIFEST` | Rutas de bloqueo y manifiesto de una corrida de sincronizacion. |
 | `WATSONX_MODEL`, `WATSONX_URL` | Configuracion opcional del backend WatsonX conservado para benchmarks/manual. |
-
-Topic-branch contracts and handoffs were part of the previous organization and
-are not active inputs now. The only current contract is `/home/mak/AGENTS.md`;
-current state is measured with `.venv/bin/python tools/mak_status.py`, and
-historical continuity is kept in `context/HANDOFF_HISTORICO.md`.
 
 Ignored `web/dist*` and `dist_compartir/` files are generated delivery artifacts,
 not sources of truth. If they contain an older snapshot, use the tracked source
