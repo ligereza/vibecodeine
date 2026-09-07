@@ -55,7 +55,7 @@ jobs:
             echo "::error::ZIP intenta tocar .github/ o airdrop.py -- canal sin-PC no lo permite"; exit 1; fi
           # debe traer _airdrop/ en la raiz
           if ! echo "$LIST" | grep -q '^_airdrop/'; then
-            echo "::error::el ZIP no trae _airdrop/ en la raiz (ver docs/AGENT_AIRDROP_PROTOCOL.md)"; exit 1; fi
+            echo "::error::el ZIP no trae _airdrop/ en la raiz"; exit 1; fi
 
       - name: Extraer _airdrop/
         run: |

@@ -425,7 +425,8 @@ Disparo:
 bash airdrop_push.sh /sdcard/Download/entrega.zip "mensaje corto"
 ```
 Verde = PR `airdrop/<tag>` lista para mergear desde el navegador del telefono.
-Detalle del canal: docs/AGENT_AIRDROP_PROTOCOL.md, seccion "Canal sin PC".
+El gate sin PC queda definido por `.github/workflows/airdrop_gate.yml` y por
+la validación ejecutable en `scripts/validate_airdrop.py`.
 Source: xio/new/airdrop_push.sh + .github/workflows/airdrop_gate.yml
 
 ## 8. Source docs

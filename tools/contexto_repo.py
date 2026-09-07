@@ -29,7 +29,7 @@ def _skip(d: str) -> bool:
     return d in _SKIP_DIRS or d.startswith(".") or d.startswith("_")
 # carpetas que son SALIDA generada (no tocar / no explorar a mano)
 _GENERADAS = {"jobs", "projects", "datadrops", "context/*.html"}
-_KEY_NAMES = {"README.md", "SKILL.md", "pyproject.toml", "cli.py", "CLAUDE.md"}
+_KEY_NAMES = {"README.md", "SKILL.md", "pyproject.toml", "cli.py", "AGENTS.md"}
 _MAXDEPTH = 3
 
 
@@ -99,7 +99,7 @@ _TASK_ROUTES = [
      ["flujo/src/flujo/resolume/automator.py",
       "BLOQUEADOR: sin .noisette real; no adivinar el schema"]),
     (("airdrop", "entrega", "release"),
-     ["docs/AGENT_AIRDROP_PROTOCOL.md", "scripts/validate_airdrop.py"]),
+     ["scripts/validate_airdrop.py"]),
     (("test", "pytest"),
      ["tests/", "context/test_lane_map.json"]),
 ]

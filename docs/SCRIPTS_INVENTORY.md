@@ -51,7 +51,7 @@ that nothing will exercise it on its own.
 
 The chain is gone. It had been dead since **2026-08-14**: at 12:41-12:44 that
 day thirteen Codex commits ("chore: remove legacy instruction docs") deleted
-`docs/AGENT_AIRDROP_PROTOCOL.md`, and at 13:10 `032822b61` ("chore: remove
+the airdrop protocol document, and at 13:10 `032822b61` ("chore: remove
 obsolete agent routes") cleaned the routes. The purge only touched `docs/`, so
 the module, six scripts, a workflow, a CLI sub-app and 42 tests were left
 standing for fourteen days. `_airdrop/` itself has **zero events in the whole
@@ -79,7 +79,7 @@ empty. Its "inverse airdrop" phrasing was an analogy and was reworded.
 | `scripts/app.py` listed as an active Web/dashboard script | **does not exist** |
 | legacy archived in `_archive/legacy_20260703_1413/` | `_archive/` **does not exist**; the cited destination cannot be inspected |
 | legacy archived in `_archive/legacy_20260718_0110/scripts_oneshot/` | same |
-| protocol at `docs/AGENT_AIRDROP_PROTOCOL.md` | **does not exist** |
+| airdrop protocol document | **does not exist** |
 | "Detalle en the repository hygiene tests." | a sentence cut in half in the previous version |
 | `generar_catalogo_rd.py` | exists in `scripts/` and was missing from the inventory |
 
