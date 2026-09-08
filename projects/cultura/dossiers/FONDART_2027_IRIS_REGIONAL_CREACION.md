@@ -403,14 +403,66 @@ medio o categoría** — es decir, por listas. (ArtStack, citado en una version
 anterior de esta seccion, se verifico como inactivo/deadpooled hoy -- retirado
 de la lista de comparacion vigente.)
 
+### La mesa, la participación y el proceso: literatura conectada a decisiones concretas de esta obra
+
+El nombre «Mesa de Montaje» y la forma de exhibición en dos actos (sección 4)
+no son una metáfora suelta: hay literatura real que ayuda a defender por qué
+la obra toma esa forma y no otra, conectada aquí a decisiones concretas del
+expediente, no como bibliografía decorativa.
+
+**La mesa como interfaz compartida.** Jordà, S., Kaltenbrunner, M., Geiger, G.
+& Bencina, R., «The reacTable*», *Proceedings of the International Computer
+Music Conference* (ICMC 2005), Barcelona, pp. 579-582, describen una mesa
+redonda donde varias personas comparten el control de un sistema moviendo
+objetos físicos sobre una superficie luminosa. La analogía es **estructural,
+no de equivalencia**: IRIS no reconoce fichas físicas por cámara -- su «mesa»
+es la superficie digital navegable ya citada en el borrador (`01_PROYECTO_IRIS_BORRADOR.md`),
+el «campo de orden» con sus cuatro modos y ocho lentes de relación. Lo que sí
+toma del precedente es el argumento de diseño: una mesa compartida, no un
+formulario ni una lista, es la forma que ya demostró sostener exploración
+colaborativa de un espacio de posibilidades entre varias personas a la vez --
+exactamente lo que el Acto 1 (mesa abierta) y el Acto 2 (taller) de la
+sección 4 necesitan que la instalación sostenga.
+
+**La participación como medio, no como decoración.** Bourriaud, N., *Esthétique
+relationnelle* (Relational Aesthetics), Les Presses du Réel, 1998 (ISBN
+978-2-84066-030-9), formula la estética relacional: el intercambio que la obra
+genera es su medio, más allá del objeto terminado. Esto conecta directamente
+con lo ya declarado en la sección 5 (protocolo) y en el Anexo 1: lo que IRIS
+registra no son obras, son decisiones -- aceptar, rechazar, dejar abierta. La
+relación entre persona y sistema es, literalmente, el medio de esta pieza, no
+un efecto colateral de exhibirla. Bourriaud no escribe sobre archivos de
+procedencia ni sobre evidencia computacional: extender su marco de la
+interacción social genérica a esta forma específica de interacción (aceptar o
+rechazar una hipótesis con evidencia visible) es una aplicación propia de esta
+obra, no una tesis que la fuente sostenga por sí misma.
+
+**El proceso como investigación, no solo el resultado.** Sullivan, G., *Art
+Practice as Research: Inquiry in the Visual Arts*, SAGE, 2ª ed. 2010 (1ª ed.
+2005), sostiene que la práctica artística constituye investigación cuando el
+artefacto y las decisiones documentadas a su alrededor son, ellos mismos, el
+vehículo de conocimiento nuevo -- no la ilustración posterior de una
+investigación hecha por otro medio. Esto delimita lo que la sección 2-quater
+de este documento ya separa (investigación/infraestructura verificada, obra
+financiada, resultado esperado) y es la razón por la que el «documento
+metodológico con decisiones, límites y resultados negativos» comprometido en
+el Anexo 1 no es un anexo administrativo: es la forma en que esta práctica se
+declara investigación, siguiendo el marco de Sullivan -- con la salvedad de que
+Sullivan no evalúa este proyecto en particular; el encaje es una lectura de
+esta postulación sobre su marco general.
+
 ### El hueco, en una frase
 
 Existe la teoría del espacio latente como archivo; existe la ingeniería de
 mapas auto-organizados; existe la preservación de bits; existen los
-constructores de portafolios como listas. **No existe el instrumento que ponga
-la decisión de vuelta en manos del artista sobre su propio archivo, de forma
-medible y reproducible.** Ese es el objeto de este proyecto, y por eso su
-resultado tiene que incluir el resultado negativo.
+constructores de portafolios como listas; existe la mesa tangible como forma
+de control compartido, la estética relacional como teoría de la participación,
+y la investigación basada en práctica como marco metodológico. **No existe el
+instrumento que combine las tres -- mesa, participación registrada como
+decisión y práctica documentada como investigación -- para poner la decisión de
+vuelta en manos del artista sobre su propio archivo, de forma medible y
+reproducible.** Ese es el objeto de este proyecto, y por eso su resultado
+tiene que incluir el resultado negativo.
 
 ## 5-ter. Requisitos de plataforma que consumen días
 
@@ -433,6 +485,28 @@ Nada de esto es conceptual y todo puede dejar la postulación fuera de bases.
 - El envío emite un certificado de recepción con fecha, hora y folio. Ese
   certificado **no** implica que el proyecto cumpla las bases.
 - Los antecedentes van **en español**.
+
+## 5-quater. Criterios de éxito, declarados antes de ejecutar
+
+Esta sección fija, antes de la ejecución, qué cuenta como éxito y qué cuenta
+como fracaso documentado -- el mismo principio que Obras Experimentales aplica
+a PhaseChaser (criterio de fracaso declarado antes de probar hardware real) y
+que la sección 5, punto 5, de este documento ya promete ("el resultado
+negativo se publica igual"). Delimita también investigación (2-bis a
+2-quater), creación (secciones 3-4) y resultado (esta tabla): la primera ya
+está verificada hoy: la segunda es lo que financia el proyecto; el tercero es
+lo que se mide después de montar y exhibir.
+
+| Eje (peso) | Criterio de éxito | Cómo se mide | Qué se publica si no se cumple |
+|---|---|---|---|
+| Impacto (40%) | Al menos 100 visitas y 4 talleres realizados (Anexo 1, "Exhibición, circulación y públicos") | conteo agregado de sesiones/visitas, sin datos personales | si la asistencia queda bajo la meta, se documenta como límite de convocatoria o difusión -- no se ajusta la meta después de medirla |
+| Calidad (30%) | La lectura relacional (mesa) produce comprensión medible distinta de una lista plana, en al menos una dimensión del protocolo (sección 5: qué recorridos se entienden, qué lenguaje produce lecturas falsas) | comparación, dentro del protocolo de campo, entre condición de mesa relacional y condición de lista, sobre las mismas decisiones de aceptar/rechazar/dejar abierta | si no hay diferencia medible, ese es el resultado negativo que la sección 5 ya promete publicar -- no invalida la obra montada, la delimita |
+| Currículo (20%) | La ficha de responsable no atribuye nada que este expediente no pueda sostener con evidencia ya medida (2-bis, 2-quater) | cifras ya citadas en este documento, ninguna nueva sin fuente | lo que falta ([FALTA] en la sección 8) es del operador: formación, trayectoria previa, enlaces vigentes |
+| Viabilidad (10%) | Gasto ejecutado dentro de los topes ya verificados (sección 6) y cronograma dentro de la ventana 01-abr a 31-may 2027 | control de gasto por ítem contra el Formulario; hitos de cronograma con fecha | si un ítem excede su cotización real, se absorbe con el margen ya declarado en sección 6 -- no se recorta en silencio el protocolo de campo |
+
+Ningún criterio de esta tabla se declara cumplido hoy: es el estándar contra
+el que se medirá el proyecto una vez financiado y ejecutado, no una
+autoevaluación anticipada.
 
 ## 6. Presupuesto — estructura y topes reales
 
@@ -577,3 +651,6 @@ Estado del arte:
 - SOM with Optimized Latent Positions: <https://arxiv.org/abs/2604.13622>
 - Internet Archive, CARTA y sitios de artistas: <https://blog.archive.org/2026/08/25/artistswebsites/>
 - Cornell, Preservation and Access Frameworks for Digital Art Objects (PAFDAO): <https://confluence.cornell.edu/display/pafdao/Home>
+- Jordà, Kaltenbrunner, Geiger & Bencina, «The reacTable*» (ICMC 2005), resumen y referencias cruzadas: <https://www.semanticscholar.org/paper/The-reacTable*:-A-Collaborative-Musical-Instrument-Kaltenbrunner-Jord%C3%A0/b153ff6e84258668ad2fad74ad3ddede91233584>
+- Bourriaud, *Relational Aesthetics* (Les Presses du Réel, 1998), ficha editorial: <https://www.lespressesdureel.com/EN/ouvrage.php?id=5&menu=0>
+- Sullivan, *Art Practice as Research* (SAGE), ficha editorial 2ª ed.: <https://us.sagepub.com/en-us/nam/art-practice-as-research/book233902>
