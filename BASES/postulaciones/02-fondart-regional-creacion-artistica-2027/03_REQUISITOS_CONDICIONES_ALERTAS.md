@@ -32,7 +32,7 @@
 
 ## Alertas de dirección
 
-1. **Cierre regional:** RM está dentro de las regiones con ampliación al 11 de septiembre a las 15:00. La fecha no sale del PDF; reconfirmar en el portal y en el FUP.
+1. **Cierre regional (reconfirmado 2026-09-07):** el portal oficial ya no distingue fecha por región para esta línea -- todas las regiones, incluida RM, cierran el 16 de septiembre de 2026 a las 15:00 (se amplió desde el 11 de septiembre que informaba el portal el 2026-09-05). La fecha no sale del PDF; reconfirmar en el portal y en el FUP una última vez antes de enviar.
 2. **Bloqueo formal:** el expediente declara equipo de trabajo y requiere cartas firmadas de cada integrante. No enviar antes de tenerlas.
 3. **Espacio anfitrión:** cerrar nombre, dirección, fechas, condiciones técnicas, accesibilidad y carta de compromiso. No declarar un espacio como confirmado antes de contar con respaldo.
 4. **Exhibición obligatoria:** la obra final, la mediación y la circulación deben ser concretas y presupuestadas.
