@@ -1,0 +1,202 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>AVANCE_DE_INVESTIGACION</title>
+<style>
+@page { size: letter; margin: 2.2cm 2.4cm; }
+body { font-family: Arial, Helvetica, sans-serif; font-size: 12pt; line-height: 1.32; color: #111; }
+h1 { font-size: 15pt; margin: 0 0 10pt 0; }
+h2 { font-size: 13pt; margin: 16pt 0 6pt 0; border-bottom: 0.75pt solid #888; padding-bottom: 2pt; }
+h3 { font-size: 12pt; margin: 12pt 0 4pt 0; font-style: italic; }
+p { margin: 0 0 8pt 0; text-align: left; }
+ul, ol { margin: 0 0 8pt 0; padding-left: 18pt; }
+li { margin-bottom: 3pt; text-align: left; }
+blockquote { margin: 6pt 0 10pt 10pt; padding-left: 8pt; border-left: 2pt solid #999; color: #333; }
+table.tbl { border-collapse: collapse; width: 100%; margin: 8pt 0 10pt 0; font-size: 10.5pt; }
+table.tbl th, table.tbl td { border: 0.5pt solid #999; padding: 3pt 5pt; text-align: left; vertical-align: top; }
+table.tbl th { background: #eee; }
+hr { border: none; border-top: 0.5pt solid #aaa; margin: 10pt 0; }
+code { font-family: "Courier New", monospace; font-size: 10.5pt; }
+</style></head><body><h1>Avance de Investigación</h1>
+<p>
+<strong>Wachuma leído por su público: procedencia visible en un jardín digital</strong>
+<br/>
+Fondart Nacional — Línea Investigación — Concurso General 2027 — Grupo A
+<br/>
+Disciplina: artes de la visualidad, nuevos medios — Temática: caracterización de públicos y consumo cultural
+</p>
+<hr/>
+<h2>1. Problema de investigación</h2>
+<p>
+Una pieza digital que representa conocimiento —una ficha, un mapa de relaciones, una escena tridimensional— puede resultar convincente sin que quien la recorre sepa qué proviene de una fuente verificable, qué es una interpretación editorial y qué es, simplemente, un marcador de trabajo en curso. Esa opacidad no es un defecto menor de diseño: es un problema de conocimiento público, porque lo que un espectador puede o no distinguir determina si la pieza le permite pensar críticamente sobre lo que ve o si, en cambio, le entrega una apariencia de hecho donde solo hay una decisión curatorial.
+</p>
+<p>
+El campo de la visualización de patrimonio cultural ya identificó este problema desde el lado de la producción: la Carta de Londres para la visualización computacional del patrimonio cultural exige que toda reconstrucción interpretativa vaya acompañada de <em>paradata</em> —documentación de las decisiones evaluativas, deductivas e interpretativas que la generaron— para que el resultado sea "intelectualmente transparente" (Denard, 2009). Esa exigencia resuelve una responsabilidad de quien produce la imagen. No resuelve, porque no lo intenta, si esa documentación —una vez disponible— cambia efectivamente lo que un público hace con la imagen. La literatura reciente de estudios de visitantes en patrimonio digital sugiere que no debería darse por sentado: en entornos de reconstrucción virtual, la calidad visual mejora la claridad percibida pero no necesariamente la confianza en la exactitud de la reconstrucción, y el riesgo señalado por ese mismo campo —que la verosimilitud de un modelo lleve a leerlo como verdad en vez de como resultado de una interpretación— sigue abierto como pregunta empírica sobre públicos reales, no solo como advertencia de buena práctica (Schwan et al., 2020).
+</p>
+<p>
+Este proyecto investiga esa pregunta usando un caso donde la distinción entre hecho y interpretación no es una metáfora de diseño sino una arquitectura de datos ya construida y en funcionamiento: Wachuma, un atlas biológico y base de conocimiento biocultural sobre <em>Echinopsis pachanoi</em> (el cactus conocido como San Pedro o huachuma), desarrollado como monorepo público (<code>github.com/ligereza/WACHUMA</code>, 83 commits al 5 de septiembre de 2026). El modelo de datos de Wachuma separa, como ejes declarados por separado y nunca intercambiables, qué clase de cosa afirma algo (<code>sourceType</code>: publicación científica, dataset externo, editorial) de qué clase de afirmación es (<code>assertionType</code>: hecho taxonómico, interpretación editorial); y marca cada representación tridimensional del organismo con el rótulo <code>procedural-interpretation</code>, un valor de enumeración presente a nivel de esquema en cuatro archivos distintos del sistema (<code>garden-scene.schema.json</code>, <code>material-fixture.schema.json</code>, <code>plant-descriptor.schema.json</code>, <code>scroll-experience.schema.json</code>), que impide —a nivel de contrato de datos, no de intención editorial— que un render generado proceduralmente se lea como reconstrucción evidencial. El sistema, además, declara explícitamente qué contenido es real y cuál es un doble de demostración: al 7 de septiembre de 2026, de sus piezas de contenido público sólo la ficha de la especie es material revisado y con visibilidad pública; la ficha cultural, una de las dos guías de cultivo y la escena tridimensional del jardín están marcadas <code>demo</code> o <code>restricted</code> en el propio esquema que las declara.
+</p>
+<p>
+Esa combinación —una separación arquitectónica real entre evidencia e interpretación, aplicada a un organismo que se puede recorrer como ficha textual, como jardín espacial y como escena tridimensional— es una oportunidad de investigación poco común: permite preguntar, con un sistema que ya implementa la distinción y no con una maqueta construida para la ocasión, si esa distinción es legible para un público real cuando se le hace explorable, y qué ocurre con su lectura cuando no se le hace explorable. El objeto de estudio no es, por tanto, ninguna propiedad del cactus, de su cultivo o de su uso: es la relación entre un público de artes visuales y una pieza de conocimiento cuya procedencia puede o no ponerse a la vista.
+</p>
+<h3>Delimitación y relevancia disciplinar</h3>
+<p>
+El proyecto se inscribe en el Grupo A (artes visuales y plásticas, fotografía, nuevos medios e interdisciplina) y en la temática de caracterización de públicos y consumo cultural que las bases asignan a artes de la visualidad. No es un estudio botánico, médico, farmacológico ni de cultivo: las referencias a <em>Echinopsis pachanoi</em> se tratan como material cultural, visual y de procedencia documental, nunca como evidencia sobre la planta misma, su cultivo o su uso de sustancias. Tampoco es un estudio de incidencia o de frecuencia de consumo cultural —ese terreno ya lo cubre, a escala nacional, la Encuesta Nacional de Participación Cultural (Ministerio de las Culturas, las Artes y el Patrimonio e INE, 2018)—: es un estudio cualitativo y comparativo de interpretación, acotado a una muestra intencional, que complementa esa tradición de medición de incidencia con una pregunta que una encuesta de participación no puede responder: qué ocurre, en el momento de la lectura, cuando la procedencia de una pieza se hace o no se hace visible.
+</p>
+<p>
+La relevancia para nuevos medios es directa: toda pieza de nuevos medios que represente conocimiento —un archivo, un mapa relacional, una reconstrucción— enfrenta la misma tensión entre atractivo visual y verificabilidad. Wachuma ofrece un caso donde esa tensión ya fue resuelta a nivel de infraestructura (la arquitectura separa evidencia de interpretación) pero no a nivel de experiencia pública verificada: nadie ha probado si un público que no construyó el sistema puede leer esa separación cuando se le ofrece como interacción, ni qué le pasa cuando no se le ofrece. Ese es exactamente el vacío que un estudio de campo, y no una revisión de código, puede llenar.
+</p>
+<h2>2. Pregunta de investigación e hipótesis de trabajo</h2>
+<p>
+<strong>Pregunta central.</strong> ¿Cambia la forma en que un público adulto de artes visuales distingue un hecho documentado de una interpretación —al recorrer una pieza de conocimiento biocultural digital— cuando puede descubrir activamente la procedencia y el estatuto epistémico de cada afirmación, en comparación con la misma pieza presentada sin ese acceso? Y, específicamente: ¿en qué medida, sin ese acceso, la verosimilitud de una representación tridimensional bien lograda hace que una interpretación (un render <code>procedural-interpretation</code>) se lea como si fuera un hecho (una reconstrucción evidencial de un ejemplar real)?
+</p>
+<p>
+Esta pregunta reúne, deliberadamente, dos formulaciones que son dos caras de una misma manipulación experimental: preguntar si la procedencia visible cambia la interpretación y preguntar si su ausencia hace que la forma convincente sustituya al hecho son la misma comparación leída desde sus dos extremos. Elegirlas como pregunta única, y no como dos preguntas separadas, evita fragmentar el diseño en más comparaciones de las que una muestra intencional pequeña puede sostener con rigor.
+</p>
+<p>
+<strong>Pregunta secundaria, tratada como dimensión de observación y no como hipótesis central.</strong> ¿Qué aporta —y qué exige— recorrer estos mismos contenidos en un jardín digital espacial e interactivo, en comparación con leerlos como una ficha de especie convencional? Esta pregunta no se responde con una condición experimental propia: se observa como una variable de ruta de entrada (ver §6), reconociendo que el formato de encuentro (espacial/exploratorio frente a lineal/textual) puede producir un tipo de involucramiento distinto —más autodirigido, con más conexiones espontáneas— independiente de si la procedencia es o no explorable (Falk &amp; Dierking, 2013). Tratarla como observación secundaria, y no como un segundo factor cruzado con el primero, es una decisión metodológica explícita: una muestra de campo acotada no sostiene con solidez un diseño factorial completo, y forzarlo produciría celdas demasiado pequeñas para decir nada con honestidad.
+</p>
+<p>
+<strong>Hipótesis de trabajo (H1).</strong> Hacer explorable la procedencia y el estatuto epistémico de cada afirmación —mediante una capa de interacción que permite abrir cada elemento de la pieza y ver su fuente, su tipo de aserción y, en el caso de la escena tridimensional, su rótulo <code>procedural-interpretation</code>— aumenta, respecto de la misma pieza sin esa capa, la proporción de clasificaciones correctas entre hecho documentado, interpretación o decisión curatorial, y demostración/placeholder; y aumenta el número de dudas informadas (rechazos y aperturas de una relación) frente a las aceptaciones sin cuestionamiento.
+</p>
+<p>
+<strong>Hipótesis de trabajo (H2).</strong> Sin acceso a la procedencia, la escena tridimensional —por su verosimilitud visual y su condición de pieza más llamativa del recorrido— tiende a clasificarse como hecho (reconstrucción de un ejemplar real) con mayor frecuencia y mayor confianza declarada que cuando la procedencia es explorable y el rótulo <code>procedural-interpretation</code> queda a la vista.
+</p>
+<p>
+<strong>Qué resultado obligaría a revisar estas hipótesis.</strong> Tres resultados, cualquiera de ellos, cuentan en contra de H1 y H2 y el proyecto se compromete a reportarlos como tales, no a ocultarlos: (a) que no haya diferencia apreciable entre condiciones en la tarea de clasificación de afirmaciones; (b) que la condición con procedencia explorable muestre un desempeño igual o peor que la condición cerrada, lo que sugeriría que la sola disponibilidad de la interacción no basta —y podría deberse a sobrecarga informativa, un efecto ya documentado en la literatura de "detalles seductores" cuando el material adicional compite por la atención del lector en vez de sostener el argumento central (Sundararajan &amp; Adesope, 2020)—; y (c) que la escena tridimensional se clasifique correctamente como interpretación en ambas condiciones por igual, lo que indicaría que la verosimilitud del render no está operando como se supone y que otra señal —quizás el propio contexto de "escena de jardín"— ya cumple esa función sin necesidad de la capa de procedencia. Cualquiera de estos tres resultados es, para este proyecto, un hallazgo válido y publicable, no un fracaso a esconder: ya se declaró en el expediente que el piloto puede producir un resultado negativo, y esa declaración se mantiene aquí en su forma más precisa.
+</p>
+<h2>3. Objetivos</h2>
+<p>
+Los objetivos generales y específicos completos, con sus actividades y su relación con el cronograma y el presupuesto, están desarrollados en la sección <code>objetivos</code> de la postulación (FUP). Se resumen aquí para que este Avance conserve la coherencia exigida entre problema, pregunta, metodología y objetivos:
+</p>
+<p>
+Caracterizar cómo un público adulto vinculado a las artes visuales distingue hecho documentado de interpretación al recorrer una pieza de conocimiento biocultural digital, y cómo cambia esa distinción cuando la procedencia y el estatuto epistémico de cada afirmación son explorables frente a cuando no lo son. De ese objetivo general se desprenden cinco objetivos específicos: delimitar el conjunto acotado de contenidos reales y demostrativos de Wachuma sobre el que se construye el estudio; implementar las dos condiciones de exploración como una capa de interacción reproducible sobre la interfaz pública existente, sin alterar el modelo de datos ni el estatus real de ningún registro; diseñar y aplicar el protocolo de campo con consentimiento informado; analizar las diferencias de clasificación, de decisión de lectura y de verbalización entre condiciones y entre rutas de entrada; y transferir el protocolo y sus resultados —incluido un eventual resultado negativo— mediante una actividad de transferencia y un informe que distinga con claridad hallazgo de límite.
+</p>
+<h2>4. Marco conceptual</h2>
+<p>
+El proyecto trabaja con cuatro distinciones conceptuales, cada una con una función distinta en el argumento.
+</p>
+<p>
+<strong>Procedencia como modelo formal, no como metáfora.</strong> El estándar W3C PROV-O define la procedencia mediante tres clases —entidad, actividad, agente— y propiedades que las conectan (<code>wasGeneratedBy</code>, <code>used</code>, <code>wasAttributedTo</code>), de modo que pueda representarse e intercambiarse de forma interoperable qué produjo un dato, con qué proceso y a partir de qué insumos (W3C, 2013). Wachuma implementa una versión aplicada de ese modelo —fuente, <em>source record</em>, tipo de fuente, tipo de aserción, revisión— sin necesidad de que el público conozca el estándar. Lo que este proyecto pregunta es distinto de lo que PROV-O resuelve: PROV-O garantiza que la procedencia pueda representarse y transmitirse entre sistemas; este estudio pregunta si, una vez traducida a una interacción visible ("abrir la fuente de esta afirmación"), un espectador humano efectivamente la usa para decidir qué cree y qué no.
+</p>
+<p>
+<strong>Paradata como documentación de la decisión interpretativa.</strong> La Carta de Londres acuña <em>paradata</em> para la documentación de los procesos evaluativos, deductivos e interpretativos detrás de una visualización, exigiendo que esa documentación se difunda de manera que la relación entre fuentes, conocimiento implícito, razonamiento explícito y resultado visual pueda entenderse (Denard, 2009). El rótulo <code>procedural-interpretation</code> de Wachuma es una forma mínima y machine-checkable de paradata: no narra la decisión, pero la marca de forma que no puede omitirse ni heredarse por accidente. Este proyecto trata esa marca como la variable que se hace o no se hace visible al público, y no como un principio de diseño ya resuelto.
+</p>
+<p>
+<strong>El heurístico de realismo y el efecto de detalles seductores.</strong> La literatura de credibilidad de medios describe un heurístico de realismo: mensajes que combinan imagen y texto tienden a percibirse como más creíbles porque se asemejan más a la realidad, independientemente de la exactitud de lo que representan (Sundar, 2008). En paralelo, la investigación educativa sobre "detalles seductores" muestra que información interesante pero tangencial —o, en este caso, una representación visualmente atractiva— puede desplazar la atención del contenido que sostiene el argumento, con un efecto más marcado en audiencias con menor conocimiento previo del tema (Sundararajan &amp; Adesope, 2020). Juntas, estas dos líneas dan el mecanismo cognitivo detrás de H2: no se trata de que el público sea descuidado, sino de que la forma visual convincente compite, de manera predecible, con el juicio evidencial, y esa competencia es más fuerte cuanto menos familiarizado está el espectador con el tema —de ahí que el cuestionario de entrada releve explícitamente la familiaridad previa (§6).
+</p>
+<p>
+<strong>Mostrar la procedencia como una posición, no un detalle técnico.</strong> <em>Data Feminism</em> argumenta que los datos nunca hablan por sí mismos y que hacer visible el contexto, el trabajo y las decisiones detrás de un dato es una posición sobre quién tiene poder para interpretar y quién debe conformarse con recibir una interpretación ya hecha (D'Ignazio &amp; Klein, 2020). Este marco evita que el proyecto trate la pregunta de investigación como un simple problema de usabilidad de interfaz: si hacer explorable la procedencia cambia lo que un público puede cuestionar, la decisión de diseño de mostrarla u ocultarla tiene una consecuencia cívica, no sólo estética.
+</p>
+<p>
+<strong>Detalle técnico del modelo de procedencia implementado (evidencia verificada en el repositorio).</strong> El registro de procedencia (<code>schemas/provenance-record.schema.json</code>) no reduce la evidencia a una etiqueta binaria "real/demostrativo": separa <code>entityType</code> (ocho valores: <code>taxon</code>, <code>biological_entity</code>, <code>specimen</code>, <code>culture</code>, <code>observation</code>, <code>place</code>, <code>media</code>, <code>source</code>) de <code>assertionType</code> (ocho valores propios del registro de procedencia: <code>taxonomic_fact</code>, <code>contemporary_observation</code>, <code>historical_source</code>, <code>archaeological_evidence</code>, <code>academic_publication</code>, <code>horticultural_guidance</code>, <code>community_knowledge</code>, <code>editorial_interpretation</code>), y añade un tercer eje independiente, <code>status</code> (<code>pending</code>, <code>accepted</code>, <code>rejected</code>, <code>superseded</code>), que registra si esa afirmación pasó o no por una revisión humana y si sigue vigente o fue reemplazada por evidencia posterior. Esta tercera dimensión distingue a Wachuma de un simple selector de dos estados: una afirmación puede estar documentada (<code>assertionType</code>: hecho) y al mismo tiempo <code>pending</code> de revisión, o <code>superseded</code> por un registro más reciente, sin dejar de conservarse como historial. Por separado, el contenido público de cada especie (<code>schemas/species-document.schema.json</code>) etiqueta cada fuente citada con su propio <code>sourceType</code> (<code>scientific_publication</code>, <code>historical_account</code>, <code>archaeological_evidence</code>, <code>community_knowledge</code>, <code>external_dataset</code>, <code>horticultural_guide</code>, <code>editorial</code>) y su propio <code>assertionType</code> de texto libre, de modo que el tipo de fuente y el tipo de afirmación que esa fuente sostiene quedan como dos preguntas distintas y nunca colapsadas en una sola casilla.
+</p>
+<p>
+Para el diseño metodológico (§6), esta granularidad importa porque la tarea de clasificación posterior a cada condición (instrumento 4) no le pide al participante distinguir entre dos categorías gruesas —verdadero o falso— sino replicar, con su propio criterio y sin haber visto el esquema, una distinción de al menos tres niveles —hecho documentado, interpretación o decisión curatorial, y "no sé"— que ya existe como estructura de datos operante en el sistema. La pregunta de investigación no evalúa, entonces, si un público puede aprender una convención ad hoc creada para el experimento: evalúa si puede reconstruir, a partir de señales de interfaz, una distinción que el sistema de producción ya sostiene con datos tipados y con una revisión human-in-the-loop (<code>status</code>) que corre de forma independiente del tipo de afirmación.
+</p>
+<p>
+<em>Fuente verificada: <code>schemas/provenance-record.schema.json</code> (entityType, assertionType, status) y <code>schemas/species-document.schema.json</code> (sourceType), repositorio <code>github.com/ligereza/WACHUMA</code>, leídos el 7 de septiembre de 2026.</em>
+</p>
+<p>
+<strong>El escritorio de revisión como gobernanza operativa, no solo como esquema de datos.</strong> La separación entre hecho e interpretación descrita arriba no depende únicamente de los campos de un esquema: está sostenida por un flujo de trabajo editorial real. El propio repositorio describe su superficie administrativa (<code>/admin</code>) no como un gestor de contenidos sino como "un escritorio de revisión, y sus verbos son revisar, promover, retirar e ingresar" (CAPACIDADES.md), y resume su criterio de publicación con una pregunta operativa: no "¿podemos publicar esto?" sino "¿podemos defenderlo?". La revisión confirma licencia, atribución, privacidad y taxonomía de manera independiente entre sí, y la visibilidad —con cuatro grados posibles— no se hereda automáticamente del dataset de origen: cada proveedor externo conserva su identidad y su registro crudo, y promover una proyección al catálogo público es un acto separado y auditable, no un efecto colateral de la importación.
+</p>
+<p>
+Este detalle es relevante para el diseño del estudio (§6) porque explica por qué la distinción que se le pide reconstruir al público no es arbitraria ni frágil: no es una convención de interfaz que un equipo de investigación decidió por conveniencia experimental, sino el resultado observable de un proceso editorial que ya se niega, de manera rutinaria, a publicar una afirmación que no pueda sostener con evidencia. Cuando el expediente de postulación describe que el responsable trabajó con "un modelo de procedencia con revisión humana registrada" (sección <code>trayectoria_responsable</code> del FUP), esta subsección es la evidencia concreta —y verificable en el repositorio citado— que sostiene esa afirmación.
+</p>
+<h2>5. Estado del arte</h2>
+<p>
+<strong>Visualización de patrimonio y el problema de la credibilidad de la reconstrucción.</strong> Desde 2006, el campo de la visualización computacional de patrimonio cultural cuenta con un marco normativo de buena práctica —la Carta de Londres— centrado en la transparencia intelectual de las reconstrucciones (Denard, 2009). Ese marco regula la producción: exige documentar el razonamiento detrás de una imagen. Los estudios de recepción posteriores, sin embargo, han empezado a preguntar qué ocurre del lado del público, y encuentran una asimetría relevante: la calidad visual de una reconstrucción mejora la claridad percibida por los visitantes, pero no necesariamente su confianza en que la reconstrucción sea exacta —es decir, un público puede disfrutar y comprender mejor una escena sin por ello creer más en su veracidad, o sin por ello dejar de creer más de lo que la evidencia sostiene (Schwan et al., 2020). Ese hallazgo mixto es exactamente lo que hace falta investigar en un caso donde, además, existe una marca explícita (<code>procedural-interpretation</code>) que podría alterar esa relación: nadie ha probado todavía si mostrar esa marca cambia la brecha entre claridad percibida y confianza evidencial, y ese es el aspecto novedoso que este proyecto añade a esa línea de trabajo.
+</p>
+<p>
+<strong>El aprendizaje libre y el papel de la interactividad frente al texto lineal.</strong> El modelo contextual de aprendizaje en museos de Falk y Dierking sostiene que la experiencia de un visitante resulta de la intersección de un contexto personal, uno físico y uno sociocultural, y que los recorridos interactivos y de elección libre producen un tipo de involucramiento —selectivo, autodirigido, con conexiones espontáneas— distinto del que produce un texto lineal, aunque no necesariamente "mejor" en todos los sentidos (Falk &amp; Dierking, 2013). Ese cuerpo de trabajo justifica por qué este proyecto no reduce "recorrer un organismo digital" y "leer una ficha convencional" a una única variable de contenido: son dos formatos de encuentro con consecuencias de aprendizaje distintas, y de ahí que se mantenga como dimensión de observación separada de la manipulación de procedencia (§2, §6), evitando confundir el efecto de la interactividad con el efecto de la procedencia visible.
+</p>
+<p>
+<strong>Alfabetización crítica de datos y el argumento normativo de mostrar el trabajo.</strong> <em>Data Feminism</em> aporta el argumento de que ocultar el contexto y las decisiones detrás de un dato no es neutral, y que mostrar ese trabajo es una forma de redistribuir la capacidad de interpretar (D'Ignazio &amp; Klein, 2020). Este proyecto contribuye a esa discusión con un dato empírico que la literatura consultada no ofrece todavía: no si el argumento normativo es correcto, sino si, en la práctica, un público real <em>usa</em> esa visibilidad para interpretar de otra manera cuando se le da la oportunidad concreta de hacerlo, en un sistema donde esa visibilidad ya existe y no es un mockup construido para la ocasión.
+</p>
+<p>
+<strong>Estudios de públicos y consumo cultural en Chile.</strong> La Encuesta Nacional de Participación Cultural, aplicada por el Ministerio de las Culturas, las Artes y el Patrimonio junto al Instituto Nacional de Estadísticas desde 2004, mide con metodología mixta la incidencia y las prácticas de participación cultural de la población, incluyendo asistencia a artes visuales (Ministerio de las Culturas, las Artes y el Patrimonio e INE, 2018). Esa tradición de medición nacional define el campo al que la temática de "caracterización de públicos y consumo cultural" pertenece, pero mide frecuencia y acceso, no interpretación. Este proyecto se sitúa deliberadamente como un complemento cualitativo y no como una réplica a menor escala: donde la encuesta pregunta cuánta gente asiste a qué, este estudio pregunta qué le pasa a una persona, en el momento preciso de la lectura, cuando puede o no puede ver de dónde viene lo que observa.
+</p>
+<p>
+<strong>Aspecto novedoso y análisis bibliográfico que lo fundamenta.</strong> La contribución específica de este proyecto —y lo que ninguna de las cinco líneas anteriores cubre por separado— es poner a prueba, con público real y en un sistema de producción (no un prototipo construido sólo para el experimento), si una arquitectura de datos que ya separa formalmente evidencia de interpretación produce una diferencia observable en cómo un público interpreta, cuando esa separación se traduce en una interacción explorable. La Carta de Londres regula la producción de la imagen; PROV-O regula su representación formal; el heurístico de realismo y los detalles seductores explican el mecanismo cognitivo de riesgo; el modelo de Falk y Dierking explica por qué el formato del encuentro importa aparte de su contenido; <em>Data Feminism</em> sostiene por qué esto importa cívicamente; y la ENPC sitúa el campo de públicos en el que esta investigación se inscribe sin duplicarlo. Ninguna de estas fuentes, sola, responde la pregunta central de este proyecto: esa respuesta requiere el estudio de campo que se describe a continuación.
+</p>
+<h2>6. Metodología</h2>
+<p>
+<strong>Diseño general.</strong> Estudio de campo comparativo, cualitativo con apoyo descriptivo, de diseño intra-sujeto para la manipulación central y entre-sujeto para la dimensión de observación secundaria. Cada participante recorre el mismo conjunto acotado de contenidos de Wachuma en dos condiciones, en orden contrabalanceado entre participantes para controlar el efecto de orden:
+</p>
+<ul>
+<li><strong>Condición cerrada:</strong> la ficha de especie, la guía de cultivo, la ficha cultural y la escena tridimensional se presentan como una pieza terminada, sin acceso visible a la fuente de cada afirmación ni al rótulo que distingue hecho de interpretación.</li>
+<li><strong>Condición abierta:</strong> el mismo contenido, en el mismo orden de presentación, pero cada afirmación puede abrirse para ver su fuente, su tipo de aserción (<code>sourceType</code>/<code>assertionType</code>) y, en el caso de la escena tridimensional, su rótulo <code>procedural-interpretation</code>.</li>
+</ul>
+<p>
+Ambas condiciones muestran exactamente el mismo contenido de fondo: lo único que cambia es si la procedencia y el estatuto epistémico son o no explorables. Esto aísla la variable de interés y evita confundir un cambio de contenido con un cambio de acceso a su procedencia.
+</p>
+<p>
+Como dimensión de observación secundaria, cada participante es asignado aleatoriamente a una de dos rutas de entrada al mismo contenido: una ruta espacial e interactiva (jardín → ejemplar → escena tridimensional → ficha cultural → guía de cultivo) o una ruta de ficha convencional (texto de la ficha de especie primero, con el resto del contenido presentado después en el mismo orden). Esta variable no se cruza con la manipulación de procedencia como diseño factorial completo —la muestra prevista no lo sostiene con rigor—; se registra como covariable descriptiva para responder la pregunta secundaria sin comprometer la interpretación de H1 y H2.
+</p>
+<p>
+<strong>Corpus de contenido usado.</strong> El estudio no crea contenido nuevo para la ocasión: usa el corpus real y demostrativo que Wachuma ya declara, precisamente porque la diferencia entre lo real y lo demostrativo es parte de lo que se pone a prueba. Se seleccionan cuatro piezas: la ficha de especie de <em>Echinopsis pachanoi</em> (contenido real, revisado, visibilidad pública), la guía de cultivo general de cactáceas (contenido real, con alcance institucional explícito y no un protocolo de campo), la ficha cultural de nombres vernáculos (marcada <code>demo</code> en su propio esquema, con la advertencia editorial explícita de que es un fixture de verificación y no una afirmación histórica publicada) y la escena tridimensional del jardín de demostración (marcada <code>restricted</code>, con rótulo <code>procedural-interpretation</code>). Ninguna ubicación de ejemplar real se usa ni se muestra: el estudio no toca la tabla de procedencia de ejemplares, que permanece fuera de cualquier publicación por la misma razón declarada en el resto del expediente —presión de recolección y significado cultural vivo de la especie.
+</p>
+<p>
+<strong>Participantes.</strong> Muestra intencional de 24 a 30 personas adultas vinculadas a prácticas de arte, diseño, mediación o investigación cultural, convocadas mediante difusión en redes propias del campo (escuelas de arte y diseño, redes de mediación cultural, sin compra de audiencia ni de datos personales, consistente con la partida presupuestaria ya declarada para convocatoria). Criterio de inclusión: mayoría de edad y vínculo declarado, aunque sea informal, con prácticas de artes visuales, diseño, mediación o investigación cultural. El cuestionario de entrada releva, además del perfil, la familiaridad previa con Wachuma, con el cactus San Pedro/huachuma y con conceptos de procedencia o curaduría de datos, porque la literatura de detalles seductores indica que el efecto de una forma visual convincente es mayor cuanto menor es el conocimiento previo (Sundararajan &amp; Adesope, 2020): esa familiaridad se trata como covariable explícita, no como un factor a controlar por exclusión.
+</p>
+<p>
+<strong>Instrumentos.</strong>
+</p>
+<ol>
+<li>Consentimiento informado y ficha de retiro voluntario, con explicación en lenguaje simple de qué se observa y qué no se conserva.</li>
+<li>Cuestionario de entrada: perfil, vínculo con artes visuales/diseño/mediación/investigación, familiaridad previa con el caso y con conceptos de procedencia.</li>
+<li>Protocolo de observación estructurada con pensar en voz alta: técnica de uso extendido en evaluación de interacción, donde cinco participantes ya revelan entre 77% y 85% de los problemas de un diseño (Nielsen, 1993), lo que respalda que una muestra de 24 a 30 personas —muy por encima de ese umbral— sea adecuada para un estudio cualitativo de esta escala. Se registra tiempo aproximado por sección y, en la condición abierta, número de aperturas de fuente.</li>
+<li>Tarea de clasificación posterior a cada condición: se presentan 6 a 8 afirmaciones extraídas del recorrido —mezclando hecho documentado real, interpretación cultural marcada <code>demo</code>, y el render tridimensional— y se pide clasificar cada una como "hecho verificado", "interpretación o decisión curatorial", o "no sé", con una escala de confianza de 1 a 5. Esta tarea mide directamente la variable dependiente central de H1 y H2.</li>
+<li>Registro de decisiones de lectura: por cada relación mostrada, el participante puede aceptarla, rechazarla o dejarla abierta; se registra la decisión y su justificación breve.</li>
+<li>Entrevista breve semiestructurada al cierre de cada condición: qué hizo confiar o dudar, si algo pareció un hecho y después generó duda (o al revés), qué relación aceptaría o rechazaría y por qué.</li>
+<li>Ficha de salida comparativa, tras ambas condiciones: preferencia declarada, y elección forzada sobre qué versión resultó "más creíble" y por qué —el dato que captura de forma más directa el efecto de la forma convincente sobre el juicio evidencial.</li>
+</ol>
+<p>
+<strong>Procedimiento por sesión.</strong> Sesiones individuales o en grupos de dos a tres personas, de 50 a 60 minutos: consentimiento y cuestionario de entrada (10 min), primer recorrido según condición y ruta asignadas con observación y pensar en voz alta (15 min), tarea de clasificación y entrevista breve (10 min), segundo recorrido en la condición restante (15 min), tarea de clasificación y entrevista breve (10 min), ficha de salida comparativa y devolución agregada (5 a 10 min).
+</p>
+<p>
+<strong>Consideración ética sobre el diseño de la comparación.</strong> Para que la tarea de clasificación mida efectivamente si el público <em>descubre</em> qué es hecho y qué es interpretación —y no simplemente si recuerda una etiqueta que se le mostró de antemano—, el participante no es informado, antes de cada recorrido, de cuáles piezas son reales y cuáles demostrativas; esa es precisamente la distinción que se le pide reconstruir. Esta reserva de información es una práctica establecida en investigación de interpretación y usabilidad, siempre que vaya acompañada de una devolución completa: al cierre de cada sesión se explica con precisión qué contenido era real, cuál demostrativo, y por qué, y se ofrece a cada participante la posibilidad de retirar su registro sin dar razones. Ningún dato personal identificable se conserva; los registros se anonimizan al momento de la sesión y el resguardo es local.
+</p>
+<p>
+<strong>Análisis.</strong> Codificación temática cualitativa de las verbalizaciones y las entrevistas (categorías esperadas: reconocimiento informado de procedencia, duda informada, sobreconfianza en el render, atractivo sin comprensión, entre otras que emerjan de los datos) y conteos descriptivos de la tarea de clasificación y de las decisiones de lectura, comparados dentro de cada participante entre condiciones. No se aplican pruebas de significancia estadística formal: la muestra es intencional y acotada, y el proyecto declara expresamente que sus resultados no se generalizan a "los públicos" de las artes visuales, sino que caracterizan, con evidencia comparable y trazable, lo que ocurrió en esta muestra bajo este diseño.
+</p>
+<p>
+<strong>Límites declarados.</strong> El estudio no mide comprensión botánica, cultivo ni ningún uso de la especie: mide lectura de una pieza de conocimiento. No sustituye a la Encuesta Nacional de Participación Cultural ni pretende su escala o representatividad. El comportamiento observado en el prototipo de estudio es un resultado simulado de laboratorio de campo, no evidencia sobre "el público de artes visuales" en general. La dimensión de ruta de entrada se reporta de forma descriptiva, no causal, dado que no está cruzada como factor experimental completo con la manipulación central.
+</p>
+<h2>7. Relación con cronograma y presupuesto</h2>
+<p>
+El diseño metodológico descrito corresponde a la Fase 3 (prototipo y piloto, julio-agosto de 2027) y la Fase 4 (análisis y curaduría, septiembre-octubre) del cronograma de ejecución detallado en la sección <code>cronograma</code> de la postulación. Los instrumentos de campo (consentimiento, cuestionario, protocolo de observación, tarea de clasificación, guía de entrevista y ficha de salida) se producen como parte de la Fase 1 (delimitación, abril-mayo) y se prueban en el piloto técnico de la Fase 2 antes de las sesiones reales. El ítem presupuestario "Diseño y aplicación de instrumentos de observación, entrevistas breves y sistematización de campo" ($1.800.000) y el ítem "Sesiones de estudio de campo: materiales, traslados locales y apoyos de participación" ($1.200.000), ya declarados en el presupuesto de la postulación, financian exactamente este diseño y no un estudio distinto.
+</p>
+<h2>8. Referencias bibliográficas</h2>
+<p>
+D'Ignazio, C., &amp; Klein, L. F. (2020). <em>Data Feminism</em>. MIT Press.
+</p>
+<p>
+Denard, H. (Ed.). (2009). <em>The London Charter for the Computer-based Visualisation of Cultural Heritage</em> (versión 2.1). King's College London.
+</p>
+<p>
+Falk, J. H., &amp; Dierking, L. D. (2013). <em>The Museum Experience Revisited</em>. Left Coast Press. [Edición revisada de <em>Learning from Museums: Visitor Experiences and the Making of Meaning</em>, AltaMira Press, 2000.]
+</p>
+<p>
+Ministerio de las Culturas, las Artes y el Patrimonio, e Instituto Nacional de Estadísticas (INE). (2018). <em>Encuesta Nacional de Participación Cultural 2017</em>. Gobierno de Chile.
+</p>
+<p>
+Nielsen, J. (1993). <em>Usability Engineering</em>. Academic Press.
+</p>
+<p>
+Schwan, S., Grajal, A., &amp; Lewalter, D. (2020). How do visitors perceive the role of authentic objects in museums? <em>Curator: The Museum Journal</em>, 63(3).
+</p>
+<p>
+Sundar, S. S. (2008). The MAIN model: A heuristic approach to understanding technology effects on credibility. En M. J. Metzger &amp; A. J. Flanagin (Eds.), <em>Digital Media, Youth, and Credibility</em> (pp. 73-100). MIT Press.
+</p>
+<p>
+Sundararajan, N., &amp; Adesope, O. (2020). Keep it coherent: A meta-analysis of the seductive details effect. <em>Educational Psychology Review</em>, 32(3), 707-734.
+</p>
+<p>
+World Wide Web Consortium (W3C). (2013). <em>PROV-O: The PROV Ontology</em>. W3C Recommendation, 30 de abril de 2013.
+</p>
+<hr/>
+<p>
+<em>Fuentes de implementación citadas en este documento, verificadas en el repositorio <code>github.com/ligereza/WACHUMA</code> el 7 de septiembre de 2026: <code>CAPACIDADES.md</code>, <code>NOMENCLATURA.md</code>, <code>schemas/garden-scene.schema.json</code>, <code>schemas/material-fixture.schema.json</code>, <code>schemas/plant-descriptor.schema.json</code>, <code>schemas/scroll-experience.schema.json</code>, <code>content/species/echinopsis-pachanoi.json</code>, <code>content/cultures/echinopsis-pachanoi-demo.json</code>, <code>content/scenes/echinopsis-pachanoi-demo.json</code>, <code>content/cultivation-guides/echinopsis-pachanoi-general-cacti-v1.json</code>.</em>
+</p>
+<blockquote>
+<p><strong>[BORRADOR DE AGENTE — PENDIENTE DE APROBACIÓN HUMANA]</strong> Dos subsecciones al final de la sección 4 —"Detalle técnico del modelo de procedencia implementado" y "El escritorio de revisión como gobernanza operativa"— fueron redactadas por un agente Claude el 2026-09-07 a partir de evidencia verificada en el repositorio WACHUMA (esquemas y CAPACIDADES.md), citada en cada caso. No inventan datos ni resultados; su propósito explícito fue cerrar la extensión de 15 páginas exigida por las bases (el documento llegó a 13 páginas antes de estas dos adiciones y alcanzó 15 después de ambas, verificado con pdfinfo). Falta: revisión humana de tono, pertinencia y de si el último margen de página se ve natural o forzado.</p>
+</blockquote>
+</body></html>

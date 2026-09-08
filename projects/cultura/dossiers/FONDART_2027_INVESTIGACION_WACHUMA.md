@@ -9,9 +9,18 @@
 >
 > Reemplaza al borrador «Jardines interpretativos», que postulaba el método sin caso. Jardines es el método; Wachuma es el caso. Las bases admiten **una sola postulación por línea** (I.4), así que existe este expediente y no los dos.
 
-> **Estado:** borrador de trabajo para revisión humana. El verificador considera
-> declarados el Avance y el Plan para comprobar la estructura; ambos todavía deben
-> maquetarse, revisarse y adjuntarse en el formato oficial antes de enviar.
+> **Estado:** el Avance de Investigación y el Plan de Actividad de Transferencia
+> están redactados en su versión completa, maquetados en tamaño carta/Arial 12
+> y exportados a PDF: `FONDART_2027_INVESTIGACION_WACHUMA_ANEXOS/AVANCE_DE_INVESTIGACION.{md,pdf}`
+> y `.../PLAN_ACTIVIDAD_TRANSFERENCIA.{md,pdf}`. La extensión del Avance (15
+> páginas tamaño carta) fue verificada con `pdfinfo` el 2026-09-07. Dos
+> subsecciones de su sección 4 fueron redactadas por un agente Claude ese día
+> a partir de evidencia del repositorio WACHUMA para completar esa extensión, y
+> están marcadas dentro del propio documento como borrador pendiente de
+> aprobación humana -- revisarlas antes de dar el Avance por cerrado. Lo demás
+> pendiente de revisión humana es lo que ningún documento puede resolver por su
+> cuenta: identidad del responsable, cotizaciones y la confirmación final de la
+> autorización ministerial de difusión (ver «Aporte del operador» al final).
 
 ## Dónde está el puntaje
 
@@ -28,11 +37,11 @@
 
 <!-- Problema, relevancia y aporte al campo disciplinar. -->
 
-Una visualización de relaciones puede resultar convincente sin que se sepa qué proviene de una fuente, qué es inferencia y qué decidió la curaduría. Esta investigación no busca demostrar una tesis botánica: busca caracterizar cómo personas adultas vinculadas a las artes visuales comprenden, cuestionan y usan la procedencia cuando ésta se hace visible. El proyecto se inscribe en el Grupo A, en nuevos medios, y en la temática autorizada de caracterización de públicos y consumo cultural.
+Una representación de conocimiento —una ficha, un mapa de relaciones, una escena tridimensional— puede resultar convincente sin que quien la recorre sepa qué proviene de una fuente verificable, qué es una interpretación editorial y qué es apenas un marcador de trabajo en curso. Esta investigación no busca demostrar una tesis botánica: busca caracterizar cómo un público adulto de artes visuales distingue hecho de interpretación cuando esa distinción puede o no descubrirse, y qué ocurre con esa distinción cuando una representación visual particularmente convincente —una escena tridimensional— compite con el juicio evidencial. El proyecto se inscribe en el Grupo A, en nuevos medios, y en la temática autorizada de caracterización de públicos y consumo cultural.
 
-El estímulo del estudio no se construirá desde cero. Es Wachuma, un jardín digital ya existente sobre *Echinopsis pachanoi* cuyo modelo de datos separa por diseño la fuente de la afirmación: al 7 de septiembre de 2026 registra 28 fuentes, 67 registros de origen, 69 filas de procedencia y 53 revisiones de esos registros, sobre 7 taxones y 7 ejemplares. Cada afirmación cita las fuentes que la sostienen mediante una tabla de relación propia, no por adyacencia. Esa arquitectura, y no una promesa, es lo que permite mostrarle a un público una lectura y su origen al mismo tiempo.
+El estímulo del estudio no se construye desde cero ni como maqueta de laboratorio: es Wachuma, un atlas biológico y jardín digital ya existente sobre *Echinopsis pachanoi*, cuyo modelo de datos separa por esquema —no por intención editorial— qué clase de cosa dijo algo (`sourceType`) de qué clase de afirmación es (`assertionType`), y marca cada representación tridimensional del organismo con el rótulo `procedural-interpretation`, presente en cuatro esquemas distintos del sistema, que impide leer un render generado proceduralmente como una reconstrucción evidencial. Al 7 de septiembre de 2026 el corpus registra 28 fuentes, 67 registros de origen, 69 filas de procedencia y 53 revisiones de esos registros, sobre 7 taxones y 7 ejemplares. Esa arquitectura, y no una promesa, es lo que permite mostrarle a un público una lectura y su origen —o su falta— al mismo tiempo.
 
-Lo que Wachuma todavía no tiene es contenido curado y una superficie pública: hay una ficha de especie real y el resto de sus piezas de contenido son demostraciones. Esa es exactamente la brecha que este proyecto trabaja, y por eso el objeto evaluable no es la infraestructura sino el estudio de campo: qué comprende, qué rechaza y qué pregunta un público cuando la procedencia está a la vista.
+Lo que Wachuma todavía no tiene es contenido curado en su totalidad ni una superficie pública completa: hay una ficha de especie real y el resto de sus piezas de contenido (ficha cultural, escena tridimensional, una de las dos guías de cultivo) están marcadas `demo` o `restricted` en su propio esquema. Esa condición mixta —parte real, parte declaradamente demostrativa— no es un obstáculo para el estudio: es su segunda fuente de evidencia, porque permite preguntarle a un público real si distingue lo real de lo demostrativo cuando se le da la oportunidad de descubrirlo, y qué pasa cuando no se le da. El objeto evaluable no es la infraestructura sino el estudio de campo: qué distingue, qué rechaza y qué da por hecho un público cuando la procedencia y el estatuto epistémico de lo que ve están, o no están, a la vista.
 
 ## Objetivos
 
@@ -41,14 +50,14 @@ Lo que Wachuma todavía no tiene es contenido curado y una superficie pública: 
 <!-- Objetivo general y específicos, con logros observables. -->
 
 Objetivo general:
-Caracterizar, mediante un estudio de campo con públicos adultos de artes visuales, qué formas de comprensión, duda y rechazo aparecen al recorrer un jardín visual interpretativo que conserva la procedencia de sus fuentes.
+Caracterizar cómo un público adulto vinculado a las artes visuales distingue hecho documentado de interpretación al recorrer una pieza de conocimiento biocultural digital, y cómo cambia esa distinción cuando la procedencia y el estatuto epistémico de cada afirmación son explorables frente a cuando no lo son.
 
 Objetivos específicos:
-1. Curar y revisar el corpus publicable del caso Wachuma, elevando las fichas de contenido desde su estado de demostración hasta material verificado, y separando en cada afirmación hecho documentado, inferencia, metáfora y decisión curatorial.
-2. Implementar un prototipo interactivo reproducible que exponga fuente, claim, relación, contexto, interpretación y punto de quiebre.
-3. Diseñar y aplicar sesiones de campo con instrumentos de observación, entrevista breve y registro de decisiones de lectura, sin conservar archivos personales ni datos innecesarios.
-4. Analizar qué comprenden los públicos, qué relaciones rechazan y qué elementos de procedencia ayudan o dificultan la lectura de la pieza.
-5. Transferir el método mediante una actividad presencial o virtual y entregar un protocolo reutilizable, un mapa de relaciones y un informe de resultados y límites.
+1. Delimitar, dentro del corpus real y demostrativo de Wachuma, un conjunto acotado de contenidos (ficha de especie, guía de cultivo, ficha cultural, escena tridimensional) que permita manipular la disponibilidad de procedencia sin alterar el contenido mostrado.
+2. Implementar dos condiciones de exploración —procedencia cerrada y procedencia abierta— como una capa de interacción reproducible sobre la interfaz pública existente, sin modificar el modelo de datos ni el estatus real de ningún registro.
+3. Diseñar y aplicar un protocolo de campo (cuestionario de entrada, tarea de clasificación con confianza, observación con pensar en voz alta, entrevista breve, ficha de salida comparativa) con consentimiento informado, anonimización y posibilidad de retiro.
+4. Analizar las diferencias, dentro de cada participante, en la clasificación de afirmaciones (hecho / interpretación / no sé), en las decisiones de aceptar-rechazar-dejar abierta una relación, y en las verbalizaciones de duda o confianza, entre ambas condiciones y entre las dos rutas de entrada (recorrido espacial/3D frente a ficha convencional).
+5. Transferir el protocolo y sus resultados —incluida la posibilidad de un resultado negativo— mediante una actividad de transferencia y un informe que distinga hallazgo de límite.
 
 ## Actividades
 
@@ -56,11 +65,11 @@ Objetivos específicos:
 
 <!-- Actividades de investigación y productos que cumplen los objetivos. -->
 
-Fase 1 — delimitación (abril-mayo de 2027): escoger un solo caso, verificar las fuentes primarias y cerrar el consentimiento, la muestra y los instrumentos.
-Fase 2 — captura y normalización (mayo-junio): registrar procedencia, claims, entidades y relaciones en SQLite; distinguir lo extraído de lo inferido.
-Fase 3 — prototipo y piloto (julio-agosto): ejecutar el workflow local, preparar la pieza visual, hacer una prueba interna y realizar sesiones de campo con participantes adultos.
-Fase 4 — análisis y curaduría (septiembre-octubre): comparar recorridos, entrevistas y decisiones; conservar resultados inciertos o negativos; ajustar textos y visualización.
-Fase 5 — transferencia y cierre (noviembre de 2027-marzo de 2028): realizar una actividad de transferencia, publicar el prototipo y protocolo sin corpus privado, editar el avance/informe final y ordenar evidencias.
+Fase 1 — delimitación (abril-mayo de 2027): confirmar el conjunto acotado de contenidos, verificar las fuentes primarias, y producir los instrumentos de campo (consentimiento, cuestionario de entrada, tarea de clasificación, guía de entrevista, ficha de salida).
+Fase 2 — implementación de las dos condiciones (mayo-junio): construir la capa de interacción que abre o cierra el acceso a fuente/tipo de aserción/rótulo `procedural-interpretation` sobre la interfaz pública existente, sin tocar el modelo de datos ni el estatus real de ningún registro.
+Fase 3 — prototipo y piloto (julio-agosto): piloto técnico de las dos condiciones y de las dos rutas de entrada, y sesiones de campo con participantes adultos (24 a 30 personas).
+Fase 4 — análisis y curaduría (septiembre-octubre): codificación cualitativa y conteos descriptivos por condición y por ruta de entrada; conservar resultados inciertos o negativos; ajustar textos y visualización.
+Fase 5 — transferencia y cierre (noviembre de 2027-marzo de 2028): realizar la actividad de transferencia, publicar el protocolo sin corpus privado, editar el avance/informe final y ordenar evidencias.
 
 ## Estudio de campo
 
@@ -68,11 +77,11 @@ Fase 5 — transferencia y cierre (noviembre de 2027-marzo de 2028): realizar un
 
 <!-- Diseño del levantamiento de datos, participantes, instrumentos y resguardos. -->
 
-El estudio de campo se centra en la temática autorizada de caracterización de públicos y consumo cultural en artes de la visualidad. Se convocará una muestra intencional de personas adultas vinculadas a prácticas de arte, diseño, mediación o investigación cultural; el número definitivo y el espacio se fijarán antes del FUP y quedan marcados [FALTA] hasta cerrar la convocatoria.
+El estudio de campo se centra en la temática autorizada de caracterización de públicos y consumo cultural en artes de la visualidad. Se convoca una muestra intencional de 24 a 30 personas adultas vinculadas a prácticas de arte, diseño, mediación o investigación cultural, por difusión en redes propias del campo y sin compra de audiencia ni de datos personales; el diseño y los instrumentos completos están en `AVANCE_DE_INVESTIGACION.md` §6.
 
-Cada participante recorrerá una versión acotada del jardín Wachuma y podrá aceptar, rechazar o dejar abierta una relación entre fuente e interpretación. La versión de campo se sirve desde el repositorio del caso, sin ubicaciones de ejemplares. Se aplicarán observación estructurada, entrevista breve de comprensión y una ficha de salida. Se registrarán sólo decisiones, tiempos aproximados, preguntas y respuestas necesarias para el análisis; no se copiarán archivos personales ni se publicarán datos identificables. La comparación entre una lectura con procedencia visible y una lectura visual sin esa capa permitirá observar qué aporta la trazabilidad.
+Cada participante recorre el mismo conjunto acotado de contenidos de Wachuma (ficha de especie real, guía de cultivo real, ficha cultural demostrativa, escena tridimensional) en dos condiciones contrabalanceadas —procedencia cerrada y procedencia abierta— y por una de dos rutas de entrada asignadas al azar —recorrido espacial/3D o ficha convencional—, pudiendo aceptar, rechazar o dejar abierta cada relación mostrada. Ninguna ubicación de ejemplar se usa ni se muestra. Se aplican cuestionario de entrada, observación estructurada con pensar en voz alta, una tarea de clasificación de afirmaciones (hecho / interpretación / no sé, con confianza 1-5) y una entrevista breve por condición, más una ficha de salida comparativa. Se registran sólo decisiones, tiempos aproximados, clasificaciones y verbalizaciones necesarias para el análisis; no se copian archivos personales ni se publican datos identificables. La comparación entre la condición abierta y la cerrada es lo que permite observar qué aporta hacer explorable la trazabilidad, y no sólo mostrarla de antemano.
 
-El protocolo incluirá consentimiento informado, retiro voluntario, anonimización, resguardo local y una devolución agregada. Las hipótesis se tratarán como hipótesis y el comportamiento del modelo como resultado simulado, nunca como evidencia del mundo botánico o de la experiencia de un público completo.
+El protocolo incluye consentimiento informado, retiro voluntario, anonimización, resguardo local y una devolución agregada. Por diseño, cada participante no es informado de antemano de qué piezas son reales y cuáles demostrativas —eso es precisamente lo que se le pide reconstruir—, y recibe una devolución completa al cierre de cada sesión; esta reserva de información acotada es una práctica establecida en investigación de interpretación y no compromete el consentimiento, que cubre con precisión qué se observa y qué no se conserva. Las hipótesis se tratan como hipótesis y el comportamiento del modelo como resultado simulado, nunca como evidencia del mundo botánico o de la experiencia de un público completo.
 
 ## Avance de Investigación
 
@@ -80,18 +89,19 @@ El protocolo incluirá consentimiento informado, retiro voluntario, anonimizaci�
 
 <!-- Problema, objeto de estudio, preguntas o hipótesis, metodología, marco teórico, estado del arte y referencias; el anexo oficial pide 15 páginas tamaño carta. -->
 
-Problema: las piezas generativas y las visualizaciones de relaciones pueden producir una lectura convincente sin dejar claro qué proviene de una fuente, qué es inferencia y qué decidió la curaduría. Esa opacidad vuelve difícil evaluar la experiencia de un público y puede convertir una metáfora en una falsa instrucción.
+**El Avance de Investigación completo (15 páginas, Arial 12) ya está redactado y maquetado**: `FONDART_2027_INVESTIGACION_WACHUMA_ANEXOS/AVANCE_DE_INVESTIGACION.md` (editable) y su PDF correspondiente. Este campo resume su contenido para mantener la coherencia del expediente; el documento oficial es el que se adjunta al FUP.
 
-Objeto de estudio: las formas de comprensión y desacuerdo que aparecen cuando públicos adultos recorren el jardín digital Wachuma con procedencia, incertidumbre y punto de quiebre explícitos. El caso está fijado de antemano y no se elige durante la ejecución: eso permite que el estudio empiece por el instrumento y no por construir el estímulo.
+Problema: una pieza digital que representa conocimiento puede resultar convincente sin que quien la recorre sepa qué proviene de una fuente verificable, qué es una interpretación editorial y qué es un marcador de trabajo en curso. Esa opacidad es un problema de conocimiento público, no un defecto menor de diseño.
 
-Pregunta: ¿cómo interpretan públicos de artes visuales una pieza de jardín visual cuando cada relación muestra su fuente, nivel de certeza y límite, y qué decisiones de interfaz favorecen una lectura crítica?
-Hipótesis de trabajo: hacer visible la procedencia y la diferencia entre evidencia e interpretación aumentará las preguntas y los rechazos informados, pero puede ralentizar el recorrido; el estudio de campo medirá esa tensión sin asumir de antemano un resultado positivo.
+Objeto de estudio: la relación entre un público de artes visuales y una pieza de conocimiento biocultural cuya procedencia y estatuto epistémico pueden o no ponerse a la vista. El caso —Wachuma, *Echinopsis pachanoi*— está fijado de antemano y no se elige durante la ejecución.
 
-Metodología: seleccionar un caso acotado; capturar fuentes; extraer y normalizar claims; relacionar y contextualizar; construir una interpretación visual; probarla con participantes; comparar observación, entrevistas y decisiones; validar límites; curar y transferir. El workflow `tools/interpretive_garden_workflow.py` implementa la cadena de procedencia local, y el repositorio del caso la tiene en producción sobre PostgreSQL/PostGIS con revisión humana registrada. La investigación añade lo que hoy no existe: el contenido curado, el protocolo de campo y su análisis.
+Pregunta: ¿cambia la forma en que un público adulto de artes visuales distingue un hecho documentado de una interpretación cuando puede descubrir activamente la procedencia y el estatuto epistémico de lo que observa, frente a la misma pieza sin ese acceso? ¿Y en qué medida, sin ese acceso, la verosimilitud de una escena tridimensional (`procedural-interpretation`) hace que se lea como un hecho? La pregunta secundaria —qué aporta recorrer un organismo digital frente a leer una ficha convencional— queda como dimensión de observación (ruta de entrada), no como hipótesis central.
 
-Marco teórico y estado del arte: el proyecto trabaja desde prácticas de archivo, visualización de relaciones, investigación basada en arte y mediación crítica. La bibliografía específica y el corpus final deben cerrarse con fuentes verificadas [FALTA]; el informe local `research/jardines_interpretativos/JARDINES_INTERPRETATIVOS_RESEARCH.md` registra el modelo de datos, la separación entre evidencia, inferencia, metáfora y curaduría, y las restricciones de publicación.
+Hipótesis de trabajo: H1, hacer explorable la procedencia y el estatuto epistémico aumenta la proporción de clasificaciones correctas y el número de dudas informadas, respecto de la misma pieza sin esa capa. H2, sin acceso a la procedencia, la escena tridimensional tiende a clasificarse como hecho con mayor frecuencia y confianza que cuando el rótulo `procedural-interpretation` es visible. El Avance especifica, en su §2, qué tres resultados obligarían a revisar ambas hipótesis.
 
-El documento final se maquetará como el Avance de Investigación de 15 páginas tamaño carta exigido por el Anexo N° 2; este campo contiene su estructura y no pretende hacer pasar una nota de trabajo por el anexo final.
+Metodología: estudio de campo intra-sujeto (dos condiciones: procedencia cerrada / procedencia abierta, orden contrabalanceado) con una dimensión de observación entre-sujeto (ruta espacial/3D frente a ficha convencional), sobre un corpus real y demostrativo ya existente —no construido para la ocasión—: ficha de especie real, guía de cultivo real, ficha cultural `demo`, escena tridimensional `restricted`. Instrumentos: cuestionario de entrada, observación con pensar en voz alta, tarea de clasificación con confianza, registro de decisiones de lectura, entrevista breve y ficha de salida comparativa. El detalle completo —participantes, procedimiento por sesión, consideración ética sobre la reserva de información, y plan de análisis— está en el Avance, §6.
+
+Marco teórico y estado del arte: el proyecto articula seis líneas —el estándar de procedencia PROV-O (W3C, 2013); la Carta de Londres y su noción de *paradata* para reconstrucciones interpretativas (Denard, 2009); el heurístico de realismo en credibilidad de medios (Sundar, 2008) y el efecto de detalles seductores (Sundararajan & Adesope, 2020) como mecanismo cognitivo de riesgo; el modelo contextual de aprendizaje en museos (Falk & Dierking, 2013); *Data Feminism* (D'Ignazio & Klein, 2020) como argumento normativo; y la Encuesta Nacional de Participación Cultural (2018) como campo de públicos al que este estudio se suma sin duplicarlo—. El aspecto novedoso, desarrollado con su análisis bibliográfico completo en el Avance §5, es poner a prueba con público real, en un sistema de producción y no en una maqueta, si una arquitectura de datos que ya separa evidencia de interpretación cambia la lectura de un público cuando esa separación se hace explorable.
 
 ## Fuentes y trazabilidad
 
@@ -115,11 +125,11 @@ El corpus del caso ya está constituido y es consultable. Medido el 7 de septiem
 | `growing_guide_claims` | 12 | afirmaciones de guía de cultivo |
 | `taxa` / `specimens` | 7 / 7 | taxones y ejemplares |
 
-El repositorio del caso es `github.com/ligereza/WACHUMA`, con 83 commits, esquemas de contenido vinculantes e importadores versionados.
+El repositorio del caso es `github.com/ligereza/WACHUMA`, con 83 commits, esquemas de contenido vinculantes e importadores versionados. El rótulo `procedural-interpretation` —que distingue una representación 3D generada de una reconstrucción evidencial— está declarado a nivel de esquema en cuatro archivos distintos del sistema (`garden-scene`, `material-fixture`, `plant-descriptor`, `scroll-experience`), verificado el 7 de septiembre de 2026.
 
-Lo que **no** puede afirmarse todavía, y el proyecto lo trata como trabajo por hacer y no como logro: de las cinco piezas de contenido publicable, sólo `content/species/echinopsis-pachanoi.json` es material real; la ficha cultural, la escena y una de las dos guías de cultivo están marcadas `demo`, y el registro del jardín es un `example`. Curar y revisar ese contenido es el objetivo específico 1, no un supuesto de partida.
+Lo que **no** puede afirmarse todavía, y el proyecto lo trata como trabajo por hacer y no como logro: de las piezas de contenido público usadas en el estudio, sólo `content/species/echinopsis-pachanoi.json` es material real y revisado; la ficha cultural (`content/cultures/echinopsis-pachanoi-demo.json`) y la escena tridimensional (`content/scenes/echinopsis-pachanoi-demo.json`) están marcadas `demo`/`restricted` en su propio esquema, y la guía de cultivo general (`content/cultivation-guides/echinopsis-pachanoi-general-cacti-v1.json`) es real pero de alcance institucional genérico, no un protocolo de campo propio. Esa condición mixta es corpus del estudio, no una brecha a resolver antes de empezar: el objetivo específico 1 la delimita, no la disuelve.
 
-Cada fuente nueva tendrá URL o ruta, fecha, hash, tipo, cita y estado, según el esquema que el repositorio ya hace vinculante. Las relaciones llevarán base y confianza; una analogía no se presentará como hecho. La bibliografía secundaria del Avance queda [FALTA] hasta cerrar la revisión disciplinar.
+Cada fuente nueva tendrá URL o ruta, fecha, hash, tipo, cita y estado, según el esquema que el repositorio ya hace vinculante. Las relaciones llevarán base y confianza; una analogía no se presentará como hecho. La bibliografía teórica completa —ocho referencias, cada una con la función que cumple en el argumento— está en `AVANCE_DE_INVESTIGACION.md` §8.
 
 ## Metodología
 
@@ -127,11 +137,9 @@ Cada fuente nueva tendrá URL o ruta, fecha, hash, tipo, cita y estado, según e
 
 <!-- Cadena de investigación, análisis y validación; separar dato, inferencia y decisión artística. -->
 
-La cadena será `discover -> capture -> extract -> normalize -> relate -> contextualize -> interpret -> simulate -> validate -> curate -> publish -> audit`. En cada paso se conservará la procedencia.
+El diseño intra-sujeto compara, para cada participante, la condición de procedencia cerrada con la condición abierta (orden contrabalanceado), y registra además la ruta de entrada asignada (espacial/3D o ficha convencional) como covariable descriptiva. El componente de campo tiene tres capas: (1) recorrido de la pieza bajo cada condición, con observación y pensar en voz alta; (2) tarea de clasificación de afirmaciones (hecho / interpretación / no sé, con confianza) y entrevista breve por condición; (3) ficha de salida comparativa entre ambas condiciones. El análisis combina codificación cualitativa de verbalizaciones y entrevistas con conteos descriptivos de la tarea de clasificación y de las decisiones de lectura, comparados dentro de cada participante; no se aplican pruebas de significancia estadística formal ni se generaliza una muestra intencional acotada a todos los públicos de artes visuales.
 
-El componente de campo tendrá tres capas: (1) recorrido de la pieza con procedencia visible; (2) observación y entrevista breve sobre comprensión, duda y contexto; (3) comparación agregada entre decisiones y fuentes. El análisis combinará codificación cualitativa de respuestas y conteos descriptivos de recorridos, sin generalizar una muestra acotada a todos los públicos.
-
-La pieza visual y el simulador son modelos interpretativos. No prueban crecimiento, eficacia, salud, cultivo ni equivalencia entre dominios. El piloto podrá producir un resultado negativo: si la capa de trazabilidad no mejora la comprensión, esa constatación será parte del informe. Las decisiones de curaduría quedarán separadas de la extracción automática y el corpus privado permanecerá fuera de la publicación.
+La escena tridimensional y sus interpretaciones son modelos interpretativos declarados como tales por el propio sistema (`procedural-interpretation`). El estudio no prueba crecimiento, eficacia, salud, cultivo ni equivalencia entre dominios. El piloto puede producir un resultado negativo —que la procedencia explorable no cambie la clasificación, o que la cambie para peor por sobrecarga informativa—, y esa constatación será parte del informe, no un resultado a evitar. Las decisiones de curaduría quedan separadas de la extracción automática y el corpus privado (incluidas las ubicaciones de ejemplares) permanece fuera de la publicación.
 
 ## Cronograma
 
@@ -172,7 +180,7 @@ Esta decisión mantiene la postulación comprobable sin inventar colaboradores. 
 
 La evidencia técnica local muestra implementación y mantenimiento del repositorio del caso, `github.com/ligereza/WACHUMA`, con 83 commits, base PostgreSQL/PostGIS, importadores, esquemas de contenido vinculantes y un modelo de procedencia con revisión humana registrada; además de `tools/interpretive_garden_workflow.py`, el registro SQLite de procedencia y la ruta `/research-garden/` del hub. El/la responsable ha trabajado con diseño de datos, trazabilidad, curaduría de relaciones, documentación y separación entre evidencia e interpretación en MAK.
 
-El nombre legal, CV, RUT, Perfil Cultura, enlaces públicos vigentes y antecedentes que acrediten la experiencia artística y de investigación deben ser completados y firmados por quien postula [FALTA]. Esta sección no atribuye premios, publicaciones ni selecciones que no estén documentadas.
+Responsable: [FALTA] nombre legal y RUT — el titular los completa directamente en el FUP. Faltan por completar: Perfil Cultura vigente (el trámite está iniciado; quedan documentos pendientes de enviar en la plataforma), domicilio y región acreditables, CV firmado y enlaces públicos vigentes que acrediten la experiencia artística y de investigación [FALTA]. Esta sección no atribuye premios, publicaciones ni selecciones que no estén documentadas.
 
 ## Presupuesto
 
@@ -232,19 +240,25 @@ Riesgos pendientes [FALTA]: cerrar la bibliografía secundaria, revisar derechos
 
 > Los documentos del Anexo N° 2 son indispensables para la postulación o la evaluación según corresponda; las formalidades exigidas deben verificarse en el FUP y en el anexo oficial vigente.
 
-- [declarado / pendiente] Avance de Investigación (15 páginas tamaño carta):
-  [FALTA] maquetar y revisar el anexo oficial.
-- [declarado / pendiente] Plan de Actividad de transferencia: [FALTA] convertir
-  este plan al formato del Anexo N° 2 y confirmar actividad y beneficiarios.
+- [declarado] Avance de Investigación (15 páginas tamaño carta, Arial 12):
+  redactado y maquetado en `FONDART_2027_INVESTIGACION_WACHUMA_ANEXOS/AVANCE_DE_INVESTIGACION.{md,pdf}`.
+  Pendiente sólo la revisión humana final antes de adjuntar al FUP.
+- [declarado] Plan de Actividad de transferencia: redactado y maquetado en
+  `FONDART_2027_INVESTIGACION_WACHUMA_ANEXOS/PLAN_ACTIVIDAD_TRANSFERENCIA.{md,pdf}`,
+  con actividad, público, metodología y resultados esperados confirmados.
+  Pendiente sólo la revisión humana final.
 
 ## Aporte del operador antes del envío
 
-- [FALTA] Nombre legal, RUT, domicilio, Perfil Cultura y acreditación del responsable.
+- Nombre legal y RUT: [FALTA] — el responsable debe completarlos directamente
+  en el FUP; este expediente no los retiene por escrito.
+  [FALTA] domicilio/región acreditables y completar el trámite de Perfil Cultura
+  (documentos pendientes de enviar en la plataforma).
 - Caso único y corpus primario: **cerrados**. El caso es Wachuma
   (*Echinopsis pachanoi*) y su corpus es la base medida en «Fuentes y
   trazabilidad».
-- [FALTA] Bibliografía secundaria, muestra, lugar/modalidad de campo y número
-  final de sesiones.
+- Bibliografía teórica, muestra (24-30 personas), diseño metodológico completo
+  y número de sesiones: **cerrados**, en el Avance de Investigación §6-8.
 - [FALTA] Cotizaciones o valores verificables y revisión laboral, tributaria y de
   derechos de terceros.
 - [FALTA] Confirmación de la autorización ministerial de difusión y verificación
