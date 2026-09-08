@@ -1,0 +1,72 @@
+{
+  "schema": "codex-error-response-audit-v1",
+  "audited_at": "2026-09-05T19:42:00-04:00",
+  "scope": "errores, excepciones y respuestas upstream visibles desde el Hub",
+  "method": "Inspección estática read-only de handlers y proxy; no se provocaron fallos ni se modificaron datos.",
+  "evidence": [
+    {
+      "path": "MAK/cultura/mak_plataforma/hub.py",
+      "lines": "5225-5233",
+      "finding": "HTTPError del upstream reenvía hasta 2 MB de body y su Content-Type directamente al cliente; no hay redacción, schema de error ni límite pequeño específico."
+    },
+    {
+      "path": "MAK/cultura/mak_plataforma/hub.py",
+      "lines": "4935-4936,5260-5282,5602-5641",
+      "finding": "Varios handlers incluyen str(exception) en detail/error; el texto queda controlado solo por truncamiento de 120-200 caracteres, no por una clasificación de información sensible."
+    },
+    {
+      "path": "MAK/cultura/mak_plataforma/hub.py",
+      "lines": "1554-1569",
+      "finding": "_answer normaliza el status HTTP a partir de ok/error, pero no añade correlation ID ni un schema de error estable."
+    },
+    {
+      "path": "MAK/cultura/mak_plataforma/hub.py",
+      "lines": "5177-5195",
+      "finding": "El serializador común no declara request ID, fecha, código de error ni política de cache diferenciada para respuestas de error."
+    }
+  ],
+  "findings": [
+    {
+      "id": "upstream-body-disclosure",
+      "severity": "high_if_exposed",
+      "statement": "El proxy puede transmitir al consumidor una respuesta de error upstream completa, que podría contener stack trace, rutas, configuración o datos internos."
+    },
+    {
+      "id": "exception-text-disclosure",
+      "severity": "medium",
+      "statement": "Truncar str(exception) reduce volumen pero no garantiza que desaparezcan rutas locales, nombres de servicios o identificadores sensibles."
+    },
+    {
+      "id": "unstable-error-contract",
+      "severity": "medium",
+      "statement": "El consumidor recibe formas distintas: error, detail, available, items vacíos o texto plano; esto complica monitoreo, retry seguro y clasificación entre error de usuario y fallo interno."
+    },
+    {
+      "id": "positive-status-normalization",
+      "severity": "informational",
+      "statement": "_answer y varios handlers ya corrigen parte del problema al devolver códigos no-2xx para payloads ok=false; falta completar el contrato de cuerpo y correlación."
+    }
+  ],
+  "recommended_contract": {
+    "schema": "mak-error-v1",
+    "fields": ["ok", "error_code", "message_safe", "request_id", "operation_id", "retryable", "details_safe"],
+    "rules": [
+      "no reenviar bodies upstream sin normalización y redacción",
+      "log interno separado, con acceso restringido y sin payload; al cliente solo error_code y message_safe",
+      "no incluir str(exception) en respuestas públicas; conservar tipo/clase interna solo en log seguro",
+      "distinguir 4xx caller_error, 401/403 auth, 404 missing, 409 conflict, 413 limit, 429 rate_limit y 5xx dependency/internal",
+      "agregar request_id a respuesta y a métricas/receipt sin usarlo como secreto"
+    ]
+  },
+  "recommended_tests": [
+    "upstream 500 con body grande o stack trace: respuesta normalizada, truncada y sin body original",
+    "excepción con ruta local: cliente recibe message_safe sin ruta; log restringido conserva solo clase/redacted",
+    "cada handler falla con schema mak-error-v1 y status coherente",
+    "retryable true solo en errores transitorios y nunca reintenta una mutación sin idempotency_key"
+  ],
+  "limitations": [
+    "No se indujeron excepciones ni se capturaron bodies de error reales.",
+    "La severidad alta depende de una frontera accesible; el Hub actual sigue en loopback.",
+    "No se aplicaron cambios ni se detuvieron procesos."
+  ]
+}

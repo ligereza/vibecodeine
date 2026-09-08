@@ -29,7 +29,7 @@ def _skip(d: str) -> bool:
     return d in _SKIP_DIRS or d.startswith(".") or d.startswith("_")
 # carpetas que son SALIDA generada (no tocar / no explorar a mano)
 _GENERADAS = {"jobs", "projects", "datadrops", "context/*.html"}
-_KEY_NAMES = {"README.md", "SKILL.md", "pyproject.toml", "cli.py", "CLAUDE.md"}
+_KEY_NAMES = {"README.md", "SKILL.md", "pyproject.toml", "cli.py", "AGENTS.md"}
 _MAXDEPTH = 3
 
 
@@ -89,19 +89,19 @@ _TASK_ROUTES = [
     (("web", "hub", "react", "vite", "visualizer", "studio", "svg studio"),
      ["web/src/components/", "web/src/App.tsx", "context/flujo_hub.html (generado)"]),
     (("cli", "comando", "command", "typer"),
-     ["src/flujo/cli.py", "docs/CLI.md"]),
+     ["flujo/src/flujo/cli.py", "flujo/docs/CLI.md"]),
     (("flyer", "suplemento", "dark", "vectoriz", "logo", "pieza", "brief", "packs", "svg"),
      [".claude/skills/entregas-rd/", ".claude/skills/taller-svg-rd/SKILL.md",
       "assets/logo/", "svg/suplementos_rd/ (derivar: muchos SVG)"]),
-    (("voz", "gemini", "agente", "handoff", "contexto"),
-     ["CLAUDE.md (seccion 'Equipo multi-agente')", "context/LAST_HANDOFF.md"]),
+    (("voz", "agente", "handoff", "contexto"),
+     ["DECISIONES.md"]),
     (("resolume", "chataigne", "noisette"),
-     ["src/flujo/resolume/automator.py",
-      "BLOQUEADOR: sin .noisette real; no adivinar el schema (ver LAST_HANDOFF)"]),
+     ["flujo/src/flujo/resolume/automator.py",
+      "BLOQUEADOR: sin .noisette real; no adivinar el schema"]),
     (("airdrop", "entrega", "release"),
-     ["docs/AGENT_AIRDROP_PROTOCOL.md", "scripts/validate_airdrop.py"]),
+     ["scripts/validate_airdrop.py"]),
     (("test", "pytest"),
-     ["tests/", "CLAUDE.md (seccion 'Verificacion minima')"]),
+     ["tests/", "context/test_lane_map.json"]),
 ]
 
 
@@ -109,7 +109,10 @@ def _task(keywords: str):
     kw = keywords.lower()
     print(f"# CONTEXTO PARA LA TAREA: {keywords}\n")
     print("== LEER PRIMERO (fuente de verdad, barato) ==")
-    for r in ("CLAUDE.md", "context/LAST_HANDOFF.md"):
+    # AGENTS.md se retiro el 2026-09-05 por orden del operador y no se
+    # reemplazo. Las decisiones estan en DECISIONES.md; los hechos se piden a
+    # tools/mak_status.py, no a un documento.
+    for r in ("DECISIONES.md",):
         print(f"  {r}")
     hits = [routes for keys, routes in _TASK_ROUTES if any(k in kw for k in keys)]
     print("\n== RUTAS RELEVANTES A LA TAREA ==")

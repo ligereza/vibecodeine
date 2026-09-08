@@ -1,0 +1,79 @@
+name: CI MAK
+permissions:
+  contents: read
+# MAK is the Linux box surface. main and historia are historical and are not
+# deployment targets, so no branch here triggers on them.
+on:
+  push:
+    branches: [MAK]
+  pull_request:
+    branches: [MAK]
+jobs:
+  mak:
+    name: gate + mak lane
+    runs-on: ubuntu-latest
+    env:
+      PYTHONIOENCODING: utf-8
+      PYTHONUTF8: "1"
+    steps:
+      # The canonical layout is materialized on purpose: MAK at the workspace
+      # root and FLUJO at ./flujo, exactly as on the box. Three lane=mak tests
+      # import consumed contracts (flujo.knowledge.learning_policy,
+      # flujo.substrate.xmp, flujo.knowledge.lane_registry), so MAK is not
+      # self-contained by design -- it consumes the motor from flujo/src.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: FLUJO
+          path: flujo
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - name: Install the MAK profile
+        run: python -m pip install -r requirements-mak.txt
+      - name: pip check
+        run: python -m pip check
+      # `tools/release_gate.py` is NOT a CI step and was removed from here on
+      # 2026-09-02, the first time these per-lane workflows ever ran. It is a
+      # box-local pre-push instrument: it resolves /home/mak and /home/mak/flujo
+      # as physical checkouts on their branches, and it exits 5 even with zero
+      # blockers because READY_TO_PUSH requires evidence that the lane suites
+      # ran green. In CI the suite IS the verdict, so the gate is both
+      # redundant and structurally unable to pass. Run it locally before a push.
+      - name: MAK lane
+        env:
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/flujo/src
+        run: python -m pytest -o addopts='' -q -m mak
+      # The hygiene lane ran in NO job until 2026-09-02. The separation created
+      # it and CI got one job per operational lane, so the 14 files that guard
+      # the registry, the docs, the language rule and the CI contract itself
+      # were left ungated -- which is why four of them sat red unnoticed. The
+      # ratchets that catch documentation lying were the ones with no gate.
+      - name: repo hygiene lane
+        env:
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/flujo/src
+        run: python -m pytest -o addopts='' -q -m repo_hygiene
+      # The `review` lane had no job either, for the same reason the hygiene
+      # lane had none: one job was created per *operational* lane, and `review`
+      # reads like a holding pen rather than a lane. It is not. A test file the
+      # generated contract does not know is routed there, so `review` is where
+      # every test written since the contract was last reconciled lives --
+      # measured 2026-09-04: 891 cases across 16 files, none of them running in
+      # any job, and none in the operator's default `-m mak` either. Tests that
+      # run nowhere are the shape of problem this file already records once.
+      #
+      # The lane is green standalone in 82 s. Its files use tmp_path or pure
+      # functions; the two that mention /home/mak call name-only checks that
+      # touch no filesystem, which their own landmine tests assert.
+      #
+      # This job is a gate on the debt, not a home for it. When the lane
+      # contract is reconciled these files move to their real lanes and the
+      # job goes quiet on its own.
+      - name: review lane
+        env:
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/flujo/src
+        run: python -m pytest -o addopts='' -q -m review

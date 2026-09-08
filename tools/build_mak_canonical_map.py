@@ -225,7 +225,7 @@ def main() -> int:
         "runtime_policy": "hidden user/runtime roots are recorded at root only to avoid treating caches, credentials or application state as project material",
         "top_level_entries": top_level,
         "measurement_commands": [
-            "python3 /home/mak/flujo/tools/build_mak_canonical_map.py",
+            "python3 /home/mak/tools/build_mak_canonical_map.py",
             "python3 -m json.tool /home/mak/indexes/mak-canonical-20260829/mak-canonical-map.json",
         ],
         "summary": {

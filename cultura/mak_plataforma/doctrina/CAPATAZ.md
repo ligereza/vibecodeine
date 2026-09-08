@@ -103,8 +103,8 @@ paso: saca trabajo del backlog o mejora del repo, hace el cambio en rama, corre 
 verificacion, abre PR. El gate (CI dual-OS + branch protection) impide que rompa
 main. Si falla, manda un sub-agente a arreglarlo (self-repair) y reintenta. El
 capataz nunca acepta un ciclo que termina en "todo verde sin PR nuevo" mientras haya
-backlog. Ver `context/DOCTRINA_CLAUDE.md` para el metodo; este archivo es la presion
-que lo mantiene andando.
+backlog. Este archivo conserva la presión operativa del capataz; la documentación
+retirada no forma parte del runtime.
 
 *Lo que falta para prender esto del todo esta en el mapeo del box (harness
 agentico + wiring cron). Este doc es la mitad "usuario" del loop; la mitad

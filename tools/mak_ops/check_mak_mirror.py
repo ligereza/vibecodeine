@@ -94,12 +94,12 @@ def remote_hashes() -> tuple[dict[str, str], int, str]:
     paths = []
     for component, names in FILES.items():
         for name in names:
-            paths += [f"/home/mak/flujo/cultura/{component}/{name}",
+            paths += [f"/home/mak/cultura/{component}/{name}",
                       f"/home/mak/{LIVE_DIRS[component]}/{name}"]
     paths.extend(UNIT_FILES.values())
-    paths.extend(f"/home/mak/flujo/cultura/mak_conductor/{name}"
+    paths.extend(f"/home/mak/cultura/mak_conductor/{name}"
                  for name in CONDUCTOR_FILES)
-    paths.extend(f"/home/mak/flujo/tools/mak_ops/{name}"
+    paths.extend(f"/home/mak/tools/mak_ops/{name}"
                  for name in CONDUCTOR_TOOL_FILES)
     try:
         r = subprocess.run(["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=8", HOST, "sha256sum", *paths],
@@ -194,7 +194,7 @@ def main() -> int:
     for component, names in FILES.items():
         for name in names:
             win = sha(ROOT / "cultura" / component / name)
-            repo = remote.get(f"/home/mak/flujo/cultura/{component}/{name}", "MISSING")
+            repo = remote.get(f"/home/mak/cultura/{component}/{name}", "MISSING")
             live = remote.get(f"/home/mak/{LIVE_DIRS[component]}/{name}", "MISSING")
             state = "PASS" if win == repo == live and win != "MISSING" else "MISMATCH"
             rows.append((f"{component}/{name}", state, win[:12], repo[:12], live[:12]))
@@ -206,7 +206,7 @@ def main() -> int:
                      win[:12], "(not mirrored)", live[:12]))
     for name in CONDUCTOR_FILES:
         local_path = ROOT / "cultura" / "mak_conductor" / name
-        remote_path = f"/home/mak/flujo/cultura/mak_conductor/{name}"
+        remote_path = f"/home/mak/cultura/mak_conductor/{name}"
         win = sha(local_path)
         repo = remote.get(remote_path, "MISSING")
         state = "PASS" if win == repo and win != "MISSING" else "MISMATCH"
@@ -214,7 +214,7 @@ def main() -> int:
                      win[:12], repo[:12], "(repo package)"))
     for name in CONDUCTOR_TOOL_FILES:
         local_path = ROOT / "tools" / "mak_ops" / name
-        remote_path = f"/home/mak/flujo/tools/mak_ops/{name}"
+        remote_path = f"/home/mak/tools/mak_ops/{name}"
         win = sha(local_path)
         repo = remote.get(remote_path, "MISSING")
         state = "PASS" if win == repo and win != "MISSING" else "MISMATCH"

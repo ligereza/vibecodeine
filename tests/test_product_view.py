@@ -25,7 +25,7 @@ from flujo.knowledge.product_view import (
 
 
 def _products() -> tuple[dict, dict, dict]:
-    from test_product_plan import _chain
+    from product_chain_fixtures import _chain
 
     opportunity, practice, fit, programs, possibility, frontier, evidence_return = _chain()
     plan = compile_product_plan(opportunity, practice, fit, programs, possibility, frontier, evidence_return)
@@ -35,8 +35,8 @@ def _products() -> tuple[dict, dict, dict]:
 
 
 def _products_with_technical_context() -> tuple[dict, dict, dict]:
-    from test_portfolio_dossier import _technical_context
-    from test_product_plan import _chain
+    from product_chain_fixtures import _technical_context
+    from product_chain_fixtures import _chain
 
     opportunity, practice, fit, programs, possibility, frontier, evidence_return = _chain()
     plan = compile_product_plan(
@@ -48,6 +48,13 @@ def _products_with_technical_context() -> tuple[dict, dict, dict]:
     dossier = compile_portfolio_dossier(plan, practice, context)
     package = compile_application_research_package(plan, opportunity)
     return plan, dossier, package
+
+
+def _real_archive_path() -> Path:
+    path = Path(__file__).parents[1] / "iskvw" / "datos" / "archivo.json"
+    if not path.is_file():
+        pytest.skip("requires the generated physical iskvw archive")
+    return path
 
 
 def test_view_is_traceable_and_fail_closed() -> None:
@@ -257,7 +264,7 @@ def test_archive_view_rejects_private_media_and_foreign_links() -> None:
 
 
 def test_real_archive_view_preserves_source_counts() -> None:
-    archive_path = Path(__file__).parents[1] / "iskvw" / "datos" / "archivo.json"
+    archive_path = _real_archive_path()
     archive = json.loads(archive_path.read_text(encoding="utf-8"))
     view = project_archive_portfolio_view(archive, max_items_per_format=2)
     assert validate_archive_portfolio_view(view) is True
@@ -272,6 +279,7 @@ def test_real_archive_view_preserves_source_counts() -> None:
 
 
 def test_cli_archive_mode_uses_existing_general_source(tmp_path: Path) -> None:
+    _real_archive_path()
     output_path = tmp_path / "archive-view.json"
     command = [
         sys.executable, "tools/render_product_view.py",

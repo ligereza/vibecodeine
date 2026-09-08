@@ -50,7 +50,7 @@ el otro sigue como si nada.
   registro, nada más. Ningún clip, luz ni timecode pasa por él.
 
 Esto describe DREF CHOCOLATE, no todo XIO. El plugin `showcontrol` puede ser
-activo en otro despliegue; revisa `xio/XIO_CAPABILITIES.md` y no lo habilites sin
+activo en otro despliegue; revisa `../CAPACIDADES_MAK.md` y no lo habilites sin
 token, prueba de ruta y autorizacion del show.
 
 ### LAPTOP — ACTIVO (el show en sí)

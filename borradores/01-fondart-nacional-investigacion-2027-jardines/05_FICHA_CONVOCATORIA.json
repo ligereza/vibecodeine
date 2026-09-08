@@ -1,0 +1,8 @@
+{
+  "source_file": "../../../data/fondart_nacional_investigacion_2027.json",
+  "copied_from": "data/fondart_nacional_investigacion_2027.json",
+  "purpose": "Referencia estructurada de la convocatoria; la fecha de cierre requiere reconfirmación en el portal oficial.",
+  "base_pdf": "01_BASE_ORIGINAL_FONDART_NACIONAL_INVESTIGACION_2027.pdf",
+  "base_sha256": "9da0ab5f0850fdad354415448829fd88fa1e61beee5fd048c90a4a5b4c418af2",
+  "portal": "https://www.fondosdecultura.cl/fondos/fondart-nacional/lineas-de-concurso/investigacion-fondart-nacional-2027/"
+}

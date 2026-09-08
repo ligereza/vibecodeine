@@ -270,7 +270,7 @@ y 0 posiciones).
 ## thi.ng: qué usa, qué no, y por qué
 
 El estado real —con las candidatas y sus prioridades— está en la sección 6 de
-[`CAPACIDADES.md`](../../CAPACIDADES.md), que es el índice que un agente lee
+[`CAPACIDADES_MAK.md`](../../CAPACIDADES_MAK.md), que es el índice que un agente lee
 *antes* de escribir un generador desde cero. Lo específico de este motor:
 
 - **`@thi.ng/hiccup` + `@thi.ng/hiccup-svg` — en uso** en el compilador de

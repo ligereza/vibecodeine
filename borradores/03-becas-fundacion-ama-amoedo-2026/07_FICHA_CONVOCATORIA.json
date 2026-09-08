@@ -1,0 +1,38 @@
+{
+  "source_file": "../../../data/ama_amoedo_becas_2026.json",
+  "copied_from": "data/ama_amoedo_becas_2026.json",
+  "purpose": "Referencia estructurada de la convocatoria, actualizada contra el PDF 2026 recuperado y verificado.",
+  "base_pdf": "01_BASE_ORIGINAL_AMA_AMOEDO_2026.pdf",
+  "base_pdf_status": "recovered_from_public_bases_link",
+  "base_pdf_source": "https://drive.google.com/file/d/1uSJGbuSd5EonyNgt1Jx2Pgr9glbR0iCI/view?usp=drive_link",
+  "base_pdf_sha256": "f170821183f299bace4b502d83d12efe113f81034701325de11a925de166f501",
+  "portal": "https://www.fundacionamaamoedo.org/programas/becas",
+  "public_text_copy": "https://es.scribd.com/document/1079178273/ESP-Bases-y-Condiciones-Becas-Fundacion-Ama-Amoedo-2026-Docx-1",
+  "deadline": "2026-09-09T23:59:00-03:00",
+  "amount_usd": 10000,
+  "artists_grants": 4,
+  "categories": ["Artistas", "Arte y Compromiso Social", "Organizaciones", "Publicaciones"],
+  "criteria": [
+    "Correlación con los objetivos de la categoría.",
+    "Aporte al desarrollo artístico.",
+    "Factibilidad de realización.",
+    "No atentar contra los derechos humanos ni presentar sesgos discriminatorios."
+  ],
+  "mandatory_documents": [
+    "Documento de identidad o pasaporte del titular.",
+    "Descripción del proyecto, objetivos, plan de implementación y justificación.",
+    "Explicación de destino de fondos y presupuesto desglosado en Excel o PDF.",
+    "CV con formación y proyectos.",
+    "Portfolio artístico para la categoría Artistas.",
+    "Anexo de proyecto opcional: bocetos, referencias, documentación o carta asociada.",
+    "Certificación notarial o inscripción legal de la entidad, solo si corresponde; requisito no excluyente."
+  ],
+  "restrictions": [
+    "Conexión significativa con América Latina.",
+    "Una sola categoría y un único titular/responsable.",
+    "No fines comerciales, deudas, gastos legales personales ni eventos de recaudación.",
+    "No apoyo previo de la Fundación en los 12 meses anteriores ni conflictos incompatibles.",
+    "No organismos o instituciones estatales."
+  ],
+  "verification_note": "El PDF local tiene 4 páginas A4 y el hash declarado arriba. La URL oficial antigua del PDF devuelve 404; se conserva como incidencia y la ruta pública de bases queda registrada en la investigación web. Revisar el formulario online antes de enviar por si exige campos, pesos o calendario adicionales."
+}

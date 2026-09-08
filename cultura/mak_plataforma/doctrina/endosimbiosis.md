@@ -64,7 +64,8 @@ La `junta.py` diaria es la conciencia: lee su propio estado (salud, backlog, tas
 exito) y toma POSTURA -- no "todo verde", sino que decide con las herramientas que
 tiene. El organismo no solo procesa datos: se observa y actua sobre si mismo. Eso es
 lo que separa un pipeline de un organismo. Ver `context/CAPATAZ.md` (el peso diario de
-su mente) y `context/DOCTRINA_CLAUDE.md` (sus politicas).
+su mente); las políticas anteriores fueron retiradas y no forman parte del
+runtime.
 
 *Este lente crece: cuando MAK investigue mas biologia de sistemas, sumar el hallazgo
 aca -- el trinquete aplicado a la propia metafora.*

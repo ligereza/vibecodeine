@@ -201,6 +201,17 @@ class TestLiveTelemetry:
         # graceful degradation: at worst the fallback void asset exists
         assert state.active_assets or state.decaying_assets
 
+    def test_build_finds_motor_in_the_sibling_flujo_checkout(self, tmp_path):
+        import tapiz_telemetry as tt
+        init = tmp_path / "flujo" / "src" / "flujo" / "__init__.py"
+        init.parent.mkdir(parents=True)
+        init.write_text("# sibling motor\n", encoding="utf-8")
+
+        state = tt.build_live_ecosystem(tmp_path)
+
+        assert "TAP-001" in state.active_assets
+        assert "flujo/src/flujo/__init__.py" in state.active_assets["TAP-001"].content
+
     def test_build_on_real_repo_has_assets_and_vitals(self):
         import tapiz_telemetry as tt
         state = tt.build_live_ecosystem()

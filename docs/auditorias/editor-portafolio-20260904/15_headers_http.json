@@ -1,0 +1,65 @@
+{
+  "schema": "codex-http-hardening-audit-v1",
+  "audited_at": "2026-09-05T18:10:00-04:00",
+  "scope": "GET response headers and HTTP serializers of active Hub",
+  "method": "Read-only GET capture plus static inspection of _send/_send_bytes; no POST.",
+  "observed_headers": {
+    "content_type": "present and appropriate for HTML/JSON",
+    "content_length": "present",
+    "cache_control": "no-cache",
+    "strict_transport_security": "absent",
+    "content_security_policy": "absent",
+    "x_content_type_options": "absent",
+    "x_frame_options": "absent",
+    "referrer_policy": "absent",
+    "permissions_policy": "absent",
+    "access_control_allow_origin": "absent",
+    "server": "MAK-Hub/2.0 Python/3.11.2"
+  },
+  "routes_sampled": [
+    "/",
+    "/api/portfolio/contract",
+    "/api/portfolio/archive-view",
+    "/api/portfolio/inbox"
+  ],
+  "findings": [
+    {
+      "id": "security-header-gap",
+      "severity": "medium",
+      "statement": "The shared response serializer sets Content-Type, Length and no-cache but no browser hardening headers."
+    },
+    {
+      "id": "server-banner",
+      "severity": "low",
+      "statement": "Server header discloses application/runtime versions."
+    },
+    {
+      "id": "cors-default",
+      "severity": "informational",
+      "statement": "No CORS header was observed; same-origin default is safer than wildcard but should be explicit if APIs are proxied."
+    },
+    {
+      "id": "scope",
+      "severity": "medium",
+      "statement": "Hardening matters if HUB_HOST becomes non-loopback; current process remains loopback."
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": "P1",
+      "action": "Add X-Content-Type-Options:nosniff, frame-ancestors/X-Frame-Options, Referrer-Policy and an explicit CORS policy."
+    },
+    {
+      "priority": "P1",
+      "action": "Use a strict CSP appropriate to inline scripts or migrate scripts/nonces; avoid weakening for convenience."
+    },
+    {
+      "priority": "P2",
+      "action": "Suppress version details in Server header and add request IDs/security audit events."
+    },
+    {
+      "priority": "P0_if_public",
+      "action": "Require TLS/auth/reverse proxy before any non-loopback bind; headers do not replace access control."
+    }
+  ]
+}

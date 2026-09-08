@@ -14,6 +14,11 @@ import sqlite3
 import sys
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[1]
+MOTOR_SRC = ROOT / "flujo" / "src"
+if MOTOR_SRC.is_dir() and str(MOTOR_SRC) not in sys.path:
+    sys.path.insert(0, str(MOTOR_SRC))
+
 from flujo.knowledge.project_context import (
     ProjectContextError,
     build_report,

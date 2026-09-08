@@ -22,7 +22,7 @@
     "",
     "'para' no es decoracion: es la razon por la que la libreria esta aca. El",
     "indice que un agente lee ANTES de escribir un generador desde cero es la",
-    "seccion 6 de CAPACIDADES.md, y tests/test_thing_registro.py la ratifica."
+    "seccion 6 de CAPACIDADES_MAK.md, y tests/test_thing_registro.py la ratifica."
   ],
   "librerias": [
     {

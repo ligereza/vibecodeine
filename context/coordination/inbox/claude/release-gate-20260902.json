@@ -1,0 +1,639 @@
+{
+  "schema": "mak-release-gate-v1",
+  "task_id": "release-gate-20260902",
+  "date": "2026-09-02T10:08:24.217473+00:00",
+  "physical_root": "/home/mak",
+  "verdict": "NOT_READY",
+  "ready_to_push": false,
+  "verdict_scope": "local repository coherence only; the test suite is deferred, so READY_TO_PUSH never means the tests are green",
+  "tests_deferred": true,
+  "tests_deferred_reason": "this gate is forbidden from running pytest, collection included",
+  "branches": [
+    {
+      "branch": "MAK",
+      "local_sha": "a62f9019585f9c80a749dae7383f3a519f2efdf5",
+      "remote_ref": "vibecodeine-legacy/MAK",
+      "remote_sha": "72b0e5e43d7b6193f424abf4fa405d5967e9bece",
+      "expected_kind": "operational",
+      "profile": {
+        "schema": "vibecodeine-branch-profile-v1",
+        "branch": "MAK",
+        "role": "Linux MAK box and department surface",
+        "default_test_selector": "-m mak",
+        "capabilities": "CAPACIDADES_MAK.md",
+        "requirements": "requirements-mak.txt",
+        "hub": {
+          "module": "cultura/mak_plataforma/hub.py",
+          "compatibility_module": "plataforma/hub.py",
+          "default_port": 8900,
+          "surface": "MAK departments and read-only machine projections"
+        },
+        "shared_consumers": [
+          "src/flujo/knowledge/project_api.py",
+          "src/flujo/knowledge/system_status.py",
+          "src/flujo/departments.py",
+          "data/mak_knowledge.db"
+        ],
+        "transfer_contract": "consume typed JSON contracts and source_ref values; do not import the FLUJO Hub implementation"
+      },
+      "profile_kind": "runtime",
+      "selector": "-m mak",
+      "hub_module": "cultura/mak_plataforma/hub.py",
+      "hub_default_port": 8900,
+      "required_missing": [],
+      "sync": {
+        "behind": 0,
+        "ahead": 2,
+        "fast_forwardable": true
+      },
+      "compatibility_module": "plataforma/hub.py",
+      "compatibility_module_on_disk": true,
+      "compatibility_module_tracked": false,
+      "required_checked": [
+        "branch_profile.json",
+        "pyproject.toml",
+        "requirements.txt",
+        "tools/test_lane_map.py",
+        "CAPACIDADES_MAK.md",
+        "requirements-mak.txt",
+        "cultura/mak_plataforma/hub.py",
+        "src/flujo/knowledge/project_api.py",
+        "src/flujo/knowledge/system_status.py",
+        "src/flujo/departments.py"
+      ]
+    },
+    {
+      "branch": "FLUJO",
+      "local_sha": "ad9ee8811325ee8661023312cd1d4a419407f547",
+      "remote_ref": "vibecodeine-legacy/FLUJO",
+      "remote_sha": "127f37476d13473dc521c064f3832d4d5c1d120f",
+      "expected_kind": "operational",
+      "profile": {
+        "schema": "vibecodeine-branch-profile-v1",
+        "branch": "FLUJO",
+        "role": "portable workflow engine",
+        "default_test_selector": "-m flujo",
+        "capabilities": "CAPACIDADES_FLUJO.md",
+        "requirements": "requirements-flujo.txt",
+        "hub": {
+          "module": "src/flujo/web/hub.py",
+          "default_port": 8765,
+          "surface": "workflow and workspace"
+        },
+        "shared_consumers": [
+          "src/flujo/knowledge/project_api.py",
+          "src/flujo/knowledge/system_status.py",
+          "src/flujo/departments.py",
+          "data/mak_knowledge.db"
+        ],
+        "transfer_contract": "exchange typed JSON contracts and source_ref values; do not import the MAK hub"
+      },
+      "profile_kind": "runtime",
+      "selector": "-m flujo",
+      "hub_module": "src/flujo/web/hub.py",
+      "hub_default_port": 8765,
+      "required_missing": [],
+      "sync": {
+        "behind": 0,
+        "ahead": 1,
+        "fast_forwardable": true
+      },
+      "required_checked": [
+        "branch_profile.json",
+        "pyproject.toml",
+        "requirements.txt",
+        "tools/test_lane_map.py",
+        "CAPACIDADES_FLUJO.md",
+        "requirements-flujo.txt",
+        "src/flujo/web/hub.py",
+        "src/flujo/knowledge/project_api.py",
+        "src/flujo/knowledge/system_status.py",
+        "src/flujo/departments.py"
+      ]
+    },
+    {
+      "branch": "main",
+      "local_sha": "3d83ed606f9ce27a1a410860a0380de684524898",
+      "remote_ref": "vibecodeine-legacy/main",
+      "remote_sha": "77333b4c5a948f04c9d4bb228bff42d82bd91e4f",
+      "expected_kind": "historical",
+      "profile": {
+        "schema": "vibecodeine-branch-profile-v1",
+        "branch": "main",
+        "kind": "historical",
+        "role": "reviewed historical aggregate; not a deployment target",
+        "default_test_selector": null,
+        "capabilities": "CAPACIDADES.md",
+        "requirements": "requirements.txt",
+        "hub": null,
+        "shared_consumers": [],
+        "transfer_contract": "historical reference only; promote a bounded surface to MAK or FLUJO after review"
+      },
+      "profile_kind": "historical",
+      "selector": null,
+      "hub_module": null,
+      "hub_default_port": null,
+      "required_missing": [],
+      "sync": {
+        "behind": 0,
+        "ahead": 1,
+        "fast_forwardable": true
+      },
+      "required_checked": [
+        "branch_profile.json"
+      ]
+    },
+    {
+      "branch": "historia",
+      "local_sha": "09f7e7d9059db286bb1fa44de322139e2b5d1d68",
+      "remote_ref": "vibecodeine-legacy/historia",
+      "remote_sha": "ab9afa13fb4d5cf257d97972c73301b0bc0d78fb",
+      "expected_kind": "historical",
+      "profile": {
+        "schema": "vibecodeine-branch-profile-v1",
+        "branch": "historia",
+        "kind": "historical",
+        "role": "historical evidence snapshot; not a deployment target",
+        "default_test_selector": null,
+        "capabilities": "CAPACIDADES.md",
+        "requirements": "requirements.txt",
+        "hub": null,
+        "shared_consumers": [],
+        "transfer_contract": "historical reference only; promote a bounded surface to MAK or FLUJO after review"
+      },
+      "profile_kind": "historical",
+      "selector": null,
+      "hub_module": null,
+      "hub_default_port": null,
+      "required_missing": [],
+      "sync": {
+        "behind": 0,
+        "ahead": 1,
+        "fast_forwardable": true
+      },
+      "required_checked": [
+        "branch_profile.json"
+      ]
+    }
+  ],
+  "hub_boundaries": [
+    {
+      "branch": "MAK",
+      "hub": "cultura/mak_plataforma/hub.py",
+      "forbidden_imports_found": [],
+      "undeclared_cross_imports": [
+        "flujo.diagnostics",
+        "flujo.knowledge.contracurator",
+        "flujo.knowledge.product_view",
+        "flujo.knowledge.project_context"
+      ]
+    },
+    {
+      "branch": "MAK",
+      "hub": "src/flujo/web/hub.py",
+      "forbidden_imports_found": [],
+      "undeclared_cross_imports": []
+    },
+    {
+      "branch": "FLUJO",
+      "hub": "cultura/mak_plataforma/hub.py",
+      "forbidden_imports_found": [],
+      "undeclared_cross_imports": [
+        "flujo.diagnostics",
+        "flujo.knowledge.contracurator",
+        "flujo.knowledge.product_view",
+        "flujo.knowledge.project_context"
+      ]
+    },
+    {
+      "branch": "FLUJO",
+      "hub": "src/flujo/web/hub.py",
+      "forbidden_imports_found": [],
+      "undeclared_cross_imports": []
+    }
+  ],
+  "lane_map": {
+    "path": "/home/mak/tools/test_lane_map.py",
+    "readable": true,
+    "lanes": [
+      "flujo",
+      "mak",
+      "integration",
+      "repo_hygiene",
+      "review"
+    ],
+    "entries": 387,
+    "per_lane": {
+      "flujo": 173,
+      "repo_hygiene": 118,
+      "mak": 86,
+      "integration": 10
+    }
+  },
+  "runtime": {
+    "tool": "/home/mak/tools/runtime_preflight.py",
+    "ran": true,
+    "schema": "mak-runtime-preflight-v1",
+    "summary": {
+      "ok": 4,
+      "ok_via_adapter": 0,
+      "warn": 1,
+      "unknown": 0,
+      "error": 0
+    },
+    "conditions": {
+      "error": 0,
+      "unknown": 0,
+      "warn": 1,
+      "adapter_dependency": 1
+    },
+    "surfaces": [
+      {
+        "surface_id": "mak_hub",
+        "status": "ok",
+        "declared_port": 8900,
+        "effective_port": 8900,
+        "fallback_port": null,
+        "source_resolved": "/home/mak/cultura/mak_plataforma/hub.py",
+        "import_probe": null,
+        "codes": []
+      },
+      {
+        "surface_id": "mak_research",
+        "status": "ok",
+        "declared_port": 8890,
+        "effective_port": 8890,
+        "fallback_port": null,
+        "source_resolved": "/home/mak/cultura/mak_research/interfaz.py",
+        "import_probe": null,
+        "codes": []
+      },
+      {
+        "surface_id": "mak_codex",
+        "status": "ok",
+        "declared_port": 8891,
+        "effective_port": 8891,
+        "fallback_port": null,
+        "source_resolved": "/home/mak/cultura/mak_codex/interfaz_codex.py",
+        "import_probe": null,
+        "codes": []
+      },
+      {
+        "surface_id": "flujo_app",
+        "status": "warn",
+        "declared_port": 8765,
+        "effective_port": 8766,
+        "fallback_port": 8766,
+        "source_resolved": "/home/mak/src/flujo/web/hub.py",
+        "import_probe": "/home/mak/flujo/src/flujo/web/hub.py",
+        "codes": [
+          "exec_start_via_adapter",
+          "port_fallback"
+        ]
+      },
+      {
+        "surface_id": "ollama",
+        "status": "ok",
+        "declared_port": 11434,
+        "effective_port": 11434,
+        "fallback_port": null,
+        "source_resolved": "/usr/local/bin/ollama",
+        "import_probe": null,
+        "codes": []
+      }
+    ]
+  },
+  "adapter_dependency": {
+    "adapter_path": "/home/mak/flujo",
+    "role": "compatibility_adapter",
+    "pth_hooks": [
+      {
+        "file": "/home/mak/.venv/lib/python3.11/site-packages/__editable__.flujo-0.56.1.pth",
+        "line": "/home/mak/flujo/src"
+      }
+    ],
+    "surfaces_depending": [
+      {
+        "surface_id": "flujo_app",
+        "import_probe": "/home/mak/flujo/src/flujo/web/hub.py"
+      }
+    ],
+    "port_fallbacks": [
+      {
+        "surface_id": "flujo_app",
+        "declared_port": 8765,
+        "effective_port": 8766
+      }
+    ]
+  },
+  "worktree": {
+    "entries": [
+      {
+        "state": " M",
+        "path": "context/LAST_HANDOFF.md",
+        "kind": "tracked_modified",
+        "class": "checkpoint",
+        "note": "single session checkpoint"
+      },
+      {
+        "state": " M",
+        "path": "cultura/mak_codex/interfaz_codex.py",
+        "kind": "tracked_modified",
+        "class": "operational_code",
+        "note": "MAK box source"
+      },
+      {
+        "state": " M",
+        "path": "docs/MAK_CURRENT_STATE.md",
+        "kind": "tracked_modified",
+        "class": "durable_doc",
+        "note": "current-state document"
+      },
+      {
+        "state": "??",
+        "path": "context/coordination/",
+        "kind": "untracked",
+        "class": "session_dossier",
+        "note": "coordination dossier written this session"
+      },
+      {
+        "state": "??",
+        "path": "context/git_history_local_20260814_20260901.json",
+        "kind": "untracked",
+        "class": "generated_data",
+        "note": "generated history export, not release material"
+      },
+      {
+        "state": "??",
+        "path": "context/python_census_20260901.json",
+        "kind": "untracked",
+        "class": "generated_data",
+        "note": "generated census, not release material"
+      },
+      {
+        "state": "??",
+        "path": "inventario_externo.sh",
+        "kind": "untracked",
+        "class": "root_agent_script",
+        "note": "one-off script at the repository root"
+      },
+      {
+        "state": "??",
+        "path": "inventario_mak.sh",
+        "kind": "untracked",
+        "class": "root_agent_script",
+        "note": "one-off script at the repository root"
+      },
+      {
+        "state": "??",
+        "path": "tests/test_runtime_preflight.py",
+        "kind": "untracked",
+        "class": "release_candidate",
+        "note": "tests for the preflight"
+      },
+      {
+        "state": "??",
+        "path": "tools/release_gate.py",
+        "kind": "untracked",
+        "class": "release_candidate",
+        "note": "this gate"
+      },
+      {
+        "state": "??",
+        "path": "tools/runtime_preflight.py",
+        "kind": "untracked",
+        "class": "release_candidate",
+        "note": "runtime preflight tool"
+      }
+    ],
+    "by_class": {
+      "checkpoint": 1,
+      "operational_code": 1,
+      "durable_doc": 1,
+      "session_dossier": 1,
+      "generated_data": 2,
+      "root_agent_script": 2,
+      "release_candidate": 3
+    },
+    "auto_included": false,
+    "head_branch": "main",
+    "head_is_historical": true
+  },
+  "push_plan": {
+    "target_branch": "MAK",
+    "why_target": "the preflight and this gate inspect the MAK box surfaces; MAK is the operational profile of the Linux box, and HEAD currently sits on a historical branch",
+    "explicit_paths_to_stage": [
+      "context/coordination/",
+      "tests/test_runtime_preflight.py",
+      "tools/release_gate.py",
+      "tools/runtime_preflight.py"
+    ],
+    "paths_deliberately_excluded": [
+      "context/git_history_local_20260814_20260901.json",
+      "context/python_census_20260901.json",
+      "inventario_externo.sh",
+      "inventario_mak.sh"
+    ],
+    "never": [
+      "git add -A",
+      "git add .",
+      "git commit -a"
+    ],
+    "target_sync_before_push": {
+      "behind": 0,
+      "ahead": 2,
+      "fast_forwardable": true
+    },
+    "steps": [
+      "python3 -m pytest tests/ -q   # the gate does not run this; it is the missing verdict",
+      "git switch -c codex/runtime-preflight MAK   # requires explicit human approval",
+      "git add <each path listed in explicit_paths_to_stage>",
+      "git commit -m 'feat(runtime): prove executed source per surface'",
+      "git push vibecodeine-legacy codex/runtime-preflight",
+      "open a PR into MAK and let the CI matrix give the verdict"
+    ],
+    "executed": false
+  },
+  "blockers": [
+    {
+      "code": "uncommitted_work_on_historical_branch",
+      "detail": "HEAD is main, declared kind=historical, and carries tracked modifications: context/LAST_HANDOFF.md, cultura/mak_codex/interfaz_codex.py, docs/MAK_CURRENT_STATE.md",
+      "evidence": "git branch --show-current; git status --porcelain"
+    },
+    {
+      "code": "root_agent_script_present",
+      "detail": "inventario_externo.sh is a one-off script at the repository root",
+      "evidence": "git status --porcelain"
+    },
+    {
+      "code": "root_agent_script_present",
+      "detail": "inventario_mak.sh is a one-off script at the repository root",
+      "evidence": "git status --porcelain"
+    }
+  ],
+  "unknowns": [],
+  "dependencies": [
+    {
+      "code": "adapter_path_hook",
+      "detail": "editable install routes imports through the adapter: /home/mak/flujo/src",
+      "evidence": "/home/mak/.venv/lib/python3.11/site-packages/__editable__.flujo-0.56.1.pth"
+    },
+    {
+      "code": "surface_depends_on_adapter",
+      "detail": "flujo_app resolves its source through /home/mak/flujo/src/flujo/web/hub.py",
+      "evidence": "python3 tools/runtime_preflight.py --check --check-adapter"
+    },
+    {
+      "code": "port_fallback_active",
+      "detail": "flujo_app declares port 8765 but answers on 8766",
+      "evidence": "python3 tools/runtime_preflight.py --check --strict"
+    }
+  ],
+  "warnings": [
+    {
+      "code": "undeclared_cross_import",
+      "detail": "MAK:cultura/mak_plataforma/hub.py imports flujo.diagnostics, flujo.knowledge.contracurator, flujo.knowledge.product_view, flujo.knowledge.project_context, which the profile's shared_consumers does not declare",
+      "evidence": "git archive MAK -- cultura/mak_plataforma/hub.py | ast"
+    },
+    {
+      "code": "undeclared_cross_import",
+      "detail": "FLUJO:cultura/mak_plataforma/hub.py imports flujo.diagnostics, flujo.knowledge.contracurator, flujo.knowledge.product_view, flujo.knowledge.project_context, which the profile's shared_consumers does not declare",
+      "evidence": "git archive FLUJO -- cultura/mak_plataforma/hub.py | ast"
+    },
+    {
+      "code": "generated_data_untracked",
+      "detail": "context/git_history_local_20260814_20260901.json is generated output; it must stay out of a release",
+      "evidence": "git status --porcelain"
+    },
+    {
+      "code": "generated_data_untracked",
+      "detail": "context/python_census_20260901.json is generated output; it must stay out of a release",
+      "evidence": "git status --porcelain"
+    }
+  ],
+  "findings": [
+    {
+      "code": "compatibility_module_untracked_by_design",
+      "severity": "info",
+      "detail": "MAK: plataforma/hub.py exists on the box and is deliberately not tracked in git; it is a runtime projection, not release material",
+      "evidence": ".git/info/exclude"
+    },
+    {
+      "code": "undeclared_cross_import",
+      "severity": "warn",
+      "detail": "MAK:cultura/mak_plataforma/hub.py imports flujo.diagnostics, flujo.knowledge.contracurator, flujo.knowledge.product_view, flujo.knowledge.project_context, which the profile's shared_consumers does not declare",
+      "evidence": "git archive MAK -- cultura/mak_plataforma/hub.py | ast"
+    },
+    {
+      "code": "undeclared_cross_import",
+      "severity": "warn",
+      "detail": "FLUJO:cultura/mak_plataforma/hub.py imports flujo.diagnostics, flujo.knowledge.contracurator, flujo.knowledge.product_view, flujo.knowledge.project_context, which the profile's shared_consumers does not declare",
+      "evidence": "git archive FLUJO -- cultura/mak_plataforma/hub.py | ast"
+    },
+    {
+      "code": "adapter_path_hook",
+      "severity": "dependency",
+      "detail": "editable install routes imports through the adapter: /home/mak/flujo/src",
+      "evidence": "/home/mak/.venv/lib/python3.11/site-packages/__editable__.flujo-0.56.1.pth"
+    },
+    {
+      "code": "surface_depends_on_adapter",
+      "severity": "dependency",
+      "detail": "flujo_app resolves its source through /home/mak/flujo/src/flujo/web/hub.py",
+      "evidence": "python3 tools/runtime_preflight.py --check --check-adapter"
+    },
+    {
+      "code": "port_fallback_active",
+      "severity": "dependency",
+      "detail": "flujo_app declares port 8765 but answers on 8766",
+      "evidence": "python3 tools/runtime_preflight.py --check --strict"
+    },
+    {
+      "code": "uncommitted_work_on_historical_branch",
+      "severity": "blocker",
+      "detail": "HEAD is main, declared kind=historical, and carries tracked modifications: context/LAST_HANDOFF.md, cultura/mak_codex/interfaz_codex.py, docs/MAK_CURRENT_STATE.md",
+      "evidence": "git branch --show-current; git status --porcelain"
+    },
+    {
+      "code": "generated_data_untracked",
+      "severity": "warn",
+      "detail": "context/git_history_local_20260814_20260901.json is generated output; it must stay out of a release",
+      "evidence": "git status --porcelain"
+    },
+    {
+      "code": "generated_data_untracked",
+      "severity": "warn",
+      "detail": "context/python_census_20260901.json is generated output; it must stay out of a release",
+      "evidence": "git status --porcelain"
+    },
+    {
+      "code": "root_agent_script_present",
+      "severity": "blocker",
+      "detail": "inventario_externo.sh is a one-off script at the repository root",
+      "evidence": "git status --porcelain"
+    },
+    {
+      "code": "root_agent_script_present",
+      "severity": "blocker",
+      "detail": "inventario_mak.sh is a one-off script at the repository root",
+      "evidence": "git status --porcelain"
+    }
+  ],
+  "gate_tool": {
+    "path": "tools/release_gate.py",
+    "sha256": "2cee5c260bafc1392d19c3992af0b81e34de6b6f9d3eba50cba6717d646dcc08",
+    "nlink": 1
+  },
+  "manufactured_blockers_removed_before_reporting": [
+    {
+      "code": "required_files_missing (MAK -> plataforma/hub.py)",
+      "why_it_was_wrong": "the MAK profile declares plataforma/hub.py as hub.compatibility_module, and /plataforma/ is excluded from git in .git/info/exclude line 81. It is a runtime projection on the box, not repo material, so demanding it inside a ref invented a blocker.",
+      "fix": "compatibility_module is verified on the physical filesystem (present, inode 1866508, 1044 bytes) and reported as info: untracked by design."
+    },
+    {
+      "code": "required_files_missing (historia -> tools/test_lane_map.py)",
+      "why_it_was_wrong": "historia declares kind=historical and is a frozen evidence snapshot that legitimately predates that tool. Requiring current tooling from a historical ref contradicts what historical means.",
+      "fix": "baseline requirements are split: operational refs must carry profile, pyproject, requirements and the lane map; a historical ref must carry only the profile that declares it historical."
+    }
+  ],
+  "fast_checks_run": [
+    {
+      "command": "stat -c %h %i tools/release_gate.py",
+      "result": "nlink=1 inode=30305608, no atomic replace needed"
+    },
+    {
+      "command": "python3 -m py_compile tools/release_gate.py",
+      "exit": 0
+    },
+    {
+      "command": "git diff --check",
+      "exit": 0
+    },
+    {
+      "command": "python3 tools/runtime_preflight.py --check",
+      "exit": 0,
+      "timeout_s": 25
+    },
+    {
+      "command": "python3 tools/release_gate.py --format text",
+      "exit": 0
+    },
+    {
+      "command": "python3 tools/release_gate.py --format json",
+      "exit": 0
+    },
+    {
+      "command": "python3 tools/release_gate.py --check",
+      "exit": 1,
+      "meaning": "blockers present"
+    }
+  ],
+  "prohibited_actions_not_taken": [
+    "pytest of any kind, collection included",
+    "commit, push, reset, checkout, branch creation",
+    "service restart",
+    "find -L or any FUSE traversal",
+    "loops, scheduled tasks, waits"
+  ],
+  "writes_outside_allowed_set": []
+}

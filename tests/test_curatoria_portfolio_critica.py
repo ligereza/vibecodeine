@@ -24,15 +24,31 @@ def _campo_real() -> dict:
 
 
 def test_corpus_real_separa_obra_de_material_operativo():
-    piezas = _campo_real()["piezas"]
+    """The separation is the property; the counts were the old measurement.
+
+    Pinned 219 total and 134 obras until 2026-09-02, when the field grew to 871
+    (perception reached reels and more of posts, with the folder filter from
+    #355 intact). The scope moved legitimately, so what is asserted here is
+    that obra and operational material stay distinguishable and that the meta
+    declares the same vocabulary the pieces use -- not how many there are.
+    """
+    campo = _campo_real()
+    piezas = campo["piezas"]
     obras = [pieza for pieza in piezas if pieza.get("tipo") == "obra"]
     material_operativo = [pieza for pieza in piezas
                           if pieza.get("tipo") in {"flyer_evento", "logo",
                                                     "ficha_sustancia"}]
 
-    assert len(piezas) == 219
-    assert len(obras) == 134
-    assert material_operativo
+    assert piezas, "the real field is empty: nothing was measured"
+    assert obras, "no piece is classified as obra"
+    assert material_operativo, "the corpus does not distinguish operational material"
+    assert len(obras) < len(piezas), (
+        "everything was classified as obra: the separation did not happen")
+    declarados = set(campo.get("meta", {}).get("tipos") or [])
+    presentes = {pieza.get("tipo") for pieza in piezas if pieza.get("tipo")}
+    assert presentes <= declarados, (
+        "pieces carry types the meta does not declare: %s"
+        % sorted(presentes - declarados))
     assert all(pieza.get("archivo") for pieza in obras[:10])
 
 

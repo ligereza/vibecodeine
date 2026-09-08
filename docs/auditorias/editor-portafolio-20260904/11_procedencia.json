@@ -1,0 +1,112 @@
+{
+  "schema": "codex-provenance-chain-audit-v1",
+  "audited_at": "2026-09-05T13:30:00-04:00",
+  "scope": "Public projection archivo.json and generator inputs",
+  "method": "Read-only metadata inspection; no regeneration performed.",
+  "observed_projection": {
+    "path": "MAK/iskvw/datos/archivo.json",
+    "top_level_keys": [
+      "version",
+      "fuente",
+      "generado",
+      "piezas",
+      "vinculos",
+      "meta"
+    ],
+    "declared_fuente": "todo",
+    "declared_generado": "2026-08-29T10:38:17",
+    "has_input_hash": false,
+    "has_generator_version": false,
+    "has_curaduria_hash": false,
+    "meta_keys": [
+      "regimen",
+      "piezas",
+      "vinculos",
+      "por_clase",
+      "vinculos_por_clase",
+      "con_posicion",
+      "medio_corregido_a_imagen",
+      "por_medio",
+      "vecindad_conservada"
+    ]
+  },
+  "inputs": [
+    {
+      "path": "MAK/iskvw/datos/archivo.json",
+      "exists": true,
+      "bytes": 1833824,
+      "sha256": "83cf54902508b3d50ed582fb2aafa307dbde2b83218ad40301ff924080fe0207"
+    },
+    {
+      "path": "MAK/iskvw/datos/curaduria.json",
+      "exists": true,
+      "bytes": 625,
+      "sha256": "219bba7d111d6d806fa8e935ed5b06ad1d0441c42575655f4e260ac923fa387f"
+    },
+    {
+      "path": "MAK/iskvw/datos/campo.json",
+      "exists": true,
+      "bytes": 93657,
+      "sha256": "f4273875fe3ffcb1c0c22dbfcdf73935a7623ac0dbf112e7c6c89cebc3580e34"
+    },
+    {
+      "path": "MAK/iskvw/datos/obras.json",
+      "exists": true,
+      "bytes": 10048,
+      "sha256": "eb3315f5e79fd665aa2ab969ce1897520f92b441d4338d64e1efd8e81a97379f"
+    },
+    {
+      "path": "MAK/iskvw/datos/micelio.json",
+      "exists": true,
+      "bytes": 1431380,
+      "sha256": "a4a056eb3d25a102816a63cafbfcb397e7948540800329040535ffe21bd2cd42"
+    },
+    {
+      "path": "MAK/tools/gen_archivo_iskvw.py",
+      "exists": true,
+      "bytes": 21068,
+      "sha256": "329d755a4f651b8579ec48f8952ca11ac0c6e9637fae32b857b2c452c0e291f3"
+    }
+  ],
+  "workflow_claims": [
+    {
+      "path": "FLUJO/.github/workflows/publicar_iskvw.yml:59",
+      "claim": "generates archivo.json with --fuente todo"
+    },
+    {
+      "path": "MAK/cultura/mak_plataforma/hub.py:1397-1400",
+      "claim": "Hub reads MAK/iskvw/datos/archivo.json by default"
+    }
+  ],
+  "findings": [
+    {
+      "id": "missing-input-lineage",
+      "severity": "high",
+      "statement": "archivo.json records fuente and generado but not hashes of source files, curaduria, generator or revision."
+    },
+    {
+      "id": "stale-projection-risk",
+      "severity": "high",
+      "statement": "Observed local projection generated 2026-08-29 while audit date is 2026-09-05; without input hashes, freshness/derivation cannot be independently reconstructed."
+    },
+    {
+      "id": "runtime-view-hash-not-lineage",
+      "severity": "medium",
+      "statement": "Hub archive-view input_hash is a view/input fingerprint, not an explicit generator/input manifest stored in archivo.json."
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": "P1",
+      "action": "Add provenance object to generated projection: generator_version, source_root, source_revision, source_file_hashes, curaduria_hash, generated_at and command/options."
+    },
+    {
+      "priority": "P1",
+      "action": "Store projection manifest alongside artifact and require runtime contract to expose it."
+    },
+    {
+      "priority": "P2",
+      "action": "Retain previous projection manifest for rollback and compare public artifact hashes before deploy."
+    }
+  ]
+}

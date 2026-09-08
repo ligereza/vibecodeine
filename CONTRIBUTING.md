@@ -4,31 +4,25 @@ Personal creative-operations repo with a unified CLI (`flujo`).
 
 ## Mandatory entry point
 
-1. Read `AGENTS.md` (root): current identity, workflow and rules. Then read
-   `context/LAST_HANDOFF.md`, the single operational checkpoint. `CLAUDE.md`
-   remains a compatibility document with historical material.
-2. Current state, decisions already closed and standing orders:
-   `context/LAST_HANDOFF.md`, the single checkpoint. Read it before asking
-   something that may already be answered.
+1. Read `/home/mak/AGENTS.md`: current contract and pointers. Measure the
+   machine with `.venv/bin/python tools/mak_status.py`; use
+   `context/HANDOFF_HISTORICO.md` only as historical context.
+2. Decisions already closed are recorded in `DECISIONES.md`; current state is
+   not inferred from prose.
 
 ## Proposing changes
 
 1. Issues are the user's channel (Gmail -> issue -> render), not a task board:
    agents do not open them. Describe the change in a message instead.
 2. Branch + PR against `main`; CI must pass. No direct pushes to `main`.
-3. Agents without push use the airdrop protocol
-   (`docs/AGENT_AIRDROP_PROTOCOL.md`):
-   ```bash
-   py scripts/validate_airdrop.py
-   py scripts/run_airdrop_checks.py "short message"
-   ```
+3. Agents without push use the repository's explicit delivery mechanism and
+   validate any airdrop payload with `.venv/bin/python scripts/validate_airdrop.py`.
 
 ## Minimum verification
 
 ```bash
-py -m compileall src/flujo
-py -m pytest tests/ -q
-py -m flujo verify
+.venv/bin/python -m pytest tests/ -q
+.venv/bin/python -m flujo verify
 ```
 
 ## Code style
@@ -37,7 +31,6 @@ py -m flujo verify
 - No `print()` inside modules: use `rich.console` or logging.
 - Tests with pytest under `tests/test_<module>.py`.
 - Do not commit heavy files or credentials.
-- Windows uses `py` (not `python`/`python3`).
 
 ## Language
 

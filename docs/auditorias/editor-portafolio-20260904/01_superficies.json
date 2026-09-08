@@ -1,0 +1,308 @@
+{
+  "schema": "codex-01-superficies-v2",
+  "generated_at_utc": "2026-09-05T06:20:00Z",
+  "heads": {
+    "MAK": "68339cd7812fababaf43dc922368817b7f970eb8",
+    "FLUJO": "a7c44431baed7e4de4c39251c1955e4406c32b11"
+  },
+  "method_summary": {
+    "MEDIDO": 5,
+    "DERIVADO": 1,
+    "SUPUESTO": 0,
+    "UNRESOLVED": 1
+  },
+  "verdict_summary": {
+    "edita_publicacion": 1,
+    "ordena_archivo": 2,
+    "ambas": 1,
+    "solo_lectura": 2,
+    "sin_uso": 0,
+    "UNRESOLVED": 0
+  },
+  "rows": [
+    {
+      "id": "editor-estatico",
+      "path": "iskvw/editor.html",
+      "http": [
+        "/portafolio/",
+        "/static/iskvw/editor"
+      ],
+      "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+      "verdict": "ambas",
+      "method": "DERIVADO",
+      "opened_by": [
+        "human via hub",
+        "browser static page"
+      ],
+      "reads": [
+        "iskvw/datos/archivo.json",
+        "iskvw/datos/campo.json",
+        "iskvw/datos/curaduria.json",
+        "iskvw/datos/tablero.json",
+        "/api/portfolio/*"
+      ],
+      "writes": [
+        "browser download curaduria.json",
+        "browser download tablero.json",
+        "/api/portfolio/* through hub"
+      ],
+      "public_effect": "La página de descarga no publica directamente; sus archivos pueden entrar al commit y al workflow Pages. Su bloque mesa consume y ordena datos del Hub.",
+      "evidence": [
+        {
+          "kind": "command",
+          "value": "nl -ba iskvw/editor.html | sed -n '1090,1097p;3010,3018p;3036,3039p'",
+          "result": "editor download-only; downloads two JSON; starts cargar and archive view, then loads mesa_montaje.js"
+        },
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 1092,
+          "excerpt": "its only output is a download."
+        },
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 3012,
+          "excerpt": "bajar(\"curaduria.json\", d);"
+        },
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 3037,
+          "excerpt": "void cargarArchivePortfolioView();"
+        },
+        {
+          "kind": "file",
+          "path": "iskvw/editor.html",
+          "line": 3039,
+          "excerpt": "<script src=\"mesa_montaje.js?v=20260811-atlas-context-map\"></script>"
+        }
+      ],
+      "note": "Es la superficie de confusión: contiene edición de publicación y la mesa de ordenamiento en el mismo HTML.",
+      "detail_order3_id": "editor-estatico",
+      "detail_output": "03_editor_html_v2.json"
+    },
+    {
+      "id": "mesa-montaje",
+      "path": "iskvw/mesa_montaje.js",
+      "http": [
+        "embebido en /portafolio/"
+      ],
+      "sha256": "7a0b308f73a6aabf13d70b714c07128da0a9bc0ea2e5c3d31a6d6f6ab33b926b",
+      "verdict": "ordena_archivo",
+      "method": "MEDIDO",
+      "opened_by": [
+        "iskvw/editor.html script tag"
+      ],
+      "reads": [
+        "/api/portfolio/inbox",
+        "/api/portfolio/copilot/map",
+        "/api/portfolio/feedback",
+        "/api/portfolio/select"
+      ],
+      "writes": [
+        "Hub ledgers through POST actions"
+      ],
+      "public_effect": "No hay código de despliegue ni escritura en iskvw/; guarda decisiones internas del Hub.",
+      "evidence": [
+        {
+          "kind": "command",
+          "value": "nl -ba iskvw/mesa_montaje.js | sed -n '789,813p'",
+          "result": "mount creates the mesa DOM and marks body mesa-active"
+        },
+        {
+          "kind": "file",
+          "path": "iskvw/mesa_montaje.js",
+          "line": 793,
+          "excerpt": "document.body.classList.add(\"mesa-active\");"
+        },
+        {
+          "kind": "file",
+          "path": "iskvw/mesa_montaje.js",
+          "line": 794,
+          "excerpt": "app.innerHTML = `<div class=\"mesa-shell mesa-engine\""
+        }
+      ]
+    },
+    {
+      "id": "iskvw-public-skin",
+      "path": "iskvw/piel/campo/index.html",
+      "http": [
+        "/",
+        "/piel/campo/"
+      ],
+      "sha256": "2e7548a3e7355716b7b151981287b73662299bb8666929bb8664959b4051d807",
+      "verdict": "edita_publicacion",
+      "method": "MEDIDO",
+      "opened_by": [
+        "visitor at iskvw.cl through Pages artifact"
+      ],
+      "reads": [
+        "datos/archivo.json",
+        "datos/campo.json",
+        "datos/tablero.json"
+      ],
+      "writes": [],
+      "public_effect": "Su contenido y recursos son copiados al artefacto Pages y servidos públicamente.",
+      "evidence": [
+        {
+          "kind": "command",
+          "value": "nl -ba .github/workflows/publicar_iskvw.yml | sed -n '62,73p;94,101p'",
+          "result": "workflow copies iskvw into _sitio, creates root index and verifies public data"
+        },
+        {
+          "kind": "file",
+          "path": ".github/workflows/publicar_iskvw.yml",
+          "line": 66,
+          "excerpt": "cp -r iskvw/. _sitio/"
+        },
+        {
+          "kind": "file",
+          "path": ".github/workflows/publicar_iskvw.yml",
+          "line": 69,
+          "excerpt": "cp iskvw/piel/campo/index.html _sitio/index.html"
+        },
+        {
+          "kind": "file",
+          "path": "iskvw/piel/campo/index.html",
+          "line": 1437,
+          "excerpt": "let r = await fetch('../../datos/archivo.json');"
+        }
+      ]
+    },
+    {
+      "id": "hub-portfolio-route",
+      "path": "cultura/mak_plataforma/hub.py",
+      "http": [
+        "/portafolio/",
+        "/api/portfolio/*",
+        "/static/iskvw/*"
+      ],
+      "sha256": "e5bf8722b5504496911126b97de52e557d11e9ee2369e1a83f442b21793aa24d",
+      "verdict": "ordena_archivo",
+      "method": "MEDIDO",
+      "opened_by": [
+        "human/operator",
+        "editor.html",
+        "mesa_montaje.js"
+      ],
+      "reads": [
+        "PORTFOLIO_ROOT data",
+        "portfolio ledgers",
+        "iskvw/editor.html"
+      ],
+      "writes": [
+        "portfolio boards and ledgers under configured internal roots"
+      ],
+      "public_effect": "El listener es local (127.0.0.1:8900 medido por mak_status); no contiene deploy-pages ni Cloudflare client.",
+      "evidence": [
+        {
+          "kind": "command",
+          "value": "nl -ba cultura/mak_plataforma/hub.py | sed -n '1,11p;5371,5385p;5584,5599p'",
+          "result": "hub serves local editor/static resources and identifies iskvw.cl as separate"
+        },
+        {
+          "kind": "file",
+          "path": "cultura/mak_plataforma/hub.py",
+          "line": 7,
+          "excerpt": "Its historically named `/portafolio/` route is the operator-facing IRIS ordering/curation interface"
+        },
+        {
+          "kind": "file",
+          "path": "cultura/mak_plataforma/hub.py",
+          "line": 9,
+          "excerpt": "`iskvw.cl` is a separate downstream site."
+        },
+        {
+          "kind": "file",
+          "path": "cultura/mak_plataforma/hub.py",
+          "line": 5586,
+          "excerpt": "asset = _portfolio_file(relative)"
+        }
+      ]
+    },
+    {
+      "id": "flujo-archive-view",
+      "path": "flujo/src/flujo/departments.py",
+      "http": [
+        "/api/portfolio/archive-view"
+      ],
+      "sha256": "9c1f7c6ad0788dcc18af3dead8e58f3ebfcb7c7e1360bcb2c9cc35d4f8ecb232",
+      "verdict": "solo_lectura",
+      "method": "MEDIDO",
+      "opened_by": [
+        "department catalog consumer"
+      ],
+      "reads": [
+        "archive projection"
+      ],
+      "writes": [],
+      "public_effect": "Declarado draft y no publicable.",
+      "evidence": [
+        {
+          "kind": "command",
+          "value": "nl -ba flujo/src/flujo/departments.py | sed -n '54,75p'",
+          "result": "archive view explicitly read_only and publication false"
+        },
+        {
+          "kind": "file",
+          "path": "flujo/src/flujo/departments.py",
+          "line": 65,
+          "excerpt": "\"mode\": \"read_only\""
+        },
+        {
+          "kind": "file",
+          "path": "flujo/src/flujo/departments.py",
+          "line": 67,
+          "excerpt": "\"publication\": False"
+        },
+        {
+          "kind": "file",
+          "path": "flujo/src/flujo/departments.py",
+          "line": 74,
+          "excerpt": "\"api_dependencies\": [\"Cloudflare only at publication boundary\"]"
+        }
+      ]
+    },
+    {
+      "id": "legacy-portfolio-generator",
+      "path": "tools/portfolio/generar_portfolio.py",
+      "http": [],
+      "sha256": "412d7c3b14716eba085c59a7d29c08b0889bbb6749967185ffefa996d9682592",
+      "verdict": "solo_lectura",
+      "method": "MEDIDO",
+      "opened_by": [
+        "operator command only; no in-tree caller measured"
+      ],
+      "reads": [
+        "tools/portfolio/proyectos.json",
+        "git history"
+      ],
+      "writes": [
+        "out/flujo-projects.json",
+        "out/basurero.json"
+      ],
+      "public_effect": "El archivo existe y solo genera artefactos locales; no se midió consumidor activo de publicación.",
+      "evidence": [
+        {
+          "kind": "command",
+          "value": "rg --files .github/workflows FLUJO/.github/workflows | sort -u",
+          "result": "portfolio.yml ausente en ambos checkouts"
+        },
+        {
+          "kind": "file",
+          "path": "tools/portfolio/generar_portfolio.py",
+          "line": 14,
+          "excerpt": "Sin red, sin APIs: solo git local y archivos del repo."
+        },
+        {
+          "kind": "file",
+          "path": "tools/portfolio/generar_portfolio.py",
+          "line": 15,
+          "excerpt": "el workflow (necesita el secret PORTFOLIO_TOKEN); este script nunca pushea."
+        }
+      ],
+      "note": "La ausencia medida es del consumidor portfolio.yml, no del archivo generador."
+    }
+  ]
+}

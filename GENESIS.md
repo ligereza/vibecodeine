@@ -187,86 +187,19 @@ sí salieron.
 Lo distinto entre los dos casos: los `diag-*` diagnosticaban una instalación ya
 hecha; éste **es** la herramienta.
 
-## Documentos de esta máquina (2026-08-29)
+## Documentos históricos retirados
 
-Escritos al final de una sesión de orden. Leerlos antes de tocar MAK
-ahorra repetir lo que ya se midió:
+Las bitácoras de sesiones y los contratos de agentes que antes se listaban
+en esta sección fueron consolidados en `MEMORIAS.md` o retirados el
+2026-09-03. La única entrada contractual vigente es `/home/mak/AGENTS.md`;
+los hechos se obtienen midiendo la máquina con `tools/mak_status.py`.
 
-    ~/APRENDIZAJE.CLAUDE.MD   cómo se averigua algo de MAK sin equivocarse
-    ~/ERRORES.CLAUDE.MD       los errores concretos que se cometieron, y su forma
-    ~/SONDA.CLAUDE.MD         qué gobierna tools/, qué demuestran los tests y qué no
-    ~/CAMBIOS.CLAUDE.MD       qué se movió, borró, restauró y corrigió, y cómo deshacerlo
-    ~/ANOTACIONES.CLAUDE.MD   lo que quedó sin saber, sin abrir y sin decidir
-    ~/PATRONES.CLAUDE.json    lista de chequeo de patrones de error (ver el JSON: crece)
-    ~/_archive/INDICE.md      las ocho campañas de retiro y cómo devolver algo
+## Registro histórico no operativo (agregado 2026-08-31)
 
-## Autoridad y orden de lectura (agregado 2026-08-31)
+La lista antigua del 2026-08-29 y su orden de lectura fueron posteriormente
+consolidados o retirados. Este bloque conserva el contexto de esa sesión; no es
+una instrucción ni un orden vigente para agentes nuevos.
 
-La lista de arriba, del 2026-08-29, ponía seis piezas en un renglón plano sin
-decir cuál se lee primero ni cuál es historia agotada. Es el mismo defecto que
-`flujo/docs/AUTORIDAD.md` diagnosticó para el repositorio -- documentos que se
-declaran canónicos mientras nadie fija el orden real -- repitiéndose acá, en
-la raíz de la máquina, y con ocho documentos, no seis: los seis de arriba, más
-`PATRONES.CLAUDE.json` (que ya se cargaba pero no estaba en esa lista) y
-`docs/handoffs/archive/MAK_CODEX_HANDOFF.md` (el traspaso que escribió otra sesión, tampoco
-listado). No se abre un noveno documento para resolver el problema de tener
-ocho: se resuelve acá, porque éste ya es el que enlaza a los demás.
-
-**Orden real, en tres niveles.**
-
-1. **Se lee siempre, entero, antes de tocar nada:**
-   - `GENESIS.md` (este archivo) -- qué es MAK y por dónde entra cada cosa.
-   - `PATRONES.CLAUDE.json` -- su propio campo `como_usarlo` lo dice: cargarlo
-     antes de actuar, no después de romper algo. Es checklist, no narrativa;
-     releerlo entero cuesta segundos.
-   - `APRENDIZAJE.CLAUDE.MD` -- el método en prosa: por qué existen esos
-     patrones y cómo se averigua algo de MAK sin caer en ellos.
-
-2. **Se consulta cuando la tarea lo toca, no de punta a punta:**
-   - `SONDA.CLAUDE.MD` -- tareas dentro de `flujo/tools`, `tests/` o
-     `CAPACIDADES.md`.
-   - `CAMBIOS.CLAUDE.MD` -- para saber si algo ya se movió, restauró o
-     corrigió, y cómo devolverlo.
-   - `ANOTACIONES.CLAUDE.MD` -- antes de asumir que algo quedó resuelto, o de
-     decidir que algo es decisión del operador: ahí está lo que sigue sin
-     saberse.
-   - `context/LAST_HANDOFF.md` -- al retomar un hilo operativo que dejó Codex
-     (consolidación física, verificación de CI, apertura de raíces). No es
-     borrador propio: lo escribió otra sesión real y describe decisiones
-     reales. Se trata como fuente -- se lee, no se edita -- y si algo suyo
-     quedó superado, se fecha y se supera, como abajo.
-
-3. **Historia agotada: se lee para entender cómo se llegó acá, no para
-   actuar:**
-   - `ERRORES.CLAUDE.MD` -- la versión larga y narrada de lo que
-     `PATRONES.CLAUDE.json` ya resume en una línea por caso. Si el síntoma del
-     JSON alcanza, no hace falta abrirlo.
-
-**La regla que evita que esto vuelva a pasar**: ninguno de los ocho es
-mantenido. Son fechados -- 2026-08-28, 29, 30, 31 -- y cuando una cifra que
-citan choca con lo que mide un instrumento (`bin/mak`, `medir_organismo.py`,
-`medir_procesos.py`, `indexes/mak-bridges-20260829/medir_bridges.py`,
-`medir_tests.py`), **gana el instrumento**. La corrección se escribe fechada
-al lado de la cifra vieja, nunca reemplazándola. Así quedaron corregidas hoy,
-en sus propios documentos, y no acá:
-
-- `SONDA.CLAUDE.MD` y `ANOTACIONES.CLAUDE.MD`: "882 sentencias al 9%" en
-  `ingesta_archivo.py` era **falso** -- la línea base real es 72%, hoy 73%.
-- `SONDA.CLAUDE.MD`: "24 módulos bajo 40% de cobertura" estaba **vieja** --
-  son 32, medidos con la suite completa.
-- `SONDA.CLAUDE.MD`: "119 archivos en tools/ / 87 VIVO" estaba **vieja** --
-  hoy son 116 archivos y 117 filas VIVO. Creció; las dos tablas de
-  `CAPACIDADES.md` siguen sin cuadrar entre sí, por la razón que el propio
-  documento ya daba.
-- `SONDA.CLAUDE.MD` y `APRENDIZAJE.CLAUDE.MD`: "122 shims" / "107" estaba
-  **vieja** -- `medir_bridges.py`, que no existía cuando se escribió esto,
-  mide 130 hoy, con 0 destinos ausentes y 0 defectos de entrypoint. La
-  conclusión ("todos resuelven") seguía siendo cierta; la cifra, no.
-
-Verificado hoy, 2026-08-31, y sin novedad: 23 líneas de cron pausadas y 0
-activas, 3 de 5 órganos vivos, `mak-xio.service` apagado por decisión y no por
-avería, y `mapa-de-retiro.csv` en 253 filas. Esa última cifra creció desde las
-79/88 que citan `CAMBIOS.CLAUDE.MD` y `ANOTACIONES.CLAUDE.MD`, y desde las 234
-que cita el handoff histórico archivado: no es contradicción, cada una fue cierta el
-día que se escribió. Se mide con `wc -l ~/_archive/orden-limpieza-20260828/mapa-de-retiro.csv`,
-no se cita de memoria.
+El orden operativo actual no se reconstruye desde este relato. Se encuentra
+únicamente en `/home/mak/AGENTS.md`; las mediciones se ejecutan y no se copian
+como hechos en esta narración.

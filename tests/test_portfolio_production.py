@@ -500,11 +500,13 @@ def test_the_decisions_a_person_already_made_are_read_not_requested() -> None:
     for row in log["consumer_decisions"]["by_item"].values():
         assert row["history"]
         assert row["decision"] == row["history"][-1]["decision"]
-    # Declarations by a named person are carried with their draft status intact.
+    # Draft and explicitly confirmed human decisions are both valid; no other
+    # status may enter the declaration ledger, and neither is auto-promoted.
     declarations = log["declarations"]
     assert declarations["declared_by"] == {"human": declarations["event_count"]}
     assert set(declarations["promotion_counts"]) == {"none"}
-    assert set(declarations["status_counts"]) == {"human_draft"}
+    assert set(declarations["status_counts"]) <= {"human_draft", "human_confirmed"}
+    assert declarations["status_counts"]
     assert not declarations["unmapped_fields"], "a new declared field must be visible"
     attesting = attesting_declarations(log)
     assert attesting, "the log declares ownership for at least one item"

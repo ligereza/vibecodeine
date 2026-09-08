@@ -109,7 +109,7 @@ def run_smoke(port: int = 0, timeout: float = 30.0, sse: bool = True) -> None:
 
     env = os.environ.copy()
     env.setdefault("PYTHONIOENCODING", "utf-8")
-    src_root = ROOT / "src"
+    src_root = ROOT / "flujo" / "src"
     current_pythonpath = env.get("PYTHONPATH", "")
     env["PYTHONPATH"] = os.pathsep.join(
         part for part in (str(src_root), current_pythonpath) if part

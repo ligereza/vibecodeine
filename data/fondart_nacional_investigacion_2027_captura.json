@@ -1,0 +1,1029 @@
+{
+  "algorithm_version": "opportunity-document-to-constraints-1",
+  "budget": [
+    "budget:project-limits"
+  ],
+  "constraints": [
+    {
+      "constraint_id": "budget:project-limits",
+      "evidence_refs": [
+        "p06-budget"
+      ],
+      "field": "project_amount_limits",
+      "kind": "budget",
+      "locator_refs": [
+        "{\"anchor\":\"\",\"page\":6,\"quote\":\"Total de recursos y montos máximos.\",\"section\":\"\",\"source_ref\":\"docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf\"}"
+      ],
+      "required": true,
+      "status": "supported",
+      "value": {
+        "currency": "CLP",
+        "group_available": {
+          "A": 180000000,
+          "B": 180000000
+        },
+        "maximum_per_project": 15000000,
+        "minimum_per_project": 500000
+      }
+    },
+    {
+      "constraint_id": "constraint:p02-objective",
+      "evidence_refs": [
+        "p02-objective"
+      ],
+      "field": "research_scope",
+      "kind": "eligibility",
+      "locator_refs": [
+        "{\"anchor\":\"\",\"page\":2,\"quote\":\"Objetivo de la convocatoria\",\"section\":\"\",\"source_ref\":\"docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf\"}"
+      ],
+      "required": true,
+      "status": "supported",
+      "value": "Investigación que aporte al avance del conocimiento en artes de la visualidad, artesanía, diseño y/o arquitectura."
+    },
+    {
+      "constraint_id": "constraint:p02-transfer-authorization",
+      "evidence_refs": [
+        "p02-transfer-authorization"
+      ],
+      "field": "ministerial_diffusion_authorization",
+      "kind": "hard_gate",
+      "locator_refs": [
+        "{\"anchor\":\"\",\"page\":2,\"quote\":\"Autorización de difusión de resumen y texto de dos carillas.\",\"section\":\"\",\"source_ref\":\"docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf\"}"
+      ],
+      "required": true,
+      "status": "supported",
+      "value": true
+    },
+    {
+      "constraint_id": "constraint:p08-cofinancing",
+      "evidence_refs": [
+        "p08-cofinancing"
+      ],
+      "field": "mandatory_cofinancing",
+      "kind": "hard_gate",
+      "locator_refs": [
+        "{\"anchor\":\"\",\"page\":8,\"quote\":\"No se exige cofinanciamiento obligatorio.\",\"section\":\"\",\"source_ref\":\"docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf\"}"
+      ],
+      "required": true,
+      "status": "supported",
+      "value": false
+    },
+    {
+      "constraint_id": "date:deadline",
+      "evidence_refs": [
+        "p28-deadline-local"
+      ],
+      "field": "submission_deadline",
+      "kind": "date",
+      "locator_refs": [
+        "{\"anchor\":\"Plazo\",\"page\":null,\"quote\":\"jueves 10 de septiembre de 2026, 15:00 hrs.\",\"section\":\"Investigación - Fondart Nacional 2027\",\"source_ref\":\"docs/recovered/claude_sessions_2026-08-12/raw/fondos-postulaciones-requisitos-visible-2027.md\"}"
+      ],
+      "required": true,
+      "status": "unknown",
+      "value": {
+        "date": "2026-09-10",
+        "time": "15:00",
+        "timezone": "America/Santiago"
+      }
+    },
+    {
+      "constraint_id": "date:start-window",
+      "evidence_refs": [
+        "p04-start-window"
+      ],
+      "field": "project_start_window",
+      "kind": "date",
+      "locator_refs": [
+        "{\"anchor\":\"\",\"page\":4,\"quote\":\"El proyecto deberá comenzar entre el 01 de marzo y 30 de abril de 2027.\",\"section\":\"\",\"source_ref\":\"docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf\"}"
+      ],
+      "required": true,
+      "status": "supported",
+      "value": {
+        "end": "2027-04-30",
+        "start": "2027-03-01"
+      }
+    },
+    {
+      "constraint_id": "document:advance-of-research",
+      "evidence_refs": [
+        "p28-advance"
+      ],
+      "field": "advance_of_research",
+      "kind": "required_document",
+      "locator_refs": [
+        "{\"anchor\":\"\",\"page\":28,\"quote\":\"Avance de Investigación.\",\"section\":\"\",\"source_ref\":\"docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf\"}"
+      ],
+      "required": true,
+      "status": "supported",
+      "value": {
+        "must_include": [
+          "problem",
+          "object_of_study",
+          "hypothesis_or_questions",
+          "methodology",
+          "theoretical_framework",
+          "state_of_art",
+          "references"
+        ],
+        "pages": 15
+      }
+    },
+    {
+      "constraint_id": "document:copyright",
+      "evidence_refs": [
+        "p27-copyright"
+      ],
+      "field": "copyright_authorization_if_applicable",
+      "kind": "required_document",
+      "locator_refs": [
+        "{\"anchor\":\"\",\"page\":27,\"quote\":\"Autorización de derechos de autor si corresponde.\",\"section\":\"\",\"source_ref\":\"docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf\"}"
+      ],
+      "required": false,
+      "status": "not_required",
+      "value": true
+    },
+    {
+      "constraint_id": "document:indigenous-consent",
+      "evidence_refs": [
+        "p27-indigenous-consent"
+      ],
+      "field": "indigenous_community_consent_if_applicable",
+      "kind": "required_document",
+      "locator_refs": [
+        "{\"anchor\":\"\",\"page\":27,\"quote\":\"Carta de consentimiento de comunidad indígena si corresponde.\",\"section\":\"\",\"source_ref\":\"docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf\"}"
+      ],
+      "required": false,
+      "status": "not_required",
+      "value": true
+    },
+    {
+      "constraint_id": "document:legal-statutes",
+      "evidence_refs": [
+        "p27-legal-statutes"
+      ],
+      "field": "private_legal_entity_statutes_if_applicable",
+      "kind": "required_document",
+      "locator_refs": [
+        "{\"anchor\":\"\",\"page\":27,\"quote\":\"Estatutos o acta de constitución si responsable es persona jurídica privada.\",\"section\":\"\",\"source_ref\":\"docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf\"}"
+      ],
+      "required": false,
+      "status": "not_required",
+      "value": true
+    },
+    {
+      "constraint_id": "document:minor-clearance",
+      "evidence_refs": [
+        "p27-minor-clearance"
+      ],
+      "field": "minor_work_clearance_if_applicable",
+      "kind": "required_document",
+      "locator_refs": [
+        "{\"anchor\":\"\",\"page\":27,\"quote\":\"Certificado de inhabilidades si hay trabajo directo con menores.\",\"section\":\"\",\"source_ref\":\"docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf\"}"
+      ],
+      "required": false,
+      "status": "not_required",
+      "value": true
+    },
+    {
+      "constraint_id": "document:space-commitment",
+      "evidence_refs": [
+        "p28-space-commitment"
+      ],
+      "field": "space_or_media_commitment_if_applicable",
+      "kind": "required_document",
+      "locator_refs": [
+        "{\"anchor\":\"\",\"page\":28,\"quote\":\"Compromisos de realización o difusión si corresponde.\",\"section\":\"\",\"source_ref\":\"docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf\"}"
+      ],
+      "required": false,
+      "status": "not_required",
+      "value": true
+    },
+    {
+      "constraint_id": "document:team-commitments",
+      "evidence_refs": [
+        "p27-team-commitments"
+      ],
+      "field": "team_commitment_letters_if_applicable",
+      "kind": "required_document",
+      "locator_refs": [
+        "{\"anchor\":\"\",\"page\":27,\"quote\":\"Carta firmada por cada integrante del equipo si corresponde.\",\"section\":\"\",\"source_ref\":\"docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf\"}"
+      ],
+      "required": false,
+      "status": "not_required",
+      "value": true
+    },
+    {
+      "constraint_id": "document:transfer-plan",
+      "evidence_refs": [
+        "p28-transfer-plan"
+      ],
+      "field": "transfer_activity_plan",
+      "kind": "required_document",
+      "locator_refs": [
+        "{\"anchor\":\"\",\"page\":28,\"quote\":\"Plan de Actividad de transferencia.\",\"section\":\"\",\"source_ref\":\"docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf\"}"
+      ],
+      "required": true,
+      "status": "supported",
+      "value": {
+        "formats": [
+          "taller",
+          "charla",
+          "seminario"
+        ],
+        "must_include": [
+          "content",
+          "methodology",
+          "audience",
+          "expected_impact"
+        ]
+      }
+    },
+    {
+      "constraint_id": "duration:max",
+      "evidence_refs": [
+        "p08-duration"
+      ],
+      "field": "project_duration_max_months",
+      "kind": "duration",
+      "locator_refs": [
+        "{\"anchor\":\"\",\"page\":8,\"quote\":\"Plazo máximo de 12 meses.\",\"section\":\"\",\"source_ref\":\"docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf\"}"
+      ],
+      "required": true,
+      "status": "supported",
+      "value": 12
+    },
+    {
+      "constraint_id": "eligibility:applicant",
+      "evidence_refs": [
+        "p10-eligible-persons"
+      ],
+      "field": "eligible_applicant_types",
+      "kind": "eligibility",
+      "locator_refs": [
+        "{\"anchor\":\"\",\"page\":10,\"quote\":\"Quiénes pueden postular.\",\"section\":\"\",\"source_ref\":\"docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf\"}"
+      ],
+      "required": true,
+      "status": "supported",
+      "value": [
+        "natural_chilean_or_definitive_resident_18_plus",
+        "chilean_public_or_private_legal_entity"
+      ]
+    },
+    {
+      "constraint_id": "gate:applicant-compatibility",
+      "evidence_refs": [
+        "p10-incompatibilities"
+      ],
+      "field": "applicant_incompatibilities",
+      "kind": "hard_gate",
+      "locator_refs": [
+        "{\"anchor\":\"\",\"page\":10,\"quote\":\"Quiénes no pueden postular e incompatibilidades.\",\"section\":\"\",\"source_ref\":\"docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf\"}"
+      ],
+      "required": true,
+      "status": "supported",
+      "value": true
+    },
+    {
+      "constraint_id": "gate:field-study",
+      "evidence_refs": [
+        "p02-field-study"
+      ],
+      "field": "field_study_required",
+      "kind": "hard_gate",
+      "locator_refs": [
+        "{\"anchor\":\"\",\"page\":2,\"quote\":\"Proyectos enfocados en estudios de campo para levantamiento de datos.\",\"section\":\"\",\"source_ref\":\"docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf\"}"
+      ],
+      "required": true,
+      "status": "supported",
+      "value": true
+    },
+    {
+      "constraint_id": "gate:fup",
+      "evidence_refs": [
+        "p11-fup"
+      ],
+      "field": "fup_complete",
+      "kind": "hard_gate",
+      "locator_refs": [
+        "{\"anchor\":\"\",\"page\":11,\"quote\":\"FUP completo y documentos requeridos.\",\"section\":\"\",\"source_ref\":\"docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf\"}"
+      ],
+      "required": true,
+      "status": "supported",
+      "value": true
+    },
+    {
+      "constraint_id": "gate:minimum-postulation",
+      "evidence_refs": [
+        "p14-minimum-requirements"
+      ],
+      "field": "minimum_postulation_requirements",
+      "kind": "hard_gate",
+      "locator_refs": [
+        "{\"anchor\":\"\",\"page\":14,\"quote\":\"Requerimientos mínimos de la postulación.\",\"section\":\"\",\"source_ref\":\"docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf\"}"
+      ],
+      "required": true,
+      "status": "supported",
+      "value": true
+    },
+    {
+      "constraint_id": "gate:one-application",
+      "evidence_refs": [
+        "p04-one-application"
+      ],
+      "field": "one_application_only",
+      "kind": "hard_gate",
+      "locator_refs": [
+        "{\"anchor\":\"\",\"page\":4,\"quote\":\"Sólo una postulación a la presente línea.\",\"section\":\"\",\"source_ref\":\"docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf\"}"
+      ],
+      "required": true,
+      "status": "supported",
+      "value": true
+    },
+    {
+      "constraint_id": "gate:transfer",
+      "evidence_refs": [
+        "p04-transfer-minimum"
+      ],
+      "field": "transfer_activity_required",
+      "kind": "hard_gate",
+      "locator_refs": [
+        "{\"anchor\":\"\",\"page\":4,\"quote\":\"Plan de transferencia con mínimo una actividad presencial o virtual.\",\"section\":\"\",\"source_ref\":\"docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf\"}"
+      ],
+      "required": true,
+      "status": "supported",
+      "value": {
+        "formats": [
+          "presencial",
+          "virtual"
+        ],
+        "minimum_activities": 1
+      }
+    }
+  ],
+  "contradictions": [],
+  "criteria": [
+    {
+      "criterion_id": "criterion:p15-curriculum",
+      "evidence_refs": [
+        "p15-curriculum"
+      ],
+      "field": "curriculum",
+      "locator_refs": [
+        "{\"anchor\":\"\",\"page\":15,\"quote\":\"Currículo.\",\"section\":\"\",\"source_ref\":\"docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf\"}"
+      ],
+      "name": "Currículo",
+      "status": "supported",
+      "weight": 0.2
+    },
+    {
+      "criterion_id": "criterion:p15-quality",
+      "evidence_refs": [
+        "p15-quality"
+      ],
+      "field": "quality",
+      "locator_refs": [
+        "{\"anchor\":\"\",\"page\":15,\"quote\":\"Calidad.\",\"section\":\"\",\"source_ref\":\"docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf\"}"
+      ],
+      "name": "Calidad",
+      "status": "supported",
+      "weight": 0.3
+    },
+    {
+      "criterion_id": "criterion:p15-transfer-impact",
+      "evidence_refs": [
+        "p15-transfer-impact"
+      ],
+      "field": "transfer_impact",
+      "locator_refs": [
+        "{\"anchor\":\"\",\"page\":15,\"quote\":\"Impacto potencial de la actividad transferencia.\",\"section\":\"\",\"source_ref\":\"docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf\"}"
+      ],
+      "name": "Impacto potencial de la actividad transferencia",
+      "status": "supported",
+      "weight": 0.4
+    },
+    {
+      "criterion_id": "criterion:p15-viability",
+      "evidence_refs": [
+        "p15-viability"
+      ],
+      "field": "viability",
+      "locator_refs": [
+        "{\"anchor\":\"\",\"page\":15,\"quote\":\"Viabilidad.\",\"section\":\"\",\"source_ref\":\"docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf\"}"
+      ],
+      "name": "Viabilidad",
+      "status": "supported",
+      "weight": 0.1
+    }
+  ],
+  "dates": [
+    "date:deadline",
+    "date:start-window"
+  ],
+  "duration": [
+    "duration:max"
+  ],
+  "eligibility": [
+    "constraint:p02-objective",
+    "eligibility:applicant",
+    "gate:applicant-compatibility"
+  ],
+  "evidence": [
+    {
+      "confirmed": true,
+      "evidence_id": "p02-field-study",
+      "field": "field_study_required",
+      "kind": "hard_gate",
+      "label": "",
+      "locator": {
+        "anchor": "",
+        "page": 2,
+        "quote": "Proyectos enfocados en estudios de campo para levantamiento de datos.",
+        "section": "",
+        "source_ref": "docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf"
+      },
+      "note": "",
+      "status": "supported",
+      "value": true,
+      "weight": null
+    },
+    {
+      "confirmed": true,
+      "evidence_id": "p02-objective",
+      "field": "research_scope",
+      "kind": "eligibility",
+      "label": "",
+      "locator": {
+        "anchor": "",
+        "page": 2,
+        "quote": "Objetivo de la convocatoria",
+        "section": "",
+        "source_ref": "docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf"
+      },
+      "note": "",
+      "status": "supported",
+      "value": "Investigación que aporte al avance del conocimiento en artes de la visualidad, artesanía, diseño y/o arquitectura.",
+      "weight": null
+    },
+    {
+      "confirmed": true,
+      "evidence_id": "p02-transfer-authorization",
+      "field": "ministerial_diffusion_authorization",
+      "kind": "hard_gate",
+      "label": "",
+      "locator": {
+        "anchor": "",
+        "page": 2,
+        "quote": "Autorización de difusión de resumen y texto de dos carillas.",
+        "section": "",
+        "source_ref": "docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf"
+      },
+      "note": "",
+      "status": "supported",
+      "value": true,
+      "weight": null
+    },
+    {
+      "confirmed": true,
+      "evidence_id": "p04-one-application",
+      "field": "one_application_only",
+      "kind": "hard_gate",
+      "label": "",
+      "locator": {
+        "anchor": "",
+        "page": 4,
+        "quote": "Sólo una postulación a la presente línea.",
+        "section": "",
+        "source_ref": "docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf"
+      },
+      "note": "",
+      "status": "supported",
+      "value": true,
+      "weight": null
+    },
+    {
+      "confirmed": true,
+      "evidence_id": "p04-start-window",
+      "field": "project_start_window",
+      "kind": "date",
+      "label": "",
+      "locator": {
+        "anchor": "",
+        "page": 4,
+        "quote": "El proyecto deberá comenzar entre el 01 de marzo y 30 de abril de 2027.",
+        "section": "",
+        "source_ref": "docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf"
+      },
+      "note": "",
+      "status": "supported",
+      "value": {
+        "end": "2027-04-30",
+        "start": "2027-03-01"
+      },
+      "weight": null
+    },
+    {
+      "confirmed": true,
+      "evidence_id": "p04-transfer-minimum",
+      "field": "transfer_activity_required",
+      "kind": "hard_gate",
+      "label": "",
+      "locator": {
+        "anchor": "",
+        "page": 4,
+        "quote": "Plan de transferencia con mínimo una actividad presencial o virtual.",
+        "section": "",
+        "source_ref": "docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf"
+      },
+      "note": "",
+      "status": "supported",
+      "value": {
+        "formats": [
+          "presencial",
+          "virtual"
+        ],
+        "minimum_activities": 1
+      },
+      "weight": null
+    },
+    {
+      "confirmed": true,
+      "evidence_id": "p06-budget",
+      "field": "project_amount_limits",
+      "kind": "budget",
+      "label": "",
+      "locator": {
+        "anchor": "",
+        "page": 6,
+        "quote": "Total de recursos y montos máximos.",
+        "section": "",
+        "source_ref": "docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf"
+      },
+      "note": "",
+      "status": "supported",
+      "value": {
+        "currency": "CLP",
+        "group_available": {
+          "A": 180000000,
+          "B": 180000000
+        },
+        "maximum_per_project": 15000000,
+        "minimum_per_project": 500000
+      },
+      "weight": null
+    },
+    {
+      "confirmed": true,
+      "evidence_id": "p08-cofinancing",
+      "field": "mandatory_cofinancing",
+      "kind": "hard_gate",
+      "label": "",
+      "locator": {
+        "anchor": "",
+        "page": 8,
+        "quote": "No se exige cofinanciamiento obligatorio.",
+        "section": "",
+        "source_ref": "docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf"
+      },
+      "note": "",
+      "status": "supported",
+      "value": false,
+      "weight": null
+    },
+    {
+      "confirmed": true,
+      "evidence_id": "p08-duration",
+      "field": "project_duration_max_months",
+      "kind": "duration",
+      "label": "",
+      "locator": {
+        "anchor": "",
+        "page": 8,
+        "quote": "Plazo máximo de 12 meses.",
+        "section": "",
+        "source_ref": "docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf"
+      },
+      "note": "",
+      "status": "supported",
+      "value": 12,
+      "weight": null
+    },
+    {
+      "confirmed": true,
+      "evidence_id": "p10-eligible-persons",
+      "field": "eligible_applicant_types",
+      "kind": "eligibility",
+      "label": "",
+      "locator": {
+        "anchor": "",
+        "page": 10,
+        "quote": "Quiénes pueden postular.",
+        "section": "",
+        "source_ref": "docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf"
+      },
+      "note": "",
+      "status": "supported",
+      "value": [
+        "natural_chilean_or_definitive_resident_18_plus",
+        "chilean_public_or_private_legal_entity"
+      ],
+      "weight": null
+    },
+    {
+      "confirmed": true,
+      "evidence_id": "p10-incompatibilities",
+      "field": "applicant_incompatibilities",
+      "kind": "hard_gate",
+      "label": "",
+      "locator": {
+        "anchor": "",
+        "page": 10,
+        "quote": "Quiénes no pueden postular e incompatibilidades.",
+        "section": "",
+        "source_ref": "docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf"
+      },
+      "note": "",
+      "status": "supported",
+      "value": true,
+      "weight": null
+    },
+    {
+      "confirmed": true,
+      "evidence_id": "p11-fup",
+      "field": "fup_complete",
+      "kind": "hard_gate",
+      "label": "",
+      "locator": {
+        "anchor": "",
+        "page": 11,
+        "quote": "FUP completo y documentos requeridos.",
+        "section": "",
+        "source_ref": "docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf"
+      },
+      "note": "",
+      "status": "supported",
+      "value": true,
+      "weight": null
+    },
+    {
+      "confirmed": true,
+      "evidence_id": "p14-minimum-requirements",
+      "field": "minimum_postulation_requirements",
+      "kind": "hard_gate",
+      "label": "",
+      "locator": {
+        "anchor": "",
+        "page": 14,
+        "quote": "Requerimientos mínimos de la postulación.",
+        "section": "",
+        "source_ref": "docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf"
+      },
+      "note": "",
+      "status": "supported",
+      "value": true,
+      "weight": null
+    },
+    {
+      "confirmed": true,
+      "evidence_id": "p15-curriculum",
+      "field": "curriculum",
+      "kind": "criterion",
+      "label": "Currículo",
+      "locator": {
+        "anchor": "",
+        "page": 15,
+        "quote": "Currículo.",
+        "section": "",
+        "source_ref": "docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf"
+      },
+      "note": "",
+      "status": "supported",
+      "value": null,
+      "weight": 0.2
+    },
+    {
+      "confirmed": true,
+      "evidence_id": "p15-quality",
+      "field": "quality",
+      "kind": "criterion",
+      "label": "Calidad",
+      "locator": {
+        "anchor": "",
+        "page": 15,
+        "quote": "Calidad.",
+        "section": "",
+        "source_ref": "docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf"
+      },
+      "note": "",
+      "status": "supported",
+      "value": null,
+      "weight": 0.3
+    },
+    {
+      "confirmed": true,
+      "evidence_id": "p15-transfer-impact",
+      "field": "transfer_impact",
+      "kind": "criterion",
+      "label": "Impacto potencial de la actividad transferencia",
+      "locator": {
+        "anchor": "",
+        "page": 15,
+        "quote": "Impacto potencial de la actividad transferencia.",
+        "section": "",
+        "source_ref": "docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf"
+      },
+      "note": "",
+      "status": "supported",
+      "value": null,
+      "weight": 0.4
+    },
+    {
+      "confirmed": true,
+      "evidence_id": "p15-viability",
+      "field": "viability",
+      "kind": "criterion",
+      "label": "Viabilidad",
+      "locator": {
+        "anchor": "",
+        "page": 15,
+        "quote": "Viabilidad.",
+        "section": "",
+        "source_ref": "docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf"
+      },
+      "note": "",
+      "status": "supported",
+      "value": null,
+      "weight": 0.1
+    },
+    {
+      "confirmed": true,
+      "evidence_id": "p27-copyright",
+      "field": "copyright_authorization_if_applicable",
+      "kind": "required_document",
+      "label": "",
+      "locator": {
+        "anchor": "",
+        "page": 27,
+        "quote": "Autorización de derechos de autor si corresponde.",
+        "section": "",
+        "source_ref": "docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf"
+      },
+      "note": "",
+      "status": "supported",
+      "value": true,
+      "weight": null
+    },
+    {
+      "confirmed": true,
+      "evidence_id": "p27-indigenous-consent",
+      "field": "indigenous_community_consent_if_applicable",
+      "kind": "required_document",
+      "label": "",
+      "locator": {
+        "anchor": "",
+        "page": 27,
+        "quote": "Carta de consentimiento de comunidad indígena si corresponde.",
+        "section": "",
+        "source_ref": "docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf"
+      },
+      "note": "",
+      "status": "supported",
+      "value": true,
+      "weight": null
+    },
+    {
+      "confirmed": true,
+      "evidence_id": "p27-legal-statutes",
+      "field": "private_legal_entity_statutes_if_applicable",
+      "kind": "required_document",
+      "label": "",
+      "locator": {
+        "anchor": "",
+        "page": 27,
+        "quote": "Estatutos o acta de constitución si responsable es persona jurídica privada.",
+        "section": "",
+        "source_ref": "docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf"
+      },
+      "note": "",
+      "status": "supported",
+      "value": true,
+      "weight": null
+    },
+    {
+      "confirmed": true,
+      "evidence_id": "p27-minor-clearance",
+      "field": "minor_work_clearance_if_applicable",
+      "kind": "required_document",
+      "label": "",
+      "locator": {
+        "anchor": "",
+        "page": 27,
+        "quote": "Certificado de inhabilidades si hay trabajo directo con menores.",
+        "section": "",
+        "source_ref": "docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf"
+      },
+      "note": "",
+      "status": "supported",
+      "value": true,
+      "weight": null
+    },
+    {
+      "confirmed": true,
+      "evidence_id": "p27-team-commitments",
+      "field": "team_commitment_letters_if_applicable",
+      "kind": "required_document",
+      "label": "",
+      "locator": {
+        "anchor": "",
+        "page": 27,
+        "quote": "Carta firmada por cada integrante del equipo si corresponde.",
+        "section": "",
+        "source_ref": "docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf"
+      },
+      "note": "",
+      "status": "supported",
+      "value": true,
+      "weight": null
+    },
+    {
+      "confirmed": true,
+      "evidence_id": "p28-advance",
+      "field": "advance_of_research",
+      "kind": "required_document",
+      "label": "",
+      "locator": {
+        "anchor": "",
+        "page": 28,
+        "quote": "Avance de Investigación.",
+        "section": "",
+        "source_ref": "docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf"
+      },
+      "note": "",
+      "status": "supported",
+      "value": {
+        "must_include": [
+          "problem",
+          "object_of_study",
+          "hypothesis_or_questions",
+          "methodology",
+          "theoretical_framework",
+          "state_of_art",
+          "references"
+        ],
+        "pages": 15
+      },
+      "weight": null
+    },
+    {
+      "confirmed": false,
+      "evidence_id": "p28-deadline-local",
+      "field": "submission_deadline",
+      "kind": "date",
+      "label": "",
+      "locator": {
+        "anchor": "Plazo",
+        "page": null,
+        "quote": "jueves 10 de septiembre de 2026, 15:00 hrs.",
+        "section": "Investigación - Fondart Nacional 2027",
+        "source_ref": "docs/recovered/claude_sessions_2026-08-12/raw/fondos-postulaciones-requisitos-visible-2027.md"
+      },
+      "note": "Visible local capture; not independently current-verified.",
+      "status": "supported",
+      "value": {
+        "date": "2026-09-10",
+        "time": "15:00",
+        "timezone": "America/Santiago"
+      },
+      "weight": null
+    },
+    {
+      "confirmed": true,
+      "evidence_id": "p28-space-commitment",
+      "field": "space_or_media_commitment_if_applicable",
+      "kind": "required_document",
+      "label": "",
+      "locator": {
+        "anchor": "",
+        "page": 28,
+        "quote": "Compromisos de realización o difusión si corresponde.",
+        "section": "",
+        "source_ref": "docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf"
+      },
+      "note": "",
+      "status": "supported",
+      "value": true,
+      "weight": null
+    },
+    {
+      "confirmed": true,
+      "evidence_id": "p28-transfer-plan",
+      "field": "transfer_activity_plan",
+      "kind": "required_document",
+      "label": "",
+      "locator": {
+        "anchor": "",
+        "page": 28,
+        "quote": "Plan de Actividad de transferencia.",
+        "section": "",
+        "source_ref": "docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf"
+      },
+      "note": "",
+      "status": "supported",
+      "value": {
+        "formats": [
+          "taller",
+          "charla",
+          "seminario"
+        ],
+        "must_include": [
+          "content",
+          "methodology",
+          "audience",
+          "expected_impact"
+        ]
+      },
+      "weight": null
+    }
+  ],
+  "hard_gates": [
+    "constraint:p02-transfer-authorization",
+    "constraint:p08-cofinancing",
+    "gate:applicant-compatibility",
+    "gate:field-study",
+    "gate:fup",
+    "gate:minimum-postulation",
+    "gate:one-application",
+    "gate:transfer"
+  ],
+  "input_hash": "sha256:febf3d349a5a84417b1775c8b2bc87afe289f9a89fd75e932c521ef7ae2de069",
+  "opportunity_id": "fondart-nacional-investigacion-2027",
+  "provenance": {
+    "claims_promoted": 0,
+    "input_schema": "mak-opportunity-document-package-v1",
+    "locators_are_required": true,
+    "source_hash": "sha256:9da0ab5f0850fdad354415448829fd88fa1e61beee5fd048c90a4a5b4c418af2",
+    "source_ref": "docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf"
+  },
+  "reconciliation": {
+    "claims_promoted": 0,
+    "constraint_count": 22,
+    "contradiction_count": 0,
+    "criteria_weight_status": "complete",
+    "criteria_weight_total": 1.0,
+    "criterion_count": 4,
+    "deterministic_order": true,
+    "hard_gate_count": 8,
+    "input_evidence_count": 26,
+    "output_evidence_count": 26,
+    "unknown_count": 1
+  },
+  "required_documents": [
+    "document:advance-of-research",
+    "document:copyright",
+    "document:indigenous-consent",
+    "document:legal-statutes",
+    "document:minor-clearance",
+    "document:space-commitment",
+    "document:team-commitments",
+    "document:transfer-plan"
+  ],
+  "schema": "mak-opportunity-constraints-v1",
+  "source": {
+    "content_hash": null,
+    "source_hash": "sha256:9da0ab5f0850fdad354415448829fd88fa1e61beee5fd048c90a4a5b4c418af2",
+    "source_ref": "docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf",
+    "source_url": "https://www.fondosdecultura.cl/wp-content/uploads/2026/08/investigacion-fondart-nacional-2027.pdf",
+    "validity": {
+      "confirmed": true,
+      "effective_from": null,
+      "effective_to": "2026-09-10",
+      "status": "current_verified"
+    },
+    "version": "local-recovery-2026-08-12"
+  },
+  "title": "Fondart Nacional Línea Investigación — Concurso General 2027",
+  "transfer": [
+    "constraint:p02-transfer-authorization",
+    "document:transfer-plan",
+    "gate:transfer"
+  ],
+  "unknowns": [
+    {
+      "code": "constraint_status_unknown",
+      "constraint_ids": [
+        "date:deadline"
+      ],
+      "evidence_refs": [
+        "p28-deadline-local"
+      ]
+    }
+  ],
+  "_rescued_from": {
+    "original_path": "/home/mak/experiments/pilots/ARICA-FONDART-2027/runs/enriched/opportunity.json",
+    "original_sha256": "0a388d3cdd5b1e2ec68d967ab85816c99a6b41df2d95ee4a2b07b5b9bcb971a2",
+    "rescued_on": "2026-09-05",
+    "why": "Bases capturadas de Fondart Nacional Linea Investigacion 2027, unica fuente que el formato F4 puede comprobar. Vivian solo bajo experiments/pilots/, que .gitignore:122 excluye entero. El original queda intacto.",
+    "consumer": "data/portfolio_formats/F4-fondart-nacional-investigacion-2027.json",
+    "sibling": "data/fondart_creacion_artistica_regional_2027.json",
+    "schema_note": "Esquema de captura de oportunidad, distinto del de bases del archivo Regional. No son intercambiables."
+  }
+}

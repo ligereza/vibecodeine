@@ -13,11 +13,12 @@ import time
 import argparse
 import glob
 import sys
+from pathlib import Path
 
 try:
     from cultura.mak_conductor.runtime import active_enabled, dispatch_sync
 except ImportError:  # pragma: no cover - direct MAK deployment
-    sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH", "/home/mak/flujo/cultura"))
+    sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH", "/home/mak/cultura"))
     try:
         from mak_conductor.runtime import active_enabled, dispatch_sync
     except ImportError:
@@ -133,8 +134,11 @@ def _safe_tree(value):
 
 def _path_roots():
     roots = []
+    repo_root = str(Path(__file__).resolve().parents[2])
     for value in (
             os.environ.get("MAK_REPO_ROOT", ""),
+            os.path.join(repo_root, "flujo"),
+            repo_root,
             "/home/mak/flujo",
             os.getcwd(),
             os.path.join(os.path.expanduser("~"), "plataforma")):

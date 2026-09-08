@@ -40,8 +40,8 @@ def direct_links(conn: sqlite3.Connection, artifact_path: str) -> list[str]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--db", type=Path, default=Path("/home/mak/flujo/data/mak_knowledge.db"))
-    parser.add_argument("--report", type=Path, default=Path("/home/mak/flujo/context/MAK_EFFORT_CONSUMER_CROSSWALK.md"))
+    parser.add_argument("--db", type=Path, default=Path("/home/mak/data/mak_knowledge.db"))
+    parser.add_argument("--report", type=Path, default=Path("/home/mak/context/MAK_EFFORT_CONSUMER_CROSSWALK.md"))
     parser.add_argument("--limit", type=int, default=15)
     args = parser.parse_args()
 
@@ -60,8 +60,8 @@ def main() -> int:
         FROM entity_relations r JOIN entities s ON s.entity_id=r.source_entity_id
         WHERE r.relation_kind='possibly_consumed_by'
           AND (s.path LIKE '/home/mak/research/%'
-               OR s.path LIKE '/home/mak/flujo/cultura/mak_research/%'
-               OR s.path='/home/mak/flujo/tools/research_job_router.py')
+               OR s.path LIKE '/home/mak/cultura/mak_research/%'
+               OR s.path='/home/mak/tools/research_job_router.py')
         """
     ).fetchone()[0]
     active_research_consumers = conn.execute(
@@ -70,10 +70,10 @@ def main() -> int:
         FROM entities e
         WHERE e.path IN (
           '/home/mak/research/interfaz.py',
-          '/home/mak/flujo/cultura/mak_research/interfaz.py',
-          '/home/mak/flujo/cultura/mak_research/source_pipeline.py',
-          '/home/mak/flujo/cultura/mak_research/fondart_corpus.py',
-          '/home/mak/flujo/tools/research_job_router.py'
+          '/home/mak/cultura/mak_research/interfaz.py',
+          '/home/mak/cultura/mak_research/source_pipeline.py',
+          '/home/mak/cultura/mak_research/fondart_corpus.py',
+          '/home/mak/tools/research_job_router.py'
         )
         ORDER BY e.path, e.entity_kind
         """

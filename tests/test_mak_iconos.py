@@ -56,8 +56,14 @@ def _import_iconos():
     except ImportError:
         sys.modules["resource"] = types.ModuleType("resource")
         resource_puesto = True
-    if str(MAK_CODEX) not in sys.path:
-        sys.path.insert(0, str(MAK_CODEX))
+    # The compatibility projection at /home/mak/codex may have been imported
+    # by an earlier MAK test. Put the canonical source first so monkeypatching
+    # the imported module reaches the function globals that execute it.
+    try:
+        sys.path.remove(str(MAK_CODEX))
+    except ValueError:
+        pass
+    sys.path.insert(0, str(MAK_CODEX))
     sys.modules.pop("codex_lib", None)
     sys.modules.pop("iconos", None)
     try:

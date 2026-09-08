@@ -98,7 +98,7 @@ Cross these instead of scanning. Ordered by how fast they pay off.
 | `.codex/memories/rollout_summaries/` | what past sessions did, with paths |
 
 `tools/conversacion.py` reads `~/.claude/projects/` transcripts as a corpus.
-The `arqueologia.py` and `esfuerzo.py` named beside it in `CAPACIDADES.md`
+The `arqueologia.py` and `esfuerzo.py` named beside it in `CAPACIDADES_MAK.md`
 do not exist as files; the archaeology function survives as
 `tools/inferential_archaeology.py` plus the sqlite above.
 

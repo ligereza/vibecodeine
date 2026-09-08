@@ -80,7 +80,7 @@ def coverage_lowlights(threshold=60, top_n=8):
         report = Path(tmp) / "coverage.json"
         cmd = [
             sys.executable, "-m", "pytest", "tests/", "-q",
-            "--cov=src/flujo", f"--cov-report=json:{report}",
+            "--cov=flujo/src/flujo", f"--cov-report=json:{report}",
         ]
         try:
             subprocess.run(cmd, cwd=ROOT, capture_output=True, timeout=600, check=False)

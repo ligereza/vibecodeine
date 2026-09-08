@@ -1,9 +1,13 @@
 # Document authority in MAK
 
+> Registro de una medición histórica (2026-08-28), no contrato vigente. La
+> autoridad actual es `/home/mak/AGENTS.md`; el estado se obtiene con
+> `.venv/bin/python tools/mak_status.py`.
+
 Measured and written 2026-08-28. This file exists because **nine documents in
 this repo declared themselves canonical and the loader reads three.**
 
-Language: English, ASCII. `agents.md` requires it for operational metadata, and
+Language: English, ASCII. `AGENTS.md` is the current contract for operational metadata, and
 the well-formed operational documents of this repo already comply -- see
 `docs/admissibility.md`, `context/OBJECTIVE_AUDIT.md`,
 `context/OWNER_MANIFEST.md` and `context/DEPENDENCY_SURFACE.md`, all English
@@ -12,10 +16,10 @@ diacritics, which was the wrong side of the same rule it was written to enforce.
 
 ## The real read order
 
-`tools/agent_bootstrap.py`, line 59, emits this order and no other:
+The current entry point is `/home/mak/AGENTS.md`, followed by a machine measurement:
 
 ```
-agents.md -> docs/MAK_CURRENT_STATE.md -> context/LAST_HANDOFF.md
+AGENTS.md -> .venv/bin/python tools/mak_status.py -> context/HANDOFF_HISTORICO.md
 ```
 
 That is the authority. It is not this file's recommendation: it is what an agent
@@ -27,7 +31,7 @@ is promoted to authority by writing "canonical" in its header.
 
 | Document | Claimed | What it actually is |
 |---|---|---|
-| `agents.md` | "This lowercase file is canonical" | **Authority. Correct.** #1 in the order. |
+| `AGENTS.md` | "This file is canonical" | **Historical row.** The current contract is the root file. |
 | `docs/MAK_CURRENT_STATE.md` | "Fuente canonica de orientacion" | **Authority. Correct.** #2 in the order. |
 | `context/LAST_HANDOFF.md` | continuity | **Authority. Correct.** #3 in the order. |
 | `docs/MAK_SYSTEM_DIRECTIVE.md` | "canonical direction for agents as of 2026-08-25" | **Mission doctrine.** Says what MAK wants to become, not what it is. Not in the order. |
@@ -35,7 +39,7 @@ is promoted to authority by writing "canonical" in its header.
 | `docs/INFLECTION_POINT_ARTISTIC_ARCHIVE_2026-08-24.md` | "decision arquitectonica vigente" (530 lines) | **Dated record of a direction change.** Good as the history of why. |
 | `docs/PORTAFOLIO_PRODUCCION.md` | "doctrina de trabajo desde 2026-08-28" (647 lines) | **Domain doctrine**: how a portfolio is produced. Does not govern the rest of MAK. |
 | `MAPA.md` | command map | **Generated index.** Useful and honest: zero broken paths, zero prose figures. |
-| `CAPACIDADES.md` | master registry (79 KB) | **Tool inventory.** See below: the one that lies most, and because of how it is written. |
+| `CAPACIDADES_MAK.md` | master registry (79 KB) | **Tool inventory.** See below: the one that lies most, and because of how it is written. |
 | `context/MD_CONTEXT_MASTER.md` | "this file is the consolidation layer" | **Navigation index.** |
 | `PLAN.md` | "Plan Maestro -- ISKVW" | **Historical (2026-07-20).** Business context, not technical state. Gitignored at `.gitignore:230`. |
 | `context/PHASE_REPORTS_INDEX.md` | gave a fourth list of truth sources | **Corrected 2026-08-28**: it now repeats the bootstrap order instead of inventing its own. |
@@ -56,17 +60,18 @@ whether a machine can decide if it is true. **653 claims:**
 Per document, what matters:
 
 ```
-CAPACIDADES.md                     95 ok   143 no path   15 broken   17 figures   116 states
+CAPACIDADES_MAK.md                     95 ok   143 no path   15 broken   17 figures   116 states
 docs/SCRIPTS_INVENTORY.md           6 ok    27 no path   26 broken    0 figures     3 states
 docs/MAK_CURRENT_STATE.md          38 ok     8 no path    4 broken    3 figures     6 states
 docs/PORTAFOLIO_PRODUCCION.md      15 ok    12 no path    7 broken    8 figures     0 states
 MAPA.md                             6 ok     0 no path    0 broken    0 figures     2 states
-agents.md                           5 ok     0 no path    0 broken    0 figures     0 states
+AGENTS.md                           historical row; current contract is measured at the root
 ```
 
-The last two rows are the conclusion. **`agents.md` and `MAPA.md` cannot lie**
+The last two rows are the conclusion. The root contract and machine measurement
+are intentionally kept outside this historical comparison.
 -- not because anyone maintains them, but because they are written in a form
-that does not admit a lie: full paths, zero prose figures. `CAPACIDADES.md`
+that does not admit a lie: full paths, zero prose figures. `CAPACIDADES_MAK.md`
 carries 116 prose states and is therefore architecturally unverifiable.
 
 Repo-wide, over the 348 tracked `*.md` files: **79 references point at files
@@ -85,7 +90,7 @@ without a root anchor.
    invariant range and the version.
 4. **A prose state (`VIVO`, `activo`, `integridad OK`) states next to it how it
    was checked**, or it is not written.
-5. **Operational metadata is English ASCII** (`agents.md`, Language section).
+5. **Operational metadata is English ASCII** (`AGENTS.md`, Language section).
    Human-facing RD and Portfolio material keeps correct Spanish with diacritics.
 
 ### The gates exist and have two measured blind spots
@@ -106,7 +111,7 @@ is that a claim can escape on punctuation. Widening them edits tests, so it is
 declared below and not done here.
 
 The concrete cause of rule 2: the `auditar_capacidades_mak` audit left its only
-list of retirement candidates pointing at **line numbers** in `CAPACIDADES.md`
+list of retirement candidates pointing at **line numbers** in `CAPACIDADES_MAK.md`
 (`rows 391, 413, 425, 426, 428, 430`). It was already broken when written --
 391 and 413 are prose lines -- and every row added since pushed it further. A
 complete audit was made unusable by its addressing.
@@ -135,9 +140,9 @@ the rule broke it.
 |---|---|---|
 | `context/PHASE_REPORTS_INDEX.md` | 748 PHASE files, "untracked" | 13 files, all tracked |
 | `docs/SCRIPTS_INVENTORY.md` | four minors behind; `checkpoint.sh` nonexistent; `scripts/app.py` active; legacy under `_archive/**` | version matches `pyproject.toml`; `checkpoint.sh` exists and `src/flujo/airdrop.py` invokes it; `app.py` does not exist; `_archive/` did not exist |
-| `CAPACIDADES.md` | 4 databases with "integridad OK" under `research/**` and `labs/**` | neither tree exists |
-| `CAPACIDADES.md` | `mak_knowledge.db` 35 tables / 387.089 rows | 48 tables / 387.104 rows per `tools/repo_audit.py`, which runs in CI and excludes SQLite internal tables |
-| `CAPACIDADES.md` | runbooks at `xio/RUNBOOK.md` | were absent locally; **restored 2026-08-28** from `/home/mak/WIN/flujo/xio/` |
+| `CAPACIDADES_MAK.md` | 4 databases with "integridad OK" under `research/**` and `labs/**` | neither tree exists |
+| `CAPACIDADES_MAK.md` | `mak_knowledge.db` 35 tables / 387.089 rows | 48 tables / 387.104 rows per `tools/repo_audit.py`, which runs in CI and excludes SQLite internal tables |
+| `CAPACIDADES_MAK.md` | runbooks at `xio/RUNBOOK.md` | were absent locally; **restored 2026-08-28** from `/home/mak/WIN/flujo/xio/` |
 | `docs/GLOSSARY.md` | Spanish comments outnumbering English several times over (2026-07-30) | inverted, per `tools/idioma.py` over 1039 tracked files: 405 carrying Spanish, 435 English, 49 mixed, 199 with no evidence |
 | `README.md` | 113 bytes, an ASCII image and nothing else | real entry point with the read order and a minimal map |
 
@@ -149,7 +154,7 @@ runbook. They existed only in `/home/mak/WIN/flujo/xio/`, and they were not
 stale: `xio/FACES.md` is byte-identical in both trees, so WIN never diverged.
 Copied with `cp -p`; the legacy tree was not modified.
 
-`xio/RUNBOOK.md` (23 KB), `xio/HOTSPOT_SHOW_RUNBOOK.md`, `xio/XIO_CAPABILITIES.md`,
+`xio/RUNBOOK.md` (23 KB), `xio/HOTSPOT_SHOW_RUNBOOK.md`, `CAPACIDADES_MAK.md (sección XIO)`,
 `xio/PLAN_SERVICIOS_SIN_ROOT.md`.
 
 ## Declared and not executed
@@ -188,7 +193,7 @@ All of the following requires touching code, tests or workflows, not files:
 - **A Markdown language gate.** Rule 5 has no instrument. `tools/idioma.py`
   covers `*.py` only.
 - **`docs/MAK_CURRENT_STATE.md`** is #2 in the read order and carries 275
-  non-ASCII characters in Spanish prose, against the rule in `agents.md`. It
+  non-ASCII characters in Spanish prose, against the historical rule. It
   also cites 4 dead paths, two of them PHASE files that no longer exist.
   Correcting the second authority deserves its own pass.
 

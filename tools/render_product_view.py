@@ -11,6 +11,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
+MOTOR_SRC = ROOT / "flujo" / "src"
+if MOTOR_SRC.is_dir() and str(MOTOR_SRC) not in sys.path:
+    sys.path.insert(0, str(MOTOR_SRC))
 
 from flujo.knowledge.product_view import (  # noqa: E402
     ProductViewError,

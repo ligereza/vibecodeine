@@ -35,7 +35,7 @@ place; this file is the consolidation layer.
 | family | source set | role and disposition |
 |---|---|---|
 | direction memory | `projects/cultura/MD_IDEAS_MASTER.md` and recovered inputs | human product direction and revenue hypotheses; source of intent, not an executable plan |
-| architecture and capability | `/home/mak/flujo/MAPA.md`, `/home/mak/flujo/CAPACIDADES.md`, `/home/mak/flujo/PLAN.md` | current maps, measured capability surface and strategic backlog; reconcile against runtime before treating statements as current |
+| architecture and capability | `/home/mak/flujo/MAPA.md`, `/home/mak/flujo/CAPACIDADES_FLUJO.md`, `/home/mak/flujo/PLAN.md` | current maps, measured capability surface and strategic backlog; reconcile against runtime before treating statements as current |
 | RD editorial contract | `/home/mak/flujo/linea_editorial/v4.1.md` | active Spanish-facing RD visual/voice contract; separate from the machine-facing `projects/flujo/flujo.json` base |
 | RD data and venue bridge | `/home/mak/flujo/docs/rd/DB_PRODUCTORAS_ESTADO.md`, `/home/mak/flujo/projects/plano/README.md`, `/home/mak/flujo/docs/HERRAMIENTAS_VISUALES.md` | operational documentation for catalog, venue/plano and visual consumers; keep databases and projections separate |
 | opportunities and proposals | `/home/mak/flujo/docs/becas/`, `/home/mak/flujo/projects/cultura/dossiers/convocatorias_mak_ruta.md`, recovered Fondart extracts | research and proposal pipeline; candidate/unverified until primary source, eligibility and deadline are checked |

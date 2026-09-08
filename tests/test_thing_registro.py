@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""tests/test_thing_registro.py -- CAPACIDADES.md seccion 6 (thi.ng) es el
+"""tests/test_thing_registro.py -- CAPACIDADES_MAK.md seccion 6 (thi.ng) es el
 indice que un agente debe leer ANTES de escribir un generador/pipeline/grafo
 desde cero (regla 2026-07-30: una sola libreria vendorizada estaba EN USO de
 cuatro, y la sesion siguiente mandaba a reescribir la misma capacidad). Este
@@ -13,7 +13,7 @@ from pathlib import Path
 import pytest
 
 REPO = Path(__file__).resolve().parents[1]
-CAPACIDADES = REPO / "CAPACIDADES.md"
+CAPACIDADES = REPO / "CAPACIDADES_MAK.md"
 MANIFIESTOS = {
     "motor": REPO / "data" / "motor_librerias.json",
     "iskvw": REPO / "data" / "iskvw_librerias.json",
@@ -27,7 +27,7 @@ LIBS_DIRS = {
 def _seccion_6_texto():
     src = CAPACIDADES.read_text(encoding="utf-8")
     m = re.search(r"^## 6\. thi\.ng.*?(?=\Z)", src, re.S | re.M)
-    assert m, "no encuentro '## 6. thi.ng' en CAPACIDADES.md"
+    assert m, "no encuentro '## 6. thi.ng' en CAPACIDADES_MAK.md"
     return m.group(0)
 
 
@@ -80,7 +80,7 @@ class TestEstructuraDeLaTabla:
     def test_mutacion_fila_sin_estado_se_detecta(self):
         """Mutation check: una tabla con una fila de estado vacio debe fallar
         la misma asercion que la de arriba (probado sobre una tabla de
-        prueba, no sobre CAPACIDADES.md real)."""
+        prueba, no sobre CAPACIDADES_MAK.md real)."""
         texto_roto = (
             "## 6. thi.ng: x\n\n"
             "| paquete | estado | donde, y que retira | senal |\n"
@@ -103,7 +103,7 @@ class TestManifiestosTienenFilaEnLaTabla:
                 if e["paquete"] not in texto:
                     faltantes.append(f"{clave}:{e['paquete']}")
         assert not faltantes, (
-            "declaradas en el manifiesto pero sin fila en CAPACIDADES.md #6: "
+            "declaradas en el manifiesto pero sin fila en CAPACIDADES_MAK.md #6: "
             + ", ".join(faltantes))
 
 
@@ -153,7 +153,7 @@ class TestFilasEnUsoNombranConsumidorReal:
     def test_mutacion_referencia_falsa_se_detecta(self):
         """Mutation check: si la fila EN USO citara un archivo real que NO
         importa la libreria, el chequeo de contenido de arriba debe fallar.
-        Probado con datos sinteticos, no con CAPACIDADES.md real."""
+        Probado con datos sinteticos, no con CAPACIDADES_MAK.md real."""
         manifiestos = _manifiestos_cargados()
         paquete_a_nombre = {
             e["paquete"]: e["nombre"]

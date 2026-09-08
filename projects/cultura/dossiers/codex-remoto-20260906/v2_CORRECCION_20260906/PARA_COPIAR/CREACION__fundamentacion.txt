@@ -1,0 +1,24 @@
+Fundamentación
+==============
+[182 palabras · 1065 caracteres · corte 2026-09-06]
+[pegar desde la linea siguiente]
+
+Un archivo de trabajo no es un catálogo. El catálogo llega cuando el trabajo
+ya está clasificado; el archivo es lo que hay antes, y es donde ocurre la
+parte interesante. Los repositorios resuelven el catálogo y abandonan el
+archivo: reducen una trayectoria a listas y resultados finales, y en esa
+reducción desaparecen las relaciones, las dudas y las decisiones que hacen
+legible un cuerpo de trabajo.
+
+Este proyecto no propone una clasificación mejor. Propone hacer visible el
+acto de clasificar y devolverlo a quien mira. La apuesta de diseño es que un
+orden que declara su propio costo es más útil, y más honesto, que un orden que
+se presenta como natural.
+
+Lo digo desde mi práctica y no como diagnóstico del sector: mi archivo tiene
+miles de registros y construí el instrumento porque no podía recorrerlo. Que
+ese problema exista para otros es una hipótesis que la obra empieza a examinar
+en sala, no una afirmación que dé por probada.
+
+La región de ejecución es donde tengo domicilio y donde se realiza la
+totalidad de las actividades, incluida la exhibición.

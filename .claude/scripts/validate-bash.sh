@@ -4,7 +4,10 @@
 # Este hook bloquea SCANS que devuelven contenido de dirs pesados, pero DEJA
 # pasar cleanups (rm/-delete/-exec), metadata (du/wc/ls -d) y git, y cualquier
 # comando ya scopeado (--exclude/-prune/-not -path).  Exit 2 = bloquear.
-cmd=$(py -c "import sys,json; print((json.load(sys.stdin).get('tool_input') or {}).get('command',''))" 2>/dev/null)
+# `py` is the Windows launcher and does not exist on this box, so reading the
+# payload with it left $cmd empty and the guard exited 0 on every command.
+PYBIN=$(command -v python3 || command -v py) || exit 0
+cmd=$("$PYBIN" -c "import sys,json; print((json.load(sys.stdin).get('tool_input') or {}).get('command',''))" 2>/dev/null)
 [ -z "$cmd" ] && exit 0
 
 # 1) ALLOW: verbos no-lectura o ya scopeados (aunque mencionen un dir pesado)

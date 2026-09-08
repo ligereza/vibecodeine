@@ -12,7 +12,7 @@ Written 2026-07-16 by consolidating xio/**/*.md + the real scripts under xio/new
 Capability boundary: this runbook covers both the passive `foh_monitor` and the
 active `showcontrol` plugin. The former observes UDP traffic; the latter can
 send or receive show-control traffic when installed, enabled and authorized.
-Repository code is not runtime proof. Use [CAPACIDADES.md](CAPACIDADES.md) as
+Repository code is not runtime proof. Use [CAPACIDADES_MAK.md](../CAPACIDADES_MAK.md) as
 the status matrix before a show.
 
 ## Index
@@ -425,7 +425,8 @@ Disparo:
 bash airdrop_push.sh /sdcard/Download/entrega.zip "mensaje corto"
 ```
 Verde = PR `airdrop/<tag>` lista para mergear desde el navegador del telefono.
-Detalle del canal: docs/AGENT_AIRDROP_PROTOCOL.md, seccion "Canal sin PC".
+El gate sin PC queda definido por `.github/workflows/airdrop_gate.yml` y por
+la validación ejecutable en `scripts/validate_airdrop.py`.
 Source: xio/new/airdrop_push.sh + .github/workflows/airdrop_gate.yml
 
 ## 8. Source docs

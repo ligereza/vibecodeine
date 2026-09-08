@@ -1,0 +1,52 @@
+Estrategias de transferencia de aprendizajes
+============================================
+[445 palabras · 2804 caracteres · corte 2026-09-06]
+[pegar desde la linea siguiente]
+
+La prueba que este anexo se pone a sí mismo: ¿el método sobrevive sin el
+laboratorio, sin el docente y sin el instrumento? Si sólo funciona con el
+software del proyecto, no hubo transferencia sino dependencia.
+
+Competencias que se transfieren, con su nivel realista declarado. Inventariar
+un archivo propio: autónomo. Distinguir obra, registro y contexto: autónomo.
+Formular una pregunta de orden: autónomo. Registrar decisiones reversibles:
+autónomo. Producir una selección con uso declarado: autónomo. Leer
+críticamente una salida automática: con apoyo. Interpretar una métrica de
+pérdida: con apoyo. Dos de siete quedan con apoyo tras 28 horas; prometer
+autonomía plena en las siete sería más vendedor y menos cierto.
+
+Mecanismo 1, la guía transferible. Documento publicado libre y gratuito, en
+lenguaje llano, con los seis pasos escritos de modo que puedan ejecutarse a
+mano o con herramientas comunes. La guía se diseñará para que el método pueda
+ejecutarse manualmente si el software no está disponible, y esa independencia
+se verificará con una actividad en la sesión 1 y una evaluación en la sesión
+8. No se presenta como eficacia ya demostrada. Verificador: la guía publicada
+y el resultado de esas dos actividades.
+
+Mecanismo 2, el apoyo de software. El método debe sostenerse aunque el
+software no esté disponible. El software se ofrecerá como apoyo local sólo si
+la prueba de instalación de la sesión 7 lo confirma; no se promete aquí que
+funcione de manera autónoma en los equipos de los participantes. Verificador:
+guía manual, instrucciones de instalación y resultado de la prueba.
+
+Mecanismo 3, la sesión entre pares. La sesión 8 es una presentación de
+participantes a participantes: cada quien muestra su selección y explica el
+método que usó. Quien puede explicar el método a otro lo ha transferido; quien
+sólo muestra el resultado, no. Verificador: registro de la sesión 8.
+
+Evidencias de logro. Doce pares de fichas comparadas; doce selecciones con uso
+declarado; doce presentaciones entre pares; doce autoevaluaciones que incluyen
+qué no funcionó; una guía publicada; cuarenta y ocho horas de tutoría
+registradas.
+
+Aplicación en el ámbito disciplinar. Inmediata y personal: cada participante
+sale con una selección utilizable esa misma semana para postular, exponer o
+publicar. En el ecosistema: la guía es libre, no depende del proyecto ni de
+software, y puede usarla una escuela, un espacio cultural o un colectivo sin
+pedir permiso ni financiamiento.
+
+Lo que no se promete. Que los participantes sigan usando el instrumento; que
+sus archivos queden ordenados por completo, porque 28 horas no alcanzan para
+diez años de material y el laboratorio lo dice desde la sesión 1; ni que se
+forme una comunidad de práctica sostenida, que exigiría un proyecto de
+continuidad que este no es.

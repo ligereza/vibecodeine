@@ -1,0 +1,549 @@
+{
+  "task_id": "runtime-contract-20260902",
+  "status": "complete",
+  "schema": "mak-runtime-contract-dossier-v1",
+  "generated_at": "2026-09-02T09:25:00+00:00",
+  "physical_root": "/home/mak",
+  "adapter": {
+    "path": "/home/mak/flujo",
+    "role": "compatibility_adapter",
+    "is_symlink": false,
+    "own_git_dir": false,
+    "is_git_worktree": false,
+    "entries": 83,
+    "sibling_symlinks": 82,
+    "recursive_symlinks": 0,
+    "broken_symlinks": 0
+  },
+  "before": {
+    "git_status_short": [
+      " M context/LAST_HANDOFF.md",
+      " M cultura/mak_codex/interfaz_codex.py",
+      " M docs/MAK_CURRENT_STATE.md",
+      "?? context/git_history_local_20260814_20260901.json",
+      "?? context/python_census_20260901.json",
+      "?? inventario_externo.sh",
+      "?? inventario_mak.sh"
+    ],
+    "checkout_branch": "main",
+    "branch_profile_local": {
+      "branch": "main",
+      "kind": "historical",
+      "role": "reviewed historical aggregate; not a deployment target",
+      "default_test_selector": null,
+      "hub": null
+    },
+    "branch_profiles_read_via_git_show": {
+      "MAK": {
+        "kind": "runtime",
+        "default_test_selector": "-m mak",
+        "hub_module": "cultura/mak_plataforma/hub.py",
+        "hub_default_port": 8900
+      },
+      "FLUJO": {
+        "kind": "runtime",
+        "default_test_selector": "-m flujo",
+        "hub_module": "src/flujo/web/hub.py",
+        "hub_default_port": 8765
+      },
+      "main": {
+        "kind": "historical",
+        "default_test_selector": null,
+        "hub_module": null
+      },
+      "historia": {
+        "kind": "historical",
+        "default_test_selector": null,
+        "hub_module": null
+      }
+    },
+    "units_systemctl_cat": [
+      {
+        "unit": "mak-hub.service",
+        "scope": "user",
+        "fragment_path": "/home/mak/.config/systemd/user/mak-hub.service",
+        "fragment_is_symlink": true,
+        "fragment_symlink_target": "/home/mak/flujo/cultura/mak_plataforma/mak-hub.service",
+        "fragment_resolved": "/home/mak/cultura/mak_plataforma/mak-hub.service",
+        "fragment_inode": 30308886,
+        "fragment_nlink": 1,
+        "fragment_sha256": "fbb5292a38bfc0be2def9fd8887f340b6d494aa0f744a552f82d6f27b339d70d",
+        "exec_start_literal": "%h/plataforma/.venv/bin/python %h/cultura/mak_plataforma/hub.py",
+        "exec_start_expanded": "/home/mak/plataforma/.venv/bin/python /home/mak/cultura/mak_plataforma/hub.py",
+        "working_directory": "%h/plataforma",
+        "active_state": "active",
+        "main_pid": 854934
+      },
+      {
+        "unit": "mak-research.service",
+        "scope": "user",
+        "fragment_path": "/home/mak/.config/systemd/user/mak-research.service",
+        "fragment_is_symlink": true,
+        "fragment_symlink_target": "/home/mak/flujo/cultura/mak_research/interfaz.service",
+        "fragment_resolved": "/home/mak/cultura/mak_research/interfaz.service",
+        "fragment_inode": 30308810,
+        "fragment_nlink": 1,
+        "fragment_sha256": "c0edad00de66c264e38fb7f056c648fca9b74c7af4908b80b8619a929b135c79",
+        "exec_start_literal": "%h/research/.venv/bin/python %h/cultura/mak_research/interfaz.py",
+        "exec_start_expanded": "/home/mak/research/.venv/bin/python /home/mak/cultura/mak_research/interfaz.py",
+        "working_directory": "%h/research",
+        "active_state": "active",
+        "main_pid": 854932
+      },
+      {
+        "unit": "mak-codex.service",
+        "scope": "user",
+        "fragment_path": "/home/mak/.config/systemd/user/mak-codex.service",
+        "fragment_is_symlink": true,
+        "fragment_symlink_target": "/home/mak/flujo/cultura/mak_codex/mak-codex.service",
+        "fragment_resolved": "/home/mak/cultura/mak_codex/mak-codex.service",
+        "fragment_inode": 30308850,
+        "fragment_nlink": 1,
+        "fragment_sha256": "aa689e31176ba48cb24f2fbaa0768dfb1819b9383004f6132fcd79201e50fbb0",
+        "exec_start_literal": "/usr/bin/python3 %h/cultura/mak_codex/interfaz_codex.py",
+        "exec_start_expanded": "/usr/bin/python3 /home/mak/cultura/mak_codex/interfaz_codex.py",
+        "working_directory": "%h/codex",
+        "active_state": "active",
+        "main_pid": 854933
+      },
+      {
+        "unit": "ollama.service",
+        "scope": "system",
+        "fragment_path": "/etc/systemd/system/ollama.service",
+        "fragment_is_symlink": false,
+        "exec_start_expanded": "/usr/local/bin/ollama serve",
+        "active_state": "active",
+        "main_pid": 2822,
+        "read_only": true
+      }
+    ],
+    "listeners_ss_ltnp": [
+      {
+        "port": 8890,
+        "address": "127.0.0.1:8890",
+        "pid": 854932,
+        "process": "python"
+      },
+      {
+        "port": 8891,
+        "address": "127.0.0.1:8891",
+        "pid": 854933,
+        "process": "python3"
+      },
+      {
+        "port": 8900,
+        "address": "127.0.0.1:8900",
+        "pid": 854934,
+        "process": "python"
+      },
+      {
+        "port": 8765,
+        "address": null,
+        "pid": null,
+        "process": null,
+        "state": "no_listener"
+      },
+      {
+        "port": 8766,
+        "address": "127.0.0.1:8766",
+        "pid": 809778,
+        "process": "python"
+      },
+      {
+        "port": 11434,
+        "address": "127.0.0.1:11434",
+        "pid": null,
+        "process": null,
+        "note": "owner not shown to a non-root reader"
+      }
+    ],
+    "http_declared_paths": [
+      {
+        "port": 8900,
+        "path": "/health",
+        "status": 200
+      },
+      {
+        "port": 8900,
+        "path": "/api/status",
+        "status": 200
+      },
+      {
+        "port": 8890,
+        "path": "/",
+        "status": 200
+      },
+      {
+        "port": 8891,
+        "path": "/",
+        "status": 200
+      },
+      {
+        "port": 8765,
+        "path": "/",
+        "status": null,
+        "curl_code": "000",
+        "detail": "connection refused"
+      },
+      {
+        "port": 8766,
+        "path": "/",
+        "status": 200
+      },
+      {
+        "port": 11434,
+        "path": "/api/version",
+        "status": 200
+      },
+      {
+        "port": 11434,
+        "path": "/api/tags",
+        "status": 200
+      }
+    ],
+    "source_sha256": [
+      {
+        "path": "cultura/mak_plataforma/hub.py",
+        "sha256": "3a3fea172840f62f41fb2e57f5f3158b7d678f7e13aa4c2bd93a5f7a7987b399",
+        "nlink": 1,
+        "inode": 30301496,
+        "mtime": "2026-09-02T02:46:41-04:00"
+      },
+      {
+        "path": "cultura/mak_research/interfaz.py",
+        "sha256": "ad7aa992730bf0a3b11c51544b332e79e310431431eaea14f4b4dd34a91ae7a0",
+        "nlink": 1,
+        "inode": 30308813,
+        "mtime": "2026-08-20T18:16:19-04:00"
+      },
+      {
+        "path": "cultura/mak_codex/interfaz_codex.py",
+        "sha256": "62881502660dc4d332379a4466f9194c404878122a96439c421e224fa91c7189",
+        "nlink": 1,
+        "inode": 30300861,
+        "mtime": "2026-09-02T03:31:38-04:00"
+      },
+      {
+        "path": "src/flujo/web/hub.py",
+        "sha256": "3f070a7a6e9056d1d92e6dd50db2a679fdaf1d07313d236429bed951b16e7e88",
+        "nlink": 1,
+        "inode": 13524904,
+        "mtime": "2026-08-21T10:08:42-04:00"
+      },
+      {
+        "path": "/usr/local/bin/ollama",
+        "sha256": "e010ce570cfa04334b30867c228a45781857b2ff5071630f3f59ef7cc2513d1f"
+      },
+      {
+        "path": "plataforma/hub.py",
+        "sha256": "8ac11ae6a15181b23905d67f2d8951be97c5e807bd28a31a0394ac1bb8a13abd",
+        "role": "compatibility_shim_1044_bytes_not_a_runtime_source"
+      }
+    ],
+    "launcher_references_through_adapter": {
+      "total_in_repo_operational_dirs": 92,
+      "code_source_class": 17,
+      "systemd_user_unit_symlinks": 3,
+      "editable_install_pth": 1,
+      "level1_shell_and_bat_launchers": 0,
+      "inside_the_three_mak_unit_bodies": 0,
+      "measured_with": "grep -rn -E '/home/mak/flujo|%h/flujo|$HOME/flujo|~/flujo' over scripts tools bin cultura xio plataforma codex research web src tests puente, plus .config/systemd/user and the venv .pth"
+    }
+  },
+  "changes": [
+    {
+      "path": "tools/runtime_preflight.py",
+      "operation": "create",
+      "sha256_after": "8243c711e456e1ef2349a2cf6055b357d9a321881ac523856bc82feef5e057bf",
+      "nlink_before": null,
+      "nlink_after": 1,
+      "hardlink_procedure": "new file; no in-place edit of a shared inode was required",
+      "why": "tools/capabilities.py proves a surface is declared and alive but never proves which code the live process executes, so an HTTP 200 has been read as runtime health",
+      "inode_after": 30277903
+    },
+    {
+      "path": "context/coordination/inbox/claude/runtime-contract-20260902.json",
+      "operation": "create",
+      "nlink_after": 1,
+      "hardlink_procedure": "new file in a new directory"
+    },
+    {
+      "path": "context/coordination/inbox/claude/runtime-contract-20260902.md",
+      "operation": "create",
+      "nlink_after": 1,
+      "hardlink_procedure": "new file in a new directory"
+    },
+    {
+      "path": "cultura/mak_plataforma/mak-hub.service",
+      "operation": "unchanged",
+      "why": "ExecStart already names %h/cultura/mak_plataforma/hub.py; there is no %h/flujo code path inside the unit body, so any edit would be cosmetic"
+    },
+    {
+      "path": "cultura/mak_research/interfaz.service",
+      "operation": "unchanged",
+      "why": "ExecStart already names %h/cultura/mak_research/interfaz.py; the adapter indirection is in the .config symlink, not in this file"
+    },
+    {
+      "path": "cultura/mak_codex/mak-codex.service",
+      "operation": "unchanged",
+      "why": "ExecStart already names %h/cultura/mak_codex/interfaz_codex.py; the adapter indirection is in the .config symlink, not in this file"
+    }
+  ],
+  "after": {
+    "preflight_summary": {
+      "ok": 1,
+      "ok_via_adapter": 3,
+      "warn": 1,
+      "unknown": 0,
+      "error": 0
+    },
+    "commands": [
+      {
+        "command": "git diff --check",
+        "exit": 0
+      },
+      {
+        "command": "python3 -m py_compile tools/runtime_preflight.py",
+        "exit": 0
+      },
+      {
+        "command": "python3 tools/runtime_preflight.py --check",
+        "exit": 0
+      },
+      {
+        "command": "python3 tools/runtime_preflight.py --check --check-adapter",
+        "exit": 3,
+        "meaning": "adapter indirection present; escalation flag is opt-in"
+      },
+      {
+        "command": "python3 tools/runtime_preflight.py --root /home/mak/.claude/jobs/593967f1/tmp --check",
+        "exit": 1,
+        "meaning": "negative proof: source_missing is an error"
+      },
+      {
+        "command": "python3 tools/runtime_preflight.py --root <decoy tree with same relative paths> --check",
+        "exit": 1,
+        "meaning": "negative proof: exec_start_outside_root plus listener_source_unverified are errors"
+      },
+      {
+        "command": "python3 tools/runtime_preflight.py --root /home/mak/flujo",
+        "exit": 0,
+        "meaning": "the adapter is normalized to /home/mak and root_normalized_from records it"
+      },
+      {
+        "command": "python3 /home/mak/flujo/tools/runtime_preflight.py",
+        "exit": 0,
+        "meaning": "invoked_via_adapter=true while physical_root stays /home/mak"
+      }
+    ],
+    "git_status_short_added": [
+      "?? tools/runtime_preflight.py",
+      "?? context/coordination/"
+    ]
+  },
+  "source_resolution": [
+    {
+      "surface_id": "mak_hub",
+      "kind": "systemd_user",
+      "source_declared": "/home/mak/cultura/mak_plataforma/hub.py",
+      "source_resolved": "/home/mak/cultura/mak_plataforma/hub.py",
+      "source_sha256": "3a3fea172840f62f41fb2e57f5f3158b7d678f7e13aa4c2bd93a5f7a7987b399",
+      "exec_start": "/home/mak/plataforma/.venv/bin/python /home/mak/cultura/mak_plataforma/hub.py",
+      "live_cmdline": "/home/mak/plataforma/.venv/bin/python /home/mak/cultura/mak_plataforma/hub.py",
+      "pid": 854934,
+      "executed_source_matches_declared": true,
+      "inside_physical_root": true,
+      "inside_frozen_evidence": false,
+      "adapter_indirection": "unit_fragment_via_adapter",
+      "http": {
+        "path": "/health",
+        "status": 200
+      },
+      "status": "ok_via_adapter"
+    },
+    {
+      "surface_id": "mak_research",
+      "kind": "systemd_user",
+      "source_declared": "/home/mak/cultura/mak_research/interfaz.py",
+      "source_resolved": "/home/mak/cultura/mak_research/interfaz.py",
+      "source_sha256": "ad7aa992730bf0a3b11c51544b332e79e310431431eaea14f4b4dd34a91ae7a0",
+      "exec_start": "/home/mak/research/.venv/bin/python /home/mak/cultura/mak_research/interfaz.py",
+      "live_cmdline": "/home/mak/research/.venv/bin/python /home/mak/cultura/mak_research/interfaz.py",
+      "pid": 854932,
+      "executed_source_matches_declared": true,
+      "inside_physical_root": true,
+      "inside_frozen_evidence": false,
+      "adapter_indirection": "unit_fragment_via_adapter",
+      "http": {
+        "path": "/",
+        "status": 200
+      },
+      "status": "ok_via_adapter"
+    },
+    {
+      "surface_id": "mak_codex",
+      "kind": "systemd_user",
+      "source_declared": "/home/mak/cultura/mak_codex/interfaz_codex.py",
+      "source_resolved": "/home/mak/cultura/mak_codex/interfaz_codex.py",
+      "source_sha256": "62881502660dc4d332379a4466f9194c404878122a96439c421e224fa91c7189",
+      "exec_start": "/usr/bin/python3 /home/mak/cultura/mak_codex/interfaz_codex.py",
+      "live_cmdline": "/usr/bin/python3 /home/mak/cultura/mak_codex/interfaz_codex.py",
+      "pid": 854933,
+      "executed_source_matches_declared": true,
+      "inside_physical_root": true,
+      "inside_frozen_evidence": false,
+      "adapter_indirection": "unit_fragment_via_adapter",
+      "http": {
+        "path": "/",
+        "status": 200
+      },
+      "status": "ok_via_adapter",
+      "note": "the working tree copy of this source is modified (git ' M') and its mtime 03:31:38 precedes the process start 04:13:56, so the running bytes are the bytes on disk"
+    },
+    {
+      "surface_id": "flujo_app",
+      "kind": "manual_process",
+      "source_declared": "/home/mak/src/flujo/web/hub.py",
+      "source_resolved": "/home/mak/src/flujo/web/hub.py",
+      "source_sha256": "3f070a7a6e9056d1d92e6dd50db2a679fdaf1d07313d236429bed951b16e7e88",
+      "exec_start": null,
+      "live_cmdline": "/home/mak/.venv/bin/python -m flujo app --no-abrir --host 127.0.0.1 --port 8765",
+      "pid": 809778,
+      "import_probe_module": "flujo.web.hub",
+      "import_probe_result": "/home/mak/flujo/src/flujo/web/hub.py",
+      "adapter_path_hooks": [
+        "/home/mak/.venv/lib/python3.11/site-packages/__editable__.flujo-0.56.1.pth:/home/mak/flujo/src"
+      ],
+      "executed_source_matches_declared": true,
+      "inside_physical_root": true,
+      "inside_frozen_evidence": false,
+      "adapter_indirection": "exec_start_via_adapter",
+      "http": {
+        "path": "/",
+        "status": 200
+      },
+      "status": "warn",
+      "note": "same inode 13524904 as the canonical path; the declaration goes through the adapter, the resolution does not leave the physical root"
+    },
+    {
+      "surface_id": "ollama",
+      "kind": "systemd_system",
+      "source_kind": "native_binary",
+      "source_declared": "/usr/local/bin/ollama",
+      "source_resolved": "/usr/local/bin/ollama",
+      "source_sha256": "e010ce570cfa04334b30867c228a45781857b2ff5071630f3f59ef7cc2513d1f",
+      "exec_start": "/usr/local/bin/ollama serve",
+      "live_cmdline": "/usr/local/bin/ollama serve",
+      "pid": 2822,
+      "executed_source_matches_declared": true,
+      "inside_physical_root": false,
+      "inside_frozen_evidence": false,
+      "consumer_sources_present": [
+        "cultura/mak_research/research_lib.py",
+        "cultura/mak_codex/codex_lib.py"
+      ],
+      "http": {
+        "path": "/api/version",
+        "status": 200
+      },
+      "status": "ok"
+    }
+  ],
+  "port_fallbacks": [
+    {
+      "surface_id": "flujo_app",
+      "declared_port": 8765,
+      "declared_port_source": "branch_profile.json on branch FLUJO, hub.default_port",
+      "declared_port_open": false,
+      "effective_port": 8766,
+      "fallback_port": 8766,
+      "requested_on_command_line": 8765,
+      "mechanism": "src/flujo/web/hub.py::_find_free_port(start_port=8765, max_tries=8), auto-detect only when the requested port equals the default",
+      "reported_as": "warn/port_fallback",
+      "why_it_matters": "a probe of 8765 gets connection refused while the surface is up on 8766; a probe of 8766 alone would report success without noticing the declared port never bound"
+    },
+    {
+      "surface_id": "mak_hub",
+      "declared_port": 8900,
+      "declared_port_source": "branch_profile.json on branch MAK, hub.default_port",
+      "declared_port_open": true,
+      "effective_port": 8900,
+      "fallback_port": null
+    },
+    {
+      "surface_id": "mak_research",
+      "declared_port": 8890,
+      "declared_port_open": true,
+      "effective_port": 8890,
+      "fallback_port": null
+    },
+    {
+      "surface_id": "mak_codex",
+      "declared_port": 8891,
+      "declared_port_open": true,
+      "effective_port": 8891,
+      "fallback_port": null
+    },
+    {
+      "surface_id": "ollama",
+      "declared_port": 11434,
+      "declared_port_open": true,
+      "effective_port": 11434,
+      "fallback_port": null
+    }
+  ],
+  "tests": [
+    {
+      "command": "/home/mak/.venv/bin/python -m pytest tests/test_operational_entrypoints.py tests/test_mak_hub_salud.py tests/test_mak_research_interfaz_http.py tests/test_mak_codex_nodos.py -q",
+      "exit": 0,
+      "passed": 88,
+      "failed": 0,
+      "errors": 0,
+      "belongs_to_change": false,
+      "note": "88 progress dots and exit 0; this repo's -q configuration emits no trailing counts line, so the count was read from the dot stream and cross-checked against 88 declared test functions. The focal suite was executed three times: the first two captures lost the tail, the third captured the exit code. No test file was edited."
+    },
+    {
+      "command": "python3 -m py_compile tools/runtime_preflight.py",
+      "exit": 0
+    },
+    {
+      "command": "git diff --check",
+      "exit": 0
+    },
+    {
+      "command": "python3 tools/runtime_preflight.py --check",
+      "exit": 0
+    }
+  ],
+  "unknowns": [
+    {
+      "id": "in_memory_bytes",
+      "detail": "no read-only method here proves the bytes a running interpreter already loaded. The preflight proves the declared source, the ExecStart, the live command line and the source mtime against the process start time, and errors on source_changed_after_start; it cannot inspect loaded code objects."
+    },
+    {
+      "id": "import_probe_scope",
+      "detail": "for flujo_app the module path comes from running the same interpreter again, so it reflects the interpreter's current sys.path, not the path the live process used at 02:17:14. The .pth hook is recorded as the file-level evidence behind it."
+    },
+    {
+      "id": "exit_code_2_unproven_at_runtime",
+      "detail": "unit_missing maps to unknown and exit 2. systemctl resolves units by name regardless of --root, so this branch could not be exercised without removing a unit, which is outside the write set. It is code-path only today."
+    },
+    {
+      "id": "ollama_listener_owner",
+      "detail": "ss run as a non-root user does not show the pid holding 11434. The surface is proven through systemctl MainPID 2822 and /proc/2822/cmdline instead of through socket ownership."
+    },
+    {
+      "id": "adapter_indirection_outside_write_set",
+      "detail": "the three systemd fragment symlinks in /home/mak/.config/systemd/user and the editable-install hook /home/mak/.venv/lib/python3.11/site-packages/__editable__.flujo-0.56.1.pth are the actual %h/flujo code-source references. Both locations are outside the allowed write set, so they are reported, not repaired."
+    },
+    {
+      "id": "check_mak_mirror_adapter_paths",
+      "detail": "tools/mak_ops/check_mak_mirror.py builds paths as /home/mak/flujo/cultura/... at lines 97-103 and 209, and tests/test_operational_entrypoints.py pins its UNIT_FILES mapping exactly. Both files are outside the write set; changing either would need its own task."
+    },
+    {
+      "id": "branch_vs_checkout",
+      "detail": "the physical checkout sits on main, whose branch_profile.json declares kind=historical, default_test_selector=null and hub=null, while the surfaces measured belong to the MAK and FLUJO profiles. The preflight annotates each surface with the checkout branch and reads the owner branch profile via git show; it does not resolve which branch should be checked out."
+    }
+  ],
+  "writes_outside_allowed_set": []
+}

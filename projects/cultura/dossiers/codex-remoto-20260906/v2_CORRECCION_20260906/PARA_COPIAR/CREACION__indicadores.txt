@@ -1,0 +1,22 @@
+Indicadores y verificadores
+===========================
+[154 palabras · 1096 caracteres · corte 2026-09-06]
+[pegar desde la linea siguiente]
+
+Semanas de exhibición pública: 4. Verificador: cotización o acuerdo del
+espacio y bitácora de sala. Visitas registradas: al menos 80. Verificador:
+registro de sala. Sesiones completas con documento de salida generado: al
+menos 40. Verificador: contador de documentos emitidos. Asistentes a la
+apertura mediada: al menos 25. Verificador: registro de asistencia. Recorridos
+de prueba sin fallo antes de abrir: 20 consecutivos. Verificador: bitácora de
+pruebas. Informe de auditoría externa de accesibilidad: 1, con correcciones
+aplicadas. Verificador: informe firmado por quien audita. Ejemplares de guía
+de lectura distribuidos: 300. Verificador: inventario. Registro audiovisual de
+la instalación: 1. Verificador: archivo entregado con el informe final.
+Documento metodológico con resultados negativos: 1. Verificador: documento
+publicado.
+
+Las metas de público son declaradas, no garantizadas: la asistencia depende
+del espacio, la fecha y factores que el proyecto no controla. Las metas de
+prueba y de accesibilidad sí dependen del proyecto y por eso se comprometen
+como criterio de aceptación.

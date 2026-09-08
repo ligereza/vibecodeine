@@ -100,7 +100,12 @@ def minar_borrados(max_entradas: int = 400) -> list[dict]:
 
 
 def leer_version() -> str:
-    texto = (_REPO / "src" / "flujo" / "version.py").read_text(encoding="utf-8")
+    candidates = (
+        _REPO / "src" / "flujo" / "version.py",
+        _REPO / "flujo" / "src" / "flujo" / "version.py",
+    )
+    version_path = next((path for path in candidates if path.is_file()), candidates[0])
+    texto = version_path.read_text(encoding="utf-8")
     m = re.search(r'__version__ = "([^"]+)"', texto)
     return m.group(1) if m else "0.0.0"
 

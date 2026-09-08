@@ -450,7 +450,7 @@ Blender); escala sin nombrar el contenedor; concordancia de plural.
 - [x] Deuda del scratch cerrada en `data/ssd_evidence/` con manifiesto
 - [x] Tres superficies medidas y registradas sin conectar
 - [x] Cinco episodios en linaje, el último con la corrección de RD
-- [x] Las tres herramientas registradas en `CAPACIDADES.md` según la regla del repo
+- [x] Las tres herramientas registradas en `CAPACIDADES_MAK.md` según la matriz vigente del repo
 - [~] **Exponer la producción en el Hub: no se hace, a propósito.**
 
 ## 16. Lo que ya existía y no había buscado

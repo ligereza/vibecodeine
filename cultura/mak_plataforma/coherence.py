@@ -37,7 +37,7 @@ import sys
 from pathlib import Path
 
 HOME = Path.home()
-CLONE = HOME / "flujo" / "cultura"
+CLONE = HOME / "cultura"
 
 # organ -> (directory in the repo, directory where it RUNS)
 ORGANS = {

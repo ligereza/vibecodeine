@@ -1,0 +1,177 @@
+{
+  "schema": "codex-mutation-boundary-matrix-v1",
+  "generated_at_utc": "2026-09-05T09:20:00-04:00",
+  "scope": "Static read-only comparison of both editor copies and active Hub handlers",
+  "method": "Editor POST call sites were matched to hub.py dispatcher and handler bodies; no POST request was issued.",
+  "rows": [
+    {
+      "route": "/api/portfolio/select",
+      "editor_lines": [
+        1669,
+        1766,
+        1817,
+        2382,
+        2396,
+        2457,
+        2474
+      ],
+      "mutation": "selection JSONL + ledger decision; may trigger triage discard",
+      "human_gate": "implicit UI action; no confirmed field required",
+      "ledger": "yes",
+      "idempotent": "yes, duplicate detection",
+      "lock": "PORTFOLIO_SELECTION_LOCK",
+      "risk": "destructive-looking discard is reversible only through undo, but UI action itself is not confirmation-gated"
+    },
+    {
+      "route": "/api/portfolio/classify",
+      "editor_lines": [
+        1717
+      ],
+      "mutation": "classification JSONL",
+      "human_gate": "status defaults human_draft; no confirmed field required",
+      "ledger": "no direct ledger append observed",
+      "idempotent": "yes when normalized fields equal",
+      "lock": "PORTFOLIO_CLASSIFICATION_LOCK",
+      "risk": "classification is persistent but can be written without an explicit confirmation marker"
+    },
+    {
+      "route": "/api/portfolio/copilot/vision",
+      "editor_lines": [
+        1830
+      ],
+      "mutation": "vision_features JSONL; invokes provider ollama",
+      "human_gate": "explicit UI action; no confirmation field",
+      "ledger": "yes/indirect contract depends on implementation",
+      "idempotent": "per-item lock; duplicate behavior requires runtime test",
+      "lock": "per-item vision lock",
+      "risk": "provider computation and persistent output are not visibly labeled as cost-bearing before action"
+    },
+    {
+      "route": "/api/portfolio/external-candidates/review",
+      "editor_lines": [
+        1875,
+        2341
+      ],
+      "mutation": "append-only human review in common ledger",
+      "human_gate": "yes: decision accept/revise/reject and ledger-backed review",
+      "ledger": "yes",
+      "idempotent": "same decision retry deduplicated",
+      "lock": "PORTFOLIO_EXTERNAL_REVIEW_LOCK",
+      "risk": "accept is human review, but public promotion remains false by contract"
+    },
+    {
+      "route": "/api/portfolio/dispatch",
+      "editor_lines": [
+        1890,
+        2264,
+        2407
+      ],
+      "mutation": "proxies POST to research/codex service via _ejecutar",
+      "human_gate": "no explicit confirmation field; editor button sends immediately",
+      "ledger": "not established in this handler",
+      "idempotent": "not established",
+      "lock": "none at dispatch wrapper",
+      "risk": "external service side effect is stronger than local read-only wording; needs explicit dispatch receipt and confirmation"
+    },
+    {
+      "route": "/api/portfolio/triangulation/context-link",
+      "editor_lines": [
+        2042
+      ],
+      "mutation": "triangulation review/context link storage",
+      "human_gate": "no explicit confirmation field observed",
+      "ledger": "not established in route wrapper",
+      "idempotent": "requires targeted test",
+      "lock": "PORTFOLIO_TRIANGULATION_LOCK",
+      "risk": "context relation can become durable without a typed evidence state"
+    },
+    {
+      "route": "/api/portfolio/triangulation/review",
+      "editor_lines": [
+        2055
+      ],
+      "mutation": "append triangulation review decision",
+      "human_gate": "decision is sent from UI; confirmation semantics not uniform",
+      "ledger": "not established in route wrapper",
+      "idempotent": "requires targeted test",
+      "lock": "PORTFOLIO_TRIANGULATION_LOCK",
+      "risk": "review and publication meanings should remain separate in schema"
+    },
+    {
+      "route": "/api/portfolio/copilot/external",
+      "editor_lines": [
+        2359
+      ],
+      "mutation": "external candidate generation/review data",
+      "human_gate": "explicit provider action; result remains candidate",
+      "ledger": "yes/indirect",
+      "idempotent": "requires targeted test",
+      "lock": "provider-specific / not established here",
+      "risk": "external provider call and candidate persistence need cost, provenance and retry metadata"
+    },
+    {
+      "route": "/api/portfolio/feedback",
+      "editor_lines": [
+        1704,
+        2371
+      ],
+      "mutation": "feedback JSONL, and accepted/corrected relations may connect",
+      "human_gate": "accept/reject action; undo requires human-confirmation internal path",
+      "ledger": "yes when available",
+      "idempotent": "same row deduplicated",
+      "lock": "PORTFOLIO_FEEDBACK_LOCK",
+      "risk": "accept feedback can create a connection as a second mutation; compound outcome needs transaction/receipt"
+    },
+    {
+      "route": "/api/portfolio/board",
+      "editor_lines": [
+        2420,
+        2434
+      ],
+      "mutation": "boards.json create/add/remove plus feedback on additions",
+      "human_gate": "UI action; no confirmation field",
+      "ledger": "indirect via feedback only",
+      "idempotent": "partial; additions deduplicated",
+      "lock": "no board-specific lock observed",
+      "risk": "concurrent board updates can race and board add can partially save feedback before board save"
+    },
+    {
+      "route": "/api/portfolio/connect",
+      "editor_lines": [
+        2447
+      ],
+      "mutation": "connections JSONL",
+      "human_gate": "UI action; no confirmation field",
+      "ledger": "not established in route wrapper",
+      "idempotent": "yes duplicate detection",
+      "lock": "PORTFOLIO_CONNECTION_LOCK",
+      "risk": "durable relation lacks explicit evidence/owner fields in this route"
+    }
+  ],
+  "findings": [
+    {
+      "id": "compound-mutation",
+      "severity": "high",
+      "evidence": "feedback accept/correct can append feedback and create connection; board add can append feedback and then save boards.",
+      "improvement": "Return a transaction-like receipt with all sub-results and recovery action; use a shared lock or atomic append protocol."
+    },
+    {
+      "id": "dispatch-gate",
+      "severity": "high",
+      "evidence": "/api/portfolio/dispatch calls _ejecutar, which POSTs to research/codex, without a confirmed field in _portfolio_dispatch.",
+      "improvement": "Require explicit human confirmation or rename/label as dispatch; return target service, job id, and immutable receipt."
+    },
+    {
+      "id": "board-concurrency",
+      "severity": "medium",
+      "evidence": "_portfolio_save_boards uses temp+replace, but _portfolio_board_action has no board-specific lock.",
+      "improvement": "Serialize board read-modify-write and add conflict/version field."
+    },
+    {
+      "id": "schema-uniformity",
+      "severity": "medium",
+      "evidence": "selection/classification/feedback have different status, ledger and confirmation semantics.",
+      "improvement": "Define a shared mutation envelope: actor, confirmed_at, consent, evidence, operation_id, idempotency_key, promotion=false."
+    }
+  ]
+}

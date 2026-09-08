@@ -1,0 +1,84 @@
+{
+  "schema": "codex-observability-audit-v1",
+  "audited_at": "2026-09-05T18:25:00-04:00",
+  "scope": "trazabilidad HTTP y mutaciones del Hub/editor",
+  "method": "Inspección estática de hub.py y lectura de nombres de campos/tails de registros existentes; no se enviaron POST, no se escribieron registros operativos.",
+  "evidence": {
+    "response_serializer": {
+      "path": "MAK/cultura/mak_plataforma/hub.py",
+      "lines": "5173-5188",
+      "present": ["Content-Type", "Content-Length", "Cache-Control"],
+      "absent": ["X-Request-ID", "operation_id", "actor_id", "result_code"]
+    },
+    "http_access_log": {
+      "path": "MAK/cultura/mak_plataforma/hub.py",
+      "lines": "5929-5930",
+      "implementation": "def log_message(self, fmt, *args): pass"
+    },
+    "mutation_records": {
+      "selection_keys": ["item_id", "decision", "session_id", "decision_scope", "reason_code", "target_id", "note", "work", "ts"],
+      "classification_keys": ["item_id", "fields", "source", "status", "owner", "promotion", "evidence", "ts"],
+      "draft_keys_include": ["draft_id", "session_id", "status", "owner", "promotion", "ts"],
+      "connection_keys": ["source_id", "target_id", "relation", "ts"],
+      "feedback_keys": ["source_id", "target_id", "action", "facet", "relation", "board_id", "note", "work", "ts"],
+      "common_absent": ["request_id", "operation_id", "idempotency_key", "actor_id", "outcome", "error_code"]
+    },
+    "existing_safeguards": {
+      "commit_undo": "commit y undo exigen confirmed=true",
+      "external_candidate_review": "usa ledger, human_decision e idempotencia por candidato/revisión",
+      "durability": "_portfolio_append_jsonl hace flush y fsync; varias rutas tienen locks específicos",
+      "payload_logging": "no se observó logging HTTP de payloads; conservar esta minimización"
+    },
+    "operational_files_sampled": {
+      "selections.jsonl": 53552,
+      "classifications.jsonl": 39007,
+      "decision_drafts.jsonl": 6855,
+      "connections.jsonl": 4345,
+      "copilot_feedback.jsonl": 11823,
+      "common_ledger.jsonl": 729136
+    }
+  },
+  "findings": [
+    {
+      "id": "missing-http-correlation",
+      "severity": "high",
+      "statement": "Una respuesta o error no puede correlacionarse de forma uniforme con una solicitud concreta porque no existe request_id/operation_id compartido ni access log del Handler."
+    },
+    {
+      "id": "mutation-envelope-drift",
+      "severity": "high",
+      "statement": "Las mutaciones escriben esquemas distintos: selección conserva session_id, conexiones solo source/target/relation/ts y feedback agrega work; no hay actor, resultado ni error normalizados."
+    },
+    {
+      "id": "compound-operation-untracked",
+      "severity": "high",
+      "statement": "Algunas acciones encadenan efectos, por ejemplo board add puede crear feedback y conexiones antes de guardar el tablero; sin operation_id y receipt no hay una vista única de éxito, parcialidad o reintento."
+    },
+    {
+      "id": "privacy-positive-boundary",
+      "severity": "informational",
+      "statement": "La ausencia de access logging evita una exposición inmediata de payloads, pero la solución debe registrar metadatos mínimos y nunca cuerpos, notas o rutas privadas sin redacción."
+    }
+  ],
+  "recommended_contract": {
+    "request": ["request_id", "operation_id", "idempotency_key", "actor_type", "actor_id_redacted", "route", "method", "started_at"],
+    "result": ["status", "result_code", "affected_ids", "partial", "finished_at", "error_code"],
+    "rules": [
+      "generar request_id por solicitud y propagar operation_id a todos los efectos derivados",
+      "hacer idempotency_key obligatorio para dispatch y opcional/soportado en mutaciones repetibles",
+      "registrar solo IDs, conteos, códigos y hashes; excluir payload, note, token, cookie y rutas absolutas",
+      "emitir receipt durable después de cada operación con estado success/partial/rejected/failed",
+      "mantener actor humano/proveedor separado de la identidad de sesión y preservar confirmed como gate explícito"
+    ]
+  },
+  "next_gate": {
+    "priority": "P1",
+    "action": "Diseñar y probar un envelope de operación común y un receipt redacted antes de implementar instrumentación.",
+    "acceptance": "Una prueba de mutación demuestra correlación request→efectos→resultado, reintento idempotente y ausencia de payloads sensibles; el comportamiento actual permanece intacto hasta aprobación."
+  },
+  "limitations": [
+    "No se enviaron POST ni se alteraron archivos, repositorios o procesos.",
+    "La inspección de campos usó las últimas líneas de archivos existentes; no se reconstruyó una historia completa de todas las mutaciones.",
+    "No se afirma que el entorno externo tenga o no observabilidad: esta medición cubre el Hub local activo y su código fuente."
+  ]
+}

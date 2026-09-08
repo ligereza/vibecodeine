@@ -17,7 +17,8 @@ from pathlib import Path
 
 DEFAULT_BLEND = Path("/home/mak/RD/AUTOMATIZACION/RD.blend")
 DEFAULT_BLENDER = Path("/home/mak/blender/blender")
-BLENDER_SCRIPT = Path(__file__).resolve().parents[1] / "src" / "flujo" / "eventos" / "blender_nodes_video_seq.py"
+BLENDER_SCRIPT = (Path(__file__).resolve().parents[1] / "flujo" / "src" /
+                  "flujo" / "eventos" / "blender_nodes_video_seq.py")
 RENDER_TIMEOUT_S = 7200.0
 PORTRAIT_9_16_RATIO = 9 / 16
 PORTRAIT_9_16_TOLERANCE = 0.03

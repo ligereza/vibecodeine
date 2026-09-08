@@ -4,6 +4,9 @@
 Thin frame around each department editor, embedded full-screen through an
 iframe. The Hub owns the browser-facing surface and proxies the internal
 research and codex services through same-origin /research/ and /codex/ paths.
+Its historically named ``/portafolio/`` route is the operator-facing IRIS
+ordering/curation interface (Atlas Campo del Orden), not the artist's public
+portfolio; ``iskvw.cl`` is a separate downstream site.
 The services keep their existing routes and contracts; their ports remain
 internal runtime boundaries.
 
@@ -14,6 +17,7 @@ Rutas: / (cara) · /research-garden/ · /health · /api/organismo · /api/miceli
 import html
 import json
 import math
+from datetime import date
 import mimetypes
 import os
 import re
@@ -74,7 +78,7 @@ PORT = int(os.environ.get("HUB_PORT", "8900"))
 HUB_HOST = os.environ.get("HUB_HOST", "127.0.0.1")
 HOME = os.path.expanduser("~")
 _percepcion = None
-_percepcion_root = os.path.join(HOME, "flujo", "cultura", "mak_curatoria")
+_percepcion_root = os.path.join(HOME, "cultura", "mak_curatoria")
 if os.path.isdir(_percepcion_root):
     try:
         sys.path.insert(0, _percepcion_root)
@@ -89,8 +93,14 @@ REFLEXIONES_DIR = os.path.join(HOME, "plataforma/reflexiones")
 RESEARCH_JOBS = os.path.join(HOME, "research/jobs.jsonl")
 CODEX_JOBS = os.path.join(HOME, "codex/jobs.jsonl")
 RELEVO = os.path.join(HOME, "RELEVO_MAK.md")
+# The iskvw root belongs to THIS checkout. It used to be spelled
+# HOME/flujo/iskvw, which resolved here through the compatibility adapter;
+# once /home/mak/flujo became the FLUJO checkout the tab started reading the
+# sibling tree, where iskvw/datos/archivo.json does not exist because
+# tools/gen_archivo_iskvw.py runs from MAK and writes to MAK. The tab kept
+# answering 200 on the tracked files and served no generated data.
 PORTFOLIO_ROOT = os.path.abspath(os.environ.get(
-    "MAK_PORTFOLIO_ROOT", os.path.join(HOME, "flujo", "iskvw")))
+    "MAK_PORTFOLIO_ROOT", os.path.join(HOME, "iskvw")))
 PORTFOLIO_INBOX = os.path.join(
     HOME, "plataforma/director_runs/portfolio-editor-20260808/PORTFOLIO_INBOX.json")
 PORTFOLIO_MEDIA_ROOT = os.path.join(HOME, "portfolio_media/media")
@@ -137,7 +147,30 @@ PORTFOLIO_TRIANGULATION_REVIEW = os.path.join(
 PORTFOLIO_VISUAL_INDEX_ROOT = os.path.abspath(os.environ.get(
     "MAK_VISUAL_INDEX_ROOT", os.path.join(HOME, "plataforma/derived/visual-index")))
 PORTFOLIO_XIO_SHOW_ROOT = os.path.abspath(os.environ.get(
-    "MAK_XIO_SHOW_ROOT", os.path.join(HOME, "flujo", "xio", "show_kit")))
+    "MAK_XIO_SHOW_ROOT", os.path.join(HOME, "xio", "show_kit")))
+_PORTFOLIO_XIO_LIVE_LOCK = threading.Lock()
+_PORTFOLIO_XIO_LIVE = {
+    "mode": "idle",  # idle | running | paused
+    "started_epoch": None,
+    "paused_epoch": None,
+    "paused_total": 0.0,
+    "external": None,  # last pulse posted by a real XIO source, or None
+}
+_PORTFOLIO_XIO_LIVE_EXTERNAL_TIMEOUT_S = 2.5
+_PORTFOLIO_XIO_LIVE_LOOP_S = 120.0
+_PORTFOLIO_XIO_LIVE_BPM = 126.0
+_PORTFOLIO_XIO_LIVE_FPS = 30
+# Used only when xio/show_kit has no real cue map -- keeps the performance
+# mode demoable without a live show connected. Timecodes in seconds.
+_PORTFOLIO_XIO_LIVE_DEMO_CUES = [
+    {"t": 0.0, "n": "1", "title": "intro", "layer": 1},
+    {"t": 14.0, "n": "2", "title": "build", "layer": 2},
+    {"t": 30.0, "n": "3", "title": "drop", "layer": 3},
+    {"t": 48.0, "n": "4", "title": "break", "layer": 2},
+    {"t": 66.0, "n": "5", "title": "segundo drop", "layer": 3},
+    {"t": 84.0, "n": "6", "title": "descenso", "layer": 4},
+    {"t": 100.0, "n": "7", "title": "outro", "layer": 1},
+]
 LEGACY_RESCUE_REVIEW = os.path.join(
     HOME, "plataforma/director_runs/faro-report-action-queue-20260808/RESCUE_ADJUDICATED.json")
 LEGACY_REPORT_RUNS = os.path.join(HOME, "plataforma/director_runs")
@@ -149,18 +182,16 @@ SERVICE_PROXY_PREFIXES = {
 }
 SERVICE_PROXY_MAX_BYTES = 2_000_000
 
-# The 8900 hub is launched from /home/mak/plataforma, while the canonical
-# diagnostics package lives in this repository's src/ tree. Add only the
-# canonical source roots so the existing external projection stays intact.
-# Resolve the physical checkout instead of preserving the legacy
-# ``/home/mak/flujo`` adapter spelling.  The Hub is often launched through
-# that compatibility path; reporting the lexical alias as the repository root
-# makes status payloads and downstream consumers believe there are two roots.
+# The 8900 hub is launched from /home/mak/plataforma. The MAK checkout does
+# not carry a motor copy: its shared diagnostics and knowledge consumers live
+# in the sibling FLUJO checkout. Add that source root explicitly because the
+# service's platform venv does not install FLUJO editable.
 _REPO_ROOT = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", ".."))
 _SSD_ORDER_FOUNDATION_PATH = os.path.join(
     _REPO_ROOT, "out", "contracurator", "ssd_order_foundation.json")
-_SRC_ROOT = os.path.join(_REPO_ROOT, "src")
-for _import_root in (_REPO_ROOT, _SRC_ROOT):
+_FLUJO_SOURCE_ROOT = os.path.abspath(os.environ.get(
+    "FLUJO_SOURCE_ROOT", os.path.join(_REPO_ROOT, "flujo", "src")))
+for _import_root in (_REPO_ROOT, _FLUJO_SOURCE_ROOT):
     if _import_root not in sys.path:
         sys.path.insert(0, _import_root)
 try:
@@ -202,6 +233,14 @@ else:
     _DEPARTMENTS_IMPORT_ERROR = ""
 
 try:
+    from tools.gen_postulacion import load_calls as _load_calls  # noqa: E402
+except Exception as _calls_exc:  # noqa: BLE001 - hub remains available
+    _load_calls = None
+    _CALLS_IMPORT_ERROR = type(_calls_exc).__name__
+else:
+    _CALLS_IMPORT_ERROR = ""
+
+try:
     from flujo.knowledge.project_api import (  # noqa: E402
         learning_summary as _learning_summary_api,
         promoted_rules as _promoted_rules_api,
@@ -218,14 +257,6 @@ except Exception as _project_router_exc:  # noqa: BLE001 - learning is additive
     _PROJECT_ROUTER_IMPORT_ERROR = type(_project_router_exc).__name__
 else:
     _PROJECT_ROUTER_IMPORT_ERROR = ""
-
-try:
-    from flujo.knowledge import portfolio_evidence as _portfolio_evidence
-except Exception as _portfolio_evidence_exc:  # noqa: BLE001 - queue is additive
-    _portfolio_evidence = None
-    _PORTFOLIO_EVIDENCE_IMPORT_ERROR = type(_portfolio_evidence_exc).__name__
-else:
-    _PORTFOLIO_EVIDENCE_IMPORT_ERROR = ""
 
 try:
     from flujo.knowledge.product_view import (  # noqa: E402
@@ -1272,7 +1303,47 @@ def _portfolio_vision():
     return result
 
 
+# Measured 2026-09-02: one `/api/portfolio/copilot/scene` call reached
+# `_portfolio_inbox()` SEVEN times, and each one reopened the 3.8 MB inbox,
+# rebuilt 7044 dictionaries and read four more files -- 0.41 s of the 1.19 s a
+# warm scene costs. The interface calls that route on every piece the operator
+# selects, and 6928 records are still undecided.
+#
+# The key is the SOURCE MTIMES, not a clock. A TTL would be the wrong contract
+# here: this data changes when the operator decides something, and a stale
+# window would show a person their own decision not applied. Keyed this way the
+# cache is invalidated by the write itself and can never be stale.
+_PORTFOLIO_INBOX_CACHE = {}
+_PORTFOLIO_INBOX_SOURCES = (
+    "PORTFOLIO_INBOX", "PORTFOLIO_SELECTIONS", "PORTFOLIO_CLASSIFICATIONS",
+    "PORTFOLIO_DRAFTS", "PORTFOLIO_VISION",
+)
+
+
+def _portfolio_inbox_signature():
+    """(path, mtime_ns, size) per source; a missing file is part of the key."""
+    signature = []
+    for name in _PORTFOLIO_INBOX_SOURCES:
+        path = globals().get(name) or ""
+        try:
+            stat = os.stat(path)
+            signature.append((name, stat.st_mtime_ns, stat.st_size))
+        except OSError:
+            signature.append((name, None, None))
+    return tuple(signature)
+
+
 def _portfolio_inbox(compact=False):
+    signature = _portfolio_inbox_signature()
+    cached = _PORTFOLIO_INBOX_CACHE.get(bool(compact))
+    if cached is not None and cached[0] == signature:
+        return cached[1]
+    payload = _portfolio_inbox_uncached(compact=compact)
+    _PORTFOLIO_INBOX_CACHE[bool(compact)] = (signature, payload)
+    return payload
+
+
+def _portfolio_inbox_uncached(compact=False):
     try:
         with open(PORTFOLIO_INBOX, encoding="utf-8") as fh:
             payload = json.load(fh)
@@ -1368,13 +1439,6 @@ def _portfolio_gtm_map(items, **kwargs):
         return copilot.build_gtm_map(items, **kwargs)
 
 
-def _portfolio_identity_graph():
-    return contrato_archivo.portfolio_identity_graph(
-        _portfolio_inbox().get("items", []),
-        connections=_portfolio_jsonl(PORTFOLIO_CONNECTIONS),
-        context_links=_portfolio_context_link_rows())
-
-
 def _director_capabilities():
     routes = {}
     for task_kind in ("visual", "research", "curation", "review", "judge"):
@@ -1401,16 +1465,130 @@ def _learning_db_path():
     return Path(configured).expanduser() if configured else Path(_REPO_ROOT) / "data" / "mak_knowledge.db"
 
 
+# Named failures whose status this file already decides somewhere else. Each
+# group follows a precedent set elsewhere in this same module rather than a
+# preference:
+#
+#   404 -- `item_no_encontrado` answers 404 in `/api/portfolio/copilot/vision`
+#          and `/api/portfolio/copilot/manifest`.
+#   400 -- the malformed-input guards in do_POST answer 400 (`json invalido`,
+#          `content_length_invalido`, `falta question`), and
+#          `project_id_requerido` answers 400 in the evidence routes.
+#   503 -- `departments_unavailable`, `diagnostics_unavailable`,
+#          `project_router_unavailable` and `portfolio_evidence_unavailable`
+#          all answer 503; an absent dependency is what `_status_for` is for.
+_ERROR_STATUS = {
+    # A named thing does not exist.
+    "item_no_encontrado": 404,
+    "items_no_encontrados": 404,
+    "tablero_no_encontrado": 404,
+    "grupo_no_encontrado": 404,
+    "candidato_no_encontrado": 404,
+    # The caller sent something this route cannot act on.
+    "accion_invalida": 400,
+    "decision_invalida": 400,
+    "departamento_invalido": 400,
+    "grupo_o_clasificacion_vacios": 400,
+    "grupo_vacio": 400,
+    "items_invalidos": 400,
+    "nombre_vacio": 400,
+    "project_id_requerido": 400,
+    "proveedor_invalido": 400,
+    "segment_id_invalido": 400,
+    "source_id_requerido": 400,
+    "undo_scope_invalid": 400,
+    "valor_de_clasificacion_invalido": 400,
+    "work_contract_invalid": 400,
+    "xio_work_id_invalido": 400,
+    # A dependency this route needs is not answering.
+    "fuentes_ausentes": 503,
+    "ledger_unavailable": 503,
+    "xio_evidence_unavailable": 503,
+    "convocatorias_unavailable": 503,
+    "convocatorias_ilegibles": 503,
+}
+_ERROR_STATUS_PREFIXES = (
+    ("motor_no_disponible", 503),
+)
+
+# Deliberately absent, and why. These are outcomes, not faults: the operator
+# asked for something and the system declined or had nothing to do. The panel
+# reads the body and shows the reason, and no precedent in this file assigns
+# them a code, so promoting them to 4xx would be a guess that changes a working
+# flow.
+#   human_confirmation_required -- a guard, arguably 409 or 428
+#   nothing_to_undo             -- an empty stack is not an error
+#   ledger_rechazo, triage_rechazo, feedback_tablero_rechazado -- policy said no
+#   provider_error              -- upstream failed; 502 and 503 both defensible
+_ERROR_STATUS_LEFT_AT_200 = (
+    "human_confirmation_required",
+    "nothing_to_undo",
+    "ledger_rechazo",
+    "triage_rechazo",
+    "feedback_tablero_rechazado",
+    "provider_error",
+)
+
+
+def _answer(handler, payload):
+    """Send `payload` with the status `_status_for` derives from it.
+
+    Every POST handler used to return `self._json(result)` with no status, so a
+    body reading `{"ok": false, "error": "tablero_no_encontrado"}` went out as
+    200. The malformed-input guards in the same dispatcher already answer 400,
+    which left a caller able to tell a broken request from a good one and
+    unable to tell a good request from a refused one.
+
+    A function rather than a handler method, for the same reason as
+    `_body_length`: the hub tests drive the dispatchers with request fakes, and
+    those only implement `_json`.
+    """
+    return handler._json(payload, _status_for(payload))
+
+
+def _body_length(headers, cap):
+    """The capped Content-Length, or None when the header is not a number.
+
+    Four POST routes guarded this and seven did not. On the seven, a
+    non-numeric Content-Length raised ValueError straight out of do_POST, which
+    BaseHTTPRequestHandler answers as a 500 with a traceback in the log -- for
+    a caller error that the guarded routes already answer as a named 400. A
+    header is caller input and cannot be trusted to be a number anywhere.
+
+    Takes the headers rather than the handler so the request fakes the hub
+    tests are built on keep working without growing a new method each time a
+    dispatcher learns something.
+    """
+    try:
+        return min(int(headers.get("Content-Length") or 0), cap)
+    except (TypeError, ValueError):
+        return None
+
+
 def _status_for(payload) -> int:
-    """503 when a payload says its own dependency is absent, else 200.
+    """The status code that agrees with what the payload already says.
 
     A body that reads `{"available": false, "reason": "..."}` under a 200 is
     honest to a human and invisible to a machine: a probe, a watchdog or a
     proxy reads the status code. This keeps the named body and makes the code
     agree with it.
+
+    An `ok: false` whose error is not named here stays 200 on purpose. Guessing
+    a status from an unrecognised string would change routes nobody measured;
+    a new mapping is a line in the table, added when its meaning is known.
     """
-    if isinstance(payload, dict) and payload.get("available") is False:
+    if not isinstance(payload, dict):
+        return 200
+    if payload.get("available") is False:
         return 503
+    if payload.get("ok") is False:
+        error = payload.get("error")
+        if isinstance(error, str):
+            if error in _ERROR_STATUS:
+                return _ERROR_STATUS[error]
+            for prefix, status in _ERROR_STATUS_PREFIXES:
+                if error.startswith(prefix):
+                    return status
     return 200
 
 
@@ -1462,64 +1640,6 @@ def _project_probe_request(body):
         record=bool(body.get("record")) if isinstance(body, dict) else False,
         episode_id=body.get("episode_id") if isinstance(body, dict) else None,
     )
-
-
-def _portfolio_evidence_queue_read(project_id):
-    if _portfolio_evidence is None:
-        return {"ok": False, "error": "portfolio_evidence_unavailable",
-                "detail": _PORTFOLIO_EVIDENCE_IMPORT_ERROR}, 503
-    if not project_id:
-        return {"ok": False, "error": "project_id_requerido"}, 400
-    try:
-        record = _portfolio_evidence.load_record(_learning_db_path(), project_id)
-        return _portfolio_evidence.queue_payload(record), 200
-    except _portfolio_evidence.PortfolioEvidenceError as exc:
-        return {"ok": False, "error": str(exc)}, 404
-    except Exception as exc:  # noqa: BLE001 - read surface must remain bounded
-        return {"ok": False, "error": type(exc).__name__}, 500
-
-
-def _portfolio_evidence_draft_read(project_id):
-    if _portfolio_evidence is None:
-        return {"ok": False, "error": "portfolio_evidence_unavailable",
-                "detail": _PORTFOLIO_EVIDENCE_IMPORT_ERROR}, 503
-    if not project_id:
-        return {"ok": False, "error": "project_id_requerido"}, 400
-    try:
-        record = _portfolio_evidence.load_record(_learning_db_path(), project_id)
-        return _portfolio_evidence.build_draft(record), 200
-    except _portfolio_evidence.PortfolioEvidenceError as exc:
-        return {"ok": False, "error": str(exc)}, 404
-    except Exception as exc:  # noqa: BLE001 - read surface must remain bounded
-        return {"ok": False, "error": type(exc).__name__}, 500
-
-
-def _portfolio_evidence_decision(body):
-    if _portfolio_evidence is None:
-        return {"ok": False, "error": "portfolio_evidence_unavailable",
-                "detail": _PORTFOLIO_EVIDENCE_IMPORT_ERROR}, 503
-    if not isinstance(body, dict):
-        return {"ok": False, "error": "json_debe_ser_objeto"}, 400
-    required = ("project_id", "candidate_id", "action")
-    missing = [key for key in required if not str(body.get(key) or "").strip()]
-    if missing:
-        return {"ok": False, "error": "campos_requeridos", "fields": missing}, 400
-    try:
-        result = _portfolio_evidence.apply_human_decision(
-            _learning_db_path(),
-            project_id=str(body["project_id"]),
-            candidate_id=str(body["candidate_id"]),
-            action=str(body["action"]),
-            actor=str(body.get("actor") or "human"),
-            note=str(body.get("note") or ""),
-            corrected_relation=str(body.get("corrected_relation") or ""),
-            corrected_target_id=str(body.get("corrected_target_id") or ""),
-        )
-        return result, 200
-    except _portfolio_evidence.PortfolioEvidenceError as exc:
-        return {"ok": False, "error": str(exc)}, 400
-    except Exception as exc:  # noqa: BLE001 - decision errors are caller-visible
-        return {"ok": False, "error": type(exc).__name__}, 500
 
 
 def _director_work(body):
@@ -1727,27 +1847,6 @@ def _legacy_rescue_queue():
             "status": "candidate_only", "promotion": "none",
             "items": normalized,
             "counts": counts if isinstance(counts, dict) else {"total": 0}}
-
-
-def _portfolio_triage_record(body):
-    with _PORTFOLIO_TRIANGULATION_LOCK:
-        return _portfolio_triage_record_unlocked(body)
-
-
-def _portfolio_triage_record_unlocked(body):
-    group = str(body.get("group_key", "")).strip()[:120]
-    if not group:
-        return {"ok": False, "error": "grupo_vacio"}
-    known = {str(row.get("key", "")) for row in _portfolio_triangulation().get("groups", [])}
-    if group not in known:
-        return {"ok": False, "error": "grupo_no_encontrado"}
-    allowed = ("artist", "event", "venue", "date", "record_kind", "confidence")
-    row = {field: str(body.get(field, "")).strip()[:240] for field in allowed}
-    row.update({"schema": "mak-triangulation-review-v1", "group_key": group,
-                "status": "human_reviewed", "promotion": "none",
-                "ts": time.strftime("%Y-%m-%dT%H:%M:%S%z")})
-    _portfolio_append_jsonl(PORTFOLIO_TRIANGULATION_REVIEW, row)
-    return {"ok": True, "resolution": row}
 
 
 def _portfolio_context_links():
@@ -2777,6 +2876,21 @@ def _portfolio_scene(item_id, limit=10, focus_facet="", shuffle=False,
         for row in map_surface.get("items", [])
         if isinstance(row, dict) and row.get("item_id")
     }
+    # What the active record HAS and LACKS, so a person is not deciding blind.
+    # The seed rows already carried has_description/has_vision/review_scope and
+    # the interface read none of them. `unknown` is kept apart from `absent`:
+    # the perception index covers a small share of the field, so "no vision
+    # record" is usually "not measured", not "has no perception".
+    vision_rows = _portfolio_vision()
+    active_record = next(
+        (row for row in scene.get("records", [])
+         if str(row.get("role") or "") == "active"), None)
+    scene["evidence_readiness"] = copilot.evidence_readiness(
+        active_record if isinstance(active_record, dict) else source,
+        vision=vision_rows.get(str(item_id)),
+        vision_indexed=vision_rows.keys(),
+        relations=scene.get("relations", []),
+    )
     scene["map"] = {
         "schema": map_surface.get("schema", copilot.GTM_SCHEMA),
         "engine": map_surface.get("engine", "not_requested"),
@@ -2787,6 +2901,142 @@ def _portfolio_scene(item_id, limit=10, focus_facet="", shuffle=False,
                   if row.get("source_id") in map_by_id],
     }
     return scene
+
+
+# The production chain already existed, whole, in the FLUJO motor:
+# `compile_portfolio_claims` -> `assess_feasibility` -> `render_portfolio` ->
+# `render_markdown`. Nothing ran it from here, so the six declared formats sat
+# inert and looked unbuildable. They were not: measured 2026-09-02, four of the
+# six render today, including the Fondart one. What was missing was the wire.
+#
+# The claim base is the input, NOT the archive rows: a claim carries verb,
+# layer, state, permission, the route that supports it and what would refute
+# it, which is exactly what a slot declares. Feeding the raw inbox instead is
+# what made every format look blocked on a permission "nobody records".
+PORTFOLIO_PRODUCTION_SOURCES = {
+    "index": "/home/mak/labs/portable-ssd-index-20260813/archivo_index.sqlite",
+    "authority": os.path.join(_REPO_ROOT, "data", "artist_discographies.json"),
+    "archive": os.path.join(_REPO_ROOT, "iskvw", "datos", "archivo.json"),
+    "practices": os.path.join(_REPO_ROOT, "data", "portfolio_practices.json"),
+    "attestations": os.path.join(_REPO_ROOT, "data", "portfolio_attestations.json"),
+    # These two lived in `/home/mak/.claude/jobs/3428381a/tmp/` -- the scratch
+    # directory of an agent session from 2026-08-23, which the harness deletes
+    # with the job. The production chain that backs a funding application would
+    # have started answering `fuentes_ausentes` the day that cleanup ran, with
+    # nothing to say why. They are measurements of the archive (48 asset paths
+    # referenced by Blender scenes, and a per-filename count of declared
+    # inputs), so `data/` beside the other production inputs is where they
+    # belong. The originals were copied, not moved.
+    "declared_inputs": os.path.join(_REPO_ROOT, "data", "portfolio_declared_inputs.json"),
+    "blend_targets": os.path.join(
+        _REPO_ROOT, "data", "portfolio_blend_dependency_targets.json"),
+    "screen_setup_root": "/media/mak/PortableSSD",
+}
+PORTFOLIO_FORMATS_DIR = os.path.join(_REPO_ROOT, "data", "portfolio_formats")
+_PORTFOLIO_PRODUCTION_CACHE = {}
+
+
+def _portfolio_production_sources():
+    """Which inputs of the chain are physically present right now."""
+    return {name: {"path": path, "present": os.path.exists(path)}
+            for name, path in sorted(PORTFOLIO_PRODUCTION_SOURCES.items())}
+
+
+def _portfolio_production(format_id="", refresh=False):
+    """Run the existing production chain and report what it renders.
+
+    Read-only by contract: every renderer returns a `control` block with
+    publication, submission, signed_document, authorship_claimed and
+    database_write false. This route neither promotes nor publishes.
+    """
+    try:
+        from flujo.knowledge.portfolio_claims import compile_portfolio_claims
+        from flujo.knowledge.portfolio_format import load_format_library
+        from flujo.knowledge.portfolio_render import (_eligible,
+                                                      assess_feasibility,
+                                                      render_markdown,
+                                                      render_portfolio)
+    except ImportError as exc:
+        return {"ok": False, "error": "motor_no_disponible:%s" % exc,
+                "sources": _portfolio_production_sources()}
+
+    sources = _portfolio_production_sources()
+    missing = [name for name, row in sources.items() if not row["present"]]
+    if "index" in missing or "archive" in missing:
+        return {"ok": False, "error": "fuentes_ausentes", "missing": missing,
+                "sources": sources,
+                "next_action": "montar el indice del SSD antes de producir"}
+
+    claims = None if refresh else _PORTFOLIO_PRODUCTION_CACHE.get("claims")
+    if claims is None:
+        def _optional(name):
+            path = PORTFOLIO_PRODUCTION_SOURCES[name]
+            return path if os.path.exists(path) else None
+        claims = compile_portfolio_claims(
+            index_path=PORTFOLIO_PRODUCTION_SOURCES["index"],
+            authority_path=PORTFOLIO_PRODUCTION_SOURCES["authority"],
+            archive_path=PORTFOLIO_PRODUCTION_SOURCES["archive"],
+            declared_inputs_path=_optional("declared_inputs"),
+            blend_targets_path=_optional("blend_targets"),
+            practices_path=PORTFOLIO_PRODUCTION_SOURCES["practices"],
+            attestations_path=PORTFOLIO_PRODUCTION_SOURCES["attestations"],
+            screen_setup_root=_optional("screen_setup_root"),
+        )
+        _PORTFOLIO_PRODUCTION_CACHE["claims"] = claims
+
+    library = load_format_library(PORTFOLIO_FORMATS_DIR)
+    formats = []
+    for spec in library["formats"]:
+        if format_id and spec["format_id"] != format_id:
+            continue
+        payload = render_portfolio(spec, claims)
+        document = payload.get("document") or {}
+        row = {
+            "format_id": spec["format_id"],
+            "title": spec.get("title", ""),
+            "purpose": spec.get("purpose", ""),
+            "status": payload.get("status"),
+            "item_count": document.get("item_count"),
+            "render_hash": payload.get("render_hash", ""),
+            "control": payload.get("control", {}),
+            "feasibility": assess_feasibility(spec, claims),
+        }
+        # A blocked slot named the shortfall and stopped there, so "no factible"
+        # read as a dead end. The format is what asks, and the archive can
+        # answer: for every slot that blocks, say which claims are the right
+        # kind of statement and what single condition stops each. The motor's
+        # own `_eligible` is what decides, passed in rather than reimplemented,
+        # so this can never contradict the feasibility verdict beside it.
+        slots_by_id = {str(slot.get("slot_id")): slot
+                       for slot in spec.get("slots", [])}
+        row["slot_candidates"] = [
+            copilot.slot_candidates(slots_by_id[str(entry.get("slot_id"))],
+                                    claims.get("claims") or [], _eligible)
+            for entry in row["feasibility"].get("blocking", [])
+            if str(entry.get("slot_id")) in slots_by_id
+        ]
+        if format_id:
+            row["markdown"] = render_markdown(payload)
+        formats.append(row)
+
+    rendered = [row["format_id"] for row in formats if row["status"] == "rendered"]
+    return {
+        "ok": True,
+        "schema": "faro-portfolio-production-v1",
+        "claims": claims.get("claim_count", len(claims.get("claims") or [])),
+        "claims_by_state": claims.get("claims_by_state", {}),
+        "claims_by_verb": claims.get("claims_by_verb", {}),
+        "claims_hash": claims.get("claims_hash", ""),
+        "formats": formats,
+        "rendered": rendered,
+        "infeasible": [row["format_id"] for row in formats
+                       if row["status"] != "rendered"],
+        "sources": sources,
+        "promotion": "none",
+        "owner": "human",
+        "next_action": "revisar un formato renderizado; ninguno se publica ni "
+                       "se firma desde aqui",
+    }
 
 
 def _portfolio_external_review_rows():
@@ -3720,48 +3970,6 @@ def _portfolio_feedback_record_unlocked(body, internal=False):
             "feedback_saved": True, "connection_saved": bool(connection.get("ok"))}
 
 
-def _portfolio_external_review(body):
-    item_id = str(body.get("item_id", ""))
-    provider = str(body.get("provider", "")).lower()
-    if provider not in ("ollama", "groq", "gemini", "cerebras"):
-        return {"ok": False, "error": "proveedor_invalido"}
-    source = _portfolio_item(item_id)
-    if not source:
-        return {"ok": False, "error": "item_no_encontrado"}
-    candidates = [item for item in _portfolio_inbox().get("items", [])
-                  if item.get("id") != item_id
-                  and item.get("selection") != "descartar"
-                  and item.get("publicacion_id") != source.get("publicacion_id")][:96]
-    board_id = str(body.get("board_id", ""))
-    board = next((row for row in _portfolio_boards().get("boards", [])
-                  if row.get("id") == board_id), {})
-    board = dict(board)
-    board.update(_portfolio_item_context(item_id))
-    prompt = {
-        "prompt": copilot.inference_prompt(source, candidates, context=board),
-        "source_manifest": copilot.media_manifest(source),
-        "candidate_count": len(candidates),
-    }
-    try:
-        providers.load_env()
-        raw = providers.call(provider, json.dumps(prompt, ensure_ascii=False),
-                             max_tokens=1400, temperature=0.1)
-    except Exception as exc:  # noqa: BLE001
-        return {"ok": False, "error": "provider_error", "detail": str(exc)[:180]}
-    normalized = copilot.normalize_inference(
-        raw, item_id, [item.get("id") for item in candidates])
-    quality = copilot.inference_quality(normalized)
-    row = {"item_id": item_id, "provider": provider, "inference": normalized,
-           "quality": quality,
-           "raw": raw,
-           "ts": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
-    _portfolio_append_jsonl(PORTFOLIO_EXTERNAL, row)
-    return {"ok": True, "provider": provider, "inference": normalized,
-            "quality": quality,
-            "raw": raw,
-            "stored": PORTFOLIO_EXTERNAL}
-
-
 def _portfolio_media_reference(value):
     value = str(value or "")
     for prefix in ("/portfolio-media/", "portfolio-media/"):
@@ -3855,6 +4063,166 @@ def _portfolio_xio_evidence(limit=24):
         return {"ok": True, "available": False, "schema": "faro-xio-evidence-v1",
                 "source": "xio/show_kit", "reason": "xio_evidence_error:%s" % str(exc)[:120],
                 "evidence": [], "segments": []}
+
+
+_TIMECODE_RE = re.compile(r"^(\d{2}):(\d{2}):(\d{2}):(\d{2})$")
+
+
+def _xio_live_cues():
+    """Cue list for the performance mode: real show cues when present, else
+    the built-in demo sequence so the mesa stays usable with no show wired up."""
+    try:
+        evidence = _portfolio_xio_evidence()
+    except Exception:  # noqa: BLE001 - live mode must keep running
+        evidence = None
+    segments = (evidence or {}).get("segments") or []
+    cues = []
+    for index, row in enumerate(segments):
+        match = _TIMECODE_RE.match(str(row.get("timecode") or ""))
+        if not match:
+            continue
+        h, m, s, f = (int(part) for part in match.groups())
+        seconds = h * 3600 + m * 60 + s + f / float(_PORTFOLIO_XIO_LIVE_FPS)
+        cues.append({"t": seconds, "n": str(row.get("index", index) + 1),
+                     "title": str(row.get("title") or ""), "layer": row.get("layer")})
+    if cues:
+        cues.sort(key=lambda row: row["t"])
+        return cues, "show_kit"
+    return _PORTFOLIO_XIO_LIVE_DEMO_CUES, "synthetic"
+
+
+def _xio_live_timecode(seconds, fps=_PORTFOLIO_XIO_LIVE_FPS):
+    seconds = max(0.0, seconds)
+    total_frames = int(seconds * fps)
+    frames = total_frames % fps
+    total_seconds = total_frames // fps
+    s = total_seconds % 60
+    m = (total_seconds // 60) % 60
+    h = (total_seconds // 3600) % 100
+    return "%02d:%02d:%02d:%02d" % (h, m, s, frames)
+
+
+def _xio_live_synthetic(t, cues):
+    """Deterministic amplitude/beat/cue for a given elapsed second `t`.
+
+    No microphone or real feed is assumed to exist -- this is the reproducible
+    demo sequence the mesa performs when nothing external is pushing pulses.
+    """
+    amplitude = (0.5 + 0.32 * math.sin(2 * math.pi * t * 0.13)
+                 + 0.18 * math.sin(2 * math.pi * t * 0.7 + 1.3))
+    amplitude = max(0.0, min(1.0, amplitude))
+    beats_per_s = _PORTFOLIO_XIO_LIVE_BPM / 60.0
+    phase = (t * beats_per_s) % 1.0
+    beat = max(0.0, 1.0 - phase / 0.22) ** 1.5
+    active = None
+    for row in cues:
+        if row["t"] <= t:
+            active = row
+        else:
+            break
+    return amplitude, beat, active
+
+
+def _xio_live_snapshot():
+    """Current performance-mode state: external pulses win when fresh,
+    otherwise a synthetic clock derived from the transport (start/pause/reset)."""
+    with _PORTFOLIO_XIO_LIVE_LOCK:
+        mode = _PORTFOLIO_XIO_LIVE["mode"]
+        started = _PORTFOLIO_XIO_LIVE["started_epoch"]
+        paused_total = _PORTFOLIO_XIO_LIVE["paused_total"]
+        paused_epoch = _PORTFOLIO_XIO_LIVE["paused_epoch"]
+        external = dict(_PORTFOLIO_XIO_LIVE["external"]) if _PORTFOLIO_XIO_LIVE["external"] else None
+    now = time.time()
+    if external and (now - external.get("ts_epoch", 0)) < _PORTFOLIO_XIO_LIVE_EXTERNAL_TIMEOUT_S:
+        cue = external.get("cue")
+        try:
+            amplitude = max(0.0, min(1.0, float(external.get("amplitude") or 0.0)))
+        except (TypeError, ValueError):
+            amplitude = 0.0
+        try:
+            beat = max(0.0, min(1.0, float(external.get("beat") or 0.0)))
+        except (TypeError, ValueError):
+            beat = 0.0
+        return {
+            "ok": True, "mode": "external", "source": "external",
+            "elapsed_s": round(now - external.get("ts_epoch", now), 3),
+            "timecode": str(external.get("timecode") or _xio_live_timecode(0)),
+            "amplitude": amplitude, "beat": beat,
+            "cue": cue if isinstance(cue, dict) else None,
+            "loop_s": _PORTFOLIO_XIO_LIVE_LOOP_S,
+        }
+    if mode == "idle":
+        return {"ok": True, "mode": "idle", "source": "none", "elapsed_s": 0.0,
+                "timecode": _xio_live_timecode(0), "amplitude": 0.0, "beat": 0.0,
+                "cue": None, "loop_s": _PORTFOLIO_XIO_LIVE_LOOP_S}
+    if mode == "paused":
+        elapsed = max(0.0, (paused_epoch or now) - (started or now) - paused_total)
+    else:
+        elapsed = max(0.0, now - (started or now) - paused_total)
+    cues, cue_source = _xio_live_cues()
+    # Real show cues can span hours; cap the loop so the mesa still performs
+    # visibly in a live demo instead of waiting out an actual show's length.
+    last_cue_t = (cues[-1]["t"] + 12.0) if cues else _PORTFOLIO_XIO_LIVE_LOOP_S
+    loop_len = min(max(_PORTFOLIO_XIO_LIVE_LOOP_S, last_cue_t), 600.0)
+    t = elapsed % loop_len
+    amplitude, beat, cue = _xio_live_synthetic(t, cues)
+    if mode == "paused":
+        beat = 0.0
+    return {"ok": True, "mode": mode, "source": "synthetic", "elapsed_s": round(elapsed, 3),
+            "timecode": _xio_live_timecode(t), "amplitude": round(amplitude, 4),
+            "beat": round(beat, 4), "cue": cue, "loop_s": loop_len, "cue_source": cue_source}
+
+
+def _xio_live_action(action):
+    action = str(action or "")
+    now = time.time()
+    with _PORTFOLIO_XIO_LIVE_LOCK:
+        if action == "start":
+            if _PORTFOLIO_XIO_LIVE["mode"] == "idle":
+                _PORTFOLIO_XIO_LIVE["started_epoch"] = now
+                _PORTFOLIO_XIO_LIVE["paused_total"] = 0.0
+                _PORTFOLIO_XIO_LIVE["paused_epoch"] = None
+            elif _PORTFOLIO_XIO_LIVE["mode"] == "paused":
+                if _PORTFOLIO_XIO_LIVE["paused_epoch"] is not None:
+                    _PORTFOLIO_XIO_LIVE["paused_total"] += now - _PORTFOLIO_XIO_LIVE["paused_epoch"]
+                _PORTFOLIO_XIO_LIVE["paused_epoch"] = None
+            _PORTFOLIO_XIO_LIVE["mode"] = "running"
+        elif action == "pause":
+            if _PORTFOLIO_XIO_LIVE["mode"] == "running":
+                _PORTFOLIO_XIO_LIVE["mode"] = "paused"
+                _PORTFOLIO_XIO_LIVE["paused_epoch"] = now
+        elif action == "reset":
+            _PORTFOLIO_XIO_LIVE["mode"] = "idle"
+            _PORTFOLIO_XIO_LIVE["started_epoch"] = None
+            _PORTFOLIO_XIO_LIVE["paused_epoch"] = None
+            _PORTFOLIO_XIO_LIVE["paused_total"] = 0.0
+            _PORTFOLIO_XIO_LIVE["external"] = None
+        else:
+            return False
+    return True
+
+
+def _xio_live_pulse(body):
+    """Ingest one external XIO-compatible pulse (timecode/amplitude/beat/cue).
+
+    Any process that can POST JSON here -- an OSC-to-HTTP bridge in front of
+    the same LTC/cue-map chain `xio/show_kit/cue_engine.py` already reads --
+    drives the mesa live. A pulse stays authoritative for
+    `_PORTFOLIO_XIO_LIVE_EXTERNAL_TIMEOUT_S` seconds, so the source simply
+    stops sending to hand control back to the synthetic demo clock.
+    """
+    if not isinstance(body, dict):
+        return False
+    cue = body.get("cue")
+    with _PORTFOLIO_XIO_LIVE_LOCK:
+        _PORTFOLIO_XIO_LIVE["external"] = {
+            "ts_epoch": time.time(),
+            "timecode": body.get("timecode"),
+            "amplitude": body.get("amplitude"),
+            "beat": body.get("beat"),
+            "cue": cue if isinstance(cue, dict) else None,
+        }
+    return True
 
 
 def _portfolio_xio_link_rows(work_id=""):
@@ -4008,15 +4376,6 @@ def _portfolio_media(relative):
     except ValueError:
         return None
     return candidate if os.path.isfile(candidate) else None
-
-
-def _portfolio_dispatch(item_id, depto, texto):
-    item = _portfolio_item(item_id)
-    if depto not in ("research", "codex"):
-        return {"ok": False, "error": "departamento_invalido"}
-    if not item:
-        return {"ok": False, "error": "item_no_encontrado"}
-    return _ejecutar(depto, "revision_portafolio", texto, "medio")
 
 
 # ── feed de actividad (los dos departamentos, con la guardia inline) ──
@@ -4181,6 +4540,152 @@ def _decisiones():
         "last": [{key: row.get(key, "") for key in (
             "id", "lane", "decision", "purpose", "next_action", "owner")}
                  for row in resumen["last"]],
+    }
+
+
+CONVOCATORIA_SCHEMA = "mak-convocatoria-surface-v1"
+# A week is when a call stops being something to plan and starts being
+# something to finish. Below this the surface says so instead of only
+# printing a date the reader has to subtract from today.
+CONVOCATORIA_URGENT_DAYS = 7
+
+
+def _call_state(closes: str, today: date | None = None):
+    """(state, days_remaining) for a closing date, or ('sin_fecha', None)."""
+    if not closes:
+        return "sin_fecha", None
+    try:
+        remaining = (date.fromisoformat(closes) - (today or date.today())).days
+    except (TypeError, ValueError):
+        return "fecha_invalida", None
+    if remaining < 0:
+        return "cerrada", remaining
+    if remaining <= CONVOCATORIA_URGENT_DAYS:
+        return "urgente", remaining
+    return "abierta", remaining
+
+
+def _regional_extensions(deadlines):
+    """Every declared deadline extension. Never inferred, never merged.
+
+    Fondart 2027 has two, and between them they cover the whole country: the
+    northern regions were extended by resolution to a fixed date, and Coquimbo
+    to Magallanes by two working days. Showing one would give the wrong date to
+    most of the country; collapsing them into a single "extended" date would
+    give the wrong date to all of it.
+
+    An extension appears only if a resolution or an official notice was read
+    and recorded with the regions it covers, and one that declares a shift
+    rather than a date says so instead of having a date computed for it.
+    """
+    declared = deadlines.get("regional_extensions")
+    if not isinstance(declared, list):
+        return []
+    out = []
+    for extension in declared:
+        if not isinstance(extension, dict):
+            continue
+        if not extension.get("extended_closes") and not extension.get(
+                "extension_business_days"):
+            continue
+        out.append({
+            "id": extension.get("id", ""),
+            "cierra": extension.get("extended_closes"),
+            "dias_habiles": extension.get("extension_business_days"),
+            "regiones": list(extension.get("applies_to_regions", [])),
+            "regiones_citadas": extension.get("regions_as_quoted", ""),
+            "resolucion": extension.get("resolution", ""),
+            "url": extension.get("url", ""),
+            "fuente": extension.get("source_kind", ""),
+            "leido": extension.get("read_on", ""),
+        })
+    return out
+
+
+def _convocatorias(today: date | None = None):
+    """The declared calls in data/, with how long each one has left.
+
+    They live in `data/*.json` under `mak-convocatoria-bases-v1` and were only
+    reachable by running `python -m tools.gen_postulacion --list`. A deadline
+    that only exists in a terminal is a deadline the operator meets by
+    remembering it.
+
+    Read-only and derived: this projects the declared bases and computes days
+    remaining. It does not decide whether to apply, and it does not read a
+    project.
+    """
+    if _load_calls is None:
+        return {"ok": False, "error": "convocatorias_unavailable",
+                "detail": _CALLS_IMPORT_ERROR, "schema": CONVOCATORIA_SCHEMA,
+                "items": []}
+    try:
+        declared = _load_calls()
+    except Exception as exc:  # noqa: BLE001 - a bad file is not a hub failure
+        return {"ok": False, "error": "convocatorias_ilegibles",
+                "detail": str(exc)[:200], "schema": CONVOCATORIA_SCHEMA, "items": []}
+
+    items = []
+    for identifier, bases in declared.items():
+        deadlines = bases.get("deadlines", {}) or {}
+        amounts = bases.get("amounts", {}) or {}
+        source = bases.get("source", {}) or {}
+        closes = str(deadlines.get("closes") or "")
+        state, remaining = _call_state(closes, today)
+        items.append({
+            "id": identifier,
+            "nombre": bases.get("name", ""),
+            "edicion": bases.get("edition", ""),
+            "organismo": bases.get("authority", ""),
+            "cierra": closes,
+            # A date alone loses the half of the deadline that decides the day:
+            # Ama Amoedo closes 23:59 Uruguay time, which is not the
+            # applicant's clock unless it happens to be.
+            "cierra_hora": deadlines.get("closes_time", ""),
+            "cierra_zona": deadlines.get("closes_timezone", ""),
+            "estado": state,
+            "dias_restantes": remaining,
+            "moneda": amounts.get("currency", ""),
+            "monto_maximo": amounts.get("max_per_project"),
+            "criterios": [
+                {"nombre": c.get("name", ""), "pondera": c.get("weight")}
+                for c in bases.get("criteria", [])
+            ],
+            # A ficha transcribed from press coverage carries the deadline and
+            # not the taxative document list. Saying which is which is the
+            # difference between a reminder and a false sense of readiness.
+            "fuente": source.get("kind", "official_bases"),
+            "bases_url": source.get("bases_pdf") or source.get("portal", ""),
+            "leido": source.get("read_on", ""),
+            "archivo": bases.get("_file", ""),
+            # Provenance is per field, not per file. The Fondart bases PDF
+            # states the amounts and the criteria and contains no date at all,
+            # so its deadline came from a portal summary. A surface that showed
+            # one confidence for the whole entry would hide exactly the part
+            # the operator is about to act on.
+            "fuente_plazo": (deadlines.get("source") or {}).get(
+                "kind", source.get("kind", "official_bases")),
+            "plazo_por_confirmar": bool(
+                (deadlines.get("source") or {}).get("todo")),
+            "ampliaciones_regionales": _regional_extensions(deadlines),
+        })
+
+    orden = {"cerrada": 3, "sin_fecha": 4, "fecha_invalida": 5}
+    items.sort(key=lambda row: (
+        orden.get(row["estado"], 0),
+        row["dias_restantes"] if row["dias_restantes"] is not None else 10**6,
+        row["id"],
+    ))
+    return {
+        "ok": True,
+        "schema": CONVOCATORIA_SCHEMA,
+        "items": items,
+        "counts": {
+            "total": len(items),
+            "abiertas": sum(1 for row in items if row["estado"] == "abierta"),
+            "urgentes": sum(1 for row in items if row["estado"] == "urgente"),
+            "cerradas": sum(1 for row in items if row["estado"] == "cerrada"),
+        },
+        "urgent_days": CONVOCATORIA_URGENT_DAYS,
     }
 
 
@@ -4591,8 +5096,11 @@ def _relevo_page():
     source = RELEVO
     source_label = "RELEVO_MAK.md"
     if not os.path.isfile(source):
-        source = os.path.join(_REPO_ROOT, "context", "LAST_HANDOFF.md")
-        source_label = "context/LAST_HANDOFF.md"
+        # Renamed 2026-09-03: it is a record, not the state, and the label has
+        # to say so on the page. The active document is DECISIONES.md and the
+        # facts come from tools/mak_status.py.
+        source = os.path.join(_REPO_ROOT, "context", "HANDOFF_HISTORICO.md")
+        source_label = "context/HANDOFF_HISTORICO.md (registro, no estado)"
     try:
         with open(source, encoding="utf-8") as f:
             cuerpo = _md_html(f.read())
@@ -4627,7 +5135,7 @@ un mapa de runtime: el trabajo actual comienza en la cara del Hub y en sus
 </div>
 <p style="color:#9db67c">El documento original queda conservado abajo como
 evidencia histórica. No debe usarse como contrato operativo si contradice
-<code>agents.md</code> o <code>LAST_HANDOFF.md</code>.</p>
+<code>DECISIONES.md</code> o <code>context/HANDOFF_HISTORICO.md</code>.</p>
 <details><summary>ver GENESIS.md histórico</summary>
 <article style="margin-top:16px">%s</article>
 </details>
@@ -4695,6 +5203,7 @@ class H(BaseHTTPRequestHandler):
         self._send(json.dumps(obj, ensure_ascii=False),
                    "application/json; charset=utf-8", code)
 
+
     def _proxy_service(self, prefix, method, body=None):
         """Forward one internal service route without exposing its port."""
         u = urllib.parse.urlparse(self.path)
@@ -4756,14 +5265,16 @@ class H(BaseHTTPRequestHandler):
                 return self._send("research UI missing", "text/plain; charset=utf-8", 404)
         if p == "/api/research/catalog":
             try:
-                return self._json(_research_catalog())
+                return _answer(self, _research_catalog())
             except Exception as exc:
-                return self._json({"available": False, "adapters": [], "error": str(exc)[:200]})
+                return self._json(
+                    {"available": False, "adapters": [], "error": str(exc)[:200]}, 503)
         if p == "/api/research/jobs":
             try:
-                return self._json(_research_jobs())
+                return _answer(self, _research_jobs())
             except Exception as exc:
-                return self._json({"available": False, "jobs": [], "error": str(exc)[:200]})
+                return self._json(
+                    {"available": False, "jobs": [], "error": str(exc)[:200]}, 503)
         if p == "/api/research/job":
             query = urllib.parse.parse_qs(u.query)
             raw_id = (query.get("id") or [""])[0].strip()
@@ -4908,8 +5419,6 @@ class H(BaseHTTPRequestHandler):
         if p == "/api/portfolio/archive-view":
             payload, code = _archive_portfolio_view_read_only()
             return self._json(payload, code)
-        if p == "/api/portfolio/identity-graph":
-            return self._json(_portfolio_identity_graph())
         if p == "/revision":
             self.send_response(301)
             self.send_header("Location", "/revision/")
@@ -4934,8 +5443,6 @@ class H(BaseHTTPRequestHandler):
             query = urllib.parse.parse_qs(u.query)
             compact = (query.get("surface") or [""])[0] == "mesa"
             return self._json(_portfolio_inbox(compact=compact))
-        if p == "/api/portfolio/index":
-            return self._json(_portfolio_metadata_index())
         if p == "/api/portfolio/decision-index":
             return self._json(_portfolio_decision_index())
         if p == "/api/portfolio/audit":
@@ -4943,35 +5450,6 @@ class H(BaseHTTPRequestHandler):
             source_id = (query.get("source_id") or query.get("item_id") or [""])[0]
             audit = _portfolio_audit(source_id)
             return self._json(audit, 404 if not audit.get("ok") else 200)
-        if p == "/api/portfolio/classifications":
-            return self._json({"ok": True,
-                               "schema": "faro-portfolio-classification-v1",
-                               "items": list(_portfolio_classifications().values())})
-        if p == "/api/portfolio/boards":
-            return self._json(_portfolio_boards())
-        if p == "/api/portfolio/triangulation":
-            return self._json(_portfolio_triangulation())
-        if p == "/api/portfolio/organism":
-            return self._json(_portfolio_organism_projection())
-        if p == "/api/portfolio/contract":
-            return self._json({
-                "schema": "faro-portfolio-contract-surface-v1",
-        "source_of_truth": ["portfolio_inbox", "classifications", "vision_features",
-                                     "boards", "connections", "copilot_feedback",
-                                     "portfolio_decision_drafts", "common_ledger"],
-                **_portfolio_contract_surface(),
-            })
-        if p == "/api/portfolio/review-queue":
-            item_id = (urllib.parse.parse_qs(u.query).get("source_id") or [""])[0]
-            return self._json(_portfolio_review_queue(item_id))
-        if p == "/api/portfolio/evidence-queue":
-            project_id = (urllib.parse.parse_qs(u.query).get("project_id") or [""])[0]
-            payload, code = _portfolio_evidence_queue_read(project_id)
-            return self._json(payload, code)
-        if p == "/api/portfolio/evidence-draft":
-            project_id = (urllib.parse.parse_qs(u.query).get("project_id") or [""])[0]
-            payload, code = _portfolio_evidence_draft_read(project_id)
-            return self._json(payload, code)
         if p == "/api/portfolio/external-candidates":
             item_id = (urllib.parse.parse_qs(u.query).get("item_id") or [""])[0]
             return self._json(_portfolio_external_candidates(item_id))
@@ -4982,16 +5460,6 @@ class H(BaseHTTPRequestHandler):
             return self._json(_legacy_report_index(limit, current))
         if p == "/api/research/rescue":
             return self._json(_legacy_rescue_queue())
-        if p == "/api/portfolio/copilot/suggestions":
-            query = urllib.parse.parse_qs(u.query)
-            item_id = (query.get("item_id") or [""])[0]
-            board_id = (query.get("board_id") or [""])[0]
-            include_map = (query.get("map") or ["0"])[0] == "1"
-            focus_facet = (query.get("facet") or [""])[0]
-            shuffle = (query.get("mode") or [""])[0] == "shuffle"
-            shuffle_seed = (query.get("seed") or [""])[0]
-            return self._json(_portfolio_suggestions(
-                item_id, board_id, include_map, focus_facet, shuffle, shuffle_seed))
         if p == "/api/portfolio/copilot/scene":
             query = urllib.parse.parse_qs(u.query)
             item_id = (query.get("item_id") or [""])[0]
@@ -5004,57 +5472,18 @@ class H(BaseHTTPRequestHandler):
             shuffle = (query.get("mode") or [""])[0] == "shuffle"
             shuffle_seed = (query.get("seed") or [""])[0]
             surface = (query.get("surface") or [""])[0]
-            return self._json(_portfolio_scene(
+            payload = _portfolio_scene(
                 item_id, limit=limit, focus_facet=focus_facet,
-                shuffle=shuffle, shuffle_seed=shuffle_seed, surface=surface))
-        if p == "/api/portfolio/copilot/map":
+                shuffle=shuffle, shuffle_seed=shuffle_seed, surface=surface)
+            return self._json(payload, _status_for(payload))
+        if p == "/api/portfolio/production":
             query = urllib.parse.parse_qs(u.query)
-            width = (query.get("width") or [8])[0]
-            height = (query.get("height") or [6])[0]
-            try:
-                width, height = int(width), int(height)
-            except (TypeError, ValueError):
-                width, height = 8, 6
-            return self._json(_portfolio_gtm_map(
-                _portfolio_inbox().get("items", []),
-                feedback=_portfolio_feedback(), width=width, height=height))
-        if p == "/api/portfolio/copilot/vision":
-            item_id = (urllib.parse.parse_qs(u.query).get("item_id") or [""])[0]
-            item = _portfolio_item(item_id)
-            if not item:
-                return self._json({"ok": False, "error": "item_no_encontrado"}, 404)
-            record = _portfolio_vision().get(item_id)
-            return self._json({"ok": True, "schema": copilot.VISION_SCHEMA,
-                               "item_id": item_id,
-                               "features": (record or {}).get("features", {}),
-                               "unknowns": (record or {}).get("unknowns", []),
-                               "confidence": (record or {}).get("confidence", "low"),
-                               "available": bool(record)})
-        if p == "/api/portfolio/copilot/manifest":
-            item_id = (urllib.parse.parse_qs(u.query).get("item_id") or [""])[0]
-            item = _portfolio_item(item_id)
-            if not item:
-                return self._json({"ok": False, "error": "item_no_encontrado"}, 404)
-            suggestions = _portfolio_suggestions(item_id).get("suggestions", [])
-            candidates = [_portfolio_item(row["item_id"]) for row in suggestions]
-            return self._json({"ok": True, "schema": "faro-portfolio-learning-manifest-v1",
-                               "source": copilot.media_manifest(item),
-                               "candidates": [copilot.media_manifest(x) for x in candidates if x]})
-        if p == "/api/portfolio/copilot/visual-index":
-            item_id = (urllib.parse.parse_qs(u.query).get("item_id") or [""])[0]
-            surface = _portfolio_visual_surface(item_id)
-            return self._json({"ok": True, "schema": "faro-portfolio-visual-index-surface-v1",
-                               "profile": surface.get("profile", {}),
-                               "relations": surface.get("relations", []),
-                               "reason": surface.get("reason", "")})
-        if p == "/api/portfolio/copilot/xio-evidence":
-            return self._json(_portfolio_xio_evidence())
-        if p == "/api/portfolio/copilot/status":
-            providers.load_env()
-            visual = _portfolio_visual_surface()
-            return self._json({"ok": True, "provider_status": copilot.provider_status(os.environ),
-                               "active": "local_hypothesis_engine",
-                               "visual_similarity": visual.get("profile", {})})
+            payload = _portfolio_production(
+                format_id=(query.get("format_id") or [""])[0],
+                refresh=(query.get("refresh") or ["0"])[0] == "1")
+            return self._json(payload, _status_for(payload))
+        if p == "/api/portfolio/xio/live":
+            return self._json(_xio_live_snapshot())
         if p == "/api/portfolio/copilot/learning":
             return self._json(_portfolio_learning())
         if p.startswith("/portfolio-media/"):
@@ -5117,6 +5546,8 @@ class H(BaseHTTPRequestHandler):
                 return self._json({"error": str(e)[:200], "total": 0,
                                    "by_lane": {}, "by_decision": {},
                                    "pending_human": 0})
+        if p == "/api/convocatorias":
+            return _answer(self, _convocatorias())
         if p == "/api/oportunidades":
             try:
                 return self._json(_oportunidades())
@@ -5215,8 +5646,14 @@ class H(BaseHTTPRequestHandler):
             result, code = _project_route_request(body)
             return self._json(result, code)
         if u.path == "/api/project/probe":
+            # The header and the body were parsed under one `except`, so a
+            # non-numeric Content-Length was reported as `json invalido` and
+            # sent the caller to debug a body that was fine. Both neighbours,
+            # `/api/project/route` and `/api/research/jobs`, name them apart.
+            length = _body_length(self.headers, 30000)
+            if length is None:
+                return self._json({"ok": False, "error": "content_length_invalido"}, 400)
             try:
-                length = min(int(self.headers.get("Content-Length") or 0), 30000)
                 body = json.loads(self.rfile.read(length).decode("utf-8", "replace") or "{}")
             except (TypeError, ValueError, json.JSONDecodeError):
                 return self._json({"ok": False, "error": "json invalido"}, 400)
@@ -5252,101 +5689,86 @@ class H(BaseHTTPRequestHandler):
             if not isinstance(body, dict):
                 return self._json({"ok": False, "error": "json debe ser objeto"}, 400)
             return self._json(_diagnostic_payload(body))
-        if u.path == "/api/portfolio/evidence-decision":
-            try:
-                length = min(int(self.headers.get("Content-Length") or 0), 12000)
-            except (TypeError, ValueError):
+        if u.path == "/api/portfolio/xio/live":
+            length = _body_length(self.headers, 2000)
+            if length is None:
                 return self._json({"ok": False, "error": "content_length_invalido"}, 400)
             try:
                 body = json.loads(self.rfile.read(length).decode("utf-8", "replace") or "{}")
             except (ValueError, TypeError):
                 return self._json({"ok": False, "error": "json invalido"}, 400)
-            payload, code = _portfolio_evidence_decision(body)
-            return self._json(payload, code)
+            if not isinstance(body, dict) or not _xio_live_action(body.get("action")):
+                return self._json({"ok": False, "error": "accion_desconocida"}, 400)
+            return self._json(_xio_live_snapshot())
+        if u.path == "/api/portfolio/xio/pulse":
+            length = _body_length(self.headers, 4000)
+            if length is None:
+                return self._json({"ok": False, "error": "content_length_invalido"}, 400)
+            try:
+                body = json.loads(self.rfile.read(length).decode("utf-8", "replace") or "{}")
+            except (ValueError, TypeError):
+                return self._json({"ok": False, "error": "json invalido"}, 400)
+            if not _xio_live_pulse(body):
+                return self._json({"ok": False, "error": "pulso_invalido"}, 400)
+            return self._json({"ok": True})
         for prefix in SERVICE_PROXY_PREFIXES:
             if u.path.startswith("/" + prefix + "/"):
-                length = min(int(self.headers.get("Content-Length") or 0),
-                             SERVICE_PROXY_MAX_BYTES + 1)
+                length = _body_length(self.headers, SERVICE_PROXY_MAX_BYTES + 1)
+                if length is None:
+                    return self._json(
+                        {"ok": False, "error": "content_length_invalido"}, 400)
                 body = self.rfile.read(length)
                 return self._proxy_service(prefix, "POST", body)
         if u.path == "/api/revision/episodios" and _episode_revision is not None:
-            largo = min(int(self.headers.get("Content-Length") or 0), 12000)
+            largo = _body_length(self.headers, 12000)
+            if largo is None:
+                return self._json({"ok": False, "error": "content_length_invalido"}, 400)
             try:
                 body = json.loads(self.rfile.read(largo).decode("utf-8", "replace"))
             except (ValueError, TypeError):
                 return self._json({"ok": False, "error": "json invalido"}, 400)
-            return self._json(_episode_revision.record(
+            return _answer(self, _episode_revision.record(
                 body.get("episodio", ""), body.get("decision", ""), body.get("note", "")))
         if u.path in ("/api/director/work", "/api/director/decision",
-                      "/api/portfolio/select", "/api/portfolio/classify",
-                      "/api/portfolio/classify-batch",
                       "/api/portfolio/draft", "/api/portfolio/commit",
                       "/api/portfolio/undo",
-                      "/api/portfolio/dispatch",
-                      "/api/portfolio/board", "/api/portfolio/connect",
-                      "/api/portfolio/feedback", "/api/portfolio/triangulation/review",
-                      "/api/portfolio/triangulation/context-link",
                       "/api/portfolio/copilot/xio-link",
-                      "/api/portfolio/copilot/external",
-                      "/api/portfolio/copilot/vision",
                       "/api/portfolio/external-candidates/review"):
-            largo = min(int(self.headers.get("Content-Length") or 0), 12000)
+            largo = _body_length(self.headers, 12000)
+            if largo is None:
+                return self._json({"ok": False, "error": "content_length_invalido"}, 400)
             try:
                 body = json.loads(self.rfile.read(largo).decode("utf-8", "replace"))
             except (ValueError, TypeError):
                 return self._json({"ok": False, "error": "json invalido"}, 400)
             if u.path == "/api/director/work":
-                return self._json(_director_work(body))
+                return _answer(self, _director_work(body))
             if u.path == "/api/director/decision":
-                return self._json(_director_decision(body))
+                return _answer(self, _director_decision(body))
             if u.path.endswith("/draft"):
-                return self._json(_portfolio_draft(body))
+                return _answer(self, _portfolio_draft(body))
             if u.path.endswith("/commit"):
-                return self._json(_portfolio_commit(body))
+                return _answer(self, _portfolio_commit(body))
             if u.path.endswith("/undo"):
-                return self._json(_portfolio_undo(body))
-            if u.path.endswith("/select"):
-                return self._json(_portfolio_select(
-                    body.get("item_id"), body.get("decision"),
-                    body.get("board_id", ""), body.get("session_id", ""),
-                    body.get("pass_size", 0), body.get("decision_scope", "selection"),
-                    body.get("reason_code", ""), body.get("target_id", ""),
-                    body.get("note", "")))
-            if u.path.endswith("/classify"):
-                return self._json(_portfolio_classify(body))
-            if u.path.endswith("/classify-batch"):
-                return self._json(_portfolio_classify_batch(body))
-            if u.path.endswith("/board"):
-                return self._json(_portfolio_board_action(body))
-            if u.path.endswith("/connect"):
-                return self._json(_portfolio_connect(body))
-            if u.path.endswith("/feedback"):
-                return self._json(_portfolio_feedback_record(body))
-            if u.path.endswith("/triangulation/review"):
-                return self._json(_portfolio_triage_record(body))
-            if u.path.endswith("/triangulation/context-link"):
-                return self._json(_portfolio_context_link(body))
+                return _answer(self, _portfolio_undo(body))
             if u.path.endswith("/copilot/xio-link"):
-                return self._json(_portfolio_xio_link(body))
-            if u.path.endswith("/external"):
-                return self._json(_portfolio_external_review(body))
-            if u.path.endswith("/vision"):
-                return self._json(_portfolio_vision_read(body))
-            if u.path.endswith("/external-candidates/review"):
-                return self._json(_portfolio_external_candidate_review(body))
-            return self._json(_portfolio_dispatch(body.get("item_id"), body.get("depto"),
-                                                   body.get("texto", "")))
+                return _answer(self, _portfolio_xio_link(body))
+            return _answer(self, _portfolio_external_candidate_review(body))  # /external-candidates/review
         if u.path == "/api/revision" and _revision is not None:
-            largo = min(int(self.headers.get("Content-Length") or 0), 5000)
+            largo = _body_length(self.headers, 5000)
+            if largo is None:
+                return self._json({"ok": False, "error": "content_length_invalido"}, 400)
             try:
                 body = json.loads(self.rfile.read(largo).decode("utf-8", "replace"))
             except (ValueError, TypeError):
                 return self._json({"ok": False, "error": "json invalido"}, 400)
-            return self._json(_revision.record(body.get("video"),
-                                               body.get("decision"),
-                                               body.get("note", "")))
+            return _answer(self, _revision.record(body.get("video"),
+                                                     body.get("decision"),
+                                                     body.get("note", "")))
         if u.path == "/api/ejecutar":
-            largo = min(int(self.headers.get("Content-Length") or 0), 12000)
+            largo = _body_length(self.headers, 12000)
+            if largo is None:
+                return self._json({"ok": False, "error": "content_length_invalido"}, 400)
             try:
                 body = json.loads(self.rfile.read(largo).decode("utf-8", "replace"))
             except (ValueError, TypeError):
@@ -5359,7 +5781,9 @@ class H(BaseHTTPRequestHandler):
                 densidad = "medio"
             return self._json(_ejecutar(depto, modo, texto, densidad))
         if u.path == "/api/ideas":
-            largo = min(int(self.headers.get("Content-Length") or 0), 12000)
+            largo = _body_length(self.headers, 12000)
+            if largo is None:
+                return self._json({"ok": False, "error": "content_length_invalido"}, 400)
             try:
                 body = json.loads(self.rfile.read(largo).decode("utf-8", "replace"))
             except (ValueError, TypeError):
@@ -5380,7 +5804,9 @@ class H(BaseHTTPRequestHandler):
                 return self._json({"ok": False, "error": str(e)[:200]}, 500)
             return self._json({"ok": False, "error": "accion desconocida"}, 400)
         if u.path == "/api/render":
-            largo = min(int(self.headers.get("Content-Length") or 0), 4000)
+            largo = _body_length(self.headers, 4000)
+            if largo is None:
+                return self._json({"ok": False, "error": "content_length_invalido"}, 400)
             try:
                 body = json.loads(self.rfile.read(largo).decode("utf-8", "replace"))
             except (ValueError, TypeError):

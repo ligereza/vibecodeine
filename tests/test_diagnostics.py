@@ -23,7 +23,11 @@ def test_route_idea_selects_cultura_with_research_support():
     assert route["primary_domain"] == "cultura"
     assert "research" in route["support_domains"]
     assert route["contract"].endswith("cultura.md")
-    assert "WIN raw archive" in route["do_not_read"]
+    # Not "WIN raw archive": there is no Windows node (2026-09-03, operator).
+    # What the route must still do is declare a bulk surface to keep out of a
+    # first read, and on this box that is the mounted SSD.
+    assert route["do_not_read"], route
+    assert not any("WIN" in entry for entry in route["do_not_read"])
 
 
 def test_route_idea_explicit_area_wins():
@@ -65,7 +69,7 @@ def test_report_is_bounded_and_markdown_copyable(tmp_path):
     assert report["area"] == "research"
     assert "topsecret" not in text
     assert "user@example.com" not in text
-    assert "WIN raw archive" in text
+    assert "do not read automatically" in text
     assert "source_search" in text
     assert render_route_markdown(report["route"]).startswith("# MAK context route")
 

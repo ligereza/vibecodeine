@@ -320,6 +320,6 @@ def conductor_import_hint() -> str:
 def install_live_import_path() -> None:
     """Allow mirrored scripts to import this package from the MAK checkout."""
     candidate = Path(os.path.expanduser(
-        os.environ.get("MAK_CONDUCTOR_PATH", "~/flujo/cultura")))
+        os.environ.get("MAK_CONDUCTOR_PATH", "~/cultura")))
     if candidate.is_dir() and str(candidate) not in sys.path:
         sys.path.insert(0, str(candidate))

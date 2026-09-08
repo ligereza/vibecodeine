@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any, Sequence
@@ -12,9 +13,13 @@ from typing import Any, Sequence
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
+# MAK consumes the motor from the FLUJO checkout; it carries no src/flujo copy.
+MOTOR_SRC = Path(os.environ.get("FLUJO_SOURCE_ROOT", str(ROOT / "flujo" / "src")))
+if MOTOR_SRC.is_dir() and str(MOTOR_SRC) not in sys.path:
+    sys.path.insert(0, str(MOTOR_SRC))
 
-from src.flujo.knowledge.opportunity_delta import validate_opportunity_delta  # noqa: E402
-from src.flujo.knowledge.selective_recompute_receipt import (  # noqa: E402
+from flujo.knowledge.opportunity_delta import validate_opportunity_delta  # noqa: E402
+from flujo.knowledge.selective_recompute_receipt import (  # noqa: E402
     SelectiveRecomputeReceiptError,
     build_selective_recompute_receipt,
     stable_json,

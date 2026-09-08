@@ -1,0 +1,10 @@
+item_base,categoria,concepto,cantidad,unidad,precio_unitario,subtotal,fundamento,origen_del_valor
+-,Personal,Dedicacion del artista a la curaduria del archivo (2034 piezas),6,mes,900,5400,Nucleo del proyecto: revisar y decidir pieza a pieza,Estimacion: 6 meses a media dedicacion
+-,Personal,Desarrollo de la exportacion a formato de portafolio,3,mes,800,2400,Construye el eslabon inexistente (verificado: unica salida es descarga JSON),Estimacion sobre alcance acotado
+-,Personal,Normalizacion del vocabulario visual y de relaciones,1,trabajo,900,900,"Corrige inconsistencias observadas (azul/Azul, variantes de estilo)",Estimacion
+-,Operacion,Hosting y dominio para la publicacion del portafolio,12,mes,25,300,Sin esto el resultado no sale de 127.0.0.1,Referencia de mercado: hosting estatico + dominio
+-,Operacion,Almacenamiento y respaldo del archivo preservado,12,mes,12,144,Preservacion es objeto declarado de la categoria,Referencia de mercado
+-,Operacion,Digitalizacion y recaptura de material degradado,1,lote,200,200,Parte del archivo requiere recaptura antes de curarse,Estimacion
+-,Operacion,Edicion y produccion del portafolio publicado,1,trabajo,500,500,El portafolio es la salida verificable del proyecto,Estimacion
+-,Operacion,Comision bancaria y diferencia de cambio en transferencia internacional,1,global,150,150,La beca se paga por transferencia internacional,"Supuesto declarado: ~1,5% del total"
+,TOTAL,Total solicitado,,,,9994,Tope de la convocatoria: 10000 USD,

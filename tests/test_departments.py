@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "cultura" / "mak_plataforma"))
 
 import hub  # noqa: E402
-from src.flujo.departments import (catalog, cultura_opportunity_gate, rd_crosswalk,
+from flujo.departments import (catalog, cultura_opportunity_gate, rd_crosswalk,
                                    rd_cultura_relations, rd_summary, rd_topics)  # noqa: E402
 
 

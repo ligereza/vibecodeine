@@ -36,7 +36,13 @@ SIGN = {
     "fuentes": -1,
     "duracion_ms": 1,
 }
-DATE_PREFIX = re.compile(r"^20\d{6}(?:[-_]\d{4,6})?-")
+# The separator after the date is `-` or `_`: both are in use on disk, 13
+# files against 8 as of 2026-09-04. Accepting only `-` left the date inside the
+# topic for the other form, so `20260726_estudio` and `20260801-estudio` read
+# as two topics instead of one. Residuals are grouped by topic and scaled by a
+# median, so splitting a group is not cosmetic: it computes the scale from
+# fewer samples than the archive actually holds.
+DATE_PREFIX = re.compile(r"^20\d{6}(?:[-_]\d{4,6})?[-_]")
 
 
 def robust_scale(values: list[float]) -> float:
@@ -275,9 +281,9 @@ def write_report(report_path: Path, csv_path: Path, rows, records, group_stats, 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--db", type=Path, default=Path("/home/mak/flujo/data/mak_knowledge.db"))
-    parser.add_argument("--report", type=Path, default=Path("/home/mak/flujo/context/MAK_EFFORT_RESIDUALS.md"))
-    parser.add_argument("--csv", type=Path, default=Path("/home/mak/flujo/context/MAK_EFFORT_RESIDUALS.csv"))
+    parser.add_argument("--db", type=Path, default=Path("/home/mak/data/mak_knowledge.db"))
+    parser.add_argument("--report", type=Path, default=Path("/home/mak/context/MAK_EFFORT_RESIDUALS.md"))
+    parser.add_argument("--csv", type=Path, default=Path("/home/mak/context/MAK_EFFORT_RESIDUALS.csv"))
     args = parser.parse_args()
     computed_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
     conn = sqlite3.connect(args.db)

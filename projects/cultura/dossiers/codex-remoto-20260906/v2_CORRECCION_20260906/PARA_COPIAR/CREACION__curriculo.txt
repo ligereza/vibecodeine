@@ -1,0 +1,20 @@
+Currículo del responsable
+=========================
+[135 palabras · 874 caracteres · corte 2026-09-06]
+[pegar desde la linea siguiente]
+
+El responsable desarrolla y mantiene el instrumento sobre el que se apoya esta
+obra: la interfaz de lectura del archivo, la organización de los datos, la
+trazabilidad de cada propuesta del sistema y el registro de decisiones
+curatoriales con su reverso.
+
+Esa experiencia es verificable y está fechada: 87 decisiones registradas en 14
+sesiones de trabajo entre el 7 de agosto y el 2 de septiembre de 2026, 103
+clasificaciones y 123 asientos en un registro de decisiones con control de
+unicidad. Reúne diseño de interacción, implementación, curaduría de archivo
+propio y documentación de método.
+
+La acreditación curricular se realiza en Perfil Cultura con el currículo del
+responsable. Este expediente no atribuye al responsable una trayectoria que no
+pueda respaldar: la evidencia técnica está documentada y fechada, y las
+declaraciones curriculares las firma el postulante.

@@ -38,7 +38,7 @@ try:
     _CONDUCTOR_RUNTIME_AVAILABLE = True
 except ImportError:  # mirrored MAK runtime imports from the repo's cultura dir
     sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH",
-                                     "/home/mak/flujo/cultura"))
+                                     "/home/mak/cultura"))
     try:
         from mak_conductor.runtime import (external_budget_limit,
                                            reserve_external_call,
@@ -493,7 +493,7 @@ def load_env(path=ENV_FILE):
     # The repo-level provider file is the existing source for Gemini keys.
     # Read only the Gemini fields from it; do not merge unrelated credentials
     # into the research runtime.
-    secondary = os.environ.get("MAK_PROVIDER_ENV", "/home/mak/flujo/.env")
+    secondary = os.environ.get("MAK_PROVIDER_ENV", "/home/mak/.env")
     if os.path.abspath(os.path.expanduser(secondary)) != os.path.abspath(
             os.path.expanduser(path)):
         try:

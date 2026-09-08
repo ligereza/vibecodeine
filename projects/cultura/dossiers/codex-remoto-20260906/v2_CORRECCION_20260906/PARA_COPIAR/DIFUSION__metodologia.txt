@@ -1,0 +1,33 @@
+Metodología
+===========
+[218 palabras · 1493 caracteres · corte 2026-09-06]
+[pegar desde la linea siguiente]
+
+El proyecto lo ejecuta el responsable, sin equipo de trabajo. Los servicios
+contratados son puntuales, con entregable y periodo definidos: diseño gráfico
+y editorial de la superficie, auditoría de accesibilidad con informe,
+redacción de descripciones alternativas, preparación de piezas, registro de
+datos de acceso e impresión.
+
+Fase 1, meses 1-3. Selección definitiva a partir de las decisiones ya
+registradas. Resolución del estado de derechos: la obra es propia, de modo que
+no corresponde autorización de terceros; se excluyen los registros de evento
+por contener posiblemente imágenes de personas. Preparación técnica de cada
+pieza.
+
+Fase 2, meses 3-5. Sistema visual y plantillas de publicación. Implementación
+de la superficie sobre el instrumento existente, incluyendo la visualización
+de la evidencia de cada relación, la métrica de pérdida y el recorrido guiado.
+
+Fase 3, meses 5-6. Publicación y auditoría externa de accesibilidad.
+Corrección de lo que el informe señale, dentro del periodo.
+
+Fase 4, meses 6-10. Convocatoria dirigida, publicación del recorrido guiado y
+de la edición imprimible de la guía. Registro de circulación sin recolección
+de datos personales del visitante. No hay actividades presenciales.
+
+Fase 5, meses 10-12. Informe de acceso, publicación del método con resultados
+negativos incluidos, respaldo y cierre administrativo.
+
+Protección de datos. La superficie no pide cuenta ni recolecta datos
+personales. El registro de circulación es agregado y anónimo.

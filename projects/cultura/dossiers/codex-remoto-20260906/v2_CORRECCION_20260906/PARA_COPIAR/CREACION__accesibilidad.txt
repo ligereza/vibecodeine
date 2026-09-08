@@ -1,0 +1,25 @@
+Accesibilidad
+=============
+[188 palabras · 1166 caracteres · corte 2026-09-06]
+[pegar desde la linea siguiente]
+
+La accesibilidad de esta obra no se declara: se somete a auditoría externa con
+informe, en el mes 5, y los hallazgos se corrigen dentro del periodo de
+ejecución. Esa auditoría es una línea del presupuesto, no una intención.
+
+Medidas comprometidas. Navegación completa por teclado, sin depender del
+puntero. Contraste verificado y tipografía legible a distancia de mesa.
+Control de pausa y reducción de movimiento, porque la obra anima transiciones.
+Textos en lenguaje claro, revisados para que la explicación de la evidencia y
+de la métrica de pérdida se entienda sin formación previa. Una alternativa
+impresa de la guía de lectura, que permite seguir el recorrido sin usar la
+interfaz. Y acompañamiento del responsable en sala durante los horarios de
+visita, para quien prefiera una lectura guiada.
+
+Selección del espacio con criterio de acceso físico y conexión a transporte
+público, declarado antes de elegirlo.
+
+Lo que no se promete: no se afirma cumplimiento de una norma específica antes
+de que la auditoría lo verifique, ni se declara la obra accesible para toda
+condición. El informe se publica con sus hallazgos, incluidos los que no se
+alcancen a corregir.

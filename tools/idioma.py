@@ -20,7 +20,8 @@ What is measured -- and, just as important, what is NOT:
 - The full measurement uses `git ls-files -- '*.py'`. The change ratchet also
   reads untracked Python files deliberately, so new work cannot hide from it.
 - Files under DEAD_ZONE (archives), FOREIGN_ZONE (vendorized, third-party) and
-  QUARANTINE_ZONE (reversible evidence) are excluded: the instrument must
+  QUARANTINE_ZONE (reversible evidence) and AUTHORSHIP_ZONE (the
+  operator's drafts and works) are excluded: the instrument must
   earn the right to accuse a file, and quarantine is not active code. Same
   convention as tests/test_higiene_docs.py.
 
@@ -97,6 +98,23 @@ FOREIGN_ZONE = (
 )
 QUARANTINE_ZONE = (
     "context/quarantine/",
+)
+# The applications workshop, one directory per convocatoria. What lives here is
+# the operator's own draft material and, in some cases, the work itself: the
+# `.py` under `03_DOUBLECUP/svg/sistema/` is a generative piece with its own
+# architecture notes, not repository infrastructure. The language rule sends
+# product a human reads to Spanish with diacritics, and a draft he writes for a
+# funding application is that. Policing it would ask him to comment his own work
+# in English so a ratchet about MAK's code stays quiet.
+#
+# `projects/cultura/dossiers/` is the same category under a different name: 230
+# tracked files of which 134 are `.md`, 50 `.txt`, 12 `.csv` and 9 `.pdf`, and
+# the only code is a delivery of scripts that write those documents. Excluding
+# it here rather than lowering the baseline keeps the ratchet policing MAK's own
+# code, which is what it is for.
+AUTHORSHIP_ZONE = (
+    "borradores/",
+    "projects/cultura/dossiers/",
 )
 
 # Unambiguous Spanish function words. Deliberately absent: "no" and "a"
@@ -230,6 +248,7 @@ def tracked_python_files(root: Path = ROOT) -> List[str]:
         if not f.startswith(DEAD_ZONE)
         and not f.startswith(FOREIGN_ZONE)
         and not f.startswith(QUARANTINE_ZONE)
+        and not f.startswith(AUTHORSHIP_ZONE)
     ]
 
 
@@ -259,6 +278,7 @@ def changed_python_files(root: Path = ROOT) -> List[str]:
         f for f in files if f and not f.startswith(DEAD_ZONE)
         and not f.startswith(FOREIGN_ZONE)
         and not f.startswith(QUARANTINE_ZONE)
+        and not f.startswith(AUTHORSHIP_ZONE)
     )
 
 

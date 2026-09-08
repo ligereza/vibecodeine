@@ -19,8 +19,6 @@ Two things these tests pin, and both are the lesson of 2026-07-31:
    verbs inside the command name; a name does not say what a command does.
 """
 import json
-import subprocess
-import sys
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
@@ -74,15 +72,21 @@ def test_undeclared_destructiveness_is_null_not_false():
     assert any(c["destructivo"] is True for c in d["comandos"])
 
 
-def test_the_manifest_is_not_stale_against_the_real_cli():
-    """The same `--check` that keeps MAPA.md honest now covers the manifest.
-    A manifest nobody checks is documentation, and documentation rots."""
-    r = subprocess.run([sys.executable, str(GENERADOR), "--check"],
-                       capture_output=True, text=True, encoding="utf-8",
-                       cwd=str(RAIZ), timeout=300)
-    assert r.returncode == 0, (
-        "context/comandos.json quedo desfasado del CLI real. "
-        "Corre: py tools/gen_mapa_comandos.py\n" + r.stdout + r.stderr)
+# The staleness check against the REAL CLI is not here, on purpose. It lives in
+# `tests/test_mapa_completo.py::test_el_manifiesto_no_queda_desfasado_del_cli`
+# since 2026-09-02. Cause: `--check` spawns `python -m flujo --help`, and the
+# CLI imports typer, which is declared only in `requirements-flujo.txt` and is
+# the one package of that stack the MAK profile genuinely lacks: run
+# 33670334244's own install step shows rich, pydantic and requests arriving
+# transitively, and typer never arriving. This file is declared
+# `repo_hygiene`, a lane the MAK profile runs, so the check failed in CI MAK
+# for an environment reason while passing on the box, where the venv also
+# holds the motor's CLI stack. The classifier could not see it: the dependency
+# goes through `subprocess`, and AST records imports, not behavior. Its twin
+# ratchet over the generated MAPA.md table was already `integration` -- the
+# lane that composes both physical checkouts -- so the manifest half joined it.
+# What stays here is what this lane can honestly measure: the shape and the
+# attribution rules of the tracked `context/comandos.json` document.
 
 
 def test_the_manifest_and_the_table_come_from_one_tree():

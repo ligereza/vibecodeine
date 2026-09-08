@@ -22,7 +22,7 @@ def _reserve_bounded_external(provider):
                                                     reserve_external_call)
     except ImportError:
         sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH",
-                                         "/home/mak/flujo/cultura"))
+                                         "/home/mak/cultura"))
         try:
             from mak_conductor.runtime import (external_budget_limit,
                                                reserve_external_call)
@@ -37,7 +37,7 @@ def _shared_local_gpu(job_id, estimated_vram_mb):
         from cultura.mak_conductor.runtime import shared_gpu_lease
     except ImportError:
         sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH",
-                                         "/home/mak/flujo/cultura"))
+                                         "/home/mak/cultura"))
         try:
             from mak_conductor.runtime import shared_gpu_lease
         except ImportError:
@@ -169,7 +169,7 @@ def load_env(path=None):
         candidates = [
             os.environ.get("RESEARCH_ENV", ""),
             os.path.join(os.getcwd(), ".env"),
-            "/home/mak/flujo/.env",
+            "/home/mak/.env",
             os.path.expanduser("~/research/research.env"),
             os.path.expanduser("~/research.env"),
         ]
@@ -310,14 +310,14 @@ def call(provider, prompt, model=None, max_tokens=2500, temperature=0.1,
         from cultura.mak_conductor.runtime import active_enabled
     except ImportError:
         sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH",
-                                         "/home/mak/flujo/cultura"))
+                                         "/home/mak/cultura"))
         from mak_conductor.runtime import active_enabled
     if active_enabled():
         try:
             from cultura.mak_conductor.runtime import dispatch_sync
         except ImportError:
             sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH",
-                                             "/home/mak/flujo/cultura"))
+                                             "/home/mak/cultura"))
             from mak_conductor.runtime import dispatch_sync
         prompt_hash = hashlib.sha256(str(prompt).encode("utf-8")).hexdigest()
 
@@ -354,7 +354,7 @@ def call(provider, prompt, model=None, max_tokens=2500, temperature=0.1,
                                                     observe_shadow)
     except ImportError:
         sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH",
-                                         "/home/mak/flujo/cultura"))
+                                         "/home/mak/cultura"))
         try:
             from mak_conductor.runtime import (enqueue_shadow,
                                                observe_shadow)

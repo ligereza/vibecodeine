@@ -1,18 +1,66 @@
 # Estado actual de MAK
 
-> Fuente canónica de orientación para agentes y colaboradores. Leer primero
-> `/home/mak/flujo/agents.md`, ejecutar `tools/agent_bootstrap.py`, luego este
-> archivo y únicamente el paquete `Agent bootstrap — CURRENT` que emite el
-> bootstrap. No recorrer el cuerpo histórico de `context/LAST_HANDOFF.md` para
-> decidir el estado actual. Verificado el 2026-08-31.
+> Esta es una instantánea narrativa fechada, no la autoridad del estado actual.
+> Para orientarse se lee `/home/mak/AGENTS.md` y se mide con
+> `.venv/bin/python tools/mak_status.py`. La continuidad histórica está en
+> `context/HANDOFF_HISTORICO.md`. Las rutas de contratos retirados que aparezcan
+> más abajo son evidencia histórica, no instrucciones vigentes.
 
 Este documento consolida decisiones durables. No reemplaza la evidencia
 histórica, no convierte cada experimento en una obligación y no afirma que una
 credencial funcione solo porque existe en un archivo de entorno.
 
-El traspaso estructurado vigente está en
-`/home/mak/context/LAST_HANDOFF.md`. Léelo junto con este estado; el antiguo
-`MAK_CODEX_HANDOFF.md` quedó histórico en `docs/handoffs/archive/`.
+El traspaso histórico está en `context/HANDOFF_HISTORICO.md`. Este documento
+conserva contexto de mediciones anteriores y no debe usarse para inferir el
+estado presente sin volver a medirlo.
+
+## Frontera semántica: IRIS no es el portafolio
+
+**IRIS es el sistema interno que el operador creó para ordenar y trabajar su
+archivo**: conserva evidencia, propone relaciones y órdenes defendibles y
+recibe decisiones humanas. Puede preparar insumos para un portafolio, dossier,
+postulación o investigación, pero no es ninguno de esos productos.
+
+`iskvw.cl` es la web pública donde se sube lo que pasó por curatoria. Es una
+salida downstream separada, con su propio contrato. El Hub MAK de `:8900`
+contiene IRIS —el sistema que el operador creó para ordenar el archivo—,
+conocido en esta superficie como **Atlas Campo del Orden**. Conserva
+`/portafolio/` como nombre histórico para su interfaz interna de
+curatoria/ordenamiento, que monta `iskvw/editor.html`; esa ruta no convierte a
+IRIS en el portafolio ni convierte a `iskvw.cl` en parte del sistema interno.
+La pantalla `MAK · ATLAS VIVO / campo de orden` y el editor/mesa montado son la
+misma interfaz visible; la distinción es entre sistema, interfaz y salida, no
+entre dos diseños distintos.
+El mismo árbol físico contiene la piel pública (`iskvw/piel/campo/`) y ese
+editor interno; co-localización no significa identidad.
+
+La multiplicidad de `editor.html` también quedó medida: el primer
+`find /home/mak -xdev -type f -name editor.html` encontró 16 copias
+(checkouts, runtime, compatibilidad, archivos, logs y rollback). La copia de
+compatibilidad obsoleta se retiró después de forma reversible; el mismo
+inventario acotado ahora encuentra 15 archivos con ese basename y un artefacto
+archivado con nombre explícitamente legacy. Claude tuvo razón al detectar la
+duplicación; la conclusión correcta es que el basename no decide autoridad.
+Para el Hub activo sólo valen la ruta servida, `MAK_PORTFOLIO_ROOT`, el archivo
+fuente y su hash.
+
+### Autoridad única del editor IRIS — verificada 2026-09-02
+
+La cadena operativa consolidada es:
+
+`127.0.0.1:8900/portafolio/` → `cultura/mak_plataforma/hub.py` →
+`MAK_PORTFOLIO_ROOT=/home/mak/iskvw` → `/home/mak/iskvw/editor.html`.
+
+La respuesta HTTP es 200, mide 253564 bytes y conserva el SHA-256
+`ed7e3bf2d02a841b52560be007390d78c7aed90c79d46258347b22700f03f331`, igual al
+archivo fuente. Ésta es la única autoridad runtime del Atlas/IRIS visible en
+el Hub. `/home/mak/flujo/iskvw/editor.html` es una copia local de su checkout
+portable, actualmente idéntica pero no servida por este proceso; sólo se
+sincroniza mediante una decisión explícita de transporte. La copia vieja en
+`/home/mak/plataforma/iskvw/editor.html` fue retirada reversiblemente a
+`_archive/iris-editor-consolidation-20260902/` porque la ruta medida no la
+consume. Las copias en `_archive/`, `_logs/` y rollback se preservan como
+historia. No se edita ni se elige ningún archivo por llamarse `editor.html`.
 
 ## Consolidación local completada — 2026-08-29
 
@@ -324,24 +372,28 @@ cuenta como éxito ni como bloqueo.
 |---|---|---|
 | `cultura/mak_plataforma/hub.py` | Activa | Interfaz única de MAK en `127.0.0.1:8900`. Agrupa departamentos y rutas. |
 | SearXNG local | Activa | Backend de búsqueda en `127.0.0.1:8888`; no es una interfaz adicional de usuario. |
-| `python3 -m flujo app/serve` | Portátil/temporal | FLUJO APP offline, con default histórico `8765`; no debe confundirse con el hub MAK ni dejarse como servicio permanente. |
+| `mak-research.service` | Activa | `cultura/mak_research/interfaz.py` en `127.0.0.1:8890`; servicio interno de Research consumido por el Hub. Comprobado el 2026-09-02. |
+| `mak-codex.service` | Activa | `cultura/mak_codex/interfaz_codex.py` en `127.0.0.1:8891`; puente interno de Codex consumido por el Hub. Comprobado el 2026-09-02. |
+| `python3 -m flujo app` | Portátil/temporal | FLUJO App completa (`src/flujo/web/hub.py`), default `8765` con auto-puerto si está ocupado; no debe confundirse con el Hub MAK ni dejarse como servicio permanente. |
+| `python3 -m flujo serve` | Bajo demanda/legado | Servidor liviano (`src/flujo/serve/server.py`), default `8777`; su parser no sustituye al backend completo de `flujo app`. |
 | GitHub Actions runner `mak` | Activo bajo evento | Ejecuta el workflow de eventos cuando llega una orden externa. |
 | `tools/route_idea.py` | Activo | Convierte una idea o incidente en un packet mínimo por área, para que un agente externo no tenga que leer todo el repo. |
 
 No hay que abrir puertos adicionales para las herramientas offline. El puerto
 8900 es la interfaz local agrupada; el 8888 es una dependencia interna de
-research. La ausencia de un listener en 8765 no implica que el código FLUJO
-esté roto: es una ruta portátil distinta y se valida bajo demanda.
+Research. La ausencia de un listener en 8765 (o 8777) no implica que el código
+FLUJO esté roto: son rutas portátiles distintas y se validan bajo demanda; la
+App puede usar el siguiente puerto libre (por ejemplo, 8766).
 
 ## 3. Mapa de departamentos y consumidores
 
 | Área | Owner físico principal | Consumidor y contrato |
 |---|---|---|
 | RD | `RD/`, `src/flujo/`, `data/rd.db` | Eventos, cotizaciones, packs, suplementos, plano/rider, venues y entregables operativos. |
-| Portfolio / ISKVW | `web/`, `iskvw/`, `tools/portfolio/` | Obras, archivo público, piezas SVG, vínculos y presentación autoral. |
+| Portfolio / ISKVW (salida) | `web/`, `iskvw/`, `tools/portfolio/` | Obras, archivo público, piezas SVG, vínculos y presentación autoral; recibe resultados seleccionados, no define IRIS. |
 | Research | `cultura/mak_research/`, `tools/research_job_router.py`, `tools/execute_research_job.py` | Preguntas por dominio, fuentes, claims, relaciones, hashes, licencias y reportes/propuestas. |
 | Curatoria | `curatoria/`, `cultura/mak_curatoria/` | Carpetas caóticas -> clasificación, índice, procedencia, triangulación y dossier. |
-| Cultura / MAK | `cultura/mak_plataforma/` | Orquestación local, health, gobierno, backlog, entrega y exposición en 8900. |
+| Cultura / MAK + IRIS | `cultura/mak_plataforma/` | Orquestación local, sistema interno de ordenamiento IRIS, health, gobierno, backlog, entrega y exposición en 8900. |
 | Lenguaje / Vigía | `cultura/mak_lenguaje/`, `cultura/mak_vigia/` | Contratos de idioma y vigilancia de convocatorias sin convertir candidatos en hechos. |
 | Venue / SCD | `data/venues/`, `tools/venue*.py`, `tools/venue3d_smoke.mjs` | Ficha de venue, geometría, plano visual y demostración 3D. SCD es un demostrador, no un levantamiento técnico certificado. |
 
@@ -484,9 +536,9 @@ requiere demostrar imports, entrypoints, tests, consumidores y rollback.
 - Cada cambio debe tener un consumidor, write set acotado, prueba foreground y
   rollback. Se hace `git add` explícito; no se publica un árbol completo por
   accidente.
-- Un agente externo puede empezar leyendo solo `agents.md`, este documento,
-  `context/OWNER_MANIFEST.md` y el packet producido por `tools/route_idea.py`.
-  Luego lee únicamente el handoff o contrato del área que va a tocar.
+- Un agente externo debe empezar por `/home/mak/AGENTS.md` y medir el estado
+  actual. Este documento y `context/OWNER_MANIFEST.md` son contexto fechado;
+  no sustituyen la medición ni agregan un contrato por área.
 
 ## 10. Qué se aprendió de las fases históricas
 
@@ -518,14 +570,14 @@ handoff. Sus conclusiones durables se pueden entender por familias:
    demuestra que no tienen consumidores legítimos.
 5. Revisar dominio/hosting del Portfolio en una tarea aparte; no mezclarlo con
    el runtime local ni con el catálogo RD.
-6. **Deuda estructural de `CAPACIDADES.md`**: la sección 5 sigue siendo el
+6. **Deuda estructural de `CAPACIDADES_MAK.md`**: la sección 5 sigue siendo el
    registro declarativo y 5-ter el overlay interpretativo; 5-bis queda marcado
    como snapshot histórico. `repo_audit` emite la medición read-only
    `mak-tool-consumer-inventory-v1` (117 herramientas) y ahora puede proyectarla
    como tabla reproducible con `--format markdown`; la salida fechada está en
    `/home/mak/state/codex-retomar-20260831/evidence/repo-audit-tools-20260831.md`.
    La medición actual devuelve 46 con referencia de producción, 39 sólo en tests
-   y 32 sin referencia directa. El overlay manual de `CAPACIDADES.md` cubre los
+   y 32 sin referencia directa. El overlay manual de `CAPACIDADES_MAK.md` cubre los
    32 casos tras clasificar también `certified_query.py`, `drenar_material.py`,
    `ig_metadatos.py`, `medir_test_overlap.py`, `medir_tests.py` y
    `venue_screen_setup.py`. No se debe llamar a esto una fuente única ni retirar
@@ -591,10 +643,10 @@ las dos listas: más sentencias sin cubrir y **más líneas colgando de un solo
 test (773, ahora 711)**.
 
 **Cifra falsa corregida**: se repitió toda una sesión que `ingesta_archivo.py`
-estaba "al 9%". Estaba al 72%. La causa es de instrumento y quedó en
-`~/PATRONES.CLAUDE.json` como patrón 24: **`--cov=paquete.modulo` devuelve "No
-data to report"** porque pytest-cov importa el módulo antes de que arranque el
-rastreador. Hay que usar la ruta real.
+estaba "al 9%". Estaba al 72%. La causa fue un defecto de instrumento:
+**`--cov=paquete.modulo` devuelve "No data to report"** porque pytest-cov
+importa el módulo antes de que arranque el rastreador. Hay que usar la ruta real;
+la explicación quedó absorbida en `MEMORIAS.md`.
 
 ### El solape entre tests, contestado
 
@@ -634,7 +686,7 @@ reciente (**4200/5/0**). No se hizo
 commit, push, activación de cron ni reanudación de XIO. El write-set local
 permanece deliberadamente sin commit hasta cerrar la revisión: `src/flujo/cli.py`,
 `src/flujo/diagnostics.py`, `src/flujo/knowledge/system_status.py`,
-`tools/repo_audit.py`, `CAPACIDADES.md` y sus pruebas asociadas, incluidas `tests/test_cli_smoke.py`
+`tools/repo_audit.py`, `CAPACIDADES_MAK.md` y sus pruebas asociadas, incluidas `tests/test_cli_smoke.py`
 y `tests/test_repo_audit.py`.
 
 La cadena `flujo verify` también quedó fail-closed: cada subproceso fallido
@@ -753,14 +805,15 @@ El latido (`tools/mak_heartbeat.py`) va **activo**: es lo que faltó el
 grita con deriva y calla sin ella. **Refijar su línea base justo después de
 reanudar** o gritará que esperaba 0 activas y hay 23.
 
-## Referencias canónicas
+## Referencias históricas y de medición
 
-- `agents.md`
+- `AGENTS.md` (contrato vigente, fuera de esta instantánea)
+- `.venv/bin/python tools/mak_status.py` (medición vigente, fuera de esta instantánea)
 - `context/LAST_HANDOFF.md` (solo el paquete `Agent bootstrap — CURRENT`; el
-  resto es evidencia histórica)
+  resto es evidencia histórica de una organización anterior)
 - `context/OWNER_MANIFEST.md`
 - `context/VIDEO_WORKFLOW_MAK_20260817.md`
-- `CAPACIDADES.md`
+- `CAPACIDADES_MAK.md`
 - `MAPA.md`
 - `docs/AUTORIDAD.md` (qué documento manda sobre cuál, y por qué)
 - sección `Historical checkpoint — Phase 495` y fases posteriores en

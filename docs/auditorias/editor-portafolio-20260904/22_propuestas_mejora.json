@@ -1,0 +1,466 @@
+{
+  "schema": "codex-propuestas-mejora-editor-v1",
+  "generated_at_utc": "2026-09-05T08:15:00Z",
+  "scope": "Investigación extendida editor/portafolio",
+  "policy": "Propuestas read-only; no se modificaron repositorios ni procesos.",
+  "proposals": [
+    {
+      "id": "P0-public-artifact-allowlist",
+      "priority": "P0",
+      "title": "Publicar mediante allowlist, no copiando todo iskvw",
+      "evidence": [
+        {
+          "path": "source-audit/13_superficie_artifacto_publico.json",
+          "finding": "cp -r iskvw/. _sitio/ incorpora 463 archivos: 4 candidatos internos (editor, mesa, curaduria, micelio) y tablero.json como configuración pública potencial que requiere contrato explícito."
+        },
+        {
+          "path": "FLUJO/.github/workflows/publicar_iskvw.yml",
+          "line": 66,
+          "finding": "no hay exclusiones antes de upload-pages-artifact."
+        }
+      ],
+      "risk": "El artifact puede exponer estado de edición, snapshots de investigación y endpoints internos; tablero requiere una decisión explícita de publicación.",
+      "improvement": "Usar allowlist de archivos públicos o staging con exclusiones verificadas; emitir manifest del artifact y fallar si aparecen candidatos internos.",
+      "acceptance": "CI demuestra que editor.html, mesa_montaje.js, curaduria.json y micelio.json no están en _sitio; tablero.json solo aparece con aprobación de configuración pública."
+    },
+    {
+      "id": "P0-publish-tree-canonical",
+      "priority": "P0",
+      "title": "Alinear el árbol que publica CI con el árbol que usa el Hub",
+      "evidence": [
+        {
+          "path": "source-audit/12_reconciliacion_arboles.json",
+          "finding": "workflow en WORKSPACE/flujo requiere un generador ausente; Hub default WORKSPACE/iskvw; archivo.json existe solo en WORKSPACE/iskvw; editor y mesa difieren."
+        }
+      ],
+      "risk": "CI puede fallar por herramienta ausente o publicar una proyección diferente de la que el Hub auditó.",
+      "improvement": "Elegir una raíz canónica y configurar explícitamente workflow/Hub/generador/editor; agregar preflight de rutas y manifest de hashes.",
+      "acceptance": "Un checkout limpio ejecuta el generador y el artifact publicado usa exactamente la raíz y versión declaradas."
+    },
+    {
+      "id": "P0-editor-canonico",
+      "priority": "P0",
+      "title": "Definir una única fuente canónica del editor",
+      "evidence": [
+        {
+          "path": "MAK/iskvw/editor.html",
+          "sha256": "a829949b4e2177c9480923ad40d25b44b2dc3450dbbd5ccaba3f1588384c0fb8",
+          "bytes": 256541
+        },
+        {
+          "path": "FLUJO/iskvw/editor.html",
+          "sha256": "ed7e3bf2d02a841b52560be007390d78c7aed90c79d46258347b22700f03f331",
+          "bytes": 253564
+        },
+        {
+          "diff": "La copia WORKSPACE/iskvw agrega readiness/purpose UI y cambia la consulta del mapa a fields=map."
+        }
+      ],
+      "risk": "La auditoría puede describir una interfaz distinta de la que se sirve o se distribuye con el workflow.",
+      "improvement": "Elegir una fuente canónica, declarar el espejo y añadir un test de igualdad/hash o un diff permitido entre ambas rutas.",
+      "acceptance": "Un comando reproducible identifica la copia canónica y falla si la otra diverge fuera de una lista explícita."
+    },
+    {
+      "id": "P0-public-gate-invariant",
+      "priority": "P0",
+      "title": "Convertir la frontera pública en una invariante ejecutable",
+      "evidence": [
+        {
+          "path": "FLUJO/.github/workflows/publicar_iskvw.yml",
+          "lines": "1-240",
+          "finding": "workflow_dispatch explícito, publicación solo de iskvw/ y comprobaciones de coherencia de campo, trazos y SVG."
+        },
+        {
+          "path": "MAK/iskvw/editor.html",
+          "lines": "1249-1266,1987-1994",
+          "finding": "la interfaz muestra publication=false/submission=false/dispatch=false/promotion=none, pero también ejecuta POST de selección, feedback, dispatch y revisión."
+        }
+      ],
+      "risk": "Los textos de frontera y las mutaciones del Hub pueden evolucionar por separado; una futura acción podría cruzar de preparación a publicación sin que el workflow lo detecte.",
+      "improvement": "Añadir un manifiesto de capacidades generado desde el editor y una prueba que prohíba en la superficie local cualquier acción de publish/submit/promotion automática; exigir workflow_dispatch y recibo humano para el único camino público.",
+      "acceptance": "La CI compara el manifiesto, valida que no existan endpoints públicos en el editor y prueba el artifact generado antes de deploy."
+    },
+    {
+      "id": "P1-validator-reproducible",
+      "priority": "P1",
+      "title": "Hacer reproducible el validador desde el checkout real",
+      "evidence": [
+        {
+          "command": "cd WORKSPACE/flujo && python3 tools/validar_curaduria.py",
+          "result": "falló ModuleNotFoundError: contrato_archivo"
+        },
+        {
+          "path": "MAK/cultura/mak_plataforma/contrato_archivo.py",
+          "sha256": "0f582791fc41077b4c7ad93c76d9bf6aa8a8997d8ce6680f97d75805f442055c",
+          "finding": "el módulo existe fuera de FLUJO/cultura/."
+        },
+        {
+          "command": "cd WORKSPACE/flujo && pytest ...",
+          "result": "falló: pytest no está en PATH"
+        }
+      ],
+      "risk": "La compuerta documentada no se puede ejecutar con la ruta de checkout y herramientas esperadas.",
+      "improvement": "Corregir RAIZ/imports o empaquetar el módulo como dependencia local; fijar un runner/venv y documentar un comando único que CI y operador puedan ejecutar.",
+      "acceptance": "El validador y los tests específicos ejecutan desde un checkout limpio, con exit code y versiones registradas."
+    },
+    {
+      "id": "P1-generated-projection-drift",
+      "priority": "P1",
+      "title": "Detectar deriva entre proyecciones regenerables",
+      "evidence": [
+        {
+          "path": "FLUJO/.github/workflows/publicar_iskvw.yml",
+          "lines": "54-60",
+          "finding": "archivo.json se genera en CI y no se versiona."
+        },
+        {
+          "path": "FLUJO/iskvw/CONTRATO.md",
+          "lines": "13-46",
+          "finding": "archivo.json es el sustrato público único y campo/obras son respaldos."
+        }
+      ],
+      "risk": "El editor local, el generador y el artifact publicado pueden leer snapshots distintos y producir decisiones no reproducibles.",
+      "improvement": "Emitir input_hash, generator_version, generated_at y manifest de fuentes en archivo.json; verificar que el editor y CI declaren el mismo contrato.",
+      "acceptance": "Una misma entrada produce el mismo hash de proyección o el diff explica la causa."
+    },
+    {
+      "id": "P2-recovery-operationalization",
+      "priority": "P2",
+      "title": "Convertir recuperables históricos en un registro operable",
+      "evidence": [
+        {
+          "path": "source-audit/07_recuperables_v2.json",
+          "finding": "418 unico_sin_equivalente, 124 duplicado_exacto, 13 copia_de_archivo_vivo y 1 ruta ausente."
+        }
+      ],
+      "risk": "La auditoría identifica material, pero no registra propietario, retención, acción segura ni criterio para archivar/descartar.",
+      "improvement": "Agregar estado operativo, dueño, fecha de revisión, cadena de custodia y acción reversible; nunca borrar automáticamente.",
+      "acceptance": "Cada candidato tiene siguiente acción explícita o justificación de conservación."
+    },
+    {
+      "id": "P1-runtime-freshness",
+      "priority": "P1",
+      "title": "Declarar la política de frescura de proyecciones",
+      "evidence": [
+        {
+          "path": "source-audit/10_observacion_runtime.json",
+          "finding": "archive-view observado el 2026-09-05 declara source.generated=2026-08-29T10:38:17."
+        }
+      ],
+      "risk": "Una interfaz puede mostrar una proyección válida pero anterior al archivo fuente, sin que el operador sepa si es snapshot intencional o deriva.",
+      "improvement": "Agregar freshness SLA/status (fresh, stale, unknown), timestamp de fuente y comando de regeneración en la respuesta; bloquear solo cuando el contrato lo exija.",
+      "acceptance": "Cada proyección declara edad, política y condición de aceptación."
+    },
+    {
+      "id": "P1-missing-assets-visible",
+      "priority": "P1",
+      "title": "Mantener faltantes de medios como estado explícito",
+      "evidence": [
+        {
+          "path": "source-audit/10_observacion_runtime.json",
+          "finding": "inbox total=7044, available_assets=7023; archive-view declara selected_items_without_media_ref."
+        }
+      ],
+      "risk": "Un item sin medio puede confundirse con obra publicada o desaparecer silenciosamente durante exportación.",
+      "improvement": "Propagar asset_status=present/missing/unknown hasta cualquier dossier y exigir que el gate público rechace o etiquete faltantes.",
+      "acceptance": "La proyección y el workflow cuentan y rotulan faltantes; nunca los presentan como media disponible."
+    },
+    {
+      "id": "P0-dispatch-confirmation",
+      "priority": "P0",
+      "title": "Separar dispatch interno de publicación y exigir recibo",
+      "evidence": [
+        {
+          "path": "MAK/cultura/mak_plataforma/hub.py",
+          "lines": "4340-4368,4917-4938",
+          "finding": "_portfolio_dispatch acepta la acción y _ejecutar realiza un POST a Research/Codex; el wrapper no exige confirmed."
+        },
+        {
+          "path": "source-audit/25_auditoria_integridad_mutaciones.json",
+          "finding": "También /api/ejecutar y el proxy de servicios reenvían POST sin el mismo envelope de confirmación/receipt; commit, board y batch pueden dejar resultados parciales."
+        },
+        {
+          "path": "MAK/iskvw/editor.html",
+          "lines": "1890,2264,2407",
+          "finding": "el editor dispara dispatch directamente desde botones de envío."
+        }
+      ],
+      "risk": "Una acción mutante externa puede parecer una simple operación de archivo y carece de recibo uniforme.",
+      "improvement": "Exigir confirmed=true o una intención explícita en toda salida POST, incluyendo /api/ejecutar y proxy; devolver job_id, servicio destino, estado y operación idempotente; mantener publication=false.",
+      "acceptance": "Cada dispatch produce recibo trazable, una prueba rechaza solicitudes sin confirmación y un retry con la misma idempotency_key no vuelve a contactar al servicio."
+    },
+    {
+      "id": "P1-board-atomicity",
+      "priority": "P1",
+      "title": "Serializar y hacer atómica la edición de tableros",
+      "evidence": [
+        {
+          "path": "MAK/cultura/mak_plataforma/hub.py",
+          "lines": "2511-2583",
+          "finding": "board action lee-modifica-escribe sin lock específico y add puede generar feedback antes de guardar el tablero."
+        }
+      ],
+      "risk": "Dos operadores o un retry pueden perder cambios o dejar feedback parcial.",
+      "improvement": "Añadir lock/versionado optimistic y receipt de suboperaciones; rollback/reconciliación si feedback y board divergen.",
+      "acceptance": "Test concurrente y test de fallo intermedio conservan invariantes."
+    },
+    {
+      "id": "P1-mutation-envelope",
+      "priority": "P1",
+      "title": "Unificar el sobre de mutación humana",
+      "evidence": [
+        {
+          "path": "MAK/cultura/mak_plataforma/hub.py",
+          "lines": "2050-2630",
+          "finding": "select, classify, feedback, connect y board usan estados/ledger/confirmación diferentes."
+        }
+      ],
+      "risk": "La auditoría y la interfaz no pueden inferir de forma uniforme quién decidió, qué evidencia usó y si el resultado es publicable.",
+      "improvement": "Schema común con operation_id, idempotency_key, actor, confirmed_at, evidence, undo_of y promotion=false.",
+      "acceptance": "Todos los POST de portfolio validan y devuelven el sobre común."
+    },
+    {
+      "id": "P1-public-exposure-scanner",
+      "priority": "P1",
+      "title": "Escanear el artifact por exposición antes de publicar",
+      "evidence": [
+        {
+          "path": "source-audit/14_escaneo_exposicion.json",
+          "finding": "40 referencias API en editor, 12 en mesa y 3 rutas locales aparentes en micelio; no se imprimieron valores."
+        }
+      ],
+      "risk": "El artifact puede revelar topología interna, rutas de máquina o snapshots de investigación aunque no contenga credenciales.",
+      "improvement": "Añadir scanner de rutas locales, endpoints internos, credenciales y datos privados sobre el manifest staging; permitir excepciones documentadas.",
+      "acceptance": "CI falla ante coincidencias no aprobadas y conserva un informe redacted con líneas/hashes."
+    },
+    {
+      "id": "P0-publication-repair-plan",
+      "priority": "P0",
+      "title": "Resolver el cierre de dependencias antes de intentar publicar",
+      "evidence": [
+        {
+          "path": "source-audit/15_plan_reparacion_publicacion.json",
+          "finding": "HEAD contiene validador pero no generador ni contrato importado; el workflow no puede reproducirse desde su checkout."
+        }
+      ],
+      "risk": "Cualquier reparación improvisada puede mezclar árboles o sobrescribir el working tree sucio.",
+      "improvement": "Elegir una de tres opciones de arquitectura y ejecutar gates de cierre de dependencias, staging, allowlist, smoke y paridad runtime.",
+      "acceptance": "El plan de reparación se valida en checkout aislado y registra root/revision/generator/output hash."
+    },
+    {
+      "id": "P2-postdeploy-independent-probe",
+      "priority": "P2",
+      "title": "Verificar publicación desde una red independiente",
+      "evidence": [
+        {
+          "path": "source-audit/16_sonda_deploy_externo.json",
+          "finding": "DNS externo no resolvió iskvw.cl en este entorno; la publicación no puede inferirse desde pruebas locales."
+        }
+      ],
+      "risk": "Un workflow verde o un Hub local no demuestra que el dominio público sirva el artifact correcto.",
+      "improvement": "Ejecutar smoke HTTP externo post-deploy para raíz, datos públicos y rutas internas prohibidas, registrando estado, headers y hashes.",
+      "acceptance": "La sonda externa distingue dominio no resoluble, deploy ausente, artifact incorrecto y rutas internas expuestas."
+    },
+    {
+      "id": "P1-provenance-chain",
+      "priority": "P1",
+      "title": "Incluir la cadena de procedencia dentro de archivo.json",
+      "evidence": [
+        {
+          "path": "source-audit/17_auditoria_procedencia.json",
+          "finding": "La proyección declara fuente/fecha, pero no input_hash, curaduria_hash, generator_version ni source_revision."
+        }
+      ],
+      "risk": "No se puede reproducir o revertir una proyección pública a partir del artifact sin volver a adivinar las entradas.",
+      "improvement": "Agregar manifest de generador, revisión, opciones y hashes de cada fuente; conservar manifest previo para rollback.",
+      "acceptance": "Cada archivo generado incluye provenance completa y el runtime la expone sin recalcular una identidad distinta."
+    },
+    {
+      "id": "P1-source-mode-attestation",
+      "priority": "P1",
+      "title": "Atestiguar la opción de fuente de cada proyección",
+      "evidence": [
+        {
+          "path": "source-audit/18_reproducibilidad_proyeccion.json",
+          "finding": "fuente=todo reproduce exactamente el payload; micelio_snapshot produce 1.530 vs 2.034 piezas y 4.921 vs 5.812 vínculos."
+        }
+      ],
+      "risk": "Un fallback silencioso cambia el contenido público sin que el operador pueda distinguir una actualización de datos de una sustitución de fuente.",
+      "improvement": "Fijar source_mode, fallback_status y hashes de entradas en provenance; separar payload_hash de generated_at.",
+      "acceptance": "El artifact y runtime muestran modo de fuente, si hubo fallback y hashes; un cambio de modo exige revisión explícita."
+    },
+    {
+      "id": "P1-pinned-validation-environment",
+      "priority": "P1",
+      "title": "Fijar un entorno de validación reproducible",
+      "evidence": [
+        {
+          "path": "source-audit/19_validacion_calidad.json",
+          "finding": "El validador y sintaxis pasan, pero pytest no está instalado y la suite no puede demostrar cobertura."
+        }
+      ],
+      "risk": "Una publicación puede depender de tests que el operador cree ejecutados sin tener evidencia real de ellos.",
+      "improvement": "Fijar Python/pytest/dependencias y un preflight único desde checkout limpio, registrando versiones y resultados.",
+      "acceptance": "El comando documentado instala/usa el entorno fijado y produce un reporte reproducible con exit code."
+    },
+    {
+      "id": "P1-runtime-envelope",
+      "priority": "P1",
+      "title": "Uniformar el contrato de todas las superficies runtime",
+      "evidence": [
+        {
+          "path": "source-audit/20_barrido_contratos_runtime.json",
+          "finding": "identity-graph responde 200 con 5,855,874 bytes sin publication_policy/control/read_only/promotion; otras superficies usan formas distintas."
+        }
+      ],
+      "risk": "Los consumidores pueden interpretar una superficie como publicable o segura por ausencia de una marca, y los payloads grandes degradan estabilidad.",
+      "improvement": "Compartir un sobre runtime con schema, status, public_promotion, publication_policy, read_only, source y next_action; añadir paginación/fields.",
+      "acceptance": "Cada GET de portfolio declara el sobre y identity-graph exige límites de tamaño/selección."
+    },
+    {
+      "id": "P0-public-operator-schema-separation",
+      "priority": "P0",
+      "title": "Separar schemas públicos de respuestas del operador",
+      "evidence": [
+        {
+          "path": "source-audit/21_auditoria_privacidad_runtime.json",
+          "finding": "archive-view contiene 550 referencias con apariencia de rutas locales; production 8; organism expone 7044 marcadores URI/privados y payload de 6,8 MB."
+        }
+      ],
+      "risk": "Copiar el editor o conectar una superficie pública al Hub podría filtrar provenance, rutas, URIs y descripciones internas aunque el Hub local use loopback.",
+      "improvement": "Crear serializers públicos con allowlist de campos y redacción; proteger respuestas operador con boundary de red/auth; probar ausencia de patrones locales en artifact y JSON público.",
+      "acceptance": "Ninguna respuesta pública contiene rutas locales, file://, asset_root, provenance operador ni payloads sin paginación."
+    },
+    {
+      "id": "P0-fail-closed-network-bind",
+      "priority": "P0",
+      "title": "Hacer que el Hub falle cerrado fuera de loopback",
+      "evidence": [
+        {
+          "path": "source-audit/22_auditoria_limite_red.json",
+          "finding": "HUB_HOST es configurable; proceso actual usa loopback; no se observó middleware de autenticación."
+        }
+      ],
+      "risk": "Un cambio de entorno puede exponer endpoints con rutas, URIs y datos internos a la red sin gate HTTP.",
+      "improvement": "Rechazar bind no-loopback por defecto y exigir modo proxy autenticado/TLS explícito; probar configuración segura e insegura.",
+      "acceptance": "El proceso no arranca en 0.0.0.0 sin autorización/configuración de auth verificable y registra el límite activo."
+    },
+    {
+      "id": "P1-http-hardening",
+      "priority": "P1",
+      "title": "Endurecer headers y política HTTP del Hub",
+      "evidence": [
+        {
+          "path": "source-audit/23_auditoria_headers_http.json",
+          "finding": "Respuestas tienen Content-Type/Length/no-cache, pero carecen de headers de seguridad y revelan Server MAK-Hub/2.0 Python/3.11.2."
+        }
+      ],
+      "risk": "Al cambiar el bind o poner un proxy, el navegador y clientes reciben menos defensas contra framing, MIME sniffing y filtraciones de versión.",
+      "improvement": "Añadir headers de seguridad/CSP/CORS explícito y ocultar banner de versión; exigir auth/TLS en exposición pública.",
+      "acceptance": "Tests de headers pasan en cada respuesta y una configuración no-loopback no arranca sin boundary seguro."
+    },
+    {
+      "id": "P1-observability-receipts",
+      "priority": "P1",
+      "title": "Correlacionar cada mutación con un receipt redacted",
+      "evidence": [
+        {
+          "path": "source-audit/24_auditoria_observabilidad.json",
+          "finding": "El serializador no devuelve request ID, log_message está silenciado y los JSONL de selección/conexión/feedback no comparten operation_id, actor_id, outcome ni error_code."
+        },
+        {
+          "path": "MAK/cultura/mak_plataforma/hub.py",
+          "lines": "5173-5188,5929-5930",
+          "finding": "Responses y access logging no tienen una correlación común."
+        }
+      ],
+      "risk": "Reintentos y operaciones compuestas pueden quedar sin prueba de qué efectos produjo una solicitud, con riesgo de duplicación o de interpretar un resultado parcial como éxito completo.",
+      "improvement": "Introducir request_id/operation_id/idempotency_key, actor mínimo y receipt durable con status/result_code/affected_ids/partial; registrar metadatos redacted, nunca payloads sensibles.",
+      "acceptance": "Una prueba cubre selección, conexión, feedback, board compuesto y dispatch: correlaciona solicitud→efectos→resultado, hace seguro el reintento y demuestra que no se persisten cuerpos, notas, cookies, tokens ni rutas absolutas."
+    },
+    {
+      "id": "P0-public-operator-boundary",
+      "priority": "P0",
+      "title": "Separar la interfaz pública de la interfaz de operador",
+      "evidence": [
+        {
+          "path": "source-audit/26_auditoria_frontera_interfaz_publica.json",
+          "finding": "El workflow copia iskvw completo al artifact; editor.html contiene 22 fetch POST y 11 endpoints mutantes, aunque su comentario lo describe como estático y sin backend."
+        }
+      ],
+      "risk": "El sitio público puede servir código y datos de operador, y una futura combinación con proxy/backend podría convertir una página pública en superficie mutante.",
+      "improvement": "Construir Pages desde allowlist pública y entregar editor/mesa por canal local o autenticado; generar manifest y scanner de endpoints como gate obligatorio.",
+      "acceptance": "El artifact público contiene cero archivos de operador y cero marcadores de POST/Hub; un artifact operador separado declara autenticación, capacidades y boundary de red."
+    },
+    {
+      "id": "P0-proxy-route-allowlist",
+      "priority": "P0",
+      "title": "Cerrar el proxy de servicios con allowlist y políticas por ruta",
+      "evidence": [
+        {
+          "path": "source-audit/27_auditoria_proxy_servicios.json",
+          "finding": "_service_proxy_target concatena cualquier path/query tras /research o /codex y el dispatcher acepta POST para cualquier ruta del prefijo, sin auth, CSRF, actor, idempotencia o receipt común."
+        }
+      ],
+      "risk": "Una ruta mutante upstream no contemplada puede quedar accesible por el Hub y saltarse los gates del editor; el riesgo se vuelve crítico si el Hub deja loopback.",
+      "improvement": "Versionar allowlist de rutas/métodos/capacidades; permitir GET/HEAD read-only por defecto y exigir autenticación, confirmación, idempotency_key y receipt para cada POST declarado.",
+      "acceptance": "Rutas no declaradas responden 404/405 sin contactar upstream; POST read-only es rechazado y cada POST mutante declarado queda correlacionado y auditado."
+    },
+    {
+      "id": "P1-safe-error-contract",
+      "priority": "P1",
+      "title": "Normalizar errores y ocultar detalles internos",
+      "evidence": [
+        {
+          "path": "source-audit/28_auditoria_errores_respuestas.json",
+          "finding": "El proxy reenvía cuerpos HTTPError de hasta 2 MB y varios handlers entregan str(exception) truncado; las formas de error no comparten schema ni correlation ID."
+        }
+      ],
+      "risk": "Stack traces, rutas locales o respuestas upstream pueden cruzar la frontera del operador y los consumidores no pueden clasificar ni reintentar errores de forma segura.",
+      "improvement": "Introducir mak-error-v1 con error_code/message_safe/request_id/retryable; separar log interno redacted y nunca reenviar body upstream sin sanitizar.",
+      "acceptance": "Errores de cliente, auth, conflicto, dependencia y servidor tienen status/schema consistente; pruebas con stack trace y body grande no filtran detalles ni permiten retry mutante inseguro."
+    },
+    {
+      "id": "P1-data-retention-minimization",
+      "priority": "P1",
+      "title": "Definir retención y minimizar evidencia persistida",
+      "evidence": [
+        {
+          "path": "source-audit/29_auditoria_retencion_datos.json",
+          "finding": "copilot_external.jsonl conserva 32 respuestas raw; vision_features conserva 33 asset_path; no se encontró TTL/rotación/purga para registros del editor."
+        }
+      ],
+      "risk": "Respuestas de proveedores, notas, sesiones y rutas de medios pueden acumularse sin propósito, vencimiento ni separación pública/operador.",
+      "improvement": "Clasificar audit_minimal/operator_evidence/provider_raw/public_projection; prohibir raw por defecto, añadir retention_class/owner/review_at y scanner redacted.",
+      "acceptance": "Cada registro tiene política de retención verificable; el artifact público no contiene raw, notes, session_id ni rutas privadas; la conservación histórica tiene exportación redacted y no borra decisiones automáticamente."
+    }
+  ],
+  "priority_order": [
+    "P0-public-artifact-allowlist",
+    "P0-publish-tree-canonical",
+    "P0-editor-canonico",
+    "P0-public-gate-invariant",
+    "P1-validator-reproducible",
+    "P1-generated-projection-drift",
+    "P2-recovery-operationalization",
+    "P1-runtime-freshness",
+    "P1-missing-assets-visible",
+    "P0-dispatch-confirmation",
+    "P1-board-atomicity",
+    "P1-mutation-envelope",
+    "P1-public-exposure-scanner",
+    "P0-publication-repair-plan",
+    "P2-postdeploy-independent-probe",
+    "P1-provenance-chain",
+    "P1-source-mode-attestation",
+    "P1-pinned-validation-environment",
+    "P1-runtime-envelope",
+    "P0-public-operator-schema-separation",
+    "P0-fail-closed-network-bind",
+    "P1-http-hardening",
+    "P0-public-operator-boundary",
+    "P0-proxy-route-allowlist",
+    "P1-safe-error-contract"
+  ],
+  "next_review": "P0: allowlist, raíz canónica, separación público/operador y bind fail-closed; luego procedencia, dispatch y entorno reproducible."
+}

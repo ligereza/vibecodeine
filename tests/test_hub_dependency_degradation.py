@@ -10,12 +10,11 @@ named 503 a caller can branch on) or QUIET (an HTTP 200 whose body merely
 sets an "ok"/"available" flag to false, indistinguishable from success to
 anything that only checks the status code)?
 
-Finding pinned here: the behavior is NOT uniform. `/api/project/route`,
-`/api/project/probe` and the `/api/portfolio/evidence-*` family return a
-named 503. `/api/project/learning`, `/api/project/context` and both the GET
-and POST forms of `/api/diagnostics` return HTTP 200 with the failure buried
-in the body. That inconsistency is recorded, not fixed here -- fixing it is
-outside tests/.
+Finding pinned here: the behavior is NOT uniform. `/api/project/route` and
+`/api/project/probe` return a named 503. `/api/project/learning`,
+`/api/project/context` and both the GET and POST forms of `/api/diagnostics`
+return HTTP 200 with the failure buried in the body. That inconsistency is
+recorded, not fixed here -- fixing it is outside tests/.
 """
 import io
 import json
@@ -211,48 +210,6 @@ class TestProjectReadOnlyForwardsItsUnavailability:
         payload, code = _get("/api/project/learning")
         assert code == 200
         assert payload["available"] is True
-
-
-class TestPortfolioEvidenceNamedFailure:
-    """Unlike the learning/context pair above, this guard's three routes do
-    forward a 503 -- same shape of guard (`_x is None`), different contract."""
-
-    def test_evidence_queue_fails_named(self, monkeypatch):
-        monkeypatch.setattr(hub, "_portfolio_evidence", None)
-        monkeypatch.setattr(hub, "_PORTFOLIO_EVIDENCE_IMPORT_ERROR", "ModuleNotFoundError")
-
-        payload, code = _get("/api/portfolio/evidence-queue?project_id=p1")
-
-        assert code == 503
-        assert payload == {"ok": False, "error": "portfolio_evidence_unavailable",
-                           "detail": "ModuleNotFoundError"}
-
-    def test_evidence_draft_fails_named(self, monkeypatch):
-        monkeypatch.setattr(hub, "_portfolio_evidence", None)
-        monkeypatch.setattr(hub, "_PORTFOLIO_EVIDENCE_IMPORT_ERROR", "ModuleNotFoundError")
-
-        payload, code = _get("/api/portfolio/evidence-draft?project_id=p1")
-
-        assert code == 503
-        assert payload["error"] == "portfolio_evidence_unavailable"
-
-    def test_evidence_decision_fails_named(self, monkeypatch):
-        monkeypatch.setattr(hub, "_portfolio_evidence", None)
-        monkeypatch.setattr(hub, "_PORTFOLIO_EVIDENCE_IMPORT_ERROR", "ModuleNotFoundError")
-
-        payload, code = _post("/api/portfolio/evidence-decision", {
-            "project_id": "p1", "candidate_id": "c1", "action": "accept"})
-
-        assert code == 503
-        assert payload["error"] == "portfolio_evidence_unavailable"
-
-    def test_evidence_queue_still_validates_input_before_touching_the_dependency(self):
-        """project_id_requerido is a caller-contract error (400), not the
-        dependency-missing path (503) -- the two must stay distinguishable."""
-        payload, code = _get("/api/portfolio/evidence-queue")
-
-        assert code == 400
-        assert payload["error"] == "project_id_requerido"
 
 
 class TestSystemStatusInternalGuard:
