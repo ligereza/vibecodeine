@@ -17,12 +17,17 @@ name: seguridad
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, MAK, FLUJO]
   push:
-    branches: [main]
+    branches: [main, MAK, FLUJO]
   schedule:
     # Una vez por semana: una dependencia se vuelve vulnerable sin que nadie
     # toque el repo, asi que esperar al proximo PR no alcanza.
+    # GitHub no permite acotar `schedule` a una rama: siempre dispara sobre
+    # el default branch (main), que desde el 2026-09-03 ya no es donde ocurre
+    # el trabajo. Sin el `ref:` explicito de abajo, esto escaneaba main sin
+    # que nadie lo notara -- confirmado el 2026-09-08: la corrida semanal
+    # llevaba en rojo sobre main y nadie la miraba porque nadie empuja ahi.
     - cron: "23 6 * * 1"
 
 permissions:
@@ -33,6 +38,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # schedule no trae una rama disparadora propia; sin esto cae en el
+          # default branch (main) en vez de la rama activa.
+          ref: ${{ github.event_name == 'schedule' && 'MAK' || github.ref }}
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.11"
@@ -76,6 +85,9 @@ jobs:
           # gitleaks necesita la historia para escanear commits, no solo el
           # arbol: un secreto borrado sigue estando en el commit que lo trajo.
           fetch-depth: 0
+          # ver el comentario de schedule mas arriba: sin esto, el cron cae
+          # en main en vez de la rama activa.
+          ref: ${{ github.event_name == 'schedule' && 'MAK' || github.ref }}
       - name: gitleaks
         uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
         env:
@@ -91,6 +103,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # ver el comentario de schedule mas arriba: sin esto, el cron cae
+          # en main en vez de la rama activa.
+          ref: ${{ github.event_name == 'schedule' && 'MAK' || github.ref }}
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.11"
