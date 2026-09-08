@@ -5,7 +5,9 @@ session tree on 2026-08-12. It is evidence, not an operational instruction
 set and not an automatic source of truth.
 
 `raw/` keeps source-relative paths. `raw/MANIFEST.json` records the source
-path, imported files, byte sizes, and SHA-256 values. The import deliberately
+label, imported files, source/stored byte sizes, and source/stored SHA-256
+values. Text evidence is sanitized for machine-local Windows user roots; the
+manifest retains source hashes for traceability. The import deliberately
 excludes `.venv`, Python caches, credential-shaped files, and the private
 `claude_web_export_2026-08-11` directory.
 
