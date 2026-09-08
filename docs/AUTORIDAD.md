@@ -40,6 +40,7 @@ is promoted to authority by writing "canonical" in its header.
 | `docs/PORTAFOLIO_PRODUCCION.md` | "doctrina de trabajo desde 2026-08-28" (647 lines) | **Domain doctrine**: how a portfolio is produced. Does not govern the rest of MAK. |
 | `MAPA.md` | command map | **Generated index.** Useful and honest: zero broken paths, zero prose figures. |
 | `CAPACIDADES_MAK.md` | master registry (79 KB) | **Tool inventory.** See below: the one that lies most, and because of how it is written. |
+| `CAPACIDADES_FLUJO.md` | master registry (79 KB) | **Tool inventory.** Measured separately from `CAPACIDADES_MAK.md` since the MAK/FLUJO branch split; same defect. |
 | `context/MD_CONTEXT_MASTER.md` | "this file is the consolidation layer" | **Navigation index.** |
 | `PLAN.md` | "Plan Maestro -- ISKVW" | **Historical (2026-07-20).** Business context, not technical state. Gitignored at `.gitignore:230`. |
 | `context/PHASE_REPORTS_INDEX.md` | gave a fourth list of truth sources | **Corrected 2026-08-28**: it now repeats the bootstrap order instead of inventing its own. |
@@ -61,6 +62,7 @@ Per document, what matters:
 
 ```
 CAPACIDADES_MAK.md                     95 ok   143 no path   15 broken   17 figures   116 states
+CAPACIDADES_FLUJO.md                     95 ok   143 no path   15 broken   17 figures   116 states
 docs/SCRIPTS_INVENTORY.md           6 ok    27 no path   26 broken    0 figures     3 states
 docs/MAK_CURRENT_STATE.md          38 ok     8 no path    4 broken    3 figures     6 states
 docs/PORTAFOLIO_PRODUCCION.md      15 ok    12 no path    7 broken    8 figures     0 states
