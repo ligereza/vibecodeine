@@ -56,6 +56,14 @@ visible el desacuerdo entre una hipótesis computacional y la interpretación de
 una persona. Si la lectura relacional no mejora la comprensión frente a una
 lista, ese resultado se conservará como parte del hallazgo.
 
+La forma de mesa compartida, en vez de un formulario o una lista, responde a
+una decisión de diseño deliberada: una superficie común sostiene mejor la
+exploración de un espacio de posibilidades entre varias personas a la vez que
+una pantalla de consulta individual (ver antecedentes de interfaces de mesa
+compartidas, `FONDART_2027_IRIS_REGIONAL_CREACION.md` §5-bis). Registrar
+decisiones -- no obras -- es igualmente deliberado: la relación entre persona
+y sistema es el medio de esta pieza, no un efecto colateral de exhibirla.
+
 ## Diferencia con alternativas existentes
 
 - **Archivo o catálogo convencional.** Ordena por lista, fecha o categoría y

@@ -38,9 +38,9 @@ Cierre reconfirmado en el portal oficial el 2026-09-07: **16 de septiembre de
 
 | Archivo | Rol | Estado | SHA-256 |
 |---|---|---|---|
-| `ANEXO_01_DESCRIPCION_PROPUESTA.md` | Descripcion artistica para adjuntar al FUP (texto fuente) | **listo** -- contenido verificado, sin datos personales | `c3b750c87d8691d027f5804bced30cff403dcd4e832cfb371b795df459ba537d` |
-| `ANEXO_01_DESCRIPCION_PROPUESTA.html` | Version maquetada (carta, Arial 12) del anexo anterior | **listo**, generado hoy desde el .md | `4057f75ef28fe51bc956b211bf7e7cb418f296d199317cb9da21800aa98d45a6` |
-| `ANEXO_01_DESCRIPCION_PROPUESTA.pdf` | Version PDF para adjuntar si la plataforma pide PDF en vez de texto pegado | **listo** -- 4 paginas, tamano carta, verificado con `pdfinfo` y `pdftotext` hoy | `0fb6c92c5499d1ea27684ee8660d785fc7973a9db497fda5aa8380160b6afc43` |
+| `ANEXO_01_DESCRIPCION_PROPUESTA.md` | Descripcion artistica para adjuntar al FUP (texto fuente) | **listo** -- contenido verificado, sin datos personales | `1dab5fc7c6b6867d93213f00f75e7c0f21ab7022f706ab554c904ed03a9f1deb` |
+| `ANEXO_01_DESCRIPCION_PROPUESTA.html` | Version maquetada (carta, Arial 12) del anexo anterior | **listo**, generado hoy desde el .md | `5f0755dd3dac9d26800018e0d8c083b5413453657a873c3283ab77dfd12c252a` |
+| `ANEXO_01_DESCRIPCION_PROPUESTA.pdf` | Version PDF para adjuntar si la plataforma pide PDF en vez de texto pegado | **listo** -- 4 paginas, tamano carta, verificado con `pdfinfo` y `pdftotext` hoy | `e2d90e6406be45b210cb76d5872cc7aa2323f79204f7dc42e73f2405790bb304` |
 | `ANEXO_02_MODELO_COMPROMISO_ESPACIO.md` | Plantilla de carta de compromiso del espacio anfitrion | **requiere operador** -- es una plantilla, no adjuntable sin completar y firmar | `7c70744d2e56044ca0673db3edab2fe4b823f451261370cb9864c24d1c2a790a` |
 | `ANEXO_03_CARTAS_COMPROMISO_EQUIPO.md` | Matriz de funciones del equipo + modelo de preparacion | **requiere operador** -- hay que usar el formato oficial de Fondart, completar identidad/honorarios y firmar cada carta | `22dbe98650d3bd0410bc32678ad651d3ab450341b0c4259451b9b1c9998b85b8` |
 | `CHECKLIST_ENVIO.md` | Checklist de envio (bloqueos P0, revision de plataforma, que no hacer) | **referencia interna** -- no se adjunta, se usa antes de enviar | `5028a3f11130b18393083ea98bfb4be395296ad859be70a7c6febb2460d91750` |
@@ -67,3 +67,18 @@ Cierre reconfirmado en el portal oficial el 2026-09-07: **16 de septiembre de
 - `pdftotext` sobre el PDF: contenido integro y legible, comparado contra el `.md` fuente.
 - Barrido de la fecha de cierre vieja ("11 de septiembre") sobre todos los archivos activos de IRIS: sin coincidencias activas restantes (ver bitacora interna, ciclo 2026-09-07 20:00).
 - Aritmetica del presupuesto ya verificada en ciclos anteriores: $18.000.000 solicitados (tope), responsable 37,78% (bajo el tope de 40%), imprevistos 1,67% (bajo el tope de 2%).
+
+
+## Actualización 2026-09-08
+
+`ANEXO_01_DESCRIPCION_PROPUESTA.{md,html,pdf}` se regeneró: se sumó a
+`FONDART_2027_IRIS_REGIONAL_CREACION.md` §5-bis literatura sobre interfaces de
+mesa compartida (Jordà et al., reacTable, ICMC 2005), estética relacional
+(Bourriaud, 1998) e investigación basada en práctica (Sullivan, 2010),
+conectada a decisiones concretas de esta obra -- no bibliografía decorativa --
+y se agregó a este anexo un párrafo breve de fundamento de diseño (mesa
+compartida, decisiones como medio). Sigue en 4 páginas, sin datos personales
+ni metadatos de autor en el PDF (`pdfinfo`: Producer LibreOffice 7.4, sin
+campo Author). También se agregó a `FONDART_2027_IRIS_REGIONAL_CREACION.md`
+la sección 5-quater (criterios de éxito por eje de evaluación, declarados
+antes de ejecutar). Ningún otro archivo de este paquete cambió.
