@@ -917,6 +917,30 @@
   @media(max-width:900px){.mesa-toolbar{flex-wrap:wrap}.mesa-field-switch{order:3;width:100%;justify-content:center}.mesa-field-switch button{flex:1}.mesa-field-readout span:nth-last-child(-n+2){display:none}.mesa-engine .mesa-node.is-active{width:min(220px,31vw)}}
   @media(max-width:760px){.mesa-field-readout{top:8px;right:8px}.mesa-field-readout span{width:44px;font-size:.36rem}.mesa-field-readout b{font-size:.62rem}.mesa-order-hud{width:340px;height:310px}.mesa-order-compass>button{width:54px}.mesa-order-hud-copy{top:7%;left:12%;max-width:150px}.mesa-engine .mesa-node.is-active{width:176px}.mesa-map-legend{display:none}}
 </style>
+<style>
+  /* XIO performance en vivo: HUD + reacción visual a amplitud/beat/cues/timecode */
+  .mesa-live-hud{position:absolute;z-index:9;top:12px;left:12px;display:flex;flex-direction:column;gap:6px;padding:9px 11px;border:1px solid #78c78b;border-radius:10px;background:rgba(13,21,16,.94);color:#c6d6c7;font-size:.5rem;letter-spacing:.03em;min-width:176px;box-shadow:0 14px 30px rgba(0,0,0,.5)}
+  .mesa-live-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .mesa-live-hud button{border:1px solid #78c78b;background:#101b13;color:#c6d6c7;padding:3px 7px;font:inherit;font-size:.49rem;border-radius:5px;cursor:pointer}
+  .mesa-live-hud button:hover:not(:disabled){border-color:#d1e6d3;color:#eef7ef}
+  .mesa-live-hud button:disabled{opacity:.4;cursor:default}
+  .mesa-live-source{margin-left:auto;color:#8fae91;text-transform:uppercase;font-size:.44rem;letter-spacing:.08em}
+  .mesa-live-source.is-external{color:#e7c98a}
+  .mesa-live-timecode{font-variant-numeric:tabular-nums;color:#eef7ef;letter-spacing:.06em}
+  .mesa-live-cue{color:#a9d0ad;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:128px}
+  .mesa-live-meter{position:relative;height:4px;border-radius:2px;background:#152018;overflow:hidden}
+  .mesa-live-meter i{position:absolute;inset:0;width:0;background:linear-gradient(90deg,#4f8f5c,#a9e6b4);transition:width .07s linear}
+  .mesa-live-beat{width:9px;height:9px;border-radius:50%;background:#78c78b;align-self:flex-end;opacity:calc(.25 + var(--xio-beat,0)*.75);transform:scale(calc(1 + var(--xio-beat,0)*.9));transition:opacity .07s linear,transform .07s linear;box-shadow:0 0 calc(var(--xio-beat,0)*10px) rgba(120,199,139,.8)}
+  #mesa-live-toggle.is-active{border-color:#78c78b!important;color:#c6d6c7!important}
+  .mesa-live-flash{position:absolute;inset:0;z-index:6;pointer-events:none;background:radial-gradient(circle at 50% 42%,rgba(120,199,139,.55) 0%,rgba(120,199,139,0) 68%);opacity:var(--xio-beat,0)}
+  #estudio-app[data-live-mode] #mesa-field-layer{transition:transform .09s linear,filter .09s linear;transform-origin:50% 50%;transform:scale(calc(1 + var(--xio-amp,0)*.08));filter:blur(.15px) drop-shadow(0 0 calc(var(--xio-beat,0)*9px) rgba(120,199,139,.7))}
+  #estudio-app[data-live-mode] #mesa-edges{filter:drop-shadow(0 0 calc(var(--xio-beat,0)*5px) rgba(120,199,139,.55))}
+  #estudio-app[data-live-mode] .mesa-engine .mesa-node{box-shadow:0 12px 30px rgba(0,0,0,.48),0 0 22px rgba(184,139,210,var(--field-alpha,.08)),0 0 calc(4px + var(--xio-amp,0)*18px) rgba(120,199,139,calc(var(--xio-beat,0)*.6))}
+  #estudio-app[data-live-mode] #mesa-world{transition:filter .3s ease;filter:hue-rotate(calc(var(--xio-cue-hue,0)*1deg)) saturate(calc(1 + var(--xio-amp,0)*.22))}
+  @keyframes mesa-cue-sweep{0%{filter:hue-rotate(calc(var(--xio-cue-hue,0)*1deg)) brightness(1) saturate(calc(1 + var(--xio-amp,0)*.22))}30%{filter:hue-rotate(calc(var(--xio-cue-hue,0)*1deg)) brightness(1.4) saturate(1.6)}100%{filter:hue-rotate(calc(var(--xio-cue-hue,0)*1deg)) brightness(1) saturate(calc(1 + var(--xio-amp,0)*.22))}}
+  #mesa-world.mesa-cue-flash{animation:mesa-cue-sweep .6s ease-out}
+  @media(max-width:760px){.mesa-live-hud{left:8px;top:8px;min-width:150px;font-size:.46rem}.mesa-live-cue{max-width:96px}}
+</style>
 </head>
 <body class="estudio-principal">
 
@@ -3037,5 +3061,6 @@ cargar().then(medirCabecera);
 void cargarArchivePortfolioView();
 </script>
 <script src="mesa_montaje.js?v=20260811-atlas-context-map"></script>
+<script src="xio_live.js?v=20260908-xio-live-performance"></script>
 </body>
 </html>
