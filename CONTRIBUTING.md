@@ -9,6 +9,9 @@ Personal creative-operations repo with a unified CLI (`flujo`).
    `context/HANDOFF_HISTORICO.md` only as historical context.
 2. Decisions already closed are recorded in `DECISIONES.md`; current state is
    not inferred from prose.
+3. Vocabulary and continuity already settled (what MAK, `vibecodeine`, IRIS,
+   RD and Portfolio each mean) live in `MEMORIAS.md`. Read it before answering
+   a nomenclature question instead of re-deriving it from scattered docs.
 
 ## Proposing changes
 
