@@ -29,7 +29,6 @@
     cameraTween: 0,
     externalCandidates: [],
     feedbackBusy: new Set(),
-    classificationPending: new Map(),
     drafts: new Map(),
     draftDirty: new Set(),
     nodes: new Map(),
@@ -1363,17 +1362,6 @@
 
   function setStatus(message) {
     if (state.status) state.status.textContent = message;
-  }
-
-  function acquireRecordActions(itemIds) {
-    const keys = [...new Set(itemIds.map((itemId) => `record-action:${itemId}`))];
-    if (keys.some((key) => state.feedbackBusy.has(key))) return null;
-    keys.forEach((key) => state.feedbackBusy.add(key));
-    return keys;
-  }
-
-  function releaseRecordActions(keys) {
-    (keys || []).forEach((key) => state.feedbackBusy.delete(key));
   }
 
   function selectRecord(id) {

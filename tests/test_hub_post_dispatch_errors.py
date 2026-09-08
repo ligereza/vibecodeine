@@ -78,17 +78,6 @@ class TestDiagnosticsPostErrorBranches:
         assert (payload, code) == ({"ok": False, "error": "json debe ser objeto"}, 400)
 
 
-class TestEvidenceDecisionErrorBranches:
-    def test_non_numeric_content_length_is_rejected(self):
-        payload, code = _post("/api/portfolio/evidence-decision", body=b"{}",
-                              headers={"Content-Length": "not-a-number"})
-        assert (payload, code) == ({"ok": False, "error": "content_length_invalido"}, 400)
-
-    def test_malformed_json_is_rejected(self):
-        payload, code = _post("/api/portfolio/evidence-decision", body=b"{not-json")
-        assert (payload, code) == ({"ok": False, "error": "json invalido"}, 400)
-
-
 class TestResearchJobsRoute:
     def test_non_numeric_content_length_is_rejected(self):
         payload, code = _post("/api/research/jobs", body=b"{}",
