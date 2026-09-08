@@ -11,8 +11,8 @@ reads the code.
 
 Each case here drives a real handler with a body that makes it refuse, and
 asserts the status the file already assigns to that error class elsewhere:
-404 for a named thing that does not exist, 400 for input the route cannot act
-on, 503 for a dependency that is not answering.
+400 for input the route cannot act on, 503 for a dependency that is not
+answering.
 
 The handlers are called with bodies that fail before any write. The write path
 is covered by tests/test_hub_durable_writers.py and is not re-entered here.
@@ -29,36 +29,6 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "cultura", "mak_plataforma"))
 
 import hub  # noqa: E402
-
-
-def _status_agrees_with_the_body(payload: dict, code: int) -> None:
-    """The status must match whatever error came back, not only the hoped-for one.
-
-    The two 404 cases below used to `pytest.skip` when the route refused with a
-    different error than the one they were written for. That switched the
-    contract off exactly when the route took a path the test did not predict,
-    which is when it is worth checking -- and one of them did take another
-    path, so its rule went unverified from the day it was written.
-
-    Which error arrives is data. The agreement between that error and the HTTP
-    status is the contract, and it holds for every error the table names.
-    """
-    error = payload.get("error")
-    assert error, f"expected a refusal, got {payload!r} with status {code}"
-    if error in hub._ERROR_STATUS_LEFT_AT_200:
-        assert code == 200, (
-            f"{error!r} is a documented exclusion and must stay 200, got {code}"
-        )
-        return
-    expected = hub._ERROR_STATUS.get(error)
-    assert expected is not None, (
-        f"the route answered {error!r} and no rule says what status that is. "
-        "Add it to `_ERROR_STATUS`, or to `_ERROR_STATUS_LEFT_AT_200` with the "
-        "reason it is not an error."
-    )
-    assert code == expected, (
-        f"{error!r} is declared as {expected} and the route answered {code}"
-    )
 
 
 class FakeHandler:
@@ -123,55 +93,7 @@ class TestStatusTable:
         assert hub._status_for({"ok": False, "error": error}) == 200
 
 
-class TestNotFoundAnswers404:
-    def test_dispatch_of_an_unknown_item(self) -> None:
-        # `depto` had to be a real department. `_portfolio_dispatch`
-        # checks it before it looks the item up, so the old `"cultura"`
-        # was refused as `departamento_invalido` and this test skipped
-        # every run since it was written: it never reached its subject.
-        payload, code = _post(
-            "/api/portfolio/dispatch",
-            {"item_id": "no-existe-en-ningun-inbox", "depto": "research",
-             "texto": "x"},
-        )
-        assert payload.get("error") == "item_no_encontrado", (
-            f"the route refused before reaching the lookup: {payload!r}"
-        )
-        _status_agrees_with_the_body(payload, code)
-        assert code == 404
-
-    def test_board_action_on_an_unknown_board(self) -> None:
-        payload, code = _post(
-            "/api/portfolio/board",
-            {"accion": "renombrar", "board_id": "tablero-que-no-existe",
-             "nombre": "x"},
-        )
-        assert payload.get("error") == "tablero_no_encontrado", (
-            f"the route refused before reaching the lookup: {payload!r}"
-        )
-        _status_agrees_with_the_body(payload, code)
-        assert code == 404
-
-
 class TestBadRequestAnswers400:
-    def test_board_action_with_an_unknown_action(self) -> None:
-        # The handler resolves the board before the action, so an unknown
-        # action on an unknown board reports the board. Either refusal is a
-        # failure and neither may go out as 200.
-        payload, code = _post("/api/portfolio/board", {"accion": "no-es-una-accion"})
-        assert payload.get("ok") is False
-        assert code in (400, 404), payload
-
-    def test_dispatch_to_an_unknown_department(self) -> None:
-        payload, code = _post(
-            "/api/portfolio/dispatch",
-            {"item_id": "x", "depto": "departamento-inexistente", "texto": "y"},
-        )
-        if payload.get("error") == "departamento_invalido":
-            assert code == 400
-        else:
-            pytest.skip(f"the route refused earlier with {payload.get('error')!r}")
-
     def test_xio_link_without_a_source_id(self) -> None:
         payload, code = _post("/api/portfolio/copilot/xio-link", {})
         assert payload.get("ok") is False
@@ -179,24 +101,12 @@ class TestBadRequestAnswers400:
             f"a missing source_id or an absent evidence store, not {code}: {payload}"
         )
 
-    def test_classify_batch_with_an_empty_group(self) -> None:
-        payload, code = _post("/api/portfolio/classify-batch", {})
-        assert payload.get("ok") is False
-        assert code == 400, payload
-
-    def test_connect_with_invalid_items(self) -> None:
-        payload, code = _post("/api/portfolio/connect", {"items": []})
-        if payload.get("error") == "items_invalidos":
-            assert code == 400
-        else:
-            pytest.skip(f"the route refused earlier with {payload.get('error')!r}")
-
 
 class TestMalformedInputStillAnswers400:
     """The guards that already worked must not have been disturbed."""
 
     def test_a_body_that_is_not_json(self) -> None:
-        handler = FakeHandler("/api/portfolio/board")
+        handler = FakeHandler("/api/portfolio/draft")
         handler.rfile = io.BytesIO(b"{no es json")
         handler.headers = {"Content-Length": "11"}
         hub.H.do_POST(handler)
@@ -213,24 +123,12 @@ POST_PATHS = [
     "/api/project/route",
     "/api/project/probe",
     "/api/diagnostics",
-    "/api/portfolio/evidence-decision",
     "/api/revision/episodios",
     "/api/revision",
-    "/api/portfolio/board",
-    "/api/portfolio/select",
-    "/api/portfolio/classify",
-    "/api/portfolio/classify-batch",
     "/api/portfolio/draft",
     "/api/portfolio/commit",
     "/api/portfolio/undo",
-    "/api/portfolio/dispatch",
-    "/api/portfolio/connect",
-    "/api/portfolio/feedback",
-    "/api/portfolio/triangulation/review",
-    "/api/portfolio/triangulation/context-link",
     "/api/portfolio/copilot/xio-link",
-    "/api/portfolio/copilot/external",
-    "/api/portfolio/copilot/vision",
     "/api/portfolio/external-candidates/review",
     "/api/director/work",
     "/api/director/decision",

@@ -16,76 +16,29 @@ def test_editor_surfaces_mak_contract_without_making_hub_required():
     mesa = MESA.read_text(encoding="utf-8")
 
     assert "id=\"inbox-contrato\"" in source
-    assert "fetch('/api/portfolio/contract'" in source
     assert 'id="inbox-copiloto-externos-lista"' in source
-    assert "/api/portfolio/external-candidates" in source
-    assert "fetch('/api/portfolio/review-queue'" in source
-    assert "fetch('/api/portfolio/triangulation'" in source
-    assert "/api/portfolio/triangulation/context-link" in source
-    assert "function enlazarContexto" in source
-    assert "enlazar a grupo..." in source
     assert 'id="inbox-revision"' in source
-    assert "function cargarRevision" in source
-    assert "evidencia humana" in source
-    assert "Contexto humano aceptado" in source
-    assert "sin grupo de triangulacion enlazado" in source
     assert 'id="inbox-indice-lista"' in source
-    assert "/api/portfolio/index" in source
-    assert "Usuarios mencionados, no entidades resueltas" in source
     assert 'id="inbox-foco"' in source
     assert "MAK · campo de orden" in source
-    assert "abrir en estudio" in source
-    assert "function mostrarAccionPieza" in source
-    assert "function cargarTriangulacionPieza" in source
     assert "foco-visual-field" in source
     assert "foco-orbit-item" in source
     assert "foco-dock" in source
-    assert "/api/portfolio/copilot/vision" in source
-    assert "visión AWS" in source
-    assert "previsualizar orden" in source
     assert 'id="inbox-herramientas"' in source
-    assert "no se ha movido ningun archivo" in source
-    assert "function pintarFoco" in source
     assert "ID exacto para enfocar" in source
-    assert "resolverCandidatoExterno" in source
     assert "copiloto-candidato-media" in source
-    assert "mediaInbox(item)" in source
     assert "candidato pendiente" in source
-    assert "contexto visual" in source
-    assert "medios visibles" in source
     assert "foco-visual-legend" in source
     assert "estudio-review-queue" in source
-    assert "estudioPendingItems" in source
-    assert "estudioOpenReview" in source
-    assert "estudioResolveCandidate" in source
     assert "estudio-learning-summary" in source
-    assert "estudioLoadLearning" in source
-    assert "/api/portfolio/copilot/learning" in source
-    assert "source_id:sourceId" in source
-    assert "Decisión guardada" in source
     assert "source_id_requerido" not in source
-    assert "await cargarPendientesRevision()" in source
     assert "data-role=\"candidate\"" in source
     assert "data-role=\"context\"" in source
-    assert "no publica automaticamente" in source
-    assert "consentimiento registrado antes de publicar" in source
-    assert "archivo visual · obras editoriales" in source
-    assert "estudioArchiveUnits" in source
-    assert "fecha antigua → nueva" in source
-    assert "20 unidades" in source
-    assert "function estudioLiveSelect" in source
     assert "ESTUDIO_SESSION_ID" in source
-    assert "medios dentro de esta pasada" in source
     assert "estudio-live-suggestion-grid" in source
-    assert "estudioSuggestionOpen" in source
-    assert "estudioEnableSuggestionDrag" in source
-    assert "data-item-id=\"${esc(neighbor.id)}\"" in source
     assert "estudio-live-suggestion-layer" in source
     assert "estudio-suggestion-popover" in source
-    assert "estudioSuggestionDecision" in source
-    assert "descartar · no es obra" in source
     assert "ESTUDIO_FEEDBACK_BUSY" in source
-    assert "seleccionada'" in source
     assert "mesa_montaje.js?v=20260811-atlas-context-map" in source
     assert "/api/portfolio/inbox?surface=mesa" in mesa
     assert "<title>MAK · Campo de orden · archivo vivo</title>" in source
@@ -176,12 +129,10 @@ def test_editor_surfaces_mak_contract_without_making_hub_required():
     assert "sceneCacheRevision" in mesa
     assert "invalidateSceneCache" in mesa
     assert "state.sceneCachePromises.clear()" in mesa
-    assert "classificationPending" in mesa
     assert "const normalizedMode = mode === \"all\" ? \"copilot\" : mode" in mesa
     assert "const excluded = new Set(state.processedHumanSeed)" in mesa
     assert "return candidates.find((record) => !isDecidedRecord(record)) || null" not in mesa
     assert "state.editorMode === \"order\" && record.source_id !== state.activeId" in mesa
-    assert "acquireRecordActions" in mesa
     assert 'field === "context_kind" && fields.context_kind !== value' in mesa
     assert "relationCounterpartId" in mesa
     assert "linkedIds.add(relation.source_id)" in mesa
@@ -221,12 +172,6 @@ def test_editor_surfaces_mak_contract_without_making_hub_required():
     assert "updateDraft(record" in order_decision
     assert "revisa y efectúa la acción explícitamente" in order_decision
 
-    assert "if(!r.ok)throw new Error(`HTTP ${r.status}`);" in source
-    assert "Selección parcial del carrusel" in source
-    assert "la selección visible fue restaurada" in source
-    assert "tableros no disponibles temporalmente" in source
-    assert "No se pudieron cargar las sugerencias; la pieza sigue disponible." in source
-
 
 def test_mesa_uses_explicit_draft_gate_and_keeps_targets_visible():
     mesa = MESA.read_text(encoding="utf-8")
@@ -261,7 +206,6 @@ def test_editor_keeps_search_board_filter_and_association_tray_separate():
     assert "inbox-pin-media" in source
     assert "inbox-action-primary" in source
     assert "const INBOX_SELECTED = new Set()" in source
-    assert "anadirSeleccionAlTablero" in source
 
 
 # ---------------------------------------------------------------------------

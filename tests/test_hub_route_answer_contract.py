@@ -119,11 +119,12 @@ HOSTILE_QUERIES = {
 def _query_reading_routes() -> list[str]:
     """The exact GET routes whose own branch reads the query string.
 
-    Only 21 of 76 do. Driving the other 55 with a hostile query pays each
-    route's full cost -- one of them takes 2.75 s -- to prove something its
-    branch cannot get wrong, because it never looks at the query. The list
-    comes from the inventory, so a route that starts reading one is covered
-    without editing this file.
+    Only 14 of 61 do (measured after the portfolio route cleanup of
+    2026-09-08 retired several dead `/api/portfolio/*` GET routes). Driving
+    the rest with a hostile query pays each route's full cost -- one of them
+    takes 2.75 s -- to prove something its branch cannot get wrong, because it
+    never looks at the query. The list comes from the inventory, so a route
+    that starts reading one is covered without editing this file.
     """
     rows = inventory()["methods"].get("GET", [])
     prefixes = _proxy_prefixes()
@@ -152,9 +153,9 @@ def test_the_query_filter_narrows_without_emptying() -> None:
     """
     assert set(QUERY_ROUTES) <= set(GET_ROUTES)
     assert len(QUERY_ROUTES) < len(GET_ROUTES), "the filter removed nothing"
-    assert len(QUERY_ROUTES) >= 15, f"only {len(QUERY_ROUTES)} routes read a query"
+    assert len(QUERY_ROUTES) >= 10, f"only {len(QUERY_ROUTES)} routes read a query"
     # Routes whose whole behaviour depends on a query parameter.
-    for known in ("/api/portfolio/copilot/map", "/api/research/job", "/pieza"):
+    for known in ("/api/portfolio/copilot/scene", "/api/research/job", "/pieza"):
         assert known in QUERY_ROUTES, f"{known} reads a query and was filtered out"
 
 

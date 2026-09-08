@@ -259,14 +259,6 @@ else:
     _PROJECT_ROUTER_IMPORT_ERROR = ""
 
 try:
-    from flujo.knowledge import portfolio_evidence as _portfolio_evidence
-except Exception as _portfolio_evidence_exc:  # noqa: BLE001 - queue is additive
-    _portfolio_evidence = None
-    _PORTFOLIO_EVIDENCE_IMPORT_ERROR = type(_portfolio_evidence_exc).__name__
-else:
-    _PORTFOLIO_EVIDENCE_IMPORT_ERROR = ""
-
-try:
     from flujo.knowledge.product_view import (  # noqa: E402
         project_archive_portfolio_view as _project_archive_portfolio_view,
     )
@@ -1447,13 +1439,6 @@ def _portfolio_gtm_map(items, **kwargs):
         return copilot.build_gtm_map(items, **kwargs)
 
 
-def _portfolio_identity_graph():
-    return contrato_archivo.portfolio_identity_graph(
-        _portfolio_inbox().get("items", []),
-        connections=_portfolio_jsonl(PORTFOLIO_CONNECTIONS),
-        context_links=_portfolio_context_link_rows())
-
-
 def _director_capabilities():
     routes = {}
     for task_kind in ("visual", "research", "curation", "review", "judge"):
@@ -1543,35 +1528,6 @@ _ERROR_STATUS_LEFT_AT_200 = (
     "feedback_tablero_rechazado",
     "provider_error",
 )
-
-
-# Measured 2026-09-04: `/api/portfolio/copilot/map` answers 4,367,883 bytes,
-# and `items` is 100.0% of it -- 7044 rows carrying `triage_prediction` (412
-# bytes each) and `features` on top of the position. Its only consumer,
-# `iskvw/editor.html`, reads `item_id`, `x` and `y`, computes its own distance,
-# and never touches the rest: about 4% of what it receives. The panel calls
-# this route while the operator moves through pieces.
-#
-# `fields=map` ships the positions only. The default shape is unchanged on
-# purpose -- the engine's own contract is tested against the full item in
-# tests/test_copilot.py, and a caller that wants the predictions still gets
-# them by not asking for the projection.
-_GTM_MAP_ITEM_FIELDS = ("item_id", "x", "y")
-
-
-def _gtm_map_positions_only(payload):
-    """The same map answer with each item reduced to what a map needs."""
-    items = payload.get("items")
-    if not isinstance(items, list):
-        return payload
-    lean = dict(payload)
-    lean["items"] = [
-        {key: row[key] for key in _GTM_MAP_ITEM_FIELDS if key in row}
-        for row in items
-        if isinstance(row, dict)
-    ]
-    lean["fields"] = "map"
-    return lean
 
 
 def _answer(handler, payload):
@@ -1684,64 +1640,6 @@ def _project_probe_request(body):
         record=bool(body.get("record")) if isinstance(body, dict) else False,
         episode_id=body.get("episode_id") if isinstance(body, dict) else None,
     )
-
-
-def _portfolio_evidence_queue_read(project_id):
-    if _portfolio_evidence is None:
-        return {"ok": False, "error": "portfolio_evidence_unavailable",
-                "detail": _PORTFOLIO_EVIDENCE_IMPORT_ERROR}, 503
-    if not project_id:
-        return {"ok": False, "error": "project_id_requerido"}, 400
-    try:
-        record = _portfolio_evidence.load_record(_learning_db_path(), project_id)
-        return _portfolio_evidence.queue_payload(record), 200
-    except _portfolio_evidence.PortfolioEvidenceError as exc:
-        return {"ok": False, "error": str(exc)}, 404
-    except Exception as exc:  # noqa: BLE001 - read surface must remain bounded
-        return {"ok": False, "error": type(exc).__name__}, 500
-
-
-def _portfolio_evidence_draft_read(project_id):
-    if _portfolio_evidence is None:
-        return {"ok": False, "error": "portfolio_evidence_unavailable",
-                "detail": _PORTFOLIO_EVIDENCE_IMPORT_ERROR}, 503
-    if not project_id:
-        return {"ok": False, "error": "project_id_requerido"}, 400
-    try:
-        record = _portfolio_evidence.load_record(_learning_db_path(), project_id)
-        return _portfolio_evidence.build_draft(record), 200
-    except _portfolio_evidence.PortfolioEvidenceError as exc:
-        return {"ok": False, "error": str(exc)}, 404
-    except Exception as exc:  # noqa: BLE001 - read surface must remain bounded
-        return {"ok": False, "error": type(exc).__name__}, 500
-
-
-def _portfolio_evidence_decision(body):
-    if _portfolio_evidence is None:
-        return {"ok": False, "error": "portfolio_evidence_unavailable",
-                "detail": _PORTFOLIO_EVIDENCE_IMPORT_ERROR}, 503
-    if not isinstance(body, dict):
-        return {"ok": False, "error": "json_debe_ser_objeto"}, 400
-    required = ("project_id", "candidate_id", "action")
-    missing = [key for key in required if not str(body.get(key) or "").strip()]
-    if missing:
-        return {"ok": False, "error": "campos_requeridos", "fields": missing}, 400
-    try:
-        result = _portfolio_evidence.apply_human_decision(
-            _learning_db_path(),
-            project_id=str(body["project_id"]),
-            candidate_id=str(body["candidate_id"]),
-            action=str(body["action"]),
-            actor=str(body.get("actor") or "human"),
-            note=str(body.get("note") or ""),
-            corrected_relation=str(body.get("corrected_relation") or ""),
-            corrected_target_id=str(body.get("corrected_target_id") or ""),
-        )
-        return result, 200
-    except _portfolio_evidence.PortfolioEvidenceError as exc:
-        return {"ok": False, "error": str(exc)}, 400
-    except Exception as exc:  # noqa: BLE001 - decision errors are caller-visible
-        return {"ok": False, "error": type(exc).__name__}, 500
 
 
 def _director_work(body):
@@ -1949,27 +1847,6 @@ def _legacy_rescue_queue():
             "status": "candidate_only", "promotion": "none",
             "items": normalized,
             "counts": counts if isinstance(counts, dict) else {"total": 0}}
-
-
-def _portfolio_triage_record(body):
-    with _PORTFOLIO_TRIANGULATION_LOCK:
-        return _portfolio_triage_record_unlocked(body)
-
-
-def _portfolio_triage_record_unlocked(body):
-    group = str(body.get("group_key", "")).strip()[:120]
-    if not group:
-        return {"ok": False, "error": "grupo_vacio"}
-    known = {str(row.get("key", "")) for row in _portfolio_triangulation().get("groups", [])}
-    if group not in known:
-        return {"ok": False, "error": "grupo_no_encontrado"}
-    allowed = ("artist", "event", "venue", "date", "record_kind", "confidence")
-    row = {field: str(body.get(field, "")).strip()[:240] for field in allowed}
-    row.update({"schema": "mak-triangulation-review-v1", "group_key": group,
-                "status": "human_reviewed", "promotion": "none",
-                "ts": time.strftime("%Y-%m-%dT%H:%M:%S%z")})
-    _portfolio_append_jsonl(PORTFOLIO_TRIANGULATION_REVIEW, row)
-    return {"ok": True, "resolution": row}
 
 
 def _portfolio_context_links():
@@ -4093,48 +3970,6 @@ def _portfolio_feedback_record_unlocked(body, internal=False):
             "feedback_saved": True, "connection_saved": bool(connection.get("ok"))}
 
 
-def _portfolio_external_review(body):
-    item_id = str(body.get("item_id", ""))
-    provider = str(body.get("provider", "")).lower()
-    if provider not in ("ollama", "groq", "gemini", "cerebras"):
-        return {"ok": False, "error": "proveedor_invalido"}
-    source = _portfolio_item(item_id)
-    if not source:
-        return {"ok": False, "error": "item_no_encontrado"}
-    candidates = [item for item in _portfolio_inbox().get("items", [])
-                  if item.get("id") != item_id
-                  and item.get("selection") != "descartar"
-                  and item.get("publicacion_id") != source.get("publicacion_id")][:96]
-    board_id = str(body.get("board_id", ""))
-    board = next((row for row in _portfolio_boards().get("boards", [])
-                  if row.get("id") == board_id), {})
-    board = dict(board)
-    board.update(_portfolio_item_context(item_id))
-    prompt = {
-        "prompt": copilot.inference_prompt(source, candidates, context=board),
-        "source_manifest": copilot.media_manifest(source),
-        "candidate_count": len(candidates),
-    }
-    try:
-        providers.load_env()
-        raw = providers.call(provider, json.dumps(prompt, ensure_ascii=False),
-                             max_tokens=1400, temperature=0.1)
-    except Exception as exc:  # noqa: BLE001
-        return {"ok": False, "error": "provider_error", "detail": str(exc)[:180]}
-    normalized = copilot.normalize_inference(
-        raw, item_id, [item.get("id") for item in candidates])
-    quality = copilot.inference_quality(normalized)
-    row = {"item_id": item_id, "provider": provider, "inference": normalized,
-           "quality": quality,
-           "raw": raw,
-           "ts": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
-    _portfolio_append_jsonl(PORTFOLIO_EXTERNAL, row)
-    return {"ok": True, "provider": provider, "inference": normalized,
-            "quality": quality,
-            "raw": raw,
-            "stored": PORTFOLIO_EXTERNAL}
-
-
 def _portfolio_media_reference(value):
     value = str(value or "")
     for prefix in ("/portfolio-media/", "portfolio-media/"):
@@ -4541,15 +4376,6 @@ def _portfolio_media(relative):
     except ValueError:
         return None
     return candidate if os.path.isfile(candidate) else None
-
-
-def _portfolio_dispatch(item_id, depto, texto):
-    item = _portfolio_item(item_id)
-    if depto not in ("research", "codex"):
-        return {"ok": False, "error": "departamento_invalido"}
-    if not item:
-        return {"ok": False, "error": "item_no_encontrado"}
-    return _ejecutar(depto, "revision_portafolio", texto, "medio")
 
 
 # ── feed de actividad (los dos departamentos, con la guardia inline) ──
@@ -5593,8 +5419,6 @@ class H(BaseHTTPRequestHandler):
         if p == "/api/portfolio/archive-view":
             payload, code = _archive_portfolio_view_read_only()
             return self._json(payload, code)
-        if p == "/api/portfolio/identity-graph":
-            return self._json(_portfolio_identity_graph())
         if p == "/revision":
             self.send_response(301)
             self.send_header("Location", "/revision/")
@@ -5619,8 +5443,6 @@ class H(BaseHTTPRequestHandler):
             query = urllib.parse.parse_qs(u.query)
             compact = (query.get("surface") or [""])[0] == "mesa"
             return self._json(_portfolio_inbox(compact=compact))
-        if p == "/api/portfolio/index":
-            return self._json(_portfolio_metadata_index())
         if p == "/api/portfolio/decision-index":
             return self._json(_portfolio_decision_index())
         if p == "/api/portfolio/audit":
@@ -5628,35 +5450,6 @@ class H(BaseHTTPRequestHandler):
             source_id = (query.get("source_id") or query.get("item_id") or [""])[0]
             audit = _portfolio_audit(source_id)
             return self._json(audit, 404 if not audit.get("ok") else 200)
-        if p == "/api/portfolio/classifications":
-            return self._json({"ok": True,
-                               "schema": "faro-portfolio-classification-v1",
-                               "items": list(_portfolio_classifications().values())})
-        if p == "/api/portfolio/boards":
-            return self._json(_portfolio_boards())
-        if p == "/api/portfolio/triangulation":
-            return self._json(_portfolio_triangulation())
-        if p == "/api/portfolio/organism":
-            return self._json(_portfolio_organism_projection())
-        if p == "/api/portfolio/contract":
-            return self._json({
-                "schema": "faro-portfolio-contract-surface-v1",
-        "source_of_truth": ["portfolio_inbox", "classifications", "vision_features",
-                                     "boards", "connections", "copilot_feedback",
-                                     "portfolio_decision_drafts", "common_ledger"],
-                **_portfolio_contract_surface(),
-            })
-        if p == "/api/portfolio/review-queue":
-            item_id = (urllib.parse.parse_qs(u.query).get("source_id") or [""])[0]
-            return self._json(_portfolio_review_queue(item_id))
-        if p == "/api/portfolio/evidence-queue":
-            project_id = (urllib.parse.parse_qs(u.query).get("project_id") or [""])[0]
-            payload, code = _portfolio_evidence_queue_read(project_id)
-            return self._json(payload, code)
-        if p == "/api/portfolio/evidence-draft":
-            project_id = (urllib.parse.parse_qs(u.query).get("project_id") or [""])[0]
-            payload, code = _portfolio_evidence_draft_read(project_id)
-            return self._json(payload, code)
         if p == "/api/portfolio/external-candidates":
             item_id = (urllib.parse.parse_qs(u.query).get("item_id") or [""])[0]
             return self._json(_portfolio_external_candidates(item_id))
@@ -5667,17 +5460,6 @@ class H(BaseHTTPRequestHandler):
             return self._json(_legacy_report_index(limit, current))
         if p == "/api/research/rescue":
             return self._json(_legacy_rescue_queue())
-        if p == "/api/portfolio/copilot/suggestions":
-            query = urllib.parse.parse_qs(u.query)
-            item_id = (query.get("item_id") or [""])[0]
-            board_id = (query.get("board_id") or [""])[0]
-            include_map = (query.get("map") or ["0"])[0] == "1"
-            focus_facet = (query.get("facet") or [""])[0]
-            shuffle = (query.get("mode") or [""])[0] == "shuffle"
-            shuffle_seed = (query.get("seed") or [""])[0]
-            payload = _portfolio_suggestions(
-                item_id, board_id, include_map, focus_facet, shuffle, shuffle_seed)
-            return self._json(payload, _status_for(payload))
         if p == "/api/portfolio/copilot/scene":
             query = urllib.parse.parse_qs(u.query)
             item_id = (query.get("item_id") or [""])[0]
@@ -5700,59 +5482,8 @@ class H(BaseHTTPRequestHandler):
                 format_id=(query.get("format_id") or [""])[0],
                 refresh=(query.get("refresh") or ["0"])[0] == "1")
             return self._json(payload, _status_for(payload))
-        if p == "/api/portfolio/copilot/map":
-            query = urllib.parse.parse_qs(u.query)
-            width = (query.get("width") or [8])[0]
-            height = (query.get("height") or [6])[0]
-            try:
-                width, height = int(width), int(height)
-            except (TypeError, ValueError):
-                width, height = 8, 6
-            payload = _portfolio_gtm_map(
-                _portfolio_inbox().get("items", []),
-                feedback=_portfolio_feedback(), width=width, height=height)
-            if (query.get("fields") or [""])[0] == "map":
-                payload = _gtm_map_positions_only(payload)
-            return self._json(payload)
-        if p == "/api/portfolio/copilot/vision":
-            item_id = (urllib.parse.parse_qs(u.query).get("item_id") or [""])[0]
-            item = _portfolio_item(item_id)
-            if not item:
-                return self._json({"ok": False, "error": "item_no_encontrado"}, 404)
-            record = _portfolio_vision().get(item_id)
-            return self._json({"ok": True, "schema": copilot.VISION_SCHEMA,
-                               "item_id": item_id,
-                               "features": (record or {}).get("features", {}),
-                               "unknowns": (record or {}).get("unknowns", []),
-                               "confidence": (record or {}).get("confidence", "low"),
-                               "available": bool(record)})
-        if p == "/api/portfolio/copilot/manifest":
-            item_id = (urllib.parse.parse_qs(u.query).get("item_id") or [""])[0]
-            item = _portfolio_item(item_id)
-            if not item:
-                return self._json({"ok": False, "error": "item_no_encontrado"}, 404)
-            suggestions = _portfolio_suggestions(item_id).get("suggestions", [])
-            candidates = [_portfolio_item(row["item_id"]) for row in suggestions]
-            return self._json({"ok": True, "schema": "faro-portfolio-learning-manifest-v1",
-                               "source": copilot.media_manifest(item),
-                               "candidates": [copilot.media_manifest(x) for x in candidates if x]})
-        if p == "/api/portfolio/copilot/visual-index":
-            item_id = (urllib.parse.parse_qs(u.query).get("item_id") or [""])[0]
-            surface = _portfolio_visual_surface(item_id)
-            return self._json({"ok": True, "schema": "faro-portfolio-visual-index-surface-v1",
-                               "profile": surface.get("profile", {}),
-                               "relations": surface.get("relations", []),
-                               "reason": surface.get("reason", "")})
-        if p == "/api/portfolio/copilot/xio-evidence":
-            return _answer(self, _portfolio_xio_evidence())
         if p == "/api/portfolio/xio/live":
             return self._json(_xio_live_snapshot())
-        if p == "/api/portfolio/copilot/status":
-            providers.load_env()
-            visual = _portfolio_visual_surface()
-            return self._json({"ok": True, "provider_status": copilot.provider_status(os.environ),
-                               "active": "local_hypothesis_engine",
-                               "visual_similarity": visual.get("profile", {})})
         if p == "/api/portfolio/copilot/learning":
             return self._json(_portfolio_learning())
         if p.startswith("/portfolio-media/"):
@@ -5958,17 +5689,6 @@ class H(BaseHTTPRequestHandler):
             if not isinstance(body, dict):
                 return self._json({"ok": False, "error": "json debe ser objeto"}, 400)
             return self._json(_diagnostic_payload(body))
-        if u.path == "/api/portfolio/evidence-decision":
-            try:
-                length = min(int(self.headers.get("Content-Length") or 0), 12000)
-            except (TypeError, ValueError):
-                return self._json({"ok": False, "error": "content_length_invalido"}, 400)
-            try:
-                body = json.loads(self.rfile.read(length).decode("utf-8", "replace") or "{}")
-            except (ValueError, TypeError):
-                return self._json({"ok": False, "error": "json invalido"}, 400)
-            payload, code = _portfolio_evidence_decision(body)
-            return self._json(payload, code)
         if u.path == "/api/portfolio/xio/live":
             length = _body_length(self.headers, 2000)
             if length is None:
@@ -6010,17 +5730,9 @@ class H(BaseHTTPRequestHandler):
             return _answer(self, _episode_revision.record(
                 body.get("episodio", ""), body.get("decision", ""), body.get("note", "")))
         if u.path in ("/api/director/work", "/api/director/decision",
-                      "/api/portfolio/select", "/api/portfolio/classify",
-                      "/api/portfolio/classify-batch",
                       "/api/portfolio/draft", "/api/portfolio/commit",
                       "/api/portfolio/undo",
-                      "/api/portfolio/dispatch",
-                      "/api/portfolio/board", "/api/portfolio/connect",
-                      "/api/portfolio/feedback", "/api/portfolio/triangulation/review",
-                      "/api/portfolio/triangulation/context-link",
                       "/api/portfolio/copilot/xio-link",
-                      "/api/portfolio/copilot/external",
-                      "/api/portfolio/copilot/vision",
                       "/api/portfolio/external-candidates/review"):
             largo = _body_length(self.headers, 12000)
             if largo is None:
@@ -6039,37 +5751,9 @@ class H(BaseHTTPRequestHandler):
                 return _answer(self, _portfolio_commit(body))
             if u.path.endswith("/undo"):
                 return _answer(self, _portfolio_undo(body))
-            if u.path.endswith("/select"):
-                return _answer(self, _portfolio_select(
-                    body.get("item_id"), body.get("decision"),
-                    body.get("board_id", ""), body.get("session_id", ""),
-                    body.get("pass_size", 0), body.get("decision_scope", "selection"),
-                    body.get("reason_code", ""), body.get("target_id", ""),
-                    body.get("note", "")))
-            if u.path.endswith("/classify"):
-                return _answer(self, _portfolio_classify(body))
-            if u.path.endswith("/classify-batch"):
-                return _answer(self, _portfolio_classify_batch(body))
-            if u.path.endswith("/board"):
-                return _answer(self, _portfolio_board_action(body))
-            if u.path.endswith("/connect"):
-                return _answer(self, _portfolio_connect(body))
-            if u.path.endswith("/feedback"):
-                return _answer(self, _portfolio_feedback_record(body))
-            if u.path.endswith("/triangulation/review"):
-                return _answer(self, _portfolio_triage_record(body))
-            if u.path.endswith("/triangulation/context-link"):
-                return _answer(self, _portfolio_context_link(body))
             if u.path.endswith("/copilot/xio-link"):
                 return _answer(self, _portfolio_xio_link(body))
-            if u.path.endswith("/external"):
-                return _answer(self, _portfolio_external_review(body))
-            if u.path.endswith("/vision"):
-                return _answer(self, _portfolio_vision_read(body))
-            if u.path.endswith("/external-candidates/review"):
-                return _answer(self, _portfolio_external_candidate_review(body))
-            return _answer(self, _portfolio_dispatch(
-                body.get("item_id"), body.get("depto"), body.get("texto", "")))
+            return _answer(self, _portfolio_external_candidate_review(body))  # /external-candidates/review
         if u.path == "/api/revision" and _revision is not None:
             largo = _body_length(self.headers, 5000)
             if largo is None:
