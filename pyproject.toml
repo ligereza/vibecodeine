@@ -58,20 +58,22 @@ build = [
     "pyinstaller>=6.22.1",  # free packaging to .exe; 'flujo package'. Not runtime dep.
 ]
 
-# No console script on the MAK branch: src/flujo/cli.py belongs to the
-# portable motor and is not carried here. The box invokes its departments
-# through cultura/mak_plataforma/hub.py and its systemd units.
+[project.scripts]
+flujo = "flujo.cli:app"
 
 [build-system]
 requires = ["setuptools>=84.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
-# The MAK box is not a distributable Python package: its departments are run
-# as scripts by systemd units, and it consumes the FLUJO motor from
-# /home/mak/flujo/src without copying src/flujo. Declaring a package root
-# here would name a tree this branch does not carry.
-[tool.setuptools]
-packages = []
+# On the MAK branch alone this stayed `packages = []`: MAK never carried a
+# copy of src/flujo and its departments run as systemd-invoked scripts, not
+# an installed package. That declaration went stale the moment this tree
+# also carries FLUJO's src/flujo -- CI installs with `pip install -e .` and
+# needs an importable `flujo` module (validar-piezas.yml, render_piezas_
+# vectoriales.yml both run `python -m flujo ...`). Use FLUJO's own discovery
+# rule instead of re-inventing one.
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.ruff]
 line-length = 100
