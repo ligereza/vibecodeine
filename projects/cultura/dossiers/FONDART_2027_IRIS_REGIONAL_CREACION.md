@@ -49,18 +49,29 @@ y fuera de territorio de pueblo originario debe **cero** documentos del Anexo 2.
 Si el proyecto incorpora artistas invitados al taller, aparecen las cartas de
 compromiso y hay que producirlas.
 
-## 1-bis. El cierre, verificado en la fuente oficial (2026-09-05)
+## 1-bis. El cierre, verificado en la fuente oficial (2026-09-05, RECONFIRMADO 2026-09-07)
 
 El PDF de bases no trae calendario. Se verificó en el sitio del Ministerio.
+
+**Actualización 2026-09-07 (agente Claude):** el sitio oficial fue reconsultado y
+ya NO distingue fecha por región para esta línea. Cita textual encontrada hoy:
+"Plazo de postulación todas las regiones, excepto Arica y Parinacota,
+Tarapacá, Antofagasta y Atacama: 16 de septiembre a las 15:00 horas de
+Santiago de Chile" y, para esas mismas cuatro regiones, la misma fecha y hora.
+Es decir, el cierre del 11 de septiembre para la Región Metropolitana que
+registraba esta tabla desde el 2026-09-05 **ya no está vigente**: se amplió a
+la misma fecha que el resto del país. Esto cambia el cálculo de la sección
+"Decisiones que faltan" más abajo -- ver nota ahí.
 
 | Dato | Valor |
 |---|---|
 | Apertura | 05-08-2026 |
-| **Cierre general para la Región Metropolitana** | **viernes 11 de septiembre de 2026, 15:00 hrs de Santiago** |
-| Cierre para Arica y Parinacota, Tarapacá, Antofagasta y Atacama | **16 de septiembre de 2026, 15:00 hrs** |
+| **Cierre, todas las regiones (incluida Región Metropolitana)** | **miércoles 16 de septiembre de 2026, 15:00 hrs de Santiago** |
+| ~~Cierre anterior para la Región Metropolitana (2026-09-05, ya superado)~~ | ~~viernes 11 de septiembre de 2026~~ |
 | Resolución que aprobó estas bases | Rex 2262 de 2026 |
 | Resolución que amplió el plazo | «Amplía plazo de postulación concurso 2027» |
 | Verificación del PDF local | sha256 **idéntico** al del PDF vivo del Ministerio: cada cifra de este dossier está medida contra las bases vigentes |
+| Última reconfirmación en el portal en vivo | 2026-09-07, por agente Claude (ver actualización arriba) |
 
 **Desde hoy quedan 6 días.** La hora y el estado del formulario deben reconfirmarse
 en el portal antes de enviar.
@@ -73,7 +84,8 @@ regional. Como las bases obligan a postular en la región donde se ejecuta, los
 siete días extra sólo existen si el proyecto se ejecuta allá de verdad.
 
 Dato relevante: el repositorio ya tiene un piloto `ARICA-FONDART-2027` con
-corpus propio (413 MB). Ver sección 2-ter.
+corpus propio (413 MB), re-verificado el 2026-09-07 contra `runs/RESULTS.md`.
+Ver sección 2-ter.
 
 ### El desempate premia postular temprano
 
@@ -149,6 +161,25 @@ formulario hasta medirla.
 
 ## 2-ter. Lo que el piloto ARICA-FONDART-2027 ya demuestra
 
+> **Re-verificación 2026-09-07 (agente Claude):** esta sección se marcó
+> brevemente como "no localizable" por un error de búsqueda propio -- se
+> buscó dentro del clon vacío `/home/mak/IRIS/experiments/...` en vez de la
+> ruta real del monorepo, `/home/mak/experiments/pilots/ARICA-FONDART-2027`
+> (413 MB, existe, modificado por última vez el 2026-08-31/09-05). Se abrió
+> `runs/RESULTS.md` directamente y se confirmó, cifra por cifra, que el texto
+> de abajo es exacto: 12.332 artefactos, 128 observaciones, 512 candidatos de
+> relación y 174 unidades en `full-baseline`; `fit=abstain` en ambos runs;
+> `unexplained_output_deltas=0`; 11.534 assets internos y 0 con elegibilidad
+> pública explícita en `enriched/portfolio-view.json`. Los hashes SHA-256 de
+> ambos manifests también están documentados en el propio `RESULTS.md`. El
+> texto original queda sin cambios porque ya era preciso. Adicionalmente, hoy
+> también se verificaron en verde tres suites de pruebas reales sobre el
+> código que sostiene este piloto (`flujo/tests/test_opportunity_fit.py`: 15
+> passed; `tests/test_iris_invariants.py`: 10 passed; `tests/test_contracurator.py`:
+> 5 passed con `-m ""`), y un corpus adicional de 2.034 piezas / 5.812
+> vínculos en `borradores/02-fondart-regional-creacion-artistica-2027-iris/CODIGO_Y_EVIDENCIA/archivo.json` --
+> evidencia complementaria, no un reemplazo de lo de abajo.
+
 `experiments/pilots/ARICA-FONDART-2027` (413 MB, con corpus de fuentes propio)
 es una corrida real de este sistema sobre esta convocatoria, ejecutada dos
 veces. Lo que quedó registrado en `runs/RESULTS.md`:
@@ -182,6 +213,62 @@ pero un documento **puede** contener links referenciales que deben estar
 tiene **nada** habilitado para mostrarse afuera. Si la postulación va a incluir
 un link a la obra viva, hay que declarar elegibilidad pública de un subconjunto
 antes del cierre vigente. Es trabajo de curatoría y de permisos, no de código.
+
+
+## 2-quater. Mapa de evidencia para el jurado
+
+Esta sección ordena lo anterior en cuatro categorías, para que quien evalúe
+sepa exactamente qué tipo de afirmación está leyendo en cada parte del
+expediente. Ninguna cifra de aquí es nueva: todas ya están en §2-ter y se
+repiten solo como índice.
+
+**1. Implementado y verificado hoy (2026-09-07), código y pruebas en verde:**
+
+| Evidencia | Ubicación | Verificación |
+|---|---|---|
+| Evaluación de encaje oportunidad/evidencia | `flujo/src/flujo/knowledge/opportunity_fit.py` | 15/15 pruebas pasan |
+| Invariantes declaradas de IRIS | `tests/test_iris_invariants.py` | 10/10 pruebas pasan |
+| Contracurator (consumo de la vista del archivo) | `tests/test_contracurator.py` | 5/5 pruebas pasan |
+| Hub de plataforma (superficie donde conviven portafolio y research-garden) | `borradores/.../CODIGO_Y_EVIDENCIA/mak_plataforma_hub.py`, original en `/home/mak/cultura/mak_plataforma/hub.py` | Compila sin errores (`python3 -m py_compile`); tiene una unidad systemd definida (`mak-hub.service`) pero no esta registrada/activa en esta maquina hoy -- es infraestructura real, no todavia un demostrador offline empaquetado para un jurado |
+
+**2. Corrida real sobre esta convocatoria -- evidencia histórica interna, no
+pública, con hash verificado:**
+
+El piloto `experiments/pilots/ARICA-FONDART-2027` (§2-ter): 12.332 artefactos,
+128 observaciones, 512 candidatos de relación, 174 unidades, replay
+byte-equivalente en dos ejecuciones, `fit=abstain` en ambas, manifests con
+SHA-256 verificado contra disco. Es evidencia real de que el sistema funciona
+y se niega a autocertificarse -- no es, ni pretende ser, una obra terminada ni
+un resultado de público.
+
+**3. Corpus adicional ya procesado -- real, interno, no es un portafolio
+público:**
+
+`borradores/02-fondart-regional-creacion-artistica-2027-iris/CODIGO_Y_EVIDENCIA/archivo.json`
+y `campo.json`: 2.034 piezas (208 código, 1.826 obra), 5.812 vínculos (5.794
+semánticos, 18 de etiqueta), 219 piezas con posición espacial resuelta,
+generado 2026-08-29. Su propio README ya lo dice: son "snapshots de datos de
+proyección del archivo, no un portafolio público listo para adjuntar".
+
+**4. Lo que hoy NO se puede mostrar -- gated por curatoría y permisos, no por
+código:**
+
+0 de los assets internos declarados en `enriched/portfolio-view.json` tienen
+elegibilidad pública explícita (§2-ter). Ningún link vivo puede adjuntarse a
+la postulación mientras esto no cambie. Cerrar esto es una decisión del
+operador -- qué piezas exponer y bajo qué permisos -- no una tarea de
+implementación, y sigue pendiente.
+
+**5. Lo que el proyecto financiado va a producir -- prospectivo, declarado
+como tal:**
+
+La obra descrita en §3 (la mesa visual, la interacción de aceptar/rechazar/
+dejar abierta cada hipótesis, el documento final propio del participante) y su
+exhibición en dos actos descrita en §4 todavía no existen como obra montada:
+son el objeto del financiamiento solicitado, no un resultado ya alcanzado. El
+expediente no los presenta como hechos consumados en ninguna parte de este
+documento.
+
 
 ## 3. La obra
 
@@ -299,17 +386,22 @@ enfrenta se lee distinto de una que la ignora.
 ### Lo que existe en preservación
 
 Cornell desarrolló los *Preservation and Access Frameworks for Digital Art
-Objects* para objetos born-digital complejos; el Internet Archive lanzó CARTA
-(agosto 2026) para preservar sitios web de artistas; hay literatura consolidada
-sobre ciclo de vida, integridad y migración de formatos.
+Objects* para objetos born-digital complejos; el Internet Archive mantiene
+CARTA (Collaborative ART Archive, activa desde 2018 con mas de 40 socios) y en
+agosto de 2026 amplio ahi su iniciativa de preservacion de sitios web de
+artistas (verificado: <https://blog.archive.org/2026/08/25/artistswebsites/>,
+2026-09-07); hay literatura consolidada sobre ciclo de vida, integridad y
+migracion de formatos.
 
 **Todo ese campo preserva bits y metadatos. Ninguno reconstruye la decisión.**
 
 ### Lo que existe en el mercado
 
-Pixpa, Format, Portfoliobox, Artwork Archive, ArtStation, ArtStack: sitios de
+Pixpa, Format, Portfoliobox, Artwork Archive, ArtStation: sitios de
 portafolio, CRM para artistas y directorios curados. Organizan por **tema,
-medio o categoría** — es decir, por listas.
+medio o categoría** — es decir, por listas. (ArtStack, citado en una version
+anterior de esta seccion, se verifico como inactivo/deadpooled hoy -- retirado
+de la lista de comparacion vigente.)
 
 ### El hueco, en una frase
 
@@ -390,16 +482,21 @@ obligaciones laborales y previsionales.
 
 ## 8. Decisiones que faltan, y son del operador
 
-Resuelto provisionalmente: la página oficial vigente informa **11 de septiembre
-de 2026, 15:00 hrs.** para la Región Metropolitana. Ver sección 1-bis y
-reconfirmar antes de enviar.
+**Actualizado 2026-09-07:** el cierre ya es el mismo para todas las regiones
+-- 16 de septiembre de 2026, 15:00 hrs -- según reconfirmación directa en el
+portal oficial ese día (ver sección 1-bis). El argumento de "5 días extra" que
+antes favorecía Arica y Parinacota sobre la Región Metropolitana **ya no
+aplica**: ambas cierran el mismo día. Reconfirmar de todas formas en el portal
+al momento de enviar, por si hay un cambio posterior.
 
-1. **Región.** Es la primera decisión y ordena todas las demás, porque decide
-   qué cierre aplica. Metropolitana concentra $800.000.000 y cierra el 11;
-   Arica y Parinacota tiene $85.000.000 y cierra el 16, y ya existe el piloto
-   `ARICA-FONDART-2027`. Pero se postula donde se ejecuta de verdad: los días
-   extra exigen ejecutar allá, con espacio anfitrión y pasajes en
-   Operación.
+1. **Región.** Sigue siendo la primera decisión, pero ya no la ordena el
+   cierre (es el mismo para todas): la ordena el tamaño del fondo regional y
+   dónde se ejecuta de verdad. Metropolitana concentra $800.000.000; Arica y
+   Parinacota tiene $85.000.000 y ya existe el piloto `ARICA-FONDART-2027`
+   (re-verificado 2026-09-07).
+   Sin la presión de una fecha distinta, la decisión depende de dónde se
+   pueda montar espacio anfitrión y ejecución real, no de días de plazo
+   adicionales.
 2. **Registro en Perfil Cultura.** Verificar hoy si existe. Es trámite, no
    decisión, y si falta bloquea todo lo demás.
 3. **Anexo N°1 y «primera obra artística».** El Anexo N°1 del 2027 no está
@@ -479,3 +576,4 @@ Estado del arte:
 - Guérin, Chauvet y Saubion, survey de SOM: <https://arxiv.org/abs/2501.08416>
 - SOM with Optimized Latent Positions: <https://arxiv.org/abs/2604.13622>
 - Internet Archive, CARTA y sitios de artistas: <https://blog.archive.org/2026/08/25/artistswebsites/>
+- Cornell, Preservation and Access Frameworks for Digital Art Objects (PAFDAO): <https://confluence.cornell.edu/display/pafdao/Home>

@@ -7,7 +7,7 @@
 - **Región de ejecución:** Metropolitana.
 - **Monto de trabajo:** $18.000.000 CLP.
 - **Duración de trabajo:** 12 meses.
-- **Cierre operativo:** 11 de septiembre de 2026, 15:00, para RM según el portal oficial.
+- **Cierre operativo (reconfirmado 2026-09-07):** 16 de septiembre de 2026, 15:00, para todas las regiones incluida RM según el portal oficial -- se amplió desde el 11 de septiembre.
 
 ## Encaje con la línea
 

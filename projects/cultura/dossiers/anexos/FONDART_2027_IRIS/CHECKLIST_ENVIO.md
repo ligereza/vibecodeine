@@ -1,13 +1,21 @@
 # Checklist de envío — IRIS / Fondart Regional 2027
 
-## Estado al 5 de septiembre de 2026
+## Estado al 5 de septiembre de 2026, RECONFIRMADO 2026-09-07
 
 La postulación narrativa y presupuestaria está completa y pasó la revisión
 automática de las 14 secciones del FUP. El único bloqueo documental actual son
-las cartas firmadas del equipo declarado. El cierre que informa la
-página oficial para la Región Metropolitana es el **11 de septiembre de 2026 a
-las 15:00 hrs de Santiago**. La fecha no aparece en el PDF de bases, por lo
-que debe reconfirmarse en el portal al momento de enviar.
+las cartas firmadas del equipo declarado.
+
+**Actualización 2026-09-07 (agente Claude):** se reconsultó el portal oficial
+en vivo. El cierre para TODAS las regiones, incluida la Región Metropolitana,
+es ahora **miércoles 16 de septiembre de 2026, 15:00 hrs de Santiago** -- se
+amplió desde el 11 de septiembre que informaba esta misma página el
+2026-09-05. Cita textual del portal: "Plazo de postulación todas las
+regiones, excepto Arica y Parinacota, Tarapacá, Antofagasta y Atacama: 16 de
+septiembre a las 15:00 horas de Santiago de Chile" (y las cuatro regiones
+exceptuadas comparten esa misma fecha). La fecha no aparece en el PDF de
+bases, por lo que de todas formas debe reconfirmarse en el portal una última
+vez al momento de enviar.
 
 ## Bloqueos P0 antes de enviar
 
