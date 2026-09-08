@@ -2,6 +2,17 @@
 
 Este archivo ayuda a entrar al trabajo y continuarlo. Está abierto a cambios cuando la experiencia los justifique. Completa únicamente lo que ayude a decidir o actuar; los espacios vacíos no impiden empezar una tarea clara.
 
+## Dónde están los hechos
+
+Este archivo no los tiene a propósito. Antes de asumir nomenclatura, estado o vocabulario del sistema:
+
+- **Decisiones cerradas, con fecha:** `DECISIONES.md`.
+- **Estado medido de la máquina:** `.venv/bin/python tools/mak_status.py` — nunca en prosa.
+- **Vocabulario y continuidad ya resueltos** (qué es MAK, `vibecodeine`, IRIS, RD, Portfolio): `MEMORIAS.md`.
+- **Registro histórico, no instrucción:** `context/HANDOFF_HISTORICO.md`.
+
+`MAK`, `vibecodeine` y las ramas/checkouts MAK y FLUJO son nombres fijados por el operador (`DECISIONES.md`, 2026-09-03) que se confunden seguido. No re-derivarlos desde código o commits sueltos sin pasar antes por los punteros de arriba.
+
 ## Lo que buscamos
 
 **Intención del usuario:** _Por completar desde el encargo real._
