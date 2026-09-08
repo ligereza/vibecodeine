@@ -175,8 +175,20 @@ def test_docstrings_are_counted():
 
 def test_excluded_zones_match_the_house_convention():
     """DEAD_ZONE/FOREIGN_ZONE mirror tests/test_higiene_docs.py on purpose:
-    one convention for which files an instrument may accuse."""
-    from test_higiene_docs import ZONA_AJENA, ZONA_MUERTA
+    one convention for which files an instrument may accuse.
+
+    The counterpart is a MAK doc ratchet and stayed in MAK when the branches
+    separated (2026-09-02), so from FLUJO there is nothing to mirror against.
+    This skipped with an ImportError until then, which read as a broken test
+    rather than as an absent counterpart. MAK still enforces the equality; the
+    skip records where the authority lives instead of hiding it.
+    """
+    try:
+        from test_higiene_docs import ZONA_AJENA, ZONA_MUERTA
+    except ModuleNotFoundError:
+        pytest.skip(
+            "tests/test_higiene_docs.py belongs to MAK; the mirror is "
+            "enforced there, on the branch that owns the doc ratchets")
 
     assert set(idioma.DEAD_ZONE) == set(ZONA_MUERTA)
     assert set(idioma.FOREIGN_ZONE) == set(ZONA_AJENA)

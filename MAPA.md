@@ -274,6 +274,12 @@ repositorio. Las credenciales y tokens se mantienen fuera de Git.
 | `MAK_SYNC_LOCK`, `MAK_SYNC_MANIFEST` | Rutas de bloqueo y manifiesto de una corrida de sincronizacion. |
 | `WATSONX_MODEL`, `WATSONX_URL` | Configuracion opcional del backend WatsonX conservado para benchmarks/manual. |
 
+Topic-branch contracts and handoffs were part of the previous organization and
+are not active inputs now. The only current contract is `AGENTS.md`; current
+state is measured with `.venv/bin/python tools/mak_status.py`, and historical
+continuity is kept in `context/HANDOFF_HISTORICO.md`.
+
+
 Ignored `web/dist*` and `dist_compartir/` files are generated delivery artifacts,
 not sources of truth. If they contain an older snapshot, use the tracked source
 and regenerate them only after the documented Node/Rollup build gate is repaired.

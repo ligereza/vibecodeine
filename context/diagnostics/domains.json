@@ -25,6 +25,8 @@
         "DECISIONES.md",
         "pyproject.toml",
         "cultura/mak_plataforma/hub.py",
+        "src/flujo/cli.py",
+        "src/flujo/diagnostics.py",
         "context/test_lane_map.json"
       ],
       "checks": [

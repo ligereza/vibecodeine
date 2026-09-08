@@ -814,6 +814,7 @@ reanudar** o gritará que esperaba 0 activas y hay 23.
 - `context/OWNER_MANIFEST.md`
 - `context/VIDEO_WORKFLOW_MAK_20260817.md`
 - `CAPACIDADES_MAK.md`
+- `CAPACIDADES_FLUJO.md`
 - `MAPA.md`
 - `docs/AUTORIDAD.md` (qué documento manda sobre cuál, y por qué)
 - sección `Historical checkpoint — Phase 495` y fases posteriores en

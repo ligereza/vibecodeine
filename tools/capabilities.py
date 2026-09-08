@@ -68,8 +68,8 @@ SURFACES: tuple[Surface, ...] = (
         "flujo_app",
         "FLUJO App",
         "flujo",
-        "flujo/src/flujo/web/hub.py",
-        ("hub", "src/flujo/web/hub.py"),
+        "src/flujo/web/hub.py",
+        ("FLUJO App", "src/flujo/web/hub.py"),
         ports=(8765, 8766),
         http_paths=("/",),
         expectation="manual",
@@ -78,8 +78,8 @@ SURFACES: tuple[Surface, ...] = (
         "flujo_serve",
         "FLUJO serve",
         "flujo",
-        "flujo/src/flujo/serve/server.py",
-        ("serve", "src/flujo/serve/server.py"),
+        "src/flujo/serve/server.py",
+        ("FLUJO `serve`", "src/flujo/serve/server.py"),
         ports=(8777,),
         http_paths=("/",),
         expectation="manual",
@@ -459,7 +459,16 @@ def _write_atomic(path: Path, payload: str) -> None:
 
 
 def build_report(root: Path, docs: list[Path], live: bool) -> dict[str, object]:
-    results = [_surface_result(root, docs, surface, live) for surface in SURFACES]
+    # This checker also ships in the MAK checkout as a shared implementation.
+    # When run from the FLUJO checkout, report only FLUJO-owned surfaces: MAK
+    # sources deliberately do not exist in that checkout. On any other branch
+    # (including this merged main, which carries both), nothing is filtered.
+    branch = _git_value(root, "branch", "--show-current")
+    surfaces = tuple(
+        surface for surface in SURFACES
+        if branch != "FLUJO" or surface.owner == "flujo"
+    )
+    results = [_surface_result(root, docs, surface, live) for surface in surfaces]
     return {
         "schema": "mak-capabilities-runtime-v1",
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -500,7 +509,7 @@ def main(argv: list[str] | None = None) -> int:
     root = args.root.resolve()
     doc_paths = args.docs or [
         Path("CAPACIDADES_MAK.md"),
-        Path("flujo/CAPACIDADES_FLUJO.md"),
+        Path("CAPACIDADES_FLUJO.md"),
     ]
     docs = [(path if path.is_absolute() else root / path) for path in doc_paths]
     docs = [path for path in docs if path.is_file()]

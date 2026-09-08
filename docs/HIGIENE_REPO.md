@@ -52,13 +52,13 @@ ya no forma parte del checkout actual.
 ## Deuda conocida
 
 - `projects/tapiz/vibecode.egg-info/` está trackeado históricamente.
-- Historial de commits de v0.34 con tareas parciales/fallidas fue consolidado (ver CLAUDE.md, seccion "Mapa del repo"; el viejo REPO_MAP.md fue archivado).
+- Historial de commits de v0.34 con tareas parciales/fallidas fue consolidado; el viejo REPO_MAP.md fue archivado.
 - checkpoints/ y docs/handoffs/ se mantienen como bitácora (no agregar commits ruidosos de micro-tareas).
 - Se recomienda correr git filter-repo para reducir tamaño del .git (ver docs/LIMPIEZA_HISTORIAL.md).
 
 **Actual (2026-06):** `context/flujo_hub.html` + `svg_visualizer.html` + `plano_demo.html` + `LAST_HANDOFF.md` son la fuente de verdad diaria.
 
-Histórico (checkpoints, _archive, reference_old) se movió a `_archive/legacy_historico_previo/` y se RETIRÓ el 2026-07-30: era un archivo dentro de un archivo dentro de un archivo, 283 archivos que nadie volvió a abrir. Vive en el historial de git, que es para lo que existe. Mantener el root limpio; el mapa del repo está en `CLAUDE.md`.
+Histórico (checkpoints, _archive, reference_old) se movió a `_archive/legacy_historico_previo/` y se RETIRÓ el 2026-07-30: era un archivo dentro de un archivo dentro de un archivo, 283 archivos que nadie volvió a abrir. Vive en el historial de git, que es para lo que existe. Mantener el root limpio; la orientación contractual está en `AGENTS.md`.
 
 **Herramientas de limpieza, estado 2026-07-30.** Vivas: `limpiar_basura.sh`
 (usado por `make clean`), `find_duplicates.py` y `suggest_repo_hygiene.py` --
@@ -70,6 +70,6 @@ Retirados el 2026-07-30 por no tener invocador real (ni Makefile, ni
 Los checkpoints de versión en `docs/handoffs/archive/` (los `HANDOFF_v0.4x.md`,
 `HOTFIX_*.md` y similares, ~93 archivos) también se retiraron ese día: git ya
 es el registro de esa historia, y ninguno de esos archivos tenía un consumidor
-real (ni el handoff vivo ni `CLAUDE.md` los citaban por nombre). Lo que sí se
+real (ni el handoff ni el contrato actual los citaban por nombre). Lo que sí se
 cita por nombre se queda: las ocho notas de decisiones de julio 2026 en esa
 misma carpeta.

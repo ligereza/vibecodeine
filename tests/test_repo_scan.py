@@ -84,8 +84,19 @@ def test_no_git_returns_empty_so_a_caller_can_skip(tmp_path):
 
 
 def test_both_entry_gates_use_the_shared_enumerator():
-    """Fixing one instance and leaving the other is how the class survived."""
-    for name in ("test_privacidad_repo.py", "test_higiene_docs.py"):
+    """Fixing one instance and leaving the other is how the class survived.
+
+    Named both gates unconditionally until 2026-09-02. `test_higiene_docs.py`
+    stayed in MAK with the rest of the doc ratchets, so reading it from here
+    raised FileNotFoundError -- an absent counterpart reported as a defect.
+    The pair is checked wherever both exist; each checkout checks what it
+    physically carries, and measuring nothing is an error.
+    """
+    presentes = [name for name in ("test_privacidad_repo.py",
+                                   "test_higiene_docs.py")
+                 if (REPO / "tests" / name).is_file()]
+    assert presentes, "neither entry gate is in this checkout: nothing measured"
+    for name in presentes:
         source = (REPO / "tests" / name).read_text(encoding="utf-8")
         assert "versionable_files" in source, (
             f"{name} no longer uses the shared enumerator")
