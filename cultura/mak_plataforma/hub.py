@@ -148,6 +148,29 @@ PORTFOLIO_VISUAL_INDEX_ROOT = os.path.abspath(os.environ.get(
     "MAK_VISUAL_INDEX_ROOT", os.path.join(HOME, "plataforma/derived/visual-index")))
 PORTFOLIO_XIO_SHOW_ROOT = os.path.abspath(os.environ.get(
     "MAK_XIO_SHOW_ROOT", os.path.join(HOME, "xio", "show_kit")))
+_PORTFOLIO_XIO_LIVE_LOCK = threading.Lock()
+_PORTFOLIO_XIO_LIVE = {
+    "mode": "idle",  # idle | running | paused
+    "started_epoch": None,
+    "paused_epoch": None,
+    "paused_total": 0.0,
+    "external": None,  # last pulse posted by a real XIO source, or None
+}
+_PORTFOLIO_XIO_LIVE_EXTERNAL_TIMEOUT_S = 2.5
+_PORTFOLIO_XIO_LIVE_LOOP_S = 120.0
+_PORTFOLIO_XIO_LIVE_BPM = 126.0
+_PORTFOLIO_XIO_LIVE_FPS = 30
+# Used only when xio/show_kit has no real cue map -- keeps the performance
+# mode demoable without a live show connected. Timecodes in seconds.
+_PORTFOLIO_XIO_LIVE_DEMO_CUES = [
+    {"t": 0.0, "n": "1", "title": "intro", "layer": 1},
+    {"t": 14.0, "n": "2", "title": "build", "layer": 2},
+    {"t": 30.0, "n": "3", "title": "drop", "layer": 3},
+    {"t": 48.0, "n": "4", "title": "break", "layer": 2},
+    {"t": 66.0, "n": "5", "title": "segundo drop", "layer": 3},
+    {"t": 84.0, "n": "6", "title": "descenso", "layer": 4},
+    {"t": 100.0, "n": "7", "title": "outro", "layer": 1},
+]
 LEGACY_RESCUE_REVIEW = os.path.join(
     HOME, "plataforma/director_runs/faro-report-action-queue-20260808/RESCUE_ADJUDICATED.json")
 LEGACY_REPORT_RUNS = os.path.join(HOME, "plataforma/director_runs")
@@ -4207,6 +4230,166 @@ def _portfolio_xio_evidence(limit=24):
                 "evidence": [], "segments": []}
 
 
+_TIMECODE_RE = re.compile(r"^(\d{2}):(\d{2}):(\d{2}):(\d{2})$")
+
+
+def _xio_live_cues():
+    """Cue list for the performance mode: real show cues when present, else
+    the built-in demo sequence so the mesa stays usable with no show wired up."""
+    try:
+        evidence = _portfolio_xio_evidence()
+    except Exception:  # noqa: BLE001 - live mode must keep running
+        evidence = None
+    segments = (evidence or {}).get("segments") or []
+    cues = []
+    for index, row in enumerate(segments):
+        match = _TIMECODE_RE.match(str(row.get("timecode") or ""))
+        if not match:
+            continue
+        h, m, s, f = (int(part) for part in match.groups())
+        seconds = h * 3600 + m * 60 + s + f / float(_PORTFOLIO_XIO_LIVE_FPS)
+        cues.append({"t": seconds, "n": str(row.get("index", index) + 1),
+                     "title": str(row.get("title") or ""), "layer": row.get("layer")})
+    if cues:
+        cues.sort(key=lambda row: row["t"])
+        return cues, "show_kit"
+    return _PORTFOLIO_XIO_LIVE_DEMO_CUES, "synthetic"
+
+
+def _xio_live_timecode(seconds, fps=_PORTFOLIO_XIO_LIVE_FPS):
+    seconds = max(0.0, seconds)
+    total_frames = int(seconds * fps)
+    frames = total_frames % fps
+    total_seconds = total_frames // fps
+    s = total_seconds % 60
+    m = (total_seconds // 60) % 60
+    h = (total_seconds // 3600) % 100
+    return "%02d:%02d:%02d:%02d" % (h, m, s, frames)
+
+
+def _xio_live_synthetic(t, cues):
+    """Deterministic amplitude/beat/cue for a given elapsed second `t`.
+
+    No microphone or real feed is assumed to exist -- this is the reproducible
+    demo sequence the mesa performs when nothing external is pushing pulses.
+    """
+    amplitude = (0.5 + 0.32 * math.sin(2 * math.pi * t * 0.13)
+                 + 0.18 * math.sin(2 * math.pi * t * 0.7 + 1.3))
+    amplitude = max(0.0, min(1.0, amplitude))
+    beats_per_s = _PORTFOLIO_XIO_LIVE_BPM / 60.0
+    phase = (t * beats_per_s) % 1.0
+    beat = max(0.0, 1.0 - phase / 0.22) ** 1.5
+    active = None
+    for row in cues:
+        if row["t"] <= t:
+            active = row
+        else:
+            break
+    return amplitude, beat, active
+
+
+def _xio_live_snapshot():
+    """Current performance-mode state: external pulses win when fresh,
+    otherwise a synthetic clock derived from the transport (start/pause/reset)."""
+    with _PORTFOLIO_XIO_LIVE_LOCK:
+        mode = _PORTFOLIO_XIO_LIVE["mode"]
+        started = _PORTFOLIO_XIO_LIVE["started_epoch"]
+        paused_total = _PORTFOLIO_XIO_LIVE["paused_total"]
+        paused_epoch = _PORTFOLIO_XIO_LIVE["paused_epoch"]
+        external = dict(_PORTFOLIO_XIO_LIVE["external"]) if _PORTFOLIO_XIO_LIVE["external"] else None
+    now = time.time()
+    if external and (now - external.get("ts_epoch", 0)) < _PORTFOLIO_XIO_LIVE_EXTERNAL_TIMEOUT_S:
+        cue = external.get("cue")
+        try:
+            amplitude = max(0.0, min(1.0, float(external.get("amplitude") or 0.0)))
+        except (TypeError, ValueError):
+            amplitude = 0.0
+        try:
+            beat = max(0.0, min(1.0, float(external.get("beat") or 0.0)))
+        except (TypeError, ValueError):
+            beat = 0.0
+        return {
+            "ok": True, "mode": "external", "source": "external",
+            "elapsed_s": round(now - external.get("ts_epoch", now), 3),
+            "timecode": str(external.get("timecode") or _xio_live_timecode(0)),
+            "amplitude": amplitude, "beat": beat,
+            "cue": cue if isinstance(cue, dict) else None,
+            "loop_s": _PORTFOLIO_XIO_LIVE_LOOP_S,
+        }
+    if mode == "idle":
+        return {"ok": True, "mode": "idle", "source": "none", "elapsed_s": 0.0,
+                "timecode": _xio_live_timecode(0), "amplitude": 0.0, "beat": 0.0,
+                "cue": None, "loop_s": _PORTFOLIO_XIO_LIVE_LOOP_S}
+    if mode == "paused":
+        elapsed = max(0.0, (paused_epoch or now) - (started or now) - paused_total)
+    else:
+        elapsed = max(0.0, now - (started or now) - paused_total)
+    cues, cue_source = _xio_live_cues()
+    # Real show cues can span hours; cap the loop so the mesa still performs
+    # visibly in a live demo instead of waiting out an actual show's length.
+    last_cue_t = (cues[-1]["t"] + 12.0) if cues else _PORTFOLIO_XIO_LIVE_LOOP_S
+    loop_len = min(max(_PORTFOLIO_XIO_LIVE_LOOP_S, last_cue_t), 600.0)
+    t = elapsed % loop_len
+    amplitude, beat, cue = _xio_live_synthetic(t, cues)
+    if mode == "paused":
+        beat = 0.0
+    return {"ok": True, "mode": mode, "source": "synthetic", "elapsed_s": round(elapsed, 3),
+            "timecode": _xio_live_timecode(t), "amplitude": round(amplitude, 4),
+            "beat": round(beat, 4), "cue": cue, "loop_s": loop_len, "cue_source": cue_source}
+
+
+def _xio_live_action(action):
+    action = str(action or "")
+    now = time.time()
+    with _PORTFOLIO_XIO_LIVE_LOCK:
+        if action == "start":
+            if _PORTFOLIO_XIO_LIVE["mode"] == "idle":
+                _PORTFOLIO_XIO_LIVE["started_epoch"] = now
+                _PORTFOLIO_XIO_LIVE["paused_total"] = 0.0
+                _PORTFOLIO_XIO_LIVE["paused_epoch"] = None
+            elif _PORTFOLIO_XIO_LIVE["mode"] == "paused":
+                if _PORTFOLIO_XIO_LIVE["paused_epoch"] is not None:
+                    _PORTFOLIO_XIO_LIVE["paused_total"] += now - _PORTFOLIO_XIO_LIVE["paused_epoch"]
+                _PORTFOLIO_XIO_LIVE["paused_epoch"] = None
+            _PORTFOLIO_XIO_LIVE["mode"] = "running"
+        elif action == "pause":
+            if _PORTFOLIO_XIO_LIVE["mode"] == "running":
+                _PORTFOLIO_XIO_LIVE["mode"] = "paused"
+                _PORTFOLIO_XIO_LIVE["paused_epoch"] = now
+        elif action == "reset":
+            _PORTFOLIO_XIO_LIVE["mode"] = "idle"
+            _PORTFOLIO_XIO_LIVE["started_epoch"] = None
+            _PORTFOLIO_XIO_LIVE["paused_epoch"] = None
+            _PORTFOLIO_XIO_LIVE["paused_total"] = 0.0
+            _PORTFOLIO_XIO_LIVE["external"] = None
+        else:
+            return False
+    return True
+
+
+def _xio_live_pulse(body):
+    """Ingest one external XIO-compatible pulse (timecode/amplitude/beat/cue).
+
+    Any process that can POST JSON here -- an OSC-to-HTTP bridge in front of
+    the same LTC/cue-map chain `xio/show_kit/cue_engine.py` already reads --
+    drives the mesa live. A pulse stays authoritative for
+    `_PORTFOLIO_XIO_LIVE_EXTERNAL_TIMEOUT_S` seconds, so the source simply
+    stops sending to hand control back to the synthetic demo clock.
+    """
+    if not isinstance(body, dict):
+        return False
+    cue = body.get("cue")
+    with _PORTFOLIO_XIO_LIVE_LOCK:
+        _PORTFOLIO_XIO_LIVE["external"] = {
+            "ts_epoch": time.time(),
+            "timecode": body.get("timecode"),
+            "amplitude": body.get("amplitude"),
+            "beat": body.get("beat"),
+            "cue": cue if isinstance(cue, dict) else None,
+        }
+    return True
+
+
 def _portfolio_xio_link_rows(work_id=""):
     rows = []
     requested = str(work_id or "").strip()
@@ -5562,6 +5745,8 @@ class H(BaseHTTPRequestHandler):
                                "reason": surface.get("reason", "")})
         if p == "/api/portfolio/copilot/xio-evidence":
             return _answer(self, _portfolio_xio_evidence())
+        if p == "/api/portfolio/xio/live":
+            return self._json(_xio_live_snapshot())
         if p == "/api/portfolio/copilot/status":
             providers.load_env()
             visual = _portfolio_visual_surface()
@@ -5784,6 +5969,28 @@ class H(BaseHTTPRequestHandler):
                 return self._json({"ok": False, "error": "json invalido"}, 400)
             payload, code = _portfolio_evidence_decision(body)
             return self._json(payload, code)
+        if u.path == "/api/portfolio/xio/live":
+            length = _body_length(self.headers, 2000)
+            if length is None:
+                return self._json({"ok": False, "error": "content_length_invalido"}, 400)
+            try:
+                body = json.loads(self.rfile.read(length).decode("utf-8", "replace") or "{}")
+            except (ValueError, TypeError):
+                return self._json({"ok": False, "error": "json invalido"}, 400)
+            if not isinstance(body, dict) or not _xio_live_action(body.get("action")):
+                return self._json({"ok": False, "error": "accion_desconocida"}, 400)
+            return self._json(_xio_live_snapshot())
+        if u.path == "/api/portfolio/xio/pulse":
+            length = _body_length(self.headers, 4000)
+            if length is None:
+                return self._json({"ok": False, "error": "content_length_invalido"}, 400)
+            try:
+                body = json.loads(self.rfile.read(length).decode("utf-8", "replace") or "{}")
+            except (ValueError, TypeError):
+                return self._json({"ok": False, "error": "json invalido"}, 400)
+            if not _xio_live_pulse(body):
+                return self._json({"ok": False, "error": "pulso_invalido"}, 400)
+            return self._json({"ok": True})
         for prefix in SERVICE_PROXY_PREFIXES:
             if u.path.startswith("/" + prefix + "/"):
                 length = _body_length(self.headers, SERVICE_PROXY_MAX_BYTES + 1)
