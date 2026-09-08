@@ -48,11 +48,39 @@ def _is_motor(name: str) -> bool:
     return name == "flujo" or name.startswith("flujo.") or name.startswith("src.flujo.")
 
 
+def _is_motor_path(path: str) -> bool:
+    """Recognize motor paths from either the MAK or FLUJO checkout root."""
+    return path.startswith(("src/flujo/", "flujo/src/flujo/"))
+
+
+# Directories the tests themselves put on sys.path, so a bare `import
+# coherence` resolves to `tools/coherence.py`. Measured 2026-09-04 across the
+# 108 `sys.path.insert` calls under tests/: these are every repository
+# directory they name. Resolving against the root alone made such an import
+# read as "not a box import", which drops the file to `repo_hygiene` -- 108 of
+# the 172 files the contract assigns to `mak` classify that way from the AST
+# alone, which is why the contract carries a reconciliation pass and must not
+# be regenerated from the classifier without one.
+_BOX_IMPORT_ROOTS = (
+    "",
+    "tools",
+    "cultura",
+    "cultura/mak_plataforma",
+    "cultura/mak_research",
+    "cultura/mak_codex",
+    "cultura/mak_curatoria",
+)
+
+
 def _is_local_box_import(name: str) -> bool:
     top = name.split(".", 1)[0]
     if _is_motor(name) or top in {"__future__", "tests"}:
         return False
-    return (REPO / f"{top}.py").is_file() or (REPO / top).is_dir()
+    for relative in _BOX_IMPORT_ROOTS:
+        base = REPO / relative if relative else REPO
+        if (base / f"{top}.py").is_file() or (base / top).is_dir():
+            return True
+    return False
 
 
 def classify(path: Path) -> LaneRecord:
@@ -384,6 +412,7 @@ PERSISTED_LANE_DATA = {
   "tests/test_project_router.py": "flujo",
   "tests/test_psicosis_agente.py": "repo_hygiene",
   "tests/test_puente_issues.py": "mak",
+  "tests/test_runtime_preflight.py": "mak",
   "tests/test_rd_database.py": "flujo",
   "tests/test_rd_datos.py": "flujo",
   "tests/test_rd_db_logos.py": "flujo",
@@ -546,8 +575,10 @@ REVIEW_LANE_ASSIGNMENTS = {
 def _module_locations() -> dict[str, tuple[Path, ...]]:
     """Index importable project modules once for unresolved test modules."""
     locations: dict[str, list[Path]] = {}
-    for root_name in ("src", "cultura", "tools", "iskvw", "scripts", "xio", "projects"):
-        root = REPO / root_name
+    roots = [REPO / name for name in
+             ("src", "cultura", "tools", "iskvw", "scripts", "xio", "projects")]
+    roots.append(REPO / "flujo" / "src")
+    for root in roots:
         if not root.is_dir():
             continue
         for candidate in root.rglob("*.py"):
@@ -574,14 +605,15 @@ def _infer_review_lane(path: Path) -> str:
         stem = name.rsplit(".", 1)[-1]
         for candidate in _MODULE_LOCATIONS.get(stem, ()):
             candidate_text = candidate.relative_to(REPO).as_posix()
-            if candidate_text.startswith("src/flujo/"):
+            if _is_motor_path(candidate_text):
                 lanes.add("flujo")
             elif candidate_text.startswith("projects/tapiz/"):
                 lanes.add("flujo")
             elif candidate_text.startswith(("cultura/", "tools/", "iskvw/", "scripts/", "xio/", "projects/")):
                 lanes.add("mak")
 
-    if "src/flujo/" in source or "scripts/flujo.py" in source or "projects/tapiz/" in source:
+    if ("src/flujo/" in source or "flujo/src/flujo/" in source or
+            "scripts/flujo.py" in source or "projects/tapiz/" in source):
         lanes.add("flujo")
     if any(token in source for token in ("cultura/", "tools/", "iskvw/", "xio/", "projects/cultura/", "projects/plano/")):
         lanes.add("mak")
@@ -591,7 +623,7 @@ def _infer_review_lane(path: Path) -> str:
     for stem in set(re.findall(r"(?<![\w-])([a-zA-Z_][\w-]*)\.py", source)):
         for candidate in _MODULE_LOCATIONS.get(stem, ()):
             candidate_text = candidate.relative_to(REPO).as_posix()
-            if candidate_text.startswith("src/flujo/"):
+            if _is_motor_path(candidate_text):
                 lanes.add("flujo")
             elif candidate_text.startswith("projects/tapiz/"):
                 lanes.add("flujo")
@@ -753,7 +785,7 @@ def lanes_for_changed_paths(paths: Iterable[str]) -> tuple[str, ...]:
                 ).lane)
             if consumers:
                 continue
-            if path.startswith("src/flujo/"):
+            if _is_motor_path(path):
                 selected.add("flujo")
             elif path.startswith(("tools/", "cultura/")) or path.endswith(".py"):
                 selected.add("mak")

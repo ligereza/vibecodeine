@@ -15,6 +15,7 @@ import io
 import json
 import os
 import sys
+from pathlib import Path
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "cultura", "mak_plataforma"))
 
@@ -253,3 +254,140 @@ class TestPortfolioAuditMissingItem:
         assert code == 404
         assert payload == {"ok": False, "error": "item_no_encontrado",
                            "source_id": "does-not-exist"}
+
+
+# ---------------------------------------------------------------------------
+# The production chain was whole; only the wire was missing
+# ---------------------------------------------------------------------------
+#
+# `compile_portfolio_claims` -> `assess_feasibility` -> `render_portfolio` ->
+# `render_markdown` already existed in the FLUJO motor and nothing ran it from
+# the Hub, so six declared formats looked unbuildable. Measured 2026-09-02:
+# eight of eight sources are present and four of the six render, the Fondart one
+# among them. The input is the CLAIM BASE, never the archive rows -- a claim
+# carries verb, layer, state, permission, its supporting route and what would
+# refute it, which is exactly what a slot declares. Feeding raw inbox records
+# instead is what made every format look blocked on a permission nobody records.
+
+
+def test_the_hub_wires_the_existing_production_chain():
+    from pathlib import Path
+
+    source = (Path(__file__).parents[1] / "cultura" / "mak_plataforma"
+              / "hub.py").read_text(encoding="utf-8")
+    assert '"/api/portfolio/production"' in source
+    assert "def _portfolio_production(" in source
+    # The chain is consumed, not reimplemented: no second composer lives here.
+    for engine in ("compile_portfolio_claims", "render_portfolio",
+                   "assess_feasibility", "load_format_library"):
+        assert engine in source, engine
+    assert "def compose_order" not in source
+
+
+def test_every_source_of_the_chain_is_named_and_checked():
+    """A missing source must be reported, never silently treated as empty."""
+    from cultura.mak_plataforma import hub
+
+    assert set(hub.PORTFOLIO_PRODUCTION_SOURCES) == {
+        "index", "authority", "archive", "practices", "attestations",
+        "declared_inputs", "blend_targets", "screen_setup_root"}
+    reported = hub._portfolio_production_sources()
+    assert set(reported) == set(hub.PORTFOLIO_PRODUCTION_SOURCES)
+    for name, row in reported.items():
+        assert set(row) == {"path", "present"}
+        assert isinstance(row["present"], bool), name
+
+
+def test_the_route_never_publishes_or_signs():
+    """Production is a reading. The renderers already return a control block
+    with everything false; the wire must not add a way around it.
+
+    Checked as WRITES, not as words: the first version grepped the body for
+    "publish" and failed on the very keys that declare it does not publish --
+    the same confusion as reading a comment as a call.
+    """
+    import ast
+    from pathlib import Path
+
+    source = (Path(__file__).parents[1] / "cultura" / "mak_plataforma"
+              / "hub.py").read_text(encoding="utf-8")
+    tree = ast.parse(source)
+    function = next(node for node in ast.walk(tree)
+                    if isinstance(node, ast.FunctionDef)
+                    and node.name == "_portfolio_production")
+    body = ast.unparse(function)
+    assert '"promotion": "none"' in body.replace("'", '"')
+    assert '"owner": "human"' in body.replace("'", '"')
+    # No write of any kind: no file opened for writing, no append, no commit.
+    for call in ast.walk(function):
+        if not isinstance(call, ast.Call):
+            continue
+        target = ast.unparse(call.func)
+        assert not target.endswith((".write", ".writelines", ".commit",
+                                    ".append_item", ".append_review")), target
+        if target == "open":
+            modes = [ast.unparse(a) for a in call.args[1:]]
+            assert not any("w" in m or "a" in m for m in modes), modes
+
+
+# ---------------------------------------------------------------------------
+# The inbox cache is keyed on writes, not on a clock
+# ---------------------------------------------------------------------------
+#
+# Measured 2026-09-02: one `/api/portfolio/copilot/scene` call reached
+# `_portfolio_inbox()` seven times, each reopening the 3.8 MB inbox, rebuilding
+# 7044 dictionaries and reading four more files -- 0.41 s of the 1.19 s a warm
+# scene cost, and the interface calls that route on every piece the operator
+# selects with 6928 records still undecided. After the cache a scene is 0.30 s
+# over HTTP.
+#
+# The key is deliberately NOT a TTL, which is the convention used elsewhere in
+# this file for a graph and a rendered page. This data changes when the
+# operator decides something, so a stale window would show a person their own
+# decision not applied. Keyed on source mtimes, the write invalidates it.
+
+
+def test_the_inbox_cache_is_keyed_on_its_sources_not_on_time():
+    assert set(hub._PORTFOLIO_INBOX_SOURCES) == {
+        "PORTFOLIO_INBOX", "PORTFOLIO_SELECTIONS", "PORTFOLIO_CLASSIFICATIONS",
+        "PORTFOLIO_DRAFTS", "PORTFOLIO_VISION"}
+    signature = hub._portfolio_inbox_signature()
+    assert len(signature) == len(hub._PORTFOLIO_INBOX_SOURCES)
+    for name, mtime, size in signature:
+        assert name in hub._PORTFOLIO_INBOX_SOURCES
+        # A missing source is part of the key, so its appearance invalidates too.
+        assert (mtime is None) == (size is None)
+    assert hub._portfolio_inbox_signature() == signature, "must be stable"
+
+
+def test_a_write_to_any_source_invalidates_the_inbox_cache(tmp_path, monkeypatch):
+    """A decision must be visible on the very next read, never one window late."""
+    inbox = tmp_path / "inbox.json"
+    inbox.write_text(json.dumps({"schema": "faro-portfolio-inbox-v1",
+                                 "items": [{"id": "a.jpg"}]}), encoding="utf-8")
+    selections = tmp_path / "selections.json"
+    selections.write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(hub, "PORTFOLIO_INBOX", str(inbox))
+    monkeypatch.setattr(hub, "PORTFOLIO_SELECTIONS", str(selections))
+    monkeypatch.setattr(hub, "_PORTFOLIO_INBOX_CACHE", {})
+
+    first = hub._portfolio_inbox()
+    assert hub._portfolio_inbox() is first, "an unchanged tree must not re-read"
+
+    os.utime(selections, (0, 0))
+    assert hub._portfolio_inbox() is not first, (
+        "a write to a source must invalidate the cache")
+
+
+def test_the_uncached_reader_is_still_the_one_that_fills_the_cache():
+    """The cache wraps the reader; it does not become a second reader."""
+    source = (Path(__file__).parents[1] / "cultura" / "mak_plataforma"
+              / "hub.py").read_text(encoding="utf-8")
+    assert "def _portfolio_inbox_uncached(" in source
+    assert "_portfolio_inbox_uncached(compact=compact)" in source
+    # No clock in this cache: the other caches in the Hub may use one, this must
+    # not, because its data changes by human decision.
+    start = source.index("def _portfolio_inbox(compact=False):")
+    body = source[start:source.index("\ndef _portfolio_inbox_uncached")]
+    for clock in ("time.time", "time.monotonic", "TTL"):
+        assert clock not in body, clock

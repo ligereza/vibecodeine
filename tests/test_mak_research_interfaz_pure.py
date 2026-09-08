@@ -578,6 +578,12 @@ def test_run_intake_request_rejects_source_root_not_a_directory():
 def test_run_intake_request_rejects_existing_intake_without_reprocessing(
         tmp_path, monkeypatch):
     monkeypatch.setattr(interfaz, "INTAKE_ROOT", tmp_path)
+    # Isolate the duplicate-intake guard from the production allow-list.  The
+    # CI checkout is not physically under /home/mak, while this test only
+    # claims that an existing derived intake must not be reprocessed.
+    monkeypatch.setattr(
+        interfaz, "_path_is_under",
+        lambda path, roots: Path(path).resolve() == REPO_ROOT.resolve())
     # Pre-seed the marker the function checks for, instead of calling it
     # twice: a first call would fall through to the real intake tooling.
     output_dir = tmp_path / "api-flujo-repo-smoke-test"

@@ -258,33 +258,47 @@ def scan_project_folder(source_root: Path, index_path: Path) -> tuple[Path, str,
     con = sqlite3.connect(index_path)
     con.executescript(
         """
-        CREATE TABLE projects(project_id TEXT PRIMARY KEY, project_path TEXT, dimensionality TEXT,
+        CREATE TABLE IF NOT EXISTS projects(project_id TEXT PRIMARY KEY, project_path TEXT, dimensionality TEXT,
             strategy TEXT, asset_count INTEGER, bytes INTEGER, confidence REAL, diagnostic_json TEXT);
-        CREATE TABLE assets(asset_id TEXT PRIMARY KEY, source_key TEXT, relative_path TEXT, extension TEXT,
+        CREATE TABLE IF NOT EXISTS assets(asset_id TEXT PRIMARY KEY, source_key TEXT, relative_path TEXT, extension TEXT,
             media_kind TEXT, bytes INTEGER, mtime_ns INTEGER, full_sha256 TEXT);
-        CREATE TABLE families(family_id TEXT PRIMARY KEY, project_id TEXT, family_key TEXT, member_count INTEGER,
+        CREATE TABLE IF NOT EXISTS families(family_id TEXT PRIMARY KEY, project_id TEXT, family_key TEXT, member_count INTEGER,
             bytes INTEGER, strategy TEXT, representative_asset_id TEXT);
-        CREATE TABLE project_members(asset_id TEXT PRIMARY KEY, project_id TEXT, family_id TEXT,
+        CREATE TABLE IF NOT EXISTS project_members(asset_id TEXT PRIMARY KEY, project_id TEXT, family_id TEXT,
             member_role TEXT, is_representative INTEGER);
-        CREATE TABLE relations(relation_id TEXT PRIMARY KEY, left_id TEXT, relation TEXT, right_id TEXT,
+        CREATE TABLE IF NOT EXISTS relations(relation_id TEXT PRIMARY KEY, left_id TEXT, relation TEXT, right_id TEXT,
             confidence REAL, evidence_json TEXT);
         """
     )
-    dimensionality = "mixto" if any(row[3] == "video" for row in rows) and any(row[3] == "structural" for row in rows) else (
-        "motion" if any(row[3] == "video" for row in rows) else ("3d" if any(row[3] == "structural" for row in rows) else "2d"))
-    con.execute("INSERT INTO projects VALUES (?,?,?,?,?,?,?,?)",
-                (project_id, project_path, dimensionality, "bounded_folder_scan", len(rows), total_bytes, 0.8,
+    # A folder with no assets used to fall through to "2d" with confidence 0.8:
+    # a dimensionality asserted from nothing, and the score for 2d work handed
+    # to an empty directory. An unmeasured folder says so, and `project_score`
+    # already gives an unrecognised dimensionality its 20.0 floor.
+    if not rows:
+        dimensionality, confidence = "desconocida", 0.0
+    else:
+        has_video = any(row[3] == "video" for row in rows)
+        has_structural = any(row[3] == "structural" for row in rows)
+        dimensionality = (
+            "mixto" if has_video and has_structural
+            else "motion" if has_video
+            else "3d" if has_structural
+            else "2d"
+        )
+        confidence = 0.8
+    con.execute("INSERT OR REPLACE INTO projects VALUES (?,?,?,?,?,?,?,?)",
+                (project_id, project_path, dimensionality, "bounded_folder_scan", len(rows), total_bytes, confidence,
                  stable_json({"source": str(source_root), "content_read": "hash_only_for_small_files"})))
     for row in rows:
-        con.execute("INSERT INTO assets VALUES (?,?,?,?,?,?,?,?)",
+        con.execute("INSERT OR REPLACE INTO assets VALUES (?,?,?,?,?,?,?,?)",
                     (row[0], str(source_root), row[1], row[2], row[3], row[4], row[5], row[6]))
     for index, (family_key, members) in enumerate(sorted(family_groups.items()), 1):
         family_id = f"family_{index:06d}"
-        con.execute("INSERT INTO families VALUES (?,?,?,?,?,?,?)",
+        con.execute("INSERT OR REPLACE INTO families VALUES (?,?,?,?,?,?,?)",
                     (family_id, project_id, family_key, len(members), sum(row[4] for row in members),
                      "folder_group", members[0][0]))
         for member_index, row in enumerate(members):
-            con.execute("INSERT INTO project_members VALUES (?,?,?,?,?)",
+            con.execute("INSERT OR REPLACE INTO project_members VALUES (?,?,?,?,?)",
                         (row[0], project_id, family_id, "representative" if member_index == 0 else "member",
                          1 if member_index == 0 else 0))
     con.commit()
@@ -352,7 +366,7 @@ def load_index(con_out: sqlite3.Connection, index_path: Path, source_root: str,
         if source_root and (Path(source_root) / item["relative_path"]).exists():
             available = "source_present"
         con_out.execute(
-            "INSERT INTO intake_assets VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT OR REPLACE INTO intake_assets VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
             (run_id, item["asset_id"], item["project_id"], item["family_id"],
              item["relative_path"], item["extension"], item["media_kind"],
              int(item["bytes"]), int(item["mtime_ns"]), item["full_sha256"],
@@ -362,7 +376,7 @@ def load_index(con_out: sqlite3.Connection, index_path: Path, source_root: str,
 
     for row in source_projects:
         con_out.execute(
-            "INSERT INTO intake_projects VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT OR REPLACE INTO intake_projects VALUES (?,?,?,?,?,?,?,?,?,?,?)",
             (run_id, row["project_id"], row["project_path"], row["project_path"],
              row["dimensionality"], row["strategy"], int(row["asset_count"]),
              int(row["bytes"]), float(row["confidence"]),
@@ -373,7 +387,7 @@ def load_index(con_out: sqlite3.Connection, index_path: Path, source_root: str,
         "SELECT family_id, project_id, family_key, member_count, bytes, strategy, representative_asset_id FROM families"
     ):
         con_out.execute(
-            "INSERT INTO intake_families VALUES (?,?,?,?,?,?,?,?)",
+            "INSERT OR REPLACE INTO intake_families VALUES (?,?,?,?,?,?,?,?)",
             (run_id, row["family_id"], row["project_id"], row["family_key"],
              int(row["member_count"]), int(row["bytes"]), row["strategy"],
              row["representative_asset_id"]),
@@ -540,6 +554,21 @@ def build_application(con: sqlite3.Connection, run_id: str, project: dict[str, A
         {"field": "schedule", "severity": "blocking", "reason": "No existe cronograma verificable en el indice."},
         {"field": "team", "severity": "review", "reason": "No se promovieron identidades por nombre de carpeta."},
     ]
+    # The gap list covered every section a person has to write and said nothing
+    # about the half this tool is responsible for. A folder with no assets came
+    # out as a fundable candidate whose declared gaps were all somebody else's.
+    if not project["asset_count"]:
+        gaps.append({
+            "field": "evidence_and_portfolio", "severity": "blocking",
+            "reason": "El proyecto seleccionado no tiene ningun activo indexado: "
+                      "no hay evidencia que adjuntar.",
+        })
+    elif not any(project["media"].get(kind, 0) for kind in ("image", "video", "structural")):
+        gaps.append({
+            "field": "evidence_and_portfolio", "severity": "review",
+            "reason": "Hay activos indexados pero ninguno es imagen, video ni "
+                      "archivo estructural: revisar que sirvan como portafolio.",
+        })
     readiness = 35.0
     if project["asset_count"] > 0:
         readiness += 15

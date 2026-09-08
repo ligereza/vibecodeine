@@ -1,4 +1,30 @@
-"""Tests para el motor de planos de stands (projects/plano/plano_stands.py)."""
+"""Tests for the stand-plan engine wrapper, `projects/plano/plano_stands.py`.
+
+These five tests had skipped on every run since 2026-09-02 and nobody saw it,
+because the guard below turns a missing subject into a skip instead of an
+error. Two things were stale at once:
+
+* `plano_stands.py` was removed from MAK that day, in the separation that
+  dropped the tools importing `flujo.plano`. It lives in the FLUJO checkout
+  now, and it calls itself "wrapper local del motor de planos de flujo" -- an
+  entry point over the engine, which is exactly what the MAK side consumes
+  through the `flujo` symlink. `flujo.plano` imports cleanly from here today,
+  so the premise that retired it ("this branch cannot execute it") no longer
+  holds.
+* `PYTHONPATH` pointed at `REPO/src`, and MAK has no `src/`. That was the
+  retired layout. Even with the script present the subprocess would have run
+  without the engine on its path.
+
+Retiring the file was the other option and it was the wrong one: MAK still
+carries `projects/plano/ejemplos/evento_ejemplo.json`, the input these tests
+feed the script, so the input stayed and only the subject left. Pointing at
+the motor costs nothing and turns five dead tests into five that run.
+
+The subject spans both checkouts, so this belongs to the `integration` lane,
+where CI checks out MAK and FLUJO together. With no motor present it still
+skips -- and now says which checkout is missing rather than naming a path that
+moved.
+"""
 import json
 import os
 import subprocess
@@ -7,17 +33,22 @@ from pathlib import Path
 
 import pytest
 
+from tools.motor_checkout import motor_root
+
 REPO = Path(__file__).resolve().parent.parent
-PLANO_DIR = REPO / "projects" / "plano"
-SCRIPT = PLANO_DIR / "plano_stands.py"
-EJEMPLO = PLANO_DIR / "ejemplos" / "evento_ejemplo.json"
+MOTOR = motor_root(REPO)
+# The script moved to the motor; the example input stayed here.
+SCRIPT = (MOTOR / "projects" / "plano" / "plano_stands.py") if MOTOR else None
+EJEMPLO = REPO / "projects" / "plano" / "ejemplos" / "evento_ejemplo.json"
 
 
 def _run_script(args: list) -> subprocess.CompletedProcess:
     """Ejecuta plano_stands.py como subproceso con PYTHONPATH correcto."""
     env = os.environ.copy()
     existing = env.get("PYTHONPATH", "")
-    src_path = str(REPO / "src")
+    # The engine lives in the motor checkout. `REPO / "src"` was the retired
+    # layout and does not exist in MAK.
+    src_path = str(MOTOR / "src")
     env["PYTHONPATH"] = src_path + (os.pathsep + existing if existing else "")
     env["PYTHONIOENCODING"] = "utf-8"
     return subprocess.run(
@@ -29,7 +60,10 @@ def _run_script(args: list) -> subprocess.CompletedProcess:
     )
 
 
-@pytest.mark.skipif(not SCRIPT.exists(), reason="proyecto plano no está presente")
+@pytest.mark.skipif(
+    SCRIPT is None or not SCRIPT.exists(),
+    reason="el checkout FLUJO no está presente: no hay motor de planos",
+)
 class TestPlanoStands:
     def test_ejemplo_json_existe(self):
         assert EJEMPLO.exists(), f"Falta ejemplo: {EJEMPLO}"

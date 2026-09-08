@@ -1,0 +1,60 @@
+# prueba_estado.sh  ---  corte 2026-09-06T18:38:05-03:00
+# base HTTP: http://127.0.0.1:8900
+
+## 1. Superficie servida (universo A: iskvw)
+RUTA                                   HTTP  BYTES      TIPO
+/portafolio/                           200   256541     text/html; charset=utf-8
+/portafolio/editor.html                200   256541     text/html; charset=utf-8
+/portafolio/mesa_montaje.js            200   122282     text/javascript
+/portafolio/datos/archivo.json         200   1833824    application/json
+/portafolio/datos/campo.json           200   93657      application/json
+/portafolio/datos/obras.json           200   10048      application/json
+/portafolio/datos/curaduria.json       200   625        application/json
+
+## 2. Control de escritura sobre la superficie servida (404 = solo lectura)
+POST /portafolio/datos/curaduria.json -> 404
+
+## 3. Universo A -- iskvw (visión de máquina). NO mezclar con el universo B.
+archivo.json   fuente=todo  generado=2026-08-29T10:38:17
+               piezas=2034  vinculos=5812  por_clase={'codigo': 208, 'obra': 1826}
+campo.json     mtime=2026-09-02T12:52:53  piezas=219  con_percepcion=219  filtradas=478  vecindad_conservada=0.4855
+               tipificacion completa (suma debe ser 219):
+                 obra              134
+                 foto_evento        40
+                 tatuaje            28
+                 otro                6
+                 logo                4
+                 flyer_evento        2
+                 pantalla            1
+                 dibujo              1
+                 meme                1
+                 dibujo digital      1
+                 ficha_sustancia     1
+                 TOTAL             219
+curaduria.json decisiones en ESTE archivo = 0  (mtime 2026-08-01T09:34:34)
+
+## 4. Universo B -- portfolio-editor (decision humana persistida)
+PORTFOLIO_INBOX.json  schema=faro-portfolio-inbox-v1  status=not_public  total=7044  assets=7023  mtime=2026-08-07T21:19:13
+                      tipo_contenido= {'story': 5919, 'published_media': 1125}
+selections.jsonl      filas=87  items_distintos=68  sesiones=14
+                      rango=2026-08-07T21:28:18-0400 -> 2026-09-02T02:53:42-0400
+                      decision= {'seleccionar': 13, 'deseleccionar': 9, 'descartar': 65}
+                      reason_code= {None: 22, 'no_es_obra': 65}
+                      provider= {None: 12, 'human': 75}
+classifications.jsonl filas=103
+                      status= {'human_draft': 100, 'human_confirmed': 3}
+                      promotion= {'none': 103}
+                      campos= {'ownership': 16, 'purpose': 16, 'nature': 12, 'triage': 91, 'context_kind': 18, 'format': 6, 'lane': 11}
+decision_drafts.jsonl filas=3   connections.jsonl filas=32
+common_ledger.jsonl   filas=477  dominio iskvw=123
+                      type= {'decision': 100, 'evidence': 21, 'reject': 2}
+                      action= {'curate': 47, 'expose': 2, 'archive': 7, 'reject': 67}
+                      owner= {None: 22, 'MAK': 7, 'human': 94}
+
+## 5. Compilador de dossier (contrato, sin ejecutarlo sobre datos reales)
+/home/mak/tools/compile_portfolio_dossier.py: existe y su motor carga
+  salida=mak-portfolio-dossier-v1
+  entradas=mak-product-plan-v1 + mak-practice-evidence-state-v1
+  contrato activo: rechaza entradas vacias con 22 errores de validacion
+  LIMITE: consume un plan y un estado de evidencia; NO lee el archivo
+  del artista, NO abre una base de datos y NO publica un asset.

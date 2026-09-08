@@ -1,0 +1,24 @@
+Presupuesto
+===========
+[151 palabras · 1002 caracteres · corte 2026-09-06]
+[pegar desde la linea siguiente]
+
+Se solicitan $8.800.000 de un máximo de $18.000.000. No se solicita el tope:
+se solicita lo que cuesta la ejecución descrita por una sola persona con
+servicios puntuales.
+
+Personal $3.400.000 (38,64%): asignación del responsable, bajo el tope de 40%
+del monto solicitado. Operación $5.230.000 (59,43%): hosting y dominio de la
+superficie por 12 meses; preparación y recaptura de piezas; auditoría externa
+de accesibilidad con informe; diseño gráfico y editorial; descripciones
+alternativas; difusión y convocatoria; registro de datos de acceso; y edición
+imprimible de la guía con tirada corta. Imprevistos $170.000 (1,93%), bajo el
+tope de 2%.
+
+Esta línea no contempla el ítem Inversión y el presupuesto no lo usa: no se
+adquiere equipamiento.
+
+Ninguna cifra se presenta como cotización obtenida. Cada línea declara su
+origen: tope normativo, referencia de mercado o estimación fundada. Las bases
+sólo exigen cotización como alternativa a la carta del espacio, documento que
+este proyecto no requiere.

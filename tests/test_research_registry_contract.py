@@ -25,6 +25,7 @@ import sys
 from pathlib import Path
 
 import pytest
+from integration_paths import FLUJO_ROOT
 
 REPO = Path(__file__).resolve().parents[1]
 PLATFORM_HUB = REPO / "cultura" / "mak_plataforma" / "hub.py"
@@ -116,7 +117,7 @@ def test_default_registry_is_absolute_on_both_surfaces(monkeypatch):
 def test_a_missing_job_id_is_a_contract_error_on_both_surfaces():
     """Neither surface may leak the raw int() ValueError for a missing id."""
     platform = PLATFORM_HUB.read_text(encoding="utf-8")
-    serve = (REPO / "src" / "flujo" / "web" / "hub.py").read_text(encoding="utf-8")
+    serve = (FLUJO_ROOT / "src" / "flujo" / "web" / "hub.py").read_text(encoding="utf-8")
     for name, text in (("platform hub", platform), ("serve hub", serve)):
         assert "id_requerido" in text, (
             f"{name} does not declare the id_requerido contract error")

@@ -1,4 +1,10 @@
-"""Curatorial copilot contracts independent of any model provider."""
+"""IRIS ordering engine, independent of any model provider.
+
+The ``portfolio`` names in schemas and API-compatible callers are historical
+domain labels for downstream portfolio material. This module is not a
+portfolio publisher: it proposes defensible orders/relations for the internal
+MAK system IRIS (Atlas Campo del Orden) and preserves the human decision gate.
+"""
 from __future__ import annotations
 
 import json
@@ -137,10 +143,39 @@ def _facet_values(item, facet):
     return result
 
 
-def _explicit_overlap(source, candidate, facet):
-    target = {_fold(value): value for value in _facet_values(candidate, facet)}
-    return [value for value in _facet_values(source, facet)
-            if _fold(value) in target]
+# Facets whose overlap is computed for every candidate. The SOURCE side of that
+# comparison does not change across the loop, and recomputing it there cost
+# real time: profiled 2026-09-02, one scene called `_facet_values` 83772 times
+# and `_explicit_overlap` 41886, so half of those calls re-derived and re-folded
+# the same source values once per candidate.
+OVERLAP_FACETS = ("artist", "venue", "event", "client", "collab", "period")
+
+
+def _folded_facet_index(item, facets=OVERLAP_FACETS):
+    """Fold one item's facet values once, for reuse across a candidate loop."""
+    return {facet: [(_fold(value), value)
+                    for value in _facet_values(item, facet)]
+            for facet in facets}
+
+
+def _explicit_overlap(source, candidate, facet, source_folded=None):
+    """Declared values shared by source and candidate for one facet.
+
+    `source_folded` is the hoisted `(folded, value)` list for this facet, or the
+    whole `_folded_facet_index` dict, in which case this facet is looked up
+    here. Passing the dict is preferred: nothing outside stops a caller from
+    pairing one facet's folded values with another facet's comparison, and the
+    lookup happening here makes that mismatch structurally impossible. It stays
+    optional so every existing caller keeps working unchanged; passing it only
+    avoids recomputing something that cannot differ.
+    """
+    if isinstance(source_folded, dict):
+        source_folded = source_folded.get(facet)
+    if source_folded is None:
+        source_folded = [(_fold(value), value)
+                         for value in _facet_values(source, facet)]
+    target = {_fold(value) for value in _facet_values(candidate, facet)}
+    return [value for folded, value in source_folded if folded in target]
 
 
 def _fold(value):
@@ -1293,6 +1328,10 @@ def build_suggestions(source, items, selections=None, feedback=None, context=Non
     result = []
     suppressed_scope = 0
     suppressed_carousel = 0
+    # Hoisted out of the candidate loop: the source's declared facet values
+    # cannot differ per candidate, and folding them once removes half of the
+    # `_facet_values` calls a scene used to make.
+    source_facets = _folded_facet_index(source)
     for candidate in items:
         candidate_id = str(candidate.get("id", ""))
         if not candidate_id or candidate_id == source_id:
@@ -1341,7 +1380,8 @@ def build_suggestions(source, items, selections=None, feedback=None, context=Non
                                }], reasons=["misma fecha"]))
         for facet, base_score in (("artist", 11), ("venue", 10), ("event", 10),
                                   ("client", 10), ("collab", 9), ("period", 6)):
-            overlap = _explicit_overlap(source, candidate, facet)
+            overlap = _explicit_overlap(source, candidate, facet,
+                                        source_folded=source_facets)
             if not overlap:
                 continue
             result.append(dict(
@@ -1615,6 +1655,342 @@ def normalize_vision(raw, item_id, provider, evidence=None):
         "status": "candidate",
         "promotion": "none",
         "evidence": [str(path)[:300] for path in (evidence or []) if path][:8],
+    }
+
+
+READINESS_SCHEMA = "faro-evidence-readiness-v1"
+
+# What a person needs in front of them before labelling a record work / record
+# / review / discard. Measured 2026-09-02: of 7044 records, 116 are labelled
+# and 6928 are not, and the ordering model predicts NONE of them with high
+# confidence (alta=0, media=4156, baja=2772). So every case is still a human
+# look, and the only lever left is making that look cheaper. The seed rows
+# already carry `has_description`, `has_vision` and `review_scope`; the
+# interface read none of them, so the operator decided without seeing what the
+# case even contains -- and `review`, the label that means "not decidable yet",
+# was used once in 116 decisions.
+#
+# Retirement: when the ordering model predicts a usable share of the field and
+# the frontier stops being one-by-one.
+READINESS_CHANNELS = ("asset", "description", "date", "perception",
+                      "classification", "relations", "work_group")
+
+# NOTHING about a single piece blocks a decision any more. Operator's
+# correction, 2026-09-02, in his words: the system creates portfolio FORMATS
+# first and then decides how to order the works; it does not look for the
+# perfect order of one work.
+#
+# This tuple used to be `("asset", "description")`. Measured over the archive,
+# that made 3556 of 7044 records report `abstain` -- half the field declared
+# undecidable for lacking a caption the work may never have had, while only 21
+# lack an asset. Worse, it was the wrong question: whether a piece can be
+# labelled in isolation is not what anyone needs answered. A declared format
+# asks for claims, and the order of works is the ANSWER to that question.
+#
+# So the readiness report stays DESCRIPTIVE -- what this record has and lacks
+# is worth seeing before a human looks -- and the verdict belongs to the
+# format, where `assess_feasibility` and `slot_candidates` already live. The
+# mechanism stays in place so a future channel can be required deliberately;
+# nothing is required today.
+#
+# Retirement: none. This is the operator's architecture, not an optimisation.
+READINESS_REQUIRED = ()
+
+
+def _readiness_row(channel, status, detail="", source_ref=""):
+    """One channel, with its status kept separate from its explanation.
+
+    `absent` means measured and not there. `unknown` means NOT MEASURED for
+    this record, which is a different claim and must never collapse into
+    `absent` -- reading an absence as a finding is how a gap becomes a fact.
+    """
+    if status not in ("present", "absent", "unknown"):
+        status = "unknown"
+    return {"channel": channel, "status": status,
+            "detail": str(detail or "")[:240],
+            "source_ref": str(source_ref or "")[:400]}
+
+
+def evidence_readiness(record, vision=None, vision_indexed=None,
+                       relations=None, work_group=None):
+    """Report what one record HAS and LACKS before a human decides on it.
+
+    Pure: it receives what was already measured elsewhere and invents nothing.
+    `vision_indexed` is the set of ids the perception index actually covers;
+    without it, a missing vision record stays `unknown`, because the index
+    holds 30 of 7044 records and "not indexed" is not "has no perception".
+    (The 100-record figure belongs to the CLIP visual index in
+    `derived/visual-index/neighbors.json`, a different surface; the set this
+    argument receives is `vision_features.jsonl`, measured 2026-09-02 at 33
+    appended lines over 30 distinct ids.)
+    """
+    record = record if isinstance(record, dict) else {}
+    rows = []
+
+    asset = record.get("asset_available")
+    rows.append(_readiness_row(
+        "asset",
+        "present" if asset is True else "absent" if asset is False else "unknown",
+        "archivo local del registro",
+        record.get("asset_path", "")))
+
+    description = str(record.get("description") or "").strip()
+    rows.append(_readiness_row(
+        "description",
+        "present" if description else "absent",
+        "texto que el autor escribio sobre la pieza",
+        record.get("source_id", "")))
+
+    date = str(record.get("date") or "").strip()
+    rows.append(_readiness_row(
+        "date", "present" if date else "absent", date or "sin fecha declarada",
+        record.get("publication_id", "")))
+
+    # Stripped: a whitespace-only id is not a subject, and the fail-closed
+    # branch below has to see it as absent rather than as a name.
+    item_id = str(record.get("source_id") or "").strip()
+    # The truth of a reading is its CONTENT, not the presence of a container.
+    # `normalize_vision` always emits the four feature keys, so a read that
+    # returned nothing is stored as `{"visual_terms": [], ...}`: a truthy dict
+    # with nothing in it. Measured 2026-09-02 on the real index, 2 of its 30
+    # records read that way and were reported `present` with `confidence: low`,
+    # which lifted them to `decidable`. The `absent` branch below was
+    # unreachable from the only caller, because `hub.py` takes `vision` and
+    # `vision_indexed` from the same dict: if the id is indexed, `vision` is
+    # never None. An empty reading is a measured absence, never evidence.
+    features = vision.get("features") if isinstance(vision, dict) else None
+    usable_reading = isinstance(features, dict) and any(features.values())
+    if usable_reading:
+        rows.append(_readiness_row(
+            "perception", "present",
+            "confianza declarada: %s" % (vision.get("confidence") or "low"),
+            item_id))
+    elif isinstance(vision, dict) or (
+            vision_indexed is not None and item_id in set(vision_indexed)):
+        # Holding the row is itself proof the record was indexed, so this stays
+        # `absent` even for a caller that passes no `vision_indexed` set.
+        rows.append(_readiness_row(
+            "perception", "absent",
+            "indexado y sin lectura utilizable", item_id))
+    else:
+        rows.append(_readiness_row(
+            "perception", "unknown",
+            "fuera del indice de percepcion; no medido, no ausente", item_id))
+
+    classification = record.get("classification")
+    rows.append(_readiness_row(
+        "classification",
+        "present" if isinstance(classification, dict) and classification else "absent",
+        "clasificacion humana previa", item_id))
+
+    relation_rows = relations if isinstance(relations, (list, tuple)) else []
+    rows.append(_readiness_row(
+        "relations",
+        "present" if relation_rows else "absent",
+        "%d relacion(es) propuestas, todas candidatas" % len(relation_rows),
+        item_id))
+
+    group = work_group if work_group is not None else record.get("work_group")
+    rows.append(_readiness_row(
+        "work_group",
+        "present" if isinstance(group, dict) and group else "absent",
+        "agrupacion de obra ya establecida", item_id))
+
+    by_channel = {row["channel"]: row for row in rows}
+    missing = [row["channel"] for row in rows if row["status"] == "absent"]
+    unmeasured = [row["channel"] for row in rows if row["status"] == "unknown"]
+    blocking = [name for name in READINESS_REQUIRED
+                if by_channel[name]["status"] != "present"]
+
+    # Fail closed on a record that cannot be read at all. That is a different
+    # claim from "this piece lacks a caption": an unusable row means the report
+    # itself has no subject, and inventing channels for it would be fabrication.
+    if not item_id:
+        decision = "abstain"
+        next_action = ("registro ilegible: no hay `source_id` sobre el que "
+                       "informar; registrar `review` con la fuente")
+    elif blocking:
+        decision = "abstain"
+        next_action = ("falta lo minimo para etiquetar (%s): registrar `review` "
+                       "con la evidencia que falta" % ", ".join(blocking))
+    elif missing or unmeasured:
+        decision = "decidable_con_reservas"
+        next_action = ("se puede etiquetar; lo no medido queda declarado, "
+                       "no resuelto")
+    else:
+        decision = "decidable"
+        next_action = "etiquetar con la evidencia completa a la vista"
+
+    return {
+        "schema": READINESS_SCHEMA,
+        "item_id": item_id,
+        "channels": rows,
+        "missing": missing,
+        "unmeasured": unmeasured,
+        "blocking": blocking,
+        "decision": decision,
+        "labels": list(ORDER_LABELS),
+        "promotion": "none",
+        "owner": "human",
+        "producer": "local_readiness_report",
+        "next_action": next_action,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Format-first: what a blocked slot is actually asking the archive for
+# ---------------------------------------------------------------------------
+#
+# Operator's correction, 2026-09-02: a declared format asks, and the ordering
+# of works is the ANSWER. `assess_feasibility` already answers "can this format
+# be filled" and, when it cannot, names the slot and the shortfall. What it
+# never said is WHICH claims are the right kind of statement for that slot and
+# what single condition stops each one -- `_eligible` counts its rejection
+# reasons and throws the identities away.
+#
+# That gap is why "no factible" read as a dead end. Measured against the live
+# chain: `F2-capacidad-barberia` blocks on `consistencia`, which needs 1 claim,
+# and 214 claims are the same verb and layer -- 175 of them stopped only
+# because their state is `observed` and the slot asks for `candidate`. That is
+# one confirmation away, not a missing archive. `F7-lectura-curatorial` is the
+# opposite and must not read the same: 0 claims of its verb and layer exist at
+# all, so it is asking for a kind of statement nothing produces yet.
+#
+# Retirement: when a format can request its own claims and this becomes the
+# input to that request rather than a report about it.
+SLOT_CANDIDATES_SCHEMA = "mak-portfolio-slot-candidates-v1"
+
+# A claim rejected for one of these is not about this slot at all.
+_OFF_SLOT_CONDITIONS = ("wrong_verb", "wrong_layer")
+
+# What a person would DO about each condition the motor can stop a claim for.
+# Read by a human, so correct Spanish with diacritics.
+_SLOT_CONDITION_ACTION = {
+    "state_too_low": "confirmar la afirmación para que alcance el estado que pide la ranura",
+    "permission_too_low": "declarar el permiso de uso que la ranura exige",
+    "caption_incomplete": "completar el pie que el formato declara",
+    "field_value_not_allowed": "el valor declarado no está entre los que la ranura acepta",
+    "duplicate_caption": "ya hay otra afirmación con el mismo pie; esta se plegó en ella",
+}
+
+
+def _caption_gaps(grammar, fields):
+    """Name the declared caption fields a claim does not carry.
+
+    The motor decides eligibility; this only names the gap, so the next step is
+    an action instead of a category. It reads the same `{field}` grammar the
+    motor fills and never re-decides anything.
+    """
+    fields = fields if isinstance(fields, dict) else {}
+    gaps, name, depth = [], "", 0
+    for char in str(grammar or ""):
+        if char == "{":
+            depth, name = 1, ""
+        elif char == "}":
+            depth = 0
+            key = name.strip()
+            value = fields.get(key)
+            empty = key not in fields or value is None or (
+                isinstance(value, str) and not value.strip())
+            if key and empty and key not in gaps:
+                gaps.append(key)
+        elif depth:
+            name += char
+    return gaps
+
+
+def slot_candidates(slot, claims, eligible, limit=8):
+    """Which claims could fill one slot, and the single condition stopping each.
+
+    `eligible` is the MOTOR'S own eligibility rule, injected instead of
+    reimplemented. Called with a single claim it either accepts it or reports
+    the one condition that stopped it, because it returns at the first failure.
+    So this explanation can never disagree with the feasibility verdict it
+    explains, and the ranks, the grammar and the field rules keep living in one
+    place.
+
+    Pure and read-only: it proposes nothing, promotes nothing and decides
+    nothing. Every row is a candidate for a human to accept or ignore.
+    """
+    slot = slot if isinstance(slot, dict) else {}
+    slot_id = str(slot.get("slot_id") or "")
+    needs = slot.get("count", {}) if isinstance(slot.get("count"), dict) else {}
+    needs = int(needs.get("min") or 0)
+
+    rows, by_condition, already = [], {}, 0
+    for claim in claims or []:
+        if not isinstance(claim, dict):
+            continue
+        try:
+            accepted, rejected = eligible(slot, [claim])
+        except Exception:  # noqa: BLE001 - a rule we do not own must not crash the read
+            continue
+        if accepted:
+            already += 1
+            continue
+        rejected = rejected if isinstance(rejected, dict) else {}
+        condition = next((name for name, count in sorted(rejected.items())
+                          if count), "")
+        if not condition or condition in _OFF_SLOT_CONDITIONS:
+            continue
+        by_condition[condition] = by_condition.get(condition, 0) + 1
+        row = {
+            "claim_id": str(claim.get("claim_id") or ""),
+            "subject": str(claim.get("subject") or ""),
+            "scope": str(claim.get("scope") or ""),
+            "state": str(claim.get("state") or ""),
+            "permission": str(claim.get("permission") or ""),
+            "condition": condition,
+            "what_to_do": _SLOT_CONDITION_ACTION.get(
+                condition, "revisar la afirmación contra lo que pide la ranura"),
+        }
+        if condition == "caption_incomplete":
+            row["missing_caption_fields"] = _caption_gaps(
+                slot.get("caption_grammar"), claim.get("caption_fields"))
+        rows.append(row)
+
+    # A state an operator can raise comes before a caption someone has to
+    # write, and that before a value the format refuses outright. Within a
+    # condition, the subject orders it, so the list is never an artifact of
+    # the order claims happened to be compiled in.
+    priority = {"state_too_low": 0, "permission_too_low": 1,
+                "caption_incomplete": 2, "field_value_not_allowed": 3}
+    rows.sort(key=lambda row: (priority.get(row["condition"], 4),
+                               row["subject"], row["claim_id"]))
+
+    if already >= needs and needs:
+        kind = "satisfied"
+        next_action = "la ranura ya tiene lo que pide"
+    elif not rows:
+        kind = "no_claim_of_this_kind"
+        next_action = (
+            "el archivo no produce todavía afirmaciones `%s` en la capa `%s`: "
+            "esta ranura pide un TIPO de afirmación que no existe, no más "
+            "evidencia de las que hay"
+            % (slot.get("claim") or "?", slot.get("layer") or "?"))
+    else:
+        kind = "one_condition_short"
+        head = min(by_condition, key=lambda name: priority.get(name, 4))
+        next_action = (
+            "%d afirmaciones son del tipo que esta ranura pide y ninguna pasa; "
+            "la vía más corta son las %d detenidas por `%s`: %s"
+            % (len(rows), by_condition[head], head,
+               _SLOT_CONDITION_ACTION.get(head, "revisarlas")))
+
+    return {
+        "schema": SLOT_CANDIDATES_SCHEMA,
+        "slot_id": slot_id,
+        "needs": needs,
+        "eligible_now": already,
+        "kind": kind,
+        "on_slot_total": len(rows),
+        "by_condition": dict(sorted(by_condition.items())),
+        "candidates": rows[:max(0, int(limit))],
+        "truncated": max(0, len(rows) - max(0, int(limit))),
+        "next_action": next_action,
+        "promotion": "none",
+        "owner": "human",
+        "producer": "local_slot_candidates",
     }
 
 

@@ -1,0 +1,119 @@
+{
+  "schema": "codex-publication-repair-plan-v1",
+  "generated_at_utc": "2026-09-05T12:20:00-04:00",
+  "scope": "Workflow publicar_iskvw, checkout WORKSPACE/flujo and Hub source WORKSPACE",
+  "constraint": "Plan only; no repository files or running processes changed. Existing dirty worktree state must be preserved.",
+  "problem_statement": {
+    "observed": "HEAD contains tools/validar_curaduria.py and iskvw data/editor, but does not contain tools/gen_archivo_iskvw.py or cultura/mak_plataforma/contrato_archivo.py; workflow invokes the generator at line 59.",
+    "impact": "Publication cannot be reproduced from its own checkout; local Hub defaults to a different tree and generated archivo.json is outside the workflow checkout."
+  },
+  "options": [
+    {
+      "id": "A-canonicalize-flujo",
+      "recommendation": "preferred",
+      "action": "Make WORKSPACE/flujo self-contained: add the generator and its contract dependency under tracked paths, then update imports/packaging only as needed.",
+      "tradeoff": "Requires a scoped repository change and reconciliation with existing dirty worktree/branch history.",
+      "gates": [
+        "git cat-file -e HEAD:tools/gen_archivo_iskvw.py",
+        "git cat-file -e HEAD:cultura/mak_plataforma/contrato_archivo.py",
+        "python3 -m py_compile tools/gen_archivo_iskvw.py tools/validar_curaduria.py",
+        "generator dry-run/output test in isolated staging",
+        "artifact allowlist scan"
+      ]
+    },
+    {
+      "id": "B-publish-from-canonical-repo",
+      "recommendation": "alternative",
+      "action": "Change workflow checkout/source to the repository that canonically owns generator, contract and iskvw, while making the Hub point to the same revision.",
+      "tradeoff": "Requires explicit repository ownership and CI credentials; cross-tree assumptions disappear only if both runtime and workflow use the same revision.",
+      "gates": [
+        "checkout path is declared",
+        "source revision is recorded in artifact",
+        "Hub PORTFOLIO_ROOT and workflow root agree",
+        "allowlist and smoke tests pass"
+      ]
+    },
+    {
+      "id": "C-package-shared-contract",
+      "recommendation": "alternative",
+      "action": "Extract generator/contract into a versioned shared package or submodule consumed by both roots.",
+      "tradeoff": "Highest setup cost but reduces future copy drift; package version must be pinned.",
+      "gates": [
+        "lockfile/version pin",
+        "import test from clean checkout",
+        "projection hash reproducibility",
+        "editor/skin contract compatibility"
+      ]
+    }
+  ],
+  "execution_sequence": [
+    {
+      "phase": 0,
+      "name": "freeze evidence",
+      "actions": [
+        "Preserve current dirty worktree; do not reset or clean.",
+        "Record current HEAD, branch, source_root and hashes."
+      ]
+    },
+    {
+      "phase": 1,
+      "name": "repair dependency closure",
+      "actions": [
+        "Choose A/B/C with owner approval.",
+        "Ensure generator, contract and all source inputs exist in the publishing checkout."
+      ]
+    },
+    {
+      "phase": 2,
+      "name": "build isolated staging",
+      "actions": [
+        "Generate archivo.json into staging.",
+        "Copy only approved public files.",
+        "Run validator, skin smoke and artifact exposure scan."
+      ]
+    },
+    {
+      "phase": 3,
+      "name": "publish gate",
+      "actions": [
+        "Require manual workflow_dispatch.",
+        "Compare manifest, source hash, generator version and generated timestamp.",
+        "Upload only when all guards pass."
+      ]
+    },
+    {
+      "phase": 4,
+      "name": "runtime reconciliation",
+      "actions": [
+        "Set Hub root to the same canonical tree/revision.",
+        "Expose freshness and source_root in contract."
+      ]
+    }
+  ],
+  "acceptance_matrix": [
+    {
+      "gate": "dependency closure",
+      "proof": "all required paths exist in HEAD and import/compile succeeds"
+    },
+    {
+      "gate": "projection",
+      "proof": "same declared inputs produce recorded output hash"
+    },
+    {
+      "gate": "surface minimization",
+      "proof": "artifact manifest excludes editor, mesa_montaje.js, curaduria.json, micelio.json; tablero only if approved public config"
+    },
+    {
+      "gate": "public safety",
+      "proof": "workflow_dispatch, human consent policy, smoke/coherence tests and exposure scanner all pass"
+    },
+    {
+      "gate": "runtime parity",
+      "proof": "Hub and workflow report identical canonical root/revision"
+    }
+  ],
+  "rollback": {
+    "safe": "Do not modify current repositories during investigation; if a repair is later applied, revert only the scoped commit after preserving generated manifests.",
+    "prohibited": "Do not delete/archive current dirty files or stop unrelated services."
+  }
+}

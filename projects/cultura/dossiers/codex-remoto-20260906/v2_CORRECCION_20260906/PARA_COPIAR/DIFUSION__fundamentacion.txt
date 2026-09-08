@@ -1,0 +1,25 @@
+Fundamentación
+==============
+[195 palabras · 1144 caracteres · corte 2026-09-06]
+[pegar desde la linea siguiente]
+
+Hay una asimetría concreta entre lo que un archivo de artista contiene y lo
+que llega a verse. El mío tiene miles de registros y una parte decidida como
+obra; lo que un tercero puede ver hoy es nada, porque el servicio que lo
+muestra escucha en una dirección local.
+
+La forma habitual de resolver eso es un sitio de portafolio: una lista de
+piezas seleccionadas. Sirve, y pierde exactamente lo que hace legible un
+cuerpo de trabajo: las relaciones, las repeticiones, lo que quedó fuera y por
+qué. Este proyecto propone difundir las obras conservando esa estructura, y
+hacerlo con una condición que considero central: que el sistema muestre su
+propio margen de error.
+
+Lo digo desde mi práctica y no como diagnóstico del sector. Que otros artistas
+tengan el mismo problema es una hipótesis que este proyecto empieza a examinar
+con datos de acceso reales, no una afirmación que dé por probada.
+
+La región de ejecución es donde tengo domicilio y donde se realiza la
+totalidad del trabajo del proyecto. La superficie es accesible desde cualquier
+lugar, pero el proyecto se ejecuta enteramente en esa región y no contempla
+actividades fuera de ella.

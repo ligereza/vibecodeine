@@ -1,0 +1,64 @@
+{
+  "schema": "codex-network-boundary-audit-v1",
+  "audited_at": "2026-09-05T17:10:00-04:00",
+  "scope": "Hub bind configuration and HTTP handler, read-only inspection",
+  "evidence": [
+    {
+      "path": "MAK/cultura/mak_plataforma/hub.py",
+      "lines": "77-78",
+      "finding": "HUB_HOST defaults to 127.0.0.1 but is configurable via environment."
+    },
+    {
+      "path": "MAK/cultura/mak_plataforma/hub.py",
+      "lines": "5717-5938",
+      "finding": "ThreadingHTTPServer dispatches GET/POST routes; no HTTP authentication middleware or Authorization validation found in inspected server path."
+    },
+    {
+      "path": "/proc/978/environ",
+      "finding": "active process currently has HUB_HOST=127.0.0.1 (value observed, no secrets printed)."
+    }
+  ],
+  "current_state": {
+    "active_pid": 978,
+    "hub_host": "127.0.0.1",
+    "hub_port": 8900,
+    "listener": "127.0.0.1:8900",
+    "auth_middleware_found": false,
+    "network_mutations": "POST handlers exist; no requests issued"
+  },
+  "findings": [
+    {
+      "id": "configurable-exposure",
+      "severity": "high",
+      "statement": "Changing HUB_HOST to a non-loopback address changes exposure boundary without a corresponding auth requirement visible in the server."
+    },
+    {
+      "id": "defense-in-depth",
+      "severity": "medium",
+      "statement": "Loopback is safe only while configuration and process environment remain controlled; the public artifact must not rely on this local assumption."
+    },
+    {
+      "id": "current-safe-bind",
+      "severity": "positive",
+      "statement": "Active process is currently bound to 127.0.0.1:8900."
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": "P0",
+      "action": "Fail closed if HUB_HOST is not loopback unless explicit authentication/TLS/reverse-proxy mode is configured."
+    },
+    {
+      "priority": "P1",
+      "action": "Expose a startup security summary and reject unsafe combinations in production mode."
+    },
+    {
+      "priority": "P1",
+      "action": "Add tests for 127.0.0.1 allowed, 0.0.0.0 rejected by default, and authenticated proxy mode explicitly enabled."
+    },
+    {
+      "priority": "P2",
+      "action": "Keep network-boundary evidence in deployment manifest and monitor drift in environment variables."
+    }
+  ]
+}

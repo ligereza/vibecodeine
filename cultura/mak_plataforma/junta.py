@@ -15,7 +15,7 @@ import tempfile
 try:
     from cultura.mak_conductor.runtime import active_enabled, dispatch_sync
 except ImportError:  # pragma: no cover - direct MAK deployment
-    sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH", "/home/mak/flujo/cultura"))
+    sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH", "/home/mak/cultura"))
     try:
         from mak_conductor.runtime import active_enabled, dispatch_sync
     except ImportError:
@@ -36,15 +36,12 @@ try:
 except Exception:
     LLM = None
 
-# 2026-07-26: CAPATAZ.md salio de context/ (donde Claude lo leia por error y se
-# confundia con su propia doctrina) a la doctrina de MAK, su unico consumidor.
-# Se prueba la ruta nueva primero y se cae a la vieja para no romper un box sin
-# actualizar.
+# CAPATAZ.md belongs to the MAK department checkout. The former fallback under
+# HOME/flujo was the retired fused layout and silently selected a missing file
+# after /home/mak/flujo became the independent FLUJO checkout.
 CAPATAZ_PATH = os.path.join(
-    HOME, "flujo", "cultura", "mak_plataforma", "doctrina", "CAPATAZ.md"
+    HOME, "cultura", "mak_plataforma", "doctrina", "CAPATAZ.md"
 )
-if not os.path.exists(CAPATAZ_PATH):
-    CAPATAZ_PATH = os.path.join(HOME, "flujo", "context", "CAPATAZ.md")
 SALUD_PROVEEDORES_PATH = os.path.join(HOME, "research", "salud_proveedores.json")
 BACKLOG_RESEARCH_PATH = os.path.join(HOME, "plataforma", "backlog.jsonl")
 BACKLOG_CODEX_PATH = os.path.join(HOME, "plataforma", "backlog_codex.txt")

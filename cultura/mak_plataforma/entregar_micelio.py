@@ -54,7 +54,7 @@ import contrato_archivo  # noqa: E402 -- same conversion tools/gen_archivo_iskvw
 RAMA_BASE = "mak"
 
 HOME = os.path.expanduser("~")
-REPO = os.path.join(HOME, "flujo")
+REPO = HOME  # the MAK checkout is this department's repo root
 DEST_REL = os.path.join("iskvw", "datos", "micelio.json")
 LOG = os.path.join(HOME, "plataforma", "logs", "entregar_micelio.log")
 

@@ -23,12 +23,15 @@ quede prosa escrita a mano que pueda contradecirlo.
 from __future__ import annotations
 
 import re
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 
 RAIZ = Path(__file__).resolve().parent.parent
 MAPA = RAIZ / "MAPA.md"
+GENERADOR = RAIZ / "tools" / "gen_mapa_comandos.py"
 
 # Variables que el repo lee pero que NO son configuracion del usuario: las
 # pone el entorno de ejecucion, no una persona. Documentarlas confundiria.
@@ -109,6 +112,33 @@ def test_toda_variable_de_entorno_esta_documentada():
         "si no las define (seccion 4 del mapa).\n"
         "Faltan: " + ", ".join(faltan)
     )
+
+
+def test_el_manifiesto_no_queda_desfasado_del_cli():
+    """The same `--check` that keeps MAPA.md honest also covers the manifest.
+
+    It lives here, and not in `tests/test_comandos_manifiesto.py`, since
+    2026-09-02. The generator emits MAPA.md and `context/comandos.json` from
+    the SAME tree, so one ratchet covers both. Ownership: `--check` spawns
+    `python -m flujo --help`, and the CLI imports typer, declared only in
+    `requirements-flujo.txt`. Measured in run 33670334244's install step:
+    rich, pydantic and requests do reach the MAK profile transitively, and
+    typer does not, so typer alone is the missing import. This file is
+    declared
+    `integration` -- the lane that composes both physical checkouts and
+    installs `requirements-integration.txt` -- while the other file is
+    `repo_hygiene`, a lane the MAK profile runs without the motor's CLI stack.
+    There the check failed for an environment reason while passing on the box,
+    and the classifier could not see it because the dependency goes through
+    `subprocess`. A manifest nobody checks is documentation, and documentation
+    rots: hence moved, not disabled.
+    """
+    r = subprocess.run([sys.executable, str(GENERADOR), "--check"],
+                       capture_output=True, text=True, encoding="utf-8",
+                       cwd=str(RAIZ), timeout=300)
+    assert r.returncode == 0, (
+        "context/comandos.json quedo desfasado del CLI real. "
+        "Corre: py tools/gen_mapa_comandos.py\n" + r.stdout + r.stderr)
 
 
 def test_el_mapa_conserva_los_marcadores_del_generador():

@@ -127,7 +127,7 @@ verificadas.
 ## Editorial y memoria de producto
 
 `linea_editorial/v4.1.md` es contrato humano de RD y debe convivir con la base
-de configuracion operativa. `MAPA.md`, `CAPACIDADES.md` y `PLAN.md` son mapas
+de configuracion operativa. `MAPA.md`, `CAPACIDADES_MAK.md` y `PLAN.md` son mapas
 de arquitectura/capacidad/backlog: sirven para orientar la lectura, pero cada
 afirmacion que afecte integracion debe cruzarse con el consumidor y la
 verificacion actual. Esto evita que una version editorial o una idea historica

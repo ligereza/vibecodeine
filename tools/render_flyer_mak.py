@@ -14,7 +14,7 @@ no es un swap de nodo artesanal:
    junto al .blend (RD.blend lo linkea para el vidrio decorativo).
 3. Genera un script .py TEMPORAL (no --python-expr inline) que, corriendo
    DENTRO de Blender, importa el modulo REAL
-   src/flujo/eventos/blender_nodes.py (sys.path.insert a esa carpeta; el
+   flujo/src/flujo/eventos/blender_nodes.py (sys.path.insert a esa carpeta; el
    modulo no importa bpy a nivel de modulo, solo dentro de sus funciones,
    asi que es importable tal cual sin portar nada a mano) y llama:
    - blender_nodes._buscar_materiales_flyer() -- la MISMA busqueda por
@@ -63,9 +63,10 @@ BLEND_FILE = "cartelera.blend"
 FRAME_FILE = "FRAME2.png"
 COLOR_PNG_RELATIVE = Path("RESULTADOS") / "color_predominante.png"
 
-# Carpeta real de src/flujo/eventos (contiene blender_nodes.py + blender_gpu.py),
-# derivada de este archivo -- NO se porta la logica a mano, se importa tal cual.
-EVENTOS_DIR = Path(__file__).resolve().parents[1] / "src" / "flujo" / "eventos"
+# Carpeta real de flujo/src/flujo/eventos (contiene blender_nodes.py +
+# blender_gpu.py), derivada de este archivo -- NO se porta la logica a mano,
+# se importa tal cual.
+EVENTOS_DIR = Path(__file__).resolve().parents[1] / "flujo" / "src" / "flujo" / "eventos"
 
 RENDER_TIMEOUT_S = 900.0
 
@@ -78,7 +79,7 @@ def extract_palette(
 ) -> list[str]:
     """Color dominante -> swatch PNG + JSON.
 
-    Portado 1:1 de src/flujo/eventos/flyer_auto.py:_extract_palette
+    Portado 1:1 de flujo/src/flujo/eventos/flyer_auto.py:_extract_palette
     (adaptive palette PIL, suficiente para direccion de arte rapida).
     """
     from PIL import Image, ImageDraw
@@ -116,7 +117,7 @@ def extract_palette(
 def write_predominant_color(image_path: Path, out_png: Path) -> str:
     """Color predominante-pero-claro del flyer -> PNG solido que el .blend linkea.
 
-    Portado 1:1 de src/flujo/eventos/flyer_auto.py:_write_predominant_color
+    Portado 1:1 de flujo/src/flujo/eventos/flyer_auto.py:_write_predominant_color
     (mismo criterio: mas luminoso entre los colores con peso real, aclarado
     25% hacia blanco). El .blend real usa este mismo PNG para recolorear el
     vidrio decorativo (Decorative Glass 05), via
@@ -154,7 +155,7 @@ def build_blender_script(
 ) -> str:
     """Script Python REAL para `blender --python <script>` (temporal, no expr).
 
-    Importa src/flujo/eventos/blender_nodes.py tal cual (sin portar su
+    Importa flujo/src/flujo/eventos/blender_nodes.py tal cual (sin portar su
     logica) y ejecuta el mismo update/build por nodos que WIN, mas los
     settings anti-OOM (Cycles CUDA, 512 samples, simplify, tile 512, sin
     persistent data) que la GPU 1650 4GB de MAK necesita y WIN no.

@@ -29,7 +29,6 @@
     cameraTween: 0,
     externalCandidates: [],
     feedbackBusy: new Set(),
-    classificationPending: new Map(),
     drafts: new Map(),
     draftDirty: new Set(),
     nodes: new Map(),
@@ -791,7 +790,7 @@
     if (!app) return false;
     app.hidden = false;
     document.body.classList.add("mesa-active");
-    app.innerHTML = `<div class="mesa-shell mesa-engine" data-field-mode="uncertainty"><header class="mesa-header"><div><div class="mesa-kicker">MAK · atlas vivo</div><h2>campo de orden</h2><p>La geometría permanece. Tus decisiones cambian el campo, no borran la ambigüedad.</p></div><div class="mesa-header-stats"><b id="mesa-visible-count">0</b><span>nodos</span><b id="mesa-relation-count">0</b><span>vínculos</span><span id="mesa-map-engine" class="mesa-map-engine">GTM · cargando</span><button type="button" id="mesa-external-queue" class="mesa-external-queue">evidencia externa · <b>0</b></button></div></header><div class="mesa-toolbar"><div class="mesa-mode-switch" role="toolbar" aria-label="Modo del editor"><button type="button" class="is-active" data-editor-mode="order">ordenar</button><button type="button" data-editor-mode="relate">relacionar</button><button type="button" class="mesa-seed-control" data-learning-action="next-seed" title="llevar el caso más informativo al centro">siguiente frontera</button></div><div class="mesa-field-switch" role="toolbar" aria-label="Campo visible"><button type="button" class="is-active" data-field-mode="uncertainty">incertidumbre</button><button type="button" data-field-mode="coverage">vacíos</button><button type="button" data-field-mode="evidence">evidencia</button><button type="button" data-field-mode="resonance">resonancia</button></div><div class="mesa-camera-actions"><button type="button" data-camera="reset">mapa</button><button type="button" data-camera="zoom-out">−</button><button type="button" data-camera="zoom-in">+</button><button type="button" id="mesa-audit" class="mesa-audit-button">auditoría</button></div></div><div class="mesa-lenses" role="toolbar" aria-label="Lentes de relación"><button type="button" class="is-active" data-lens="all">copiloto</button><button type="button" data-lens="date">fecha</button><button type="button" data-lens="publication">publicación</button><button type="button" data-lens="event">evento</button><button type="button" data-lens="venue">venue</button><button type="button" data-lens="artist">artista</button><button type="button" data-lens="client">cliente</button><button type="button" data-lens="text">concepto</button></div><div class="mesa-map-legend" aria-label="Lectura del campo"><span class="is-field">halo = información pendiente</span><span class="is-evidence">línea continua = evidencia</span><span class="is-resonance">línea discontinua = resonancia</span><em id="mesa-map-fit">proyección GTM</em></div><main class="mesa-main mesa-engine-main"><div class="mesa-stage" id="mesa-stage" data-flow-render="canvas-progressive" aria-label="Atlas GTM; arrastra el espacio para mover la cámara y selecciona piezas para ordenar"><canvas class="mesa-flow-canvas" id="mesa-flow-canvas" aria-hidden="true"></canvas><div class="mesa-world" id="mesa-world"><svg class="mesa-field-layer" id="mesa-field-layer" viewBox="0 0 100 100" preserveAspectRatio="none"></svg><svg class="mesa-edges" id="mesa-edges" viewBox="0 0 100 100" preserveAspectRatio="none"></svg><div class="mesa-card-layer" id="mesa-card-layer"></div></div><div class="mesa-field-readout" id="mesa-field-readout" aria-live="polite"></div><div class="mesa-order-hud" id="mesa-order-hud" aria-live="polite"></div><div class="mesa-popover" id="mesa-popover" hidden></div><div class="mesa-stage-help">click: elegir · rueda: acercar · arrastra el vacío: recorrer el atlas</div></div><nav class="mesa-timeline" id="mesa-timeline" aria-label="Nodos de esta ventana"></nav><div class="mesa-live-status" id="mesa-status" aria-live="polite"></div></main></div>`;
+    app.innerHTML = `<div class="mesa-shell mesa-engine" data-field-mode="uncertainty"><header class="mesa-header"><div><div class="mesa-kicker">MAK · atlas vivo</div><h2>campo de orden</h2><p>La geometría permanece. Tus decisiones cambian el campo, no borran la ambigüedad.</p></div><div class="mesa-header-stats"><b id="mesa-visible-count">0</b><span>nodos</span><b id="mesa-relation-count">0</b><span>vínculos</span><span id="mesa-map-engine" class="mesa-map-engine">GTM · cargando</span><button type="button" id="mesa-external-queue" class="mesa-external-queue">evidencia externa · <b>0</b></button></div></header><div class="mesa-toolbar"><div class="mesa-mode-switch" role="toolbar" aria-label="Modo del editor"><button type="button" class="is-active" data-editor-mode="order">ordenar</button><button type="button" data-editor-mode="relate">relacionar</button><button type="button" class="mesa-seed-control" data-learning-action="next-seed" title="llevar el caso más informativo al centro">siguiente frontera</button></div><div class="mesa-field-switch" role="toolbar" aria-label="Campo visible"><button type="button" class="is-active" data-field-mode="uncertainty">incertidumbre</button><button type="button" data-field-mode="coverage">vacíos</button><button type="button" data-field-mode="evidence">evidencia</button><button type="button" data-field-mode="resonance">resonancia</button></div><div class="mesa-camera-actions"><button type="button" data-camera="reset">mapa</button><button type="button" data-camera="zoom-out">−</button><button type="button" data-camera="zoom-in">+</button><button type="button" id="mesa-purposes" class="mesa-audit-button">propósitos</button><button type="button" id="mesa-audit" class="mesa-audit-button">auditoría</button><button type="button" id="mesa-live-toggle" class="mesa-audit-button" title="reacciona a amplitud, beat, cues y timecode XIO">performance en vivo</button></div></div><div class="mesa-lenses" role="toolbar" aria-label="Lentes de relación"><button type="button" class="is-active" data-lens="all">copiloto</button><button type="button" data-lens="date">fecha</button><button type="button" data-lens="publication">publicación</button><button type="button" data-lens="event">evento</button><button type="button" data-lens="venue">venue</button><button type="button" data-lens="artist">artista</button><button type="button" data-lens="client">cliente</button><button type="button" data-lens="text">concepto</button></div><div class="mesa-map-legend" aria-label="Lectura del campo"><span class="is-field">halo = información pendiente</span><span class="is-evidence">línea continua = evidencia</span><span class="is-resonance">línea discontinua = resonancia</span><em id="mesa-map-fit">proyección GTM</em></div><main class="mesa-main mesa-engine-main"><div class="mesa-stage" id="mesa-stage" data-flow-render="canvas-progressive" aria-label="Atlas GTM; arrastra el espacio para mover la cámara y selecciona piezas para ordenar"><canvas class="mesa-flow-canvas" id="mesa-flow-canvas" aria-hidden="true"></canvas><div class="mesa-world" id="mesa-world"><svg class="mesa-field-layer" id="mesa-field-layer" viewBox="0 0 100 100" preserveAspectRatio="none"></svg><svg class="mesa-edges" id="mesa-edges" viewBox="0 0 100 100" preserveAspectRatio="none"></svg><div class="mesa-card-layer" id="mesa-card-layer"></div></div><div class="mesa-live-flash" id="mesa-live-flash" aria-hidden="true"></div><div class="mesa-field-readout" id="mesa-field-readout" aria-live="polite"></div><div class="mesa-order-hud" id="mesa-order-hud" aria-live="polite"></div><div class="mesa-live-hud" id="mesa-live-hud" hidden aria-live="polite"><div class="mesa-live-row"><button type="button" data-live-action="start" id="mesa-live-start">iniciar</button><button type="button" data-live-action="pause" id="mesa-live-pause">pausar</button><button type="button" data-live-action="reset" id="mesa-live-reset">reiniciar</button><span class="mesa-live-source" id="mesa-live-source">sintético</span></div><div class="mesa-live-row"><b class="mesa-live-timecode" id="mesa-live-timecode">00:00:00:00</b><span class="mesa-live-cue" id="mesa-live-cue">sin cue</span></div><div class="mesa-live-meter" aria-hidden="true"><i id="mesa-live-amp-bar"></i></div><span class="mesa-live-beat" id="mesa-live-beat" aria-hidden="true"></span></div><div class="mesa-popover" id="mesa-popover" hidden></div><div class="mesa-stage-help">click: elegir · rueda: acercar · arrastra el vacío: recorrer el atlas</div></div><nav class="mesa-timeline" id="mesa-timeline" aria-label="Nodos de esta ventana"></nav><div class="mesa-live-status" id="mesa-status" aria-live="polite"></div></main></div>`;
     state.root = app;
     state.root.dataset.editorMode = state.editorMode;
     state.root.dataset.fieldMode = state.fieldMode;
@@ -826,6 +825,7 @@
     if (allButton) allButton.textContent = "copiloto";
     state.root.querySelector("#mesa-external-queue")?.addEventListener("click", openNextExternalCandidate);
     state.root.querySelector("#mesa-audit")?.addEventListener("click", () => loadAuditSummary());
+    state.root.querySelector("#mesa-purposes")?.addEventListener("click", () => loadPurposes());
     state.root.querySelectorAll("[data-editor-mode]").forEach((button) => {
       button.addEventListener("click", () => setEditorMode(button.dataset.editorMode));
     });
@@ -1036,6 +1036,36 @@
     syncEditorMode();
   }
 
+  // Lo que la ficha TIENE y lo que le FALTA, antes de etiquetarla. El estado
+  // `unknown` se muestra distinto de `absent` a proposito: el indice de
+  // percepcion cubre una parte chica del campo, asi que "sin lectura" casi
+  // siempre es "no medido", y leer esa ausencia como dato es como un vacio se
+  // vuelve un hecho.
+  const READINESS_LABEL = {
+    asset: "archivo", description: "descripcion", date: "fecha",
+    perception: "percepcion", classification: "clasificacion",
+    relations: "relaciones", work_group: "grupo",
+  };
+  const READINESS_MARK = { present: "si", absent: "no", unknown: "?" };
+
+  function readinessStrip() {
+    const report = state.scene?.evidence_readiness;
+    if (!report || !Array.isArray(report.channels) || !report.channels.length) return "";
+    const chips = report.channels.map((row) => {
+      const label = READINESS_LABEL[row.channel] || row.channel;
+      const mark = READINESS_MARK[row.status] || "?";
+      return `<span class="is-${escMesa(row.status)}" title="${escMesa(row.detail || "")}">`
+        + `${escMesa(label)} ${mark}</span>`;
+    }).join("");
+    const blocking = Array.isArray(report.blocking) ? report.blocking : [];
+    const verdict = blocking.length
+      ? `falta lo minimo (${blocking.map((name) => escMesa(READINESS_LABEL[name] || name)).join(", ")}) · revisar`
+      : escMesa(report.next_action || "");
+    return `<div class="mesa-readiness" data-decision="${escMesa(report.decision || "")}">`
+      + `<div class="mesa-readiness-chips">${chips}</div>`
+      + `<small>${verdict}</small></div>`;
+  }
+
   function renderOrderHud() {
     if (!state.orderHud) return;
     const ids = [...state.orderSelectedIds];
@@ -1052,7 +1082,7 @@
       ? ids.map((id) => escMesa(String(id))).join(" · ")
       : `${ids.slice(0, 3).map((id) => escMesa(String(id))).join(" · ")} · +${ids.length - 3}`;
     const draftActions = pending ? `<div class="mesa-order-actions"><button type="button" data-order-action="save-draft-all">guardar ${pending} borrador(es)</button><button type="button" data-order-action="commit-draft-all">efectuar ${pending} acción(es)</button><button type="button" data-order-action="cancel-draft-all">volver sin aplicar</button></div>` : "";
-    state.orderHud.innerHTML = `<div class="mesa-order-compass" role="toolbar" aria-label="Destino de orden"><div class="mesa-order-hud-copy"><b>${ids.length}</b><span>${copy}${pending ? ` · ${pending} pendiente(s)` : ""}</span><small class="mesa-order-targets">objetivos: ${targetSummary}</small></div><button type="button" class="is-work" data-order-action="work" aria-label="preparar como obra">${actionGlyph("work")}<span>obra</span></button><button type="button" class="is-record" data-order-action="record" aria-label="preparar como registro">${actionGlyph("record")}<span>registro</span></button><button type="button" class="is-review" data-order-action="review" aria-label="dejar para revisar">${actionGlyph("review")}<span>revisar</span></button><button type="button" class="is-discard" data-order-action="discard" aria-label="preparar descarte; no es obra">${actionGlyph("discard")}<span>descarte</span></button><button type="button" class="is-region" data-order-action="region" aria-label="comparar región">${actionGlyph("region")}<span>${ids.length > 1 ? "una pieza" : "región"}</span></button><button type="button" class="is-detail" data-order-action="detail" aria-label="abrir detalle">${actionGlyph("detail")}<span>detalle</span></button>${draftActions}</div>`;
+    state.orderHud.innerHTML = `<div class="mesa-order-compass" role="toolbar" aria-label="Destino de orden"><div class="mesa-order-hud-copy"><b>${ids.length}</b><span>${copy}${pending ? ` · ${pending} pendiente(s)` : ""}</span><small class="mesa-order-targets">objetivos: ${targetSummary}</small>${ids.length === 1 ? readinessStrip() : ""}</div><button type="button" class="is-work" data-order-action="work" aria-label="preparar como obra">${actionGlyph("work")}<span>obra</span></button><button type="button" class="is-record" data-order-action="record" aria-label="preparar como registro">${actionGlyph("record")}<span>registro</span></button><button type="button" class="is-review" data-order-action="review" aria-label="dejar para revisar">${actionGlyph("review")}<span>revisar</span></button><button type="button" class="is-discard" data-order-action="discard" aria-label="preparar descarte; no es obra">${actionGlyph("discard")}<span>descarte</span></button><button type="button" class="is-region" data-order-action="region" aria-label="comparar región">${actionGlyph("region")}<span>${ids.length > 1 ? "una pieza" : "región"}</span></button><button type="button" class="is-detail" data-order-action="detail" aria-label="abrir detalle">${actionGlyph("detail")}<span>detalle</span></button>${draftActions}</div>`;
     positionOrderHud();
   }
 
@@ -1334,17 +1364,6 @@
     if (state.status) state.status.textContent = message;
   }
 
-  function acquireRecordActions(itemIds) {
-    const keys = [...new Set(itemIds.map((itemId) => `record-action:${itemId}`))];
-    if (keys.some((key) => state.feedbackBusy.has(key))) return null;
-    keys.forEach((key) => state.feedbackBusy.add(key));
-    return keys;
-  }
-
-  function releaseRecordActions(keys) {
-    (keys || []).forEach((key) => state.feedbackBusy.delete(key));
-  }
-
   function selectRecord(id) {
     if (!byId(id)) return;
     state.selectedId = id;
@@ -1435,6 +1454,126 @@
       }).join("")
       : "<li>sin eventos registrados</li>";
     return `<div class="mesa-popover-head"><span>pieza auditada</span><button type="button" class="mesa-popover-close" data-pop-action="close" aria-label="cerrar">×</button></div><div class="mesa-popover-flow mesa-audit"><div class="mesa-audit-title"><h3>${escMesa(item.source_id || "pieza")}</h3><p class="mesa-popover-meta">${escMesa(item.date || "sin fecha")} · ${escMesa(item.content_type || "registro")}</p></div><section class="mesa-audit-section"><h4>Estado actual</h4><div class="mesa-audit-current"><span>selección: <b>${escMesa(current.selection || "pendiente")}</b></span><span>triage: <b>${escMesa(current.triage_label || "unlabeled")}</b> · ${escMesa(current.triage_source || "sin origen")}</span><span>clasificación: <b>${escMesa(JSON.stringify(current.classification || {}))}</b></span></div></section><section class="mesa-audit-section"><h4>Línea temporal · ${escMesa(item.timeline_total || 0)} eventos</h4><ol class="mesa-audit-timeline">${timelineMarkup}</ol></section><div class="mesa-audit-actions"><button type="button" data-pop-action="audit-summary">volver al resumen</button></div></div>`;
+  }
+
+  // Un propósito declarado es un formato: `data/portfolio_formats/*.json`. La
+  // cadena que los produce ya existía entera en el motor y no se veía desde
+  // aquí -- cuatro de seis producen documento hoy y el operador tenía que
+  // consultar una ruta JSON para saberlo. Esto no decide ni publica nada: lee
+  // `/api/portfolio/production`, que declara `promotion: none` y `owner:
+  // human`, y muestra lo que cada propósito produjo o qué lo bloquea.
+
+  // `feasibility.slots` is every DECLARED slot of the format; the ones that
+  // actually lack evidence are `feasibility.blocking`, which also carries the
+  // shortfall, the reason and what would close it. Reading `slots` here named
+  // satisfied slots as missing: measured 2026-09-02, F2-capacidad-barberia
+  // declares 5 slots, only `consistencia` blocks, and the panel printed
+  // "tecnicas · escala · consistencia" -- two of them already satisfied. With
+  // the first three shown, a blocker declared fourth or later disappeared
+  // entirely. The verdict layer is `blocking`, never the declaration layer.
+  // A blocked slot used to name the shortfall and stop. The format is what
+  // asks, so the archive answers: `/api/portfolio/production` now carries, per
+  // blocking slot, which claims are the right KIND of statement and the single
+  // condition stopping each. Two answers that must never look alike --
+  // `F2-capacidad-barberia` needs 1 and has 214 of the right kind, 175 of them
+  // one confirmation away; `F7-lectura-curatorial` has 0, because it asks for a
+  // kind of statement the archive does not produce yet. The first is work, the
+  // second is a decision about what the archive should say at all.
+  function purposeSlotMarkup(entry) {
+    if (!entry || !entry.slot_id) return "";
+    const absent = entry.kind === "no_claim_of_this_kind";
+    const named = (entry.candidates || []).slice(0, 3)
+      .map((candidate) => escMesa(candidate.subject)).join(" · ");
+    const more = entry.truncated ? ` (+${escMesa(entry.truncated)} más)` : "";
+    return `<div class="mesa-purpose-slot ${absent ? "is-absent" : "is-near"}">`
+      + `<b>${escMesa(entry.slot_id)}</b>`
+      + `<span>pide ${escMesa(entry.needs)}</span>`
+      + `<p>${escMesa(entry.next_action || "")}</p>`
+      + (absent || !named ? "" : `<small>${named}${more}</small>`)
+      + `</div>`;
+  }
+
+  function purposeRow(row) {
+    const rendered = row.status === "rendered";
+    const feasibility = row.feasibility || {};
+    const declared = Array.isArray(feasibility.slots) ? feasibility.slots : [];
+    const blocking = Array.isArray(feasibility.blocking)
+      ? feasibility.blocking
+      : declared.filter((slot) => slot && slot.ok === false);
+    const gaps = blocking.filter((gap) => gap && gap.slot_id);
+    const missing = gaps.slice(0, 3).map((gap) => escMesa(gap.slot_id)).join(" · ");
+    const more = gaps.length > 3 ? ` (+${escMesa(gaps.length - 3)} más)` : "";
+    // What would close it is already served by the engine; showing the slot id
+    // alone left the operator with a name and no next step.
+    const remedy = escMesa(String(
+      gaps[0] && (gaps[0].what_would_close_it || gaps[0].reason) || ""));
+    return `<article class="mesa-purpose ${rendered ? "is-rendered" : "is-blocked"}">`
+      + `<header><b>${escMesa(row.title || row.format_id)}</b>`
+      + `<span class="mesa-purpose-state">${rendered
+        ? `${escMesa(row.item_count ?? 0)} piezas` : "no factible"}</span></header>`
+      + `<p>${escMesa(row.purpose || "")}</p>`
+      + (rendered
+        ? `<div class="mesa-purpose-actions"><button type="button" data-pop-action="purpose-open" data-format-id="${escMesa(row.format_id)}">leer el documento</button></div>`
+        : `<small>ranuras sin evidencia suficiente: ${missing || "declaradas en el formato"}${more}`
+          + ` · ${escMesa(gaps.length)} de ${escMesa(declared.length)} declaradas</small>`
+          + (remedy
+            ? `<small class="mesa-purpose-remedy">lo que la cerraría: ${remedy}</small>`
+            : "")
+          + (row.slot_candidates || []).map(purposeSlotMarkup).join(""))
+      + `</article>`;
+  }
+
+  function purposesMarkup(data) {
+    const rows = (data.formats || []).map(purposeRow).join("");
+    const states = Object.entries(data.claims_by_state || {})
+      .map(([k, v]) => `<span>${escMesa(k)}: <b>${escMesa(v)}</b></span>`).join("");
+    return `<div class="mesa-popover-head"><span>propósitos declarados</span>`
+      + `<button type="button" class="mesa-popover-close" data-pop-action="close" aria-label="cerrar">×</button></div>`
+      + `<div class="mesa-popover-flow mesa-audit"><div class="mesa-audit-title">`
+      + `<h3>Un mismo archivo, varios órdenes defendibles</h3>`
+      + `<p class="mesa-popover-meta">${escMesa(data.rendered?.length || 0)} de `
+      + `${escMesa((data.formats || []).length)} propósitos producen documento · `
+      + `${escMesa(data.claims || 0)} afirmaciones · promoción: `
+      + `${escMesa(data.promotion || "none")}</p></div>`
+      + `<section class="mesa-audit-section"><h4>Estado de las afirmaciones</h4>`
+      + `<div class="mesa-audit-history">${states}</div></section>`
+      + `<section class="mesa-audit-section">${rows}</section>`
+      + `<small>${escMesa(data.next_action || "")}</small></div>`;
+  }
+
+  function purposeDocumentMarkup(row) {
+    const text = String(row.markdown || "").slice(0, 24000);
+    return `<div class="mesa-popover-head"><span>${escMesa(row.format_id)}</span>`
+      + `<button type="button" class="mesa-popover-close" data-pop-action="close" aria-label="cerrar">×</button></div>`
+      + `<div class="mesa-popover-flow mesa-audit"><div class="mesa-audit-title">`
+      + `<h3>${escMesa(row.title || row.format_id)}</h3>`
+      + `<p class="mesa-popover-meta">${escMesa(row.item_count ?? 0)} piezas · `
+      + `${escMesa(row.render_hash || "")}</p></div>`
+      + `<pre class="mesa-purpose-doc">${escMesa(text)}</pre>`
+      + `<div class="mesa-audit-actions"><button type="button" data-pop-action="purposes">volver a los propósitos</button></div></div>`;
+  }
+
+  async function loadPurposes(formatId = "") {
+    const wanted = String(formatId || "").trim();
+    setStatus(wanted ? "componiendo el documento…" : "leyendo los propósitos declarados…");
+    try {
+      const query = wanted ? `?format_id=${encodeURIComponent(wanted)}` : "";
+      const response = await fetch(`/api/portfolio/production${query}`, { cache: "no-store" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      if (!data.ok) throw new Error(data.error || "producción no disponible");
+      if (wanted) {
+        const row = (data.formats || [])[0];
+        if (!row) throw new Error("ese propósito no está declarado");
+        openPopover(purposeDocumentMarkup(row));
+        setStatus("documento compuesto; no se publicó ni se firmó nada.");
+        return;
+      }
+      openPopover(purposesMarkup(data));
+      setStatus(`${data.rendered?.length || 0} de ${(data.formats || []).length} propósitos producen documento.`);
+    } catch (error) {
+      setStatus("No se pudieron leer los propósitos: " + error.message);
+    }
   }
 
   async function loadAuditSummary(sourceId = "") {
@@ -2024,6 +2163,8 @@
     const note = state.popover.querySelector("[data-pop-note]")?.value?.trim() || "";
     if (action === "close") return closePopover();
     if (action === "audit-summary") return loadAuditSummary();
+    if (action === "purposes") return loadPurposes();
+    if (action === "purpose-open") return loadPurposes(button.dataset.formatId);
     if (action === "audit-item") return loadAuditSummary(button.dataset.auditItem || state.selectedId);
     if (action === "back") return showRecordPopover();
     if (action === "classify-axis") {

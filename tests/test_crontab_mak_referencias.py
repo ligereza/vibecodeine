@@ -70,3 +70,14 @@ def test_todo_script_del_cron_existe_en_el_repo():
         "file, or retire the cron line in crontab.mak IN THE SAME CHANGE:\n  "
         + "\n  ".join(faltantes)
     )
+
+
+def test_cron_revisor_runs_from_the_mak_checkout():
+    active = [
+        line.strip()
+        for line in CRONTAB.read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    ]
+    revisor = next(line for line in active if "# MAK-REVISOR" in line)
+    assert "cd /home/mak &&" in revisor
+    assert "cd /home/mak/flujo &&" not in revisor

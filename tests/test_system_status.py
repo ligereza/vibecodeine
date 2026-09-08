@@ -30,7 +30,7 @@ def test_system_status_is_read_only_and_redacts_provider_values(tmp_path: Path, 
     repo = tmp_path / "flujo"
     physical = tmp_path / "mak"
     for relative in (
-        "agents.md",
+        "AGENTS.md",
         "cultura/mak_plataforma/hub.py",
         "src/flujo/knowledge/project_api.py",
         "web/package.json",
@@ -76,6 +76,29 @@ def test_system_status_is_read_only_and_redacts_provider_values(tmp_path: Path, 
     encoded = json.dumps(result, ensure_ascii=False)
     assert secret not in encoded
     assert before == after
+
+
+# The fixtures below name `AGENTS.md`: the lowercase `agents.md` was deleted on
+# 2026-09-03 with every other contract file, and `_repo_component` now requires
+# the one contract that exists. A fixture keeping the old name would assert a
+# file the repo deliberately no longer has.
+def test_repo_component_finds_motor_in_the_sibling_flujo_checkout(tmp_path: Path) -> None:
+    repo = tmp_path / "mak"
+    for relative in (
+        "AGENTS.md",
+        "cultura/mak_plataforma/hub.py",
+        "flujo/src/flujo/knowledge/project_api.py",
+        "web/package.json",
+    ):
+        _touch(repo / relative, "fixture")
+
+    result = status_module._repo_component(repo)
+
+    assert result["status"] == "ready"
+    assert result["evidence"]["knowledge_api"]["exists"] is True
+    assert result["evidence"]["knowledge_api"]["path"].endswith(
+        "flujo/src/flujo/knowledge/project_api.py"
+    )
 
 
 def test_service_status_checks_canonical_runtime_source_candidates(tmp_path: Path, monkeypatch) -> None:

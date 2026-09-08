@@ -22,6 +22,42 @@ def test_database_inventory_is_read_only_and_declares_consumers():
         assert item["missing_consumers"] == []
         if item["exists"]:
             assert item.get("integrity") == "ok"
+        # A consumer that cannot be checked here is only ever a motor file in
+        # the FLUJO checkout, never a MAK path. Measured 2026-09-02: this test
+        # passed in /home/mak and failed in every agent worktree, because four
+        # `flujo/src/flujo/*` consumers are absent wherever that sibling
+        # checkout is not on disk -- which includes a fresh clone. An absence
+        # that is the topology must not read as a broken inventory.
+        for consumer in item.get("unverifiable_consumers", []):
+            assert consumer.startswith("flujo/"), consumer
+            assert consumer in item["peer_consumers"], consumer
+
+
+def test_a_consumer_outside_the_peer_checkout_is_still_a_finding():
+    """The exemption is for the sibling checkout only, not for absence at large.
+
+    Softening the check into "absent is fine" would have hidden the very thing
+    it exists to catch: a database whose declared reader no longer exists in
+    this branch.
+    """
+    from pathlib import Path
+
+    from tools import repo_audit
+
+    original = repo_audit.DB_CONSUMERS
+    patched = dict(original)
+    first = sorted(patched)[0]
+    patched[first] = (*patched[first], "cultura/no_existe_este_consumidor.py")
+    repo_audit.DB_CONSUMERS = patched
+    try:
+        result = repo_audit.audit()
+    finally:
+        repo_audit.DB_CONSUMERS = original
+
+    item = next(row for row in result["databases"] if row["path"] == first)
+    assert "cultura/no_existe_este_consumidor.py" in item["missing_consumers"]
+    assert result["ok"] is False
+    assert not Path("cultura/no_existe_este_consumidor.py").exists()
 
 
 def test_tool_consumer_inventory_is_explicit_and_bounded():
@@ -29,7 +65,59 @@ def test_tool_consumer_inventory_is_explicit_and_bounded():
 
     assert result["schema"] == "mak-tool-consumer-inventory-v1"
     assert result["historical_win_excluded"] is True
-    assert result["count"] == 137
+    # 106, not 137: the MAK/FLUJO separation removed the tools that drive the
+    # motor from this branch. The number is pinned on purpose -- an unnoticed
+    # drift in the tool inventory is what this ratchet exists to catch.
+    #
+    # 105 -> 106 on 2026-09-02: `gen_campo_iskvw.py` came back to MAK by
+    # consumer (commit ea847e0b), after this pin was written (4bba4e98). The
+    # ratchet did its job -- it caught a real inventory move.
+    #
+    # 106 -> 104 on 2026-09-03: `agent_bootstrap.py` and `handoff.py` were
+    # deleted by the operator's order. Both existed to manufacture "current
+    # state" out of documents -- the first emitted a hash-pinned packet from
+    # `agents.md` plus the handoff, the second printed a template to paste into
+    # the handoff. The active document is now `DECISIONES.md`, which holds
+    # decisions and no facts, and the facts come from `tools/mak_status.py`.
+    # Neither tool had a consumer other than its own test.
+    #
+    # 104 -> 106 on 2026-09-03: `motor_checkout.py` and `link_motor_checkout.py`
+    # were added. The suite located the FLUJO motor by assuming `<raiz>/flujo`,
+    # so every test that reads motor sources failed on a missing path in any
+    # checkout that is not the operator's home one -- a worktree or a CI clone
+    # read as a broken contract. The first resolves the motor instead of
+    # assuming it and is imported by `tests/conftest.py` and
+    # `tests/integration_paths.py`; the second creates the composed layout that
+    # `flujo.departments.catalog` and `replay_suite_v1.json` are written
+    # against, and never deletes or overwrites to do it.
+    #
+    # 106 -> 107 on 2026-09-04: `hub_route_inventory.py` was added. The hub
+    # dispatches from a 458-line if-chain and nothing listed what it answers;
+    # the first measurement found 35 of 100 routes with no mention anywhere in
+    # the suite. Consumed by `tests/test_hub_route_answer_contract.py`, which
+    # takes its route list from the tool instead of a hardcoded copy.
+    #
+    # 107 -> 108 on 2026-09-04: `gen_postulacion.py` was added. It checks a
+    # funding application against the bases of its own convocatoria -- budget
+    # floor and ceiling, percentage caps, duration, empty sections ordered by
+    # the score they cost, and the mandatory documents the project's own
+    # declared conditions trigger. Consumed by `tests/test_gen_postulacion.py`.
+    #
+    # 108 -> 109 on 2026-09-04: `hub_payload_budget.py` was added. Nothing
+    # watched response size, which is how `/api/portfolio/copilot/map` came to
+    # answer 4,367,883 bytes so its only consumer could read three fields per
+    # row. It pins bytes per item, not total bytes, so the ratchet survives an
+    # archive of any size. Consumed by `tests/test_hub_payload_budget.py`.
+    #
+    # 109 -> 110 on 2026-09-04: `rol_candidatos.py` was added. The F5 format
+    # requires a `rol_y_exclusiones` slot and the archive cannot supply it:
+    # measured against the portable-SSD index, `owner_status` is `unknown`
+    # for all 917 projects and `owner_evidence_json` is empty for all 917.
+    # Nothing recorded who did what. It ranks where declaring a role pays
+    # off and emits a blank worksheet; it never writes a role, because a
+    # role is a claim a person makes about their own work. Consumed by
+    # `tests/test_rol_candidatos.py`.
+    assert result["count"] == 110
     assert len(result["files"]) == result["count"]
     summary = result["summary"]
     assert summary["with_production_reference"] + summary["tests_only"] \

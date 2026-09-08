@@ -1,0 +1,47 @@
+Propuesta creativa
+==================
+[417 palabras · 2556 caracteres · corte 2026-09-06]
+[pegar desde la linea siguiente]
+
+Concepto. Un archivo se muestra como lista. La lista responde bien a una sola
+pregunta: dónde está eso que busco. Es inútil para las demás: qué hay, qué se
+repite, qué quedó suelto, qué se parece a qué sin que nadie lo dijera. Este
+dispositivo toma esa insuficiencia y la convierte en experiencia.
+
+El gesto central no es mostrar relaciones: es mostrar el costo de mostrarlas.
+Cuando el sistema dispone las piezas de modo que lo parecido quede cerca,
+aplasta muchas dimensiones en dos y destruye vecindades verdaderas. La mayoría
+de las interfaces lo oculta. Ésta lo publica: junto al orden aparece la
+fracción de vecindad que sobrevivió, que en la versión existente es 0,4855.
+Una interfaz que declara su distorsión cambia la relación de autoridad con
+quien la mira: deja de ser un oráculo y pasa a ser un instrumento.
+
+Formato y soporte. Instalación interactiva de mesa, para una persona a la vez.
+Dispositivo de visualización sobre superficie de trabajo, periféricos de
+navegación, y una versión que corre localmente sin dependencia de red.
+Duración de la experiencia: entre 5 y 15 minutos según cuánto intervenga el
+visitante.
+
+Lenguaje. Diseño de interacción y visualización. Tipografía y color legibles a
+distancia de mesa, movimiento reducido. Nada de la estética del panel de
+control: no es un tablero sino una mesa de montaje, donde el material está
+desplegado y las decisiones son visibles y provisorias.
+
+Las tres capas. La materia: un archivo demostrativo de obra propia con
+procedencia declarada, donde cada pieza conserva de dónde viene y qué es. La
+lectura de máquina: color, estilo y descripción automática, mostrada como
+lectura y no como verdad, con sus errores a la vista. La decisión: el
+visitante acepta, descarta o deja abierto, y la obra incorpora sin discutir.
+
+Estado real del punto de partida, declarado con precisión. Existe y está
+verificado: el servicio corriendo local, el inventario, la lectura visual, la
+métrica de pérdida, y un subsistema de decisión curatorial con 87 decisiones
+registradas y 9 reversiones reales. No existe todavía: la salida de sesión
+para el visitante, la versión instalable para público y la accesibilidad
+verificada. Eso es exactamente lo que se pide financiar.
+
+Lo que el proyecto no afirmará: que existe un orden correcto, que el sistema
+descubre autorías, que sus resultados son universales, ni que puede leer
+atención o comprensión. No usa cámaras ni sensores biométricos. Y si en una
+sesión la lectura relacional no aporta comprensión frente a una lista, ese
+resultado se conserva y se publica.

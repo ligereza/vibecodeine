@@ -29,7 +29,7 @@ import time
 try:
     from cultura.mak_conductor.runtime import active_enabled, dispatch_sync
 except ImportError:  # pragma: no cover - direct MAK deployment
-    sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH", "/home/mak/flujo/cultura"))
+    sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH", "/home/mak/cultura"))
     try:
         from mak_conductor.runtime import active_enabled, dispatch_sync
     except ImportError:
@@ -55,7 +55,7 @@ RAMA_BASE = "mak"
 HOME = os.path.expanduser("~")
 CODEX_JOBS = os.path.join(HOME, "codex", "jobs.jsonl")
 PIEZAS_DIR = os.path.join(HOME, "codex", "piezas")
-REPO = os.path.join(HOME, "flujo")
+REPO = HOME  # the MAK checkout is this department's repo root
 DEST_REL = os.path.join("cultura", "mak_plataforma", "utilidades")
 STATE = os.path.join(HOME, "plataforma", "codex_delivered.json")
 LOG = os.path.join(HOME, "plataforma", "logs", "entregar.log")

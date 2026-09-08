@@ -1,0 +1,20 @@
+Resumen
+=======
+[144 palabras · 891 caracteres · corte 2026-09-06]
+[pegar desde la linea siguiente]
+
+IRIS: Mesa de Montaje es un dispositivo de diseño que convierte un archivo
+visual en una superficie donde el orden se puede discutir. El visitante
+recorre un archivo, ve las relaciones que el sistema propone, la evidencia que
+las sostiene y cuánto se pierde al ordenarlas —el propio sistema publica esa
+cifra— y decide: acepta, descarta o deja abierta.
+
+El proyecto parte de una base que existe y funciona localmente, con decisiones
+curatoriales ya registradas sobre el archivo del autor. Lo que se financia no
+es inventar el sistema: es construir lo que hoy no tiene —una salida de sesión
+que el visitante se lleve, accesibilidad verificada y un montaje instalable— y
+exhibirlo cuatro semanas en un espacio cultural de acceso público, con
+mediación a cargo del propio responsable.
+
+Las funciones que el visitante usará son resultados comprometidos del
+proyecto, no capacidades ya validadas.

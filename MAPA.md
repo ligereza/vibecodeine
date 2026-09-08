@@ -1,18 +1,18 @@
 # MAP
 
-This is the generated command/route map for `/home/mak/flujo`.
-`docs/MAK_CURRENT_STATE.md` is the compact current architecture, and
-`context/LAST_HANDOFF.md` is the continuity record; phase files are evidence
-and must not override either one. The installed CLI may still expose legacy
-commands for compatibility; that does not make them part of the active MAK
-workflow.
+This is the generated command/route map for the `flujo` CLI, which lives in
+the FLUJO checkout at `/home/mak/flujo` (branch `FLUJO`). This branch is MAK:
+`/home/mak` carries the box departments, services and Hub on `8900`, and
+consumes the motor from `/home/mak/flujo/src`. Every `flujo ...` row below is
+run from the FLUJO checkout, not from here.
+The installed CLI may still expose legacy commands for compatibility; that
+does not make them part of the active MAK workflow.
 The historical tree under `/home/mak/WIN` is the only preserved legacy surface
 and is not current MAK instruction. Use this tree as the sole active authoring
 and integration baseline.
 
 This repository is the reviewed projection of the MAK system.
 
-- `src/flujo/` is the canonical Python runtime and CLI.
 - `web/` is the frontend surface for Main, RD and Portfolio/ISKVW.
 - `cultura/` contains research and curation consumers owned by MAK.
 - `data/` contains bounded read-oriented sources and projections.
@@ -27,19 +27,18 @@ Machine-facing identifiers and contracts use English ASCII. Human-facing
 products may use correct Spanish. Run `python3 -m flujo --help` for the current
 CLI contract and `python3 -m flujo doctor` for local diagnostics.
 
-Git topology is intentionally small: `main` is the only permanent branch and
-the only deployment trunk. The annotated tag `archive/house-history` is the
-single preservation point; it reaches the historical branch tips without
-keeping those names as live branches. Topic branches are optional and
-short-lived only while a bounded slice is being reviewed (`rd/*`,
-`portfolio/*`, `mak/*`, `tools/*` or `cleanup/*`); they merge directly to
-`main` and are deleted after promotion. There are no permanent domain,
-`source/*`, `work/*`, `develop`, `staging` or release branches.
+The branches are the working shape of the system, not a defect to be gated
+away: MAK and FLUJO are two checkouts of this repository with distinct
+authorities, and the operator's decision of 2026-09-03 names them as such
+while reserving `ligereza/MAK`, `ligereza/flujo` and `ligereza/IRIS` as the
+next step. The annotated tag `archive/house-history` remains the single
+preservation point for the historical branch tips.
 
-`.github/workflows/git-topology.yml` guards this invariant on `main`: remote
-branch refs must contain only `main`, and the preservation tag must exist.
-Domain separation lives in the physical owner/consumer boundaries above, not
-in parallel Git trunks.
+A main-only invariant was written on 2026-08-15 and enforced by
+`.github/workflows/git-topology.yml`. It was retired on 2026-09-06: the
+decision of 2026-09-03 superseded it, 335 commits had landed on MAK since it
+was written, and a gate that fails by design measures nothing. Domain
+separation lives in the physical owner/consumer boundaries above.
 
 <!-- COMANDOS:INICIO -- generado por tools/gen_mapa_comandos.py, no editar a mano -->
 
@@ -190,7 +189,7 @@ Medido sobre el CLI real: **98 comandos** (25 sueltos + 73 dentro de 17 grupos).
 
 | Comando | Que hace | Que necesita antes |
 |---|---|---|
-| `py -m flujo rd-datos ingest` | Ingesta un CSV de datos de campo (testeo de reactivos, atenciones o encuestas) a la DB privacy-first data/rd_datos.db. Toda fila pasa por flujo.privacy.scan_text ANTES de persistir: RUT chileno o n... | un CSV de campo; la DB privacy-first se crea sola |
+| `py -m flujo rd-datos ingest` | Ingesta un CSV de datos de campo (testeo de reactivos, atenciones o encuestas) a la DB privacy-first data/rd.db. Toda fila pasa por flujo.privacy.scan_text ANTES de persistir: RUT chileno o numero... | un CSV de campo; la DB privacy-first se crea sola |
 | `py -m flujo rd-datos informe` | Genera el informe trimestral de datos de campo RD (markdown): 3 tablas (tendencias por sustancia/mes, tasa de no-coincidencia por sustancia, atenciones por tipo) precedidas por el disclaimer obliga... | nada |
 
 ### Grupo `rd-db` -- Base de datos RD: reactivos, packs, suplementos, productoras, eventos.
@@ -256,6 +255,7 @@ repositorio. Las credenciales y tokens se mantienen fuera de Git.
 | `FLUJO_RD_ROOT` | Raíz externa del material RD indexable. |
 | `FLUJO_WEB_DEBUG` | Activa diagnóstico web local. |
 | `FLUJO_WORKSPACE_ROOT` | Raíz explícita del workspace. |
+| `FLUJO_SOURCE_ROOT` | Raíz del código del motor FLUJO que MAK consume; por defecto `/home/mak/flujo/src`. MAK no lleva copia de `src/flujo`, así que las herramientas que importan `flujo.knowledge.*` resuelven por aquí. |
 | `FLYER_BASE` | Raíz alternativa del material de flyers. |
 | `BLENDER_EXE` | Ruta explícita opcional del binario Blender; si falta, MAK busca el binario local instalado junto a `/home/mak/flujo`. |
 | `MAK_BLENDER` | Alias histórico de `BLENDER_EXE`, reconocido para no romper instalaciones existentes. Solo lo leía el diagnóstico de curatoría, así que quien seguía esta tabla resolvía Blender en un lado y no en el otro; ahora ambos nombres funcionan en los dos y gana `BLENDER_EXE`. |
@@ -273,16 +273,6 @@ repositorio. Las credenciales y tokens se mantienen fuera de Git.
 | `MAK_SYNC_BACKUP_ROOT`, `MAK_SYNC_RECOVERY_ROOT`, `MAK_SYNC_STAGING_ROOT` | Directorios de backup, recuperacion y staging del puente de sincronizacion. |
 | `MAK_SYNC_LOCK`, `MAK_SYNC_MANIFEST` | Rutas de bloqueo y manifiesto de una corrida de sincronizacion. |
 | `WATSONX_MODEL`, `WATSONX_URL` | Configuracion opcional del backend WatsonX conservado para benchmarks/manual. |
-
-Every active topic branch must carry its own scoped contract and handoff,
-created from `contracts/BRANCH_AGENTS_TEMPLATE.md` and
-`context/BRANCH_HANDOFF_TEMPLATE.md`. The branch contract narrows the global
-`agents.md` rules to one consumer and write set; the branch handoff records
-only that branch's commands, files, risks and next action. The root
-`context/LAST_HANDOFF.md` remains the main continuity record. When a topic is
-merged and deleted, durable facts are promoted there and the temporary branch
-documents disappear with the branch, so stale branch state cannot become a
-new operational map.
 
 Ignored `web/dist*` and `dist_compartir/` files are generated delivery artifacts,
 not sources of truth. If they contain an older snapshot, use the tracked source

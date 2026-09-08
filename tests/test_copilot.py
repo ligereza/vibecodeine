@@ -1,6 +1,10 @@
 from cultura.mak_plataforma.copilot import (active_ordering_seed,
                                              build_gtm_map, build_suggestions,
                                              evaluate_feedback, group_suggestions,
+                                             evidence_readiness,
+                                             OVERLAP_FACETS,
+                                             _explicit_overlap,
+                                             _folded_facet_index,
                                              external_evidence_profile,
                                              inference_prompt,
                                              learning_profile,
@@ -11,6 +15,10 @@ from cultura.mak_plataforma.copilot import (active_ordering_seed,
                                              normalize_vision,
                                              ordering_distance_profile,
                                              replay_ordering_evaluation,
+                                             READINESS_SCHEMA,
+                                             SLOT_CANDIDATES_SCHEMA,
+                                             slot_candidates,
+                                             _caption_gaps,
                                              _vector_distance)
 
 import json
@@ -555,3 +563,369 @@ def test_inference_quality_keeps_only_evidenced_hypotheses_ready_for_human_gate(
     assert quality["valid_hypotheses"] == 1
     assert quality["missing_evidence"] == ["c"]
     assert quality["promotion"] == "none"
+
+
+# ---------------------------------------------------------------------------
+# Evidence readiness: what a record has and lacks before a human labels it
+# ---------------------------------------------------------------------------
+#
+# Added 2026-09-02 from a measurement, not a hunch. Of 7044 records, 116 are
+# labelled and 6928 are not, and the ordering model predicts none of them with
+# high confidence (alta=0, media=4156, baja=2772), so every case is still a
+# human look. The frontier rows already carried has_description / has_vision /
+# review_scope and the interface read none of them: the operator decided
+# without seeing what the case contained, and `review` -- the label that means
+# "not decidable yet" -- was used once in 116 decisions.
+
+
+def _record(**overrides):
+    row = {
+        "source_id": "x.jpg", "asset_available": True, "asset_path": "/p/x.jpg",
+        "description": "una pieza", "date": "2021-10-03",
+        "classification": {}, "work_group": None,
+    }
+    row.update(overrides)
+    return row
+
+
+def _status(report, channel):
+    return next(row["status"] for row in report["channels"]
+                if row["channel"] == channel)
+
+
+def test_readiness_separates_not_measured_from_measured_absent():
+    """`unknown` and `absent` are different claims and must not collapse.
+
+    The perception index holds 30 of 7044 records, so a missing vision row
+    is almost always "not indexed", not "this record has no perception".
+    Reading that absence as a finding is how a gap becomes a fact.
+    """
+    outside = evidence_readiness(_record(), vision=None,
+                                         vision_indexed=["other.jpg"])
+    assert _status(outside, "perception") == "unknown"
+    assert "perception" in outside["unmeasured"]
+    assert "perception" not in outside["missing"]
+
+    indexed = evidence_readiness(_record(), vision=None,
+                                         vision_indexed=["x.jpg"])
+    assert _status(indexed, "perception") == "absent"
+    assert "perception" in indexed["missing"]
+
+    seen = evidence_readiness(
+        _record(), vision={"features": {"a": 1}, "confidence": "low"},
+        vision_indexed=["x.jpg"])
+    assert _status(seen, "perception") == "present"
+
+
+def test_a_piece_never_blocks_a_decision_by_itself():
+    """The report describes the piece; the FORMAT is what decides.
+
+    Operator's correction, 2026-09-02, in his words: the system creates
+    portfolio formats first and then decides how to order the works; it does
+    not look for the perfect order of one work. `READINESS_REQUIRED` was
+    `("asset", "description")`, which made 3556 of 7044 records report
+    `abstain` -- half the archive declared undecidable for lacking a caption
+    the work may never have had, against 21 that lack an asset.
+
+    What the channels say is kept, because seeing what a record holds before
+    looking at it is worth having. What is gone is the verdict.
+    """
+    blind = evidence_readiness(_record(asset_available=False, description=""))
+    assert blind["decision"] != "abstain"
+    assert blind["blocking"] == []
+    # The absence is still reported, exactly as measured.
+    assert _status(blind, "asset") == "absent"
+    assert _status(blind, "description") == "absent"
+    assert {"asset", "description"} <= set(blind["missing"])
+    assert blind["promotion"] == "none" and blind["owner"] == "human"
+    # `review` stays available as a label; it is no longer prescribed.
+    assert "review" in blind["labels"]
+
+
+def test_a_record_with_no_subject_still_fails_closed():
+    """Removing the caption gate must not remove fail-closed on an unusable row.
+
+    A record without `source_id` has no subject to report on, which is a
+    different claim from "this piece lacks a caption".
+    """
+    for unusable in (None, {}, {"source_id": ""}, {"source_id": "   "}):
+        report = evidence_readiness(unusable)
+        assert report["decision"] == "abstain", unusable
+        assert report["item_id"] == ""
+        assert "ilegible" in report["next_action"]
+
+
+def test_readiness_never_promotes_and_keeps_the_human_as_owner():
+    """A readout is not a decision. It says what is there, nothing more."""
+    for report in (evidence_readiness(_record()),
+                   evidence_readiness(_record(asset_available=False))):
+        assert report["promotion"] == "none"
+        assert report["owner"] == "human"
+        assert report["producer"] == "local_readiness_report"
+        assert report["next_action"].strip()
+        assert report["schema"] == READINESS_SCHEMA
+
+
+def test_readiness_reports_reservations_without_blocking_the_label():
+    """Missing enrichment is declared, not resolved, and does not stop a
+    defensible label from being possible."""
+    report = evidence_readiness(_record(), relations=[{"item_id": "y"}])
+    assert report["decision"] == "decidable_con_reservas"
+    assert report["blocking"] == []
+    assert set(report["missing"]) == {"classification", "work_group"}
+    assert _status(report, "relations") == "present"
+    assert "relacion" in next(row["detail"] for row in report["channels"]
+                              if row["channel"] == "relations")
+
+
+def test_readiness_survives_a_record_it_cannot_read():
+    """Fail closed: an unusable record reports unknowns, never invented values."""
+    report = evidence_readiness(None)
+    assert report["decision"] == "abstain"
+    assert report["item_id"] == ""
+    assert all(row["status"] in ("present", "absent", "unknown")
+               for row in report["channels"])
+
+
+def test_hoisting_the_source_facets_changes_speed_and_not_results():
+    """`_explicit_overlap` recomputed the SOURCE side once per candidate.
+
+    Profiled 2026-09-02: one scene called `_facet_values` 83772 times against
+    41886 `_explicit_overlap` calls, so half of them re-derived and re-folded
+    values that cannot differ across the loop. Hoisting halved the calls. What
+    this test guards is the part that matters: the answer is identical.
+    """
+    source = {"id": "s", "artista": ["DrefQuila", "Harry Nach"],
+              "venue": "Teatro Caupolicán", "evento": ["Festival Sentir"]}
+    candidates = [
+        {"id": "a", "artista": ["Harry Nach"]},
+        {"id": "b", "venue": "Teatro Caupolicán", "evento": ["otro"]},
+        {"id": "c", "artista": [], "venue": ""},
+        {"id": "d", "evento": ["Festival Sentir"], "artista": ["DrefQuila"]},
+    ]
+    index = _folded_facet_index(source)
+    for candidate in candidates:
+        for facet in OVERLAP_FACETS:
+            assert _explicit_overlap(source, candidate, facet) == \
+                _explicit_overlap(source, candidate, facet,
+                                  source_folded=index.get(facet)), (candidate, facet)
+    # The hoist is optional, so every caller that never heard of it still works.
+    assert _explicit_overlap(source, candidates[0], "artist") == ["Harry Nach"]
+    assert _explicit_overlap(source, candidates[2], "artist") == []
+    assert set(index) == set(OVERLAP_FACETS)
+
+
+def test_a_perception_read_that_returned_nothing_is_not_evidence():
+    """An empty reading is a measured absence, never `present`.
+
+    `normalize_vision` always emits its four feature keys, so a read that came
+    back with nothing is stored as `{"visual_terms": [], ...}`: a truthy dict
+    holding nothing. Deciding on the container instead of its content reported
+    exactly that as evidence. Measured 2026-09-02 on the real index, 2 of its
+    30 records carried an empty reading, were reported `present` with
+    `confidence: low`, and so reached `decision: decidable`.
+
+    The shape comes from `normalize_vision` itself rather than being written
+    out here, so this test cannot drift from what the writer actually stores.
+    """
+    empty = normalize_vision("not json at all", "x.jpg", "ollama")
+    assert empty["features"], "the writer always emits its four keys"
+    assert not any(empty["features"].values()), "and here they are all empty"
+
+    report = evidence_readiness(_record(), vision=empty,
+                                vision_indexed=["x.jpg"])
+    assert _status(report, "perception") == "absent"
+    assert "perception" in report["missing"]
+    assert "perception" not in report["unmeasured"]
+
+    # Holding the row is itself proof the record was indexed, so a caller that
+    # passes no index still gets `absent` and never `unknown`.
+    assert _status(evidence_readiness(_record(), vision=empty),
+                   "perception") == "absent"
+
+    # The correction does not over-reach: one real term is still evidence.
+    seen = normalize_vision('{"visual_terms": ["trama"]}', "x.jpg", "ollama")
+    assert _status(evidence_readiness(_record(), vision=seen,
+                                      vision_indexed=["x.jpg"]),
+                   "perception") == "present"
+
+
+def test_the_hoisted_facet_index_cannot_be_paired_with_the_wrong_facet():
+    """The hoist must not open a way to compare one facet against another.
+
+    Nothing outside `_explicit_overlap` stopped a caller from handing it the
+    `artist` values for a `venue` comparison, which returns a shared value that
+    is not shared on that facet at all. Taking the whole folded index and
+    looking the facet up inside makes that mismatch impossible to express.
+    """
+    source = {"id": "s", "artist": ["Tal Artista"], "venue": ["Un Lugar"]}
+    candidate = {"id": "c", "artist": ["Tal Artista"], "venue": ["Tal Artista"]}
+    index = _folded_facet_index(source)
+
+    # The lookup finds the right facet: this pair really does share an artist.
+    assert _explicit_overlap(source, candidate, "artist",
+                             source_folded=index) == ["Tal Artista"]
+    # And it does not reach across: the candidate's venue matches the source's
+    # ARTIST, which is not a venue in common.
+    assert _explicit_overlap(source, candidate, "venue", source_folded=index) == []
+    assert _explicit_overlap(source, candidate, "venue") == [], "unhoisted agrees"
+    # The shape of the mistake this closes: the wrong facet's folded values
+    # invent an overlap. Reachable only by writing it out by hand, never by
+    # passing the index.
+    assert _explicit_overlap(source, candidate, "venue",
+                             source_folded=index["artist"]) == ["Tal Artista"]
+    # A bare list for the RIGHT facet stays supported, so no caller breaks.
+    assert _explicit_overlap(source, candidate, "artist",
+                             source_folded=index["artist"]) == ["Tal Artista"]
+
+
+# ---------------------------------------------------------------------------
+# Format-first: what a blocked slot asks the archive for
+# ---------------------------------------------------------------------------
+#
+# `slot_candidates` takes the eligibility rule as an argument because the rule
+# belongs to the motor and must keep living in one place. These tests exercise
+# the AGGREGATION with a stand-in that implements the documented contract --
+# accept the claim, or report the first condition that stopped it. Agreement
+# with the real rule over the real format files is a separate test in the
+# `integration` lane, which is where a FLUJO import is declared.
+
+_STATES = ("observed", "candidate", "supported_candidate")
+
+
+def _fake_eligible(slot, claims):
+    """The motor's contract: stop at the first failure, count that one reason."""
+    rejected = {"wrong_verb": 0, "wrong_layer": 0, "state_too_low": 0,
+                "permission_too_low": 0, "caption_incomplete": 0,
+                "field_value_not_allowed": 0}
+    rows = []
+    for claim in claims:
+        if claim.get("verb") != slot["claim"]:
+            rejected["wrong_verb"] += 1
+            continue
+        if claim.get("layer") != slot["layer"]:
+            rejected["wrong_layer"] += 1
+            continue
+        if _STATES.index(claim["state"]) < _STATES.index(slot["min_state"]):
+            rejected["state_too_low"] += 1
+            continue
+        if _caption_gaps(slot.get("caption_grammar"), claim.get("caption_fields")):
+            rejected["caption_incomplete"] += 1
+            continue
+        rows.append(dict(claim))
+    return rows, rejected
+
+
+def _slot(**overrides):
+    row = {"slot_id": "consistencia", "claim": "puedo", "layer": "process",
+           "min_state": "candidate", "min_permission": "aggregate_only",
+           "required": True, "count": {"min": 1, "max": 4},
+           "caption_grammar": "{tool} durante {year}"}
+    row.update(overrides)
+    return row
+
+
+def _claim(subject, **overrides):
+    row = {"claim_id": "claim:" + subject, "verb": "puedo", "layer": "process",
+           "subject": subject, "scope": "archive", "state": "candidate",
+           "permission": "unnamed",
+           "caption_fields": {"tool": subject, "year": 2025}}
+    row.update(overrides)
+    return row
+
+
+def test_a_blocked_slot_names_the_claims_that_are_one_condition_short():
+    """"No factible" was a dead end; the format asks and the archive answers.
+
+    Measured against the live chain, `F2-capacidad-barberia` blocks on
+    `consistencia`, which needs 1 claim, while 214 claims are the same verb and
+    layer -- 175 stopped only because their state is `observed` where the slot
+    asks for `candidate`. That is one confirmation away, and nothing said so.
+    """
+    claims = [
+        _claim("Blender", state="observed"),
+        _claim("Krita", state="observed"),
+        _claim("Illustrator", caption_fields={"tool": "Illustrator"}),
+        # Not about this slot at all, and must not appear.
+        _claim("un contexto", verb="ocurrio", layer="context"),
+        _claim("un rol", verb="hice_esta_parte", layer="role"),
+    ]
+    report = slot_candidates(_slot(), claims, _fake_eligible)
+
+    assert report["schema"] == SLOT_CANDIDATES_SCHEMA
+    assert report["kind"] == "one_condition_short"
+    assert report["slot_id"] == "consistencia"
+    assert report["needs"] == 1
+    assert report["eligible_now"] == 0
+    # Three of the right kind; the two off-slot claims are not counted.
+    assert report["on_slot_total"] == 3
+    assert report["by_condition"] == {"caption_incomplete": 1, "state_too_low": 2}
+    subjects = [row["subject"] for row in report["candidates"]]
+    assert "un contexto" not in subjects and "un rol" not in subjects
+    # A state an operator can raise comes before a caption someone must write.
+    assert subjects == ["Blender", "Krita", "Illustrator"]
+    assert report["candidates"][0]["condition"] == "state_too_low"
+    assert "confirmar" in report["candidates"][0]["what_to_do"]
+    # The caption case names the field, so the next step is an action.
+    assert report["candidates"][-1]["missing_caption_fields"] == ["year"]
+    assert "175" not in report["next_action"], "no invented numbers"
+    assert "state_too_low" in report["next_action"]
+    assert report["promotion"] == "none" and report["owner"] == "human"
+
+
+def test_a_slot_with_no_claim_of_its_kind_does_not_read_as_missing_evidence():
+    """`F7-lectura-curatorial` needs `significa` claims in the `curatorial`
+    layer and the archive produces none at all: 0 of the right kind, measured.
+
+    That is not "add more evidence", it is "this asks for a kind of statement
+    nothing produces yet", and the two must never read alike.
+    """
+    claims = [_claim("Blender"), _claim("un contexto", verb="ocurrio",
+                                        layer="context")]
+    report = slot_candidates(
+        _slot(slot_id="lecturas", claim="significa", layer="curatorial",
+              count={"min": 2, "max": 6}), claims, _fake_eligible)
+
+    assert report["kind"] == "no_claim_of_this_kind"
+    assert report["on_slot_total"] == 0
+    assert report["candidates"] == []
+    assert report["by_condition"] == {}
+    assert "significa" in report["next_action"]
+    assert "curatorial" in report["next_action"]
+    assert "TIPO" in report["next_action"]
+
+
+def test_the_candidate_list_is_bounded_and_says_how_much_it_hid():
+    claims = [_claim("t%02d" % index, state="observed") for index in range(12)]
+    report = slot_candidates(_slot(), claims, _fake_eligible, limit=3)
+    assert len(report["candidates"]) == 3
+    assert report["on_slot_total"] == 12
+    assert report["truncated"] == 9
+
+
+def test_an_already_satisfied_slot_is_reported_as_such():
+    report = slot_candidates(_slot(), [_claim("Blender")], _fake_eligible)
+    assert report["eligible_now"] == 1
+    assert report["kind"] == "satisfied"
+
+
+def test_a_rule_that_raises_never_takes_the_read_down():
+    """The eligibility rule belongs to the motor. A read-only report must
+    degrade to saying nothing rather than break the surface that shows it."""
+    def explodes(slot, claims):
+        raise RuntimeError("motor cambio de forma")
+
+    report = slot_candidates(_slot(), [_claim("Blender")], explodes)
+    assert report["candidates"] == []
+    assert report["kind"] == "no_claim_of_this_kind"
+
+
+def test_caption_gaps_names_the_declared_field_that_is_absent():
+    grammar = "{tool} durante {year} en {venue}"
+    assert _caption_gaps(grammar, {"tool": "Blender", "year": 2025,
+                                   "venue": "Sala"}) == []
+    assert _caption_gaps(grammar, {"tool": "Blender"}) == ["year", "venue"]
+    # Declared but empty is still a gap: a caption cannot carry a blank.
+    assert _caption_gaps(grammar, {"tool": "Blender", "year": 2025,
+                                   "venue": "   "}) == ["venue"]
+    assert _caption_gaps("sin campos", {}) == []

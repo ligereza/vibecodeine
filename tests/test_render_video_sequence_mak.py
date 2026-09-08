@@ -28,6 +28,16 @@ def test_build_command_uses_sequence_script_and_manifest(tmp_path):
     assert "--no-persistent-data" not in command
 
 
+def test_sequence_script_comes_from_the_sibling_flujo_checkout():
+    expected = (
+        Path(__file__).resolve().parents[1] / "flujo" / "src" /
+        "flujo" / "eventos" / "blender_nodes_video_seq.py"
+    )
+    assert module.BLENDER_SCRIPT == expected
+    retired = Path(__file__).resolve().parents[1] / "src" / "flujo" / "eventos"
+    assert module.BLENDER_SCRIPT != retired / "blender_nodes_video_seq.py"
+
+
 def test_build_command_can_disable_persistent_data(tmp_path):
     command = module.build_blender_command(
         Path("/home/mak/blender/blender"),

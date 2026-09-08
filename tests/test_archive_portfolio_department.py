@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from src.flujo.departments import catalog
+from flujo.departments import catalog
 
 
 ROOT = Path(__file__).resolve().parents[1]

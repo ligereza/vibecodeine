@@ -1,0 +1,16 @@
+Sostenibilidad
+==============
+[101 palabras · 648 caracteres · corte 2026-09-06]
+[pegar desde la linea siguiente]
+
+La guía queda publicada y es ejecutable sin software. El instrumento sigue
+funcionando en el equipo del responsable, como funciona hoy; su instalación en
+equipos de terceros es una prueba del proyecto, no un resultado asegurado.
+Ninguno de los dos requiere financiamiento para seguir existiendo, que es
+exactamente el punto: el resultado de este proyecto no tiene costo de
+mantención.
+
+La continuidad posible —talleres pagados a partir de la demanda que el
+laboratorio revele— es una hipótesis con validación pendiente y no el objetivo
+de esta postulación. Que exista demanda es, precisamente, una de las cosas que
+este laboratorio permitirá saber.

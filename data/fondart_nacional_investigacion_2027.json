@@ -1,0 +1,423 @@
+{
+  "schema": "mak-convocatoria-bases-v1",
+  "id": "fondart-nacional-investigacion-2027",
+  "name": "Fondart Nacional — Línea Investigación",
+  "edition": "Concurso General 2027",
+  "authority": "Ministerio de las Culturas, las Artes y el Patrimonio",
+  "source": {
+    "kind": "official_bases",
+    "covers": "objetivo, estudio de campo, temáticas por disciplina, grupos, montos, gastos financiables, duración, criterios, secciones y documentos. NO contiene el calendario de apertura y cierre: la fecha de cierre se conserva como captura local del portal y queda marcada UNRESOLVED en `deadlines.source`.",
+    "bases_pdf": "https://www.fondosdecultura.cl/wp-content/uploads/2026/08/investigacion-fondart-nacional-2027.pdf",
+    "portal": "https://www.fondosdecultura.gob.cl",
+    "read_on": "2026-09-05",
+    "source_hash": "sha256:9da0ab5f0850fdad354415448829fd88fa1e61beee5fd048c90a4a5b4c418af2",
+    "note": "Transcripción campo por campo desde el PDF oficial local recuperado en `docs/recovered/claude_sessions_2026-08-12/raw/bases_pdf/fondart-nacional-investigacion-2027.pdf`; los `source_section` y las notas de fecha distinguen lo que el PDF sí sostiene de lo que procede del portal. El paquete de captura que originó esta ficha fue rescatado del objeto local `c76b6f6a` y queda identificado en `_rescued_from`; no se inventan valores que no estén en esa evidencia. Verificar el PDF y el portal vigentes antes de enviar: la autoridad puede reemplazarlos sin aviso."
+  },
+  "deadlines": {
+    "opens": null,
+    "closes": "2026-09-14",
+    "closes_time": "15:00",
+    "closes_timezone": "America/Santiago",
+    "max_duration_months": 12,
+    "projects_start_window": {
+      "start": "2027-03-01",
+      "end": "2027-04-30"
+    },
+    "source_section": "I.4 Restricciones; I.9 Duración y ejecución de los proyectos (solo ventana y máximo)",
+    "source": {
+      "kind": "official_resolution",
+      "status": "RESOLVED",
+      "verified": "2026-09-07",
+      "resolution": "Rex 2596, de 2026",
+      "approving_resolution_of_these_bases": "Res. Ex. 2166, de 2026",
+      "local_source_ref": "projects/cultura/dossiers/codex-remoto-20260906/fuentes/txt/Rex-2596-ano-2026.txt",
+      "validator": "https://doc.digital.gob.cl/validador/YDOQQV-570",
+      "quote": "Fondo Nacional de Desarrollo Cultural y las Artes, ambito nacional de financiamiento | Investigacion | 2166, de 2026 | Lunes 14 de septiembre a las 15:00 horas de Santiago de Chile",
+      "note": "CORRECCION 2026-09-07. El valor anterior, 2026-09-10, venia de una captura del portal marcada UNRESOLVED. La resolucion oficial que amplia el plazo estaba en esta maquina y nadie la habia cruzado con esta linea: su tabla cubre explicitamente el ambito NACIONAL y le asigna el lunes 14. El PDF de bases sigue sin traer fecha -- verificado el 2026-09-07 sobre las 38 paginas, cero apariciones de 'septiembre' -- pero SI fija la hora: 'las 15:00 horas de Santiago de Chile del ultimo dia habil para postular'.",
+      "supersedes": {
+        "closes": "2026-09-10",
+        "why": "captura de portal sin resolucion; el dia de la semana citado (jueves 10) era consistente, pero la ampliacion posterior lo movio"
+      }
+    },
+    "regional_extensions": [],
+    "extensions_checked": {
+      "on": "2026-09-05",
+      "found": "ninguna aplicable en la captura",
+      "note": "La línea es de ámbito nacional; no se transforma la fecha incierta del portal en una ampliación regional."
+    },
+    "excluded_regions": [
+      "Arica y Parinacota",
+      "Tarapaca",
+      "Antofagasta",
+      "Atacama"
+    ],
+    "excluded_regions_note": "La ampliacion de Rex 2596 excluye a los responsables de esas cuatro regiones, que se rigen por la ampliacion climatica del norte."
+  },
+  "amounts": {
+    "currency": "CLP",
+    "min_per_project": 500000,
+    "max_per_project": 15000000,
+    "group_available": {
+      "A": 180000000,
+      "B": 180000000
+    },
+    "source_section": "I.6.2 Total de recursos y montos máximos"
+  },
+  "budget_caps": [
+    {
+      "id": "imprevistos_max_2pct",
+      "description": "Imprevistos no puede exceder el 2% del valor total solicitado al Fondo.",
+      "field": "contingency",
+      "base": "requested_from_fund",
+      "max_percent": 2.0,
+      "source_section": "I.7 Gastos financiables — Imprevistos"
+    },
+    {
+      "id": "responsable_max_40pct",
+      "description": "El tope para la asignación del responsable será de 40% del monto solicitado al fondo y aplica a responsables personas naturales.",
+      "field": "lead_fee",
+      "base": "requested_from_fund",
+      "max_percent": 40.0,
+      "source_section": "I.7 Gastos financiables — Personal"
+    },
+    {
+      "id": "transferencia_entre_5_y_10pct",
+      "description": "El plan de actividades de transferencia de conocimientos puede solicitar entre 5% y 10% de los recursos solicitados al Fondo.",
+      "field": "knowledge_transfer",
+      "base": "requested_from_fund",
+      "min_percent": 5.0,
+      "max_percent": 10.0,
+      "source_section": "I.7 Gastos financiables — Operación"
+    }
+  ],
+  "objective": "Financiar total o parcialmente proyectos individuales o colectivos de investigación que aporten al avance del conocimiento en las disciplinas de las artes de la visualidad, la artesanía, el diseño y/o la arquitectura, enfocados en estudios de campo para levantar datos de cada sector.",
+  "objective_source_section": "I.1 Objetivo de la convocatoria",
+  "field_study_required": true,
+  "field_study_source_section": "I.1 Objetivo de la convocatoria",
+  "groups": [
+    {
+      "id": "A",
+      "title": "Grupo A",
+      "object": "Proyectos de investigación en artes visuales y plásticas, fotografía, nuevos medios e interdisciplina.",
+      "disciplines": [
+        "Artes de la Visualidad",
+        "Fotografía",
+        "Nuevos medios",
+        "Interdisciplina"
+      ],
+      "source_section": "I.6.1 Grupos"
+    },
+    {
+      "id": "B",
+      "title": "Grupo B",
+      "object": "Proyectos de investigación en artesanía, diseño, arquitectura e interdisciplina.",
+      "disciplines": [
+        "Artesanía",
+        "Diseño",
+        "Arquitectura",
+        "Interdisciplina"
+      ],
+      "source_section": "I.6.1 Grupos"
+    }
+  ],
+  "eligible_field_study_topics": {
+    "Artes de la Visualidad": [
+      "Caracterización de públicos y consumo cultural",
+      "Evidencia comparada de experiencias de internacionalización",
+      "Catastro y mapeo de espacios e infraestructura del sector"
+    ],
+    "Artesanía": [
+      "Estudio de consumo, canales y/o rutas de comercialización",
+      "Identificación y caracterización del sector y/o centros de producción artesanales",
+      "Estudios de impacto de políticas públicas de artesanía"
+    ],
+    "Diseño": [
+      "Caracterización, catastros y mapeos del sector diseño en Chile",
+      "Mercados, internacionalización y transformación tecnológica del diseño",
+      "Públicos, mediación cultural y acceso ciudadano al diseño"
+    ],
+    "Arquitectura": [
+      "Catastros, estudios y caracterización del ecosistema cultural de la arquitectura",
+      "Estudios de públicos, acceso, mediación y valoración cultural de la arquitectura",
+      "Estudios de circulación, internacionalización e impacto de políticas públicas"
+    ]
+  },
+  "declared_priority": "Para un proyecto del Grupo A, la investigación debe declarar un estudio de campo y una de las temáticas de artes de la visualidad; la transferencia de conocimientos es una condición de convocatoria y también el criterio de mayor ponderación.",
+  "score_bands": [
+    {
+      "from": 10,
+      "to": 44,
+      "label": "Muy Insuficiente"
+    },
+    {
+      "from": 45,
+      "to": 54,
+      "label": "Insuficiente"
+    },
+    {
+      "from": 55,
+      "to": 64,
+      "label": "Regular"
+    },
+    {
+      "from": 65,
+      "to": 74,
+      "label": "Aceptable"
+    },
+    {
+      "from": 75,
+      "to": 84,
+      "label": "Bueno"
+    },
+    {
+      "from": 85,
+      "to": 94,
+      "label": "Muy Bueno"
+    },
+    {
+      "from": 95,
+      "to": 100,
+      "label": "Excelente"
+    }
+  ],
+  "criteria": [
+    {
+      "id": "viabilidad",
+      "name": "VIABILIDAD",
+      "weight": 10,
+      "assesses": "Objetivos, motivaciones, actividades y adecuación y suficiencia de los montos contemplados en el presupuesto.",
+      "dimensions": [
+        "Objetivos, motivaciones y actividades",
+        "Presupuesto o solicitud financiera"
+      ],
+      "indicators": [
+        "Los objetivos específicos describen logros graduales y las motivaciones evidencian pertinencia con el programa de estudios.",
+        "Las actividades son pertinentes y contribuyen a los objetivos.",
+        "El presupuesto está detallado, estimado y corresponde al cronograma, objetivos y funciones del equipo."
+      ],
+      "fed_by_sections": [
+        "objetivos",
+        "actividades",
+        "metodologia",
+        "cronograma",
+        "presupuesto"
+      ],
+      "source_section": "III.3 Procedimiento de evaluación — Viabilidad"
+    },
+    {
+      "id": "curriculo",
+      "name": "CURRÍCULO",
+      "weight": 20,
+      "assesses": "Competencias y experiencia del responsable, equipo y otros participantes en relación con la metodología y las temáticas de investigación.",
+      "dimensions": [
+        "Currículo, experiencias o competencias"
+      ],
+      "indicators": [
+        "El responsable y el equipo demuestran competencias técnicas, teóricas y disciplinarias y la experiencia necesaria.",
+        "La postulación cuenta con especialistas y profesionales necesarios para su ejecución."
+      ],
+      "fed_by_sections": [
+        "equipo",
+        "trayectoria_responsable"
+      ],
+      "source_section": "III.3 Procedimiento de evaluación — Currículo"
+    },
+    {
+      "id": "calidad",
+      "name": "CALIDAD",
+      "weight": 30,
+      "assesses": "Pertinencia de los antecedentes respecto del Avance de Investigación, metodología y uso de estudios de campo para levantar datos.",
+      "dimensions": [
+        "Contenido de la propuesta"
+      ],
+      "indicators": [
+        "El Avance de Investigación tiene coherencia conceptual, claridad y fundamentación como aporte a la generación de conocimiento.",
+        "La propuesta detalla su formulación y metodología y contempla compromisos de realización o difusión cuando corresponda."
+      ],
+      "fed_by_sections": [
+        "avance_investigacion",
+        "estudio_campo",
+        "metodologia",
+        "fuentes",
+        "compromisos_difusion"
+      ],
+      "source_section": "III.3 Procedimiento de evaluación — Calidad"
+    },
+    {
+      "id": "impacto_transferencia",
+      "name": "IMPACTO POTENCIAL DE LA ACTIVIDAD TRANSFERENCIA",
+      "weight": 40,
+      "assesses": "Atributos de la investigación, aporte al sector y difusión mediante una actividad de transferencia de conocimientos.",
+      "dimensions": [
+        "Actividad de transferencia"
+      ],
+      "indicators": [
+        "Los contenidos de la actividad son claros y coherentes con la investigación.",
+        "La metodología es clara y viable según los recursos y beneficiarios.",
+        "El público está identificado, la estimación de audiencias es pertinente y la actividad cuenta con compromisos de realización cuando corresponde.",
+        "La actividad es relevante para el desarrollo profesional del postulante y aporta al campo disciplinar."
+      ],
+      "fed_by_sections": [
+        "plan_transferencia",
+        "publicos",
+        "presupuesto",
+        "compromisos_difusion"
+      ],
+      "source_section": "III.3 Procedimiento de evaluación — Impacto potencial de la actividad transferencia"
+    }
+  ],
+  "form_sections": [
+    {
+      "id": "fundamentacion",
+      "title": "Fundamentación",
+      "guidance": "Problema, relevancia y aporte al campo disciplinar."
+    },
+    {
+      "id": "objetivos",
+      "title": "Objetivos",
+      "guidance": "Objetivo general y específicos, con logros observables."
+    },
+    {
+      "id": "actividades",
+      "title": "Actividades",
+      "guidance": "Actividades de investigación y productos que cumplen los objetivos."
+    },
+    {
+      "id": "estudio_campo",
+      "title": "Estudio de campo",
+      "guidance": "Diseño del levantamiento de datos, participantes, instrumentos y resguardos."
+    },
+    {
+      "id": "avance_investigacion",
+      "title": "Avance de Investigación",
+      "guidance": "Problema, objeto de estudio, preguntas o hipótesis, metodología, marco teórico, estado del arte y referencias; el anexo oficial pide 15 páginas tamaño carta."
+    },
+    {
+      "id": "fuentes",
+      "title": "Fuentes y trazabilidad",
+      "guidance": "Fuentes primarias/secundarias, procedencia, claims y límites de interpretación."
+    },
+    {
+      "id": "metodologia",
+      "title": "Metodología",
+      "guidance": "Cadena de investigación, análisis y validación; separar dato, inferencia y decisión artística."
+    },
+    {
+      "id": "cronograma",
+      "title": "Cronograma",
+      "guidance": "Ejecución de hasta 12 meses iniciada entre marzo y abril de 2027."
+    },
+    {
+      "id": "equipo",
+      "title": "Equipo de trabajo",
+      "guidance": "Responsabilidades, competencias y cartas de compromiso cuando corresponda."
+    },
+    {
+      "id": "trayectoria_responsable",
+      "title": "Trayectoria del responsable",
+      "guidance": "Experiencia pertinente y antecedentes acreditables."
+    },
+    {
+      "id": "presupuesto",
+      "title": "Presupuesto",
+      "guidance": "Gastos por actividad y funciones, con transferencia entre 5% y 10%, imprevistos hasta 2% y responsable hasta 40%."
+    },
+    {
+      "id": "plan_transferencia",
+      "title": "Plan de Actividad de transferencia",
+      "guidance": "Contenido, metodología, formato, público, resultados esperados, impacto y alcance; mínimo una actividad presencial o virtual."
+    },
+    {
+      "id": "publicos",
+      "title": "Públicos beneficiarios",
+      "guidance": "Perfil, convocatoria, número estimado y relación con el contenido."
+    },
+    {
+      "id": "compromisos_difusion",
+      "title": "Compromisos de realización y/o difusión",
+      "guidance": "Compromisos firmados de espacios, infraestructuras o medios existentes cuando la formulación los nombre."
+    },
+    {
+      "id": "riesgos_etica",
+      "title": "Riesgos, ética y límites",
+      "guidance": "Consentimiento, privacidad, derechos, seguridad y límites de la interpretación visual."
+    }
+  ],
+  "mandatory_documents": [
+    {
+      "id": "autorizacion_derechos_autor",
+      "name": "Autorización de derechos de autor si corresponde",
+      "conditional": true,
+      "condition": "El proyecto usa obras protegidas por derecho de autor o derechos conexos."
+    },
+    {
+      "id": "cartas_compromiso_equipo",
+      "name": "Carta firmada por cada integrante del equipo si corresponde",
+      "conditional": true,
+      "condition": "El proyecto declara un equipo de trabajo."
+    },
+    {
+      "id": "consentimiento_comunidad_indigena",
+      "name": "Carta de consentimiento de comunidad indígena si corresponde",
+      "conditional": true,
+      "condition": "Hay actividades en territorios habitados por algún pueblo originario."
+    },
+    {
+      "id": "estatutos_persona_juridica",
+      "name": "Estatutos o acta de constitución si el responsable es persona jurídica privada",
+      "conditional": true,
+      "condition": "El responsable es una persona jurídica privada."
+    },
+    {
+      "id": "certificado_inhabilidades_menores",
+      "name": "Certificado de inhabilidades para trabajar con menores si corresponde",
+      "conditional": true,
+      "condition": "El proyecto contempla mediación o trabajo directo con menores de edad."
+    }
+  ],
+  "evaluation_documents": [
+    {
+      "id": "avance_investigacion",
+      "name": "Avance de Investigación (15 páginas tamaño carta)",
+      "conditional": false,
+      "criterion": "calidad",
+      "source_section": "Anexo N° 2 — Documentos necesarios para la evaluación"
+    },
+    {
+      "id": "plan_actividad_transferencia",
+      "name": "Plan de Actividad de transferencia",
+      "conditional": false,
+      "criterion": "impacto_transferencia",
+      "source_section": "Anexo N° 2 — Documentos necesarios para la evaluación"
+    },
+    {
+      "id": "compromisos_exhibicion",
+      "name": "Compromisos de realización y/o difusión",
+      "conditional": true,
+      "condition": "La formulación nombra espacios, infraestructuras o medios existentes como parte de la estrategia de difusión o cotización",
+      "criterion": "calidad",
+      "source_section": "Anexo N° 2 — Documentos necesarios para la evaluación"
+    }
+  ],
+  "mandatory_documents_warning": "Los documentos del Anexo N° 2 son indispensables para la postulación o la evaluación según corresponda; las formalidades exigidas deben verificarse en el FUP y en el anexo oficial vigente.",
+  "restrictions": [
+    "El proyecto debe comenzar entre el 01 de marzo y el 30 de abril de 2027.",
+    "El proyecto debe ser un estudio de campo para levantamiento de datos y ajustarse a una temática del grupo/disciplina correspondiente.",
+    "Solo se puede presentar una postulación a esta línea por responsable; se considera la última enviada.",
+    "Debe incluir un plan de actividades de transferencia de conocimientos con al menos una actividad presencial o virtual.",
+    "El responsable seleccionado en esta línea en la convocatoria 2026 no puede participar en 2027.",
+    "Se exige autorización de difusión por parte del Ministerio de al menos un resumen y un texto de dos carillas sobre la investigación."
+  ],
+  "_rescued_from": {
+    "original_path": "/home/mak/experiments/pilots/ARICA-FONDART-2027/runs/enriched/opportunity.json",
+    "original_sha256": "0a388d3cdd5b1e2ec68d967ab85816c99a6b41df2d95ee4a2b07b5b9bcb971a2",
+    "rescued_on": "2026-09-05",
+    "why": "La captura de las bases de Fondart Nacional Línea Investigación 2027 vivía solo bajo experiments/pilots/, que .gitignore excluye. Se recuperó el paquete local desde el historial; el original queda intacto.",
+    "consumer": "data/portfolio_formats/F4-fondart-nacional-investigacion-2027.json",
+    "sibling": "data/fondart_creacion_artistica_regional_2027.json",
+    "schema_note": "La captura original usa mak-opportunity-constraints-v1; esta ficha usa mak-convocatoria-bases-v1 para que tools/gen_postulacion.py pueda revisarla.",
+    "capture_schema": "mak-opportunity-constraints-v1",
+    "capture_source_hash": "sha256:9da0ab5f0850fdad354415448829fd88fa1e61beee5fd048c90a4a5b4c418af2",
+    "capture_recovered_from": "git object c76b6f6a:data/fondart_nacional_investigacion_2027_captura.json"
+  }
+}

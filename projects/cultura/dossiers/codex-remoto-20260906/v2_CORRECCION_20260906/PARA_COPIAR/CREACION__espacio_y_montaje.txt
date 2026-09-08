@@ -1,0 +1,28 @@
+Espacio y montaje
+=================
+[205 palabras · 1355 caracteres · corte 2026-09-06]
+[pegar desde la linea siguiente]
+
+Decisión: el espacio se resuelve con una cotización de arriendo de sala en un
+centro cultural o espacio de exhibición de la comuna de ejecución, no con una
+carta de compromiso. Las bases aceptan cualquiera de las dos —el anexo pide
+compromiso firmado o cotización del espacio— y una cotización no depende de
+que un tercero adhiera al proyecto, lo que en el plazo disponible es la
+diferencia entre tener el documento y no tenerlo.
+
+Requerimientos del espacio, y son modestos a propósito: sala interior con
+circulación pública; superficie aproximada de una mesa de trabajo más el
+recorrido de un visitante; conexión eléctrica corriente; acceso para personas
+con movilidad reducida; y cercanía a transporte público. No requiere obra
+civil, no perfora ni fija nada, y se monta y desmonta sin alterar el lugar.
+Cuatro semanas continuas.
+
+Montaje mínimo: computador local capaz de ejecutar la versión de exhibición,
+pantalla o proyector de resolución suficiente, periféricos de navegación, mesa
+o soporte, iluminación básica, almacenamiento de respaldo y material impreso
+de orientación. La obra funciona sin conexión permanente a internet; la red se
+usa sólo para mantenimiento autorizado.
+
+El modelo de solicitud y el de cotización están redactados y listos para
+enviar en postulaciones/BORRADORES_SIN_FIRMA/SOLICITUD_ESPACIO_COTIZACION.md.
+No se han enviado.
