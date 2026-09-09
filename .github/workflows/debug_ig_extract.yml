@@ -3,6 +3,8 @@ name: debug-ig-extract
 # parth_dl encuentra para un link de Instagram, sin descargar ni tocar
 # issues. No es parte del pipeline productivo -- se borra despues de usarlo.
 on:
+  push:
+    branches: [fix/ig-download-resolution-disclosure]
   workflow_dispatch:
     inputs:
       url:
@@ -24,7 +26,7 @@ jobs:
 
       - name: extraer y listar candidatos
         env:
-          URL: ${{ github.event.inputs.url }}
+          URL: ${{ github.event.inputs.url || 'https://www.instagram.com/p/DdCZODWiI2s/?stkn=MXNsN3psOHZ4Nzl2bg==' }}
         run: |
           python3 - <<'PY'
           import os
