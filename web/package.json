@@ -30,12 +30,13 @@
     "@vitejs/plugin-react": "6.1.1",
     "tailwindcss": "4.3.3",
     "typescript": "5.9.3",
-    "vite": "7.3.6",
+    "vite": "8.2.2",
     "vite-plugin-singlefile": "2.3.3"
   },
   "overrides": {
     "nanoid": "^3.3.18",
     "postcss": "^8.5.18",
-    "esbuild": "^0.28.1"
+    "esbuild": "^0.28.1",
+    "undici-types": "8.4.0"
   }
 }

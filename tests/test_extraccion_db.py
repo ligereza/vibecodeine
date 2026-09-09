@@ -139,6 +139,80 @@ def test_fuzzy_match_canonico_con_typo(tmp_path):
     assert candidato["match_ratio"] >= extraccion_db.RATIO_CANONICO
 
 
+def test_mejor_match_segmenta_productora_pegada_a_sponsors():
+    """Bug real (2026-09-09, issue #556, Piknic Electronik): la vision no
+    separa productora de sponsors ('X, Banco de Chile, entel'), y
+    SequenceMatcher sobre el string entero castiga el ratio por el largo
+    extra aunque el nombre real este limpio adentro. Segmentar por los
+    separadores tipicos entre productora y lo que la acompaña debe rescatar
+    un ratio mucho mejor que el string completo, sin inventar nada (sigue
+    siendo el mismo SequenceMatcher, solo contra un candidato mas)."""
+    catalogo = [{"canonico": "Piknic Electronik",
+                 "variantes": ["PIKNIC", "Piknic", "Piknic Electronik"]}]
+
+    completo = extraccion_db.SequenceMatcher(
+        None,
+        extraccion_db.normalizar_texto(
+            "Picnic Electronik Santiago, Banco de Chile, e) entel"),
+        extraccion_db.normalizar_texto("Piknic Electronik"),
+    ).ratio()
+
+    canonico, ratio = extraccion_db.mejor_match(
+        "Picnic Electronik Santiago, Banco de Chile, e) entel", catalogo)
+
+    assert canonico == "Piknic Electronik"
+    assert ratio > completo
+
+
+def test_mejor_match_sin_separador_no_cambia_el_resultado():
+    """Un crudo limpio (sin sponsors pegados) no gana nada de segmentar --
+    debe dar exactamente el mismo ratio que el SequenceMatcher de siempre
+    contra el string completo (sin candidatos de segmento de por medio,
+    porque no hay separador que cortar)."""
+    catalogo = [{"canonico": "Piknic Electronik", "variantes": ["Piknic Electronik"]}]
+    esperado = extraccion_db.SequenceMatcher(
+        None,
+        extraccion_db.normalizar_texto("PIKMIC ELECTRONIK"),
+        extraccion_db.normalizar_texto("Piknic Electronik"),
+    ).ratio()
+    canonico, ratio = extraccion_db.mejor_match("PIKMIC ELECTRONIK", catalogo)
+    assert canonico == "Piknic Electronik"
+    assert abs(ratio - round(esperado, 3)) < 0.001
+
+
+def test_mejor_match_no_produce_falso_positivo_por_segmentar():
+    """Segmentar no debe inventar coincidencias: un sponsor real (no la
+    productora) sigue sin matchear nada por encima del umbral."""
+    catalogo = [{"canonico": "Piknic Electronik",
+                 "variantes": ["Piknic Electronik"]}]
+    canonico, ratio = extraccion_db.mejor_match(
+        "Auspicia: Banco de Chile, e) entel", catalogo)
+    assert ratio < extraccion_db.RATIO_DUDOSO_MIN
+
+
+def test_extraccion_end_to_end_productora_con_sponsors_pegados(tmp_path):
+    fichas = [_ficha(
+        ruta_rel="desde_issues/issue556-DdCZODWiI2s.jpg",
+        productora="Picnic Electronik Santiago, Banco de Chile, e) entel",
+        venue="Parque Ciudad Empresarial", fecha="03 OCTUBRE",
+    )]
+    ruta_in = tmp_path / "fichas.jsonl"
+    _escribir_jsonl(ruta_in, fichas)
+
+    dir_cat = tmp_path / "catalogo_productoras"
+    _escribir_catalogo_productora_json(
+        dir_cat, "piknic", "Piknic Electronik",
+        aliases=["PIKNIC", "Piknic"])
+
+    outdir = tmp_path / "out"
+    resumen = extraccion_db.procesar(ruta_in, outdir, catalogo_productoras_ruta=dir_cat)
+
+    (candidato,) = resumen["candidatos"]
+    assert candidato["productora_canonica"] is None  # no llega a RATIO_CANONICO
+    assert candidato["match_ratio"] >= extraccion_db.RATIO_DUDOSO_MIN  # pero SI a dudoso
+    assert extraccion_db.clasificar_ratio(candidato["match_ratio"]) == "dudoso"
+
+
 # ---------------------------------------------------------------------------
 # 4. "nuevo?" sin catalogo
 # ---------------------------------------------------------------------------

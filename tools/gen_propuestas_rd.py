@@ -24,8 +24,12 @@ garbage on top of what is already right. Concretely:
   "Sundek" vs "Sundeck" twins.
 - Only event categories generate candidates (a logo or a ficha_sustancia has
   no productora); own-identity rows (RD itself) never do.
-- "dudoso" matches (0.70-0.82) are REPORTED, never drafted: a dubious name is
-  a triangulation question, not a database row.
+- "dudoso" matches (0.70-0.82) never get a NEW productora/venue draft: a
+  dubious name is a triangulation question, not evidence for a new catalog
+  entry. They DO get an event draft when they identify a specific event
+  (fecha+venue) of what is very likely an existing productora, but that
+  draft's own `estado` says `needs_confirmation` -- never `confirmado_auto`
+  -- so the uncertainty travels with the data instead of disappearing.
 - Drafts require MIN_OBRAS_PROPUESTA distinct works of evidence, the same
   threshold extraccion_db already applies to its own proposals.
 - Nothing is written outside --outdir (mineria_rd._ruta_segura enforces it),
@@ -76,6 +80,76 @@ def _clave(nombre: str) -> str:
     return mineria_rd._slug(extraccion_db.normalizar_texto(nombre))
 
 
+# Real bug (2026-09-09, issue #556): a candidate matching an ALREADY-KNOWN
+# productora (ratio>=0.82) or a dubious one (0.70-0.82) used to be counted
+# and discarded -- neither the new event (fecha, venue, headliners) nor the
+# "dudoso" flag itself ended up anywhere queryable. A repeat flyer from a
+# known productora added nothing to the database; the database never grew
+# from what it already knew. This adds the missing hop: events from
+# known/dudoso productoras now also accumulate and get proposed, through the
+# same human-PR gate `proponer()` already uses -- review is never skipped,
+# only the data stops being thrown away.
+RD_LOCAL_RAIZ = Path.home() / "RD"
+
+
+def _rutas_locales_rd(ruta_rel: str) -> dict:
+    """Local paths of the flyer (source + render, if it exists), relative to
+    ~/RD -- the same tree puente_issues.py / percepcion.py already use, and
+    where issue_descarga_ig.yml leaves each issue-processed flyer
+    (RD/desde_issues/issue<N>-<shortcode>.jpg + RD/renders_issues/...png).
+    Only ever references paths relative to ~/RD (never an absolute disk path
+    in an artifact that can end up in a public PR)."""
+    rutas = {"fuente": "RD/%s" % ruta_rel}
+    if ruta_rel.startswith("desde_issues/"):
+        nombre = Path(ruta_rel).stem
+        render_rel = "renders_issues/%s.png" % nombre
+        if (RD_LOCAL_RAIZ / render_rel).is_file():
+            rutas["render"] = "RD/%s" % render_rel
+    return rutas
+
+
+def _clave_evento(fecha_cruda: str, venue_crudo: str) -> str:
+    """Dedup key for 'is this the same event': normalized fecha+venue.
+    Does not attempt to understand prose dates (that is
+    flujo.rd.eventos.parsear_fecha's job, in another layer) -- only avoids
+    proposing the same event twice when two flyers describe the same
+    fecha/venue in the same or near-same wording."""
+    return "%s|%s" % (extraccion_db.normalizar_texto(fecha_cruda),
+                       extraccion_db.normalizar_texto(venue_crudo))
+
+
+def cargar_eventos_existentes(canonico: str, repo_root: Path) -> tuple[str, set]:
+    """(slug, claves) of the events data/productoras/<slug>.json ALREADY has
+    -- so an event the productora already records is never re-proposed,
+    whether it arrived by hand or from an earlier run of this same tool.
+
+    The slug is resolved by finding the file whose "name" field is an EXACT
+    match for canonico -- never by re-deriving a slug from the name.
+    Measured 2026-09-09: 9 legacy productoras have a filename without
+    underscores (piknic.json, panalrecords.json, streetmachine.json...)
+    while their "name" field has spaces ("Piknic Electronik", "Panal
+    Records"...); guessing the slug from the name ("piknic_electronik")
+    never finds those files, and the event draft ends up with an empty
+    slug_productora (a filename with no productora prefix). slug="" if no
+    file carries that name (a productora with no json of its own yet;
+    should not happen for something classified "match", but not assumed)."""
+    directorio = repo_root / "data" / "productoras"
+    if directorio.is_dir():
+        for archivo in sorted(directorio.glob("*.json")):
+            try:
+                datos = json.loads(archivo.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                continue
+            if isinstance(datos, dict) and datos.get("name") == canonico:
+                claves = set()
+                for evento in datos.get("eventos") or []:
+                    if isinstance(evento, dict):
+                        claves.add(_clave_evento(str(evento.get("fecha") or ""),
+                                                 str(evento.get("venue") or "")))
+                return archivo.stem, claves
+    return "", set()
+
+
 def cargar_candidatos(path: Path) -> list[dict]:
     """candidatos_db.jsonl rows, latest-wins by obra_id (the file may carry
     re-runs; counting repeated rows would inflate evidence)."""
@@ -89,8 +163,8 @@ def cargar_candidatos(path: Path) -> list[dict]:
                 registro = json.loads(linea)
             except json.JSONDecodeError:
                 continue
-            # JSON valido que no es objeto (fila corrupta/editada) se salta
-            # igual que el JSON roto: una fila mala no aborta la corrida.
+            # Valid JSON that is not an object (a corrupted/edited row) is
+            # skipped the same as broken JSON: one bad row never aborts the run.
             if not isinstance(registro, dict):
                 continue
             obra_id = registro.get("obra_id")
@@ -141,6 +215,7 @@ def consolidar_candidatos(
     catalogo_productoras: list[dict] | None = None,
     catalogo_venues: list[dict] | None = None,
     minimo_evidencia: int = extraccion_db.MIN_OBRAS_PROPUESTA,
+    repo_root: Path | None = None,
 ) -> tuple[dict, dict]:
     """Digested candidates -> the dict `mineria_rd.proponer()` expects, plus a
     report of everything that was NOT drafted and why (no silent drops)."""
@@ -148,9 +223,13 @@ def consolidar_candidatos(
         catalogo_productoras = extraccion_db.cargar_catalogo_productoras()
     if catalogo_venues is None:
         catalogo_venues = extraccion_db.cargar_catalogo_venues()
+    if repo_root is None:
+        repo_root = REPO_ROOT
 
     productoras: dict = {}
     venues: dict = {}
+    eventos_conocidos: dict = {}
+    _eventos_ya_registrados: dict[str, set] = {}
     informe = {
         "filas": len(candidatos),
         "descartes": {
@@ -163,6 +242,7 @@ def consolidar_candidatos(
         },
         "productoras": {"conocidas": 0, "dudosas": [], "nuevas": 0, "evidencia_corta": []},
         "venues": {"conocidos": 0, "dudosos": [], "nuevos": 0, "evidencia_corta": []},
+        "eventos_conocidos": {"propuestos": 0, "ya_registrados": 0, "sin_fecha": 0},
     }
 
     for registro in candidatos:
@@ -196,6 +276,72 @@ def consolidar_candidatos(
                 )
             else:
                 _acumular(productoras, _clave(nombre_prod), nombre_prod, registro)
+
+            # match or dudoso -- productora ALREADY IDENTIFIED, do not
+            # discard the event (fecha/venue) THIS flyer carries. Before
+            # this block existed, this was only counted and thrown away: a
+            # repeat flyer from a known productora added nothing to the
+            # database.
+            if clase in ("match", "dudoso"):
+                fecha_cruda = extraccion_db.valor_limpio(registro.get("fecha_cruda"))
+                # LOCAL check, does not touch `nombre_venue` (the venue
+                # block further below still needs it raw): "Santiago" is
+                # not a venue, it is the city -- same criterion
+                # GEOGRAFIA_NO_VENUE already applies to the venue candidate.
+                venue_evento = (
+                    "" if nombre_venue and extraccion_db.normalizar_texto(nombre_venue)
+                    in GEOGRAFIA_NO_VENUE else nombre_venue
+                )
+                if not fecha_cruda:
+                    informe["eventos_conocidos"]["sin_fecha"] += 1
+                else:
+                    # Bug real (2026-09-09, encontrado con el Piknic real:
+                    # aparece en mas de una fila del corpus): en la 2da+
+                    # aparicion del mismo canonico esto ADIVINABA el slug de
+                    # nuevo en vez de reusar el ya resuelto por archivo real
+                    # -- Piknic terminaba con dos slugs distintos
+                    # ("piknic" resuelto, "piknic_electronik" adivinado)
+                    # segun cual fila llegaba primero o segunda. El cache
+                    # ahora guarda (slug, claves) junto, nunca solo re-deriva.
+                    if canonico not in _eventos_ya_registrados:
+                        slug_prod, ya = cargar_eventos_existentes(canonico, repo_root)
+                        _eventos_ya_registrados[canonico] = (slug_prod, ya)
+                    else:
+                        slug_prod, ya = _eventos_ya_registrados[canonico]
+                    clave_ev = _clave_evento(fecha_cruda, venue_evento)
+                    if clave_ev in ya:
+                        informe["eventos_conocidos"]["ya_registrados"] += 1
+                    else:
+                        entrada_ev = eventos_conocidos.setdefault(
+                            (slug_prod, clave_ev), {
+                                "productora_canonica": canonico,
+                                "slug_productora": slug_prod,
+                                "clase": clase,
+                                "match_ratio": ratio,
+                                # the CANONICAL name, not the raw OCR string
+                                # -- "match"/"dudoso" guarantees canonico
+                                # exists (it comes from a real catalog). The
+                                # raw string usually has sponsors glued to
+                                # it ("Picnic Electronik Santiago, Banco de
+                                # Chile, e) entel"); the draft has to show
+                                # the corrected name, not that dirty
+                                # string.
+                                "nombre_evento": canonico,
+                                "fecha": fecha_cruda,
+                                "venue": nombre_venue,
+                                "handles": set(),
+                                "archivos_fuente": [],
+                            })
+                        # Higher confidence wins if the same event shows up
+                        # in more than one flyer with a different reading
+                        # (e.g. the source and its render, each with its
+                        # own OCR pass).
+                        if ratio > entrada_ev["match_ratio"]:
+                            entrada_ev["match_ratio"] = ratio
+                            entrada_ev["clase"] = clase
+                        entrada_ev["handles"].update(registro.get("handles") or [])
+                        entrada_ev["archivos_fuente"].append(
+                            _rutas_locales_rd(registro.get("ruta_rel", "")))
 
         if nombre_venue and extraccion_db.normalizar_texto(nombre_venue) in GEOGRAFIA_NO_VENUE:
             informe["descartes"]["venue_geografia"] += 1
@@ -231,10 +377,12 @@ def consolidar_candidatos(
     informe["venues"]["evidencia_corta"] = sorted(
         "%s (%d)" % (d["nombre"], d["evidencia"]) for d in ven_cortos.values()
     )
+    informe["eventos_conocidos"]["propuestos"] = len(eventos_conocidos)
 
     consolidado = {
         "productoras_nuevas": productoras_listas,
         "venues_nuevos": venues_listos,
+        "eventos_conocidos": list(eventos_conocidos.values()),
     }
     return consolidado, informe
 
@@ -284,10 +432,12 @@ def main(argv: list[str] | None = None) -> int:
     _imprimir_informe(informe)
 
     mineria_rd.proponer(consolidado, args.outdir)
-    print("borradores en %s: %d productoras, %d venues"
+    print("borradores en %s: %d productoras, %d venues, %d eventos de "
+          "productoras conocidas/dudosas"
           % (args.outdir,
              len(consolidado["productoras_nuevas"]),
-             len(consolidado["venues_nuevos"])))
+             len(consolidado["venues_nuevos"]),
+             len(consolidado["eventos_conocidos"])))
     return 0
 
 
