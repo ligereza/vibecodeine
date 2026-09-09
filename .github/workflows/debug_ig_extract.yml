@@ -1,0 +1,43 @@
+name: debug-ig-extract
+# One-off diagnostic: prints every candidate (formats) parth_dl finds for a
+# link, no download, not part of the production pipeline. Delete after use.
+on:
+  push:
+    branches: [fix/ig-download-resolution-disclosure]
+
+permissions:
+  contents: read
+
+jobs:
+  inspeccionar:
+    runs-on: [self-hosted, eventos]
+    timeout-minutes: 5
+    steps:
+      - name: instalar parth-dl si falta
+        run: |
+          python3 -c "import parth_dl" 2>/dev/null || \
+            python3 -m pip install --user --quiet --break-system-packages parth-dl
+
+      - name: extraer y listar candidatos
+        env:
+          URL: "https://www.instagram.com/iskvw/p/DT7xwj6EcR8/"
+        run: |
+          python3 - <<'PY'
+          import os
+          from parth_dl import get_info
+
+          url = os.environ["URL"]
+          data = get_info(url)
+          print("type:", data.get("type"))
+          entries = data.get("entries") or []
+          print("num entries:", len(entries))
+          for i, e in enumerate(entries):
+              print(f"--- entry {i} kind={e.get('kind')} ---")
+              for f in (e.get("formats") or []):
+                  w = f.get("width")
+                  h = f.get("height")
+                  aspect = (w / h) if (w and h) else None
+                  print(f"  format_id={f.get('format_id')} width={w} height={h} "
+                        f"aspect={aspect} has_audio={f.get('has_audio')}")
+          print("thumbnail:", data.get("thumbnail"))
+          PY
