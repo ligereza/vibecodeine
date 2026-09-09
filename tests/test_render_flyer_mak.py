@@ -60,6 +60,7 @@ def test_script_uses_real_blender_nodes_functions_not_ad_hoc_swap():
     script = render_flyer_mak.build_blender_script(
         Path("/tmp/FRAME2.png"), Path("/tmp/input_ig.jpg"),
         Path("/tmp/RESULTADOS/color_predominante.png"), Path("/tmp/render_output.png"),
+        frame_hue=0.9196,
     )
     # importa el modulo REAL, no reinventa la busqueda/recoloreo a mano
     assert "import blender_nodes" in script
@@ -68,14 +69,42 @@ def test_script_uses_real_blender_nodes_functions_not_ad_hoc_swap():
     # funciones reales de src/flujo/eventos/blender_nodes.py
     assert "blender_nodes._buscar_materiales_flyer()" in script
     assert "blender_nodes.build_flyer_nodes(" in script
-    assert "blender_nodes.hue_de_rgb(" in script
-    assert "blender_nodes._color_predominante_bpy(" in script
     assert "blender_nodes._repuntar_color_predominante(" in script
+    # el hue del marco viaja como literal calculado en el host (bug
+    # 2026-09-09: ya NO se recalcula dentro de Blender desde el color
+    # aclarado-para-vidrio, ver _color_mas_saturado)
+    assert "blender_nodes.hue_de_rgb(" not in script
+    assert "blender_nodes._color_predominante_bpy(" not in script
+    assert repr(0.9196) in script
     # paleta + imagen se pasan al build/update real, no a un TEX_IMAGE suelto
     assert repr(str(Path("/tmp/FRAME2.png"))) in script
     assert repr(str(Path("/tmp/input_ig.jpg"))) in script
     assert repr(str(Path("/tmp/RESULTADOS/color_predominante.png"))) in script
     assert repr(str(Path("/tmp/render_output.png"))) in script
+
+
+def test_color_mas_saturado_prefiere_el_acento_sobre_el_fondo_claro():
+    # Regresion 2026-09-09: el flyer real de Piknic tiene fondo casi-blanco
+    # (#fcf5ea, la mayoria del area) y acentos magenta/cyan reales. El marco
+    # debe teñirse del acento (magenta), no del fondo.
+    paleta = ["#fcf5ea", "#a91c60", "#7be1ed", "#a77fac", "#a8175d", "#feebf4"]
+    rgb = render_flyer_mak._color_mas_saturado(paleta)
+    assert rgb == (0xa8, 0x17, 0x5d)  # el color de mayor saturacion HSV
+
+
+def test_hue_del_marco_no_sale_del_color_aclarado_para_vidrio():
+    # write_predominant_color aclara 25% hacia blanco a proposito (pensado
+    # para el vidrio); ese color casi-blanco tiene un hue casi arbitrario
+    # (medido: 37 grados/naranja) que NO representa el flyer (magenta/cyan
+    # reales). _color_mas_saturado + _hue_de_rgb sobre la paleta cruda debe
+    # dar un hue cercano al magenta real (331 grados), no al aclarado.
+    paleta = ["#fcf5ea", "#a91c60", "#7be1ed", "#a77fac", "#a8175d", "#feebf4"]
+    hue_marco = render_flyer_mak._hue_de_rgb(
+        render_flyer_mak._color_mas_saturado(paleta))
+    hue_aclarado = render_flyer_mak._hue_de_rgb((0xfc, 0xf7, 0xef))
+    assert abs(hue_marco * 360 - 331) < 5
+    assert abs(hue_aclarado * 360 - 37) < 5
+    assert abs(hue_marco - hue_aclarado) > 0.5  # extremos opuestos del circulo
 
 
 def test_extract_palette_returns_hex_colors(tmp_path):
@@ -253,7 +282,7 @@ def test_main_prints_render_ok_and_exits_0(tmp_path, monkeypatch, capsys):
     _synthetic_image(imagen)
     out_dir = tmp_path / "out"
 
-    def fake_run_render(blender_exe, base_dir, imagen_path, output_path):
+    def fake_run_render(blender_exe, base_dir, imagen_path, output_path, frame_hue=0.0):
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_bytes(b"fake png")
         return True, str(output_path)
@@ -285,7 +314,7 @@ def test_main_prints_render_fallo_when_render_step_fails(tmp_path, monkeypatch, 
     base = tmp_path / "base"
     base.mkdir()
 
-    def fake_run_render(blender_exe, base_dir, imagen_path, output_path):
+    def fake_run_render(blender_exe, base_dir, imagen_path, output_path, frame_hue=0.0):
         return False, "no existe /home/mak/RD/AUTOMATIZACION/cartelera.blend"
 
     monkeypatch.setattr(render_flyer_mak, "run_render", fake_run_render)
