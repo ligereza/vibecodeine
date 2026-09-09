@@ -118,8 +118,10 @@ jobs:
           test "$n" -gt 0
           video=$(find "$out" -maxdepth 1 -type f -name 'input_ig*.mp4' -print -quit)
           media_type=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8")).get("media_type", ""))' "$out/media.json")
+          shortcode=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8")).get("shortcode", ""))' "$out/media.json")
           echo "video=$video" >> "$GITHUB_OUTPUT"
           echo "media_type=$media_type" >> "$GITHUB_OUTPUT"
+          echo "shortcode=$shortcode" >> "$GITHUB_OUTPUT"
           echo "dir=$out" >> "$GITHUB_OUTPUT"
           # Que slide renderizar: Instagram pone ?img_index=N en el link
           # cuando alguien comparte esa imagen puntual del carrusel
@@ -305,6 +307,47 @@ jobs:
             echo "RENDER_PUBLISH_OK: salida completa publicada en $destino"
           else
             echo "RENDER_PARTIAL_PUBLISH_OK: media y artefactos disponibles publicados en $destino"
+          fi
+
+      - name: guardar copia local en RD (fuente + render)
+        if: >
+          always() &&
+          github.event_name == 'issues' &&
+          steps.guard.outputs.skip != 'true' &&
+          steps.dl.outcome == 'success'
+        env:
+          SHORTCODE: ${{ steps.dl.outputs.shortcode }}
+          IMAGE_PATH: ${{ steps.dl.outputs.imagen }}
+          MEDIA_TYPE: ${{ steps.dl.outputs.media_type }}
+          RENDER_DIR: ${{ steps.render.outputs.dir }}
+          RENDER_OUTCOME: ${{ steps.render.outcome }}
+        run: |
+          set -euo pipefail
+          # Copia local en RD, separada de OneDrive, para dos consumidores
+          # distintos que solo leen disco:
+          # - RD/desde_issues: la fuente, mismo esquema de nombre que
+          #   puente_issues.py ya establecio (issue<N>-<shortcode>.jpg), asi
+          #   la percepcion (~/cultura/mak_curatoria/percepcion.py, OCR +
+          #   Gemma3:4b via ollama) la levanta en su proxima pasada -- es el
+          #   unico dato de donde sale la triangulacion headliner+fecha ->
+          #   productora que alimenta la base de RD.
+          # - RD/renders_issues: el flyer terminado. Separado a proposito:
+          #   la percepcion solo necesita el original, no el mismo evento
+          #   dos veces con marco decorativo encima.
+          # No se publica la ruta local en el comentario del issue (el
+          # issue es publico; ver la nota de puente_issues.py sobre nunca
+          # exponer rutas de disco ahi).
+          nombre="issue${ISSUE_NUM}-${SHORTCODE}"
+          if [ -n "${IMAGE_PATH:-}" ] && [ -s "$IMAGE_PATH" ]; then
+            mkdir -p "$HOME/RD/desde_issues"
+            cp "$IMAGE_PATH" "$HOME/RD/desde_issues/${nombre}.jpg"
+            echo "fuente guardada en RD/desde_issues/${nombre}.jpg"
+          fi
+          if [ "${MEDIA_TYPE:-}" != "video" ] && [ "$RENDER_OUTCOME" = "success" ] \
+              && [ -s "${RENDER_DIR:-}/render_output.png" ]; then
+            mkdir -p "$HOME/RD/renders_issues"
+            cp "$RENDER_DIR/render_output.png" "$HOME/RD/renders_issues/${nombre}.png"
+            echo "render guardado en RD/renders_issues/${nombre}.png"
           fi
 
       - name: comentar render OK y cerrar issue
