@@ -295,13 +295,21 @@ def consolidar_candidatos(
                 if not fecha_cruda:
                     informe["eventos_conocidos"]["sin_fecha"] += 1
                 else:
+                    # Bug real (2026-09-09, encontrado con el Piknic real:
+                    # aparece en mas de una fila del corpus): en la 2da+
+                    # aparicion del mismo canonico esto ADIVINABA el slug de
+                    # nuevo en vez de reusar el ya resuelto por archivo real
+                    # -- Piknic terminaba con dos slugs distintos
+                    # ("piknic" resuelto, "piknic_electronik" adivinado)
+                    # segun cual fila llegaba primero o segunda. El cache
+                    # ahora guarda (slug, claves) junto, nunca solo re-deriva.
                     if canonico not in _eventos_ya_registrados:
                         slug_prod, ya = cargar_eventos_existentes(canonico, repo_root)
-                        _eventos_ya_registrados[canonico] = ya
+                        _eventos_ya_registrados[canonico] = (slug_prod, ya)
                     else:
-                        slug_prod = mineria_rd._slug(extraccion_db.normalizar_texto(canonico))
+                        slug_prod, ya = _eventos_ya_registrados[canonico]
                     clave_ev = _clave_evento(fecha_cruda, venue_evento)
-                    if clave_ev in _eventos_ya_registrados[canonico]:
+                    if clave_ev in ya:
                         informe["eventos_conocidos"]["ya_registrados"] += 1
                     else:
                         entrada_ev = eventos_conocidos.setdefault(
