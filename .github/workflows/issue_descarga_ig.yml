@@ -158,6 +158,77 @@ jobs:
             echo "imagen_wh=$imagen_wh" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: leer productora y fecha con OCR (para nombre del archivo)
+        id: nombre_ocr
+        if: >
+          github.event_name == 'issues' &&
+          steps.guard.outputs.skip != 'true' &&
+          steps.dl.outcome == 'success'
+        env:
+          IMAGEN: ${{ steps.dl.outputs.imagen }}
+          MEDIA_TYPE: ${{ steps.dl.outputs.media_type }}
+        run: |
+          set -uo pipefail
+          # El OCR corre sobre la imagen DESCARGADA, no sobre el render (el
+          # render todavia no existe en este punto del workflow) -- por eso
+          # este paso va antes de "render flyer", no despues. Es la misma
+          # vision (percepcion.py + gemma3:4b via ollama) que despues vuelve
+          # a correr el cron async sobre RD/desde_issues para la ficha
+          # oficial; esta corrida aca es SOLO para tener un nombre de
+          # archivo con productora+fecha desde el primer guardado, nunca
+          # bloqueante -- si falla o no hay nada legible, el paso siguiente
+          # cae al nombre issueN-shortcode de siempre.
+          python3 - <<'PY'
+          import os
+          import sys
+
+          imagen = os.environ.get("IMAGEN", "")
+          media_type = os.environ.get("MEDIA_TYPE", "")
+          nombre_ocr = ""
+          productora_ocr = ""
+          fecha_ocr = ""
+
+          if imagen and os.path.isfile(imagen) and media_type in ("image", "carousel"):
+              try:
+                  sys.path.insert(0, "cultura/mak_curatoria")
+                  sys.path.insert(0, "cultura/mak_plataforma")
+                  import percepcion
+                  import mineria_rd
+                  import extraccion_db
+                  resultado = percepcion.vision_imagen(imagen, timeout=90, fuente="rd")
+                  if not resultado.get("error"):
+                      fecha_ocr = extraccion_db.valor_limpio(resultado.get("fecha"))
+                      crudo = extraccion_db.valor_limpio(resultado.get("productora"))
+                      # El campo "productora" casi siempre sale pegado a
+                      # auspiciadores ("Picnic Electronik Santiago, Banco de
+                      # Chile, e) entel" -- medido 2026-09-09 contra esta
+                      # misma imagen real): mejor_match ya sabe segmentar
+                      # por coma/presenta/etc y preferir el segmento que
+                      # matchea el catalogo real, asi el nombre de archivo
+                      # usa el nombre canonico limpio (o el crudo tal cual
+                      # si es una productora genuinamente nueva) en vez del
+                      # string mezclado completo.
+                      if crudo and not extraccion_db.es_identidad_propia(crudo):
+                          catalogo = extraccion_db.cargar_catalogo_productoras()
+                          canonico, ratio = extraccion_db.mejor_match(crudo, catalogo)
+                          clase = extraccion_db.clasificar_ratio(ratio)
+                          productora_ocr = (
+                              canonico if clase in ("match", "dudoso") and canonico
+                              else crudo)
+                      if productora_ocr and fecha_ocr:
+                          nombre_ocr = "%s__%s" % (
+                              mineria_rd._slug(productora_ocr),
+                              mineria_rd._slug(fecha_ocr))
+              except Exception as exc:
+                  print("OCR para nombre fallo (no bloqueante): %s" % exc,
+                        file=sys.stderr)
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+              f.write("nombre_ocr=%s\n" % nombre_ocr)
+          print("nombre_ocr=%r productora=%r fecha=%r"
+                % (nombre_ocr, productora_ocr, fecha_ocr))
+          PY
+
       - name: preservar media descargada antes de render
         id: preserve
         if: >
@@ -339,23 +410,34 @@ jobs:
           MEDIA_TYPE: ${{ steps.dl.outputs.media_type }}
           RENDER_DIR: ${{ steps.render.outputs.dir }}
           RENDER_OUTCOME: ${{ steps.render.outcome }}
+          NOMBRE_OCR: ${{ steps.nombre_ocr.outputs.nombre_ocr }}
         run: |
           set -euo pipefail
           # Copia local en RD, separada de OneDrive, para dos consumidores
           # distintos que solo leen disco:
-          # - RD/desde_issues: la fuente, mismo esquema de nombre que
-          #   puente_issues.py ya establecio (issue<N>-<shortcode>.jpg), asi
-          #   la percepcion (~/cultura/mak_curatoria/percepcion.py, OCR +
-          #   Gemma3:4b via ollama) la levanta en su proxima pasada -- es el
-          #   unico dato de donde sale la triangulacion headliner+fecha ->
-          #   productora que alimenta la base de RD.
+          # - RD/desde_issues: la fuente, la percepcion
+          #   (~/cultura/mak_curatoria/percepcion.py, OCR + Gemma3:4b via
+          #   ollama) la vuelve a levanta en su proxima pasada para la
+          #   ficha oficial -- es el unico dato de donde sale la
+          #   triangulacion headliner+fecha -> productora que alimenta la
+          #   base de RD.
           # - RD/renders_issues: el flyer terminado. Separado a proposito:
           #   la percepcion solo necesita el original, no el mismo evento
           #   dos veces con marco decorativo encima.
           # No se publica la ruta local en el comentario del issue (el
           # issue es publico; ver la nota de puente_issues.py sobre nunca
           # exponer rutas de disco ahi).
-          nombre="issue${ISSUE_NUM}-${SHORTCODE}"
+          #
+          # Nombre: productora+fecha (2026-09-09, pedido explicito) cuando
+          # el paso "leer productora y fecha con OCR" pudo leerlos de la
+          # imagen descargada; issue<N>-<shortcode> (esquema historico de
+          # puente_issues.py) si el OCR no encontro nada legible o fallo --
+          # nunca se bloquea el guardado por esto.
+          if [ -n "${NOMBRE_OCR:-}" ]; then
+            nombre="${NOMBRE_OCR}__issue${ISSUE_NUM}"
+          else
+            nombre="issue${ISSUE_NUM}-${SHORTCODE}"
+          fi
           if [ -n "${IMAGE_PATH:-}" ] && [ -s "$IMAGE_PATH" ]; then
             mkdir -p "$HOME/RD/desde_issues"
             cp "$IMAGE_PATH" "$HOME/RD/desde_issues/${nombre}.jpg"
