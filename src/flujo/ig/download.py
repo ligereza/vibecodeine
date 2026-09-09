@@ -10,6 +10,7 @@ con imginn.
 """
 
 import html as html_mod
+import json
 import re
 import shutil
 import time
@@ -130,6 +131,41 @@ def _meta_content(html: str, prop: str) -> str | None:
     return html_mod.unescape(m.group(1))
 
 
+_EMBED_CTX = '"contextJSON":'
+
+
+def _embed_context(session, shortcode: str) -> dict | None:
+    """Full GraphQL media object from Instagram's public embed page.
+
+    `og:image` (the previous approach here) is a single, generic
+    link-preview image: for a carousel it is only the first slide, and even
+    for a lone post it can be a smaller/cropped rendition picked for social
+    cards, not the actual asset. The embed page's `contextJSON` carries the
+    real GraphQL `shortcode_media`, including `edge_sidecar_to_children`
+    with every slide's own `display_url` at its real size. Ported from
+    `eventos/flyer_auto.py::_embed_imagenes` (measured 2026-07-27: the
+    visible `<img>` gave 1 image, contextJSON gave the real 3) -- that fix
+    was never carried over when this module was written, so every carousel
+    (and every post whose og:image happens to be a crop) landed here with
+    a single, potentially-cropped image and nothing said so.
+    """
+    page = session.get(
+        f"https://www.instagram.com/p/{shortcode}/embed/captioned/",
+        impersonate="chrome", timeout=30,
+    )
+    if page.status_code != 200:
+        return None
+    i = page.text.find(_EMBED_CTX)
+    if i < 0:
+        return None
+    try:
+        inner, _ = json.JSONDecoder().raw_decode(page.text, i + len(_EMBED_CTX))
+        ctx = json.loads(inner)
+    except (ValueError, TypeError):
+        return None
+    return (ctx.get("gql_data") or {}).get("shortcode_media") or None
+
+
 def _cffi_download(url: str, shortcode: str, output_dir: Path) -> dict | None:
     """Via secundaria: curl_cffi con impersonate="chrome".
 
@@ -144,21 +180,54 @@ def _cffi_download(url: str, shortcode: str, output_dir: Path) -> dict | None:
         return None
     try:
         session = cffi_requests.Session()
-        page = session.get(url, impersonate="chrome", timeout=30)
-        html = page.text
+        media = _embed_context(session, shortcode)
 
-        image_url = _meta_content(html, "og:image")
-        if not image_url:
+        image_urls: list[str] = []
+        is_video = False
+        video_url = None
+        caption = ""
+        if media is not None:
+            is_video = bool(media.get("is_video"))
+            children = ((media.get("edge_sidecar_to_children") or {}).get("edges") or [])
+            if children:
+                image_urls = [
+                    node["display_url"]
+                    for node in (edge.get("node") or {} for edge in children)
+                    if node.get("display_url") and not node.get("is_video")
+                ]
+            elif media.get("display_url"):
+                image_urls = [media["display_url"]]
+            if is_video:
+                video_url = media.get("video_url")
+            caption_edges = (media.get("edge_media_to_caption") or {}).get("edges") or []
+            if caption_edges:
+                caption = caption_edges[0].get("node", {}).get("text", "") or ""
+
+        if not image_urls or (is_video and not video_url):
+            page = session.get(url, impersonate="chrome", timeout=30)
+            html = page.text
+            if not image_urls:
+                fallback = _meta_content(html, "og:image")
+                if fallback:
+                    image_urls = [fallback]
+            if not video_url:
+                video_url = _meta_content(html, "og:video")
+                is_video = is_video or video_url is not None
+            if not caption:
+                caption = (_meta_content(html, "og:description")
+                           or _meta_content(html, "og:title") or "")
+
+        if not image_urls and not video_url:
             return None
-        is_video = _meta_content(html, "og:video") is not None
-        video_url = _meta_content(html, "og:video") if is_video else None
-        caption = (_meta_content(html, "og:description")
-                   or _meta_content(html, "og:title") or "")
 
-        img_resp = session.get(image_url, impersonate="chrome", timeout=30)
-        dst = output_dir / "input_ig.jpg"
-        dst.write_bytes(img_resp.content)
-        files = [str(dst)]
+        image_files: list[str] = []
+        for index, image_url in enumerate(image_urls, start=1):
+            name = "input_ig.jpg" if index == 1 else f"input_ig_{index}.jpg"
+            img_resp = session.get(image_url, impersonate="chrome", timeout=30)
+            dst = output_dir / name
+            dst.write_bytes(img_resp.content)
+            image_files.append(str(dst))
+        files = list(image_files)
         video_dst = None
         if video_url:
             video_resp = session.get(video_url, impersonate="chrome", timeout=120)
@@ -170,19 +239,20 @@ def _cffi_download(url: str, shortcode: str, output_dir: Path) -> dict | None:
     except Exception:
         return None
 
+    media_type = "video" if video_dst else ("carousel" if len(image_files) > 1 else "image")
     return {
         "status": "downloaded",
         "shortcode": shortcode,
         "url": url,
-        "media_type": "video" if is_video else "image",
+        "media_type": media_type,
         "files": files,
         "video_files": [str(video_dst)] if video_dst else [],
-        "image_files": [str(dst)],
+        "image_files": image_files,
         "file_count": len(files),
         "caption": caption,
         "owner": "",
         "date": "",
-        "is_video": is_video,
+        "is_video": bool(video_dst),
     }
 
 
