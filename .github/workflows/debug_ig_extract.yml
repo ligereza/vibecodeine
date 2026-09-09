@@ -1,0 +1,44 @@
+name: debug-ig-extract
+on:
+  push:
+    branches: [fix/ig-download-resolution-disclosure]
+
+permissions:
+  contents: read
+
+jobs:
+  render_piknic:
+    runs-on: [self-hosted, eventos]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: descargar (codigo arreglado)
+        id: dl
+        run: |
+          set -e
+          out="$RUNNER_TEMP/prueba_render"
+          mkdir -p "$out"
+          echo "dir=$out" >> "$GITHUB_OUTPUT"
+          URL="https://www.instagram.com/p/DdCZODWiI2s/" OUT="$out" PYTHONPATH=src python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          from flujo.ig.download import download_post
+          out = Path(os.environ["OUT"])
+          res = download_post(os.environ["URL"], out)
+          print(json.dumps({k: str(v) for k, v in res.items()}, ensure_ascii=False))
+          if res.get("status") != "downloaded":
+              raise SystemExit(1)
+          PY
+
+      - name: render Blender (primera imagen)
+        run: |
+          set -e
+          out="${{ steps.dl.outputs.dir }}"
+          python3 tools/render_flyer_mak.py --imagen "$out/input_ig.jpg" --out "$out" \
+            2>&1 | tee "$out/render.log"
+          grep -q '^RENDER_OK:' "$out/render.log"
+          test -s "$out/render_output.png"
+          rclone copy "$out/render_output.png" "onedrive:MAK/_test/render-piknic" --create-empty-src-dirs
+          rclone copy "$out/input_ig.jpg" "onedrive:MAK/_test/render-piknic" --create-empty-src-dirs
+          rclone lsl "onedrive:MAK/_test/render-piknic"
