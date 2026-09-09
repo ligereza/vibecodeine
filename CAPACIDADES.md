@@ -828,6 +828,7 @@ count was the one line that commit missed.
 | `tools/token_budget.py` | si | 1 | 1 | -- |
 | `tools/venue_geometria_scd.py` | si | 1 | 2 | -- |
 | `tools/verify_all.py` | si | 0 | 1 | -- |
+| `tools/verify_learning_hashmaps.py` | si | 0 | 0 | -- |
 
 ### Reproducir esta medicion
 

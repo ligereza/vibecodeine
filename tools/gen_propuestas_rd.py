@@ -80,24 +80,25 @@ def _clave(nombre: str) -> str:
     return mineria_rd._slug(extraccion_db.normalizar_texto(nombre))
 
 
-# Bug real (2026-09-09, issue #556): un candidato que matchea una productora
-# YA CONOCIDA (ratio>=0.82) o dudosa (0.70-0.82) hoy se cuenta y se descarta --
-# ni el evento nuevo (fecha, venue, headliners) ni el propio "dudoso" quedan
-# en ningun lado consultable. Un flyer repetido de una productora conocida no
-# suma nada a la base; la base nunca crece con lo que ya conoce. Esto agrega
-# el hop que faltaba: eventos de productoras conocidas/dudosas tambien se
-# acumulan y se proponen, con el mismo gate de PR humana que ya usa
-# `proponer()` -- no se salta la revision, solo deja de tirar el dato.
+# Real bug (2026-09-09, issue #556): a candidate matching an ALREADY-KNOWN
+# productora (ratio>=0.82) or a dubious one (0.70-0.82) used to be counted
+# and discarded -- neither the new event (fecha, venue, headliners) nor the
+# "dudoso" flag itself ended up anywhere queryable. A repeat flyer from a
+# known productora added nothing to the database; the database never grew
+# from what it already knew. This adds the missing hop: events from
+# known/dudoso productoras now also accumulate and get proposed, through the
+# same human-PR gate `proponer()` already uses -- review is never skipped,
+# only the data stops being thrown away.
 RD_LOCAL_RAIZ = Path.home() / "RD"
 
 
 def _rutas_locales_rd(ruta_rel: str) -> dict:
-    """Rutas locales del flyer (fuente + render, si existe), relativas a
-    ~/RD -- el mismo arbol que ya usa puente_issues.py / percepcion.py, y
-    donde issue_descarga_ig.yml deja cada flyer procesado por un issue
+    """Local paths of the flyer (source + render, if it exists), relative to
+    ~/RD -- the same tree puente_issues.py / percepcion.py already use, and
+    where issue_descarga_ig.yml leaves each issue-processed flyer
     (RD/desde_issues/issue<N>-<shortcode>.jpg + RD/renders_issues/...png).
-    Solo referencia rutas relativas a ~/RD (nunca una ruta absoluta de disco
-    en un artefacto que puede terminar en un PR publico)."""
+    Only ever references paths relative to ~/RD (never an absolute disk path
+    in an artifact that can end up in a public PR)."""
     rutas = {"fuente": "RD/%s" % ruta_rel}
     if ruta_rel.startswith("desde_issues/"):
         nombre = Path(ruta_rel).stem
@@ -108,31 +109,30 @@ def _rutas_locales_rd(ruta_rel: str) -> dict:
 
 
 def _clave_evento(fecha_cruda: str, venue_crudo: str) -> str:
-    """Clave de dedup para 'es el mismo evento': fecha+venue normalizados.
-    No pretende entender fechas en prosa (eso es trabajo de
-    flujo.rd.eventos.parsear_fecha en otra capa) -- solo evitar proponer el
-    mismo evento dos veces cuando dos flyers describen la misma fecha/venue
-    con la misma redaccion o casi."""
+    """Dedup key for 'is this the same event': normalized fecha+venue.
+    Does not attempt to understand prose dates (that is
+    flujo.rd.eventos.parsear_fecha's job, in another layer) -- only avoids
+    proposing the same event twice when two flyers describe the same
+    fecha/venue in the same or near-same wording."""
     return "%s|%s" % (extraccion_db.normalizar_texto(fecha_cruda),
                        extraccion_db.normalizar_texto(venue_crudo))
 
 
 def cargar_eventos_existentes(canonico: str, repo_root: Path) -> tuple[str, set]:
-    """(slug, claves) de los eventos que YA tiene data/productoras/<slug>.json
-    -- para no re-proponer un evento que la productora ya registra, sea que
-    haya llegado por humano o por una corrida anterior de esta misma
-    herramienta.
+    """(slug, claves) of the events data/productoras/<slug>.json ALREADY has
+    -- so an event the productora already records is never re-proposed,
+    whether it arrived by hand or from an earlier run of this same tool.
 
-    El slug se resuelve buscando el archivo cuyo campo "name" sea EXACTO al
-    canonico -- nunca re-derivando un slug a partir del nombre. Medido
-    2026-09-09: 9 productoras legacy tienen un archivo sin guion bajo
-    (piknic.json, panalrecords.json, streetmachine.json...) mientras su
-    "name" trae espacios ("Piknic Electronik", "Panal Records"...); adivinar
-    el slug desde el nombre ("piknic_electronik") no encuentra esos archivos
-    y el borrador de evento sale con slug_productora vacio (nombre de
-    archivo sin el prefijo de productora). slug="" si ningun archivo trae
-    ese name (productora sin json propio todavia; no deberia pasar para algo
-    clasificado "match", pero no se asume)."""
+    The slug is resolved by finding the file whose "name" field is an EXACT
+    match for canonico -- never by re-deriving a slug from the name.
+    Measured 2026-09-09: 9 legacy productoras have a filename without
+    underscores (piknic.json, panalrecords.json, streetmachine.json...)
+    while their "name" field has spaces ("Piknic Electronik", "Panal
+    Records"...); guessing the slug from the name ("piknic_electronik")
+    never finds those files, and the event draft ends up with an empty
+    slug_productora (a filename with no productora prefix). slug="" if no
+    file carries that name (a productora with no json of its own yet;
+    should not happen for something classified "match", but not assumed)."""
     directorio = repo_root / "data" / "productoras"
     if directorio.is_dir():
         for archivo in sorted(directorio.glob("*.json")):
@@ -163,8 +163,8 @@ def cargar_candidatos(path: Path) -> list[dict]:
                 registro = json.loads(linea)
             except json.JSONDecodeError:
                 continue
-            # JSON valido que no es objeto (fila corrupta/editada) se salta
-            # igual que el JSON roto: una fila mala no aborta la corrida.
+            # Valid JSON that is not an object (a corrupted/edited row) is
+            # skipped the same as broken JSON: one bad row never aborts the run.
             if not isinstance(registro, dict):
                 continue
             obra_id = registro.get("obra_id")
@@ -277,16 +277,17 @@ def consolidar_candidatos(
             else:
                 _acumular(productoras, _clave(nombre_prod), nombre_prod, registro)
 
-            # match o dudoso -- productora YA IDENTIFICADA, no descartar el
-            # evento (fecha/venue) que trae ESTE flyer. Antes de esta fila,
-            # esto se contaba y se tiraba: un flyer repetido de una
-            # productora conocida no sumaba nada a la base.
+            # match or dudoso -- productora ALREADY IDENTIFIED, do not
+            # discard the event (fecha/venue) THIS flyer carries. Before
+            # this block existed, this was only counted and thrown away: a
+            # repeat flyer from a known productora added nothing to the
+            # database.
             if clase in ("match", "dudoso"):
                 fecha_cruda = extraccion_db.valor_limpio(registro.get("fecha_cruda"))
-                # Chequeo LOCAL, no toca `nombre_venue` (el bloque de venues
-                # de mas abajo lo necesita crudo todavia): "Santiago" no es
-                # un venue, es la ciudad -- mismo criterio que
-                # GEOGRAFIA_NO_VENUE ya aplica para el candidato de venue.
+                # LOCAL check, does not touch `nombre_venue` (the venue
+                # block further below still needs it raw): "Santiago" is
+                # not a venue, it is the city -- same criterion
+                # GEOGRAFIA_NO_VENUE already applies to the venue candidate.
                 venue_evento = (
                     "" if nombre_venue and extraccion_db.normalizar_texto(nombre_venue)
                     in GEOGRAFIA_NO_VENUE else nombre_venue
@@ -309,23 +310,24 @@ def consolidar_candidatos(
                                 "slug_productora": slug_prod,
                                 "clase": clase,
                                 "match_ratio": ratio,
-                                # el nombre CANONICO, no el crudo del OCR --
-                                # "match"/"dudoso" garantiza que canonico
-                                # exista (viene de un catalogo real). El
-                                # crudo suele traer auspiciadores pegados
-                                # ("Picnic Electronik Santiago, Banco de
-                                # Chile, e) entel"); el borrador tiene que
-                                # mostrar el nombre corregido, no ese
-                                # string sucio.
+                                # the CANONICAL name, not the raw OCR string
+                                # -- "match"/"dudoso" guarantees canonico
+                                # exists (it comes from a real catalog). The
+                                # raw string usually has sponsors glued to
+                                # it ("Picnic Electronik Santiago, Banco de
+                                # Chile, e) entel"); the draft has to show
+                                # the corrected name, not that dirty
+                                # string.
                                 "nombre_evento": canonico,
                                 "fecha": fecha_cruda,
                                 "venue": nombre_venue,
                                 "handles": set(),
                                 "archivos_fuente": [],
                             })
-                        # Confianza mas alta gana si el mismo evento aparece
-                        # en mas de un flyer con distinta lectura (p.ej. la
-                        # fuente y su render, cada uno con su propio OCR).
+                        # Higher confidence wins if the same event shows up
+                        # in more than one flyer with a different reading
+                        # (e.g. the source and its render, each with its
+                        # own OCR pass).
                         if ratio > entrada_ev["match_ratio"]:
                             entrada_ev["match_ratio"] = ratio
                             entrada_ev["clase"] = clase
