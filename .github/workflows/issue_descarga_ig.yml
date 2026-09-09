@@ -123,6 +123,20 @@ jobs:
           echo "imagen=$imagen" >> "$GITHUB_OUTPUT"
           echo "media_type=$media_type" >> "$GITHUB_OUTPUT"
           echo "dir=$out" >> "$GITHUB_OUTPUT"
+          # Resolucion real de lo que Instagram entrego (no lo que pedimos):
+          # el metodo de extraccion que hoy funciona sin sesion (embed page,
+          # ver parth_dl/extractors.py MediaExtractor.extract, "Embed" primero
+          # porque API y GraphQL directos devuelven 403/sesion requerida) no
+          # garantiza el aspect ratio original -- puede entregar un
+          # display_url ya recortado por Instagram. No lo detectamos como
+          # error (no hay forma confiable de saber "cuadrado real" vs
+          # "cuadrado recortado" sin ver el post), pero SI lo hacemos visible
+          # en el comentario de cierre para que un humano lo note antes de
+          # confiar en el flyer.
+          if [ -n "$imagen" ] && [ -s "$imagen" ]; then
+            imagen_wh=$(python3 -c 'from PIL import Image; import sys; w,h = Image.open(sys.argv[1]).size; print(f"{w}x{h}")' "$imagen")
+            echo "imagen_wh=$imagen_wh" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: preservar media descargada antes de render
         id: preserve
@@ -277,9 +291,16 @@ jobs:
 
       - name: comentar render OK y cerrar issue
         if: steps.render.outcome == 'success' && steps.publish.outcome == 'success'
+        env:
+          MEDIA_TYPE: ${{ steps.dl.outputs.media_type }}
+          IMAGEN_WH: ${{ steps.dl.outputs.imagen_wh }}
         run: |
+          aviso_resolucion=""
+          if [ "${MEDIA_TYPE:-}" != "video" ] && [ -n "${IMAGEN_WH:-}" ]; then
+            aviso_resolucion=" Imagen de origen: ${IMAGEN_WH}px (resolucion real entregada por Instagram via el metodo de extraccion que hoy responde sin sesion; si el post original no es de esa proporcion, puede llegar recortado -- revisar antes de publicar)."
+          fi
           gh issue comment "$ISSUE_NUM" -R "$GITHUB_REPOSITORY" \
-            -b "runner MAK: render OK y publicado en OneDrive (\`${{ steps.publish.outputs.destino }}\`). Run de control: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            -b "runner MAK: render OK y publicado en OneDrive (\`${{ steps.publish.outputs.destino }}\`).${aviso_resolucion} Run de control: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
           gh issue close "$ISSUE_NUM" -R "$GITHUB_REPOSITORY"
 
       - name: comentar render fallido con media preservada
