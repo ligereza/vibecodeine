@@ -9,6 +9,7 @@ Default behavior is safe:
 
 from __future__ import annotations
 
+import colorsys
 import glob
 import json
 import os
@@ -382,7 +383,16 @@ def _start_droplet(droplet_path: Path, psd_path: Path) -> None:
 
 
 def _write_predominant_color(image_path: Path, out_png: Path) -> str:
-    """Color predominante-pero-claro del flyer -> PNG solido que RD.blend linkea."""
+    """Color mas saturado del flyer -> PNG solido que RD.blend linkea para el
+    hue del marco Y, via el mismo datablock, el vidrio decorativo.
+
+    Antes elegia el mas luminoso y lo aclaraba 25% hacia blanco (pensado
+    solo para el tinte sutil del vidrio); ese aclarado le daba a
+    hue_de_rgb() un hue practicamente al azar en flyers de fondo claro, y
+    dejaba vidrio/marco sin unificar en el mismo acento (bug real,
+    encontrado 2026-09-09 con el flyer de Piknic). Sin aclarado: un solo
+    color real manda en ambos.
+    """
     from PIL import Image
 
     img = Image.open(image_path).convert("RGB")
@@ -394,16 +404,14 @@ def _write_predominant_color(image_path: Path, out_png: Path) -> str:
     colores = []
     for cnt, idx in counts:
         r, g, b = palette[idx * 3:idx * 3 + 3]
-        lum = 0.299 * r + 0.587 * g + 0.114 * b
-        colores.append((cnt, lum, (r, g, b)))
+        _h, sat, _v = colorsys.rgb_to_hsv(r / 255.0, g / 255.0, b / 255.0)
+        colores.append((cnt, sat, (r, g, b)))
     if not colores:
         colores = [(1, 0.0, (0, 0, 0))]
-    # el mas luminoso entre los que tienen peso real (>15% del dominante)
+    # el mas saturado entre los que tienen peso real (>15% del dominante)
     colores.sort(key=lambda c: (-c[1], -c[0]))
     candidato = next((c for c in colores if c[0] > counts[0][0] * 0.15), colores[0])
     r, g, b = candidato[2]
-    # aclarar 25% hacia blanco
-    r, g, b = (int(r + (255 - r) * 0.25), int(g + (255 - g) * 0.25), int(b + (255 - b) * 0.25))
     out_png.parent.mkdir(parents=True, exist_ok=True)
     Image.new("RGB", (512, 512), (r, g, b)).save(out_png)
     return f"#{r:02x}{g:02x}{b:02x}"

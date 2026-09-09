@@ -201,6 +201,38 @@ def test_cargar_eventos_existentes_resuelve_por_name_no_por_slug_adivinado(
     assert gen._clave_evento("2026-01-10", "Club Real") in claves
 
 
+def test_known_event_slug_stays_consistent_across_repeated_rows(
+        tmp_path):
+    # Bug real (2026-09-09, encontrado con Piknic: aparece en mas de una
+    # fila del corpus real). El cache de "ya vi este canonico" guardaba
+    # solo las claves de eventos ya registrados, no el slug -- en la 2da+
+    # fila con el MISMO canonico volvia a ADIVINAR el slug desde el nombre
+    # en vez de reusar el ya resuelto por archivo real. Con un archivo
+    # legacy sin guion bajo (panalrecords.json, nombre "Panal Records"),
+    # la 1ra fila resolvia "panalrecords" (correcto) y la 2da adivinaba
+    # "panal_records" (nunca existe como archivo) -- dos slugs distintos
+    # para la MISMA productora en la MISMA corrida.
+    productoras_dir = tmp_path / "data" / "productoras"
+    productoras_dir.mkdir(parents=True)
+    (productoras_dir / "panalrecords.json").write_text(json.dumps({
+        "name": "Panal Records", "eventos": [],
+    }), encoding="utf-8")
+    catalogo = [{"canonico": "Panal Records", "variantes": ["Panal Records"]}]
+    candidatos = [
+        _candidato(obra_id="o1", productora="Panal Records",
+                   venue="Club Uno", ruta_rel="a.png"),
+        _candidato(obra_id="o2", productora="Panal Records",
+                   venue="Club Dos", ruta_rel="b.png"),
+    ]
+    for c in candidatos:
+        c["fecha_cruda"] = "2026-05-01"
+    consolidado, _ = gen.consolidar_candidatos(
+        candidatos, catalogo_productoras=catalogo, catalogo_venues=[],
+        repo_root=tmp_path)
+    slugs = {ev["slug_productora"] for ev in consolidado["eventos_conocidos"]}
+    assert slugs == {"panalrecords"}
+
+
 def test_umbral_de_evidencia():
     candidatos = [
         _candidato(obra_id="o1", ruta_rel="a.png", productora="Nueva Fest"),
