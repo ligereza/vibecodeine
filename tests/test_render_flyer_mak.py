@@ -298,6 +298,61 @@ def test_main_prints_render_ok_and_exits_0(tmp_path, monkeypatch, capsys):
     assert "RENDER_OK:" in captured.out
 
 
+def _synthetic_flyer_fondo_claro_acento(path: Path) -> None:
+    # Mismo patron que el flyer real de Piknic: mayoria de area clara +
+    # un acento saturado real -- distinto de _synthetic_image (un solo
+    # color plano, donde aclarado y acento coinciden y no prueban nada).
+    from PIL import Image, ImageDraw
+
+    img = Image.new("RGB", (64, 64), (250, 245, 235))  # fondo casi blanco
+    draw = ImageDraw.Draw(img)
+    draw.rectangle([4, 4, 30, 30], fill=(170, 20, 90))  # acento magenta real
+    img.save(path)
+
+
+def test_main_escribe_el_mismo_acento_en_marco_y_vidrio(tmp_path, monkeypatch):
+    # Regresion 2026-09-09 (decision del usuario): el vidrio decorativo y
+    # sus 3 objetos (BezierCircle, G_Scale.2, petri dish, material
+    # "Decorative Glass 05") deben quedar con el MISMO acento vivo que el
+    # marco -- no con la version aclarada-hacia-blanco de
+    # write_predominant_color.
+    base = tmp_path / "base"
+    base.mkdir()
+    (base / render_flyer_mak.BLEND_FILE).write_text("fake blend", encoding="utf-8")
+    imagen = tmp_path / "input_ig.jpg"
+    _synthetic_flyer_fondo_claro_acento(imagen)
+    out_dir = tmp_path / "out"
+
+    vistos = {}
+
+    def fake_run_render(blender_exe, base_dir, imagen_path, output_path, frame_hue=0.0):
+        vistos["frame_hue"] = frame_hue
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_bytes(b"fake png")
+        return True, str(output_path)
+
+    monkeypatch.setattr(render_flyer_mak, "run_render", fake_run_render)
+
+    code = render_flyer_mak.main([
+        "--imagen", str(imagen), "--out", str(out_dir), "--base", str(base),
+    ])
+    assert code == 0
+
+    from PIL import Image
+    color_png = base / render_flyer_mak.COLOR_PNG_RELATIVE
+    assert color_png.exists()
+    rgb_vidrio = Image.open(color_png).convert("RGB").getpixel((256, 256))
+
+    # el hue del marco (calculado sobre el mismo acento) tiene que calzar
+    # con el hue del pixel escrito para el vidrio -- misma fuente de color
+    import colorsys
+    hue_vidrio = colorsys.rgb_to_hsv(*(c / 255 for c in rgb_vidrio))[0]
+    assert abs(hue_vidrio - vistos["frame_hue"]) < 0.01
+    # y NO es el color aclarado-hacia-blanco de la version vieja
+    r, g, b = rgb_vidrio
+    assert not (r > 230 and g > 230 and b > 220)  # el aclarado da casi-blanco
+
+
 def test_main_prints_render_fallo_and_exits_1_when_image_missing(tmp_path, capsys):
     code = render_flyer_mak.main([
         "--imagen", str(tmp_path / "no_existe.jpg"), "--out", str(tmp_path / "out"),
