@@ -350,6 +350,23 @@ jobs:
             echo "render guardado en RD/renders_issues/${nombre}.png"
           fi
 
+      - name: avisar en pantalla (MAK corre en la misma maquina)
+        if: steps.render.outcome == 'success'
+        env:
+          SHORTCODE: ${{ steps.dl.outputs.shortcode }}
+        run: |
+          # El runner es un servicio systemd sin sesion grafica propia; se le
+          # pasan DISPLAY/DBUS_SESSION_BUS_ADDRESS de la sesion gnome real
+          # (unico usuario/escritorio en esta maquina) para que notify-send
+          # entregue en la pantalla de MAK, no a la nada. Si el paquete no
+          # esta instalado o no hay sesion activa, no se rompe el render por
+          # esto -- es un aviso, no el resultado.
+          command -v notify-send >/dev/null 2>&1 || exit 0
+          DISPLAY=:0 DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/1000/bus" \
+            notify-send "MAK · render listo" \
+            "issue #$ISSUE_NUM ($SHORTCODE): flyer renderizado y publicado" \
+            -i dialog-information || true
+
       - name: comentar render OK y cerrar issue
         if: steps.render.outcome == 'success' && steps.publish.outcome == 'success'
         env:
