@@ -26,7 +26,7 @@ jobs:
 
       - name: extraer y listar candidatos
         env:
-          URL: ${{ github.event.inputs.url || 'https://www.instagram.com/p/DdCZODWiI2s/' }}
+          URL: ${{ github.event.inputs.url || 'https://www.instagram.com/p/DcbY8XZxGHh/' }}
         run: |
           python3 - <<'PY'
           import os
