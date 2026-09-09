@@ -171,31 +171,39 @@ jobs:
           MEDIA_TYPE: ${{ steps.dl.outputs.media_type }}
         run: |
           set -euo pipefail
-          destino="onedrive:MAK/eventos/issue-$ISSUE_NUM"
-          if [ "${MEDIA_TYPE:-}" = "video" ]; then
-            test -s "${VIDEO_PATH:-}"
-            rclone copyto "$VIDEO_PATH" "$destino/input_ig.mp4" \
-              --retries 3 --low-level-retries 10 --stats-one-line
-            if test -s "${IMAGE_PATH:-}"; then
+          # Dos nubes, no una: onedrive es donde vive el pipeline hoy,
+          # gdrive es donde el usuario ya mira por costumbre (el puente
+          # viejo -- puente_issues.py -- usaba gdrive por defecto). Mismo
+          # contenido a las dos, ninguna es "la buena": si una falla, la
+          # otra igual entrega.
+          for remoto in onedrive gdrive; do
+            destino="${remoto}:MAK/eventos/issue-$ISSUE_NUM"
+            if [ "${MEDIA_TYPE:-}" = "video" ]; then
+              test -s "${VIDEO_PATH:-}"
+              rclone copyto "$VIDEO_PATH" "$destino/input_ig.mp4" \
+                --retries 3 --low-level-retries 10 --stats-one-line
+              if test -s "${IMAGE_PATH:-}"; then
+                rclone copyto "$IMAGE_PATH" "$destino/input_ig.jpg" \
+                  --retries 3 --low-level-retries 10 --stats-one-line
+              fi
+            elif [ "${MEDIA_TYPE:-}" = "image" ] || [ "${MEDIA_TYPE:-}" = "carousel" ]; then
+              test -s "${IMAGE_PATH:-}"
               rclone copyto "$IMAGE_PATH" "$destino/input_ig.jpg" \
                 --retries 3 --low-level-retries 10 --stats-one-line
+            else
+              echo "UNKNOWN_MEDIA_TYPE: no se preserva una descarga no clasificada."
+              exit 1
             fi
-          elif [ "${MEDIA_TYPE:-}" = "image" ] || [ "${MEDIA_TYPE:-}" = "carousel" ]; then
-            test -s "${IMAGE_PATH:-}"
-            rclone copyto "$IMAGE_PATH" "$destino/input_ig.jpg" \
-              --retries 3 --low-level-retries 10 --stats-one-line
-          else
-            echo "UNKNOWN_MEDIA_TYPE: no se preserva una descarga no clasificada."
-            exit 1
-          fi
-          for extra in media.json ig_caption.txt; do
-            if test -s "$DOWNLOAD_DIR/$extra"; then
-              rclone copyto "$DOWNLOAD_DIR/$extra" "$destino/$extra" \
-                --retries 3 --low-level-retries 10 --stats-one-line
-            fi
+            for extra in media.json ig_caption.txt; do
+              if test -s "$DOWNLOAD_DIR/$extra"; then
+                rclone copyto "$DOWNLOAD_DIR/$extra" "$destino/$extra" \
+                  --retries 3 --low-level-retries 10 --stats-one-line
+              fi
+            done
+            rclone lsf "$destino" --files-only
           done
-          rclone lsf "$destino" --files-only
-          echo "destino=$destino" >> "$GITHUB_OUTPUT"
+          echo "destino=onedrive:MAK/eventos/issue-$ISSUE_NUM" >> "$GITHUB_OUTPUT"
+          echo "destino_gdrive=gdrive:MAK/eventos/issue-$ISSUE_NUM" >> "$GITHUB_OUTPUT"
 
       # --- render Blender MAK: habilitado tras gate foreground 2026-08-15 ---
 
@@ -270,37 +278,47 @@ jobs:
           RENDER_OUTCOME: ${{ steps.render.outcome }}
         run: |
           set -euo pipefail
-          destino="onedrive:MAK/eventos/issue-$ISSUE_NUM"
-          if [ "${MEDIA_TYPE:-}" = "video" ]; then
-            if [ -d "$RENDER_DIR/frames" ] && find "$RENDER_DIR/frames" \
-                -type f -name 'frame_*.png' -size +0c | grep -q .; then
-              rclone copy "$RENDER_DIR/frames" "$destino/frames" \
-                --retries 3 --low-level-retries 10 --stats-one-line
-            fi
-            for artifact in render_manifest.json render.log; do
-              if test -s "$RENDER_DIR/$artifact"; then
-                rclone copyto "$RENDER_DIR/$artifact" "$destino/$artifact" \
+          # Copia a las dos nubes; la validacion (que realmente haya llegado
+          # bien) se hace solo contra onedrive, la misma que ya validaba
+          # antes de agregar gdrive -- si gdrive tiene un hipo transitorio
+          # no se cae el render por eso, onedrive ya entrego.
+          for remoto in onedrive gdrive; do
+            destino="${remoto}:MAK/eventos/issue-$ISSUE_NUM"
+            if [ "${MEDIA_TYPE:-}" = "video" ]; then
+              if [ -d "$RENDER_DIR/frames" ] && find "$RENDER_DIR/frames" \
+                  -type f -name 'frame_*.png' -size +0c | grep -q .; then
+                rclone copy "$RENDER_DIR/frames" "$destino/frames" \
                   --retries 3 --low-level-retries 10 --stats-one-line
               fi
-            done
+              for artifact in render_manifest.json render.log; do
+                if test -s "$RENDER_DIR/$artifact"; then
+                  rclone copyto "$RENDER_DIR/$artifact" "$destino/$artifact" \
+                    --retries 3 --low-level-retries 10 --stats-one-line
+                fi
+              done
+            elif [ "${MEDIA_TYPE:-}" = "image" ] || [ "${MEDIA_TYPE:-}" = "carousel" ]; then
+              if test -s "$RENDER_DIR/render_output.png"; then
+                rclone copyto "$RENDER_DIR/render_output.png" \
+                  "$destino/render_output.png" \
+                  --retries 3 --low-level-retries 10 --stats-one-line
+              fi
+            else
+              echo "UNKNOWN_MEDIA_TYPE: no se publican salidas sin clasificacion."
+              exit 1
+            fi
+          done
+          destino="onedrive:MAK/eventos/issue-$ISSUE_NUM"
+          if [ "${MEDIA_TYPE:-}" = "video" ]; then
             rclone lsf "$destino" --files-only | grep -qx 'input_ig.mp4'
             if [ "$RENDER_OUTCOME" = "success" ]; then
               rclone lsf "$destino/frames" --files-only | grep -q 'frame_'
               rclone lsf "$destino" --files-only | grep -qx 'render_manifest.json'
             fi
-          elif [ "${MEDIA_TYPE:-}" = "image" ] || [ "${MEDIA_TYPE:-}" = "carousel" ]; then
-            if test -s "$RENDER_DIR/render_output.png"; then
-              rclone copyto "$RENDER_DIR/render_output.png" \
-                "$destino/render_output.png" \
-                --retries 3 --low-level-retries 10 --stats-one-line
-            fi
+          else
             rclone lsf "$destino" --files-only | grep -qx 'input_ig.jpg'
             if [ "$RENDER_OUTCOME" = "success" ]; then
               rclone lsf "$destino" --files-only | grep -qx 'render_output.png'
             fi
-          else
-            echo "UNKNOWN_MEDIA_TYPE: no se publican salidas sin clasificacion."
-            exit 1
           fi
           echo "destino=$destino" >> "$GITHUB_OUTPUT"
           if [ "$RENDER_OUTCOME" = "success" ]; then
