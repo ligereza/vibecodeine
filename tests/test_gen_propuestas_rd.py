@@ -157,6 +157,29 @@ def test_match_conocido_no_se_propone():
     assert informe["productoras"]["conocidas"] == 3
 
 
+def test_evento_conocido_usa_el_nombre_canonico_no_el_ocr_sucio():
+    # Regresion 2026-09-09: el borrador traia "nombre_evento" = el crudo
+    # del OCR ("Picnic Electronik Santiago, Banco de Chile, e) entel",
+    # medido contra el flyer real de Piknic) en vez del nombre YA
+    # corregido por el fuzzy-match. Si "match"/"dudoso" ya identifico la
+    # productora, el borrador tiene que mostrar el nombre limpio.
+    catalogo = [{"canonico": "Piknic Electronik", "variantes": ["Piknic Electronik"]}]
+    candidatos = [
+        _candidato(
+            obra_id="o1",
+            productora="Picnic Electronik Santiago, Banco de Chile, e) entel",
+            venue="Parque Ciudad Empresarial",
+        ),
+    ]
+    for c in candidatos:
+        c["fecha_cruda"] = "03 OCTUBRE"
+    consolidado, _ = gen.consolidar_candidatos(
+        candidatos, catalogo_productoras=catalogo, catalogo_venues=[])
+    eventos = consolidado["eventos_conocidos"]
+    assert len(eventos) == 1
+    assert eventos[0]["nombre_evento"] == "Piknic Electronik"
+
+
 def test_cargar_eventos_existentes_resuelve_por_name_no_por_slug_adivinado(
         tmp_path):
     # Medido 2026-09-09 contra data/productoras real: 9 productoras legacy

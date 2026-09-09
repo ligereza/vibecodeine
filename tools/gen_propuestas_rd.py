@@ -309,7 +309,15 @@ def consolidar_candidatos(
                                 "slug_productora": slug_prod,
                                 "clase": clase,
                                 "match_ratio": ratio,
-                                "nombre_evento": nombre_prod,
+                                # el nombre CANONICO, no el crudo del OCR --
+                                # "match"/"dudoso" garantiza que canonico
+                                # exista (viene de un catalogo real). El
+                                # crudo suele traer auspiciadores pegados
+                                # ("Picnic Electronik Santiago, Banco de
+                                # Chile, e) entel"); el borrador tiene que
+                                # mostrar el nombre corregido, no ese
+                                # string sucio.
+                                "nombre_evento": canonico,
                                 "fecha": fecha_cruda,
                                 "venue": nombre_venue,
                                 "handles": set(),
