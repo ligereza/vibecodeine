@@ -51,6 +51,24 @@ def canonicalizar_url(url: str) -> str:
     )
 
 
+def indice_pedido(url: str) -> int:
+    """El `img_index` del propio link, 1-based. 1 si no viene.
+
+    Instagram ya pone `?img_index=2` en la URL cuando alguien comparte la
+    segunda imagen de un carrusel -- el dato esta ahi, no hace falta
+    inventar sintaxis nueva. Mismo criterio que
+    `eventos/flyer_auto.py::_indice_pedido`; se duplica (es puro, sin
+    dependencias, poco probable que cambie) en vez de importar un modulo
+    orientado a Windows/Blender/Photoshop desde el runner de Linux.
+    """
+    try:
+        query = urllib.parse.urlparse(url).query
+        crudo = urllib.parse.parse_qs(query).get("img_index", ["1"])[0]
+        return max(1, int(crudo))
+    except (ValueError, TypeError):
+        return 1
+
+
 def _url_requires_video(url: str) -> bool:
     """Return whether the URL path declares a video-like Instagram post."""
     return bool(re.search(r"/(?:reels?|tv)/", url, re.IGNORECASE))
@@ -478,6 +496,7 @@ def download_post(url: str, output_dir: Path, retries: int = 1) -> dict:
     if not shortcode:
         return {"status": "error", "reason": "shortcode_no_detectado", "url": url}
     requires_video = _url_requires_video(url)
+    indice = indice_pedido(url)
 
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -486,13 +505,22 @@ def download_post(url: str, output_dir: Path, retries: int = 1) -> dict:
         f.unlink(missing_ok=True)
     (output_dir / "ig_caption.txt").unlink(missing_ok=True)
 
+    def _con_indice(resultado: dict) -> dict:
+        # Todas las vias bajan el carrusel entero, en orden; cual slide usa
+        # el render es una decision de consumo, no de descarga, asi que se
+        # anota aca en un solo punto en vez de en cada _*_download.
+        disponibles = len(resultado.get("image_files") or [])
+        resultado["requested_image_index"] = indice
+        resultado["requested_image_index_available"] = 0 < indice <= disponibles
+        return resultado
+
     last_err = ""
     for attempt in range(retries + 1):
         try:
             resultado = _parth_download(url, shortcode, output_dir)
             if requires_video and not resultado.get("video_files"):
                 raise RuntimeError("video_sin_mp4")
-            return resultado
+            return _con_indice(resultado)
         except ImportError:
             last_err = "parth_dl_no_instalado"
             break
@@ -515,7 +543,7 @@ def download_post(url: str, output_dir: Path, retries: int = 1) -> dict:
         if requires_video and not resultado.get("video_files"):
             last_err = "video_sin_mp4"
         else:
-            return resultado
+            return _con_indice(resultado)
 
     if requires_video:
         resultado = _snapinsta_download(url, shortcode, output_dir)

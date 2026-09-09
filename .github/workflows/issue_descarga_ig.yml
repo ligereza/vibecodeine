@@ -117,12 +117,30 @@ jobs:
           echo "archivos descargados: $n"
           test "$n" -gt 0
           video=$(find "$out" -maxdepth 1 -type f -name 'input_ig*.mp4' -print -quit)
-          imagen=$(find "$out" -maxdepth 1 -type f -name 'input_ig.jpg' -print -quit)
           media_type=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8")).get("media_type", ""))' "$out/media.json")
           echo "video=$video" >> "$GITHUB_OUTPUT"
-          echo "imagen=$imagen" >> "$GITHUB_OUTPUT"
           echo "media_type=$media_type" >> "$GITHUB_OUTPUT"
           echo "dir=$out" >> "$GITHUB_OUTPUT"
+          # Que slide renderizar: Instagram pone ?img_index=N en el link
+          # cuando alguien comparte esa imagen puntual del carrusel
+          # (download_post ya lo lee y lo deja en media.json). Default: la
+          # primera. Si se pidio otra y no existe, se usa la primera de
+          # todos modos (mejor un flyer que ninguno) y se avisa, nunca en
+          # silencio -- mismo criterio que eventos/flyer_auto.py.
+          indice_pedido=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8")).get("requested_image_index", "1"))' "$out/media.json")
+          indice_disponible=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8")).get("requested_image_index_available", "True"))' "$out/media.json")
+          aviso_indice=""
+          if [ "$indice_disponible" = "True" ] && [ "$indice_pedido" != "1" ]; then
+            nombre_imagen="input_ig_${indice_pedido}.jpg"
+          else
+            nombre_imagen="input_ig.jpg"
+            if [ "$indice_pedido" != "1" ]; then
+              aviso_indice=" AVISO: el link pedia la imagen ${indice_pedido} del carrusel pero el post no la tiene; se uso la primera."
+            fi
+          fi
+          imagen=$(find "$out" -maxdepth 1 -type f -name "$nombre_imagen" -print -quit)
+          echo "imagen=$imagen" >> "$GITHUB_OUTPUT"
+          echo "aviso_indice=$aviso_indice" >> "$GITHUB_OUTPUT"
           # Resolucion real de lo que Instagram entrego (no lo que pedimos):
           # el metodo de extraccion que hoy funciona sin sesion (embed page,
           # ver parth_dl/extractors.py MediaExtractor.extract, "Embed" primero
@@ -294,13 +312,14 @@ jobs:
         env:
           MEDIA_TYPE: ${{ steps.dl.outputs.media_type }}
           IMAGEN_WH: ${{ steps.dl.outputs.imagen_wh }}
+          AVISO_INDICE: ${{ steps.dl.outputs.aviso_indice }}
         run: |
           aviso_resolucion=""
           if [ "${MEDIA_TYPE:-}" != "video" ] && [ -n "${IMAGEN_WH:-}" ]; then
             aviso_resolucion=" Imagen de origen: ${IMAGEN_WH}px (resolucion real entregada por Instagram via el metodo de extraccion que hoy responde sin sesion; si el post original no es de esa proporcion, puede llegar recortado -- revisar antes de publicar)."
           fi
           gh issue comment "$ISSUE_NUM" -R "$GITHUB_REPOSITORY" \
-            -b "runner MAK: render OK y publicado en OneDrive (\`${{ steps.publish.outputs.destino }}\`).${aviso_resolucion} Run de control: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            -b "runner MAK: render OK y publicado en OneDrive (\`${{ steps.publish.outputs.destino }}\`).${aviso_resolucion}${AVISO_INDICE:-} Run de control: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
           gh issue close "$ISSUE_NUM" -R "$GITHUB_REPOSITORY"
 
       - name: comentar render fallido con media preservada
