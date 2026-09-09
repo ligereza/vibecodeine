@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AX — firma angular</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0a0a0b; --panel:#131316; --line:#26262c; --txt:#e8e8ea;
+    --dim:#7a7a85; --acc:#d9ff3f; --acc2:#3fd9ff; --warn:#ff6b4a;
+  }
+  body{
+    background:var(--bg); color:var(--txt);
+    font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    font-size:13px; line-height:1.55; padding:28px 22px 80px;
+  }
+  .wrap{max-width:1180px;margin:0 auto}
+  header{border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:26px}
+  h1{font-size:34px;letter-spacing:.22em;font-weight:400;color:var(--acc)}
+  .sub{color:var(--dim);margin-top:6px;letter-spacing:.04em;max-width:70ch}
+  h2{font-size:11px;letter-spacing:.2em;color:var(--dim);text-transform:uppercase;
+     margin:30px 0 12px;font-weight:400;border-bottom:1px solid var(--line);padding-bottom:7px}
+
+  .drop{
+    border:1px dashed var(--line); border-radius:3px; padding:34px 20px;
+    text-align:center; color:var(--dim); cursor:pointer; transition:.15s;
+  }
+  .drop:hover,.drop.hot{border-color:var(--acc);color:var(--acc);background:#101013}
+  .drop b{color:var(--txt);font-weight:400}
+
+  .bar{display:flex;gap:9px;flex-wrap:wrap;margin:16px 0}
+  button{
+    background:transparent;border:1px solid var(--line);color:var(--txt);
+    font-family:inherit;font-size:11px;letter-spacing:.11em;text-transform:uppercase;
+    padding:9px 15px;cursor:pointer;border-radius:2px;transition:.15s;
+  }
+  button:hover{border-color:var(--acc);color:var(--acc)}
+  button:disabled{opacity:.3;cursor:default}
+  button.p{border-color:var(--acc);color:var(--acc)}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:15px}
+  .card .nm{font-size:11px;color:var(--dim);margin-bottom:10px;overflow:hidden;
+            text-overflow:ellipsis;white-space:nowrap}
+  .cvrow{display:flex;gap:12px;align-items:flex-start}
+  canvas.rose{background:#0d0d10;border:1px solid var(--line);border-radius:2px}
+  canvas.thumb{border:1px solid var(--line);border-radius:2px;object-fit:cover}
+
+  .kv{margin-top:11px;font-size:12px}
+  .kv div{display:flex;justify-content:space-between;padding:3px 0;
+          border-bottom:1px solid #1c1c21}
+  .kv span:first-child{color:var(--dim)}
+  .kv span:last-child{color:var(--txt)}
+  .big{color:var(--acc)!important;font-size:15px}
+  .b2{color:var(--acc2)!important}
+  .flag{color:var(--warn)!important}
+
+  .summary{background:var(--panel);border:1px solid var(--acc);border-radius:3px;padding:20px}
+  .summary .hero{font-size:52px;color:var(--acc);letter-spacing:.05em;line-height:1}
+  .summary .heroL{font-size:11px;color:var(--dim);letter-spacing:.2em;text-transform:uppercase}
+  .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:22px;margin-top:18px}
+  .note{color:var(--dim);font-size:12px;margin-top:14px;max-width:78ch}
+  .note b{color:var(--txt);font-weight:400}
+
+  .cfg{display:flex;gap:18px;flex-wrap:wrap;align-items:center;margin:14px 0;
+       color:var(--dim);font-size:12px}
+  select,input[type=number]{
+    background:#0d0d10;border:1px solid var(--line);color:var(--txt);
+    font-family:inherit;font-size:12px;padding:6px 8px;border-radius:2px;
+  }
+  .test{background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:15px;
+        font-size:12px;white-space:pre-wrap;color:var(--dim)}
+  .ok{color:var(--acc)}
+  .bad{color:var(--warn)}
+  footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--line);
+         color:var(--dim);font-size:11px;max-width:80ch}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>AX</h1>
+  <div class="sub">
+    Firma angular de obra digital. Tensor de estructura, histograma de orientaciones,
+    índice de quiralidad y separación trazo / composición.
+    Todo se ejecuta en tu máquina — ninguna imagen sale de aquí.
+  </div>
+</header>
+
+<h2>1 · Corpus</h2>
+<div class="drop" id="drop">
+  <b>Arrastra tus obras aquí</b> o haz clic para elegirlas.<br>
+  Mientras más, mejor: con menos de 15 el resultado no significa nada.
+</div>
+<input type="file" id="file" multiple accept="image/*" style="display:none">
+
+<div class="cfg">
+  <label>Lateralidad
+    <select id="hand">
+      <option value="none">no declarar</option>
+      <option value="R">diestro</option>
+      <option value="L">zurdo</option>
+    </select>
+  </label>
+  <label>Eje de cilindro OD <input type="number" id="axR" min="0" max="180" step="1" style="width:70px" placeholder="—">°</label>
+  <label>Eje de cilindro OI <input type="number" id="axL" min="0" max="180" step="1" style="width:70px" placeholder="—">°</label>
+</div>
+
+<div class="bar">
+  <button id="run" class="p" disabled>Analizar</button>
+  <button id="csv" disabled>Exportar CSV</button>
+  <button id="clear" disabled>Limpiar</button>
+  <button id="validate">Validar el instrumento</button>
+</div>
+
+<div id="valOut" style="display:none"><h2>Validación</h2><div class="test" id="valBody"></div></div>
+
+<div id="sumWrap" style="display:none">
+  <h2>2 · Firma</h2>
+  <div class="summary" id="summary"></div>
+</div>
+
+<div id="gridWrap" style="display:none">
+  <h2>3 · Obra por obra</h2>
+  <div class="grid" id="grid"></div>
+</div>
+
+<footer>
+  <b>Cómo leerlo.</b> El <b>eje dominante</b> es la orientación que tu obra privilegia, en grados
+  (0° = horizontal, 90° = vertical), calculado en representación de ángulo duplicado.
+  La <b>anisotropía</b> (0–1) dice cuán marcada es esa preferencia: cerca de 0 es una obra sin
+  dirección dominante, cerca de 1 es una obra fuertemente orientada.
+  La <b>quiralidad</b> mide cuánto se rompe tu obra al espejearse: es tu "si flipeo es otra obra",
+  en número. El <b>Δ trazo/composición</b> es la separación metodológica: el trazo lo pone la mano,
+  la composición la pone el ojo. Si divergen, tienes dos fuentes distintas de sesgo.
+  <br><br>
+  AX no diagnostica y no informa errores. Informa ángulos.
+</footer>
+
+</div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   NÚCLEO — tensor de estructura y estadística orientacional
+   Convención: 0° = horizontal, 90° = vertical, antihorario.
+   ============================================================ */
+
+const NBINS = 180;
+const MAXDIM = 760;           // techo de resolución de análisis
+const COARSE_FACTOR = 6;      // downsample para la escala "composición"
+
+function toGray(imgData){
+  const {width:w, height:h, data:d} = imgData;
+  const g = new Float32Array(w*h);
+  for(let i=0,p=0;i<d.length;i+=4,p++){
+    g[p] = 0.2126*d[i] + 0.7152*d[i+1] + 0.0722*d[i+2];
+  }
+  return {g,w,h};
+}
+
+// promedio por área — actúa como pasabajos limpio
+function downsample(src, factor){
+  if(factor<=1) return src;
+  const {g,w,h} = src;
+  const nw = Math.max(8, Math.floor(w/factor));
+  const nh = Math.max(8, Math.floor(h/factor));
+  const out = new Float32Array(nw*nh);
+  for(let y=0;y<nh;y++){
+    const y0=Math.floor(y*h/nh), y1=Math.max(y0+1,Math.floor((y+1)*h/nh));
+    for(let x=0;x<nw;x++){
+      const x0=Math.floor(x*w/nw), x1=Math.max(x0+1,Math.floor((x+1)*w/nw));
+      let s=0,n=0;
+      for(let yy=y0;yy<y1;yy++) for(let xx=x0;xx<x1;xx++){ s+=g[yy*w+xx]; n++; }
+      out[y*nw+x] = s/n;
+    }
+  }
+  return {g:out,w:nw,h:nh};
+}
+
+function boxBlur(src,w,h,r){
+  if(r<1) return src;
+  const tmp=new Float32Array(w*h), out=new Float32Array(w*h);
+  for(let y=0;y<h;y++){
+    let acc=0;
+    for(let x=-r;x<=r;x++) acc+=src[y*w+Math.min(w-1,Math.max(0,x))];
+    for(let x=0;x<w;x++){
+      tmp[y*w+x]=acc/(2*r+1);
+      acc-=src[y*w+Math.min(w-1,Math.max(0,x-r))];
+      acc+=src[y*w+Math.min(w-1,Math.max(0,x+r+1))];
+    }
+  }
+  for(let x=0;x<w;x++){
+    let acc=0;
+    for(let y=-r;y<=r;y++) acc+=tmp[Math.min(h-1,Math.max(0,y))*w+x];
+    for(let y=0;y<h;y++){
+      out[y*w+x]=acc/(2*r+1);
+      acc-=tmp[Math.min(h-1,Math.max(0,y-r))*w+x];
+      acc+=tmp[Math.min(h-1,Math.max(0,y+r+1))*w+x];
+    }
+  }
+  return out;
+}
+
+/* Devuelve histograma de ORIENTACIÓN DE BORDE, 180 bins, ponderado
+   por energía × coherencia. */
+function orientationHistogram(gray, tensorRadius){
+  const {g,w,h} = gray;
+  const gx=new Float32Array(w*h), gy=new Float32Array(w*h);
+  const at=(x,y)=>g[Math.min(h-1,Math.max(0,y))*w+Math.min(w-1,Math.max(0,x))];
+
+  // Scharr 3x3 — mejor isotropía rotacional que Sobel (crítico acá)
+  for(let y=0;y<h;y++) for(let x=0;x<w;x++){
+    const tl=at(x-1,y-1), tc=at(x,y-1), tr=at(x+1,y-1);
+    const ml=at(x-1,y  ),               mr=at(x+1,y  );
+    const bl=at(x-1,y+1), bc=at(x,y+1), br=at(x+1,y+1);
+    const sx = 3*tl + 10*ml + 3*bl - 3*tr - 10*mr - 3*br;
+    // y de imagen crece hacia abajo → invertimos para convención matemática
+    const sy = 3*bl + 10*bc + 3*br - 3*tl - 10*tc - 3*tr;
+    gx[y*w+x] = -sx; gy[y*w+x] = sy;
+  }
+
+  let Jxx=new Float32Array(w*h), Jyy=new Float32Array(w*h), Jxy=new Float32Array(w*h);
+  for(let i=0;i<w*h;i++){ Jxx[i]=gx[i]*gx[i]; Jyy[i]=gy[i]*gy[i]; Jxy[i]=gx[i]*gy[i]; }
+  Jxx=boxBlur(Jxx,w,h,tensorRadius);
+  Jyy=boxBlur(Jyy,w,h,tensorRadius);
+  Jxy=boxBlur(Jxy,w,h,tensorRadius);
+
+  const hist=new Float64Array(NBINS);
+  let total=0;
+  for(let i=0;i<w*h;i++){
+    const tr=Jxx[i]+Jyy[i];
+    if(tr<1e-6) continue;
+    const dif=Jxx[i]-Jyy[i];
+    const disc=Math.sqrt(dif*dif + 4*Jxy[i]*Jxy[i]);
+    const coh = disc/tr;                       // 0 = isótropo, 1 = línea pura
+    if(coh<0.12) continue;                      // descarta zonas sin dirección
+    const gradAng = 0.5*Math.atan2(2*Jxy[i], dif);   // rad, orientación del gradiente
+    let edge = gradAng*180/Math.PI + 90;             // el borde es perpendicular
+    edge = ((edge%180)+180)%180;
+    const wgt = tr*coh;
+    hist[Math.min(NBINS-1, Math.floor(edge))] += wgt;
+    total += wgt;
+  }
+  if(total>0) for(let i=0;i<NBINS;i++) hist[i]/=total;
+  return hist;
+}
+
+/* Estadística circular en ángulo duplicado (correcto para orientaciones mod 180) */
+function circStats(hist){
+  let C=0,S=0,T=0;
+  for(let i=0;i<NBINS;i++){
+    const a = (i+0.5)*Math.PI/180*2;   // ángulo duplicado
+    C += hist[i]*Math.cos(a);
+    S += hist[i]*Math.sin(a);
+    T += hist[i];
+  }
+  if(T===0) return {axis:NaN, aniso:0};
+  const R = Math.sqrt(C*C+S*S)/T;
+  let ax = 0.5*Math.atan2(S,C)*180/Math.PI;
+  ax = ((ax%180)+180)%180;
+  return {axis:ax, aniso:R};
+}
+
+/* Suavizado circular. Necesario antes de medir quiralidad: sin él, una
+   orientación que cae justo en el borde de un bin produce asimetría espuria. */
+function smoothCirc(hist, r){
+  const o=new Float64Array(NBINS);
+  for(let i=0;i<NBINS;i++){
+    let s=0;
+    for(let k=-r;k<=r;k++) s += hist[(((i+k)%NBINS)+NBINS)%NBINS];
+    o[i]=s/(2*r+1);
+  }
+  return o;
+}
+
+/* Quiralidad: asimetría del histograma respecto del eje vertical.
+   Espejear horizontalmente mapea θ → 180−θ, o sea el bin i → 179−i.
+   0 = la obra sobrevive el espejo · 1 = espejearla la vuelve otra cosa. */
+function chirality(hist){
+  const H = smoothCirc(hist, 4);
+  let diff=0, sum=0;
+  for(let i=0;i<NBINS;i++){
+    const j = (NBINS-1-i);
+    diff += Math.abs(H[i]-H[j]);
+    sum  += H[i]+H[j];
+  }
+  return sum>0 ? diff/sum : 0;
+}
+
+/* Razón entre familias diagonales: "/" (≈45°) vs "\" (≈135°) */
+function diagonalRatio(hist){
+  let a=0,b=0;
+  for(let i=0;i<NBINS;i++){
+    if(i>=25&&i<=65) a+=hist[i];
+    if(i>=115&&i<=155) b+=hist[i];
+  }
+  return {slash:a, backslash:b, ratio: b>0 ? a/b : Infinity};
+}
+
+/* Diferencia angular mínima entre dos orientaciones (0..90) */
+function angDiff(a,b){
+  let d=Math.abs(a-b)%180;
+  return d>90 ? 180-d : d;
+}
+
+/* ============================================================
+   ANÁLISIS DE UNA IMAGEN
+   ============================================================ */
+function analyzeImage(img){
+  const sc = Math.min(1, MAXDIM/Math.max(img.width,img.height));
+  const w = Math.max(16,Math.round(img.width*sc)), h = Math.max(16,Math.round(img.height*sc));
+  const c = document.createElement('canvas'); c.width=w; c.height=h;
+  const ctx=c.getContext('2d',{willReadFrequently:true});
+  ctx.drawImage(img,0,0,w,h);
+  const gray = toGray(ctx.getImageData(0,0,w,h));
+
+  const hFine   = orientationHistogram(gray, 2);
+  const hCoarse = orientationHistogram(downsample(gray, COARSE_FACTOR), 2);
+
+  const sFine=circStats(hFine), sCoarse=circStats(hCoarse);
+  const combined=new Float64Array(NBINS);
+  for(let i=0;i<NBINS;i++) combined[i]=(hFine[i]+hCoarse[i])/2;
+  const sAll=circStats(combined);
+
+  return {
+    hist:combined, histFine:hFine, histCoarse:hCoarse,
+    axis:sAll.axis, aniso:sAll.aniso,
+    axisFine:sFine.axis, axisCoarse:sCoarse.axis,
+    dSep: angDiff(sFine.axis, sCoarse.axis),
+    chir: chirality(combined),
+    diag: diagonalRatio(combined),
+    thumb: c
+  };
+}
+
+/* ============================================================
+   DIBUJO — rosa polar
+   ============================================================ */
+function drawRose(cv, hist, axis, color){
+  const ctx=cv.getContext('2d'), S=cv.width, cx=S/2, cy=S/2, R=S/2-10;
+  ctx.clearRect(0,0,S,S);
+  ctx.fillStyle='#0d0d10'; ctx.fillRect(0,0,S,S);
+
+  ctx.strokeStyle='#1f1f25'; ctx.lineWidth=1;
+  [0.33,0.66,1].forEach(f=>{ctx.beginPath();ctx.arc(cx,cy,R*f,0,7);ctx.stroke();});
+  ctx.beginPath(); ctx.moveTo(cx-R,cy); ctx.lineTo(cx+R,cy);
+  ctx.moveTo(cx,cy-R); ctx.lineTo(cx,cy+R); ctx.stroke();
+
+  let mx=0; for(let i=0;i<NBINS;i++) mx=Math.max(mx,hist[i]);
+  if(mx<=0) return;
+
+  ctx.beginPath();
+  for(let k=0;k<360;k++){
+    const i=k%180, r=R*Math.pow(hist[i]/mx,0.6);
+    const a=k*Math.PI/180;                       // antihorario, y hacia arriba
+    const x=cx+r*Math.cos(a), y=cy-r*Math.sin(a);
+    k===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.closePath();
+  ctx.fillStyle=color+'2e'; ctx.fill();
+  ctx.strokeStyle=color; ctx.lineWidth=1.4; ctx.stroke();
+
+  if(!isNaN(axis)){
+    const a=axis*Math.PI/180;
+    ctx.beginPath();
+    ctx.moveTo(cx-R*Math.cos(a), cy+R*Math.sin(a));
+    ctx.lineTo(cx+R*Math.cos(a), cy-R*Math.sin(a));
+    ctx.strokeStyle='#ffffff'; ctx.lineWidth=1; ctx.setLineDash([4,4]);
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+  ctx.fillStyle='#55555f'; ctx.font='9px monospace';
+  ctx.fillText('0°',S-16,cy-4); ctx.fillText('90°',cx+4,11);
+}
+
+/* ============================================================
+   ESTADO / UI
+   ============================================================ */
+const state={files:[],results:[]};
+const $=id=>document.getElementById(id);
+
+function loadImage(file){
+  return new Promise((res,rej)=>{
+    const img=new Image(); const url=URL.createObjectURL(file);
+    img.onload=()=>{URL.revokeObjectURL(url);res(img);};
+    img.onerror=()=>{URL.revokeObjectURL(url);rej();};
+    img.src=url;
+  });
+}
+
+$('drop').onclick=()=>$('file').click();
+['dragover','dragenter'].forEach(e=>$('drop').addEventListener(e,ev=>{
+  ev.preventDefault();$('drop').classList.add('hot');}));
+['dragleave','drop'].forEach(e=>$('drop').addEventListener(e,ev=>{
+  ev.preventDefault();$('drop').classList.remove('hot');}));
+$('drop').addEventListener('drop',ev=>addFiles(ev.dataTransfer.files));
+$('file').onchange=e=>addFiles(e.target.files);
+
+function addFiles(list){
+  for(const f of list) if(f.type.startsWith('image/')) state.files.push(f);
+  $('drop').innerHTML = state.files.length
+    ? `<b>${state.files.length}</b> obra${state.files.length>1?'s':''} cargada${state.files.length>1?'s':''}.
+       ${state.files.length<15?'<span style="color:var(--warn)">Menos de 15: el resultado será ruido.</span>':'Listo para analizar.'}`
+    : '<b>Arrastra tus obras aquí</b> o haz clic para elegirlas.';
+  $('run').disabled = state.files.length===0;
+  $('clear').disabled = state.files.length===0;
+}
+
+$('clear').onclick=()=>{
+  state.files=[]; state.results=[];
+  $('grid').innerHTML=''; $('gridWrap').style.display='none';
+  $('sumWrap').style.display='none'; $('csv').disabled=true;
+  addFiles([]);
+};
+
+$('run').onclick=async()=>{
+  $('run').disabled=true; $('run').textContent='Analizando…';
+  state.results=[];
+  $('grid').innerHTML='';
+  for(let i=0;i<state.files.length;i++){
+    try{
+      const img=await loadImage(state.files[i]);
+      const r=analyzeImage(img);
+      r.name=state.files[i].name;
+      state.results.push(r);
+      renderCard(r);
+    }catch(e){ /* archivo ilegible: se omite */ }
+    $('run').textContent=`Analizando… ${i+1}/${state.files.length}`;
+    await new Promise(r=>setTimeout(r,0));
+  }
+  $('gridWrap').style.display='block';
+  renderSummary();
+  $('run').disabled=false; $('run').textContent='Analizar';
+  $('csv').disabled=false;
+};
+
+function renderCard(r){
+  const el=document.createElement('div'); el.className='card';
+  const flagSep = r.dSep>18;
+  el.innerHTML=`
+    <div class="nm">${r.name}</div>
+    <div class="cvrow">
+      <canvas class="rose" width="150" height="150"></canvas>
+      <canvas class="thumb" width="86" height="150"></canvas>
+    </div>
+    <div class="kv">
+      <div><span>eje dominante</span><span class="big">${r.axis.toFixed(1)}°</span></div>
+      <div><span>anisotropía</span><span>${r.aniso.toFixed(3)}</span></div>
+      <div><span>quiralidad</span><span>${r.chir.toFixed(3)}</span></div>
+      <div><span>eje trazo (fino)</span><span>${r.axisFine.toFixed(1)}°</span></div>
+      <div><span>eje composición</span><span>${r.axisCoarse.toFixed(1)}°</span></div>
+      <div><span>Δ trazo/comp.</span><span class="${flagSep?'flag':'b2'}">${r.dSep.toFixed(1)}°</span></div>
+      <div><span>diagonal / \\</span><span>${isFinite(r.diag.ratio)?r.diag.ratio.toFixed(2):'∞'}</span></div>
+    </div>`;
+  $('grid').appendChild(el);
+  drawRose(el.querySelector('.rose'), r.hist, r.axis, '#d9ff3f');
+  const tc=el.querySelector('.thumb'), tx=tc.getContext('2d');
+  const s=Math.max(86/r.thumb.width,150/r.thumb.height);
+  tx.drawImage(r.thumb,(86-r.thumb.width*s)/2,(150-r.thumb.height*s)/2,
+               r.thumb.width*s,r.thumb.height*s);
+}
+
+function renderSummary(){
+  const R=state.results; if(!R.length) return;
+
+  // media circular de los ejes, ponderada por anisotropía
+  let C=0,S=0,W=0;
+  R.forEach(r=>{const a=r.axis*Math.PI/90; C+=r.aniso*Math.cos(a); S+=r.aniso*Math.sin(a); W+=r.aniso;});
+  let mAx=((0.5*Math.atan2(S,C)*180/Math.PI)%180+180)%180;
+  const conc = W>0 ? Math.sqrt(C*C+S*S)/W : 0;      // 0 = disperso, 1 = idéntico
+
+  const mAniso = R.reduce((s,r)=>s+r.aniso,0)/R.length;
+  const mChir  = R.reduce((s,r)=>s+r.chir,0)/R.length;
+  const mSep   = R.reduce((s,r)=>s+r.dSep,0)/R.length;
+
+  // descuento de lateralidad: el sesgo diagonal esperado por mecánica de muñeca
+  const hand=$('hand').value;
+  const handAxis = hand==='R' ? 45 : (hand==='L' ? 135 : null);
+  const resid = handAxis!==null ? angDiff(mAx,handAxis) : null;
+
+  const axR=parseFloat($('axR').value), axL=parseFloat($('axL').value);
+  let refracLine='';
+  if(!isNaN(axR)||!isNaN(axL)){
+    const parts=[];
+    if(!isNaN(axR)) parts.push(`OD ${axR}° → Δ ${angDiff(mAx,axR).toFixed(1)}°`);
+    if(!isNaN(axL)) parts.push(`OI ${axL}° → Δ ${angDiff(mAx,axL).toFixed(1)}°`);
+    const best=Math.min(...[axR,axL].filter(v=>!isNaN(v)).map(v=>angDiff(mAx,v)));
+    refracLine=`<div class="note" style="margin-top:16px">
+      <b>Contraste refractivo.</b> ${parts.join(' · ')}.
+      ${best<20
+        ? '<span style="color:var(--acc)">Tu eje de obra cae a menos de 20° de tu eje de cilindro. Es coincidencia sospechosa y es exactamente la hipótesis que el proyecto quiere poner a prueba — con corpus grande y control de obra ajena.</span>'
+        : 'Tu eje de obra no coincide con tu eje refractivo. Eso es un resultado, no un fracaso: acota el sesgo al lado motor.'}
+    </div>`;
+  }
+
+  $('summary').innerHTML=`
+    <div class="heroL">Eje dominante del corpus</div>
+    <div class="hero">${mAx.toFixed(1)}°</div>
+    <div class="cols">
+      <div><div class="heroL">Constancia</div>
+        <div style="font-size:23px;color:${conc>0.6?'var(--acc)':'var(--txt)'}">${conc.toFixed(3)}</div>
+        <div class="note" style="font-size:11px">${conc>0.6
+          ? 'Alta: el sesgo es sistémico, no estilístico. Viene del cuerpo o del ojo.'
+          : conc>0.35 ? 'Media: hay tendencia, pero varía por obra.'
+          : 'Baja: tu eje cambia por obra. Es decisión, no condición.'}</div></div>
+      <div><div class="heroL">Anisotropía media</div>
+        <div style="font-size:23px">${mAniso.toFixed(3)}</div>
+        <div class="note" style="font-size:11px">Cuán direccional es tu obra.</div></div>
+      <div><div class="heroL">Quiralidad media</div>
+        <div style="font-size:23px">${mChir.toFixed(3)}</div>
+        <div class="note" style="font-size:11px">${mChir>0.25
+          ? 'Alta: tu obra se rompe al espejearse. Ahora corre el mismo test sobre obra ajena — es el único control válido.'
+          : 'Baja: tu obra sobrevive el espejo.'}</div></div>
+      <div><div class="heroL">Δ trazo / composición</div>
+        <div style="font-size:23px;color:${mSep>18?'var(--warn)':'var(--txt)'}">${mSep.toFixed(1)}°</div>
+        <div class="note" style="font-size:11px">${mSep>18
+          ? 'Divergen. Dos fuentes de sesgo distintas: la mano tira para un lado y la composición para otro.'
+          : 'Coinciden. Una sola fuente de sesgo.'}</div></div>
+    </div>
+    ${handAxis!==null?`<div class="note" style="margin-top:16px">
+      <b>Descuento de lateralidad.</b> Un ${hand==='R'?'diestro':'zurdo'} tiende a la diagonal de ${handAxis}°.
+      Tu eje está a <b>${resid.toFixed(1)}°</b> de esa predicción.
+      ${resid>25?'Ese residuo es la parte que la mano no explica — es el candidato perceptual.'
+                :'Tu eje se explica en buena parte por mecánica de mano.'}</div>`:''}
+    ${refracLine}
+    <div class="note" style="margin-top:16px">
+      <b>N = ${R.length} obras.</b> ${R.length<15
+        ? '<span style="color:var(--warn)">Muestra insuficiente. Bajo 15 obras esto es ruido con decimales.</span>'
+        : 'Muestra suficiente para una lectura preliminar.'}
+    </div>`;
+  $('sumWrap').style.display='block';
+}
+
+$('csv').onclick=()=>{
+  const rows=[['archivo','eje','anisotropia','quiralidad','eje_trazo','eje_composicion','delta_sep','diag_ratio']];
+  state.results.forEach(r=>rows.push([r.name,r.axis.toFixed(2),r.aniso.toFixed(4),
+    r.chir.toFixed(4),r.axisFine.toFixed(2),r.axisCoarse.toFixed(2),r.dSep.toFixed(2),
+    isFinite(r.diag.ratio)?r.diag.ratio.toFixed(3):'inf']));
+  const blob=new Blob([rows.map(r=>r.join(',')).join('\n')],{type:'text/csv'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download='ax-firma.csv'; a.click();
+};
+
+/* ============================================================
+   VALIDACIÓN — rejillas sintéticas de ángulo conocido
+   ============================================================ */
+function syntheticGrating(angleDeg,size){
+  const c=document.createElement('canvas'); c.width=c.height=size;
+  const ctx=c.getContext('2d'); const im=ctx.createImageData(size,size);
+  const a=angleDeg*Math.PI/180;
+  // líneas ORIENTADAS a angleDeg → onda que varía en la perpendicular
+  const kx=Math.sin(a), ky=Math.cos(a), f=0.14;
+  for(let y=0;y<size;y++) for(let x=0;x<size;x++){
+    const yy=size-1-y;                        // y matemática, hacia arriba
+    const v=127+120*Math.sin(2*Math.PI*f*(x*kx+yy*ky));
+    const i=(y*size+x)*4; im.data[i]=im.data[i+1]=im.data[i+2]=v; im.data[i+3]=255;
+  }
+  ctx.putImageData(im,0,0); return c;
+}
+
+$('validate').onclick=()=>{
+  $('valOut').style.display='block';
+  const out=[]; let worst=0;
+  out.push('Rejillas sintéticas de orientación conocida → orientación recuperada\n');
+  [0,15,30,45,60,75,90,105,120,135,150,165].forEach(t=>{
+    const c=syntheticGrating(t,240);
+    const ctx=c.getContext('2d',{willReadFrequently:true});
+    const gray=toGray(ctx.getImageData(0,0,240,240));
+    const s=circStats(orientationHistogram(gray,2));
+    const err=angDiff(s.axis,t); worst=Math.max(worst,err);
+    out.push(`  esperado ${String(t).padStart(3)}°   medido ${s.axis.toFixed(1).padStart(6)}°   `+
+             `error ${err.toFixed(2)}°   aniso ${s.aniso.toFixed(3)}   `+
+             (err<3?'<span class="ok">OK</span>':'<span class="bad">FALLA</span>'));
+  });
+  // control de quiralidad: una rejilla simétrica no debe tener quiralidad
+  const sym=toGray(syntheticGrating(90,240).getContext('2d',{willReadFrequently:true})
+                   .getImageData(0,0,240,240));
+  const chSym=chirality(orientationHistogram(sym,2));
+  const asym=toGray(syntheticGrating(30,240).getContext('2d',{willReadFrequently:true})
+                    .getImageData(0,0,240,240));
+  const chAsym=chirality(orientationHistogram(asym,2));
+  out.push(`\nControl de quiralidad`);
+  out.push(`  rejilla vertical (simétrica al espejo)  → ${chSym.toFixed(3)}  `+
+           (chSym<0.15?'<span class="ok">OK</span>':'<span class="bad">FALLA</span>'));
+  out.push(`  rejilla a 30° (quiral)                  → ${chAsym.toFixed(3)}  `+
+           (chAsym>0.5?'<span class="ok">OK</span>':'<span class="bad">FALLA</span>'));
+  out.push(`\nError angular máximo: ${worst.toFixed(2)}°  `+
+           (worst<3?'<span class="ok">— instrumento validado</span>':'<span class="bad">— revisar pipeline</span>'));
+  $('valBody').innerHTML=out.join('\n');
+};
+</script>
+</body>
+</html>

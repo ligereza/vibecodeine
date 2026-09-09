@@ -12,6 +12,16 @@ import os
 import sys
 import tempfile
 
+try:
+    from cultura.mak_conductor.runtime import active_enabled, dispatch_sync
+except ImportError:  # pragma: no cover - direct MAK deployment
+    sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH", "/home/mak/flujo/cultura"))
+    try:
+        from mak_conductor.runtime import active_enabled, dispatch_sync
+    except ImportError:
+        active_enabled = lambda: False
+        dispatch_sync = None
+
 HOME = os.path.expanduser("~")
 sys.path.insert(0, os.path.join(HOME, "research"))
 sys.path.insert(0, os.path.join(HOME, "plataforma"))
@@ -325,6 +335,30 @@ def escribir_ajustes(m, resultado):
 
 
 def main():
+    if active_enabled() and dispatch_sync is not None:
+        payload = {"day": datetime.date.today().isoformat(),
+                   "requires_human": False}
+
+        def handle(_job):
+            result = _main_unlocked()
+            return {
+                "validated": True,
+                "result": result,
+                "artifacts": [{
+                    "kind": "junta_reflection_manifest",
+                    "content": json.dumps(result, sort_keys=True),
+                    "staging_path": AJUSTES_PATH,
+                }],
+            }
+
+        return dispatch_sync(
+            "junta_cycle", payload, producer="platform.junta.main",
+            handler=handle, template_version="junta-cycle-v1",
+        )
+    return _main_unlocked()
+
+
+def _main_unlocked():
     m = metricas()
     try:
         resultado, _prov = pedir_decision(m)
@@ -338,6 +372,8 @@ def main():
         print("proveedor: %s" % resultado["proveedor"])
     else:
         print("proveedor: ninguno (sin decision del modelo)")
+    return {"reflexion": ruta_md, "ajustes": ruta_json,
+            "provider": resultado["proveedor"] if resultado else None}
 
 
 if __name__ == "__main__":

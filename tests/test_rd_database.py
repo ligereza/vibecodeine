@@ -84,6 +84,33 @@ def test_testing_evidence_is_isolated_and_traceable(rd_db: Path):
     assert summary["public_claims_allowed"] is False
 
 
+def test_candidate_research_is_consolidated_but_not_promoted(rd_db: Path):
+    summary = db.research_candidate_summary(rd_db)
+    assert summary == {
+        "sources": 4,
+        "entities": 48,
+        "reagents": 12,
+        "reaction_patterns": 60,
+        "relations": 52,
+        "references": 230,
+        "joined_observations": 4745,
+        "public_claims_allowed": False,
+    }
+
+    conn = db.connect(rd_db)
+    try:
+        row = conn.execute(
+            "SELECT reagent_name, interpretation_policy FROM v_testeo_observaciones_reactivo "
+            "WHERE reagent_id = 'marquis' LIMIT 1"
+        ).fetchone()
+        assert dict(row) == {
+            "reagent_name": "Marquis",
+            "interpretation_policy": "contains_signal_only_no_claim_of_purity_or_dose",
+        }
+    finally:
+        conn.close()
+
+
 def test_testing_observations_filter_preserves_source(rd_db: Path):
     rows = db.testing_observations(reagent_id="marquis", db_path=rd_db)
     assert rows

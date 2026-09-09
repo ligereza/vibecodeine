@@ -170,6 +170,19 @@ def test_fondart_routes_to_opportunity_card_not_generic_report():
         "opportunity", "eligibility", "deadline", "source", "next_action")
 
 
+def test_historical_fondart_corpus_routes_before_current_opportunity_card():
+    route = R.route_research_task(
+        "multiplicar",
+        "Construir un corpus histórico de proyectos Fondart adjudicados y postulaciones coincidentes",
+    )
+    assert route.domain == "research_corpus"
+    assert route.intent == "historical_corpus"
+    assert route.formato == "source_corpus"
+    assert route.epistemic_mode == "evidencia"
+    assert route.required_fields == (
+        "source_manifest", "records", "coverage", "next_action")
+
+
 def test_opportunity_profile_requires_url_evidence_for_official_source():
     profile = R.profile_for_area("opportunity_radar")
     result = {

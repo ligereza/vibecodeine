@@ -15,6 +15,16 @@ import unicodedata
 from contextlib import contextmanager
 
 try:
+    from cultura.mak_conductor.runtime import active_enabled, dispatch_sync
+except ImportError:  # pragma: no cover - direct MAK deployment
+    sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH", "/home/mak/flujo/cultura"))
+    try:
+        from mak_conductor.runtime import active_enabled, dispatch_sync
+    except ImportError:
+        active_enabled = lambda: False
+        dispatch_sync = None
+
+try:
     import fcntl
 except ImportError:  # pragma: no cover - Windows director has no fcntl
     fcntl = None
@@ -156,7 +166,7 @@ def _fuente_salud():
     return tareas
 
 
-def _main_unlocked():
+def _rebuild_unlocked():
     existentes = _cargar_lineas(BACKLOG_TXT)
     existing_normalized = {_norm(line_text) for line_text in existentes}
     total_actual = len(existentes)
@@ -196,8 +206,29 @@ def _main_unlocked():
 
 
 def main():
+    if active_enabled() and dispatch_sync is not None:
+        payload = {"bucket": int(time.time() // 43200)}
+
+        def handle(_job):
+            result = _main_unlocked()
+            return {"validated": True, "result": result,
+                    "artifacts": [{
+                        "kind": "codex_backlog_manifest",
+                        "content": json.dumps(payload, sort_keys=True),
+                        "staging_path": BACKLOG_TXT,
+                    }]}
+
+        return dispatch_sync(
+            "codex_backlog", payload,
+            producer="platform.backlog_codex.main", handler=handle,
+            template_version="codex-backlog-v1",
+        )
+    return _main_unlocked()
+
+
+def _main_unlocked():
     with _exclusive_backlog_lock(BACKLOG_TXT):
-        return _main_unlocked()
+        return _rebuild_unlocked()
 
 
 if __name__ == "__main__":

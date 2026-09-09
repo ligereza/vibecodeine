@@ -19,6 +19,6 @@
 45 * * * * /home/mak/vigia/vigia_guardia.sh >> /home/mak/plataforma/logs/vigia.log 2>&1 # MAK-VIGIA
 */20 * * * * /home/mak/research/micelio_guardia.sh >> /home/mak/plataforma/logs/micelio.log 2>&1 # MAK-MICELIO
 */10 * * * * FLUJO_GPU_BACKEND=CUDA /usr/bin/python3 /home/mak/plataforma/puente_issues.py >> /home/mak/plataforma/logs/puente_issues.log 2>&1 # MAK-PUENTE-ISSUES
-# PAUSED-FARO */10 * * * * git -C /home/mak/flujo fetch -q origin +refs/heads/main:refs/remotes/origin/main && git -C /home/mak/flujo checkout -q -B main origin/main && git -C /home/mak/flujo reset -q --hard origin/main && cp -r /home/mak/flujo/cultura/mak_plataforma/. /home/mak/plataforma/ && cp -r /home/mak/flujo/cultura/mak_research/. /home/mak/research/ && cp -r /home/mak/flujo/cultura/mak_codex/. /home/mak/codex/ && cp -r /home/mak/flujo/cultura/mak_curatoria/. /home/mak/curatoria/  && cp -r /home/mak/flujo/cultura/mak_xio_puente/. /home/mak/xio_puente/ && mkdir -p /home/mak/vigia && cp -r /home/mak/flujo/cultura/mak_vigia/. /home/mak/vigia/ # MAK-REPO-SYNC
+# PAUSED-FARO */10 * * * * /usr/bin/python3 /home/mak/bin/mak_sync_safe.py >> /home/mak/plataforma/logs/mak_sync.log 2>&1 # MAK-REPO-SYNC-SAFE
 10 5 * * * /usr/bin/python3 /home/mak/research/retencion.py --dir /home/mak/research/informes --keep 50 --apply >> /home/mak/plataforma/logs/retencion.log 2>&1 # MAK-RETENCION
 20 5 * * * /usr/bin/python3 /home/mak/research/retencion.py --dir /home/mak/research/paneles --keep 50 --apply >> /home/mak/plataforma/logs/retencion.log 2>&1 # MAK-RETENCION

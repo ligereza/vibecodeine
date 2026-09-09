@@ -32,10 +32,21 @@ import hashlib
 from contextlib import contextmanager
 import re
 import threading
+import time
 import unicodedata
 import json
 import os
 import sys
+
+try:
+    from cultura.mak_conductor.runtime import active_enabled, dispatch_sync
+except ImportError:  # pragma: no cover - direct MAK deployment
+    sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH", "/home/mak/flujo/cultura"))
+    try:
+        from mak_conductor.runtime import active_enabled, dispatch_sync
+    except ImportError:
+        active_enabled = lambda: False
+        dispatch_sync = None
 
 try:
     import fcntl
@@ -435,6 +446,26 @@ def degradar_ocurrencias(aplicar=False):
 
 
 def main():
+    if active_enabled() and dispatch_sync is not None:
+        payload = {"argv": sys.argv[1:], "bucket": int(time.time() // 3600)}
+
+        def handle(_job):
+            result = _main_unlocked()
+            return {"validated": True, "result": result,
+                    "artifacts": [{
+                        "kind": "material_queue_manifest",
+                        "content": json.dumps(payload, sort_keys=True),
+                        "staging_path": COLA,
+                    }]}
+
+        return dispatch_sync(
+            "material_rebuild", payload, producer="platform.material.main",
+            handler=handle, template_version="material-rebuild-v1",
+        )
+    return _main_unlocked()
+
+
+def _main_unlocked():
     if "--degradar-ocurrencias" in sys.argv:
         aplicar = "--aplicar" in sys.argv
         n, total = degradar_ocurrencias(aplicar)

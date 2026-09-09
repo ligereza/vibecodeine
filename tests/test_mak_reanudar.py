@@ -145,6 +145,15 @@ class TestAplicarResultadoJob:
         assert job["checkpoint"] == r["checkpoint"]
         assert job["error"] == "sin proveedores disponibles"
 
+    def test_review_required_is_not_marked_as_ready_or_failed(self):
+        job = {}
+        interfaz._aplicar_resultado_job(
+            job, {"ok": False, "review": True, "path": "/x/corpus.md",
+                  "tail": "source corpus quality gate: review_required"})
+        assert job["estado"] == "REVISAR"
+        assert job["path"] == "corpus.md"
+        assert "review_required" in job["error"]
+
 
 @requiere_fcntl
 class TestCerrarJob:
@@ -224,7 +233,7 @@ class TestReanudarLogic:
                             lambda path, accion, texto="": aplicado.setdefault("ok", (path, accion, texto)))
 
         llamado = {}
-        def fake_run_tema(modo, tema, ntfy=True, job_id=None, extra=None):
+        def fake_run_tema(modo, tema, ntfy=True, job_id=None, extra=None, **kwargs):
             llamado["args"] = (modo, tema, ntfy, job_id, extra)
             return {"ok": True, "path": "/x/out.md"}
         monkeypatch.setattr(interfaz, "run_tema", fake_run_tema)

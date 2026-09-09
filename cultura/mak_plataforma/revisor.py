@@ -30,6 +30,16 @@ import subprocess
 import sys
 import time
 
+try:
+    from cultura.mak_conductor.runtime import active_enabled, dispatch_sync
+except ImportError:  # pragma: no cover - direct MAK deployment
+    sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH", "/home/mak/flujo/cultura"))
+    try:
+        from mak_conductor.runtime import active_enabled, dispatch_sync
+    except ImportError:
+        active_enabled = lambda: False
+        dispatch_sync = None
+
 REPO_SLUG = "ligereza/vibecodeine"
 # El buzon de MAK. `enforce_pr` solo actua sobre PRs con ESTA base:
 # lo que mergea declara contra que mergea.
@@ -237,6 +247,33 @@ def enforce_pr(v):
 
 
 def main():
+    if (active_enabled() and dispatch_sync is not None and
+            "--enforce" in sys.argv[1:]):
+        payload = {"argv": sys.argv[1:], "bucket": int(time.time() // 21600),
+                   "requires_human": True}
+
+        def queued_merge(_job):
+            result_code = _main_unlocked()
+            return {
+                "validated": result_code == 0,
+                "result_code": result_code,
+                "artifacts": [{
+                    "kind": "pr_merge_manifest",
+                    "content": json.dumps(
+                        dict(payload, result_code=result_code), sort_keys=True),
+                    "staging_path": OUT,
+                }],
+            }
+
+        result = dispatch_sync(
+            "pr_merge", payload, producer="platform.revisor.enforce_pr",
+            handler=queued_merge, template_version="pr-merge-v1",
+        )
+        return int((result or {}).get("result_code", 2))
+    return _main_unlocked()
+
+
+def _main_unlocked():
     ap = argparse.ArgumentParser()
     ap.add_argument("--enforce", action="store_true",
                     help="aplica el veredicto (ready/merge/comment); sin esto solo observa")

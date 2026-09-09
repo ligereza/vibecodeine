@@ -22,6 +22,7 @@ vuelve segura una sustancia.
 from __future__ import annotations
 
 import json
+import hashlib
 import importlib.util
 import re
 import sqlite3
@@ -42,6 +43,12 @@ _SUPLEMENTOS_JSON = (
 )
 _PRODUCTORAS_DIR = _REPO / "data" / "productoras"
 _TESTING_EVIDENCE_JSON = _REPO / "data" / "rd_fuentes" / "testeo_eventos_2025_evidence.json"
+_CANDIDATE_REGISTRIES = {
+    "entity_universe_v0_1": (_REPO / "data" / "rd_fuentes" / "candidates" / "entity_universe_v0.1.json", "records"),
+    "reagent_library_v0_1": (_REPO / "data" / "rd_fuentes" / "candidates" / "reagent_library_v0.1.json", "reagents"),
+    "relation_graph_v0_1": (_REPO / "data" / "rd_fuentes" / "candidates" / "relation_graph_v0.1.json", "relations"),
+    "relation_index_v0_1": (_REPO / "data" / "rd_fuentes" / "candidates" / "relation_index_v0.1.json", "records"),
+}
 _FUENTES_PY = _REPO / "cultura" / "mak_research" / "fuentes.py"
 _VENUES_DIR = _REPO / "knowledge" / "venues"     # *.yaml canonicos
 _LOGOS_DIR = _REPO / "knowledge" / "logos"       # *.yaml canonicos
@@ -69,6 +76,74 @@ CREATE TABLE reactivos (
 );
 CREATE INDEX idx_reactivos_familia  ON reactivos(familia);
 CREATE INDEX idx_reactivos_reactivo ON reactivos(reactivo);
+
+-- Candidate research stays attributable and separate from canonical service
+-- data. These records make associations inspectable; they are not public or
+-- scientific claims merely because they share a database with observations.
+CREATE TABLE rd_fuentes_registro (
+    source_id TEXT PRIMARY KEY,
+    path TEXT NOT NULL,
+    sha256 TEXT NOT NULL,
+    status TEXT NOT NULL,
+    generated_at TEXT,
+    schema_version TEXT,
+    source_scope TEXT,
+    raw_metadata TEXT NOT NULL
+);
+CREATE TABLE rd_entidades_candidatas (
+    entity_id TEXT PRIMARY KEY,
+    display_name TEXT NOT NULL,
+    entity_kind TEXT,
+    aliases TEXT NOT NULL,
+    matrix INTEGER NOT NULL DEFAULT 0,
+    source_status TEXT,
+    test_status TEXT,
+    source_urls TEXT NOT NULL,
+    source_id TEXT NOT NULL REFERENCES rd_fuentes_registro(source_id),
+    raw_record TEXT NOT NULL
+);
+CREATE TABLE rd_reactivos_candidatos (
+    reagent_id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    reagent_type TEXT,
+    components TEXT,
+    observation_window TEXT,
+    limitations TEXT NOT NULL,
+    complements TEXT NOT NULL,
+    source_url TEXT,
+    source_id TEXT NOT NULL REFERENCES rd_fuentes_registro(source_id),
+    raw_record TEXT NOT NULL
+);
+CREATE TABLE rd_reacciones_candidatas (
+    reagent_id TEXT NOT NULL REFERENCES rd_reactivos_candidatos(reagent_id),
+    target_ref TEXT NOT NULL,
+    sequence TEXT,
+    source_wording TEXT,
+    PRIMARY KEY (reagent_id, target_ref, sequence)
+);
+CREATE TABLE rd_relaciones_candidatas (
+    relation_id TEXT PRIMARY KEY,
+    source_ref TEXT NOT NULL,
+    target_ref TEXT NOT NULL,
+    source_kind TEXT,
+    target_kind TEXT,
+    relation_type TEXT NOT NULL,
+    status TEXT NOT NULL,
+    confidence TEXT,
+    matrix_relevance TEXT,
+    notes TEXT,
+    source_id TEXT NOT NULL REFERENCES rd_fuentes_registro(source_id),
+    raw_record TEXT NOT NULL
+);
+CREATE TABLE rd_relacion_referencias (
+    relation_id TEXT NOT NULL REFERENCES rd_relaciones_candidatas(relation_id),
+    reference_kind TEXT NOT NULL,
+    reference_value TEXT NOT NULL,
+    source_id TEXT NOT NULL REFERENCES rd_fuentes_registro(source_id),
+    PRIMARY KEY (relation_id, reference_kind, reference_value)
+);
+CREATE INDEX idx_rd_relation_refs_source_target ON rd_relaciones_candidatas(source_ref, target_ref);
+CREATE INDEX idx_rd_relation_refs_status ON rd_relaciones_candidatas(status);
 CREATE TABLE packs (
     id          TEXT PRIMARY KEY,   -- INFO | TESTEO | COMPLETO
     nombre      TEXT NOT NULL,
@@ -300,6 +375,21 @@ CREATE TABLE testeo_enlaces_revision (
 );
 CREATE INDEX idx_testeo_links_event ON testeo_enlaces_revision(event_id);
 CREATE INDEX idx_testeo_links_review ON testeo_enlaces_revision(review_status);
+CREATE VIEW v_testeo_observaciones_reactivo AS
+SELECT
+    observation.observation_id,
+    observation.test_id,
+    observation.event_id,
+    observation.reagent_normalized_candidate AS reagent_id,
+    observation.result_raw,
+    observation.result_normalized_candidate,
+    observation.interpretation_policy,
+    candidate.name AS reagent_name,
+    candidate.observation_window,
+    candidate.limitations AS candidate_limitations
+FROM testeo_observaciones_fuente AS observation
+JOIN rd_reactivos_candidatos AS candidate
+  ON candidate.reagent_id = observation.reagent_normalized_candidate;
 """
 
 
@@ -421,6 +511,159 @@ def _load_testing_evidence(path: Path | None = None) -> dict[str, Any] | None:
     if not isinstance(doc.get("events"), list) or not isinstance(doc.get("observations"), list):
         return None
     return doc
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def _load_candidate_registry(path: Path) -> dict[str, Any] | None:
+    """Load a candidate registry exactly as supplied, never fabricating rows."""
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return value if isinstance(value, dict) else None
+
+
+def _json(value: Any) -> str:
+    return json.dumps(value, ensure_ascii=False, sort_keys=True)
+
+
+def _insert_candidate_registries(conn: sqlite3.Connection) -> None:
+    """Project RD candidate registries without promoting their contents.
+
+    The tables preserve raw records and sources alongside the queryable fields.
+    That lets the operator inspect why a relation is proposed without turning a
+    site page, a scraped URL, or a color change into a scientific conclusion.
+    """
+    docs: dict[str, dict[str, Any]] = {}
+    for source_id, (path, record_key) in _CANDIDATE_REGISTRIES.items():
+        doc = _load_candidate_registry(path)
+        if doc is None or not isinstance(doc.get(record_key), list):
+            continue
+        docs[source_id] = doc
+        metadata = {key: value for key, value in doc.items() if key != record_key}
+        conn.execute(
+            "INSERT INTO rd_fuentes_registro("
+            "source_id, path, sha256, status, generated_at, schema_version, source_scope, raw_metadata"
+            ") VALUES (?,?,?,?,?,?,?,?)",
+            (
+                source_id,
+                path.relative_to(_REPO).as_posix(),
+                _sha256_file(path),
+                str(doc.get("status", "candidate")),
+                doc.get("generated_at"),
+                doc.get("schema_version"),
+                doc.get("source_scope") or doc.get("source"),
+                _json(metadata),
+            ),
+        )
+
+    for row in docs.get("entity_universe_v0_1", {}).get("records", []):
+        if not isinstance(row, dict) or not row.get("id"):
+            continue
+        conn.execute(
+            "INSERT INTO rd_entidades_candidatas("
+            "entity_id, display_name, entity_kind, aliases, matrix, source_status, test_status, "
+            "source_urls, source_id, raw_record) VALUES (?,?,?,?,?,?,?,?,?,?)",
+            (
+                str(row["id"]),
+                str(row.get("display_name", row["id"])),
+                row.get("entity_kind"),
+                _json(row.get("aliases", [])),
+                int(bool(row.get("matrix"))),
+                row.get("source_status"),
+                row.get("test_status"),
+                _json(row.get("source_urls", [])),
+                "entity_universe_v0_1",
+                _json(row),
+            ),
+        )
+
+    for row in docs.get("reagent_library_v0_1", {}).get("reagents", []):
+        if not isinstance(row, dict) or not row.get("id"):
+            continue
+        reagent_id = str(row["id"])
+        conn.execute(
+            "INSERT INTO rd_reactivos_candidatos("
+            "reagent_id, name, reagent_type, components, observation_window, limitations, "
+            "complements, source_url, source_id, raw_record) VALUES (?,?,?,?,?,?,?,?,?,?)",
+            (
+                reagent_id,
+                str(row.get("name", reagent_id)),
+                row.get("type"),
+                row.get("components"),
+                row.get("observation_window"),
+                _json(row.get("limitations", [])),
+                _json(row.get("complements", [])),
+                row.get("source_url"),
+                "reagent_library_v0_1",
+                _json(row),
+            ),
+        )
+        for reaction in row.get("reactions", []):
+            if not isinstance(reaction, dict) or not reaction.get("target"):
+                continue
+            conn.execute(
+                "INSERT INTO rd_reacciones_candidatas("
+                "reagent_id, target_ref, sequence, source_wording) VALUES (?,?,?,?)",
+                (
+                    reagent_id,
+                    str(reaction["target"]),
+                    reaction.get("sequence"),
+                    reaction.get("source_wording"),
+                ),
+            )
+
+    for row in docs.get("relation_graph_v0_1", {}).get("relations", []):
+        if not isinstance(row, dict) or not row.get("id"):
+            continue
+        relation_id = str(row["id"])
+        conn.execute(
+            "INSERT INTO rd_relaciones_candidatas("
+            "relation_id, source_ref, target_ref, source_kind, target_kind, relation_type, "
+            "status, confidence, matrix_relevance, notes, source_id, raw_record) "
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                relation_id,
+                str(row.get("source_ref", "")),
+                str(row.get("target_ref", "")),
+                row.get("source_kind"),
+                row.get("target_kind"),
+                str(row.get("relation_type", "context")),
+                str(row.get("status", "candidate")),
+                row.get("confidence"),
+                row.get("matrix_relevance"),
+                row.get("notes"),
+                "relation_graph_v0_1",
+                _json(row),
+            ),
+        )
+        for reference_kind, values in (("testing_ref", row.get("testing_refs", [])), ("evidence_url", row.get("evidence_urls", []))):
+            for value in values if isinstance(values, list) else []:
+                conn.execute(
+                    "INSERT INTO rd_relacion_referencias(relation_id, reference_kind, reference_value, source_id) "
+                    "VALUES (?,?,?,?)",
+                    (relation_id, reference_kind, str(value), "relation_graph_v0_1"),
+                )
+
+    for row in docs.get("relation_index_v0_1", {}).get("records", []):
+        if not isinstance(row, dict) or not row.get("relation_id"):
+            continue
+        relation_id = str(row["relation_id"])
+        for reference_kind in ("rd_pages", "testing_guides", "product_resources", "research_posts", "scientific_sources", "other_sources", "testing_refs"):
+            values = row.get(reference_kind, [])
+            for value in values if isinstance(values, list) else []:
+                conn.execute(
+                    "INSERT OR IGNORE INTO rd_relacion_referencias("
+                    "relation_id, reference_kind, reference_value, source_id) VALUES (?,?,?,?)",
+                    (relation_id, reference_kind, str(value), "relation_index_v0_1"),
+                )
 
 
 def _fold_source_label(value: Any) -> str:
@@ -891,6 +1134,8 @@ def build_rd_db(
                 (i, r["reactivo"], r["familia"], r["reaccion"], r["hex"]),
             )
 
+        _insert_candidate_registries(conn)
+
         # packs + inclusiones
         inc_id = 0
         for orden, (pid, p) in enumerate(_load_packs().items(), start=1):
@@ -1273,6 +1518,26 @@ def testing_evidence_summary(db_path: str | Path | None = None) -> dict[str, Any
                 "formula_count": source["formula_count"],
             },
             "counts": counts,
+            "public_claims_allowed": False,
+        }
+    finally:
+        conn.close()
+
+
+def research_candidate_summary(db_path: str | Path | None = None) -> dict[str, Any]:
+    """Summarize association candidates without upgrading them to claims."""
+    conn = connect(db_path)
+    try:
+        return {
+            "sources": conn.execute("SELECT COUNT(*) FROM rd_fuentes_registro").fetchone()[0],
+            "entities": conn.execute("SELECT COUNT(*) FROM rd_entidades_candidatas").fetchone()[0],
+            "reagents": conn.execute("SELECT COUNT(*) FROM rd_reactivos_candidatos").fetchone()[0],
+            "reaction_patterns": conn.execute("SELECT COUNT(*) FROM rd_reacciones_candidatas").fetchone()[0],
+            "relations": conn.execute("SELECT COUNT(*) FROM rd_relaciones_candidatas").fetchone()[0],
+            "references": conn.execute("SELECT COUNT(*) FROM rd_relacion_referencias").fetchone()[0],
+            "joined_observations": conn.execute(
+                "SELECT COUNT(*) FROM v_testeo_observaciones_reactivo"
+            ).fetchone()[0],
             "public_claims_allowed": False,
         }
     finally:

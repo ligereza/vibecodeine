@@ -10,6 +10,53 @@ not memory). If something
 de aca no calza con lo que ves, el repo cambio despues -- confia en el repo,
 no en este doc, y actualizalo en el mismo PR que lo detecte.
 
+## 0. Distributed system authority (measured 2026-08-13)
+
+This repository is a projection of a distributed organism, not its complete
+material inventory. The measured authority order is:
+
+1. Windows and MAK Linux local surfaces: files, databases, memories, mounts,
+   services, and generated outputs determine what physically exists.
+2. The transversal catalog at
+   `/home/mak/indexes/mak-reality-20260813/full-organism/` indexes those
+   surfaces by path, hash, provenance, owner, status, and transport
+   eligibility. It stores references; it does not merge sovereign data.
+3. Git `main` is a reviewed reproducibility and publication checkpoint. Git
+   history is transport evidence, not runtime authority.
+
+The sovereign organisms are MAK (computational producer and curator), RD /
+Reduciendo Dano (NGO), and Portfolio / ISKVW (artist archive). Windows and
+MAK Linux are physical nodes; either node may host material belonging to any
+organism. For every result keep producer, owner, subject domain, final
+authority, evidence, status, visibility, and destination independent.
+
+The target is one logical knowledge database with bounded schemas: `core`
+(identity/context/provenance), `mak` (operations/research/curation), `rd`
+(scientific/field/safety), `portfolio` (works/records/authorial curation),
+`relations` (typed cross-domain links), `products` (publication projections),
+and `audit`. Assertions and relationships carry source/evidence, producer,
+owner, confidence/status, visibility, and timestamp/version. Raw and binary
+material stays on Windows, MAK, or mounted storage; the database stores URI
+and hash. RD and Portfolio remain sovereign organisms and gates even though
+their knowledge may share this logical database.
+
+Current physical state is not yet that target. The Windows enriched RD SQLite
+is a read-only `CANDIDATE_AUTHORITY` migration input; the MAK reduced RD
+SQLite is a read-only `LEGACY_PROJECTION`. Neither is an established logical
+system of record. Portfolio DB remains `NOT_CONFIGURED` as a separate DB
+because Portfolio is a target schema, not an independent database. Local
+SQLite files are migration inputs, caches, or projections; bidirectional
+writes are prohibited. The intended end state has one primary writer and an
+explicit versioned sync direction. Search and vector indexes are derived and
+rebuildable, not truth.
+
+Runtime memory and mounted/private state stay on their owning physical node;
+credentials, `.env`, private exports, and runtime memory are not eligible for
+Git transport. A transport manifest with source, hash, physical node,
+organism owner, database/memory authority, Git eligibility, and promotion gate
+is required before any selected material is projected into Git. There is no
+mass folder migration implied by this architecture.
+
 ## 1. Mapa index del repo
 
 CLI real (`py -m flujo --help`, v0.56.1), comandos principales:
@@ -159,14 +206,17 @@ jsonschema, requests).
 
 1. Read `AGENTS.md` + `context/LAST_HANDOFF.md` + this inventory. Nothing else before starting.
 2. Clasificar la ruta destino: nucleo vivo / operacion diaria / historico / generado (ver mapa de `CLAUDE.md`) antes de tocar nada.
-3. Elegir linea de trabajo: `rd` (ONG/datos/becas), `portafolio` (curatoria/iskvw), `mejoras` (repo/MAK/infra). Nunca contra `main` directo.
-4. Si toca produccion aislada: worktree propio (`EnterWorktree`/`git worktree add`), rama desde `origin/<linea>`.
+3. Elegir dominio: `mak/`, `rd/`, `portfolio/`, `data/`, `capabilities/`,
+   `products/`, `operations/` o `tests/`; estos no son ramas permanentes.
+4. Si toca producción aislada: worktree propio (`EnterWorktree`/`git worktree
+   add`) y rama temporal `codex/*` desde `origin/main`.
 5. Elegir el modelo mas barato que resuelva la tarea (tabla seccion 2 + `CLAUDE.md` "Regulacion de gasto"); escala solo si aplica un trigger.
 6. Si es pieza cultural nueva: aplicar motor-omega (Omega11 declarada + fracaso no se reinterpreta) antes de exponer.
 7. Cambios minimos, completos, verificables -- nada a medias, nada de TODO/placeholder.
 8. Verificacion minima segun area tocada (Python: compileall+pytest+`flujo verify`; Web: typecheck+build:context; Airdrop: validate_airdrop+run_airdrop_checks).
 9. Entregables (datos/docs/piezas) en espanol correcto UTF-8; `CLAUDE.md`/`context/*.md` operativos en ASCII.
-10. PR contra la linea correspondiente, CI verde obligatorio -- promocion a `main` la hace el director via PR curado.
+10. PR siempre contra `main`, CI verde obligatorio; el director hace la
+    promoción curada al dominio o superficie correspondiente.
 
 Actualizar este doc en el mismo PR si algo listado aca cambia (tool
 eliminada, skill nueva, IP/puerto distinto): el doc miente si lista algo que
@@ -196,6 +246,7 @@ tabla; archivo sin entrada = ratchet rojo.
 | `ig_metadatos.py` | VIVO | consumidor medido: `percepcion.py correr --meta-ig`, que mete el texto del artista en el prompt de vision. Saca del export de Instagram el mapa archivo -> {fecha, texto}. Medido sobre el export real 2026-08-01: 1.125 archivos mapeados, 1.014 con texto propio (90%), 1.125 con fecha exacta, rango 2018-11-29 a 2026-06-16; casan 1.124 de las 1.401 fichas ig (80%). Repara el mojibake del export (Instagram escribe UTF-8 y el export lo decodifica como latin-1: `coleccion` llega como `colecciA3n`) quedandose con la version de MENOS marcas, y lo que no pudo recuperar lo marca en vez de entregarlo como si estuviera bien. Lee SOLO `your_instagram_activity/media/`: al lado viven mensajes privados, likes e interacciones de historias, y toda ruta que pase por ahi se rechaza por nombre; `tests/test_ig_metadatos.py` | 2026-08-01 |
 | `contexto_repo.py` | VIVO | referenciado en `CLAUDE.md` ("Ahorro de contexto") | 2026-07-25 |
 | `conversacion.py` | VIVO | tercer hermano de `arqueologia.py` (historial de git) y `esfuerzo.py` (costo de un informe): lee las transcripciones de `~/.claude/projects/` como corpus. Nadie las escribio para eso, y contienen lo unico que el repo no tiene -- lo que el usuario decidio, ordeno y tuvo que repetir. Consumidor medido: `clasificar` manda los lotes a watsonx y `citar` recupera la cita TEXTUAL por indice, porque una decision parafraseada deja de ser la decision. Corrida real 2026-08-01 sobre 126 sesiones: 17.629 turnos con texto, de los cuales **3.094 escritos por un humano** (0,7 MB) contra 12.197 del asistente (5,6 MB); 39,2 MB del corpus son `tool_result` y no entran. Dos defectos propios encontrados MIDIENDO, no leyendo: (1) la primera version decidia por una lista de prefijos escrita a mano quien era humano, la lista dejo de coincidir con la realidad y los resumenes de compactacion se comieron los 30 primeros puestos -- ahora lo dice `origin.kind`, que el registro ya trae; (2) los lotes se dimensionaban por la ventana de ENTRADA (95k) y los 3 primeros lotes agotaron los 8.000 tokens de SALIDA devolviendo JSON cortado, asi que el tope real es la salida. Un lote sin JSON legible se cuenta como FALLO y nunca como lista vacia. El hallazgo que no cuesta un token es la repeticion entre sesiones DISTINTAS: `users issvk downloads` en 13, `claude teleport session` en 9, `compileall src flujo`/`pytest tests`/`flujo verify` en 6, `api key nvidia` en 6 -- constantes que hay que re-pegar cada sesion porque no estan escritas | 2026-08-01 |
+| `inferential_archaeology.py` | VIVO | read-only cross-source index for authorship, proposals, direct mutation evidence, Git path history, hotspots, and possibility lanes; consumed by the archaeology focused tests and ignored evidence packet under `out/archaeology/` | 2026-08-13 |
 | `drenar_material.py` | VIVO | vacia `~/plataforma/material.jsonl` en paralelo mientras dure la ventana pagada -- `trabajo.py` saca UNA tarea por invocacion y corre por cron, o sea meses para 2.730 tareas. Escribe a su propio directorio y NO a la base de RD: una productora identificada por un modelo es un candidato, no un cliente. Lo pausado o fallido VUELVE a pendiente (una cola que se vacia sin haber trabajado es la peor forma de decir que termino) y aborta el lote entero si se acumulan pausas por ceguera. Informa la DISTRIBUCION, no un total: "412 hechas" no dice nada, "412 hechas, 180 con productora y fuente, 190 NO SE ENCONTRO, 42 pausadas ciegas" si. Corrida real 2026-08-01: 8 tareas, 7,6 s cada una con 4 hilos | 2026-08-01 |
 | `gen_archivo_iskvw.py` | VIVO | genera `iskvw/datos/archivo.json`, el contrato piezas+vinculos; consumidor confirmado via `.github/workflows/publicar_iskvw.yml`. Desde 2026-08-05 `--fuente todo` es el sustrato publico limpio: 446 piezas y 237 vinculos en medicion local, sin mezclar los ensayos de research; `--fuente ensayos` o `--fuente todo --incluir-ensayos` trae deliberadamente la vista de research ilustrado (33 piezas y 32 vinculos adicionales: informe, conceptos e iconos). La conversion micelio->contrato vive en `cultura/mak_plataforma/contrato_archivo.py` desde 2026-07-29, compartida con `GET /api/archivo` del hub de MAK. Ese workflow corre en `ubuntu-latest` y nunca alcanza la caja (LAN privada), asi que los vinculos de micelio llegan solo por snapshot `iskvw/datos/micelio.json`, empujado por `cultura/mak_plataforma/entregar_micelio.py` corriendo EN la caja; hard-falla (exit 1, nada escrito, ningun PR) si el micelio no responde o devuelve 0 vinculos -- una ausencia nunca se vuelve un cero plausible. `tests/test_contrato_archivo.py`, `tests/test_gen_archivo_iskvw.py`, `tests/test_entregar_micelio.py` | 2026-08-05 |
 | `gen_propuestas_rd.py` | VIVO | el ultimo salto a la base RD: alimenta el escritor de borradores de `mineria_rd.py` desde `docs/rd/candidatos_curatoria/candidatos_db.jsonl` (ya digerido por `extraccion_db`), sin OCR ni GPU; re-matchea contra los catalogos ACTUALES, reporta dudosos sin proponerlos y exige evidencia >= 2; los borradores salen a una carpeta aparte y entran solo por PR humano; `tests/test_gen_propuestas_rd.py` | 2026-07-29 |

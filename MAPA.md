@@ -14,11 +14,11 @@ not written by hand, it is generated from the program itself
 (`py tools/gen_mapa_comandos.py`), so that part cannot rot without turning the
 verification red.
 
-**Language:** everything in this repo is written in English — code, docs,
-commits. The one exception is anything a human reads as a product: RD pieces and
-data, and iskvw curation, which go in correct Spanish with diacritics. The
-command table below mirrors the program's own `--help`, which speaks Spanish to
-the operator, so it stays as the program emits it.
+**Language:** machine-facing code, contracts, and operational documentation use
+English/ASCII where practical. Human-facing RD and Portfolio products keep
+correct Spanish with diacritics. The command table below mirrors the program's
+own `--help`, which speaks Spanish to the operator, so it stays as the program
+emits it.
 
 ---
 
@@ -38,29 +38,66 @@ project is called Dimensiones del Orden.**
 
 ---
 
-## 2. The three working lines
+## 2. Authority, organisms, nodes, and working surfaces
 
-The repo has four canonical branches and no more. `mak` is the machine inbox,
-but it is still a real branch whose work must return through a PR to `main`.
-Any other branch you see is temporary and gets deleted once its work landed.
+The system has three authority levels. First are the physical/local surfaces
+on Windows and the MAK Linux computer: their files, databases, memories,
+services, mounted storage, and generated outputs determine what exists and what
+is current. Second is the transversal catalog and coordination layer, which
+indexes those surfaces without absorbing sovereign data. Third is Git, which is
+only a reviewed reproducibility and publication projection.
 
-| Line | What it holds | Who touches it |
+MAK, RD / Reduciendo Dano, and Portfolio / ISKVW are sovereign organisms. MAK
+is the computational producer, curator, researcher, and coordinator. RD is the
+NGO with sanitary, ethical, legal, and publication governance. Portfolio is the
+artist's archive with authorial and human governance. Windows and MAK Linux
+are physical nodes, not organisms or domains; either node can host material
+belonging to any organism.
+
+The target data architecture is one logical knowledge database with bounded
+schemas: `core` (identity, context, provenance), `mak` (operations, research,
+curation), `rd` (scientific, field, safety), `portfolio` (works, records,
+authorial curation), `relations` (typed cross-domain links), `products`
+(publication projections), and `audit`. Every assertion and relationship
+stores source/evidence, producer, owner, confidence/status, visibility, and
+timestamp/version. Raw and binary material remains on Windows, MAK, or
+mounted storage; the database stores URI plus hash.
+
+This target must not be confused with current physical state. The Windows
+enriched RD SQLite is a read-only `CANDIDATE_AUTHORITY` migration input, not a
+proven current system of record. The MAK reduced SQLite is a read-only
+`LEGACY_PROJECTION`. Portfolio has no separate configured database and remains
+`NOT_CONFIGURED` as a standalone DB because it belongs in the `portfolio`
+schema. Local SQLite files are migration inputs, caches, or projections; no
+bidirectional writer is allowed. A single primary writer and explicit,
+versioned sync direction are defined only after reconciliation. Search/vector
+indexes are derived and rebuildable.
+
+| Ref | Role | Lifecycle |
 |---|---|---|
-| **main** | **Everything, without exception.** The good and complete version. The other three lines come *down* from here. | Nobody directly. It only enters through a reviewed PR with green verification |
-| **rd** | The NGO's work: data, promoters, grants, field material | Whoever works on RD |
-| **iskvw** | The artistic practice: shows, mapping, art-research pieces, and the portfolio | Whoever works on the artwork |
-| **mak** | The **inbox branch** of the machine that works on its own. Work may live here temporarily; its only exit is a reviewed PR into main | Only MAK, automatically |
+| **main** | Reviewed Git projection of selected reproducible system components | Permanent; receives reviewed PRs only |
+| **codex/*** | Temporary worktree for a bounded change in any domain | Open from `main`, verify, review, merge, then prune |
+| **dependabot/*** | Automated dependency update | Temporary; same review gate as any other PR |
+| **mak**, **rd**, **iskvw**, **mejoras** | Legacy transition/history refs | Preserve while reconciling; do not start new work there |
+| **mak-svg** | Historical SVG experiment | Preserve as evidence; do not start new work there |
 
-The two rules holding it up:
+The governing rules are:
 
-1. **main has everything.** A line is never a warehouse where work main has not
-   seen piles up. If you worked in `rd`, that goes up to main.
-2. **Nobody writes into main by hand.** Not even the repo owner. You open a
-   change proposal (a *pull request*), the automatic verification reviews it,
-   and only then it enters.
+1. **Domains are not branches or organisms.** MAK, RD, and Portfolio retain
+   separate ownership and gates while sharing one logical knowledge database.
+   Capabilities are replaceable tools; Products are derived outputs.
+2. **Every change starts from `main` in a temporary worktree** and returns by
+   reviewed PR. Nobody writes directly to `main`.
+3. **Git is not material authority.** MAK services, private memories, mounted
+   databases, generated outputs, and environment-specific dependencies remain
+   on their physical surfaces. Any transport or projection requires a manifest
+   recording source, hash, owner, target, and promotion status; a Git commit
+   cannot erase or redefine local material.
+4. **No mass folder move.** Index first; transport selected material only after
+   its source family, owner, target, and promotion gate are explicit.
 
-To bring a line up to date with main: `git merge origin/main`. Rewriting history
-is never necessary.
+The transition refs are not deleted by this documentation change. Their
+contents must first be classified and reconciled against `main`.
 
 ---
 

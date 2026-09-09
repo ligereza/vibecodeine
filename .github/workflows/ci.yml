@@ -1,15 +1,353 @@
 name: CI
+
 permissions:
   contents: read
+
 on:
   push:
     branches: [main]
   pull_request:
-    branches: [main, mak, rd, iskvw, mejoras]
+    branches: [main]
+  workflow_dispatch:
+
+# A newer commit supersedes an older PR run. Main runs are also safe to cancel
+# when a newer main commit exists: the required gate belongs to the newest tree.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  test:
-    name: test (${{ matrix.os }})
+  contract:
+    name: contract gate (ubuntu)
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - name: Install core test dependencies
+        run: python -m pip install -e ".[dev]"
+      - name: Require pull requests to target main
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ] && [ "$BASE_REF" != "main" ]; then
+            echo "::error::pull requests must target main (got $BASE_REF)"
+            exit 1
+          fi
+      - name: Validate workflow YAML
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import yaml
+
+          paths = sorted(Path(".github/workflows").glob("*.yml"))
+          for path in paths:
+              with path.open(encoding="utf-8") as handle:
+                  document = yaml.safe_load(handle)
+              if not isinstance(document, dict):
+                  raise SystemExit(f"invalid workflow document: {path}")
+          print(f"validated {len(paths)} workflow files")
+          PY
+      - name: Classify focused and full-suite-only tests
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          import re
+          import subprocess
+
+          tracked = set(subprocess.check_output(
+              ["git", "ls-files", "tests/test_*.py"], text=True
+          ).splitlines())
+          workflow_text = "\n".join(
+              path.read_text(encoding="utf-8")
+              for path in Path(".github/workflows").glob("*.yml")
+          )
+          focused = set(re.findall(r"tests/test_[A-Za-z0-9_]+\.py", workflow_text))
+          full_only = sorted(tracked - focused)
+          print(f"tracked_tests={len(tracked)}")
+          print(f"focused_gate_references={len(tracked & focused)}")
+          print(f"full_suite_only={len(full_only)}")
+          print("Full-suite-only tests are intentional: they run through the full")
+          print("Ubuntu+Windows verification on main pushes and manual dispatches.")
+          summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
+          if summary_path:
+              summary = Path(summary_path)
+              with summary.open("a", encoding="utf-8") as handle:
+                  handle.write("## Test gate coverage\n")
+                  handle.write(f"- tracked: {len(tracked)}\n")
+                  handle.write(f"- focused references: {len(tracked & focused)}\n")
+                  handle.write(f"- deliberate full-suite-only: {len(full_only)}\n")
+          PY
+      - name: Verify protected README and privacy contracts
+        run: |
+          python tools/update_readme_svg.py --check
+          python -m pytest -q -rs --maxfail=1 \
+            tests/test_privacidad_repo.py \
+            tests/test_readme_svg.py \
+            tests/test_autonomia_cli.py \
+            tests/test_cultura_sin_automerge.py
+      - name: Check PR or push diff whitespace
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            git diff --check "$BASE_SHA...HEAD"
+          else
+            git diff --check HEAD^ HEAD
+          fi
+
+  scope:
+    name: classify changed risk domains
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    outputs:
+      core: ${{ steps.classify.outputs.core }}
+      mak: ${{ steps.classify.outputs.mak }}
+      rd: ${{ steps.classify.outputs.rd }}
+      portfolio: ${{ steps.classify.outputs.portfolio }}
+      publication: ${{ steps.classify.outputs.publication }}
+      web: ${{ steps.classify.outputs.web }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - id: classify
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          core=false
+          mak=false
+          rd=false
+          portfolio=false
+          publication=false
+          web=false
+          unknown=false
+
+          while IFS= read -r path; do
+            case "$path" in
+              pyproject.toml|requirements*.txt|web/package*.json)
+                core=true; mak=true; rd=true; portfolio=true; publication=true ;;
+              .github/workflows/*|README.md|arte-ascii-readme.svg)
+                publication=true ;;
+              web/*)
+                portfolio=true; web=true ;;
+              iskvw/*|tools/gen_archivo_iskvw.py|cultura/mak_plataforma/contrato_archivo.py|tests/test_iskvw_*.py|tests/test_portfolio_*.py|tests/test_vinculos_iskvw.py|tests/test_campo_filtro.py|tests/test_capas_iskvw.py)
+                portfolio=true ;;
+              src/flujo/rd/*|data/rd*|docs/rd/*|tests/test_rd_*.py|tests/test_gen_propuestas_rd.py|tests/test_generar_catalogo_rd.py|tests/test_mineria_rd.py|tests/test_reactivo_matcher.py|tests/test_paleta_reactivos.py)
+                rd=true ;;
+              cultura/mak_conductor/*|cultura/mak_plataforma/*|cultura/mak_research/*|cultura/mak_vigia/*|tools/mak*|tests/test_mak_*)
+                mak=true ;;
+              src/*|scripts/*|tools/*|tests/*)
+                core=true ;;
+              *)
+                unknown=true ;;
+            esac
+          done < <(git diff --name-only "$BASE_SHA...HEAD")
+
+          # Unclassified source is a core risk. Documentation-only changes
+          # keep the contract gate but do not wake an irrelevant domain gate.
+          if [ "$unknown" = true ]; then core=true; fi
+          for name in core mak rd portfolio publication web; do
+            value="${!name}"
+            echo "$name=$value" >> "$GITHUB_OUTPUT"
+            echo "$name=$value"
+          done
+
+  changed-tests:
+    name: changed test files (ubuntu)
+    needs: scope
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - run: python -m pip install -e ".[dev]"
+      - name: Run every changed test file
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          mapfile -t changed_tests < <(git diff --name-only "$BASE_SHA...HEAD" -- 'tests/test_*.py')
+          if [ "${#changed_tests[@]}" -eq 0 ]; then
+            echo "No test file changed; focused gates remain responsible for source changes."
+            exit 0
+          fi
+          printf 'Changed test files:\n- %s\n' "${changed_tests[@]}"
+          python -m pytest -q -rs --maxfail=1 "${changed_tests[@]}"
+
+  core:
+    name: core contracts (${{ matrix.os }})
+    needs: scope
+    if: github.event_name == 'pull_request' && needs.scope.outputs.core == 'true'
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 8
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - run: python -m pip install -e ".[dev]"
+      # This is the portable core slice. Renderer, browser, and full suites
+      # remain in the main/release gate below; they are not silently removed.
+      - run: >-
+          python -m pytest -q -rs --maxfail=1
+          tests/test_cli_smoke.py
+          tests/test_flujo_dispatcher.py
+          tests/test_hub_comando_seguro.py
+          tests/test_hub_comandos.py
+          tests/test_hub_durable_writers.py
+          tests/test_mantenimiento.py
+          tests/test_operational_entrypoints.py
+          tests/test_route_resolver.py
+
+  mak:
+    name: MAK runtime contracts
+    needs: scope
+    if: github.event_name == 'pull_request' && needs.scope.outputs.mak == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - run: python -m pip install -e ".[dev]"
+      - run: >-
+          python -m pytest -q -rs --maxfail=1
+          tests/test_mak_conductor.py
+          tests/test_mak_conductor_registry.py
+          tests/test_mak_hub_eventos.py
+          tests/test_mak_hub_salud.py
+          tests/test_mak_ledger.py
+          tests/test_mak_mirror_fixes.py
+          tests/test_mak_organos_visibles.py
+          tests/test_mak_post.py
+          tests/test_mak_post_registry.py
+          tests/test_mak_process_guard.py
+          tests/test_mak_reanudar.py
+          tests/test_mak_research_iconos_auto.py
+          tests/test_mak_research_lib.py
+          tests/test_mak_research_router.py
+          tests/test_mak_research_watchdog.py
+          tests/test_mak_tandas.py
+          tests/test_mak_tandas_surface.py
+
+  rd:
+    name: RD safety and data integrity
+    needs: scope
+    if: github.event_name == 'pull_request' && needs.scope.outputs.rd == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - run: python -m pip install -e ".[dev]"
+      - run: >-
+          python -m pytest -q -rs --maxfail=1
+          tests/test_rd_database.py
+          tests/test_rd_datos.py
+          tests/test_rd_db_logos.py
+          tests/test_rd_eventos.py
+          tests/test_rd_informe.py
+          tests/test_gen_propuestas_rd.py
+          tests/test_generar_catalogo_rd.py
+          tests/test_mineria_rd.py
+          tests/test_paleta_reactivos.py
+          tests/test_reactivo_matcher.py
+
+  portfolio:
+    name: Portfolio integrity
+    needs: scope
+    if: github.event_name == 'pull_request' && needs.scope.outputs.portfolio == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - run: python -m pip install -e ".[dev]"
+      - run: >-
+          python -m pytest -q -rs --maxfail=1
+          tests/test_campo_filtro.py
+          tests/test_capas_iskvw.py
+          tests/test_contrato_archivo.py
+          tests/test_gen_archivo_iskvw.py
+          tests/test_iskvw_editor_contract.py
+          tests/test_iskvw_librerias.py
+          tests/test_iskvw_piel_medir.py
+          tests/test_iskvw_piel_smoke.py
+          tests/test_iskvw_semilla.py
+          tests/test_iskvw_vinculos.py
+          tests/test_portfolio_decision_drafts.py
+          tests/test_portfolio_gen.py
+          tests/test_portfolio_works.py
+          tests/test_vinculos_iskvw.py
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        if: needs.scope.outputs.web == 'true'
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+        if: needs.scope.outputs.web == 'true'
+        working-directory: web
+      - run: npm run typecheck
+        if: needs.scope.outputs.web == 'true'
+        working-directory: web
+      - run: npm run build:context
+        if: needs.scope.outputs.web == 'true'
+        working-directory: web
+
+  publication:
+    name: release and publication contracts
+    needs: scope
+    if: github.event_name == 'pull_request' && needs.scope.outputs.publication == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - run: python -m pip install -e ".[dev]"
+      - run: >-
+          python -m pytest -q -rs --maxfail=1
+          tests/test_readme_svg.py
+          tests/test_run_airdrop_checks.py
+          tests/test_suplementos_svg_validator.py
+          tests/test_validate_airdrop.py
+
+  full:
+    name: full verification (${{ matrix.os }})
+    if: github.event_name != 'pull_request'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
@@ -28,9 +366,8 @@ jobs:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: web/package-lock.json
-      # `render` va incluido a proposito: sin rasterizador el critico
-      # perceptual del motor semantico no se ejecuta y CI daria verde sobre
-      # codigo que nadie corrio.
+      # Full verification remains mandatory on main/manual runs. The render
+      # extra is intentional: visual tests must execute, not silently skip.
       - run: python -m pip install -e ".[dev,render]"
       - run: npm ci
         working-directory: web
@@ -38,14 +375,6 @@ jobs:
         working-directory: web
       - run: npm run build:context
         working-directory: web
-      # El sustrato, ANTES de los tests. `archivo.json` esta gitignoreado y
-      # solo lo generaba el workflow de publicacion, asi que la suite media un
-      # mundo de UNA fuente (campo.json) mientras el sitio servia otro. Medido
-      # el 2026-07-31: con el sustrato presente la piel dibujaba 203 marcas por
-      # cuadro en vez de 7647 y el patch de efectos quedaba inerte, con la
-      # suite entera en verde. Un instrumento que solo mide la condicion facil
-      # no puede acusar a nadie. El generador avisa que no alcanza el micelio
-      # (la caja no es visible desde CI) y sigue con el material del repo: eso
-      # es lo esperado, no un error.
+      # The generated substrate is required by the public-surface tests.
       - run: python tools/gen_archivo_iskvw.py --fuente todo
       - run: python -m flujo verify

@@ -27,7 +27,7 @@ import os
 import re
 
 FORMATOS = ("informe", "ensayo", "revision", "exposicion", "curatoria",
-            "oportunidad")
+            "oportunidad", "source_corpus")
 
 # Las siete exigencias, en el orden en que un lector las encuentra.
 EXIGENCIAS = (

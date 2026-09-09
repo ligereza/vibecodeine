@@ -16,6 +16,16 @@ import glob
 import sys
 
 try:
+    from cultura.mak_conductor.runtime import active_enabled, dispatch_sync
+except ImportError:  # pragma: no cover - direct MAK deployment
+    sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH", "/home/mak/flujo/cultura"))
+    try:
+        from mak_conductor.runtime import active_enabled, dispatch_sync
+    except ImportError:
+        active_enabled = lambda: False
+        dispatch_sync = None
+
+try:
     from . import ledger as common_ledger
 except Exception:  # noqa: BLE001 - direct script deployment on MAK
     try:
@@ -977,7 +987,7 @@ def _conservative_opportunity_repair(payload, area):
     return repaired
 
 
-def run_external_batch(area, batch_id, provider, paths=None, model=None,
+def _run_external_batch_unlocked(area, batch_id, provider, paths=None, model=None,
                        out_dir=None, common_path=COMMON_LEDGER,
                        batch_path=LEDGER, use_ollama=True, max_tokens=2500,
                        instruction="", max_items=5, image_paths=None):
@@ -1123,6 +1133,67 @@ def run_external_batch(area, batch_id, provider, paths=None, model=None,
     if repair_raw_path:
         result["repair_raw_path"] = repair_raw_path
     return result
+
+
+def run_external_batch(area, batch_id, provider, paths=None, model=None,
+                       out_dir=None, common_path=COMMON_LEDGER,
+                       batch_path=LEDGER, use_ollama=True, max_tokens=2500,
+                       instruction="", max_items=5, image_paths=None):
+    """Run one bounded batch through the shared queue when active."""
+    if active_enabled() and dispatch_sync is not None:
+        payload = {
+            "area": area, "batch_id": batch_id, "provider": provider,
+            "paths": list(paths or []), "model": model or "",
+            "out_dir": out_dir or "", "common_path": common_path or "",
+            "batch_path": batch_path or "", "instruction": instruction,
+            "image_paths": list(image_paths or []),
+            "max_tokens": int(max_tokens), "max_items": int(max_items),
+            "use_ollama": bool(use_ollama),
+        }
+
+        def handle(_job):
+            result = _run_external_batch_unlocked(
+                area, batch_id, provider, paths=paths, model=model,
+                out_dir=out_dir, common_path=common_path, batch_path=batch_path,
+                use_ollama=use_ollama, max_tokens=max_tokens,
+                instruction=instruction, max_items=max_items,
+                image_paths=image_paths,
+            )
+            artifacts = []
+            for key, kind in (("raw_path", "provider_raw_output"),
+                              ("repair_raw_path", "provider_repair_output")):
+                path = result.get(key) if isinstance(result, dict) else None
+                if path:
+                    artifacts.append({"kind": kind, "path": path})
+            if not isinstance(result, dict):
+                return {"validated": False, "error": "batch returned non-mapping"}
+            status = str(result.get("status") or "")
+            if status == "provider_error":
+                return {"validated": False, "retriable": True,
+                        "error": ";".join(result.get("errors") or
+                                           ["provider_error"]),
+                        "result": result, "artifacts": artifacts}
+            return {"validated": status in {
+                "accepted", "awaiting_review", "revise", "invalid",
+            }, "result": result, "artifacts": artifacts}
+
+        queued = dispatch_sync(
+            "external_batch", payload,
+            producer="platform.tandas.run_external_batch", handler=handle,
+            template_version="external-batch-v1",
+        )
+        if queued and isinstance(queued.get("result"), dict):
+            result = dict(queued["result"])
+            result["queue_status"] = queued.get("queue_status")
+            return result
+        return queued or {"ok": False, "status": "queue_unavailable",
+                          "errors": ["queue_unavailable"]}
+    return _run_external_batch_unlocked(
+        area, batch_id, provider, paths=paths, model=model,
+        out_dir=out_dir, common_path=common_path, batch_path=batch_path,
+        use_ollama=use_ollama, max_tokens=max_tokens, instruction=instruction,
+        max_items=max_items, image_paths=image_paths,
+    )
 
 
 def summarize_ledger(path=LEDGER, limit=20):

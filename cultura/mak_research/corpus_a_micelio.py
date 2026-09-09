@@ -22,6 +22,18 @@ import json
 import os
 import pathlib
 import re
+import time
+
+try:
+    from cultura.mak_conductor.runtime import active_enabled, dispatch_sync
+except ImportError:  # pragma: no cover - direct MAK deployment
+    import sys
+    sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH", "/home/mak/flujo/cultura"))
+    try:
+        from mak_conductor.runtime import active_enabled, dispatch_sync
+    except ImportError:
+        active_enabled = lambda: False
+        dispatch_sync = None
 
 FICHAS = os.path.expanduser("~/curatoria/fichas/fichas.jsonl")
 DESTINO = pathlib.Path(os.path.expanduser("~/research/corpus"))
@@ -141,6 +153,27 @@ def documento(f):
 
 
 def main():
+    if active_enabled() and dispatch_sync is not None:
+        payload = {"source": "iskvw", "day": int(time.time() // 86400)}
+
+        def handle(_job):
+            result = _main_unlocked()
+            return {"validated": True, "result": result,
+                    "artifacts": [{
+                        "kind": "corpus_projection_manifest",
+                        "content": json.dumps(payload, sort_keys=True),
+                        "staging_path": str(DESTINO),
+                    }]}
+
+        return dispatch_sync(
+            "corpus_projection", payload,
+            producer="research.corpus_a_micelio.main", handler=handle,
+            template_version="corpus-projection-v1",
+        )
+    return _main_unlocked()
+
+
+def _main_unlocked():
     DESTINO.mkdir(parents=True, exist_ok=True)
     escritos = sin_cambio = saltados = 0
     with open(FICHAS, encoding="utf-8", errors="replace") as fh:

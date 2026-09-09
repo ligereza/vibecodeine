@@ -20,7 +20,8 @@ from cultura.mak_plataforma import providers as external_providers
 from cultura.mak_plataforma import tandas
 
 
-CANONICAL_BRANCHES = ("main", "mak", "rd", "iskvw")
+CANONICAL_BRANCHES = ("main",)
+LEGACY_TRANSITION_BRANCHES = ("mak", "rd", "iskvw", "mejoras", "mak-svg")
 DEFAULT_AREAS = (
     "mak_quality",
     "rd_evidence",
@@ -119,6 +120,17 @@ def _csv(values: str | Iterable[str] | None, default: tuple[str, ...]) -> tuple[
     return tuple(items or default)
 
 
+def _classify_branch(branch: str) -> str:
+    """Classify a remote ref without treating runtime domains as Git authority."""
+    if branch in CANONICAL_BRANCHES:
+        return "canonical"
+    if branch in LEGACY_TRANSITION_BRANCHES:
+        return "legacy_transition"
+    if branch.startswith("codex/") or branch.startswith("dependabot/"):
+        return "temporary_work"
+    return "unclassified"
+
+
 def _branch_state() -> dict:
     current = _run_git(["branch", "--show-current"])
     dirty = _run_git(["status", "--porcelain"]).splitlines()
@@ -132,18 +144,32 @@ def _branch_state() -> dict:
         for ref in raw_remote
         if ref.startswith("origin/") and ref != "origin/HEAD"
     )
-    extra_remote = sorted(
-        ref for ref in remote_branches if ref not in CANONICAL_BRANCHES
-    )
     canonical_present = {
         branch: branch in remote_branches for branch in CANONICAL_BRANCHES
     }
+    by_class = {
+        "legacy_transition": sorted(
+            ref for ref in remote_branches
+            if _classify_branch(ref) == "legacy_transition"
+        ),
+        "temporary_work": sorted(
+            ref for ref in remote_branches
+            if _classify_branch(ref) == "temporary_work"
+        ),
+        "unclassified": sorted(
+            ref for ref in remote_branches
+            if _classify_branch(ref) == "unclassified"
+        ),
+    }
     return {
         "current": current,
+        "current_classification": _classify_branch(current) if current else "unknown",
         "dirty": dirty,
         "remote_branches": remote_branches,
         "canonical_present": canonical_present,
-        "extra_remote_branches": extra_remote,
+        "legacy_transition_branches": by_class["legacy_transition"],
+        "temporary_work_branches": by_class["temporary_work"],
+        "unclassified_remote_branches": by_class["unclassified"],
     }
 
 
@@ -226,8 +252,8 @@ def _operational_state(branches, prs, common, batches, quarantine, readme):
     actions = []
     if branches["dirty"]:
         actions.append("clean_repo_before_promotion")
-    if branches["extra_remote_branches"]:
-        actions.append("remove_noncanonical_remote_branches")
+    if branches["unclassified_remote_branches"]:
+        actions.append("review_unclassified_remote_branches")
     if prs:
         actions.append("review_open_promotion_prs")
     if blocked_prs:
@@ -242,8 +268,10 @@ def _operational_state(branches, prs, common, batches, quarantine, readme):
         "schema": "flujo-operational-state-v1",
         "branch_policy": {
             "canonical": list(CANONICAL_BRANCHES),
+            "legacy_transition": branches["legacy_transition_branches"],
+            "temporary_work": branches["temporary_work_branches"],
             "remote": branches["remote_branches"],
-            "extra_remote": branches["extra_remote_branches"],
+            "unclassified": branches["unclassified_remote_branches"],
         },
         "promotion": {
             "open_prs": len(prs),
@@ -329,8 +357,8 @@ def autonomy_status(common_path: str = tandas.COMMON_LEDGER,
     ]
     if missing:
         blockers.append("missing_canonical_branches:" + ",".join(missing))
-    if branches["extra_remote_branches"]:
-        blockers.append("extra_remote_branches")
+    if branches["unclassified_remote_branches"]:
+        blockers.append("unclassified_remote_branches")
     quarantine_path = _quarantine_path(common_path)
     quarantine = _quarantine_summary(quarantine_path)
     next_actions = []

@@ -24,6 +24,26 @@ from collections import defaultdict
 from pathlib import Path
 
 try:
+    from cultura.mak_conductor.runtime import (active_enabled, dispatch_sync,
+                                                enqueue_shadow, observe_shadow,
+                                                shared_gpu_lease)
+except ImportError:
+    import sys
+    sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH",
+                                     "/home/mak/flujo/cultura"))
+    try:
+        from mak_conductor.runtime import (active_enabled, dispatch_sync,
+                                           enqueue_shadow, observe_shadow,
+                                           shared_gpu_lease)
+    except ImportError:
+        from contextlib import nullcontext
+        def active_enabled():
+            return False
+        enqueue_shadow = observe_shadow = dispatch_sync = None
+        def shared_gpu_lease(**_kwargs):
+            return nullcontext()
+
+try:
     import instagram_source as _instagram_source
 except Exception:  # noqa: BLE001 - source adapter is optional for the worker
     try:
@@ -481,19 +501,88 @@ def build_index(inbox_path=DEFAULT_INBOX, media_root=DEFAULT_MEDIA_ROOT,
                 model_path=DEFAULT_MODEL_PATH, device="cuda", neighbors=DEFAULT_NEIGHBORS,
                 instagram_catalog=None):
     """Build or incrementally update the derived index for a bounded sample."""
-    started = time.perf_counter()
-    output_root = Path(output_root).expanduser()
-    output_root.mkdir(parents=True, exist_ok=True)
-    run_id = "visual-index-%s-%s" % (time.strftime("%Y%m%d%H%M%S"), uuid.uuid4().hex[:8])
-    run_dir = output_root / "runs"
-    previous, previous_vectors = _read_previous(output_root)
-    payload = json.loads(Path(inbox_path).expanduser().read_text(encoding="utf-8"))
-    source_catalog = _read_source_catalog(instagram_catalog)
-    catalog_items = _merge_source_catalog(payload.get("items", []), source_catalog)
-    units = select_sample(group_portfolio_items(catalog_items, media_root), limit)
-    if not units:
-        raise RuntimeError("visual_sample_empty")
+    if active_enabled():
+        payload = {
+            "inbox_path": str(inbox_path), "media_root": str(media_root),
+            "output_root": str(output_root), "limit": int(limit),
+            "model_path": str(model_path), "device": str(device),
+            "neighbors": int(neighbors),
+            "instagram_catalog": str(instagram_catalog or ""),
+        }
 
+        def handle(_job):
+            result = build_index(
+                inbox_path=inbox_path, media_root=media_root,
+                output_root=output_root, limit=limit, model_path=model_path,
+                device=device, neighbors=neighbors,
+                instagram_catalog=instagram_catalog)
+            return {"validated": isinstance(result, dict) and
+                    result.get("status") == "ok", **result}
+
+        queued = dispatch_sync(
+            "visual_index", payload, producer="platform.visual_index.build_index",
+            handler=handle, estimated_vram_mb=3500, model=MODEL_NAME,
+            template_version="visual-index-v2")
+        if queued and queued.get("queue_status") == "COMPLETED":
+            return {key: value for key, value in queued.items()
+                    if key not in {"job_id", "status", "queue_status",
+                                   "validated"}}
+        raise RuntimeError("queued visual index failed: %s" %
+                           ((queued or {}).get("error", "not executed")))
+
+    shadow_job = (enqueue_shadow(
+        "visual_index", {
+            "inbox_path": str(inbox_path), "media_root": str(media_root),
+            "output_root": str(output_root), "limit": int(limit),
+            "model_path": str(model_path), "device": str(device),
+            "neighbors": int(neighbors),
+            "instagram_catalog": str(instagram_catalog or ""),
+        }, producer="platform.visual_index.build_index",
+        estimated_vram_mb=3500, model=MODEL_NAME,
+        template_version="visual-index-v1")
+        if enqueue_shadow is not None else None)
+
+    started = time.perf_counter()
+    try:
+        output_root = Path(output_root).expanduser()
+        output_root.mkdir(parents=True, exist_ok=True)
+        run_id = "visual-index-%s-%s" % (time.strftime("%Y%m%d%H%M%S"), uuid.uuid4().hex[:8])
+        run_dir = output_root / "runs"
+        previous, previous_vectors = _read_previous(output_root)
+        payload = json.loads(Path(inbox_path).expanduser().read_text(encoding="utf-8"))
+        source_catalog = _read_source_catalog(instagram_catalog)
+        catalog_items = _merge_source_catalog(payload.get("items", []), source_catalog)
+        units = select_sample(group_portfolio_items(catalog_items, media_root), limit)
+        if not units:
+            raise RuntimeError("visual_sample_empty")
+
+        with shared_gpu_lease(job_id="visual-index-%s" % os.getpid(),
+                              estimated_vram_mb=3500):
+            result = _build_index_locked(
+                output_root, run_id, run_dir, previous, previous_vectors, units,
+                source_catalog, started, model_path, device, neighbors)
+        if observe_shadow is not None:
+            observe_shadow(
+                shadow_job, producer="platform.visual_index.build_index",
+                result_status="READY", validated=isinstance(result, dict),
+                payload={"status": result.get("status") if isinstance(result, dict) else ""},
+                started_at=started, owner_pid=os.getpid(),
+            )
+        return result
+    except Exception as exc:
+        if observe_shadow is not None:
+            observe_shadow(
+                shadow_job, producer="platform.visual_index.build_index",
+                result_status="FAILED", payload={"error": str(exc)[:2000]},
+                started_at=started, owner_pid=os.getpid(),
+            )
+        raise
+
+
+def _build_index_locked(output_root, run_id, run_dir, previous,
+                        previous_vectors, units, source_catalog, started,
+                        model_path, device, neighbors):
+    """Build the derived index while the common GPU lease is held."""
     torch, model, preprocess, model_hash = _load_encoder(model_path, device)
     metadata = _model_metadata(model_hash)
     encoded = 0

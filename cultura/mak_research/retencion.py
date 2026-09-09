@@ -14,8 +14,20 @@ Usage:
 import argparse
 import json
 import os
+import time
 from pathlib import Path
 from typing import List, Tuple
+
+try:
+    from cultura.mak_conductor.runtime import active_enabled, dispatch_sync
+except ImportError:  # pragma: no cover - direct MAK deployment
+    import sys
+    sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH", "/home/mak/flujo/cultura"))
+    try:
+        from mak_conductor.runtime import active_enabled, dispatch_sync
+    except ImportError:
+        active_enabled = lambda: False
+        dispatch_sync = None
 
 
 def list_reports(dir_path: str, exclude_archive: bool = True) -> List[Tuple[str, List[str]]]:
@@ -157,6 +169,28 @@ def dry_run_summary(report_pairs: List[Tuple[str, List[str]]],
 
 
 def main():
+    if (active_enabled() and dispatch_sync is not None and
+            "--apply" in sys.argv[1:]):
+        payload = {"argv": sys.argv[1:], "day": int(time.time() // 86400),
+                   "requires_human": True}
+
+        def handle(_job):
+            result = _main_unlocked()
+            return {"validated": result == 0, "result_code": result,
+                    "artifacts": [{
+                        "kind": "retention_manifest",
+                        "content": json.dumps(payload, sort_keys=True),
+                    }]}
+
+        result = dispatch_sync(
+            "retention", payload, producer="research.retencion.main",
+            handler=handle, template_version="retention-v1",
+        )
+        return int((result or {}).get("result_code", 2))
+    return _main_unlocked()
+
+
+def _main_unlocked():
     parser = argparse.ArgumentParser(
         description="Retention policy for MAK research reports."
     )

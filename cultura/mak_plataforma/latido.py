@@ -18,6 +18,17 @@ import time
 import urllib.parse
 import urllib.request
 
+try:
+    from cultura.mak_conductor.runtime import active_enabled, dispatch_sync
+except ImportError:  # pragma: no cover - direct MAK deployment
+    import sys
+    sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH", "/home/mak/flujo/cultura"))
+    try:
+        from mak_conductor.runtime import active_enabled, dispatch_sync
+    except ImportError:
+        active_enabled = lambda: False
+        dispatch_sync = None
+
 HOME = os.path.expanduser("~")
 SEMILLAS = os.path.join(HOME, "plataforma/semillas_latido.txt")
 IDX = os.path.join(HOME, "plataforma/.latido_idx")
@@ -117,6 +128,26 @@ def _save(s):
 
 
 def main():
+    if active_enabled() and dispatch_sync is not None:
+        payload = {"bucket": int(time.time() // 7200)}
+
+        def handle(_job):
+            result = _main_unlocked()
+            return {"validated": True, "result": result,
+                    "artifacts": [{
+                        "kind": "heartbeat_manifest",
+                        "content": json.dumps(payload, sort_keys=True),
+                        "staging_path": LOG,
+                    }]}
+
+        return dispatch_sync(
+            "heartbeat", payload, producer="platform.latido.main",
+            handler=handle, template_version="heartbeat-v1",
+        )
+    return _main_unlocked()
+
+
+def _main_unlocked():
     ts = time.strftime("%F %T")
     now = time.time()
     hoy = time.strftime("%Y-%m-%d")
@@ -149,6 +180,7 @@ def main():
             % (ts, st["count"], MAX_DIA, tema[:70], resp[:80]))
     except Exception as e:  # noqa: BLE001 - el latido no debe tumbar nada
         log("%s latido FALLO: %s" % (ts, str(e)[:140]))
+    return 0
 
 
 if __name__ == "__main__":
