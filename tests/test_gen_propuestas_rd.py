@@ -107,7 +107,8 @@ def test_filtros_de_entrada():
         _candidato(obra_id="o5"),  # sin nombres
     ]
     consolidado, informe = gen.consolidar_candidatos(candidatos, **SIN_CATALOGO)
-    assert consolidado == {"productoras_nuevas": {}, "venues_nuevos": {}}
+    assert consolidado == {
+        "productoras_nuevas": {}, "venues_nuevos": {}, "eventos_conocidos": []}
     d = informe["descartes"]
     assert d["fuente_no_rd"] == 1
     assert d["identidad_propia"] == 1
@@ -127,8 +128,14 @@ def test_geografia_no_es_venue():
 
 def test_dudoso_se_reporta_y_no_se_propone():
     catalogo = [{"canonico": "Espacio Riesco", "variantes": ["Espacio Riesco"]}]
+    # Sin coma: mejor_match (2026-09-09) tambien prueba segmentos separados
+    # por coma/presenta/etc contra el catalogo, asi que un crudo con coma
+    # ("Espacio Riesgo, Santiago") ahora matchea limpio (0.929) en vez de
+    # quedar dudoso -- correcto (es una mejora real), pero ya no sirve para
+    # probar la banda dudosa. Este string se mantiene ambiguo (0.788) sin
+    # depender de esa segmentacion.
     candidatos = [
-        _candidato(obra_id="o%d" % i, venue="Espacio Riesgo, Santiago")
+        _candidato(obra_id="o%d" % i, venue="Espacio Riezco Club")
         for i in range(3)
     ]
     consolidado, informe = gen.consolidar_candidatos(
@@ -148,6 +155,27 @@ def test_match_conocido_no_se_propone():
         candidatos, catalogo_productoras=catalogo, catalogo_venues=[])
     assert consolidado["productoras_nuevas"] == {}
     assert informe["productoras"]["conocidas"] == 3
+
+
+def test_cargar_eventos_existentes_resuelve_por_name_no_por_slug_adivinado(
+        tmp_path):
+    # Medido 2026-09-09 contra data/productoras real: 9 productoras legacy
+    # tienen archivo sin guion bajo (piknic.json, panalrecords.json,
+    # streetmachine.json...) con "name" que SI trae espacios ("Panal
+    # Records"). Adivinar el slug desde el name ("panal_records") no
+    # encuentra "panalrecords.json" -> slug_productora salia vacio y el
+    # borrador de evento quedaba con nombre de archivo sin prefijo
+    # ("__18_abril.json" en vez de "panalrecords__18_abril.json").
+    productoras_dir = tmp_path / "data" / "productoras"
+    productoras_dir.mkdir(parents=True)
+    (productoras_dir / "panalrecords.json").write_text(json.dumps({
+        "name": "Panal Records",
+        "eventos": [{"fecha": "2026-01-10", "venue": "Club Real"}],
+    }), encoding="utf-8")
+
+    slug, claves = gen.cargar_eventos_existentes("Panal Records", tmp_path)
+    assert slug == "panalrecords"
+    assert gen._clave_evento("2026-01-10", "Club Real") in claves
 
 
 def test_umbral_de_evidencia():
@@ -212,7 +240,7 @@ def test_borradores_calcan_schema_y_quedan_en_outdir(tmp_path):
     assert (outdir / "RESUMEN.md").exists()
     # nada se escribio fuera de outdir
     assert set(p.name for p in outdir.iterdir()) == {
-        "productoras", "venues", "RESUMEN.md"}
+        "productoras", "venues", "eventos_conocidos", "RESUMEN.md"}
 
 
 def test_el_nombre_del_venue_conserva_la_tilde(tmp_path):

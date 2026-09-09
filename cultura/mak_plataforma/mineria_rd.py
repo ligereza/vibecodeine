@@ -650,6 +650,30 @@ def _borrador_venue_yaml(slug: str, datos: dict) -> str:
     return "\n".join(lineas)
 
 
+def _borrador_evento_conocido(datos: dict) -> dict:
+    """Shape identico a `productora_eventos` (ver flujo/src/flujo/rd/database.py
+    y el `eventos` de data/productoras/*.json): nombre, fecha, venue, estado,
+    fuente, fuentes_primarias. `estado` es el vocabulario que la base YA usa
+    (piknic.json trae "pasado_needs_confirmation" a mano desde antes de esto):
+    confirmado_auto si el match fue >=0.82, needs_confirmation si fue dudoso
+    (0.70-0.82) -- nunca mas alto que lo que el ratio realmente sostiene."""
+    estado = ("confirmado_auto" if datos["clase"] == "match"
+              else "needs_confirmation")
+    fuentes = sorted(
+        {ruta for archivo in datos["archivos_fuente"] for ruta in archivo.values()}
+    )
+    return {
+        "nombre": datos["nombre_evento"],
+        "fecha": datos["fecha"],
+        "venue": datos["venue"],
+        "estado": estado,
+        "fuente": "gen_propuestas_rd.py, match_ratio=%.3f contra '%s'"
+                  % (datos["match_ratio"], datos["productora_canonica"]),
+        "fuentes_primarias": fuentes,
+        "handles": sorted(datos["handles"]),
+    }
+
+
 def proponer(consolidado: dict, outdir: str = "propuestas_mineria") -> None:
     """
     Escribe borradores de productoras/venues nuevos DENTRO de `outdir`,
@@ -660,9 +684,23 @@ def proponer(consolidado: dict, outdir: str = "propuestas_mineria") -> None:
     base = Path(outdir)
     (base / "productoras").mkdir(parents=True, exist_ok=True)
     (base / "venues").mkdir(parents=True, exist_ok=True)
+    (base / "eventos_conocidos").mkdir(parents=True, exist_ok=True)
 
     productoras_nuevas = consolidado.get("productoras_nuevas", {})
     venues_nuevos = consolidado.get("venues_nuevos", {})
+    eventos_conocidos = consolidado.get("eventos_conocidos", [])
+
+    for datos in eventos_conocidos:
+        # Nombre de archivo pensado para que un humano lo reconozca de un
+        # vistazo en el listado: productora + fecha, el minimo que el
+        # usuario pidio (2026-09-09) -- no el obra_id ni el issue.
+        nombre_archivo = "%s__%s.json" % (
+            datos["slug_productora"], _slug(datos["fecha"]))
+        ruta = _ruta_segura(base, "eventos_conocidos", nombre_archivo)
+        with open(ruta, "w", encoding="utf-8") as f:
+            json.dump(_borrador_evento_conocido(datos), f,
+                      ensure_ascii=False, indent=2)
+            f.write("\n")
 
     lineas_resumen = [
         "# Propuestas de mineria RD",
@@ -695,6 +733,19 @@ def proponer(consolidado: dict, outdir: str = "propuestas_mineria") -> None:
             f.write(contenido)
         lineas_resumen.append(
             "- %s (evidencia: %d archivo(s))" % (datos["nombre"], datos["evidencia"])
+        )
+
+    lineas_resumen.append("")
+    lineas_resumen.append(
+        "## Eventos de productoras ya conocidas/dudosas (%d)" % len(eventos_conocidos)
+    )
+    for datos in sorted(eventos_conocidos,
+                        key=lambda d: (d["productora_canonica"], d["fecha"])):
+        lineas_resumen.append(
+            "- %s -- %s (%s) [%s, ratio=%.3f]"
+            % (datos["productora_canonica"], datos["fecha"],
+               datos["venue"] or "venue sin identificar", datos["clase"],
+               datos["match_ratio"])
         )
 
     ruta_resumen = _ruta_segura(base, "RESUMEN.md")
