@@ -521,12 +521,38 @@ def cargar_catalogo_venues(ruta_override=None) -> list[dict]:
     return _cargar_entradas_dir(raiz / "knowledge" / "venues")
 
 
+# productora pegada a sponsors ("X, Banco de Chile, entel") o a
+# un co-presentador ("X presenta Y") en el mismo string -- el prompt de
+# vision no las separa (no hay campo "sponsors" en el esquema), y
+# SequenceMatcher sobre el string completo castiga el ratio por el
+# largo extra aunque el nombre real este limpio adentro. Medido:
+# "Picnic Electronik Santiago, Banco de Chile, e) entel" contra
+# "Piknic Electronik" da 0.485 completo, 0.744 solo el primer segmento.
+_SEPARADORES_PRODUCTORA = re.compile(
+    r",|/|\||&| presenta | x |\bpresenta\b", re.IGNORECASE)
+
+
+def _segmentos_de(crudo: str) -> list[str]:
+    """Trozos de `crudo` cortados por separadores tipicos entre una
+    productora y lo que la acompaña en el mismo texto. Nunca reemplaza
+    el intento con el string completo, solo se suma."""
+    return [p.strip() for p in _SEPARADORES_PRODUCTORA.split(crudo or "")
+            if p and p.strip()]
+
+
 def mejor_match(crudo: str, catalogo: list[dict]) -> tuple:
     """(canonico|None, ratio) del mejor match de `crudo` (normalizado)
     contra las variantes normalizadas del catalogo. (None, 0.0) si
-    `crudo` esta vacio o el catalogo esta vacio."""
-    crudo_norm = normalizar_texto(crudo)
-    if not crudo_norm or not catalogo:
+    `crudo` esta vacio o el catalogo esta vacio.
+
+    Prueba el string completo Y cada segmento (ver `_segmentos_de`) contra
+    cada variante, y se queda con el mejor ratio de todos los intentos --
+    nunca peor que solo probar el string completo, a veces mejor cuando el
+    nombre real viene acompañado de otra cosa en el mismo campo."""
+    candidatos = [normalizar_texto(crudo)] + [
+        normalizar_texto(seg) for seg in _segmentos_de(crudo)]
+    candidatos = [c for c in dict.fromkeys(candidatos) if c]
+    if not candidatos or not catalogo:
         return None, 0.0
 
     mejor_canonico = None
@@ -536,10 +562,11 @@ def mejor_match(crudo: str, catalogo: list[dict]) -> tuple:
             variante_norm = normalizar_texto(variante)
             if not variante_norm:
                 continue
-            ratio = SequenceMatcher(None, crudo_norm, variante_norm).ratio()
-            if ratio > mejor_ratio:
-                mejor_ratio = ratio
-                mejor_canonico = entrada["canonico"]
+            for candidato in candidatos:
+                ratio = SequenceMatcher(None, candidato, variante_norm).ratio()
+                if ratio > mejor_ratio:
+                    mejor_ratio = ratio
+                    mejor_canonico = entrada["canonico"]
     return mejor_canonico, round(mejor_ratio, 3)
 
 
