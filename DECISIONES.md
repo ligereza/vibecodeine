@@ -60,3 +60,17 @@ Lo que el operador decidio, con la fecha en que lo dijo.
   MAK y FLUJO, y sobre separar el sistema en repos propios, ya lo dejaba
   obsoleto. El tag `archive/house-history` se conserva: es el punto de
   preservacion y no depende del guardian.
+
+---
+
+## 2026-09-10
+
+- **La union literal de MAK y FLUJO en `main` (decidida el 2026-09-08) no
+  reabre la retirada del 2026-09-06.** Un agente, al integrar el `main` unido
+  con el trabajo nuevo de las ramas, reintrodujo `git-topology.yml` (re-
+  enmarcado como "testigo historico" en `MAPA.md`) y `context/LAST_HANDOFF.md`
+  con contenido nuevo, sin dejar esta entrada -- una auditoria posterior lo
+  encontro sin registro. Confirmado: no fue autorizado. Se revierten ambos:
+  `git-topology.yml`, su parrafo en `MAPA.md` y `context/LAST_HANDOFF.md`
+  salen de `main` de nuevo; `HANDOFF_HISTORICO.md` sigue siendo el unico
+  historico, tal como quedo fijado el 2026-09-03.

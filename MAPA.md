@@ -33,8 +33,10 @@ their typed contract boundary and separate ports remain explicit. The
 annotated tag `archive/house-history` preserves the historical branch tips.
 
 The integrated baseline is checked by `.github/workflows/ci-integration.yml`.
-`.github/workflows/git-topology.yml` remains a historical topology witness;
-domain separation lives in the physical owner/consumer boundaries above.
+Domain separation lives in the physical owner/consumer boundaries above, not
+in a topology guard: `git-topology.yml` stays retired per the 2026-09-06
+decision (its premise -- separating into own repos next -- changed on
+2026-09-08, but the retirement itself was never re-authorized).
 
 <!-- COMANDOS:INICIO -- generado por tools/gen_mapa_comandos.py, no editar a mano -->
 
