@@ -234,6 +234,10 @@
   .archive-view-meta span{border:1px solid #28241e;padding:2px 4px}
   .archive-view-provenance{margin-top:5px;color:#686158;font-size:.47rem;overflow-wrap:anywhere}
   .archive-view-omitted{margin-top:6px;color:#81796d;font-size:.49rem}
+  .archive-view-fold{margin-top:7px}
+  .archive-view-fold>summary{cursor:pointer;list-style:none;color:#d1b68b;font-size:.52rem;letter-spacing:.07em;text-transform:uppercase}
+  .archive-view-fold>summary::-webkit-details-marker{display:none}
+  .archive-view-fold[open]>summary{margin-bottom:4px}
   .archive-view-gaps{margin-top:9px;border-top:1px solid #332f29;padding-top:8px;color:#8f887d;font-size:.54rem;line-height:1.5}
   .archive-view-gaps strong{color:#b7af9f;font-weight:500}
   .archive-view-source{margin-top:7px;color:#6f685f;font-size:.49rem;line-height:1.45;overflow-wrap:anywhere}
@@ -1115,7 +1119,7 @@ let ESTUDIO_PASS_OFFSET = 0;
 let ESTUDIO_PASS_SELECTED = new Set();
 const ESTUDIO_FEEDBACK_BUSY = new Set();
 const ESTUDIO_SUGGESTION_POSITIONS = new Map();
-const ARCHIVE_VIEW_FORMAT_IDS = ['declared-works','observed-field','practice-context'];
+const ARCHIVE_VIEW_FORMAT_IDS = ['declared-works','documented-record','observed-field','practice-context'];
 let ARCHIVE_PORTFOLIO_VIEW = null;
 let ARCHIVE_PORTFOLIO_STATE = 'idle';
 const ESTUDIO_SESSION_ID = "estudio-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
@@ -1201,12 +1205,12 @@ function archiveViewValidate(payload){
   if(!payload||typeof payload!=='object'||Array.isArray(payload))return false;
   if(payload.schema!=='mak-archive-portfolio-view-v1'||payload.scope!=='general_archive_portfolio'||payload.status!=='draft_only')return false;
   if(!payload.source||payload.source.kind!=='iskvw_archive_projection'||payload.source.path_hint!=='iskvw/datos/archivo.json'||!/^sha256:[0-9a-f]{64}$/.test(payload.source.input_hash||''))return false;
-  if(!Array.isArray(payload.formats)||payload.formats.length!==3||!Array.isArray(payload.items)||!Array.isArray(payload.relationships)||!Array.isArray(payload.gaps))return false;
+  if(!Array.isArray(payload.formats)||payload.formats.length!==4||!Array.isArray(payload.items)||!Array.isArray(payload.relationships)||!Array.isArray(payload.gaps))return false;
   if(payload.formats.map(format=>format?.format_id).join('|')!==ARCHIVE_VIEW_FORMAT_IDS.join('|'))return false;
   const itemIds=new Set();
   for(const item of payload.items){
     if(!item||typeof item.item_id!=='string'||!item.item_id||typeof item.source_ref!=='string'||!item.source_ref.startsWith('iskvw:piece:'))return false;
-    if(itemIds.has(item.item_id)||!Array.isArray(item.roles)||!item.roles.length||item.roles.some(role=>!['declared_work','observed_archive_piece','practice_context'].includes(role)))return false;
+    if(itemIds.has(item.item_id)||!Array.isArray(item.roles)||!item.roles.length||item.roles.some(role=>!['declared_work','documented_record','observed_archive_piece','practice_context'].includes(role)))return false;
     if(item.title!==null&&typeof item.title!=='string')return false;
     if(item.summary!==null&&typeof item.summary!=='string')return false;
     if(item.observed_description!==null&&typeof item.observed_description!=='string')return false;
@@ -1221,7 +1225,7 @@ function archiveViewValidate(payload){
   const selection=payload.selection;
   const catalog=payload.catalog;
   if(!selection||!catalog||!Number.isInteger(catalog.piece_count)||catalog.piece_count<0||!Number.isInteger(catalog.link_count)||catalog.link_count<0)return false;
-  if(selection.selected_item_count!==payload.items.length||selection.declared_work_count!==payload.formats[0].item_ids.length||selection.observed_field_count!==payload.formats[1].item_ids.length||selection.practice_context_count!==payload.formats[2].item_ids.length)return false;
+  if(selection.selected_item_count!==payload.items.length||selection.declared_work_count!==payload.formats[0].item_ids.length||selection.documented_record_count!==payload.formats[1].item_ids.length||selection.observed_field_count!==payload.formats[2].item_ids.length||selection.practice_context_count!==payload.formats[3].item_ids.length)return false;
   if(!payload.control||payload.control.publication!==false||payload.control.submission!==false||payload.control.dispatch!==false||payload.control.source_mutation!==false||payload.control.promotion!=='none')return false;
   if(!payload.provenance||payload.provenance.filename_is_not_authorship!==true||payload.provenance.observed_text_is_not_author_statement!==true||payload.provenance.source_hash!==payload.source.input_hash)return false;
   if(!payload.reconciliation||payload.reconciliation.truth_promotions!==0||payload.reconciliation.source_preserved_by_hash!==true)return false;
@@ -1377,15 +1381,28 @@ function archiveViewDisplayLabel(item){
 }
 
 function archiveViewFormatLabel(formatId){
-  return {'declared-works':'obras declaradas','observed-field':'campo observado','practice-context':'práctica y contexto'}[formatId]||formatId;
+  return {'declared-works':'obras declaradas','documented-record':'registros documentados','observed-field':'campo observado','practice-context':'práctica y contexto'}[formatId]||formatId;
+}
+
+/* roleNote y epistemic_status son constantes por formato (no por item): se
+   declaran una vez en la cabecera de cada sección (archiveViewReadyContent)
+   en vez de repetirse en cada <li>, que es lo que inflaba la pestaña con
+   texto idéntico repetido hasta 24 veces por formato. */
+function archiveViewFormatNote(formatId){
+  return {
+    'declared-works':{role:'registro declarado en la fuente',status:'declared_source_record'},
+    'documented-record':{role:'una persona ya lo marcó: es registro de una obra, no la obra',status:'human_declared_record'},
+    'observed-field':{role:'observación de fuente · no declaración del artista',status:'observed_source_record'},
+    'practice-context':{role:'contexto técnico · no obra automáticamente',status:'observed_source_record'},
+  }[formatId]||{role:'',status:''};
 }
 
 function archiveViewItem(item,formatId){
   const label=archiveViewDisplayLabel(item);
-  const description=formatId==='declared-works'?(item.summary||'sin resumen declarado'):(item.observed_description||item.summary||(formatId==='practice-context'?'registro técnico sin descripción declarada':'sin descripción observada'));
-  const roleNote=formatId==='practice-context'?'contexto técnico · no obra automáticamente':formatId==='observed-field'?'observación de fuente · no declaración del artista':'registro declarado en la fuente';
+  const description=formatId==='declared-works'?(item.summary||'sin resumen declarado'):(item.observed_description||item.summary||null);
+  const descriptionHtml=description?`<div class="archive-view-description">${esc(description)}</div>`:'';
   const tags=(item.tags||[]).slice(0,4).map(tag=>`<span>${esc(tag)}</span>`).join('');
-  return `<li class="archive-view-item"><span class="archive-view-item-title" data-neutral="${label.neutral}">${esc(label.text)}</span>${label.neutral?'<span class="archive-view-neutral">etiqueta de referencia · no es título autoral</span>':''}<div class="archive-view-description">${esc(description)}</div><div class="archive-view-meta"><span>${esc(item.date||'sin fecha')}</span><span>${esc(roleNote)}</span><span>${Number(item.link_degree||0)} vínculos</span>${tags}</div><div class="archive-view-provenance">procedencia: ${esc(item.source_ref)} · estado ${esc(item.epistemic_status)}</div></li>`;
+  return `<li class="archive-view-item"><span class="archive-view-item-title" data-neutral="${label.neutral}">${esc(label.text)}</span>${label.neutral?'<span class="archive-view-neutral">etiqueta de referencia · no es título autoral</span>':''}${descriptionHtml}<div class="archive-view-meta"><span>${esc(item.date||'sin fecha')}</span><span>${Number(item.link_degree||0)} vínculos</span>${tags}</div><div class="archive-view-provenance">${esc(item.source_ref)}</div></li>`;
 }
 
 function archiveViewContracurator(view){
@@ -1420,7 +1437,15 @@ function archiveViewReadyContent(view){
   const byId=new Map(view.items.map(item=>[item.item_id,item]));
   const formats=view.formats.map(format=>{
     const rows=format.item_ids.map(itemId=>archiveViewItem(byId.get(itemId),format.format_id)).join('');
-    return `<section class="archive-view-format" aria-labelledby="archive-view-${esc(format.format_id)}"><div class="archive-view-format-header"><h3 id="archive-view-${esc(format.format_id)}">${esc(archiveViewFormatLabel(format.format_id))}</h3><b>${format.item_ids.length}</b></div><div class="archive-view-format-purpose">${esc(format.purpose)}</div><ul class="archive-view-list">${rows||'<li class="archive-view-item">Sin registros seleccionados en este formato.</li>'}</ul><div class="archive-view-omitted">${format.omitted_count} registros omitidos por el límite; permanecen en la fuente.</div></section>`;
+    const note=archiveViewFormatNote(format.format_id);
+    const list=`<ul class="archive-view-list">${rows||'<li class="archive-view-item">Sin registros seleccionados en este formato.</li>'}</ul><div class="archive-view-omitted">${format.omitted_count} registros omitidos por el límite; permanecen en la fuente.</div>`;
+    /* declared-works y documented-record son pocos (obras con título+resumen
+       explícito, o ítems que una persona ya triό a mano) y van siempre
+       visibles; observed-field/practice-context pueden traer hasta
+       max_items_per_format filas cada una y son las que convertían la
+       pestaña en un muro de texto — quedan plegadas, sin borrar nada. */
+    const body=(format.format_id==='declared-works'||format.format_id==='documented-record')?list:`<details class="archive-view-fold"><summary>${format.item_ids.length} registros · mostrar</summary>${list}</details>`;
+    return `<section class="archive-view-format" aria-labelledby="archive-view-${esc(format.format_id)}"><div class="archive-view-format-header"><h3 id="archive-view-${esc(format.format_id)}">${esc(archiveViewFormatLabel(format.format_id))}</h3><b>${format.item_ids.length}</b></div><div class="archive-view-format-purpose">${esc(format.purpose)} — ${esc(note.role)} · estado ${esc(note.status)}</div>${body}</section>`;
   }).join('');
   const gaps=view.gaps.length?view.gaps.map(gap=>esc(gap)).join(' · '):'sin gaps declarados';
   return `<div class="archive-view-summary" aria-label="Conteos del archivo"><div class="archive-view-stat"><b>${view.catalog.piece_count}</b><span>piezas fuente</span></div><div class="archive-view-stat"><b>${view.catalog.link_count}</b><span>vínculos fuente</span></div><div class="archive-view-stat"><b>${view.selection.selected_item_count}</b><span>filas visibles</span></div><div class="archive-view-stat"><b>${view.selection.omitted_piece_count}</b><span>omitidas, no borradas</span></div></div><div class="archive-view-formats">${formats}</div>${archiveViewContracurator(view)}<div class="archive-view-gaps"><strong>Gaps declarados:</strong> ${gaps}</div><div class="archive-view-source">procedencia: ${esc(view.source.path_hint)} · ${esc(view.source.fuente)} · generado ${esc(view.source.generated||'sin fecha declarada')} · ${esc(view.source.input_hash)}</div><div class="archive-view-boundary">Lectura interna y read-only. No infiere autor, serie, publicación ni elegibilidad; publicación=false · submission=false · dispatch=false · promotion=none.</div>`;

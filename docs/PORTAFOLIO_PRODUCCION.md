@@ -669,3 +669,42 @@ render habría destruido el único test de generalización que existe.
 **No se resolvió ningún empate del orden SSD.** Los 50 siguen sin responder, y
 ahora es visible que casi ninguno bloqueaba nada: F1, F2 y F3 renderizaron sin
 resolver uno solo.
+
+## 19. Registro vs. obra: la distinción que faltaba en el Hub (2026-09-10)
+
+El operador preguntó directamente: *"que es un registro? foto / historia de IG
+principalmente que registra una obra, no una obra en si"*. `archive-view`
+(`/api/portfolio/archive-view`, `iskvw/editor.html`) distinguía `class=obra` de
+`class=codigo` por carpeta (`_CLASE_POR_DIR` en `contrato_archivo.py`), pero
+nunca esa pregunta: un `class=obra` sin metadata caía siempre en
+`observed-field`, registro o no.
+
+El §16 ya había encontrado la respuesta, sin conectarla: `classifications.jsonl`
+trae un campo `triage: work/record/review/discard`, declarado a mano por el
+operador (`owner: human`) sobre 78 ítems -- 32 `record`. `human_decision_log.py`
+ya leía ese campo (está en `DECLARATION_FIELDS`) pero nunca lo exponía; nada lo
+consumía.
+
+Se agregó `triage_declarations()` en `human_decision_log.py` (lee el triage,
+indexado por el id numérico de IG que también es el sufijo del id de la pieza
+en `archivo.json` -- así se cruzan sin adivinar) y un cuarto formato,
+`documented-record`, en `project_archive_portfolio_view()`: un `class=obra` con
+`triage=record` sale de `observed-field` (o de `declared-works`, si el humano
+lo contradice) y entra ahí, con `epistemic_status=human_declared_record`. Contra
+el archivo real: **9 de 2034 piezas** tienen esa declaración y ese cruce.
+
+Esto **no** es la excepción que el §18 prohíbe. No se inyectó `compile_portfolio_claims`
+(la cadena de producción, `out/portfolio/`) dentro de `archive-view` -- son productos
+distintos y siguen siéndolo. Lo que se conectó es un campo que `human_decision_log.py`
+ya leía de un log que `archive-view` ya consume por otra vía, sin agregar una fuente
+nueva ni una pregunta nueva al operador.
+
+Sigue sin resolver: la mayoría del archivo (informe: `documented_record_count=9` contra
+`observed_field_count` bastante mayor) no tiene una declaración humana de ningún tipo,
+y esto no la inventa. `categoria`/`vision.tipo_obra` (el intento de un futuro fix por
+heurística de OCR, considerado y descartado en la sesión que encontró este hueco) sigue
+sin llegar al grafo semántico (`memoria.py::_semantic_graph_unlocked` lee `doc_meta` pero
+nunca copia `categoria` al nodo) -- deliberadamente no tocado aquí: es una segunda fuente
+de evidencia, más débil que una declaración humana nombrada, y mezclarlas sin marcar la
+diferencia de procedencia sería exactamente el "filtro de fuente vestido de curaduría"
+que el §12 ya retiró.

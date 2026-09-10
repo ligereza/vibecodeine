@@ -519,6 +519,30 @@ def test_the_decisions_a_person_already_made_are_read_not_requested() -> None:
 
 
 @human_logs
+def test_a_person_s_own_record_vs_work_triage_is_read_and_stays_a_draft() -> None:
+    """The editor already asked "is this a record or the work" -- read it.
+
+    A registro (a photo, a story) is evidence *of* a work, not the work
+    itself; ``triage`` is the field where the person already made that call
+    for some items.  This must never be promoted past what the person
+    actually wrote: draft stays draft, and an id with no numeric stem or no
+    triage value never appears.
+    """
+    from flujo.knowledge.human_decision_log import read_human_decisions, triage_declarations
+
+    log = read_human_decisions(classifications_path=CLASSIFICATIONS)
+    triage = triage_declarations(log)
+    assert triage, "the editor log declares a triage for at least one item"
+    assert set(triage) <= {stem for stem in triage if stem.isdigit()}
+    for row in triage.values():
+        assert row["value"] in {"work", "record", "review", "discard"}
+        assert row["declared_by"] == "human"
+        assert isinstance(row["kept_as_draft"], bool)
+    values = {row["value"] for row in triage.values()}
+    assert "record" in values, "at least one item is already triaged as a record, not a work"
+
+
+@human_logs
 @real_sources
 def test_a_prior_outcome_is_a_baseline_not_a_result_for_these_documents(
     claims: dict,

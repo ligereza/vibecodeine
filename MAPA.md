@@ -271,6 +271,7 @@ repositorio. Las credenciales y tokens se mantienen fuera de Git.
 | `MAK_DEPLOY_REPO`, `MAK_USER_REPO` | Rutas opcionales del repositorio de despliegue/sincronizacion local. |
 | `MAK_SYNC_BACKUP_ROOT`, `MAK_SYNC_RECOVERY_ROOT`, `MAK_SYNC_STAGING_ROOT` | Directorios de backup, recuperacion y staging del puente de sincronizacion. |
 | `MAK_SYNC_LOCK`, `MAK_SYNC_MANIFEST` | Rutas de bloqueo y manifiesto de una corrida de sincronizacion. |
+| `MAK_PORTFOLIO_CLASSIFICATIONS` | Ruta opcional de `classifications.jsonl`, el log del editor donde una persona ya declaró `triage: work/record/review/discard` por ítem; enriquece `/api/portfolio/archive-view` con un formato `documented-record` cuando el ítem existe. Por defecto usa `/home/mak/plataforma/director_runs/portfolio-editor-20260808/classifications.jsonl`; si el archivo falta, la vista sigue funcionando sin ese formato. |
 | `MAK_AZURE_LANGUAGE_NER` | Habilita el respaldo remoto Azure Language para extracción NER; permanece desactivado salvo configuración explícita. |
 | `AZURE_LANGUAGE_ENDPOINT`, `AZURE_LANGUAGE_KEY`, `AZURE_LANGUAGE_API_VERSION`, `AZURE_LANGUAGE_TIMEOUT` | Endpoint, credencial, versión y timeout del respaldo Azure Language; son opcionales y no se guardan en Git. |
 | `XIO_FIELD_TOKEN` | Token opcional para la superficie XIO; si falta, la superficie funciona en modo local restringido. |
