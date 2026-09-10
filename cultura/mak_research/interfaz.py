@@ -176,6 +176,12 @@ JOBS_FILE = os.path.expanduser("~/research/jobs.jsonl")
 ENV_FILE = os.environ.get("RESEARCH_ENV", os.path.expanduser("~/research/research.env"))
 WORKFLOW_FILE = os.path.expanduser("~/research/workflow.json")
 INTAKE_ROOT = Path(os.path.expanduser("~/research/intake"))
+# The current user's home, not a hardcoded "/home/mak" -- the intake
+# endpoint restricts every source path to under here (see _path_is_under
+# below); hardcoding "/home/mak" made this restriction (and any test
+# exercising it with a real path) fail everywhere except on MAK itself,
+# e.g. GitHub Actions' runner home is /home/runner.
+HOME_ROOT = Path(os.path.expanduser("~"))
 FLUJO_ROOT = Path(os.environ.get("MAK_FLUJO_ROOT", "/home/mak/flujo"))
 if not FLUJO_ROOT.is_dir():
     FLUJO_ROOT = Path(__file__).resolve().parents[2]
@@ -206,7 +212,7 @@ def _run_intake_request(body):
         return {"ok": False, "error": "indica source_index o source_root, no ambos"}, 400
     if str(Path(source_root_raw).name).casefold() in {"portablessd", "win"}:
         return {"ok": False, "error": "usa el indice SSD existente o una carpeta de proyecto acotada"}, 400
-    allowed_sources = [Path("/home/mak"), Path("/media/mak")]
+    allowed_sources = [HOME_ROOT, Path("/media/mak")]
     if source_index_raw:
         source = Path(source_index_raw)
         if not _path_is_under(source, allowed_sources) or not source.is_file():
@@ -218,8 +224,8 @@ def _run_intake_request(body):
         source_index = source.resolve()
     else:
         source = Path(source_root_raw)
-        if not _path_is_under(source, [Path("/home/mak")]) or not source.is_dir():
-            return {"ok": False, "error": "source_root debe ser una carpeta local bajo /home/mak"}, 400
+        if not _path_is_under(source, [HOME_ROOT]) or not source.is_dir():
+            return {"ok": False, "error": "source_root debe ser una carpeta local bajo %s" % HOME_ROOT}, 400
         source_kind = "project_folder"
         project_path = str(body.get("project_path") or source.name).strip()
         output_name = "api-" + re.sub(r"[^a-z0-9]+", "-", project_path.casefold()).strip("-")[:60]

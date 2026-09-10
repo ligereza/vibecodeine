@@ -91,7 +91,7 @@ def _correr(monkeypatch, tmp_path, fichas):
         encoding="utf-8")
     monkeypatch.setattr(triangular, "FICHAS", str(entrada))
     monkeypatch.setattr(triangular, "SALIDA", str(salida))
-    triangular.main()
+    triangular.main([])  # argv explicito: no heredar el argv real de pytest
     return [json.loads(l) for l in
             salida.read_text(encoding="utf-8").splitlines()]
 
@@ -152,6 +152,192 @@ def test_main_la_ultima_ficha_del_mismo_archivo_gana(monkeypatch, tmp_path):
     assert len(filas) == 1
     assert filas[0]["id_ficha"] == "nueva"
     assert filas[0]["venue"] == "Sala Nueva"
+
+
+# --------------------------------------------------------------- despachar
+#
+# Offline: research_lib/fuentes are monkeypatched with fakes. A test that
+# hits the real network depends on the environment (SearXNG in Docker) and
+# would not run in CI -- see the test rule in CLAUDE.md.
+
+class _FakeModulos:
+    """Fake for _research_lib_module()/_fuentes_module(): records the
+    queries it was asked and returns results fixed by the test, without
+    touching the real network."""
+
+    def __init__(self, respuesta=None):
+        self.respuesta = respuesta or {"results": [], "ciego": True, "motivo": "no configurado"}
+        self.queries = []
+
+    def web_search(self, query, max_results=5, errors=None):
+        self.queries.append(query)
+        return self.respuesta
+
+
+def _catalogo():
+    return [{"canonico": "Creamfields", "variantes": ["Creamfields", "CREAMFIELDSCL"]}]
+
+
+def test_candidato_legible_rechaza_fragmentos_de_ocr_reales():
+    # Real regression (2026-09-09): these 3 fragments came from a real
+    # ~/curatoria/triangulacion.jsonl and used to pass a looser "3+ letters
+    # in a row" check -- "NES" is exactly 3 letters.
+    assert triangular._candidato_legible("NES") is False
+    assert triangular._candidato_legible("¡ S") is False
+    assert triangular._candidato_legible("7 So 1]") is False
+    assert triangular._candidato_legible("ESPACIO RIESCO") is True
+    assert triangular._candidato_legible("Carl Cox") is True
+
+
+def test_senal_suficiente_ignora_venue_generico_y_headliners_ilegibles():
+    assert triangular._senal_suficiente({
+        "venue": "Santiago de Chile", "headliners_candidatos": ["¡ S", "NES"],
+        "productora_declarada": "",
+    }) is False
+    assert triangular._senal_suficiente({
+        "venue": "Blondie", "headliners_candidatos": [], "productora_declarada": "",
+    }) is True
+
+
+def test_despachar_sin_senal_nunca_toca_la_red(monkeypatch):
+    fake = _FakeModulos()
+    monkeypatch.setattr(triangular, "_research_lib_module", lambda: fake)
+    monkeypatch.setattr(triangular, "_source_gate_module", lambda: object())
+    row = {"venue": "Santiago de Chile", "headliners_candidatos": ["¡ S"],
+           "productora_declarada": "", "fecha": "2025", "pregunta": "?"}
+    result = triangular.despachar([row], _catalogo())
+    assert result[0]["despacho"]["estado"] == "sin_senal"
+    assert fake.queries == [], "a row with no signal must not spend a search"
+
+
+def test_dispatch_blind_search_does_not_claim_absence_of_sources(monkeypatch):
+    """`ciego` (nobody could search) has to be recorded as distinct from
+    "searched and found nothing" -- see research_lib.web_search."""
+    fake = _FakeModulos({"results": [], "ciego": True, "motivo": "searxng: timeout"})
+    monkeypatch.setattr(triangular, "_research_lib_module", lambda: fake)
+    monkeypatch.setattr(triangular, "_source_gate_module", lambda: object())
+    row = {"venue": "Blondie", "headliners_candidatos": [],
+           "productora_declarada": "", "fecha": "2025", "pregunta": "?"}
+    result = triangular.despachar([row], _catalogo())
+    despacho = result[0]["despacho"]
+    assert despacho["estado"] == "sin_busqueda"
+    assert "timeout" in despacho["motivo"]
+
+
+def test_dispatch_confirmed_requires_catalog_match_and_primary_source(monkeypatch):
+    import fuentes  # the real module: cl_eventos already knows instagram.com is primary
+
+    fake = _FakeModulos({"ciego": False, "results": [
+        {"url": "https://www.instagram.com/creamfields_cl/", "title": "Creamfields Chile",
+         "content": "Creamfields organizo el evento en Espacio Riesco"},
+    ]})
+    monkeypatch.setattr(triangular, "_research_lib_module", lambda: fake)
+    monkeypatch.setattr(triangular, "_source_gate_module", lambda: fuentes)
+    row = {"venue": "Espacio Riesco", "headliners_candidatos": [],
+           "productora_declarada": "Creamfields", "fecha": "2025",
+           "pregunta": "Verifica Creamfields"}
+    result = triangular.despachar([row], _catalogo())
+    despacho = result[0]["despacho"]
+    assert despacho["estado"] == "confirmado"
+    assert despacho["productora_declarada_confirmada"] == "Creamfields"
+    assert despacho["revision_humana"] == "pendiente"
+    assert fake.queries, "confirmado still searches (never trusts the declared value alone)"
+
+
+def test_despachar_un_solo_dominio_primario_es_confianza_media(monkeypatch):
+    import fuentes
+
+    fake = _FakeModulos({"ciego": False, "results": [
+        {"url": "https://www.instagram.com/creamfields_cl/", "title": "x",
+         "content": "Creamfields en el line up"},
+    ]})
+    monkeypatch.setattr(triangular, "_research_lib_module", lambda: fake)
+    monkeypatch.setattr(triangular, "_source_gate_module", lambda: fuentes)
+    row = {"venue": "Espacio Riesco", "headliners_candidatos": [],
+           "productora_declarada": "", "fecha": "2025", "pregunta": "?"}
+    result = triangular.despachar([row], _catalogo())
+    assert result[0]["despacho"]["estado"] == "candidata_media_confianza"
+
+
+def test_despachar_dos_dominios_independientes_es_alta_confianza(monkeypatch):
+    import fuentes
+
+    fake = _FakeModulos({"ciego": False, "results": [
+        {"url": "https://www.instagram.com/creamfields_cl/", "title": "x", "content": "Creamfields"},
+        {"url": "https://www.puntoticket.com/creamfields-2026", "title": "y", "content": "Creamfields"},
+    ]})
+    monkeypatch.setattr(triangular, "_research_lib_module", lambda: fake)
+    monkeypatch.setattr(triangular, "_source_gate_module", lambda: fuentes)
+    row = {"venue": "Espacio Riesco", "headliners_candidatos": [],
+           "productora_declarada": "", "fecha": "2025", "pregunta": "?"}
+    result = triangular.despachar([row], _catalogo())
+    assert result[0]["despacho"]["estado"] == "candidata_alta_confianza"
+
+
+def test_dispatch_never_confirms_without_any_primary_source(monkeypatch):
+    import fuentes
+
+    fake = _FakeModulos({"ciego": False, "results": [
+        {"url": "https://www.eldinamo.cl/nota-x", "title": "x",
+         "content": "Creamfields se realizo el fin de semana"},
+    ]})
+    monkeypatch.setattr(triangular, "_research_lib_module", lambda: fake)
+    monkeypatch.setattr(triangular, "_source_gate_module", lambda: fuentes)
+    row = {"venue": "Espacio Riesco", "headliners_candidatos": [],
+           "productora_declarada": "Creamfields", "fecha": "2025", "pregunta": "?"}
+    result = triangular.despachar([row], _catalogo())
+    despacho = result[0]["despacho"]
+    assert despacho["estado"] == "candidata_sin_fuente_primaria"
+    assert despacho["estado"] != "confirmado"
+
+
+def test_despachar_respeta_el_limite(monkeypatch):
+    fake = _FakeModulos({"ciego": True, "motivo": "no importa"})
+    monkeypatch.setattr(triangular, "_research_lib_module", lambda: fake)
+    monkeypatch.setattr(triangular, "_source_gate_module", lambda: object())
+    filas = [{"venue": "Blondie", "headliners_candidatos": [],
+              "productora_declarada": "", "fecha": "2025", "pregunta": "?"}
+             for _ in range(5)]
+    result = triangular.despachar(filas, _catalogo(), limite=2)
+    assert len(result) == 2
+
+
+def test_despachar_sin_modulos_no_crashea(monkeypatch):
+    monkeypatch.setattr(triangular, "_research_lib_module", lambda: None)
+    row = {"venue": "Blondie", "headliners_candidatos": [],
+           "productora_declarada": "", "fecha": "2025", "pregunta": "?"}
+    result = triangular.despachar([row], _catalogo())
+    assert result[0]["despacho"]["estado"] == "sin_despacho"
+
+
+def test_main_dispatch_writes_result_and_never_touches_rd_db(monkeypatch, tmp_path):
+    """At the CLI level: --despachar must write DISPATCH_RESULTS_PATH using
+    whatever catalog module _catalog_db_module() returns -- a fake here, so
+    this test does not depend on data/rd.db."""
+    entrada = tmp_path / "fichas.jsonl"
+    salida = tmp_path / "triangulacion.jsonl"
+    result_path = tmp_path / "triangulacion_resultado.jsonl"
+    entrada.write_text(json.dumps(_ficha(
+        datos_evento={"fecha": "2026-06-06", "venue": "Blondie"})) + "\n",
+        encoding="utf-8")
+    monkeypatch.setattr(triangular, "FICHAS", str(entrada))
+    monkeypatch.setattr(triangular, "SALIDA", str(salida))
+    monkeypatch.setattr(triangular, "DISPATCH_RESULTS_PATH", str(result_path))
+
+    llamadas = []
+
+    def _fake_despachar(filas, catalogo, limite=None):
+        llamadas.append((len(filas), len(catalogo), limite))
+        return [dict(f, despacho={"estado": "sin_busqueda", "motivo": "test"}) for f in filas]
+
+    monkeypatch.setattr(triangular, "despachar", _fake_despachar)
+    monkeypatch.setattr(triangular, "_catalog_db_module",
+                        lambda: type("M", (), {"cargar_catalogo_productoras": staticmethod(lambda: [])})())
+
+    triangular.main(["--despachar", "--limite", "3"])
+    assert llamadas and llamadas[0][2] == 3
+    result_rows = [json.loads(l) for l in result_path.read_text(encoding="utf-8").splitlines()]
+    assert result_rows[0]["despacho"]["estado"] == "sin_busqueda"
 
 
 def test_main_conserva_diacriticos_en_la_pregunta(monkeypatch, tmp_path):

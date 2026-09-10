@@ -158,6 +158,7 @@ NO_REFERENCE_CLASSIFICATIONS = {
     "token_budget": {"status": "manual_only", "source": "cli_declared"},
     "triangulate_project_context": {"status": "manual_only", "source": "capabilities_5_ter"},
     "verify_all": {"status": "manual_only", "source": "cli_declared"},
+    "verify_learning_hashmaps": {"status": "manual_only", "source": "cli_declared"},
     "watsonx_coder_bench": {"status": "manual_only", "source": "cli_declared"},
     "watsonx_smoke": {"status": "manual_only", "source": "cli_declared"},
     "watsonx_vision_bench": {"status": "manual_only", "source": "cli_declared"},
