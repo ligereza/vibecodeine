@@ -76,9 +76,30 @@
           "scope_note": "Metropolitana está en el tramo Coquimbo–Magallanes y no figura entre las cuatro excepciones; por eso esta fecha sí le corresponde."
         },
         "note": "El aviso Rex 2596 da un desplazamiento («dos días hábiles»), no una fecha. La ficha oficial de esta línea, leída el 2026-09-05 y citada en `extended_closes_source`, declara después la fecha exacta de 11 de septiembre para todas las regiones fuera del norte, incluida Metropolitana. `extended_closes` transcribe esa declaración; no se calcula a partir de `closes` ni del desplazamiento. La lista de regiones expande el tramo citado; si el desglose por región importa, verificar contra la resolución.",
-        "reason": "facilitar el proceso de postulación"
+        "reason": "facilitar el proceso de postulación",
+        "superseded_by": "unificacion-16-septiembre"
+      },
+      {
+        "id": "unificacion-16-septiembre",
+        "resolution": "no identificada por número; ver nota",
+        "url": "https://www.fondosdecultura.cl/creacion-artistica-innovacion-y-nuevos-formatos-creativos-fondart-regional-2027/",
+        "read_on": "2026-09-09",
+        "source_kind": "official_line_page",
+        "applies_to_regions": ["todas"],
+        "extended_closes": "2026-09-16",
+        "extended_closes_time": "15:00",
+        "extended_closes_timezone": "America/Santiago",
+        "quote": "miércoles 16 de septiembre de 2026, 15:00 hrs. [...] se amplía el plazo de cierre de este fondo hasta el 16 de septiembre a las 15:00 horas de Santiago de Chile",
+        "note": "VERIFICADO 2026-09-09 por WebFetch sobre la ficha oficial de la línea: el 16 de septiembre a las 15:00 hrs aparece ahora como cierre único para todas las regiones, incluidas las que antes tenían el 11 de septiembre (Coquimbo a Magallanes, incluida Metropolitana) y las que ya tenían el 16 (norte). Esto reemplaza (`supersedes`) el cierre del 11 de septiembre de la ampliación `coquimbo-magallanes`, que quedó obsoleto por una ampliación posterior no capturada el 2026-09-05. No se localizó el número de resolución exacto de esta segunda ampliación: pendiente [FALTA] confirmarlo contra el PDF de resolución si aparece publicado.",
+        "supersedes": {
+          "closes": "2026-09-11",
+          "why": "ampliación posterior del 16 de septiembre, verificada en el portal el 2026-09-09, unificó el cierre para todas las regiones fuera del norte"
+        },
+        "reason": "ampliación general de plazo, motivo no especificado en la página consultada"
       }
-    ]
+    ],
+    "closes_effective_2026_09_09": "2026-09-16",
+    "closes_effective_note": "A partir de la verificación del 2026-09-09, el cierre aplicable a TODAS las regiones (incluida Metropolitana) es el 16 de septiembre de 2026 a las 15:00 hrs de Santiago. Ver `regional_extensions[id=unificacion-16-septiembre]`."
   },
   "amounts": {
     "currency": "CLP",
