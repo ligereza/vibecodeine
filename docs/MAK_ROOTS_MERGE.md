@@ -5,11 +5,11 @@ de runner o de caché sea confundida con el árbol de autoría.
 
 ## Fuente canónica
 
-`/home/mak` es ahora la única raíz física de autoría y verificación local. El
-antiguo `/home/mak/flujo` se conserva como adaptador de compatibilidad no
-recursivo (directorio con enlaces a la raíz); no hay un segundo checkout
-activo. El Git local está en la rama `MAK`; `main` queda como referencia
-histórica y el checkpoint anterior era `ab9afa13`.
+`/home/mak` es la raíz física de autoría y verificación local. `/home/mak` y
+`/home/mak/flujo` son worktrees enlazados al mismo Git común: `MAK` conserva la
+superficie Linux y `FLUJO` conserva el motor portable. La rama `main` es el
+baseline integrado que contiene ambos árboles; no es una tercera superficie de
+runtime ni una referencia histórica.
 
 ## Copias no canónicas y archivo de fusión
 
@@ -29,7 +29,8 @@ histórica y el checkpoint anterior era `ab9afa13`.
 
 ## Regla
 
-Todo cambio nuevo entra en `/home/mak` (el alias `/home/mak/flujo` resuelve ahí).
+Los cambios de cada lane entran en su worktree (`MAK` o `FLUJO`) y la rama
+`main` recibe la unión revisada de ambos, con su propio inventario y pruebas.
 La fusión lossless de las tres raíces está materializada en el propio árbol:
 `/home/mak/_archive/merge-20260831/fused/projection3/MANIFEST.json` registra
 5.426 rutas iguales, 813 rutas divergentes y 2.366 variantes. El expediente

@@ -1,8 +1,8 @@
 name: CI MAK
 permissions:
   contents: read
-# MAK is the Linux box surface. main and historia are historical and are not
-# deployment targets, so no branch here triggers on them.
+# MAK is the Linux box surface. The integrated `main` baseline has its own
+# workflow; this file validates only the operational MAK lane.
 on:
   push:
     branches: [MAK]

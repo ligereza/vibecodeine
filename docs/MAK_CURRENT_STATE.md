@@ -554,7 +554,7 @@ handoff. Sus conclusiones durables se pueden entender por familias:
 | Research y Curatoria | Discovery, captura, triangulación, claims y propuestas son pasos separados; candidatos no son hechos. |
 | Portfolio y Venue | Venue puede unir RD y Portfolio; SCD es una demostración geométrica y no sustituye una ficha técnica certificada. |
 | Salud y limpieza | Se valida antes de mover/borrar; basura confirmada se cuarentena de forma reversible; evidencia no se elimina. |
-| Git | Se consolidó una sola `main` y un tag histórico; no se conserva un bosque de ramas. |
+| Git | `main` es el baseline integrado MAK + FLUJO; `MAK` y `FLUJO` conservan sus lanes operativos y los tags preservan historia. |
 | Eventos y video | El camino Linux MAK quedó separado de WIN, con preservación temprana, clasificación image/video y composición por proporción. |
 | APIs y costo | Una API solo se declara operativa con consumer y prueba reciente; las claves y servicios no son evidencia suficiente. |
 

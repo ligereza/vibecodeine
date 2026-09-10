@@ -1,47 +1,40 @@
 {
   "schema": "vibecodeine-branch-profile-v1",
-  "branch": "MAK",
-  "role": "Linux MAK box and department surface",
-  "default_test_selector": "-m mak",
-  "capabilities": "CAPACIDADES_MAK.md",
-  "requirements": "requirements-mak.txt",
-  "hub": {
-    "module": "cultura/mak_plataforma/hub.py",
-    "compatibility_module": "plataforma/hub.py",
-    "default_port": 8900,
-    "surface": "MAK departments and read-only machine projections"
-  },
-  "shared_consumers": [
-    "flujo/src/flujo/departments.py",
-    "flujo/src/flujo/diagnostics.py",
-    "flujo/src/flujo/knowledge/contracurator.py",
-    "flujo/src/flujo/knowledge/episode_runner.py",
-    "flujo/src/flujo/knowledge/lane_registry.py",
-    "flujo/src/flujo/knowledge/learning_policy.py",
-    "flujo/src/flujo/knowledge/opportunity_constraints.py",
-    "flujo/src/flujo/knowledge/portfolio_dossier.py",
-    "flujo/src/flujo/knowledge/product_view.py",
-    "flujo/src/flujo/knowledge/project_api.py",
-    "flujo/src/flujo/knowledge/project_context.py",
-    "flujo/src/flujo/knowledge/project_ir.py",
-    "flujo/src/flujo/knowledge/project_research.py",
-    "flujo/src/flujo/knowledge/project_router.py",
-    "flujo/src/flujo/knowledge/research_evidence_triangulation.py",
-    "flujo/src/flujo/knowledge/research_frontier_bridge.py",
-    "flujo/src/flujo/knowledge/runtime_tools.py",
-    "flujo/src/flujo/knowledge/system_status.py",
-    "flujo/src/flujo/paths.py",
-    "flujo/src/flujo/rd/entity_crosswalk.py",
-    "flujo/src/flujo/substrate/aepfile.py",
-    "flujo/src/flujo/substrate/epistemics.py",
-    "flujo/src/flujo/substrate/ingest.py",
-    "flujo/src/flujo/substrate/resolution.py",
-    "flujo/src/flujo/substrate/scene_snapshot.py",
-    "flujo/src/flujo/substrate/schema.py",
-    "flujo/src/flujo/substrate/xmp.py",
-    "data/mak_knowledge.db"
+  "branch": "main",
+  "kind": "integrated",
+  "role": "integrated MAK + FLUJO baseline; validation and release composition",
+  "default_test_selector": "-m \"mak or flujo or integration or repo_hygiene\"",
+  "capabilities": "CAPACIDADES_MAIN.md",
+  "requirements": "requirements-integration.txt",
+  "hubs": [
+    {
+      "module": "cultura/mak_plataforma/hub.py",
+      "default_port": 8900,
+      "owner": "MAK",
+      "surface": "MAK departments and read-only machine projections"
+    },
+    {
+      "module": "src/flujo/web/hub.py",
+      "default_port": 8765,
+      "owner": "FLUJO",
+      "surface": "portable workflow and workspace"
+    }
   ],
-  "transfer_contract": "consume typed JSON contracts and source_ref values; do not import the FLUJO Hub implementation",
-  "shared_contract_note": "MAK does not carry the motor. Each path below lives in the FLUJO checkout at /home/mak/flujo and is consumed from there; the venv editable hook resolves flujo.* to /home/mak/flujo/src. Neutrality is measured: no import closure from these files reaches flujo.web.hub or flujo.cli.",
-  "consumed_from": "/home/mak/flujo/src"
+  "lane_profiles": {
+    "MAK": {
+      "capabilities": "CAPACIDADES_MAK.md",
+      "requirements": "requirements-mak.txt",
+      "selector": "-m mak"
+    },
+    "FLUJO": {
+      "capabilities": "CAPACIDADES_FLUJO.md",
+      "requirements": "requirements-flujo.txt",
+      "selector": "-m flujo"
+    }
+  },
+  "secondary_capabilities": [
+    "CAPACIDADES_MAK.md",
+    "CAPACIDADES_FLUJO.md"
+  ],
+  "transfer_contract": "carry both source trees in one reviewed baseline; preserve the MAK and FLUJO hub boundary and exchange typed contracts rather than importing one hub into the other"
 }

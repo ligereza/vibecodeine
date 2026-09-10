@@ -1,7 +1,8 @@
 """Deterministic AST import map for bounded pytest execution lanes.
 
-The classifier is read-only. It records imports, not a test's complete
-behavior; unresolved sources remain in ``review`` and never break collection.
+The classifier is read-only unless ``--write`` is explicit. It records imports,
+not a test's complete behavior; unresolved sources remain in ``review`` and
+never break collection.
 """
 from __future__ import annotations
 
@@ -139,7 +140,7 @@ PERSISTED_LANE_DATA = {
   "tests/test_artistic_program_hypotheses.py": "flujo",
   "tests/test_auto_pending_flyers.py": "flujo",
   "tests/test_autofit.py": "flujo",
-  "tests/test_autonomia_cli.py": "flujo",
+  "tests/test_autonomia_cli.py": "integration",
   "tests/test_autonomy_plan.py": "flujo",
   "tests/test_backlog_descargar_concurrency.py": "repo_hygiene",
   "tests/test_becas_calendario.py": "mak",
@@ -284,7 +285,7 @@ PERSISTED_LANE_DATA = {
   "tests/test_iskvw_vinculos.py": "repo_hygiene",
   "tests/test_jobs_brief.py": "flujo",
   "tests/test_jobs_lifecycle.py": "flujo",
-  "tests/test_knowledge_dossiers.py": "flujo",
+  "tests/test_knowledge_dossiers.py": "integration",
   "tests/test_knowledge_reconciliation.py": "flujo",
   "tests/test_knowledge_scanner_skips.py": "repo_hygiene",
   "tests/test_laser.py": "flujo",
@@ -499,7 +500,29 @@ PERSISTED_LANE_DATA = {
   "tests/test_xio_puente_monitor.py": "repo_hygiene",
   "tests/test_xio_puente_staged.py": "repo_hygiene",
   "tests/test_xio_superficie.py": "repo_hygiene",
-  "tests/test_zipper.py": "flujo"
+  "tests/test_zipper.py": "flujo",
+  "tests/test_compute_effort_residuals.py": "mak",
+  "tests/test_consolidate_static_duplicates.py": "mak",
+  "tests/test_diagnostics_routing_contract.py": "repo_hygiene",
+  "tests/test_gen_postulacion.py": "mak",
+  "tests/test_gen_propuesta_directiva.py": "mak",
+  "tests/test_hub_convocatorias.py": "mak",
+  "tests/test_hub_payload_budget.py": "mak",
+  "tests/test_hub_post_status_agrees_with_body.py": "mak",
+  "tests/test_hub_route_answer_contract.py": "mak",
+  "tests/test_interpretive_garden_workflow.py": "mak",
+  "tests/test_iris_invariants.py": "mak",
+  "tests/test_mak_azure_backup.py": "mak",
+  "tests/test_mak_merge_roots.py": "mak",
+  "tests/test_portfolio_production_sources.py": "mak",
+  "tests/test_portfolio_slot_candidates.py": "mak",
+  "tests/test_rd_espina_relacional.py": "flujo",
+  "tests/test_rd_tariff_single_source.py": "repo_hygiene",
+  "tests/test_resolve_identity_ties.py": "mak",
+  "tests/test_rol_candidatos.py": "mak",
+  "tests/test_scan_roots_skip_cloud_mounts.py": "mak",
+  "tests/test_substrate_scan_manifest.py": "mak",
+  "tests/test_venue_geometria_scd.py": "mak"
 }
 # A file is not a hygiene test merely because it mentions ``repo`` or touches
 # a fixture.  Keep this lane deliberately small: these modules assert tree,
@@ -713,7 +736,7 @@ def report() -> dict[str, object]:
         for lane, paths in grouped.items()},
         "not_covered": uncovered,
         "total": len(TEST_LANE_MAP),
-        "contract_path": str(LANE_MAP_CONTRACT),
+        "contract_path": str(LANE_MAP_CONTRACT.relative_to(REPO)),
         "contract_disagreements": int(contract_summary.get("disagreements", 0) or 0),
     }
 
@@ -804,11 +827,21 @@ def main() -> int:
         "--select-changed", action="store_true",
         help="read git diff --name-only paths from stdin and print selected lanes",
     )
+    parser.add_argument(
+        "--write", action="store_true",
+        help="persist the generated contract at context/test_lane_map.json",
+    )
     args = parser.parse_args()
     if args.select_changed:
         print(" ".join(lanes_for_changed_paths(sys.stdin)))
         return 0
     data = report()
+    if args.write:
+        LANE_MAP_CONTRACT.write_text(
+            json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        return 0
     if args.format == "json":
         print(json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True))
     else:

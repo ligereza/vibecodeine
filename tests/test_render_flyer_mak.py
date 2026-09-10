@@ -1,18 +1,23 @@
-"""The MAK renderer must import Blender nodes from the physical FLUJO checkout."""
+"""Tests de tools/render_flyer_mak.py -- SIN Blender real (mock subprocess).
 
-from __future__ import annotations
-
+Cubre: composicion del comando Blender (blend correcto, --python con un
+script temporal que usa las funciones REALES de
+src/flujo/eventos/blender_nodes.py, settings anti-OOM), parseo
+RENDER_OK/FALLO y paleta/color predominante con una imagen sintetica chica
+(PIL, ya es dependencia del repo).
+"""
 import importlib.util
+import subprocess
+import sys
 from pathlib import Path
 
+import pytest
 
-ROOT = Path(__file__).resolve().parents[1]
-SPEC = importlib.util.spec_from_file_location(
-    "render_flyer_mak", ROOT / "tools" / "render_flyer_mak.py"
-)
-assert SPEC and SPEC.loader
-MODULE = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(MODULE)
+MODULE_PATH = Path(__file__).resolve().parents[1] / "tools" / "render_flyer_mak.py"
+_spec = importlib.util.spec_from_file_location("render_flyer_mak", MODULE_PATH)
+render_flyer_mak = importlib.util.module_from_spec(_spec)
+sys.modules["render_flyer_mak"] = render_flyer_mak
+_spec.loader.exec_module(render_flyer_mak)
 
 
 def _synthetic_image(path: Path) -> None:
@@ -376,8 +381,3 @@ def test_main_prints_render_fallo_when_render_step_fails(tmp_path, monkeypatch, 
     assert code == 1
     assert "RENDER_FALLO:" in captured.out
     assert "cartelera.blend" in captured.out
-
-def test_motor_directory_uses_the_sibling_flujo_checkout():
-    expected = ROOT / "flujo" / "src" / "flujo" / "eventos"
-    assert MODULE.EVENTOS_DIR == expected
-    assert MODULE.EVENTOS_DIR != ROOT / "src" / "flujo" / "eventos"

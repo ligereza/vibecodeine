@@ -1,8 +1,8 @@
 name: CI FLUJO
 permissions:
   contents: read
-# FLUJO is the portable motor. main and historia are historical and are not
-# deployment targets, so neither triggers this workflow.
+# FLUJO is the portable motor. The integrated `main` baseline has its own
+# workflow; this file validates only the operational FLUJO lane.
 on:
   push:
     branches: [FLUJO]

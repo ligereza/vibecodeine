@@ -1,10 +1,10 @@
 # MAP
 
-This is the generated command/route map for the `flujo` CLI, which lives in
-the FLUJO checkout at `/home/mak/flujo` (branch `FLUJO`). This branch is MAK:
-`/home/mak` carries the box departments, services and Hub on `8900`, and
-consumes the motor from `/home/mak/flujo/src`. Every `flujo ...` row below is
-run from the FLUJO checkout, not from here.
+This is the generated command/route map for the integrated `flujo` CLI, which
+lives in `src/flujo/` on the `main` union tree. The same tree carries the MAK
+departments, services and Hub on `8900`; the portable FLUJO surface remains on
+port `8765`. Operational lane checkouts may still use their own source roots,
+but this baseline validates both surfaces from one tree.
 The installed CLI may still expose legacy commands for compatibility; that
 does not make them part of the active MAK workflow.
 The historical tree under `/home/mak/WIN` is the only preserved legacy surface
@@ -27,18 +27,14 @@ Machine-facing identifiers and contracts use English ASCII. Human-facing
 products may use correct Spanish. Run `python3 -m flujo --help` for the current
 CLI contract and `python3 -m flujo doctor` for local diagnostics.
 
-The branches are the working shape of the system, not a defect to be gated
-away: MAK and FLUJO are two checkouts of this repository with distinct
-authorities, and the operator's decision of 2026-09-03 names them as such
-while reserving `ligereza/MAK`, `ligereza/flujo` and `ligereza/IRIS` as the
-next step. The annotated tag `archive/house-history` remains the single
-preservation point for the historical branch tips.
+The branches retain distinct authorities and operational lanes, while `main`
+is their reviewed Git union. MAK and FLUJO are not collapsed into one Hub:
+their typed contract boundary and separate ports remain explicit. The
+annotated tag `archive/house-history` preserves the historical branch tips.
 
-A main-only invariant was written on 2026-08-15 and enforced by
-`.github/workflows/git-topology.yml`. It was retired on 2026-09-06: the
-decision of 2026-09-03 superseded it, 335 commits had landed on MAK since it
-was written, and a gate that fails by design measures nothing. Domain
-separation lives in the physical owner/consumer boundaries above.
+The integrated baseline is checked by `.github/workflows/ci-integration.yml`.
+`.github/workflows/git-topology.yml` remains a historical topology witness;
+domain separation lives in the physical owner/consumer boundaries above.
 
 <!-- COMANDOS:INICIO -- generado por tools/gen_mapa_comandos.py, no editar a mano -->
 
@@ -267,11 +263,15 @@ repositorio. Las credenciales y tokens se mantienen fuera de Git.
 | `TAVILY_API_KEY` | Clave opcional para el respaldo de busqueda de Research; no requerida por el modo offline. |
 | `FIRECRAWL_API_KEY` | Clave opcional para captura estructurada de Research; el pipeline conserva fallback urllib si no existe. |
 | `MAK_RESEARCH_REGISTRY` | Ruta opcional del registro SQLite de jobs de Research; por defecto usa `/home/mak/research/jardines_interpretativos/jardines_interpretativos.sqlite`. |
+| `MAK_RESEARCH_ROOT` | Raíz opcional de las fuentes de investigación MAK que consulta RD; `main` prefiere `cultura/mak_research` local y el checkout FLUJO usa el hermano disponible. |
 | `MAK_LEARNING_DB` | Ruta opcional del ledger SQLite de Project IR y contratos; por defecto usa `data/mak_knowledge.db`. |
 | `MAK_HEARTBEAT_NTFY_TOPIC` | Tema ntfy opcional para `tools/mak_heartbeat.py`; si falta, cae a `NTFY_TOPIC_OUT` de `research.env`. |
 | `MAK_DEPLOY_REPO`, `MAK_USER_REPO` | Rutas opcionales del repositorio de despliegue/sincronizacion local. |
 | `MAK_SYNC_BACKUP_ROOT`, `MAK_SYNC_RECOVERY_ROOT`, `MAK_SYNC_STAGING_ROOT` | Directorios de backup, recuperacion y staging del puente de sincronizacion. |
 | `MAK_SYNC_LOCK`, `MAK_SYNC_MANIFEST` | Rutas de bloqueo y manifiesto de una corrida de sincronizacion. |
+| `MAK_AZURE_LANGUAGE_NER` | Habilita el respaldo remoto Azure Language para extracción NER; permanece desactivado salvo configuración explícita. |
+| `AZURE_LANGUAGE_ENDPOINT`, `AZURE_LANGUAGE_KEY`, `AZURE_LANGUAGE_API_VERSION`, `AZURE_LANGUAGE_TIMEOUT` | Endpoint, credencial, versión y timeout del respaldo Azure Language; son opcionales y no se guardan en Git. |
+| `XIO_FIELD_TOKEN` | Token opcional para la superficie XIO; si falta, la superficie funciona en modo local restringido. |
 | `WATSONX_MODEL`, `WATSONX_URL` | Configuracion opcional del backend WatsonX conservado para benchmarks/manual. |
 
 Topic-branch contracts and handoffs were part of the previous organization and

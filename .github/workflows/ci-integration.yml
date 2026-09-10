@@ -1,17 +1,16 @@
-name: CI integration
+name: CI integrated main
 permissions:
   contents: read
-# The integration lane is the composition of the two physical checkouts. It
-# runs on both operational branches because a change on either side can break
-# the composition, and on neither historical branch.
+# main is the reviewed MAK + FLUJO baseline. The lane branches keep their
+# own operational CI; this workflow validates the actual integrated tree.
 on:
   push:
-    branches: [MAK, FLUJO]
+    branches: [main]
   pull_request:
-    branches: [MAK, FLUJO]
+    branches: [main]
 jobs:
-  integration:
-    name: integration lane (MAK + FLUJO)
+  integrated:
+    name: integrated MAK + FLUJO baseline
     runs-on: ubuntu-latest
     env:
       PYTHONIOENCODING: utf-8
@@ -19,31 +18,17 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # On a PR to MAK, test the merge revision. On a PR to FLUJO, MAK is
-          # the stable peer and the PR revision is checked out below.
-          ref: ${{ github.event_name == 'pull_request' && github.base_ref == 'MAK' && github.event.pull_request.merge_commit_sha || 'MAK' }}
-          fetch-depth: 0
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          # Mirror the rule above for the motor checkout.
-          ref: ${{ github.event_name == 'pull_request' && github.base_ref == 'FLUJO' && github.event.pull_request.merge_commit_sha || 'FLUJO' }}
-          path: flujo
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.merge_commit_sha || 'main' }}
           fetch-depth: 0
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.11'
           cache: 'pip'
-      # requirements-integration.txt reads the FLUJO profile from the sibling
-      # checkout instead of duplicating it, so this step also proves the
-      # layout is real.
-      - name: Install the composition
+      - name: Install the integrated profile
         run: python -m pip install -r requirements-integration.txt
       - name: pip check
         run: python -m pip check
-      - name: Integration lane
+      - name: Integrated lanes
         env:
-          # Three paths on purpose: the MAK tree, the FLUJO checkout root (for
-          # tests that import the motor as src.flujo.*) and the motor package
-          # root.
-          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/flujo:${{ github.workspace }}/flujo/src
-        run: python -m pytest -o addopts='' -q -m integration
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
+        run: python -m pytest -o addopts='' -q -m "mak or flujo or integration or repo_hygiene"

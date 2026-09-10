@@ -66,8 +66,17 @@ def _get(query: str = "") -> tuple[dict, int]:
     return payload, code
 
 
-@pytest.fixture(scope="module")
-def surface() -> dict:
+@pytest.fixture
+def surface(monkeypatch) -> dict:
+    # The fixture records the evidence snapshot used by these tests. Keeping
+    # its clock fixed prevents a real calendar day from turning a provenance
+    # assertion into a different sort order or a closed/open-state failure.
+    original = hub._convocatorias
+    monkeypatch.setattr(
+        hub,
+        "_convocatorias",
+        lambda today=date(2026, 9, 4): original(today),
+    )
     payload, code = _get()
     assert code == 200, payload
     return payload

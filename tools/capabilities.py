@@ -347,6 +347,7 @@ def _branch_result(root: Path) -> dict[str, object]:
         "capabilities": None,
         "requirements": None,
         "hub_source": None,
+        "hub_sources": [],
         "selector": None,
         "pyproject_addopts": None,
         "issues": [],
@@ -371,10 +372,18 @@ def _branch_result(root: Path) -> dict[str, object]:
     capabilities = profile.get("capabilities")
     requirements = profile.get("requirements")
     hub = profile.get("hub") or {}
-    hub_source = hub.get("module") if isinstance(hub, dict) else None
+    declared_hubs = profile.get("hubs") if isinstance(profile.get("hubs"), list) else []
+    if isinstance(hub, dict) and hub and not declared_hubs:
+        declared_hubs = [hub]
+    hub_sources = [
+        item.get("module") for item in declared_hubs
+        if isinstance(item, dict) and isinstance(item.get("module"), str)
+    ]
+    hub_source = hub_sources[0] if hub_sources else None
     result["capabilities"] = capabilities
     result["requirements"] = requirements
     result["hub_source"] = hub_source
+    result["hub_sources"] = hub_sources
 
     if branch and profile_branch != branch:
         issues.append(f"profile_branch_mismatch:{profile_branch!s}->{branch}")
@@ -385,8 +394,19 @@ def _branch_result(root: Path) -> dict[str, object]:
     if profile_kind == "historical":
         if hub_source is not None:
             issues.append("historical_hub_declared")
+    elif profile_kind == "integrated":
+        if len(hub_sources) < 2:
+            issues.append("integrated_hubs_missing")
+        for source in hub_sources:
+            if not (root / source).is_file():
+                issues.append(f"profile_hub_source_missing:{source}")
     elif not isinstance(hub_source, str) or not (root / hub_source).is_file():
         issues.append("profile_hub_source_missing")
+
+    if profile_kind == "integrated":
+        for secondary in profile.get("secondary_capabilities", []) or []:
+            if isinstance(secondary, str) and not (root / secondary).is_file():
+                issues.append(f"secondary_capabilities_missing:{secondary}")
 
     pyproject = root / "pyproject.toml"
     if pyproject.is_file():
