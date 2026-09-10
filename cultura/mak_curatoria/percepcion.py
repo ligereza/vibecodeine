@@ -879,15 +879,12 @@ def vision_imagen(path: str, timeout: int = 120, fuente: str = "rd",
     # significaria dos cosas a la vez -- "respondio ollama" y "nadie atribuyo"
     # -- y el campo dejaria de servir para lo unico que existe.
     d["_motor"] = "ollama"
-    if vision_fallback:
-        d["_fallback_desde"] = vision_fallback
     if observe_shadow is not None:
         observe_shadow(shadow_job,
                        producer="curatoria.percepcion.vision_imagen",
                        result_status="FAILED" if d.get("error") else "READY",
                        validated=not bool(d.get("error")),
-                       payload={"engine": "ollama", "path": path,
-                                "fallback": vision_fallback},
+                       payload={"engine": "ollama", "path": path},
                        started_at=shadow_started, owner_pid=os.getpid())
     return d
 
