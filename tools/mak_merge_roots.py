@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Merge duplicate MAK roots into the canonical flujo tree, fail-closed.
+"""Merge duplicate MAK roots into the canonical MAK tree, fail-closed.
 
 The operator's box contains historical, runner and cache copies of the same
 project.  This tool maps them to one destination without treating a filename
@@ -13,7 +13,7 @@ or a clean-looking directory as authority:
   source into the destination only after the copy plan succeeds and leaves a
   symlink redirect at its old path.
 
-The default destination is ``/home/mak/flujo``.  The scanner discovers only
+The default destination is ``/home/mak``.  The scanner discovers only
 directories named ``flujo`` or ``vibecodeine``; generated internals such as
 ``.git``, virtual environments, caches and node_modules are recorded as
 excluded rather than merged.
@@ -36,7 +36,7 @@ from typing import Iterable
 
 
 HOME = Path("/home/mak")
-DEFAULT_DEST = HOME / "flujo"
+DEFAULT_DEST = HOME
 RUN_ID = "mak-merge-20260831"
 ARCHIVE_ID = RUN_ID.removeprefix("mak-")
 PLAN_PATH = DEFAULT_DEST / "context" / RUN_ID / "plan.json"
@@ -59,6 +59,16 @@ DISCOVERY_PRUNE_DIRS = SKIP_DIRS | {
     "_archive",
     "OneDrive",
     "GoogleDrive",
+    # Agent, desktop and trash trees are not project roots.  In particular,
+    # the desktop Trash can contain old ``vibecodeine`` names that must never
+    # be reintroduced by an automatic lift.
+    ".local",
+    ".claude",
+    ".codex",
+    ".agents",
+    ".config",
+    ".cache",
+    ".gemini",
     "site-packages",
     "dist-packages",
 }
@@ -90,18 +100,41 @@ def utc_now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
+def _home_relative(path: Path) -> str:
+    """Return a stable identifier for paths inside or outside the MAK box."""
+    try:
+        # Preserve the lexical source path for in-box symlinks such as
+        # ``WIN/flujo``; resolving them would erase the source identity and
+        # change archive/manifests IDs between runs.
+        return path.relative_to(HOME).as_posix()
+    except ValueError:
+        # Explicit ``--source`` roots may live on another mounted SSD.  Keep
+        # their absolute coordinate in the source id instead of failing before
+        # any plan can be inspected.
+        return path.resolve().as_posix().lstrip("/")
+
+
 def source_id(path: Path) -> str:
-    rel = path.relative_to(HOME).as_posix()
+    rel = _home_relative(path)
     safe = "-".join(part for part in rel.split("/") if part)
     return re.sub(r"[^a-zA-Z0-9_-]+", "_", safe.lower()) or "root"
 
 
 def source_mode(path: Path) -> str:
     """Return ``repo`` for live checkouts and ``snapshot`` for evidence/caches."""
-    rel = path.relative_to(HOME).as_posix()
-    if rel.startswith(("_archive/", "state/", ".cache/", ".local/", "actions-runner/_work/_PipelineMapping/")):
-        return "snapshot"
-    if "/src/flujo" in rel or "/projects/flujo" in rel or "/proyectos/flujo" in rel:
+    rel = _home_relative(path)
+    if rel.startswith((
+        "_archive/",
+        "state/",
+        ".cache/",
+        ".local/",
+        "WIN/",
+        "actions-runner/_work/_PipelineMapping/",
+        "actions-runner/_work/vibecodeine/",
+        "projects/flujo/",
+        "proyectos/flujo/",
+        "src/flujo/",
+    )) or rel in {"projects/flujo", "proyectos/flujo", "src/flujo"}:
         return "snapshot"
     return "repo"
 
@@ -112,6 +145,23 @@ def is_under(path: Path, root: Path) -> bool:
     except ValueError:
         return False
     return True
+
+
+def is_compat_adapter(path: Path, destination: Path = DEFAULT_DEST) -> bool:
+    """Identify a link-only compatibility root without following its links.
+
+    The live ``flujo`` adapter and the runner's ``vibecodeine`` redirect
+    preserve legacy paths but are not independent source trees. Treating
+    either as a merge input would count the same files again and can feed
+    parent-relative links back into the destination.
+    """
+    if path.name.lower() not in SOURCE_NAMES or not path.is_dir() or path.is_symlink():
+        return False
+    try:
+        entries = list(path.iterdir())
+    except OSError:
+        return False
+    return bool(entries) and all(entry.is_symlink() for entry in entries)
 
 
 def archive_run(destination: Path) -> Path:
@@ -134,9 +184,13 @@ def discover_roots(home: Path = HOME, destination: Path = DEFAULT_DEST) -> list[
     """Discover outermost named roots, preferring a nested checkout with .git."""
     candidates: list[Path] = []
     for current, dirnames, _filenames in os.walk(home, topdown=True, followlinks=False):
-        dirnames[:] = sorted(name for name in dirnames if name not in DISCOVERY_PRUNE_DIRS)
+        dirnames[:] = sorted(
+            name for name in dirnames
+            if name not in DISCOVERY_PRUNE_DIRS
+            and not is_compat_adapter(Path(current) / name, destination)
+        )
         path = Path(current)
-        if path.is_symlink() or is_under(path, destination) or path.name.lower() not in SOURCE_NAMES:
+        if path.is_symlink() or path == destination or path.name.lower() not in SOURCE_NAMES:
             continue
         candidates.append(path)
 
@@ -410,7 +464,12 @@ def apply_plan(plan: dict, *, retire_sources: bool = False) -> dict:
     result = {"applied": 0, "verified": 0, "failed": 0, "retired": 0}
     for action in plan["actions"]:
         operation = action["operation"]
-        if operation not in {"copy_unique", "preserve_variant", "conflict_existing_unhashed"}:
+        if operation not in {
+            "copy_unique",
+            "record_snapshot",
+            "preserve_variant",
+            "conflict_existing_unhashed",
+        }:
             continue
         source = Path(action["source"])
         target = Path(action["destination"])

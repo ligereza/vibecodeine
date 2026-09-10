@@ -6,9 +6,10 @@ de runner o de caché sea confundida con el árbol de autoría.
 ## Fuente canónica
 
 `/home/mak` es ahora la única raíz física de autoría y verificación local. El
-antiguo `/home/mak/flujo` se conserva sólo como symlink de compatibilidad hacia
-`.`; no hay un segundo checkout activo. El Git de la raíz sigue en `main` y el
-checkpoint anterior era `ab9afa13`.
+antiguo `/home/mak/flujo` se conserva como adaptador de compatibilidad no
+recursivo (directorio con enlaces a la raíz); no hay un segundo checkout
+activo. El Git local está en la rama `MAK`; `main` queda como referencia
+histórica y el checkpoint anterior era `ab9afa13`.
 
 ## Copias no canónicas y archivo de fusión
 
@@ -36,7 +37,10 @@ completo conserva los tres orígenes bajo `fused/origins/`; la proyección pone
 una sola ruta activa por entrada, sin sobrescribir archivos preexistentes, y el
 informe de materialización está en `fused/root-materialization.json`.
 Cada operación tiene hash y verificación en
-`context/mak-merge-20260831/actions.jsonl`. No se borró ninguna fuente.
+`context/mak-merge-20260831/actions.jsonl`. Después se eliminaron únicamente
+capas redundantes o regenerables (la proyección duplicada, copias exactas,
+salidas de cobertura y entornos obsoletos); los tres orígenes con bytes
+divergentes permanecen.
 
 La raíz histórica `/home/mak/WIN/flujo` y el checkout del runner fueron
 reubicados como orígenes de la fusión mientras el runner estaba idle (sólo

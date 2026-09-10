@@ -8,10 +8,20 @@ que fue recuperado desde la evidencia de WIN. No depende de WIN en runtime y
 no es un swap de nodo artesanal:
 
 1. Paleta de color dominante (portado 1:1 de flyer_auto._extract_palette)
-   -> palette_ig.png + palette_ig.json en --out.
-2. Color predominante-pero-claro (portado 1:1 de
-   flyer_auto._write_predominant_color) -> RESULTADOS/color_predominante.png
-   junto al .blend (RD.blend lo linkea para el vidrio decorativo).
+   -> palette_ig.png + palette_ig.json en --out. De aca sale el acento
+   UNICO del evento (_color_mas_saturado: el color de mayor saturacion de
+   la paleta cruda) que alimenta TANTO el hue del MARCO como el PNG de
+   RESULTADOS/color_predominante.png -- RD.blend linkea ese PNG para
+   recolorear "Decorative Glass 05" y sus 3 objetos (BezierCircle,
+   G_Scale.2, petri dish). Antes de 2026-09-09 un solo color extraido
+   (aclarado 25% hacia blanco, write_predominant_color) alimentaba ambos;
+   el marco se corrigio para usar el acento sin aclarar (bug: un flyer de
+   fondo claro le daba al marco un hue casi aleatorio) y, por decision del
+   usuario, el vidrio+objetos se unificaron al MISMO acento en vez de
+   quedar con dos fuentes de color distintas.
+2. write_predominant_color() (portado 1:1 de
+   flyer_auto._write_predominant_color) sigue definida y testeada por
+   paridad con flyer_auto.py, pero YA NO la llama este pipeline.
 3. Genera un script .py TEMPORAL (no --python-expr inline) que, corriendo
    DENTRO de Blender, importa el modulo REAL
    src/flujo/eventos/blender_nodes.py (sys.path.insert a esa carpeta; el
@@ -20,12 +30,12 @@ no es un swap de nodo artesanal:
    - blender_nodes._buscar_materiales_flyer() -- la MISMA busqueda por
      convencion "flyer_final" que ya vive en el codigo (Material.002 +
      Material.008 en el .blend real).
-   - blender_nodes._color_predominante_bpy() / _repuntar_color_predominante()
-     -- leen y re-apuntan el datablock color_predominante.png (mismo color
-     que recolorea el vidrio decorativo, evita el bug de color viejo).
-   - blender_nodes.hue_de_rgb() + blender_nodes.build_flyer_nodes() -- el
-     update/build POR NODOS real (paleta + imagen + fit-width mapping +
-     hue), NO un swap de un solo TEX_IMAGE.
+   - blender_nodes._repuntar_color_predominante() -- re-apunta el
+     datablock color_predominante.png que recolorea el vidrio decorativo
+     (evita el bug de color viejo, ya documentado, no relacionado a este).
+   - blender_nodes.build_flyer_nodes() con el hue REAL calculado en el host
+     (punto 1) -- el update/build POR NODOS real (paleta + imagen +
+     fit-width mapping + hue), NO un swap de un solo TEX_IMAGE.
    El script agrega ADEMAS los settings anti-OOM (Cycles CUDA, 512 samples,
    simplify, tile 512, sin persistent data) porque WIN no los necesita
    (mas VRAM) pero la GPU 1650 4GB de MAK si.
@@ -51,6 +61,7 @@ Sin dependencias nuevas: stdlib + Pillow (ya es dependencia del repo).
 from __future__ import annotations
 
 import argparse
+import colorsys
 import json
 import subprocess
 import sys
@@ -114,13 +125,19 @@ def extract_palette(
 
 
 def write_predominant_color(image_path: Path, out_png: Path) -> str:
-    """Color predominante-pero-claro del flyer -> PNG solido que el .blend linkea.
+    """Color predominante-pero-claro del flyer -> PNG solido.
 
     Portado 1:1 de src/flujo/eventos/flyer_auto.py:_write_predominant_color
     (mismo criterio: mas luminoso entre los colores con peso real, aclarado
-    25% hacia blanco). El .blend real usa este mismo PNG para recolorear el
-    vidrio decorativo (Decorative Glass 05), via
-    blender_nodes._repuntar_color_predominante.
+    25% hacia blanco).
+
+    Ya NO es lo que usa main() para recolorear el vidrio decorativo (bug
+    2026-09-09, decision del usuario 2026-09-09: el vidrio y sus 3 objetos
+    -- BezierCircle, G_Scale.2, petri dish, todos comparten el material
+    "Decorative Glass 05" -- se unificaron con el mismo acento vivo del
+    marco via _color_mas_saturado + _escribir_color_solido, no con esta
+    version aclarada). Se mantiene definida y testeada por paridad con
+    flyer_auto.py, no por uso en este pipeline.
     """
     from PIL import Image
 
@@ -141,9 +158,46 @@ def write_predominant_color(image_path: Path, out_png: Path) -> str:
     candidato = next((c for c in colores if c[0] > counts[0][0] * 0.15), colores[0])
     r, g, b = candidato[2]
     r, g, b = (int(r + (255 - r) * 0.25), int(g + (255 - g) * 0.25), int(b + (255 - b) * 0.25))
+    return _escribir_color_solido((r, g, b), out_png)
+
+
+def _escribir_color_solido(rgb: tuple[int, int, int], out_png: Path) -> str:
+    """PNG solido 512x512 de `rgb` -- el formato que el .blend real linkea
+    (via blender_nodes._repuntar_color_predominante)."""
+    from PIL import Image
+
+    r, g, b = rgb
     out_png.parent.mkdir(parents=True, exist_ok=True)
     Image.new("RGB", (512, 512), (r, g, b)).save(out_png)
     return f"#{r:02x}{g:02x}{b:02x}"
+
+
+def _color_mas_saturado(hex_colors: list[str]) -> tuple[int, int, int]:
+    """El acento real del flyer: el color de MAYOR SATURACION HSV entre la
+    paleta cruda (extract_palette, sin aclarar) -- el que un humano
+    reconoceria como "el color del evento".
+
+    NO usar write_predominant_color para esto (bug 2026-09-09, detectado
+    por el usuario en el marco de Piknic): esa funcion aclara 25% hacia
+    blanco a proposito ("predominante-pero-claro", pensada para el tinte
+    sutil del vidrio decorativo) y para un flyer con fondo claro devuelve
+    casi-blanco -- un color casi sin saturacion cuyo angulo de hue es
+    ruido, no una senal real. Medido contra el flyer real de Piknic: esa
+    version aclarada dio hue=37 grados (naranja), mientras la paleta real
+    del flyer es magenta (331 grados, #a91c60/#a8175d) y cyan (186 grados,
+    #7be1ed) -- el marco quedaba tenido de un color que ni aparece en el
+    flyer."""
+    def _saturacion(hexc: str) -> float:
+        r, g, b = int(hexc[1:3], 16), int(hexc[3:5], 16), int(hexc[5:7], 16)
+        return colorsys.rgb_to_hsv(r / 255, g / 255, b / 255)[1]
+
+    mejor = max(hex_colors, key=_saturacion)
+    return (int(mejor[1:3], 16), int(mejor[3:5], 16), int(mejor[5:7], 16))
+
+
+def _hue_de_rgb(rgb: tuple[int, int, int]) -> float:
+    r, g, b = (max(0, min(255, int(c))) / 255.0 for c in rgb)
+    return colorsys.rgb_to_hsv(r, g, b)[0]
 
 
 def build_blender_script(
@@ -151,6 +205,7 @@ def build_blender_script(
     imagen_path: Path,
     color_png_path: Path,
     output_path: Path,
+    frame_hue: float = 0.0,
 ) -> str:
     """Script Python REAL para `blender --python <script>` (temporal, no expr).
 
@@ -158,12 +213,19 @@ def build_blender_script(
     logica) y ejecuta el mismo update/build por nodos que WIN, mas los
     settings anti-OOM (Cycles CUDA, 512 samples, simplify, tile 512, sin
     persistent data) que la GPU 1650 4GB de MAK necesita y WIN no.
+
+    `frame_hue` (calculado en el host con _color_mas_saturado, NO dentro de
+    Blender) es el hue REAL del marco -- el vidrio decorativo sigue usando
+    el color aclarado de color_png_path via _repuntar_color_predominante
+    (eso si estaba bien), pero el marco ya no reusa esa misma version
+    aclarada (bug 2026-09-09, ver _color_mas_saturado).
     """
     eventos_dir_lit = repr(str(EVENTOS_DIR))
     frame_lit = repr(str(frame_path))
     imagen_lit = repr(str(imagen_path))
     color_png_lit = repr(str(color_png_path))
     salida_lit = repr(str(output_path))
+    hue_lit = repr(float(frame_hue))
     return (
         "import sys\n"
         f"sys.path.insert(0, {eventos_dir_lit})\n"
@@ -197,12 +259,9 @@ def build_blender_script(
         f"_color_png_path = {color_png_lit}\n"
         "import os\n"
         "if os.path.exists(_color_png_path):\n"
-        "    _rgb = blender_nodes._color_predominante_bpy(_color_png_path)\n"
         "    blender_nodes._repuntar_color_predominante(_color_png_path)\n"
-        "else:\n"
-        "    _rgb = (0, 254, 254)\n"
-        "_hue = blender_nodes.hue_de_rgb(_rgb)\n"
-        "print(f'Color predominante RGB={_rgb} hue={_hue:.4f}')\n"
+        f"_hue = {hue_lit}\n"
+        "print(f'Hue del marco (acento real del flyer, sin aclarar) = {_hue:.4f}')\n"
         "\n"
         "_materiales = blender_nodes._buscar_materiales_flyer()\n"
         "for _mat, _nodo in _materiales:\n"
@@ -245,6 +304,7 @@ def run_render(
     base_dir: Path,
     imagen_path: Path,
     output_path: Path,
+    frame_hue: float = 0.0,
 ) -> tuple[bool, str]:
     """Corre Blender headless (script real por nodos). Devuelve (ok, detalle/motivo)."""
     blend_path = base_dir / BLEND_FILE
@@ -258,7 +318,8 @@ def run_render(
         return False, f"no existe {frame_path} (requerido para el camino por nodos)"
 
     color_png_path = base_dir / COLOR_PNG_RELATIVE
-    script_text = build_blender_script(frame_path, imagen_path, color_png_path, output_path)
+    script_text = build_blender_script(
+        frame_path, imagen_path, color_png_path, output_path, frame_hue)
 
     with tempfile.NamedTemporaryFile(
         mode="w", suffix="_render_flyer_mak.py", delete=False, encoding="utf-8",
@@ -319,16 +380,27 @@ def main(argv: list[str] | None = None) -> int:
         print(f"RENDER_FALLO: paleta fallo: {exc}")
         return 1
 
+    # Acento real del flyer: el color de mayor saturacion de la paleta
+    # CRUDA (nunca el aclarado-para-vidrio de write_predominant_color, bug
+    # 2026-09-09). Decision del usuario 2026-09-09: el marco Y el vidrio
+    # decorativo (mas sus 3 objetos -- BezierCircle, G_Scale.2, petri dish,
+    # todos con el material "Decorative Glass 05") comparten AHORA este
+    # mismo acento -- antes era un solo color extraido que alimentaba a
+    # los dos, y separarlos sin querer rompia esa consistencia visual.
+    acento_rgb = _color_mas_saturado(colores)
+    frame_hue = _hue_de_rgb(acento_rgb)
+    print(f"hue de marco (acento real): {frame_hue:.4f}")
+
     try:
         color_png_path = base / COLOR_PNG_RELATIVE
-        hex_color = write_predominant_color(imagen, color_png_path)
-        print(f"color predominante: {hex_color}")
+        hex_color = _escribir_color_solido(acento_rgb, color_png_path)
+        print(f"color del vidrio decorativo (unificado con el marco): {hex_color}")
     except Exception as exc:
         print(f"RENDER_FALLO: color predominante fallo: {exc}")
         return 1
 
     output_path = out_dir / "render_output.png"
-    ok, detalle = run_render(args.blender, base, imagen, output_path)
+    ok, detalle = run_render(args.blender, base, imagen, output_path, frame_hue)
     if ok:
         print(f"RENDER_OK: {detalle}")
         return 0

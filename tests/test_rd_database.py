@@ -501,3 +501,35 @@ def test_el_rescate_no_duplica_al_reconstruir_dos_veces(tmp_path):
         assert conn.execute("SELECT count(*) FROM atenciones").fetchone()[0] == 1
     finally:
         conn.close()
+
+def test_perfil_enriquecido_de_knowledge_se_fusiona_con_data_productoras(rd_db: Path):
+    # Antes de esto, extraccion_db.py leia data/productoras Y
+    # knowledge/productoras por separado para armar su propio catalogo de
+    # matching -- dos lecturas de la misma fuente, y la DB (la unica que
+    # debe consultar el matching de ahora en mas) se quedaba sin el perfil
+    # enriquecido de knowledge/ (affinity, service_preferences,
+    # relationship, venues_recurrentes...). Ahora build_rd_db() fusiona
+    # ambas fuentes en la misma fila.
+    prods = {p["slug"]: p for p in db.productoras(rd_db)}
+    creamfields = prods["creamfields"]
+    # alias de data/productoras/creamfields.json Y de knowledge/productoras/
+    # creamfields.yaml conviven en la misma union, sin duplicar
+    assert "CREAMFIELDS" in creamfields["aliases"]
+    assert "creamfieldscl" in creamfields["aliases"]
+    assert len(creamfields["aliases"]) == len(set(creamfields["aliases"]))
+    assert creamfields["perfil"] is not None
+    assert creamfields["perfil"]["affinity"]["testeo"] is False
+
+    # productoras sin perfil enriquecido no rompen (perfil = None, no KeyError)
+    sin_perfil = [p for p in prods.values() if p["perfil"] is None]
+    assert sin_perfil, "debe haber al menos una productora sin knowledge/productoras/*.yaml"
+
+
+def test_knowledge_productoras_template_file_is_never_ingested(rd_db: Path):
+    # rave_under_template.yaml es un arquetipo de categoria (id/name
+    # terminan en "template"), no una productora real -- nunca debe
+    # aparecer en el catalogo de matching.
+    slugs = {p["slug"] for p in db.productoras(rd_db)}
+    assert "rave_under_template" not in slugs
+    nombres = {p["nombre"].lower() for p in db.productoras(rd_db)}
+    assert not any(n.endswith("template") for n in nombres)

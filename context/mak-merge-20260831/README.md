@@ -1,8 +1,10 @@
 # Expediente de fusión física MAK — 2026-08-31
 
-La raíz física única es `/home/mak`; `/home/mak/flujo` es sólo un symlink de
-compatibilidad. Esta corrida fusionó por hash las tres raíces encontradas y
-preservó cada divergencia con su `source_id`. No se eliminó contenido.
+La raíz física única es `/home/mak`; `/home/mak/flujo` es un adaptador de
+compatibilidad no recursivo. Esta corrida fusionó por hash las tres raíces
+encontradas y preservó cada divergencia con su `source_id`. Las capas
+redundantes de proyección y las copias exactas se purgaron después; los
+orígenes con contenido divergente siguen intactos.
 
 - `plan.json`: plan inicial de las 23 raíces detectadas.
 - `plan-post-redirect.json`: plan posterior a la redirección de `WIN`.
@@ -28,9 +30,10 @@ preservó cada divergencia con su `source_id`. No se eliminó contenido.
   requieren el fallback operativo de `win-flujo`; ninguna variante se descartó.
 
 El material preservado está en `/home/mak/_archive/merge-20260831/fused/`:
-`origins/` contiene los tres checkouts completos, `projection3/` el manifiesto
-lossless y `resolved-conflicts/` los archivos que no deben ser entrypoints
-activos. `/home/mak/WIN/flujo` y el checkout del runner son symlinks a sus
+`origins/` contiene los tres checkouts completos, `projection3/MANIFEST.json`
+es el manifiesto lossless y `resolved-conflicts/` los archivos que no deben
+ser entrypoints activos. La subcarpeta de variantes era una segunda copia de
+`origins/` y fue eliminada tras verificar sus hashes. `/home/mak/WIN/flujo` y el checkout del runner son symlinks a sus
 orígenes fusionados; se movieron cuando no había `Runner.Worker` activo y el
 listener siguió sin reiniciarse.
 

@@ -6,6 +6,7 @@ Modelo validado en vivo 2026-07-10: el contenido ajusta al ANCHO de la
 ventana siempre; el alto sobrante lo maneja el fade (no el mapping).
 """
 import pytest
+from hypothesis import given, strategies as st
 
 from flujo.eventos.blender_nodes import (
     IMAGE_LAYOUT_POLICY, WINDOW_UV, classify_contain_layout,
@@ -68,6 +69,22 @@ def test_fitwidth_input_muy_vertical_recorta_alto():
     assert u0[1] == pytest.approx(1.0 - u1[1], abs=1e-6)  # banda centrada
 
 
+def test_fitwidth_horizontal_llena_ancho_sin_recortar_laterales():
+    # El caso que arranco toda esta investigacion: una productora que
+    # publica flyers horizontales (16:9), no verticales. fitwidth_mapping
+    # es la UNICA politica de produccion (IMAGE_LAYOUT_POLICY) -- no hay
+    # rama por tipo de fuente, asi que el mismo input que
+    # test_fitcover_16x9_llena_ventana_y_recorta_lados_centrado recorta en
+    # los laterales, aca NO debe tocar los laterales en absoluto: ancho
+    # completo, el sobrante de alto lo absorbe el fade (nunca los lados).
+    scale, loc = fitwidth_mapping(WINDOW_UV, FRAME_REAL, (1920, 1080))
+    u0 = _aplicar((WINDOW_UV["x0"], WINDOW_UV["y0"]), scale, loc)
+    u1 = _aplicar((WINDOW_UV["x1"], WINDOW_UV["y1"]), scale, loc)
+    assert u0[0] == pytest.approx(0.0, abs=1e-6)   # ancho: borde a borde
+    assert u1[0] == pytest.approx(1.0, abs=1e-6)
+    assert u0[1] < 0.0 < 1.0 < u1[1]               # alto: sobra ventana (fade)
+
+
 def test_shared_fitwidth_policy_matches_lateral_borders_and_fades_vertical():
     layout = classify_fitwidth_layout(WINDOW_UV, FRAME_REAL, (718, 536))
     assert layout["policy"] == IMAGE_LAYOUT_POLICY == "fitwidth_fade"
@@ -83,6 +100,29 @@ def test_shared_fitwidth_policy_matches_lateral_borders_and_fades_vertical():
     assert u0[0] == pytest.approx(0.0, abs=1e-6)
     assert u1[0] == pytest.approx(1.0, abs=1e-6)
     assert u0[1] < 0.0 < 1.0 < u1[1]
+
+
+@given(
+    input_w=st.integers(min_value=1, max_value=10000),
+    input_h=st.integers(min_value=1, max_value=10000),
+)
+def test_fitwidth_nunca_recorta_laterales_sea_cual_sea_la_proporcion(input_w, input_h):
+    """El invariante real detras de todo este caso: fitwidth_mapping (la
+    UNICA politica de produccion, IMAGE_LAYOUT_POLICY) debe cubrir el ancho
+    completo de la ventana para CUALQUIER proporcion de entrada -- cuadrada,
+    horizontal, vertical, extrema -- y nunca recortar los laterales. No fue
+    Blender el que recorto la publicidad de Piknic/DAME (esto ya lo
+    garantizaba, matematicamente, para cualquier input); fue la descarga
+    entregando una imagen ya recortada por Instagram antes de que esta
+    funcion la viera. Barrido con hypothesis en vez de un puñado de casos
+    de mano: la garantia es "sea cual sea la proporcion", no "para estos
+    tres ejemplos".
+    """
+    scale, loc = fitwidth_mapping(WINDOW_UV, FRAME_REAL, (input_w, input_h))
+    u0 = _aplicar((WINDOW_UV["x0"], WINDOW_UV["y0"]), scale, loc)
+    u1 = _aplicar((WINDOW_UV["x1"], WINDOW_UV["y1"]), scale, loc)
+    assert u0[0] == pytest.approx(0.0, abs=1e-6)
+    assert u1[0] == pytest.approx(1.0, abs=1e-6)
 
 
 def test_fitwidth_dimensiones_invalidas():
