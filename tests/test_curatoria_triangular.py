@@ -64,6 +64,49 @@ def test_una_linea_minuscula_no_es_cartel():
     assert triangular.posibles_headliners("un texto cualquiera en prosa") == []
 
 
+def test_azure_ner_agrega_candidatos_sin_convertirlos_en_hechos(monkeypatch):
+    class _Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def read(self):
+            return json.dumps({
+                "results": {"documents": [{"entities": [
+                    {"category": "Person", "text": "Amelie Lens", "confidenceScore": 0.98},
+                    {"category": "Location", "text": "Santiago", "confidenceScore": 0.99},
+                    {"category": "Product", "text": "TICKETS", "confidenceScore": 0.99},
+                ]}]}
+            }).encode("utf-8")
+
+    monkeypatch.setenv("AZURE_LANGUAGE_ENDPOINT", "https://language.example")
+    monkeypatch.setenv("AZURE_LANGUAGE_KEY", "test-key")
+    monkeypatch.setattr(triangular.urllib.request, "urlopen", lambda *_a, **_kw: _Response())
+
+    evidence = triangular._headliner_evidence("AMELIE")
+
+    assert evidence["candidatos"] == ["AMELIE", "Amelie Lens"]
+    assert evidence["fuentes"][-1] == {
+        "kind": "azure_language_ner", "status": "candidate",
+    }
+    assert evidence["azure"] == "ok"
+
+
+def test_azure_ner_falla_abierto_y_conserva_heuristica(monkeypatch):
+    monkeypatch.setenv("AZURE_LANGUAGE_ENDPOINT", "https://language.example")
+    monkeypatch.setenv("AZURE_LANGUAGE_KEY", "test-key")
+
+    def _fail(*_args, **_kwargs):
+        raise OSError("offline")
+
+    monkeypatch.setattr(triangular.urllib.request, "urlopen", _fail)
+
+    assert triangular.posibles_headliners("AMELIE LENS") == ["AMELIE LENS"]
+    assert triangular._headliner_evidence("AMELIE LENS")["azure"] == "request_error"
+
+
 # --------------------------------------------------------------------- _txt
 
 def test_txt_tolera_lista_none_y_string():

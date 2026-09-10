@@ -23,6 +23,9 @@ import json
 import os
 import re
 import sys
+import urllib.error
+import urllib.parse
+import urllib.request
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -99,8 +102,18 @@ RUIDO = {
 
 
 def posibles_headliners(texto):
-    """Nombres candidatos del cartel, desde el OCR. Heuristica honesta: no
-    pretende acertar siempre, solo proponer para que research verifique."""
+    """Nombres candidatos del cartel, desde OCR y NER opcional.
+
+    La ruta heuristica sigue siendo la base determinista. Azure Language solo
+    agrega candidatos cuando sus credenciales estan presentes; el resultado
+    nunca se trata como una confirmacion y la cola conserva la procedencia en
+    ``headliners_fuentes``.
+    """
+    return _headliner_evidence(texto)["candidatos"]
+
+
+def _heuristic_headliners(texto):
+    """Candidatos que pueden obtenerse sin red ni credenciales."""
     if not texto:
         return []
     cands = []
@@ -125,6 +138,110 @@ def posibles_headliners(texto):
             vistos.add(k)
             salida.append(c)
     return salida[:5]
+
+
+def _azure_language_ner(texto):
+    """Read-only optional enrichment through Azure Language EntityRecognition.
+
+    The integration uses the unified REST endpoint and the standard-library
+    HTTP client so the offline curatoria path has no new mandatory dependency.
+    Missing configuration, network failures and malformed responses degrade to
+    an empty candidate list; they never erase the deterministic OCR result.
+    """
+    endpoint = os.environ.get("AZURE_LANGUAGE_ENDPOINT", "").strip().rstrip("/")
+    key = os.environ.get("AZURE_LANGUAGE_KEY", "").strip()
+    if not endpoint or not key:
+        return {"status": "not_configured", "candidates": []}
+    if os.environ.get("MAK_AZURE_LANGUAGE_NER", "1").strip().lower() in {
+        "0", "false", "no", "off",
+    }:
+        return {"status": "disabled", "candidates": []}
+    if not texto or not str(texto).strip():
+        return {"status": "empty_input", "candidates": []}
+
+    # Some deployments expose the full route in the endpoint variable. Accept
+    # both forms so the value copied from Azure does not need manual editing.
+    if endpoint.endswith("/language/:analyze-text"):
+        url_base = endpoint
+    else:
+        url_base = endpoint + "/language/:analyze-text"
+    api_version = os.environ.get("AZURE_LANGUAGE_API_VERSION", "2026-05-01").strip()
+    url = "%s?%s" % (url_base, urllib.parse.urlencode({"api-version": api_version}))
+    body = {
+        "kind": "EntityRecognition",
+        "parameters": {
+            "modelVersion": "latest",
+            "overlapPolicy": {"policyKind": "matchLongest"},
+        },
+        "analysisInput": {
+            "documents": [{"id": "ocr-1", "language": "es", "text": str(texto)[:5000]}],
+        },
+    }
+    request = urllib.request.Request(
+        url,
+        data=json.dumps(body, ensure_ascii=False).encode("utf-8"),
+        headers={
+            "Content-Type": "application/json",
+            "Ocp-Apim-Subscription-Key": key,
+        },
+        method="POST",
+    )
+    timeout = float(os.environ.get("AZURE_LANGUAGE_TIMEOUT", "8"))
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        return {"status": "http_error", "code": int(exc.code), "candidates": []}
+    except (urllib.error.URLError, TimeoutError, OSError, ValueError, TypeError):
+        return {"status": "request_error", "candidates": []}
+
+    documents = ((payload.get("results") or {}).get("documents") or [])
+    entities = documents[0].get("entities") if documents else []
+    candidates = []
+    for entity in entities or []:
+        if not isinstance(entity, dict):
+            continue
+        try:
+            score = float(entity.get("confidenceScore", 0))
+        except (TypeError, ValueError):
+            score = 0
+        category = str(entity.get("category") or "")
+        text_value = str(entity.get("text") or "").strip()
+        # Person and Organization are useful for artists and collectives. A
+        # Product can be a stage name, but it is admitted only at a higher
+        # confidence so generic flyer words do not flood the queue.
+        threshold = 0.65 if category.lower() == "product" else 0.5
+        if category.lower() not in {"person", "organization", "product"}:
+            continue
+        words = [word.lower() for word in re.findall(r"[\wÁÉÍÓÚÑáéíóúñ]+", text_value)]
+        if (
+            score < threshold
+            or not (3 <= len(text_value) <= 40)
+            or len(words) > 4
+            or any(word in RUIDO for word in words)
+            or not _candidato_legible(text_value)
+        ):
+            continue
+        candidates.append(text_value)
+    return {"status": "ok", "candidates": candidates[:10]}
+
+
+def _headliner_evidence(texto):
+    heuristic = _heuristic_headliners(texto)
+    azure = _azure_language_ner(texto)
+    candidates = []
+    sources = []
+    for value in heuristic:
+        if value.lower() not in {item.lower() for item in candidates}:
+            candidates.append(value)
+    if heuristic:
+        sources.append({"kind": "ocr_heuristic", "status": "observed"})
+    for value in azure.get("candidates", []):
+        if value.lower() not in {item.lower() for item in candidates}:
+            candidates.append(value)
+    if azure.get("status") == "ok" and azure.get("candidates"):
+        sources.append({"kind": "azure_language_ner", "status": "candidate"})
+    return {"candidatos": candidates[:5], "fuentes": sources, "azure": azure.get("status")}
 
 
 
@@ -324,7 +441,8 @@ def _build_queue() -> list[dict]:
         venue = _txt(e.get("venue"))
         handles = e.get("handles") or []
         if isinstance(handles, str): handles = [handles]
-        heads = posibles_headliners(f.get("ocr_texto") or "")
+        headliner_evidence = _headliner_evidence(f.get("ocr_texto") or "")
+        heads = headliner_evidence["candidatos"]
 
         if fecha:
             con_fecha += 1
@@ -362,6 +480,7 @@ def _build_queue() -> list[dict]:
             "productora_declarada": prod,
             "handles": handles,
             "headliners_candidatos": heads,
+            "headliners_fuentes": headliner_evidence["fuentes"],
             "pregunta": pregunta,
         })
 
