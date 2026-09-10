@@ -500,8 +500,9 @@ def test_the_decisions_a_person_already_made_are_read_not_requested() -> None:
     for row in log["consumer_decisions"]["by_item"].values():
         assert row["history"]
         assert row["decision"] == row["history"][-1]["decision"]
-    # Draft and explicitly confirmed human decisions are both valid; no other
-    # status may enter the declaration ledger, and neither is auto-promoted.
+    # Declarations by a named person are carried with their real status intact
+    # -- a declaration starts as human_draft and can move to human_confirmed
+    # once the person confirms it; both are valid, neither is silently lost.
     declarations = log["declarations"]
     assert declarations["declared_by"] == {"human": declarations["event_count"]}
     assert set(declarations["promotion_counts"]) == {"none"}

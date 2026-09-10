@@ -15,6 +15,368 @@ MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
 
 
+def _synthetic_image(path: Path) -> None:
+    from PIL import Image
+
+    img = Image.new("RGB", (64, 64), (10, 200, 30))
+    img.save(path)
+
+
+def test_build_blender_command_uses_cartelera_blend_and_python_script():
+    cmd = render_flyer_mak.build_blender_command(
+        Path("/home/mak/blender/blender"),
+        Path("/home/mak/RD/AUTOMATIZACION/cartelera.blend"),
+        Path("/tmp/render_flyer_mak_script.py"),
+    )
+    assert cmd[0] == str(Path("/home/mak/blender/blender"))
+    assert "-b" in cmd
+    assert str(Path("/home/mak/RD/AUTOMATIZACION/cartelera.blend")) in cmd
+    assert "--python" in cmd
+    assert "--python-expr" not in cmd  # ya no es expr inline, es script real
+    assert str(Path("/tmp/render_flyer_mak_script.py")) in cmd
+
+
+def test_script_contains_anti_oom_settings():
+    script = render_flyer_mak.build_blender_script(
+        Path("/tmp/FRAME2.png"), Path("/tmp/input_ig.jpg"),
+        Path("/tmp/RESULTADOS/color_predominante.png"), Path("/tmp/render_output.png"),
+    )
+    assert "scene.render.use_simplify = True" in script
+    assert "texture_limit_render = '2048'" in script
+    assert "scene.cycles.use_auto_tile = True" in script
+    assert "scene.cycles.tile_size = 512" in script
+    assert "scene.render.use_persistent_data = False" in script
+    assert "scene.cycles.samples = 512" in script
+    assert "'CUDA'" in script
+    assert "CPU" not in script.split("compute_device_type")[0]  # no fallback silencioso a CPU antes de forzar GPU
+
+
+def test_script_uses_real_blender_nodes_functions_not_ad_hoc_swap():
+    script = render_flyer_mak.build_blender_script(
+        Path("/tmp/FRAME2.png"), Path("/tmp/input_ig.jpg"),
+        Path("/tmp/RESULTADOS/color_predominante.png"), Path("/tmp/render_output.png"),
+        frame_hue=0.9196,
+    )
+    # importa el modulo REAL, no reinventa la busqueda/recoloreo a mano
+    assert "import blender_nodes" in script
+    assert "from blender_gpu import force_gpu" in script
+    assert repr(str(render_flyer_mak.EVENTOS_DIR)) in script
+    # funciones reales de src/flujo/eventos/blender_nodes.py
+    assert "blender_nodes._buscar_materiales_flyer()" in script
+    assert "blender_nodes.build_flyer_nodes(" in script
+    assert "blender_nodes._repuntar_color_predominante(" in script
+    # el hue del marco viaja como literal calculado en el host (bug
+    # 2026-09-09: ya NO se recalcula dentro de Blender desde el color
+    # aclarado-para-vidrio, ver _color_mas_saturado)
+    assert "blender_nodes.hue_de_rgb(" not in script
+    assert "blender_nodes._color_predominante_bpy(" not in script
+    assert repr(0.9196) in script
+    # paleta + imagen se pasan al build/update real, no a un TEX_IMAGE suelto
+    assert repr(str(Path("/tmp/FRAME2.png"))) in script
+    assert repr(str(Path("/tmp/input_ig.jpg"))) in script
+    assert repr(str(Path("/tmp/RESULTADOS/color_predominante.png"))) in script
+    assert repr(str(Path("/tmp/render_output.png"))) in script
+
+
+def test_color_mas_saturado_prefiere_el_acento_sobre_el_fondo_claro():
+    # Regresion 2026-09-09: el flyer real de Piknic tiene fondo casi-blanco
+    # (#fcf5ea, la mayoria del area) y acentos magenta/cyan reales. El marco
+    # debe teñirse del acento (magenta), no del fondo.
+    paleta = ["#fcf5ea", "#a91c60", "#7be1ed", "#a77fac", "#a8175d", "#feebf4"]
+    rgb = render_flyer_mak._color_mas_saturado(paleta)
+    assert rgb == (0xa8, 0x17, 0x5d)  # el color de mayor saturacion HSV
+
+
+def test_hue_del_marco_no_sale_del_color_aclarado_para_vidrio():
+    # write_predominant_color aclara 25% hacia blanco a proposito (pensado
+    # para el vidrio); ese color casi-blanco tiene un hue casi arbitrario
+    # (medido: 37 grados/naranja) que NO representa el flyer (magenta/cyan
+    # reales). _color_mas_saturado + _hue_de_rgb sobre la paleta cruda debe
+    # dar un hue cercano al magenta real (331 grados), no al aclarado.
+    paleta = ["#fcf5ea", "#a91c60", "#7be1ed", "#a77fac", "#a8175d", "#feebf4"]
+    hue_marco = render_flyer_mak._hue_de_rgb(
+        render_flyer_mak._color_mas_saturado(paleta))
+    hue_aclarado = render_flyer_mak._hue_de_rgb((0xfc, 0xf7, 0xef))
+    assert abs(hue_marco * 360 - 331) < 5
+    assert abs(hue_aclarado * 360 - 37) < 5
+    assert abs(hue_marco - hue_aclarado) > 0.5  # extremos opuestos del circulo
+
+
+def test_extract_palette_returns_hex_colors(tmp_path):
+    imagen = tmp_path / "input_ig.jpg"
+    _synthetic_image(imagen)
+    palette_png = tmp_path / "palette_ig.png"
+    palette_json = tmp_path / "palette_ig.json"
+
+    colores = render_flyer_mak.extract_palette(imagen, palette_png, palette_json)
+
+    assert colores, "debe devolver al menos un color"
+    assert all(c.startswith("#") and len(c) == 7 for c in colores)
+    assert palette_png.exists()
+    assert palette_json.exists()
+    import json
+    data = json.loads(palette_json.read_text(encoding="utf-8"))
+    assert data["colors"] == colores
+
+
+def test_write_predominant_color_returns_hex_and_writes_png(tmp_path):
+    imagen = tmp_path / "input_ig.jpg"
+    _synthetic_image(imagen)
+    out_png = tmp_path / "RESULTADOS" / "color_predominante.png"
+
+    hex_color = render_flyer_mak.write_predominant_color(imagen, out_png)
+
+    assert hex_color.startswith("#") and len(hex_color) == 7
+    assert out_png.exists()
+
+
+def test_parse_render_marker_ok():
+    texto = "algo de log\notra linea\nRENDER_OK: /tmp/out/render_output.png\n"
+    resultado = render_flyer_mak.parse_render_marker(texto)
+    assert resultado == (True, "/tmp/out/render_output.png")
+
+
+def test_parse_render_marker_fallo():
+    texto = "GPU: {...}\nRENDER_FALLO: no encontre el material flyer_final\n"
+    resultado = render_flyer_mak.parse_render_marker(texto)
+    assert resultado == (False, "no encontre el material flyer_final")
+
+
+def test_parse_render_marker_none_when_missing():
+    assert render_flyer_mak.parse_render_marker("sin marcador aca\n") is None
+
+
+def test_run_render_fails_clear_when_blend_missing(tmp_path):
+    ok, motivo = render_flyer_mak.run_render(
+        Path("/usr/bin/true"), tmp_path, tmp_path / "no_existe.jpg", tmp_path / "out.png",
+    )
+    assert ok is False
+    assert "cartelera.blend" in motivo
+
+
+def test_run_render_fails_clear_when_frame2_missing(tmp_path):
+    base = tmp_path / "base"
+    base.mkdir()
+    (base / render_flyer_mak.BLEND_FILE).write_text("fake blend", encoding="utf-8")
+    imagen = tmp_path / "input_ig.jpg"
+    imagen.write_bytes(b"fake")
+
+    ok, motivo = render_flyer_mak.run_render(
+        Path("/usr/bin/true"), base, imagen, tmp_path / "out.png",
+    )
+    assert ok is False
+    assert render_flyer_mak.FRAME_FILE in motivo
+
+
+def test_run_render_ok_when_blender_succeeds_and_writes_output(tmp_path, monkeypatch):
+    base = tmp_path / "base"
+    base.mkdir()
+    (base / render_flyer_mak.BLEND_FILE).write_text("fake blend", encoding="utf-8")
+    (base / render_flyer_mak.FRAME_FILE).write_bytes(b"fake frame")
+    imagen = tmp_path / "input_ig.jpg"
+    imagen.write_bytes(b"fake")
+    output = tmp_path / "out" / "render_output.png"
+
+    def fake_run(cmd, capture_output, text, timeout):
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_bytes(b"fake png")
+        return subprocess.CompletedProcess(cmd, 0, stdout="GPU: ok", stderr="")
+
+    monkeypatch.setattr(render_flyer_mak.subprocess, "run", fake_run)
+
+    ok, detalle = render_flyer_mak.run_render(
+        Path("/home/mak/blender/blender"), base, imagen, output,
+    )
+    assert ok is True
+    assert detalle == str(output)
+
+
+def test_run_render_passes_python_script_flag(tmp_path, monkeypatch):
+    """El camino real usa --python <script temporal>, no --python-expr."""
+    base = tmp_path / "base"
+    base.mkdir()
+    (base / render_flyer_mak.BLEND_FILE).write_text("fake blend", encoding="utf-8")
+    (base / render_flyer_mak.FRAME_FILE).write_bytes(b"fake frame")
+    imagen = tmp_path / "input_ig.jpg"
+    imagen.write_bytes(b"fake")
+    output = tmp_path / "out" / "render_output.png"
+
+    seen = {}
+
+    def fake_run(cmd, capture_output, text, timeout):
+        seen["cmd"] = cmd
+        script_path = Path(cmd[cmd.index("--python") + 1])
+        seen["script_contenido"] = script_path.read_text(encoding="utf-8")
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_bytes(b"fake png")
+        return subprocess.CompletedProcess(cmd, 0, stdout="GPU: ok", stderr="")
+
+    monkeypatch.setattr(render_flyer_mak.subprocess, "run", fake_run)
+
+    render_flyer_mak.run_render(Path("/home/mak/blender/blender"), base, imagen, output)
+
+    cmd = seen["cmd"]
+    assert "--python" in cmd
+    assert "--python-expr" not in cmd
+    script_path = Path(cmd[cmd.index("--python") + 1])
+    assert script_path.suffix == ".py"
+    assert "blender_nodes._buscar_materiales_flyer()" in seen["script_contenido"]
+    # el script temporal se limpia despues de correr
+    assert not script_path.exists()
+
+
+def test_run_render_fallo_when_blender_exits_nonzero(tmp_path, monkeypatch):
+    base = tmp_path / "base"
+    base.mkdir()
+    (base / render_flyer_mak.BLEND_FILE).write_text("fake blend", encoding="utf-8")
+    (base / render_flyer_mak.FRAME_FILE).write_bytes(b"fake frame")
+    imagen = tmp_path / "input_ig.jpg"
+    imagen.write_bytes(b"fake")
+    output = tmp_path / "out" / "render_output.png"
+
+    def fake_run(cmd, capture_output, text, timeout):
+        return subprocess.CompletedProcess(
+            cmd, 1, stdout="", stderr="Error: CUDA out of memory\n",
+        )
+
+    monkeypatch.setattr(render_flyer_mak.subprocess, "run", fake_run)
+
+    ok, detalle = render_flyer_mak.run_render(
+        Path("/home/mak/blender/blender"), base, imagen, output,
+    )
+    assert ok is False
+    assert "CUDA out of memory" in detalle
+
+
+def test_run_render_fallo_when_output_missing_despite_success_exit(tmp_path, monkeypatch):
+    base = tmp_path / "base"
+    base.mkdir()
+    (base / render_flyer_mak.BLEND_FILE).write_text("fake blend", encoding="utf-8")
+    (base / render_flyer_mak.FRAME_FILE).write_bytes(b"fake frame")
+    imagen = tmp_path / "input_ig.jpg"
+    imagen.write_bytes(b"fake")
+    output = tmp_path / "out" / "render_output.png"
+
+    def fake_run(cmd, capture_output, text, timeout):
+        return subprocess.CompletedProcess(cmd, 0, stdout="GPU: ok", stderr="")
+
+    monkeypatch.setattr(render_flyer_mak.subprocess, "run", fake_run)
+
+    ok, detalle = render_flyer_mak.run_render(
+        Path("/home/mak/blender/blender"), base, imagen, output,
+    )
+    assert ok is False
+    assert "no genero el archivo" in detalle
+
+
+def test_main_prints_render_ok_and_exits_0(tmp_path, monkeypatch, capsys):
+    base = tmp_path / "base"
+    base.mkdir()
+    (base / render_flyer_mak.BLEND_FILE).write_text("fake blend", encoding="utf-8")
+    imagen = tmp_path / "input_ig.jpg"
+    _synthetic_image(imagen)
+    out_dir = tmp_path / "out"
+
+    def fake_run_render(blender_exe, base_dir, imagen_path, output_path, frame_hue=0.0):
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_bytes(b"fake png")
+        return True, str(output_path)
+
+    monkeypatch.setattr(render_flyer_mak, "run_render", fake_run_render)
+
+    code = render_flyer_mak.main([
+        "--imagen", str(imagen), "--out", str(out_dir), "--base", str(base),
+        "--blender", "/home/mak/blender/blender",
+    ])
+    captured = capsys.readouterr()
+    assert code == 0
+    assert "RENDER_OK:" in captured.out
+
+
+def _synthetic_flyer_fondo_claro_acento(path: Path) -> None:
+    # Mismo patron que el flyer real de Piknic: mayoria de area clara +
+    # un acento saturado real -- distinto de _synthetic_image (un solo
+    # color plano, donde aclarado y acento coinciden y no prueban nada).
+    from PIL import Image, ImageDraw
+
+    img = Image.new("RGB", (64, 64), (250, 245, 235))  # fondo casi blanco
+    draw = ImageDraw.Draw(img)
+    draw.rectangle([4, 4, 30, 30], fill=(170, 20, 90))  # acento magenta real
+    img.save(path)
+
+
+def test_main_escribe_el_mismo_acento_en_marco_y_vidrio(tmp_path, monkeypatch):
+    # Regresion 2026-09-09 (decision del usuario): el vidrio decorativo y
+    # sus 3 objetos (BezierCircle, G_Scale.2, petri dish, material
+    # "Decorative Glass 05") deben quedar con el MISMO acento vivo que el
+    # marco -- no con la version aclarada-hacia-blanco de
+    # write_predominant_color.
+    base = tmp_path / "base"
+    base.mkdir()
+    (base / render_flyer_mak.BLEND_FILE).write_text("fake blend", encoding="utf-8")
+    imagen = tmp_path / "input_ig.jpg"
+    _synthetic_flyer_fondo_claro_acento(imagen)
+    out_dir = tmp_path / "out"
+
+    vistos = {}
+
+    def fake_run_render(blender_exe, base_dir, imagen_path, output_path, frame_hue=0.0):
+        vistos["frame_hue"] = frame_hue
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_bytes(b"fake png")
+        return True, str(output_path)
+
+    monkeypatch.setattr(render_flyer_mak, "run_render", fake_run_render)
+
+    code = render_flyer_mak.main([
+        "--imagen", str(imagen), "--out", str(out_dir), "--base", str(base),
+    ])
+    assert code == 0
+
+    from PIL import Image
+    color_png = base / render_flyer_mak.COLOR_PNG_RELATIVE
+    assert color_png.exists()
+    rgb_vidrio = Image.open(color_png).convert("RGB").getpixel((256, 256))
+
+    # el hue del marco (calculado sobre el mismo acento) tiene que calzar
+    # con el hue del pixel escrito para el vidrio -- misma fuente de color
+    import colorsys
+    hue_vidrio = colorsys.rgb_to_hsv(*(c / 255 for c in rgb_vidrio))[0]
+    assert abs(hue_vidrio - vistos["frame_hue"]) < 0.01
+    # y NO es el color aclarado-hacia-blanco de la version vieja
+    r, g, b = rgb_vidrio
+    assert not (r > 230 and g > 230 and b > 220)  # el aclarado da casi-blanco
+
+
+def test_main_prints_render_fallo_and_exits_1_when_image_missing(tmp_path, capsys):
+    code = render_flyer_mak.main([
+        "--imagen", str(tmp_path / "no_existe.jpg"), "--out", str(tmp_path / "out"),
+    ])
+    captured = capsys.readouterr()
+    assert code == 1
+    assert "RENDER_FALLO:" in captured.out
+
+
+def test_main_prints_render_fallo_when_render_step_fails(tmp_path, monkeypatch, capsys):
+    imagen = tmp_path / "input_ig.jpg"
+    _synthetic_image(imagen)
+    out_dir = tmp_path / "out"
+    base = tmp_path / "base"
+    base.mkdir()
+
+    def fake_run_render(blender_exe, base_dir, imagen_path, output_path, frame_hue=0.0):
+        return False, "no existe /home/mak/RD/AUTOMATIZACION/cartelera.blend"
+
+    monkeypatch.setattr(render_flyer_mak, "run_render", fake_run_render)
+
+    code = render_flyer_mak.main([
+        "--imagen", str(imagen), "--out", str(out_dir), "--base", str(base),
+    ])
+    captured = capsys.readouterr()
+    assert code == 1
+    assert "RENDER_FALLO:" in captured.out
+    assert "cartelera.blend" in captured.out
+
 def test_motor_directory_uses_the_sibling_flujo_checkout():
     expected = ROOT / "flujo" / "src" / "flujo" / "eventos"
     assert MODULE.EVENTOS_DIR == expected
