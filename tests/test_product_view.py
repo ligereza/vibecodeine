@@ -222,9 +222,10 @@ def test_archive_view_separates_declared_observed_and_practice() -> None:
     assert view["schema"] == ARCHIVE_VIEW_SCHEMA
     assert validate_archive_portfolio_view(view) is True
     assert [row["format_id"] for row in view["formats"]] == [
-        "declared-works", "observed-field", "practice-context",
+        "declared-works", "documented-record", "observed-field", "practice-context",
     ]
     assert view["selection"]["declared_work_count"] == 1
+    assert view["selection"]["documented_record_count"] == 0
     assert view["selection"]["observed_field_count"] == 1
     assert view["selection"]["practice_context_count"] == 1
     observed = next(row for row in view["items"] if row["item_id"] == "observed-b")
@@ -236,6 +237,55 @@ def test_archive_view_separates_declared_observed_and_practice() -> None:
     assert "Campo observado (no son títulos autorales)" in markdown
     assert "Práctica y código (contexto, no obra automáticamente)" in markdown
     assert "Obra A" in markdown
+
+
+def test_archive_view_honors_a_human_triage_as_a_record_not_the_observed_default() -> None:
+    archive = _archive_fixture()
+    archive["piezas"].append({
+        "id": "corpus-aa11bb22cc33-17950615887015728",
+        "titulo": "",
+        "clase": "obra",
+        "fecha": None,
+        "resumen": None,
+        "etiquetas": ["corpus"],
+        "peso": 1,
+        "medio": {"tipo": "imagen", "src": "posts/corpus-aa11.jpg"},
+        "estado": "publicada",
+        "extra": {"percibido": "Una historia de IG que registra otra obra."},
+    })
+    without_triage = project_archive_portfolio_view(archive, max_items_per_format=5)
+    assert without_triage["selection"]["documented_record_count"] == 0
+    row = next(r for r in without_triage["items"] if r["item_id"] == "corpus-aa11bb22cc33-17950615887015728")
+    assert row["roles"] == ["observed_archive_piece"]
+    assert row["epistemic_status"] == "observed_source_record"
+
+    with_triage = project_archive_portfolio_view(
+        archive, max_items_per_format=5,
+        human_triage={"17950615887015728": {
+            "value": "record", "declared_by": "human",
+            "declared_at": "2026-08-09T03:43:11-0400", "kept_as_draft": True,
+        }},
+    )
+    assert validate_archive_portfolio_view(with_triage) is True
+    assert with_triage["selection"]["documented_record_count"] == 1
+    assert with_triage["selection"]["observed_field_count"] == 1
+    documented_format = next(f for f in with_triage["formats"] if f["format_id"] == "documented-record")
+    assert documented_format["item_ids"] == ["corpus-aa11bb22cc33-17950615887015728"]
+    row = next(r for r in with_triage["items"] if r["item_id"] == "corpus-aa11bb22cc33-17950615887015728")
+    assert row["roles"] == ["documented_record"]
+    assert row["epistemic_status"] == "human_declared_record"
+    assert "human_triage_record" in row["selection_reasons"]
+    markdown = render_archive_portfolio_markdown(with_triage)
+    assert "Registros documentados" in markdown
+    assert "corpus-aa11bb22cc33-17950615887015728" in markdown
+
+    # A triage keyed by a non-numeric or unmatched stem never joins to a
+    # piece -- no silent guess, no crash.
+    no_match = project_archive_portfolio_view(
+        archive, max_items_per_format=5,
+        human_triage={"not-a-number": {"value": "record"}, "999999999999": {"value": "record"}},
+    )
+    assert no_match["selection"]["documented_record_count"] == 0
 
 
 def test_archive_view_is_deterministic_and_non_mutating() -> None:

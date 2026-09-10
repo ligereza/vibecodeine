@@ -189,6 +189,12 @@ SERVICE_PROXY_MAX_BYTES = 2_000_000
 _REPO_ROOT = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", ".."))
 _SSD_ORDER_FOUNDATION_PATH = os.path.join(
     _REPO_ROOT, "out", "contracurator", "ssd_order_foundation.json")
+# The operator's own editor already asked "is this a record or the work" for
+# some items (triage: work/record/review/discard); this is that log, read as
+# optional enrichment for the archive view, never a new question.
+_PORTFOLIO_CLASSIFICATIONS_PATH = os.environ.get(
+    "MAK_PORTFOLIO_CLASSIFICATIONS",
+    "/home/mak/plataforma/director_runs/portfolio-editor-20260808/classifications.jsonl")
 _FLUJO_SOURCE_ROOT = os.path.abspath(os.environ.get(
     "FLUJO_SOURCE_ROOT", os.path.join(_REPO_ROOT, "flujo", "src")))
 for _import_root in (_REPO_ROOT, _FLUJO_SOURCE_ROOT):
@@ -268,6 +274,15 @@ except Exception as _archive_portfolio_view_exc:  # noqa: BLE001 - view is addit
         _archive_portfolio_view_exc).__name__
 else:
     _ARCHIVE_PORTFOLIO_VIEW_IMPORT_ERROR = ""
+
+try:
+    from flujo.knowledge.human_decision_log import (  # noqa: E402
+        read_human_decisions as _read_human_decisions,
+        triage_declarations as _triage_declarations,
+    )
+except Exception:  # noqa: BLE001 - triage enrichment is additive
+    _read_human_decisions = None
+    _triage_declarations = None
 
 try:
     from flujo.knowledge.contracurator import (  # noqa: E402
@@ -1410,9 +1425,18 @@ def _archive_portfolio_view_read_only():
             "detail": _ARCHIVE_PORTFOLIO_VIEW_IMPORT_ERROR or _CONTRACURATOR_IMPORT_ERROR,
         }, 503
     archive_path = Path(PORTFOLIO_ROOT) / "datos" / "archivo.json"
+    human_triage = {}
+    if _read_human_decisions is not None and _triage_declarations is not None:
+        try:
+            if os.path.isfile(_PORTFOLIO_CLASSIFICATIONS_PATH):
+                human_triage = _triage_declarations(_read_human_decisions(
+                    classifications_path=_PORTFOLIO_CLASSIFICATIONS_PATH))
+        except Exception:  # noqa: BLE001 - triage enrichment is additive
+            human_triage = {}
     try:
         archive = json.loads(archive_path.read_text(encoding="utf-8"))
-        view = _project_archive_portfolio_view(archive, max_items_per_format=24)
+        view = _project_archive_portfolio_view(
+            archive, max_items_per_format=24, human_triage=human_triage)
         order_basis = None
         order_basis_path = Path(_SSD_ORDER_FOUNDATION_PATH)
         if order_basis_path.is_file():

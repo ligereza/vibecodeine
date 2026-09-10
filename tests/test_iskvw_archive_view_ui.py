@@ -59,15 +59,16 @@ def test_archive_view_is_integrated_read_only_and_accessible() -> None:
     assert "/api/portfolio/dispatch" not in loader
 
 
-def test_three_contract_formats_and_epistemic_boundaries_are_visible() -> None:
+def test_four_contract_formats_and_epistemic_boundaries_are_visible() -> None:
     text = _html()
     constant = re.search(
         r"const ARCHIVE_VIEW_FORMAT_IDS = \[([^\]]+)\];", text)
     assert constant
     assert re.findall(r"'([^']+)'", constant.group(1)) == [
-        "declared-works", "observed-field", "practice-context"]
+        "declared-works", "documented-record", "observed-field", "practice-context"]
     assert "no es título autoral" in text
     assert "contexto técnico · no obra automáticamente" in text
+    assert "es registro de una obra, no la obra" in text
     assert "No infiere autor, serie, publicación ni elegibilidad" in text
     assert "publicación=false · submission=false · dispatch=false · promotion=none" in text
 
@@ -77,11 +78,13 @@ def test_untitled_rows_use_only_a_neutral_item_reference() -> None:
     script = "\n".join([
         _function("esc"),
         _function("archiveViewDisplayLabel"),
+        _function("archiveViewFormatNote"),
         _function("archiveViewItem"),
         "const item={item_id:'artist-name/Famous-Work-FINAL',title:null,summary:null,observed_description:'Machine-observed blue form.',date:null,tags:['archive'],link_degree:2,source_ref:'iskvw:piece:artist-name/Famous-Work-FINAL',epistemic_status:'observed_source_record'};",
         "const label=archiveViewDisplayLabel(item);",
         "const html=archiveViewItem(item,'observed-field');",
-        "console.log(JSON.stringify({label,html}));",
+        "const note=archiveViewFormatNote('observed-field');",
+        "console.log(JSON.stringify({label,html,note}));",
     ])
     result = _run_node(script)
 
@@ -89,11 +92,17 @@ def test_untitled_rows_use_only_a_neutral_item_reference() -> None:
         "text": "ref · artist-name/Famous-Work-FINAL", "neutral": True}
     assert 'data-neutral="true"' in result["html"]
     assert "etiqueta de referencia · no es título autoral" in result["html"]
-    assert "observación de fuente · no declaración del artista" in result["html"]
+    # The role note is now declared once per format section, not repeated on
+    # every item row -- it must not appear inside a single item's own html.
+    assert "observación de fuente · no declaración del artista" not in result["html"]
+    assert result["note"] == {
+        "role": "observación de fuente · no declaración del artista",
+        "status": "observed_source_record",
+    }
 
 
 @NODE_AVAILABLE
-def test_client_contract_accepts_all_three_formats_and_rejects_partial_data() -> None:
+def test_client_contract_accepts_all_four_formats_and_rejects_partial_data() -> None:
     text = _html()
     formats = re.search(
         r"const ARCHIVE_VIEW_FORMAT_IDS = \[[^\]]+\];", text)
@@ -110,6 +119,8 @@ def test_client_contract_accepts_all_three_formats_and_rejects_partial_data() ->
         "formats": [
             {"format_id": "declared-works", "purpose": "declared",
              "item_ids": ["declared"], "omitted_count": 0},
+            {"format_id": "documented-record", "purpose": "documented record",
+             "item_ids": ["documented"], "omitted_count": 0},
             {"format_id": "observed-field", "purpose": "observed",
              "item_ids": ["observed"], "omitted_count": 4},
             {"format_id": "practice-context", "purpose": "practice",
@@ -123,6 +134,7 @@ def test_client_contract_accepts_all_three_formats_and_rejects_partial_data() ->
              "observed_description_is_not_author_statement": False}
             for item_id, role, title, epistemic in [
                 ("declared", "declared_work", "Declared", "declared_source_record"),
+                ("documented", "documented_record", None, "human_declared_record"),
                 ("observed", "observed_archive_piece", None, "observed_source_record"),
                 ("practice", "practice_context", None, "observed_source_record"),
             ]
@@ -130,7 +142,8 @@ def test_client_contract_accepts_all_three_formats_and_rejects_partial_data() ->
         "relationships": [],
         "gaps": ["omitted_bounded_selection"],
         "catalog": {"piece_count": 9, "link_count": 0},
-        "selection": {"selected_item_count": 3, "declared_work_count": 1,
+        "selection": {"selected_item_count": 4, "declared_work_count": 1,
+                      "documented_record_count": 1,
                       "observed_field_count": 1, "practice_context_count": 1},
         "control": {"publication": False, "submission": False,
                     "dispatch": False, "source_mutation": False,

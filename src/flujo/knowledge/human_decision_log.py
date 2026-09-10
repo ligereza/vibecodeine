@@ -49,6 +49,13 @@ DISCARDED = "descartar"
 DECLARATION_FIELDS = (
     "ownership", "context_kind", "purpose", "nature", "format", "lane", "triage",
 )
+# Triage vocabulary observed in the log's "triage" field. An unknown value is
+# retained and reported through field_value_counts, never silently dropped.
+TRIAGE_WORK = "work"
+TRIAGE_RECORD = "record"
+TRIAGE_REVIEW = "review"
+TRIAGE_DISCARD = "discard"
+
 # Which declared fields can lift a claim, and which verb they speak to.
 _ATTESTING_FIELDS = {
     "ownership": "es_mio",
@@ -448,6 +455,43 @@ def attesting_declarations(log: Mapping[str, Any]) -> dict[str, list[dict[str, A
     return result
 
 
+def triage_declarations(log: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
+    """A named person's own ``work``/``record``/``review``/``discard`` call,
+    keyed by the numeric IG source id the archive projection can join on.
+
+    ``classifications.jsonl`` keys an item by its raw asset filename (e.g.
+    ``17950615887015728.mp4``); archive pieces built from the same publication
+    carry that same numeric id as the trailing segment of their own id
+    (``corpus-<hash>-17950615887015728``). Only filenames whose stem is purely
+    numeric are returned -- anything else has no reliable join target and is
+    left out rather than guessed at.
+
+    ``triage`` is not in ``_ATTESTING_FIELDS``: it says what an item *is* for
+    the person's own portfolio work, not a claim about authorship or context,
+    so it never lifts a verb past ``candidate`` on its own. It still is the
+    person's own record-vs-work call, which is stronger evidence than an
+    unlabeled default.
+    """
+    result: dict[str, dict[str, Any]] = {}
+    declarations = log.get("declarations")
+    if not isinstance(declarations, Mapping):
+        return result
+    for item, row in (declarations.get("by_item") or {}).items():
+        field = (row.get("fields") or {}).get("triage")
+        if not isinstance(field, Mapping) or not field.get("value"):
+            continue
+        stem = str(item).rsplit(".", 1)[0]
+        if not stem.isdigit():
+            continue
+        result[stem] = {
+            "value": field["value"],
+            "declared_by": field["owner"],
+            "declared_at": field["declared_at"],
+            "kept_as_draft": field["status"] == "human_draft",
+        }
+    return result
+
+
 def curatorial_relations(log: Mapping[str, Any]) -> list[dict[str, Any]]:
     """Relations a person drew, with their confirmation state, for the claim base."""
     relations = log.get("relations")
@@ -507,6 +551,7 @@ def consumer_decision_summary(log: Mapping[str, Any]) -> dict[str, Any]:
 __all__ = [
     "ALGORITHM_VERSION", "DECLARATION_FIELDS", "DESELECTED", "DISCARDED",
     "HumanDecisionLogError", "RELATION_KINDS", "SCHEMA", "SELECTED",
+    "TRIAGE_DISCARD", "TRIAGE_RECORD", "TRIAGE_REVIEW", "TRIAGE_WORK",
     "attesting_declarations", "consumer_decision_summary", "curatorial_relations",
-    "read_human_decisions",
+    "read_human_decisions", "triage_declarations",
 ]

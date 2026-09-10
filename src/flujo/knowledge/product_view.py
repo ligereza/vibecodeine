@@ -455,6 +455,21 @@ def _archive_piece_ref(piece_id: str) -> str:
     return f"iskvw:piece:{piece_id}"
 
 
+def _archive_piece_source_stem(piece_id: str) -> str | None:
+    """The trailing numeric IG source id a corpus piece id encodes, if any.
+
+    ``contrato_archivo.py`` names corpus pieces ``corpus-<hash>-<ig id>``; that
+    trailing id is the only part of the piece id that a human's own
+    classifications.jsonl declaration (keyed by the raw asset filename) can
+    join against. Anything else -- codex pieces, a corpus id whose tail is not
+    purely numeric -- has no reliable join target.
+    """
+    if not piece_id.startswith("corpus-"):
+        return None
+    tail = piece_id.rsplit("-", 1)[-1]
+    return tail if tail.isdigit() else None
+
+
 def _archive_public_media(value: Any, field: str) -> dict[str, Any]:
     if value is None:
         return {"tipo": "ninguno"}
@@ -557,13 +572,23 @@ def project_archive_portfolio_view(
     archive: Mapping[str, Any],
     *,
     max_items_per_format: int = 24,
+    human_triage: Mapping[str, Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    """Project the existing ISKVW archive into three non-destructive portfolio readings.
+    """Project the existing ISKVW archive into four non-destructive portfolio readings.
 
     This is intentionally a consumer of ``iskvw/datos/archivo.json`` rather
     than a second archive model.  The source already distinguishes declared
     pieces, observed corpus material and code; this projection keeps those
     boundaries visible and gives each selected row its source reference.
+
+    ``human_triage`` is optional, read-only enrichment: a mapping from the
+    numeric IG source id to a named person's own record-vs-work call (see
+    ``flujo.knowledge.human_decision_log.triage_declarations``). It never
+    invents a class; a piece the archive already calls ``class=obra`` and a
+    person has explicitly triaged as ``record`` moves out of declared/observed
+    into its own ``documented-record`` format -- a photo or story *of* a work
+    is not the work, and a person's own call on a specific item outranks the
+    archive's folder-only default.
     """
     if isinstance(max_items_per_format, bool) or not isinstance(max_items_per_format, int) or not 1 <= max_items_per_format <= 500:
         raise ProductViewError("archive_view_max_items_invalid")
@@ -573,14 +598,26 @@ def project_archive_portfolio_view(
         degrees[link["left"]] += 1
         degrees[link["right"]] += 1
     by_id = {row["id"]: row for row in pieces}
+    human_triage = human_triage or {}
 
+    documented_record_ids = sorted(
+        row["id"] for row in pieces
+        if row["class"] == "obra"
+        and (stem := _archive_piece_source_stem(row["id"])) is not None
+        and (declared := human_triage.get(stem))
+        and declared.get("value") == "record"
+    )
+    documented_record_set = set(documented_record_ids)
     declared_ids = sorted(
         row["id"] for row in pieces
         if row["class"] == "obra" and row["title"] and row["summary"]
+        and row["id"] not in documented_record_set
     )
     observed_rows = [
         row for row in pieces
-        if row["class"] == "obra" and row["id"] not in set(declared_ids)
+        if row["class"] == "obra"
+        and row["id"] not in set(declared_ids)
+        and row["id"] not in documented_record_set
     ]
     observed_rows.sort(key=lambda row: (
         -int(bool(row["medium"].get("src"))),
@@ -597,6 +634,8 @@ def project_archive_portfolio_view(
     roles: dict[str, list[str]] = {}
     for piece_id in declared_ids:
         roles[piece_id] = ["declared_work"]
+    for piece_id in documented_record_ids:
+        roles.setdefault(piece_id, []).append("documented_record")
     for piece_id in observed_ids:
         roles.setdefault(piece_id, []).append("observed_archive_piece")
     for piece_id in practice_ids:
@@ -609,12 +648,23 @@ def project_archive_portfolio_view(
         reasons = []
         if "declared_work" in roles[piece_id]:
             reasons.extend(["source_class_obra", "explicit_title", "explicit_summary"])
+        if "documented_record" in roles[piece_id]:
+            triage = human_triage[_archive_piece_source_stem(piece_id)]
+            reasons.append("human_triage_record")
+            if not triage.get("kept_as_draft", True):
+                reasons.append("human_triage_confirmed")
         if "observed_archive_piece" in roles[piece_id]:
             reasons.append("bounded_observed_archive_selection")
             if row["perceived_observation"]:
                 reasons.append("source_perception_available")
         if "practice_context" in roles[piece_id]:
             reasons.extend(["source_class_codigo", "bounded_practice_selection"])
+        if "declared_work" in roles[piece_id]:
+            epistemic_status = "declared_source_record"
+        elif "documented_record" in roles[piece_id]:
+            epistemic_status = "human_declared_record"
+        else:
+            epistemic_status = "observed_source_record"
         item = {
             "item_id": piece_id,
             "source_ref": _archive_piece_ref(piece_id),
@@ -630,7 +680,7 @@ def project_archive_portfolio_view(
             "source_state": row["state"],
             "link_degree": degrees[piece_id],
             "selection_reasons": sorted(set(reasons)),
-            "epistemic_status": "declared_source_record" if "declared_work" in roles[piece_id] else "observed_source_record",
+            "epistemic_status": epistemic_status,
             "observed_description_is_not_author_statement": bool(row["perceived_observation"]),
         }
         items.append(item)
@@ -657,9 +707,16 @@ def project_archive_portfolio_view(
             "omitted_count": 0,
         },
         {
+            "format_id": "documented-record",
+            "purpose": "pieces a named person has already triaged as a record of a work, not the work itself",
+            "selection_rule": ["class=obra", "human_triage=record"],
+            "item_ids": documented_record_ids,
+            "omitted_count": 0,
+        },
+        {
             "format_id": "observed-field",
             "purpose": "bounded visual/archive field without inventing titles",
-            "selection_rule": ["class=obra", "not_declared_work", f"max_items={max_items_per_format}"],
+            "selection_rule": ["class=obra", "not_declared_work", "not_documented_record", f"max_items={max_items_per_format}"],
             "item_ids": observed_ids,
             "omitted_count": max(0, len(observed_rows) - len(observed_ids)),
         },
@@ -712,6 +769,7 @@ def project_archive_portfolio_view(
         "selection": {
             "selected_item_count": len(items),
             "declared_work_count": len(declared_ids),
+            "documented_record_count": len(documented_record_ids),
             "observed_field_count": len(observed_ids),
             "practice_context_count": len(practice_ids),
             "max_items_per_format": max_items_per_format,
@@ -802,7 +860,7 @@ def validate_archive_portfolio_view(payload: Any) -> bool:
             raise ProductViewError(f"archive_portfolio_view.item_{index}_identity_invalid")
         item_ids.append(item_id)
         roles = _refs(row.get("roles"), f"archive_portfolio_view.item_{index}.roles")
-        if roles != row.get("roles") or not set(roles) <= {"declared_work", "observed_archive_piece", "practice_context"}:
+        if roles != row.get("roles") or not set(roles) <= {"declared_work", "documented_record", "observed_archive_piece", "practice_context"}:
             raise ProductViewError(f"archive_portfolio_view.item_{index}_roles_invalid")
         for field in ("title", "summary", "observed_description", "date"):
             if row.get(field) is not None and not isinstance(row.get(field), str):
@@ -817,7 +875,7 @@ def validate_archive_portfolio_view(payload: Any) -> bool:
         if not isinstance(row.get("link_degree"), int) or row["link_degree"] < 0:
             raise ProductViewError(f"archive_portfolio_view.item_{index}_link_degree_invalid")
         _refs(row.get("selection_reasons"), f"archive_portfolio_view.item_{index}.selection_reasons")
-        if row.get("epistemic_status") not in {"declared_source_record", "observed_source_record"}:
+        if row.get("epistemic_status") not in {"declared_source_record", "human_declared_record", "observed_source_record"}:
             raise ProductViewError(f"archive_portfolio_view.item_{index}_epistemic_status_invalid")
         if not isinstance(row.get("observed_description_is_not_author_statement"), bool):
             raise ProductViewError(f"archive_portfolio_view.item_{index}_observation_flag_invalid")
@@ -860,7 +918,7 @@ def validate_archive_portfolio_view(payload: Any) -> bool:
             raise ProductViewError(f"archive_portfolio_view.format_{index}_items_invalid")
         if not isinstance(row.get("omitted_count"), int) or row["omitted_count"] < 0:
             raise ProductViewError(f"archive_portfolio_view.format_{index}_omitted_invalid")
-    if format_ids != ["declared-works", "observed-field", "practice-context"]:
+    if format_ids != ["declared-works", "documented-record", "observed-field", "practice-context"]:
         raise ProductViewError("archive_portfolio_view_formats_invalid")
     catalog = _mapping(payload.get("catalog"), "archive_portfolio_view.catalog")
     if set(catalog) != {"piece_count", "link_count", "class_counts", "state_counts", "medium_counts"}:
@@ -875,7 +933,7 @@ def validate_archive_portfolio_view(payload: Any) -> bool:
         if list(counts) != sorted(counts):
             raise ProductViewError(f"archive_portfolio_view_catalog_{field}_not_sorted")
     selection = _mapping(payload.get("selection"), "archive_portfolio_view.selection")
-    required_selection = {"selected_item_count", "declared_work_count", "observed_field_count", "practice_context_count", "max_items_per_format", "omitted_piece_count", "omitted_by_class"}
+    required_selection = {"selected_item_count", "declared_work_count", "documented_record_count", "observed_field_count", "practice_context_count", "max_items_per_format", "omitted_piece_count", "omitted_by_class"}
     if set(selection) != required_selection:
         raise ProductViewError("archive_portfolio_view_selection_fields_invalid")
     for field in required_selection - {"omitted_by_class"}:
@@ -916,7 +974,7 @@ def render_archive_portfolio_markdown(view: Mapping[str, Any]) -> str:
     lines = [
         "# MAK — borrador general del archivo",
         "",
-        "Tres lecturas del mismo archivo, sin fusionar identidad ni convertir observaciones en autoría.",
+        "Cuatro lecturas del mismo archivo, sin fusionar identidad ni convertir observaciones en autoría.",
         "",
         f"Fuente: `{source['path_hint']}` · piezas: {view['catalog']['piece_count']} · vínculos: {view['catalog']['link_count']}",
         f"Estado: `{view['status']}` · hash: `{source['input_hash']}`",
@@ -933,6 +991,13 @@ def render_archive_portfolio_markdown(view: Mapping[str, Any]) -> str:
     for row in declared:
         media = row["medium"].get("src") or "sin media declarada"
         lines.extend([f"- **{row['title']}** ({row['date'] or 'sin fecha'}) — {row['summary']}", f"  Media: `{media}` · evidencia: `{row['source_ref']}`"])
+    lines.extend(["", "## Registros documentados (una persona ya lo marcó: es registro, no obra)", ""])
+    documented = [row for row in view["items"] if "documented_record" in row["roles"]]
+    if not documented:
+        lines.append("Nadie ha triado ningún ítem como registro todavía.")
+    for row in documented:
+        description = row["observed_description"] or "sin descripción perceptual"
+        lines.append(f"- `{row['item_id']}` — {description}; media `{row['medium'].get('src') or 'sin ref'}`; evidencia `{row['source_ref']}`.")
     lines.extend(["", "## Campo observado (no son títulos autorales)", ""])
     observed = [row for row in view["items"] if "observed_archive_piece" in row["roles"]]
     if not observed:
