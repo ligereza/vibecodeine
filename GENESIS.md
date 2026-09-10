@@ -155,7 +155,7 @@ Medido el 2026-08-29:
 - `mak-hub`, `mak-research` y `mak-codex` fueron reactivados el 16 y 17 de
   agosto y corren ahora. **xio quedó fuera de esa reactivación sin un solo error
   que lo explique**: es una omisión deliberada.
-- `~/xio_puente/XIO_PUENTE.md` y `~/MAK_CODEX_HANDOFF.md` lo dicen sin
+- `~/xio_puente/XIO_PUENTE.md` y `~/context/LAST_HANDOFF.md` lo dicen sin
   ambigüedad: no encender `mak-xio.service` por cuenta propia; la dirección de
   red del teléfono es decisión de operador.
 - No hay ninguna fila de xio en `mapa-de-retiro.csv`: no se retiró nada, sigue
@@ -208,7 +208,7 @@ decir cuál se lee primero ni cuál es historia agotada. Es el mismo defecto que
 declaran canónicos mientras nadie fija el orden real -- repitiéndose acá, en
 la raíz de la máquina, y con ocho documentos, no seis: los seis de arriba, más
 `PATRONES.CLAUDE.json` (que ya se cargaba pero no estaba en esa lista) y
-`MAK_CODEX_HANDOFF.md` (el traspaso que escribió otra sesión, tampoco
+`docs/handoffs/archive/MAK_CODEX_HANDOFF.md` (el traspaso que escribió otra sesión, tampoco
 listado). No se abre un noveno documento para resolver el problema de tener
 ocho: se resuelve acá, porque éste ya es el que enlaza a los demás.
 
@@ -230,7 +230,7 @@ ocho: se resuelve acá, porque éste ya es el que enlaza a los demás.
    - `ANOTACIONES.CLAUDE.MD` -- antes de asumir que algo quedó resuelto, o de
      decidir que algo es decisión del operador: ahí está lo que sigue sin
      saberse.
-   - `MAK_CODEX_HANDOFF.md` -- al retomar un hilo operativo que dejó Codex
+   - `context/LAST_HANDOFF.md` -- al retomar un hilo operativo que dejó Codex
      (consolidación física, verificación de CI, apertura de raíces). No es
      borrador propio: lo escribió otra sesión real y describe decisiones
      reales. Se trata como fuente -- se lee, no se edita -- y si algo suyo
@@ -267,6 +267,6 @@ Verificado hoy, 2026-08-31, y sin novedad: 23 líneas de cron pausadas y 0
 activas, 3 de 5 órganos vivos, `mak-xio.service` apagado por decisión y no por
 avería, y `mapa-de-retiro.csv` en 253 filas. Esa última cifra creció desde las
 79/88 que citan `CAMBIOS.CLAUDE.MD` y `ANOTACIONES.CLAUDE.MD`, y desde las 234
-que cita `MAK_CODEX_HANDOFF.md`: no es contradicción, cada una fue cierta el
+que cita el handoff histórico archivado: no es contradicción, cada una fue cierta el
 día que se escribió. Se mide con `wc -l ~/_archive/orden-limpieza-20260828/mapa-de-retiro.csv`,
 no se cita de memoria.

@@ -43,6 +43,7 @@ _SUPLEMENTOS_JSON = (
     / "01_contenido" / "contenido_suplementos_rd.json"
 )
 _PRODUCTORAS_DIR = _REPO / "data" / "productoras"
+_KNOWLEDGE_PRODUCTORAS_DIR = _REPO / "knowledge" / "productoras"  # *.yaml: perfil operativo enriquecido
 _TESTING_EVIDENCE_JSON = _REPO / "data" / "rd_fuentes" / "testeo_eventos_2025_evidence.json"
 _CANDIDATE_REGISTRIES = {
     "entity_universe_v0_1": (_REPO / "data" / "rd_fuentes" / "candidates" / "entity_universe_v0.1.json", "records"),
@@ -187,7 +188,10 @@ CREATE TABLE productoras (
     instagram TEXT,
     aliases   TEXT,                 -- JSON: formas literales que extrae la vision
     confirmado TEXT,                -- nota de confirmacion humana
-    notas     TEXT
+    notas     TEXT,
+    perfil_json TEXT                -- JSON: knowledge/productoras/*.yaml (affinity,
+                                     -- service_preferences, relationship, venues_recurrentes,
+                                     -- confidence...) cuando existe; NULL si no hay perfil
 );
 CREATE TABLE venues (
     id            TEXT PRIMARY KEY,   -- id canonico (espacio_riesco)
@@ -1543,6 +1547,7 @@ def build_rd_db(
 
         # productoras conocidas (store) + tablas hijas: tipos, venues, logos
         tipo_id = vnk_id = logo_id = prodev_id = 0
+        slugs_desde_json: set[str] = set()
         if prod_dir.exists():
             for pf in sorted(prod_dir.glob("*.json")):
                 try:
@@ -1562,6 +1567,7 @@ def build_rd_db(
                         d.get("notes"),
                     ),
                 )
+                slugs_desde_json.add(slug)
                 # tipos de fecha (vocabulario controlado)
                 from .vocab import normalize_tipos
 
@@ -1617,6 +1623,52 @@ def build_rd_db(
                             ev.get("fuente"),
                             fuentes_primarias,
                             sin_fuente_primaria,
+                        ),
+                    )
+
+        # perfil operativo enriquecido (knowledge/productoras/*.yaml): affinity,
+        # service_preferences, relationship, venues_recurrentes, confidence...
+        # Antes de esto, extraccion_db.py leia data/productoras Y knowledge/
+        # productoras por separado para armar su catalogo de matching -- dos
+        # lecturas de la misma fuente. Ahora la DB es la unica fuente que
+        # consulta el matching (ver database.productoras()), asi que el perfil
+        # tiene que fusionarse aca. Nunca se ingesta una plantilla (id/name
+        # terminado en "template", ver rave_under_template.yaml: es un
+        # arquetipo de categoria, no una productora real).
+        if _KNOWLEDGE_PRODUCTORAS_DIR.exists():
+            for yf in sorted(_KNOWLEDGE_PRODUCTORAS_DIR.glob("*.yaml")):
+                perfil = _load_yaml(yf)
+                if not isinstance(perfil, dict):
+                    continue
+                pid = str(perfil.get("id") or yf.stem)
+                profile_name = str(perfil.get("name") or pid)
+                if pid.endswith("_template") or profile_name.strip().lower().endswith("template"):
+                    continue
+                aliases_extra = [
+                    a for a in (perfil.get("aliases") or []) if isinstance(a, str) and a.strip()
+                ]
+                perfil_json = json.dumps(perfil, ensure_ascii=False)
+                if pid in slugs_desde_json:
+                    row = conn.execute(
+                        "SELECT aliases FROM productoras WHERE slug = ?", (pid,)
+                    ).fetchone()
+                    existentes = json.loads(row[0]) if row and row[0] else []
+                    union = list(dict.fromkeys(existentes + aliases_extra))
+                    conn.execute(
+                        "UPDATE productoras SET aliases = ?, perfil_json = ? WHERE slug = ?",
+                        (json.dumps(union, ensure_ascii=False), perfil_json, pid),
+                    )
+                else:
+                    # productora que solo existe en knowledge/ (sin json propio
+                    # todavia en data/productoras/): igual entra al catalogo.
+                    conn.execute(
+                        "INSERT OR REPLACE INTO productoras"
+                        "(slug, nombre, instagram, aliases, confirmado, notas, perfil_json) "
+                        "VALUES (?,?,?,?,?,?,?)",
+                        (
+                            pid, profile_name, None,
+                            json.dumps(aliases_extra, ensure_ascii=False),
+                            None, None, perfil_json,
                         ),
                     )
 
@@ -1730,13 +1782,14 @@ def suplementos(db_path: str | Path | None = None) -> list[dict[str, Any]]:
 
 
 def productoras(db_path: str | Path | None = None) -> list[dict[str, Any]]:
-    """Promotoras conocidas (aliases deserializados)."""
+    """Promotoras conocidas (aliases + perfil enriquecido deserializados)."""
     conn = connect(db_path)
     try:
         out: list[dict[str, Any]] = []
         for p in conn.execute("SELECT * FROM productoras ORDER BY slug").fetchall():
             d = dict(p)
             d["aliases"] = json.loads(d["aliases"]) if d.get("aliases") else []
+            d["perfil"] = json.loads(d["perfil_json"]) if d.get("perfil_json") else None
             out.append(d)
         return out
     finally:
@@ -1777,6 +1830,7 @@ def productora(slug: str, db_path: str | Path | None = None) -> dict[str, Any] |
             return None
         d = dict(row)
         d["aliases"] = json.loads(d["aliases"]) if d.get("aliases") else []
+        d["perfil"] = json.loads(d["perfil_json"]) if d.get("perfil_json") else None
         d["tipos_fecha"] = [
             r["tipo"] for r in conn.execute(
                 "SELECT tipo FROM productora_tipos WHERE productora_slug = ?", (slug,)

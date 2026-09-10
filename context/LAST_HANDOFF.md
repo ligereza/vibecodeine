@@ -22,13 +22,18 @@ evidencia fechada, incluso cuando se contradicen.
   cierre semántico ni una autorización para borrar o promover variantes.
 - `fused/projection3/MANIFEST.json` registra 5.426 rutas `tree_equal`, 813
   rutas divergentes con `variants_all_preserved` y 2.366 rutas de variantes.
-  `fused/root-materialization.json` registra 6.214 `linked_file`, 22
-  `linked_symlink`, 1 colisión de raíz preservada y 2 conflictos reubicados.
-  `actions.jsonl` del origen activo tiene 5.496 líneas. Las cifras antiguas se
-  mantienen abajo; las discrepancias entre contadores de acciones y de
-  materialización no se resuelven con prosa.
+  La subcarpeta materializada `fused/projection3/variants/` era una segunda
+  copia de los orígenes y se purgó el 2026-09-01 tras verificar hashes; las
+  variantes reales siguen en `fused/origins/`.
+  `fused/root-materialization.json` registra históricamente 6.214
+  `linked_file`, 22 `linked_symlink`, 1 colisión de raíz preservada y 2
+  conflictos reubicados. Esa cifra describe la corrida del 31-08, no el estado
+  actual: el 01-09 se desacoplaron todos los inodos vivos que aún compartían
+  evidencia. La medición directa actual es `live_nlink_gt1=0` y
+  `live_archive_shared=0`; `actions.jsonl` conserva las 5.496 líneas de la
+  corrida original.
 - El árbol vivo es `/home/mak`; `/home/mak/flujo` es ahora un adaptador de
-  directorio no recursivo con 170 enlaces a hermanos, porque el symlink físico
+  directorio no recursivo con 164 enlaces a hermanos, porque el symlink físico
   a `.` permitía recorridos cíclicos. La medición actual encontró cero enlaces
   que resuelvan dentro de su propio ancestro. `/home/mak/WIN/flujo` redirige a
   `../_archive/merge-20260831/fused/origins/win-flujo`. No hay otro directorio
@@ -46,13 +51,13 @@ evidencia fechada, incluso cuando se contradicen.
   La ola local que precedió esta topología está en `32d929d8`, `6166a8b8`,
   `940d2324`, `111a52e6`, `ac789a31` y `29715450`; no se hizo push de esos
   nombres a `ligereza-mak`.
-- Revalidación 2026-09-02 para FLUJO: `context/code_structure_index.json`
-  describe el árbol `/home/mak/flujo`, excluye `context-history` histórico y
-  registra 1.096 Python, 280.430 líneas, 12.557 símbolos y 0 errores de
-  sintaxis (SHA-256 `fe4df3b6624751051b87bf6b477498ab34675edefec976cddd061cef40495909`).
-  El tip actual de `FLUJO` y su igualdad con `git ls-remote` se comprueban con
-  `git rev-parse FLUJO` y la referencia remota; los tips antiguos de arriba
-  quedan como historia de transición.
+- Revalidación 2026-09-02: el código MAK anterior a este bloque estaba en
+  `39f16c4de32b8751682e068c2d9053b8a9450597`; el tip actual de la rama `MAK`
+  (este bloque incluido) se obtiene con
+  `git rev-parse MAK`, `FLUJO=efeaa8a911d7675bc4cdcd0bf72aeb48b8ca6a9c` y
+  `main=historia=ab9afa13fb4d5cf257d97972c73301b0bc0d78fb`; `git ls-remote`
+  coincide con cada tip local. Esta revalidación sustituye los tips abreviados
+  anteriores, que quedan como historia de la transición.
 
 ### Estado documental medido
 
@@ -65,9 +70,11 @@ evidencia fechada, incluso cuando se contradicen.
 
 ### Revalidación física y carriles — 2026-08-31
 
-- El desacoplamiento dejó 5.018 archivos vivos con `nlink=1`; permanecen 1.270
-  enlaces compartidos únicamente en rutas protegidas (`tests/`, `context/`,
-  `context-history/`, `pyproject.toml`). Se restauró
+- La medición histórica dejó 5.018 archivos vivos con `nlink=1` y 1.270 enlaces
+  compartidos protegidos. El 01-09 se revisaron y desacoplaron esos 1.257
+  archivos que seguían vinculados a `_archive` (22.526.816 bytes), con copia,
+  SHA-256 y reemplazo atómico; la re-medición actual da `nlink_gt1=0` y cero
+  inodos vivos compartidos con `_archive`. Se restauró
   `cultura/mak_research/fallback_util.py` como copia independiente; ese estado
   fue superado el 2026-09-01 al retirar la copia duplicada, porque el único
   consumidor importa `cultura/mak_codex/fallback_util.py`. El legado
@@ -80,6 +87,46 @@ evidencia fechada, incluso cuando se contradicen.
   `repo_hygiene` 115 (124 s, RC 0), `review` 39 bajo demanda.
   El mapa de 387 rutas quedó persistido estáticamente en ese archivo para que
   la colección no recalcule AST en cada corrida (`ac789a31`).
+
+### Revalidación de índice y carriles — 2026-09-01 — CURRENT
+
+Este bloque reemplaza únicamente las cifras operativas anteriores; las
+mediciones del 31-08 permanecen abajo como historia fechada.
+
+- `context/code_structure_index.json` es el índice del código operativo de
+  `/home/mak`, no un censo de toda la caja: 932 archivos Python, 249.626
+  líneas, 10.962 símbolos y 0 errores de sintaxis. Su alcance explícito incluye
+  sólo la raíz Python, `src/`, `cultura/`, `tools/`, `tests/` y `scripts/`.
+  Excluye `_archive`, `WIN`, montajes y árboles de material no-code. Su SHA-256
+  actual es `e8f49ec645eaa9c61d8a61f73a6b597b5e52cc5b12f9cda6758dd7b5af802f2b`.
+- `context/test_lane_map.json` (`mak-test-lane-map-v3`) es el contrato vigente
+  y `tools/test_lane_map.py` lo carga. Conserva 243 acuerdos, 80 carriles
+  respaldados por imports/rutas, mueve 1 caso por import directo y resuelve 56
+  por ruta de módulo única. Los 7 casos que quedaban en `review` se resolvieron
+  por estructura dirigida (3 imports de MAK, 3 tests de activos ISKVW y 1 test
+  de taxonomía); `review=0`. La comparación original conserva 144
+  discrepancias visibles, no las presenta como consenso. SHA del contrato:
+  `984e26ecfb0d6890936156e1e7ed5d6d159e6ab08aa7ffbe6d11511f6a76e977`.
+- Colección actual de casos: `flujo=1.778`, `mak=2.229`,
+  `integration=239`, `repo_hygiene=87`, `review=0`; total `4.333`.
+  Los cuatro carriles operativos cubren todos los casos; los cambios de
+  clasificación sólo redistribuyeron casos, no crearon tests.
+- `lanes_for_changed_paths()` sigue consumidores desde el índice. Cambios en
+  `pyproject.toml`, `tests/conftest.py`, `tools/test_lane_map.py`,
+  `context/code_structure_index.json` o `context/test_lane_map.json` activan
+  todos los carriles; un cambio aislado en `src/flujo/*` activa solo `flujo`
+  cuando no tiene consumidores de otro carril.
+- `mak-hub.service` fue recargado tras resolver la raíz física: `/api/status`
+  devuelve ahora `repo_root=/home/mak` y `physical_root=/home/mak`; el alias
+  `/home/mak/flujo` queda sólo para compatibilidad de rutas heredadas.
+- Validación enfocada actual: `tests/test_code_index.py` (2 passed), los 7
+  archivos que cerraron `review` (49 passed), `tests/test_repo_audit.py` (5
+  passed en 33 s), `py_compile` RC 0 y `git diff --check` RC 0. No se ejecutó
+  la suite completa.
+- Se corrigieron dos escapes `\\s` en el HTML embebido de
+  `cultura/mak_codex/interfaz_codex.py`; la colección limpia dejó de emitir la
+  advertencia `invalid escape sequence`, y las pruebas enfocadas de interfaz
+  quedaron en 67 passed.
 
 ### Cierre de `review` y triage de divergencias — 2026-09-01
 
@@ -145,7 +192,7 @@ evidencia fechada, incluso cuando se contradicen.
   `context-history/untracked-context-20260819/PHASE405_OWNER_CLEANUP_BRANCH_HANDOFF.md`
   y `context-history/untracked-context-20260819/quarantine/LAST_HANDOFF.pre-803d2e5-20260818.md`;
   plantilla: `context/BRANCH_HANDOFF_TEMPLATE.md`; paquete previo/duplicado:
-  `MAK_CODEX_HANDOFF.md`; departamentales no globales: `context/handoffs/cultura.md`,
+  `docs/handoffs/archive/MAK_CODEX_HANDOFF.md`; departamentales no globales: `context/handoffs/cultura.md`,
   `context/handoffs/iskvw.md` y `context/handoffs/rd.md`.
 - El contrato no distingue global de departamental: captura los tres estados
   departamentales por contener `handoff` en sus rutas. Su política literal
@@ -342,7 +389,7 @@ This is the only current operational packet. The material below the marked
 historical boundary is retained evidence and must not override this packet.
 
 Detailed current handoff for this consolidation:
-`/home/mak/MAK_CODEX_HANDOFF.md`.
+`/home/mak/docs/handoffs/archive/MAK_CODEX_HANDOFF.md`.
 
 ### Standing contract, carried forward unchanged
 
@@ -426,7 +473,7 @@ changed history, branch or remote state. The organism measurement now offers
 `--cron-detail` for 23 static cron preflights and `--json` for
 `mak-organism-heartbeat-v1`. The valid test-overlap evidence is in
 `/home/mak/indexes/mak-solape-tests-20260829/`; see
-`/home/mak/MAK_CODEX_HANDOFF.md` for its counts and limits.
+`/home/mak/docs/handoffs/archive/MAK_CODEX_HANDOFF.md` for its historical counts and limits.
 
 The first opening of all previously uninspected local roots is complete. The
 system-level GitHub runner is enabled and active; `actions-runner` is therefore
