@@ -24,9 +24,11 @@ con 4 reglas obligatorias (evidencia real del corpus, no negociables):
    PROPIA sea flyer_evento/foto_evento: productora/venue/fecha = valor
    no vacio mas frecuente; handles = union sin duplicados.
 3. Fuzzy-match (difflib, texto normalizado: lower/sin tildes/sin
-   puntuacion) contra data/productoras/*.json y knowledge/productoras|
-   venues/*.yaml -- ratio>=0.82 = canonico, 0.70-0.82 = dudoso, <0.70 =
-   "nuevo?". Jamas se manda texto literal a la DB.
+   puntuacion) contra data/rd.db (la proyeccion que build_rd_db() ya
+   fusiona desde data/productoras/*.json + knowledge/productoras/*.yaml +
+   knowledge/venues/*.yaml -- la unica fuente, nunca dos lecturas
+   separadas de lo mismo) -- ratio>=0.82 = canonico, 0.70-0.82 = dudoso,
+   <0.70 = "nuevo?". Jamas se manda texto literal a la DB.
 4. Separacion: solo categoria (de obra) flyer_evento/foto_evento aporta
    datos_evento; material_rd/ficha_sustancia/logo/otro NUNCA generan
    candidato productora/venue. Valores basura (<3 caracteres
@@ -500,33 +502,103 @@ def _repo_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
+def _rd_database_module():
+    """Importa flujo.rd.database (la unica fuente que arma el catalogo por
+    defecto). None si el paquete no esta disponible -- degrada como
+    cualquier otra dependencia opcional de este archivo (PyYAML, PIL):
+    nunca tumba el loop, el catalogo vacio hace caer todo a "nuevo?"."""
+    import sys
+
+    try:
+        return __import__("flujo.rd.database", fromlist=["database"])
+    except ImportError:
+        pass
+    src_path = _repo_root() / "src"
+    if str(src_path) not in sys.path:
+        sys.path.insert(0, str(src_path))
+    try:
+        return __import__("flujo.rd.database", fromlist=["database"])
+    except ImportError:
+        return None
+
+
+def _variantes_de_productora(row: dict) -> list[str]:
+    variantes = [row["nombre"]] if row.get("nombre") else []
+    variantes.extend(a for a in row.get("aliases") or [] if a)
+    if row.get("instagram"):
+        variantes.append(row["instagram"])
+    return variantes
+
+
 def cargar_catalogo_productoras(ruta_override=None) -> list[dict]:
-    """Default: data/productoras/*.json + knowledge/productoras/*.yaml
-    (raiz del repo). Con --catalogo-productoras: escanea SOLO ese
-    directorio (json+yaml). Sin catalogos -> [] -> todo cae a "nuevo?"."""
+    """Default: consulta data/rd.db -- la unica fuente que build_rd_db() ya
+    fusiona desde data/productoras/*.json + knowledge/productoras/*.yaml
+    (perfil enriquecido incluido). Antes, este loader y database.py leian
+    esos mismos archivos por separado con logica propia cada uno; ahora la
+    DB es la unica que los toca y este catalogo solo la consulta.
+    Con --catalogo-productoras: escanea SOLO ese directorio (json+yaml),
+    sin pasar por la DB -- uso puntual/aislado (tests, catalogo de prueba).
+    Sin catalogo disponible -> [] -> todo cae a "nuevo?"."""
     if ruta_override:
         return _cargar_entradas_dir(ruta_override)
-    raiz = _repo_root()
-    entradas = _cargar_entradas_dir(raiz / "data" / "productoras")
-    entradas.extend(_cargar_entradas_dir(raiz / "knowledge" / "productoras"))
-    return entradas
+    database = _rd_database_module()
+    if database is None:
+        return []
+    database.build_rd_db()
+    return [
+        {"canonico": row["nombre"], "variantes": _variantes_de_productora(row)}
+        for row in database.productoras()
+    ]
 
 
 def cargar_catalogo_venues(ruta_override=None) -> list[dict]:
-    """Default: knowledge/venues/*.yaml (raiz del repo). Con
-    --catalogo-venues: escanea SOLO ese directorio (json+yaml)."""
+    """Default: consulta data/rd.db (tabla `venues`, proyectada desde
+    knowledge/venues/*.yaml por build_rd_db()). Con --catalogo-venues:
+    escanea SOLO ese directorio (json+yaml), sin pasar por la DB."""
     if ruta_override:
         return _cargar_entradas_dir(ruta_override)
-    raiz = _repo_root()
-    return _cargar_entradas_dir(raiz / "knowledge" / "venues")
+    database = _rd_database_module()
+    if database is None:
+        return []
+    database.build_rd_db()
+    return [
+        {"canonico": row["nombre"], "variantes": [row["nombre"]] if row.get("nombre") else []}
+        for row in database.venues()
+    ]
+
+
+# productora pegada a sponsors ("X, Banco de Chile, entel") o a
+# un co-presentador ("X presenta Y") en el mismo string -- el prompt de
+# vision no las separa (no hay campo "sponsors" en el esquema), y
+# SequenceMatcher sobre el string completo castiga el ratio por el
+# largo extra aunque el nombre real este limpio adentro. Medido:
+# "Picnic Electronik Santiago, Banco de Chile, e) entel" contra
+# "Piknic Electronik" da 0.485 completo, 0.744 solo el primer segmento.
+_SEPARADORES_PRODUCTORA = re.compile(
+    r",|/|\||&| presenta | x |\bpresenta\b", re.IGNORECASE)
+
+
+def _segmentos_de(crudo: str) -> list[str]:
+    """Trozos de `crudo` cortados por separadores tipicos entre una
+    productora y lo que la acompaña en el mismo texto. Nunca reemplaza
+    el intento con el string completo, solo se suma."""
+    return [p.strip() for p in _SEPARADORES_PRODUCTORA.split(crudo or "")
+            if p and p.strip()]
 
 
 def mejor_match(crudo: str, catalogo: list[dict]) -> tuple:
     """(canonico|None, ratio) del mejor match de `crudo` (normalizado)
     contra las variantes normalizadas del catalogo. (None, 0.0) si
-    `crudo` esta vacio o el catalogo esta vacio."""
-    crudo_norm = normalizar_texto(crudo)
-    if not crudo_norm or not catalogo:
+    `crudo` esta vacio o el catalogo esta vacio.
+
+    Prueba el string completo Y cada segmento (ver `_segmentos_de`) contra
+    cada variante, y se queda con el mejor ratio de todos los intentos --
+    nunca peor que solo probar el string completo, a veces mejor cuando el
+    nombre real viene acompañado de otra cosa en el mismo campo."""
+    candidatos = [normalizar_texto(crudo)] + [
+        normalizar_texto(seg) for seg in _segmentos_de(crudo)]
+    candidatos = [c for c in dict.fromkeys(candidatos) if c]
+    if not candidatos or not catalogo:
         return None, 0.0
 
     mejor_canonico = None
@@ -536,10 +608,11 @@ def mejor_match(crudo: str, catalogo: list[dict]) -> tuple:
             variante_norm = normalizar_texto(variante)
             if not variante_norm:
                 continue
-            ratio = SequenceMatcher(None, crudo_norm, variante_norm).ratio()
-            if ratio > mejor_ratio:
-                mejor_ratio = ratio
-                mejor_canonico = entrada["canonico"]
+            for candidato in candidatos:
+                ratio = SequenceMatcher(None, candidato, variante_norm).ratio()
+                if ratio > mejor_ratio:
+                    mejor_ratio = ratio
+                    mejor_canonico = entrada["canonico"]
     return mejor_canonico, round(mejor_ratio, 3)
 
 

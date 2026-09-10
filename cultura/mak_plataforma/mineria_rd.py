@@ -651,9 +651,12 @@ def _borrador_venue_yaml(slug: str, datos: dict) -> str:
 
 
 def _borrador_evento_conocido(datos: dict) -> dict:
-    """Shape identico a productora_eventos: nombre, fecha, venue, estado,
-    fuente, fuentes_primarias. confirmado_auto si match >=0.82,
-    needs_confirmation si dudoso (0.70-0.82)."""
+    """Shape identico a `productora_eventos` (ver flujo/src/flujo/rd/database.py
+    y el `eventos` de data/productoras/*.json): nombre, fecha, venue, estado,
+    fuente, fuentes_primarias. `estado` es el vocabulario que la base YA usa
+    (piknic.json trae "pasado_needs_confirmation" a mano desde antes de esto):
+    confirmado_auto si el match fue >=0.82, needs_confirmation si fue dudoso
+    (0.70-0.82) -- nunca mas alto que lo que el ratio realmente sostiene."""
     estado = ("confirmado_auto" if datos["clase"] == "match"
               else "needs_confirmation")
     fuentes = sorted(
@@ -687,6 +690,18 @@ def proponer(consolidado: dict, outdir: str = "propuestas_mineria") -> None:
     venues_nuevos = consolidado.get("venues_nuevos", {})
     eventos_conocidos = consolidado.get("eventos_conocidos", [])
 
+    for datos in eventos_conocidos:
+        # Nombre de archivo pensado para que un humano lo reconozca de un
+        # vistazo en el listado: productora + fecha, el minimo que el
+        # usuario pidio (2026-09-09) -- no el obra_id ni el issue.
+        nombre_archivo = "%s__%s.json" % (
+            datos["slug_productora"], _slug(datos["fecha"]))
+        ruta = _ruta_segura(base, "eventos_conocidos", nombre_archivo)
+        with open(ruta, "w", encoding="utf-8") as f:
+            json.dump(_borrador_evento_conocido(datos), f,
+                      ensure_ascii=False, indent=2)
+            f.write("\n")
+
     lineas_resumen = [
         "# Propuestas de mineria RD",
         "",
@@ -719,15 +734,6 @@ def proponer(consolidado: dict, outdir: str = "propuestas_mineria") -> None:
         lineas_resumen.append(
             "- %s (evidencia: %d archivo(s))" % (datos["nombre"], datos["evidencia"])
         )
-
-    for datos in eventos_conocidos:
-        nombre_archivo = "%s__%s.json" % (
-            datos["slug_productora"], _slug(datos["fecha"]))
-        ruta = _ruta_segura(base, "eventos_conocidos", nombre_archivo)
-        with open(ruta, "w", encoding="utf-8") as f:
-            json.dump(_borrador_evento_conocido(datos), f,
-                      ensure_ascii=False, indent=2)
-            f.write("\n")
 
     lineas_resumen.append("")
     lineas_resumen.append(
