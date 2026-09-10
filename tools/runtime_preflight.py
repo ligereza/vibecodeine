@@ -489,17 +489,21 @@ def _declared_port_from_branch(
     if not isinstance(profile, dict):
         return None
     hub = profile.get("hub")
-    if not isinstance(hub, dict):
-        return None
-    modules = {
-        str(hub.get(key))
-        for key in ("module", "compatibility_module")
-        if isinstance(hub.get(key), str)
-    }
-    if source_declared not in modules:
-        return None
-    port = hub.get("default_port")
-    return port if isinstance(port, int) else None
+    hubs = profile.get("hubs") if isinstance(profile.get("hubs"), list) else []
+    if isinstance(hub, dict) and hub and not hubs:
+        hubs = [hub]
+    for declared in hubs:
+        if not isinstance(declared, dict):
+            continue
+        modules = {
+            str(declared.get(key))
+            for key in ("module", "compatibility_module")
+            if isinstance(declared.get(key), str)
+        }
+        if source_declared in modules:
+            port = declared.get("default_port")
+            return port if isinstance(port, int) else None
+    return None
 
 
 # --------------------------------------------------------------------------

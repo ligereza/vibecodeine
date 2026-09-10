@@ -31,7 +31,19 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def test_contract_port_matches_the_branch_profile():
     profile = json.loads((ROOT / "branch_profile.json").read_text(encoding="utf-8"))
-    declared = profile.get("hub", {}).get("default_port")
+    declared_hubs = profile.get("hubs")
+    if isinstance(declared_hubs, list):
+        declared = next(
+            (
+                item.get("default_port")
+                for item in declared_hubs
+                if isinstance(item, dict)
+                and item.get("module") == "src/flujo/web/hub.py"
+            ),
+            None,
+        )
+    else:
+        declared = profile.get("hub", {}).get("default_port")
     assert hub.CONTRACT_PORT == 8765
     assert declared == hub.CONTRACT_PORT, (
         "the port the code contracts for and the port branch_profile.json "

@@ -85,7 +85,7 @@ target-version = ["py310"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-q -m mak"
+addopts = "-q -m \"mak or flujo or integration or repo_hygiene\""
 strict_config = true
 strict_markers = true
 markers = [

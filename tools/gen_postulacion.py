@@ -162,7 +162,9 @@ def _criteria_by_section(bases: dict) -> dict[str, list[dict]]:
     return mapping
 
 
-def review(bases: dict, project: dict) -> list[dict]:
+def review(
+    bases: dict, project: dict, *, today: date | None = None
+) -> list[dict]:
     """Every finding, blocking ones first. Empty means nothing blocks."""
     findings: list[dict] = []
 
@@ -279,7 +281,7 @@ def review(bases: dict, project: dict) -> list[dict]:
     closes = deadlines.get("closes")
     if closes:
         try:
-            days_left = (date.fromisoformat(closes) - date.today()).days
+            days_left = (date.fromisoformat(closes) - (today or date.today())).days
         except ValueError:
             days_left = None
         if days_left is not None:

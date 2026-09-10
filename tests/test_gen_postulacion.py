@@ -94,7 +94,10 @@ class TestDeclaredBases:
 
 class TestValidProject:
     def test_a_complete_project_does_not_block(self, bases, valid_project) -> None:
-        assert [f for f in review(bases, valid_project) if f["level"] == BLOCKING] == []
+        assert [
+            f for f in review(bases, valid_project, today=date(2026, 9, 4))
+            if f["level"] == BLOCKING
+        ] == []
 
     def test_the_empty_template_blocks_on_everything(self, bases) -> None:
         # A freshly requested template is not an application. If it passed the

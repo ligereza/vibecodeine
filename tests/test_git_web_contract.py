@@ -3,9 +3,6 @@
 import re
 from pathlib import Path
 
-import pytest
-
-
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOWS = ROOT / ".github" / "workflows"
 
@@ -14,47 +11,32 @@ def _workflow(name: str) -> str:
     return (WORKFLOWS / name).read_text(encoding="utf-8")
 
 
-def test_ci_targets_linux_and_its_own_operational_branch_only():
-    """The monolithic `ci.yml` was retired on 2026-09-02.
-
-    It was replaced by one workflow per lane, and the branch assertion had to
-    invert with it: the old test demanded `branches: [main]`, and under the
-    current topology main is a historical aggregate that is never a deployment
-    target. Each operational CI now triggers on the branch that owns its
-    surface -- ci-mak on MAK, ci-integration on MAK because the integration
-    lane is the composition of both checkouts, and ci-flujo on FLUJO from the
-    FLUJO checkout.
-    """
+def test_ci_targets_linux_and_separates_lanes_from_integrated_main():
+    """The integrated baseline and the operational lanes have distinct CI."""
     for name in ("ci-mak.yml", "ci-integration.yml"):
         text = _workflow(name)
         assert "windows-latest" not in text, name
         assert "runs-on: ubuntu-latest" in text, name
         assert "mejoras" not in text, name
 
-        # The trigger lists carry only operational branches. ci-integration
-        # names both on purpose: the lane is the composition, so a change on
-        # either side can break it.
+        # MAK CI belongs to MAK; the composition CI belongs to the integrated
+        # main baseline. FLUJO has its own workflow in the portable lane.
         listas = re.findall(r"branches: \[([^\]]*)\]", text)
         assert listas, name
         for lista in listas:
             refs = {ref.strip() for ref in lista.split(",") if ref.strip()}
-            assert refs <= {"MAK", "FLUJO"}, (name, sorted(refs))
+            expected = {"MAK"} if name == "ci-mak.yml" else {"main"}
+            assert refs == expected, (name, sorted(refs))
             assert refs, name
 
 
 def test_pull_request_composition_checks_the_revision_under_review():
     integration = _workflow("ci-integration.yml")
     assert "github.event.pull_request.merge_commit_sha" in integration
-    assert "github.base_ref == 'MAK'" in integration
-    assert "github.base_ref == 'FLUJO'" in integration
-
-    # The second checkout in CI FLUJO must follow the event revision. A fixed
-    # ref would silently test the branch tip instead of the pull request.
-    flujo_workflow = ROOT / "flujo" / ".github" / "workflows" / "ci-flujo.yml"
-    if not flujo_workflow.is_file():
-        pytest.skip("requires the sibling FLUJO checkout")
-    text = flujo_workflow.read_text(encoding="utf-8")
-    assert "ref: FLUJO" not in text
+    assert "github.base_ref == 'MAK'" not in integration
+    assert "github.base_ref == 'FLUJO'" not in integration
+    assert "ref: ${{ github.event_name == 'pull_request'" in integration
+    assert "path: flujo" not in integration
 
 
 def test_automated_gates_cannot_publish_repo_changes():

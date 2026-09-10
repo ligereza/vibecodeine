@@ -59,7 +59,8 @@ def test_no_domain_routes_a_read_into_the_sibling_motor_checkout():
         for path in cfg.get("read_paths", []):
             first = Path(path).parts[0] if Path(path).parts else ""
             assert first != "flujo", (name, path)
-            assert not path.startswith("src/flujo"), (name, path)
+            # Integrated main carries the FLUJO source tree locally; only the
+            # sibling checkout spelling is forbidden here.
 
 
 def test_every_domain_contract_file_exists():

@@ -80,10 +80,10 @@ def _help(path: list[str]) -> str:
         "NO_COLOR": "1",
         "PYTHONIOENCODING": "utf-8",
     }
-    # MAK consume el CLI desde el checkout físico FLUJO hermano. El mapa debe
-    # interrogar esa fuente canónica, no un paquete que casualmente gane en
-    # sys.path del entorno global.
-    raiz_src = str(RAIZ / "flujo" / "src")
+    # The integrated main tree carries src/flujo locally. Operational MAK still
+    # uses the sibling FLUJO worktree, so retain that fallback for the lane.
+    raiz_src_path = RAIZ / "src" if (RAIZ / "src").is_dir() else RAIZ / "flujo" / "src"
+    raiz_src = str(raiz_src_path)
     pythonpath = entorno.get("PYTHONPATH", "")
     entorno["PYTHONPATH"] = raiz_src + (os.pathsep + pythonpath if pythonpath else "")
     r = subprocess.run(

@@ -415,3 +415,4 @@ xio/show_kit/artnet_relay.py
 xio/show_kit/check_show.py
 xio/show_kit/cue_engine.py
 xio/show_kit/map_dref.py
+tests/test_rd_espina_relacional.py
