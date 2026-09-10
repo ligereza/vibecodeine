@@ -234,6 +234,10 @@
   .archive-view-meta span{border:1px solid #28241e;padding:2px 4px}
   .archive-view-provenance{margin-top:5px;color:#686158;font-size:.47rem;overflow-wrap:anywhere}
   .archive-view-omitted{margin-top:6px;color:#81796d;font-size:.49rem}
+  .archive-view-fold{margin-top:7px}
+  .archive-view-fold>summary{cursor:pointer;list-style:none;color:#d1b68b;font-size:.52rem;letter-spacing:.07em;text-transform:uppercase}
+  .archive-view-fold>summary::-webkit-details-marker{display:none}
+  .archive-view-fold[open]>summary{margin-bottom:4px}
   .archive-view-gaps{margin-top:9px;border-top:1px solid #332f29;padding-top:8px;color:#8f887d;font-size:.54rem;line-height:1.5}
   .archive-view-gaps strong{color:#b7af9f;font-weight:500}
   .archive-view-source{margin-top:7px;color:#6f685f;font-size:.49rem;line-height:1.45;overflow-wrap:anywhere}
@@ -1351,12 +1355,24 @@ function archiveViewFormatLabel(formatId){
   return {'declared-works':'obras declaradas','observed-field':'campo observado','practice-context':'práctica y contexto'}[formatId]||formatId;
 }
 
+/* roleNote y epistemic_status son constantes por formato (no por item): se
+   declaran una vez en la cabecera de cada sección (archiveViewReadyContent)
+   en vez de repetirse en cada <li>, que es lo que inflaba la pestaña con
+   texto idéntico repetido hasta 24 veces por formato. */
+function archiveViewFormatNote(formatId){
+  return {
+    'declared-works':{role:'registro declarado en la fuente',status:'declared_source_record'},
+    'observed-field':{role:'observación de fuente · no declaración del artista',status:'observed_source_record'},
+    'practice-context':{role:'contexto técnico · no obra automáticamente',status:'observed_source_record'},
+  }[formatId]||{role:'',status:''};
+}
+
 function archiveViewItem(item,formatId){
   const label=archiveViewDisplayLabel(item);
-  const description=formatId==='declared-works'?(item.summary||'sin resumen declarado'):(item.observed_description||item.summary||(formatId==='practice-context'?'registro técnico sin descripción declarada':'sin descripción observada'));
-  const roleNote=formatId==='practice-context'?'contexto técnico · no obra automáticamente':formatId==='observed-field'?'observación de fuente · no declaración del artista':'registro declarado en la fuente';
+  const description=formatId==='declared-works'?(item.summary||'sin resumen declarado'):(item.observed_description||item.summary||null);
+  const descriptionHtml=description?`<div class="archive-view-description">${esc(description)}</div>`:'';
   const tags=(item.tags||[]).slice(0,4).map(tag=>`<span>${esc(tag)}</span>`).join('');
-  return `<li class="archive-view-item"><span class="archive-view-item-title" data-neutral="${label.neutral}">${esc(label.text)}</span>${label.neutral?'<span class="archive-view-neutral">etiqueta de referencia · no es título autoral</span>':''}<div class="archive-view-description">${esc(description)}</div><div class="archive-view-meta"><span>${esc(item.date||'sin fecha')}</span><span>${esc(roleNote)}</span><span>${Number(item.link_degree||0)} vínculos</span>${tags}</div><div class="archive-view-provenance">procedencia: ${esc(item.source_ref)} · estado ${esc(item.epistemic_status)}</div></li>`;
+  return `<li class="archive-view-item"><span class="archive-view-item-title" data-neutral="${label.neutral}">${esc(label.text)}</span>${label.neutral?'<span class="archive-view-neutral">etiqueta de referencia · no es título autoral</span>':''}${descriptionHtml}<div class="archive-view-meta"><span>${esc(item.date||'sin fecha')}</span><span>${Number(item.link_degree||0)} vínculos</span>${tags}</div><div class="archive-view-provenance">${esc(item.source_ref)}</div></li>`;
 }
 
 function archiveViewContracurator(view){
@@ -1391,7 +1407,14 @@ function archiveViewReadyContent(view){
   const byId=new Map(view.items.map(item=>[item.item_id,item]));
   const formats=view.formats.map(format=>{
     const rows=format.item_ids.map(itemId=>archiveViewItem(byId.get(itemId),format.format_id)).join('');
-    return `<section class="archive-view-format" aria-labelledby="archive-view-${esc(format.format_id)}"><div class="archive-view-format-header"><h3 id="archive-view-${esc(format.format_id)}">${esc(archiveViewFormatLabel(format.format_id))}</h3><b>${format.item_ids.length}</b></div><div class="archive-view-format-purpose">${esc(format.purpose)}</div><ul class="archive-view-list">${rows||'<li class="archive-view-item">Sin registros seleccionados en este formato.</li>'}</ul><div class="archive-view-omitted">${format.omitted_count} registros omitidos por el límite; permanecen en la fuente.</div></section>`;
+    const note=archiveViewFormatNote(format.format_id);
+    const list=`<ul class="archive-view-list">${rows||'<li class="archive-view-item">Sin registros seleccionados en este formato.</li>'}</ul><div class="archive-view-omitted">${format.omitted_count} registros omitidos por el límite; permanecen en la fuente.</div>`;
+    /* declared-works son pocas (obras con título+resumen explícito) y van
+       siempre visibles; observed-field/practice-context pueden traer hasta
+       max_items_per_format filas cada una y son las que convertían la
+       pestaña en un muro de texto — quedan plegadas, sin borrar nada. */
+    const body=format.format_id==='declared-works'?list:`<details class="archive-view-fold"><summary>${format.item_ids.length} registros · mostrar</summary>${list}</details>`;
+    return `<section class="archive-view-format" aria-labelledby="archive-view-${esc(format.format_id)}"><div class="archive-view-format-header"><h3 id="archive-view-${esc(format.format_id)}">${esc(archiveViewFormatLabel(format.format_id))}</h3><b>${format.item_ids.length}</b></div><div class="archive-view-format-purpose">${esc(format.purpose)} — ${esc(note.role)} · estado ${esc(note.status)}</div>${body}</section>`;
   }).join('');
   const gaps=view.gaps.length?view.gaps.map(gap=>esc(gap)).join(' · '):'sin gaps declarados';
   return `<div class="archive-view-summary" aria-label="Conteos del archivo"><div class="archive-view-stat"><b>${view.catalog.piece_count}</b><span>piezas fuente</span></div><div class="archive-view-stat"><b>${view.catalog.link_count}</b><span>vínculos fuente</span></div><div class="archive-view-stat"><b>${view.selection.selected_item_count}</b><span>filas visibles</span></div><div class="archive-view-stat"><b>${view.selection.omitted_piece_count}</b><span>omitidas, no borradas</span></div></div><div class="archive-view-formats">${formats}</div>${archiveViewContracurator(view)}<div class="archive-view-gaps"><strong>Gaps declarados:</strong> ${gaps}</div><div class="archive-view-source">procedencia: ${esc(view.source.path_hint)} · ${esc(view.source.fuente)} · generado ${esc(view.source.generated||'sin fecha declarada')} · ${esc(view.source.input_hash)}</div><div class="archive-view-boundary">Lectura interna y read-only. No infiere autor, serie, publicación ni elegibilidad; publicación=false · submission=false · dispatch=false · promotion=none.</div>`;
