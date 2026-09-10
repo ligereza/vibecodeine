@@ -1,7 +1,7 @@
 # IRIS: Mesa de Montaje
 
 **Convocatoria:** Fondart Regional — Línea Creación Artística: Innovación y Nuevos Formatos Creativos — Concurso General 2027
-**Cierre:** 2026-09-11
+**Cierre:** 2026-09-16 (VERIFICADO 2026-09-09; reemplaza el 2026-09-11 registrado el 2026-09-05)
 **Solicitado al fondo:** $18.000.000 CLP
 **Duración:** 12 meses
 

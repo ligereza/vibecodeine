@@ -28,6 +28,8 @@
       "kind": "official_resolution",
       "status": "RESOLVED",
       "verified": "2026-09-07",
+      "reverified_on_portal": "2026-09-09",
+      "reverification_note": "VERIFICADO 2026-09-09 vía WebFetch sobre https://www.fondosdecultura.cl/fondos/fondart-nacional/lineas-de-concurso/investigacion-fondart-nacional-2027/: el portal confirma 14 de septiembre 15:00 hrs como cierre general y 16 de septiembre 15:00 hrs para las cuatro regiones del norte. Sin cambios respecto de la resolución Rex 2596 ya registrada abajo.",
       "resolution": "Rex 2596, de 2026",
       "approving_resolution_of_these_bases": "Res. Ex. 2166, de 2026",
       "local_source_ref": "projects/cultura/dossiers/codex-remoto-20260906/fuentes/txt/Rex-2596-ano-2026.txt",

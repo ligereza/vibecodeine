@@ -2,7 +2,7 @@
 
 **Convocatoria:** Fondart Regional — Línea Creación Artística: Innovación y Nuevos Formatos Creativos — Concurso General 2027
 **Región de ejecución propuesta:** Región Metropolitana
-**Cierre informado por el portal oficial:** 11 de septiembre de 2026, 15:00 hrs de Santiago
+**Cierre informado por el portal oficial:** 16 de septiembre de 2026, 15:00 hrs de Santiago (VERIFICADO 2026-09-09: ampliación posterior unificó el cierre para todas las regiones, incluida Metropolitana; reemplaza el 11 de septiembre registrado el 2026-09-05)
 **Solicitado al fondo:** $18.000.000 CLP
 **Duración:** 12 meses
 
@@ -201,6 +201,7 @@ El proyecto dejará tres resultados transferibles: una obra exhibible, un protoc
 ---
 
 Bases leídas el 2026-09-05: https://www.fondosdecultura.cl/wp-content/uploads/2026/08/CreacionArtistica-Regional2027.pdf
+Fecha de cierre reverificada el 2026-09-09 contra la ficha oficial de la línea: https://www.fondosdecultura.cl/creacion-artistica-innovacion-y-nuevos-formatos-creativos-fondart-regional-2027/
 
 ## Pendientes del operador — [FALTA]
 
