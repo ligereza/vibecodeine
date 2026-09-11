@@ -94,7 +94,7 @@ Network Destination        Netmask          Gateway       Interface  Metric
     faces = (ROOT / "xio" / "FACES.md").read_text(encoding="utf-8")
     for marker in (
         "CURRENT FIELD SURFACE CONTRACT",
-        "FLUJO Hub | MAK `:8765`",
+        "FLUJO engine | Windows portable",
         "XIO field host",
         "XIO-RD",
         "XIO-FOH",

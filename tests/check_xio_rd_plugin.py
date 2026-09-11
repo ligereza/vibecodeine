@@ -8,16 +8,32 @@ calls the plugin boundary directly against an isolated database.
 from __future__ import annotations
 
 import importlib.util
+import os
 import sys
 import tempfile
 import types
 from pathlib import Path
 
-from test_xio_rd_field import _Context, _payload, _schema
-
-
 ROOT = Path(__file__).resolve().parents[1]
 PLUGIN = ROOT / "xio" / "new-plugins" / "rd_field" / "__init__.py"
+
+
+def _load_fixture_helpers():
+    """Load the canonical isolated fixture helpers from the XIO repo."""
+    configured = os.environ.get("XIO_SOURCE_ROOT", "").strip()
+    xio_root = Path(configured) if configured else ROOT.parent / "XIO"
+    helper = xio_root / "tests" / "test_xio_rd_field.py"
+    if not helper.is_file():
+        raise FileNotFoundError(f"XIO fixture helper unavailable: {helper}")
+    spec = importlib.util.spec_from_file_location("xio_rd_field_fixture_helpers", helper)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module._Context, module._payload, module._schema
+
+
+_Context, _payload, _schema = _load_fixture_helpers()
 
 
 class _Request:
