@@ -423,6 +423,14 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 self._send_json({"productoras": [], "venues": [], "error": str(e)}, status=200)
             return
+        if path == "/api/rd-db/event-link":
+            try:
+                from ..rd.panel import rd_event_link
+                key = (parse_qs(parsed.query).get("eventKey") or [""])[0]
+                self._send_json(rd_event_link(self.root, key))
+            except Exception as e:
+                self._send_json({"status": "error", "error": str(e)}, status=200)
+            return
         if path == "/api/portafolio":
             try:
                 self._send_json(self._get_portafolio())
@@ -723,6 +731,22 @@ class HubRequestHandler(BaseHTTPRequestHandler):
                 self._send_json(result)
             except Exception as e:
                 self._send_json({"error": str(e)}, status=400)
+            return
+
+        if p == "/api/rd-db/event-link":
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length).decode("utf-8")
+            try:
+                data = json.loads(body or "{}")
+                from ..rd.panel import rd_event_link
+                result = rd_event_link(
+                    self.root,
+                    data.get("event_key") or data.get("eventKey"),
+                    data.get("overrides"),
+                )
+                self._send_json(result, status=404 if result.get("status") == "not_found" else 200)
+            except Exception as e:
+                self._send_json({"status": "error", "error": str(e)}, status=400)
             return
 
         if p == "/api/cotizacion/render":

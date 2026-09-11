@@ -284,5 +284,130 @@ completed:
     evidence: phone runtime, dynamic host, RD plugin and FOH context checks
       PASS; web typecheck/build:rd/build:iskvw PASS; XIO Android Gradle tests
       and assembleDebug PASS; FLUJO commit 9ef5b2b7 pushed.
-remaining: none for the stated objective. Future changes can extend active FOH
-  signal interpretation, but are outside this completed separation milestone.
+remaining: the user has explicitly reopened the objective with the following
+  core additions: create/build/install a native XIO-FOH APK with its own menu;
+  make it the active signal listener rather than treating foh_monitor HTML as
+  a substitute; finish automated graphical RD event fichas and explicit
+  event-to-rider/venue links; and verify the physical/runtime paths.
+
+## Reopened objective — 2026-09-11
+
+status: active
+requirements:
+  - Native XIO-FOH APK exists as a separate Android package and has its own menu.
+  - XIO-FOH can actively listen to OSC, Art-Net, sACN and timecode locally,
+    persist an offline FOH log, and expose the host ISKVW hub for viewers.
+  - FLUJO-ISKVW remains the visualization/tool hub and does not become RD.
+  - FLUJO-RD produces graphical producer/event fichas with automated host
+    result summaries, and links event -> venue -> rider/layout explicitly.
+  - RAIDER is part of the RD workflow, not only an APK shortcut.
+  - Both APKs and their required buttons/navigation are verified on Xiaomi.
+verification_required:
+  - Gradle unit/build checks for the new FOH project.
+  - ADB install/package evidence for the second APK without removing RD.
+  - Physical UI navigation evidence for RD and FOH.
+  - Real UDP loopback probes for OSC, Art-Net, sACN and timecode.
+  - Offline persistence/reload and browser view of the resulting FOH log.
+  - RD fixture/event graph and explicit rider-link behavior.
+current_state:
+  - XIO-RD APK exists and is built; no FOH Android project/package exists yet.
+  - XIO foh_monitor is a Python/server listener plus HTML hub, useful as the
+    protocol reference but not a replacement for the requested APK.
+  - RD graphical panel and RAIDER route exist, but automatic event/rider
+    linking is partial and not yet proven end-to-end.
+  - XIO and FLUJO worktrees were inspected; unrelated FLUJO dirty files remain
+    preserved and must not be swept into targeted commits.
+last_critique: >-
+  The previous completion claim used server routes and source/build evidence as
+  a proxy for the stronger user requirement of a second active APK and physical
+  verification. That proxy is invalid. Direct implementation of an independent
+  FOH APK has lower total risk than further polishing the HTML first; the APK
+  can reuse the proven UDP contracts and link to the existing hub.
+selected_action: change_method
+next_action: scaffold a separate FOH Android project from the proven Gradle
+  baseline, implement the active listener and menu, then build before any
+  device install.
+next_checkpoint_trigger: FOH project compiles or a build blocker repeats.
+
+## Checkpoint — densidad de fichas corregida 2026-09-11
+
+status: active
+completed:
+  - item: Detectada y corregida la expansión vertical innecesaria de fichas RD.
+    evidence: `RdDbPanel.tsx` usa micrográficos por evento y chips flexibles;
+      no se añadieron filas a la base de datos.
+  - item: La proyección RD expone claves estables y estados separados para
+      venue, rider y layout, sin inventar enlaces.
+    evidence: `src/flujo/rd/panel.py` `_wire_event_links` y build pendiente.
+current_state:
+  - FOH APK compila, pero su instalación en Xiaomi fue rechazada por
+    `INSTALL_FAILED_USER_RESTRICTED`; APK está staged en Download esperando
+    autorización visible del dispositivo.
+  - XIO plugin mirror incluye modo `app_proxy` y `/ingest`.
+  - RD UI acaba de compactarse; aún falta verificar build y, después, la
+    automatización efectiva de rider/layout.
+last_critique: La densidad visual era una regresión aunque la información fuese
+  correcta; conservar gráficos pero cambiar a microvisualización minimiza
+  espacio y mantiene el requisito de fichas gráficas.
+next_action: Ejecutar typecheck/build:rd, luego implementar el enlace/acción
+  explícita de rider/layout usando los consumidores existentes de `flujo.plano`
+  sin crear una tabla paralela.
+next_checkpoint_trigger: build RD pasa o se detecta una incompatibilidad de
+  datos en los nuevos campos.
+
+## Checkpoint — ruido de datos corregido 2026-09-11
+
+status: active
+completed:
+  - item: La proyección RD omite `rider_ref`/`layout_ref` vacíos.
+    evidence: `datos_panel` read-only: 7 eventos, 0 refs vacíos emitidos.
+  - item: Las fichas no repiten placeholders vacíos; muestran micrográficos
+      compactos y un contador agregado de enlaces faltantes.
+    evidence: `RdDbPanel.tsx`; typecheck y `build:rd` PASS; bundle regenerado
+      y sincronizado con XIO/FLUJO mirror.
+current_state:
+  - FOH APK build PASS; package `cl.xio.foh` staged on Xiaomi but install is
+    blocked by device policy `INSTALL_FAILED_USER_RESTRICTED`.
+  - XIO/FLUJO foh_monitor source mirror includes `app_proxy` and `/ingest`.
+  - RD event links are deterministic and safe but rider/layout generation is
+    not yet wired to the existing `flujo.plano` consumer.
+next_action: Implement one reversible RD action/endpoint that consumes the
+  existing plano renderer for an exact event record, without making a second
+  DB or guessing absent venue/rider data; then add its UI action compactly.
+next_checkpoint_trigger: endpoint/consumer test or a confirmed missing source
+  parameter that must remain review-pending.
+
+## Revisión de espacios vacíos y consumidor Plano-Rider — 2026-09-11
+
+status: active
+completed:
+  - item: La proyección de enlaces ya no serializa `ref: ""`, `id: null` ni
+      nombres vacíos; sólo conserva valores fuente o estados verificables.
+    evidence: datos_panel inspeccionado: siete eventos, cero valores vacíos y
+      cero claves `ref` sin contenido.
+  - item: La ficha de productora dejó de ocupar una tarjeta completa con un
+      placeholder de venue no calculado; ahora muestra sólo el resumen de
+      venues que existe y un conteo real cuando corresponde.
+    evidence: `RdDbPanel.tsx`, typecheck y build:rd PASS.
+  - item: El event_key exacto ahora consume el motor existente `flujo.plano`
+      mediante `/api/rd-db/event-link`, sin tabla paralela ni escritura.
+    evidence: `tests/test_rd_event_links.py`: pendiente exacto cuando faltan
+      parámetros y render listo con un draft explícito; ambos PASS.
+  - item: El runtime de Termux fue relanzado por la ruta normal, sin logout ni
+      cambios de cuenta, y quedó en modo `app_proxy` para que la APK sea dueña
+      de la escucha.
+    evidence: Xiaomi `foh_monitor/status`: `listener_mode=app_proxy`, canales
+      con mensaje `listener delegado a XIO-FOH APK`, IP actual `10.129.201.10`.
+current_state:
+  - FOH APK compilada y staged en `/sdcard/Download/xio-foh-debug.apk`; la
+    instalación automática fue bloqueada por `INSTALL_FAILED_USER_RESTRICTED`.
+      Falta la aprobación visible de Android para obtener evidencia física.
+  - XIO responde por la IP dinámica actual; no se conserva la IP histórica
+      `10.248.64.39` como configuración fija.
+  - `foh_monitor` y el contrato APK pasan sus pruebas estáticas/dinámicas;
+      los probes reales de UDP y navegación física dependen de instalar la APK.
+next_action: Obtener aprobación visible de instalación en Xiaomi, abrir
+  `cl.xio.foh`, probar navegación, persistencia offline y cuatro entradas UDP;
+  después ejecutar probes de visualización y sincronización al host.
+next_checkpoint_trigger: package `cl.xio.foh` aparece instalado o la política
+  Android vuelve a rechazar la instalación con una causa nueva.

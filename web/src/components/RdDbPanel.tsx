@@ -21,6 +21,7 @@ interface Venue {
   preferido: boolean;
 }
 interface Evento {
+  event_key?: string;
   nombre: string;
   fecha?: string;
   fecha_iso?: string | null;
@@ -30,6 +31,11 @@ interface Evento {
   lineup?: string[];
   fuentes_primarias?: string[];
   sin_fuente_primaria?: boolean;
+  rider_ref?: string;
+  layout_ref?: string;
+  venue_link?: { id?: string | null; name?: string; status?: string };
+  rider_link?: { ref?: string; status?: string; generated_key?: string };
+  layout_link?: { ref?: string; status?: string; generated_key?: string };
 }
 interface Distribucion {
   valor: string;
@@ -168,6 +174,7 @@ export default function RdDbPanel() {
   const [hostEventRef, setHostEventRef] = useState('');
   const [hostSamples, setHostSamples] = useState<RdHostSamples | null>(null);
   const [hostError, setHostError] = useState('');
+  const [planoEstado, setPlanoEstado] = useState<{ key: string; status: 'cargando' | 'ready' | 'pending_review' | 'error'; missing?: string[]; error?: string } | null>(null);
   // Cache-buster: tras reemplazar un logo hay que forzar que el <img> lo relea.
   const [rev, setRev] = useState(0);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -291,6 +298,31 @@ export default function RdDbPanel() {
   const hostColorRows = Object.entries(hostColors)
     .sort(([, left], [, right]) => right - left)
     .slice(0, 8);
+  const enlacePendiente = (ev: Evento) => [ev.rider_link?.status !== 'explicit', ev.layout_link?.status !== 'explicit'].filter(Boolean).length;
+  const venueResumen = activa?.eventos?.reduce<Record<string, number>>((counts, ev) => {
+    const venue = ev.venue_link?.name || ev.venue;
+    if (venue) counts[venue] = (counts[venue] || 0) + 1;
+    return counts;
+  }, {}) ?? {};
+  const venueMasRepetido = Object.entries(venueResumen).sort(([, left], [, right]) => right - left)[0];
+
+  const abrirPlanoRider = async (eventKey: string) => {
+    setPlanoEstado({ key: eventKey, status: 'cargando' });
+    try {
+      const response = await fetch('/api/rd-db/event-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event_key: eventKey }),
+      });
+      const result = await response.json();
+      if (!response.ok || result.status === 'error' || result.status === 'not_found') {
+        throw new Error(result.error || `HTTP ${response.status}`);
+      }
+      setPlanoEstado({ key: eventKey, status: result.status, missing: result.missing });
+    } catch (error) {
+      setPlanoEstado({ key: eventKey, status: 'error', error: String(error instanceof Error ? error.message : error) });
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -549,18 +581,10 @@ export default function RdDbPanel() {
               </div>
               {activa.eventos?.length ? (
                 <>
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-xl border border-dashed border-amber-900/60 bg-amber-950/10 p-4">
-                    <span className="block text-[10px] font-bold uppercase tracking-wider text-amber-400">Venue más repetido</span>
-                    <span className="mt-1 block text-sm text-zinc-300">Pendiente de conexión con <code>triangular.py</code></span>
-                    <span className="mt-1 block text-[11px] leading-relaxed text-zinc-600">No se inventa una frecuencia a partir de una lista de venues sin conteo.</span>
-                  </div>
-                  <div className="rounded-xl border border-zinc-800 bg-zinc-950/40 p-4">
-                    <span className="block text-[10px] font-bold uppercase tracking-wider text-zinc-600">Venues conocidos</span>
-                    <span className="mt-1 block text-sm text-zinc-300">{activa.venues.length ? activa.venues.map(v => v.nombre).join(' · ') : 'Aún no vinculados'}</span>
-                    <span className="mt-1 block text-[11px] leading-relaxed text-zinc-600">Referencia existente; no reemplaza el cálculo histórico.</span>
-                  </div>
-                </div>
+                {(activa.venues.length > 0 || venueMasRepetido) && <div className="mt-4 flex flex-wrap items-center gap-1.5 text-[10px]">
+                  {venueMasRepetido && <span className="rounded border border-sky-900/50 bg-sky-950/20 px-2 py-1 text-sky-300">venue más usado: {venueMasRepetido[0]} · {venueMasRepetido[1]} evento{venueMasRepetido[1] === 1 ? '' : 's'}</span>}
+                  {activa.venues.map(v => <span key={v.nombre} className="rounded border border-zinc-800 px-2 py-1 text-zinc-500">ficha venue: {v.nombre}</span>)}
+                </div>}
                 <div className="mt-4 grid gap-3 md:grid-cols-2">
                   {activa.eventos.map((ev, index) => (
                     <article key={`${ev.nombre}-${index}`} className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-4">
@@ -569,13 +593,26 @@ export default function RdDbPanel() {
                           <h3 className="font-semibold text-zinc-100">{ev.nombre}</h3>
                           <p className="mt-1 text-xs text-zinc-500">{ev.fecha || 'Fecha pendiente'}</p>
                         </div>
-                        <span className="rounded bg-zinc-800 px-2 py-1 text-[10px] text-zinc-400">{ev.estado || 'sin estado'}</span>
+                        <div className="flex shrink-0 items-center gap-1.5">
+                          <span className="rounded bg-zinc-800 px-2 py-1 text-[10px] text-zinc-400">{ev.estado || 'sin estado'}</span>
+                          {!SIN_SERVIDOR && ev.event_key && <button type="button" onClick={() => abrirPlanoRider(ev.event_key!)} className="rounded border border-emerald-900/60 px-2 py-1 text-[10px] text-emerald-300 hover:bg-emerald-950/40">Plano / rider</button>}
+                        </div>
                       </div>
-                      <div className="mt-3 grid gap-2 text-xs sm:grid-cols-3">
-                        <div><span className="block text-[10px] uppercase tracking-wider text-zinc-600">Venue</span><span className="text-zinc-300">{ev.venue || 'pendiente'}</span></div>
-                        <div><span className="block text-[10px] uppercase tracking-wider text-zinc-600">Rider / plano</span><span className="text-zinc-500">pendiente de enlace</span></div>
-                        <div><span className="block text-[10px] uppercase tracking-wider text-zinc-600">Fuente</span><span className="text-zinc-500">{ev.fuentes_primarias?.length ? 'primaria' : 'pendiente'}</span></div>
+                      <div className="mt-3 flex flex-wrap items-center gap-1.5 text-[10px]">
+                        {(ev.venue_link?.name || ev.venue) && <span className="rounded border border-sky-900/50 bg-sky-950/20 px-2 py-1 text-sky-300">⌖ {ev.venue_link?.name || ev.venue}</span>}
+                        {ev.venue_link?.status === 'exact' && <span className="rounded border border-emerald-900/50 bg-emerald-950/20 px-2 py-1 text-emerald-300">venue exacto</span>}
+                        {ev.rider_link?.status === 'explicit' && <span className="rounded border border-zinc-800 px-2 py-1 text-zinc-500">Rider: {ev.rider_link.ref}</span>}
+                        {ev.layout_link?.status === 'explicit' && <span className="rounded border border-zinc-800 px-2 py-1 text-zinc-500">Layout: {ev.layout_link.ref}</span>}
+                        {ev.fuentes_primarias?.length ? <span className="rounded border border-zinc-800 px-2 py-1 text-zinc-500">fuente primaria</span> : null}
+                        {enlacePendiente(ev) > 0 && <span className="rounded border border-amber-900/50 bg-amber-950/20 px-2 py-1 text-amber-300">{enlacePendiente(ev)} enlace{enlacePendiente(ev) > 1 ? 's' : ''} pendiente{enlacePendiente(ev) > 1 ? 's' : ''}</span>}
+                        {ev.event_key && <code className="max-w-full truncate px-1 text-[9px] text-zinc-700" title={ev.event_key}>{ev.event_key}</code>}
                       </div>
+                      {(() => {
+                        const estadoEvento = planoEstado?.key === ev.event_key ? planoEstado : null;
+                        return estadoEvento && estadoEvento.status !== 'cargando' && <p className={`mt-2 text-[10px] ${estadoEvento.status === 'error' ? 'text-red-300' : estadoEvento.status === 'ready' ? 'text-emerald-300' : 'text-amber-300'}`}>
+                          {estadoEvento.status === 'ready' ? 'Motor Plano-Rider listo para este evento.' : estadoEvento.status === 'pending_review' ? `Pendiente: faltan ${(estadoEvento.missing || []).join(', ')}.` : `No se pudo abrir: ${estadoEvento.error}`}
+                        </p>;
+                      })()}
                     </article>
                   ))}
                 </div>
@@ -595,12 +632,18 @@ export default function RdDbPanel() {
                 </div>
                 <span className="rounded bg-violet-950/60 px-2 py-1 text-[10px] text-violet-300">{data!.evidencia_2025!.length} hojas/eventos fuente</span>
               </div>
-              <div className="grid gap-2 p-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 p-3 sm:grid-cols-2 lg:grid-cols-3">
                 {data!.evidencia_2025!.map(ev => (
-                  <button key={ev.event_id} type="button" onClick={() => { setEvidenciaActiva(ev.event_id); setProductoraActiva(null); }} className={`min-h-20 rounded-xl border p-3 text-left transition-colors ${evidenciaActiva === ev.event_id ? 'border-violet-500 bg-violet-950/40' : 'border-zinc-800 bg-zinc-950/40 hover:border-violet-800'}`}>
-                    <span className="block font-medium text-zinc-200">{ev.nombre}</span>
-                    <span className="mt-1 block text-[10px] text-zinc-600"><code>{ev.event_id}</code> · {ev.fecha_iso || 'fecha no resuelta'} · {ev.filas} filas</span>
-                  </button>
+                  <article key={ev.event_id} className={`rounded-xl border p-3 ${evidenciaActiva === ev.event_id ? 'border-violet-500 bg-violet-950/40' : 'border-zinc-800 bg-zinc-950/40'}`}>
+                    <button type="button" onClick={() => { setEvidenciaActiva(ev.event_id); setProductoraActiva(null); }} className="w-full text-left hover:text-violet-200">
+                      <span className="flex items-center justify-between gap-2"><span className="font-medium text-zinc-200">{ev.nombre}</span><span className="rounded bg-violet-950/60 px-1.5 py-0.5 text-[9px] text-violet-300">auto</span></span>
+                      <span className="mt-1 block text-[10px] text-zinc-600"><code>{ev.event_id}</code> · {ev.fecha_iso || 'fecha no resuelta'} · {ev.filas} filas</span>
+                    </button>
+                    <div className="mt-3 grid gap-2">
+                      {!!ev.muestra_declarada.distribucion.length && <MiniDistribution label="Declaración" values={ev.muestra_declarada.distribucion} />}
+                      {!!ev.resultados_colorimetricos.distribucion.length && <MiniDistribution label="Colorimetría" values={ev.resultados_colorimetricos.distribucion} />}
+                    </div>
+                  </article>
                 ))}
               </div>
             </section>
@@ -690,6 +733,19 @@ function DistributionCard({
         {values.length > 8 && <p className="text-[10px] text-zinc-600">Se muestran los 8 valores más frecuentes; el total incluye todos.</p>}
         {!values.length && <p className="text-[11px] text-zinc-600">Sin valores registrados.</p>}
       </div>
+    </div>
+  );
+}
+
+function MiniDistribution({ label, values }: { label: string; values: Distribucion[] }) {
+  const top = values.slice(0, 3);
+  return (
+    <div className="flex items-center gap-2">
+      <span className="w-16 shrink-0 text-[9px] font-bold uppercase tracking-wider text-zinc-600">{label}</span>
+      {top.length ? <div className="flex h-4 min-w-0 flex-1 items-end gap-1" title={top.map(item => `${item.valor || 'sin dato'}: ${item.porcentaje.toFixed(1)}%`).join(' · ')}>
+        {top.map(item => <span key={item.valor} className="min-w-1 flex-1 rounded-t bg-violet-400/80" style={{ height: `${Math.max(12, Math.min(100, item.porcentaje))}%` }} />)}
+      </div> : <span className="text-[9px] text-zinc-700">sin datos</span>}
+      {top[0] && <span className="w-10 shrink-0 text-right text-[9px] text-zinc-500">{top[0].porcentaje.toFixed(0)}%</span>}
     </div>
   );
 }

@@ -10,8 +10,117 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import re
+import unicodedata
 from collections import Counter
 from pathlib import Path
+
+
+def _event_key(productora_slug: str, nombre: str, fecha: str = "") -> str:
+    """Stable key for an RD event card; never uses a display-name lookup."""
+    def token(value: str) -> str:
+        plain = unicodedata.normalize("NFD", str(value or "").lower())
+        plain = "".join(c for c in plain if unicodedata.category(c) != "Mn")
+        return re.sub(r"[^a-z0-9]+", "-", plain).strip("-") or "sin-dato"
+    return f"rd:{token(productora_slug)}:{token(nombre)}:{token(fecha)}"
+
+
+def _wire_event_links(productora_slug: str, event: dict, venues: list[dict]) -> None:
+    """Add deterministic links without guessing a venue or rider asset.
+
+    An exact normalized venue match is safe to automate. Rider/layout files
+    are only linked when the source event explicitly provides their refs;
+    otherwise the UI receives a generated key and a review status.
+    """
+    event["event_key"] = _event_key(productora_slug, event.get("nombre", ""), event.get("fecha_iso") or event.get("fecha", ""))
+    event_venue = str(event.get("venue") or "").strip()
+    def norm(value: str) -> str:
+        plain = unicodedata.normalize("NFD", value.lower())
+        plain = "".join(c for c in plain if unicodedata.category(c) != "Mn")
+        return re.sub(r"[^a-z0-9]+", " ", plain).strip()
+    venue_map = {norm(v.get("nombre", "")): v for v in venues if v.get("nombre")}
+    matched = venue_map.get(norm(event_venue)) if event_venue else None
+    venue_link = {"status": "exact" if matched else "pending_review"}
+    if matched and matched.get("id"):
+        venue_link["id"] = matched["id"]
+    if matched:
+        venue_link["name"] = matched["nombre"]
+    elif event_venue:
+        # Conservar el texto de origen sólo cuando existe; no emitir una
+        # cadena vacía como si fuera un dato de venue.
+        venue_link["name"] = event_venue
+    event["venue_link"] = venue_link
+    rider_ref = str(event.get("rider_ref") or "").strip()
+    layout_ref = str(event.get("layout_ref") or "").strip()
+    rider_link = {
+        "status": "explicit" if rider_ref else "pending_review",
+        "generated_key": event["event_key"] + ":rider",
+    }
+    if rider_ref:
+        rider_link["ref"] = rider_ref
+    layout_link = {
+        "status": "explicit" if layout_ref else "pending_review",
+        "generated_key": event["event_key"] + ":layout",
+    }
+    if layout_ref:
+        layout_link["ref"] = layout_ref
+    event["rider_link"] = rider_link
+    event["layout_link"] = layout_link
+
+
+def rd_event_link(root: Path, event_key: str, overrides: dict | None = None) -> dict:
+    """Resolve one exact RD event and consume the existing Plano engine.
+
+    This is a read/render projection, not a second database.  A generated key
+    is not treated as proof that a rider or layout exists: rendering remains
+    ``pending_review`` until the source event has the real pack and operating
+    parameters.  Optional overrides are for the operator's current draft and
+    never get written back to the catalogue.
+    """
+    wanted = str(event_key or "").strip()
+    if not wanted:
+        return {"status": "invalid", "error": "event_key es obligatorio"}
+    catalog = datos_panel(Path(root))
+    found = None
+    for productora in catalog["productoras"]:
+        for event in productora.get("eventos", []):
+            if event.get("event_key") == wanted:
+                found = (productora, event)
+                break
+        if found:
+            break
+    if not found:
+        return {"status": "not_found", "event_key": wanted,
+                "error": "event_key no existe en la ficha RD"}
+
+    productora, event = found
+    draft = dict(event)
+    supplied = overrides if isinstance(overrides, dict) else {}
+    for key in ("pack", "preset", "duracion_horas", "asistentes_estimados",
+                "voluntarios", "layout_mode"):
+        value = supplied.get(key, event.get(key))
+        if value is not None and str(value).strip() != "":
+            draft[key] = value
+
+    required = ("pack", "duracion_horas", "asistentes_estimados")
+    missing = [key for key in required if draft.get(key) in (None, "")]
+    result = {
+        "status": "pending_review" if missing else "ready",
+        "event_key": wanted,
+        "productora_slug": productora["slug"],
+        "productora": productora["nombre"],
+        "event": event,
+        "missing": missing,
+        "links": {
+            "venue": event.get("venue_link"),
+            "rider": event.get("rider_link"),
+            "layout": event.get("layout_link"),
+        },
+    }
+    if not missing:
+        from ..serve.server import api_plano_render
+        result["render"] = api_plano_render(draft)
+    return result
 
 
 def _candidatos_logo(base, slug: str, ref: str = "") -> list:
@@ -132,6 +241,10 @@ def datos_panel(root) -> dict:
                             "lineup": [str(x) for x in (ev.get("lineup") or [])],
                             "co_organiza": [str(x) for x in (ev.get("co_organiza") or [])],
                         })
+                        if ev.get("rider_ref"):
+                            eventos_norm[-1]["rider_ref"] = str(ev["rider_ref"])
+                        if ev.get("layout_ref"):
+                            eventos_norm[-1]["layout_ref"] = str(ev["layout_ref"])
             except Exception:
                 eventos_norm = []
 
@@ -181,6 +294,15 @@ def datos_panel(root) -> dict:
                 elif line.startswith("capacity_bucket:"):
                     info["capacidad"] = line.split(":", 1)[1].strip()
             venues_cat.append(info)
+
+    # Vinculos deterministicos para la ficha: el evento se puede automatizar
+    # sin convertir una coincidencia de nombre en una afirmacion. Solo el
+    # venue normalizado exacto se marca como seguro; rider/layout requieren un
+    # ref explicito en la fuente y, mientras tanto, conservan una clave estable
+    # para que el operador pueda completar el enlace sin crear otro evento.
+    for productora in prods:
+        for evento in productora["eventos"]:
+            _wire_event_links(productora["slug"], evento, venues_cat)
 
     # Estado de la triangulacion: cuantos eventos se pueden cruzar de verdad
     # (necesitan fecha ISO Y lineup). Es el numero que dice si esa tarea
