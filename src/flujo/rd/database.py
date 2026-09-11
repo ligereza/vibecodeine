@@ -22,7 +22,6 @@ vuelve segura una sustancia.
 from __future__ import annotations
 
 import json
-import os
 import hashlib
 import importlib.util
 import re
@@ -43,7 +42,6 @@ _SUPLEMENTOS_JSON = (
     / "01_contenido" / "contenido_suplementos_rd.json"
 )
 _PRODUCTORAS_DIR = _REPO / "data" / "productoras"
-_KNOWLEDGE_PRODUCTORAS_DIR = _REPO / "knowledge" / "productoras"  # *.yaml: perfil operativo enriquecido
 _TESTING_EVIDENCE_JSON = _REPO / "data" / "rd_fuentes" / "testeo_eventos_2025_evidence.json"
 _CANDIDATE_REGISTRIES = {
     "entity_universe_v0_1": (_REPO / "data" / "rd_fuentes" / "candidates" / "entity_universe_v0.1.json", "records"),
@@ -51,18 +49,23 @@ _CANDIDATE_REGISTRIES = {
     "relation_graph_v0_1": (_REPO / "data" / "rd_fuentes" / "candidates" / "relation_graph_v0.1.json", "relations"),
     "relation_index_v0_1": (_REPO / "data" / "rd_fuentes" / "candidates" / "relation_index_v0.1.json", "records"),
 }
-# The RD source roster is MAK research material, not motor material. The
-# portable motor may read it when the box is next to it, but must not require
-# it: MAK_RESEARCH_ROOT overrides, and the default is the parent checkout
-# because /home/mak/flujo sits inside /home/mak. Absent, the loader degrades
-# instead of raising FileNotFoundError.
-_MAK_RESEARCH_ROOT = Path(
-    os.environ.get("MAK_RESEARCH_ROOT", str(_REPO.parent / "cultura" / "mak_research"))
-)
-_FUENTES_PY = _MAK_RESEARCH_ROOT / "fuentes.py"
-MAK_RESEARCH_SOURCES_AVAILABLE = _FUENTES_PY.is_file()
+_FUENTES_PY = _REPO / "cultura" / "mak_research" / "fuentes.py"
 _VENUES_DIR = _REPO / "knowledge" / "venues"     # *.yaml canonicos
 _LOGOS_DIR = _REPO / "knowledge" / "logos"       # *.yaml canonicos
+
+
+def _es_productora_rd(datos: dict[str, Any]) -> bool:
+    """Keep non-RD artist/client records out of the RD projection.
+
+    MAK's broader catalogue may contain VJ artists alongside RD producers.
+    An explicit artist type is catalogue knowledge, not an event relation;
+    the source remains available to the broader catalogue but must not inflate
+    the RD database or its producer/event cards.
+    """
+    if datos.get("rd_scope") is False:
+        return False
+    tipo = str(datos.get("tipo") or "").strip().lower()
+    return tipo not in {"artist", "artist_dj", "dj"}
 # Directorios donde viven jsons con forma de evento (voluntarios/asistentes/...)
 _EVENTOS_GLOBS = (
     (_REPO / "jobs", "**/evento*.json"),
@@ -188,10 +191,7 @@ CREATE TABLE productoras (
     instagram TEXT,
     aliases   TEXT,                 -- JSON: formas literales que extrae la vision
     confirmado TEXT,                -- nota de confirmacion humana
-    notas     TEXT,
-    perfil_json TEXT                -- JSON: knowledge/productoras/*.yaml (affinity,
-                                     -- service_preferences, relationship, venues_recurrentes,
-                                     -- confidence...) cuando existe; NULL si no hay perfil
+    notas     TEXT
 );
 CREATE TABLE venues (
     id            TEXT PRIMARY KEY,   -- id canonico (espacio_riesco)
@@ -407,127 +407,6 @@ JOIN rd_reactivos_candidatos AS candidate
 """
 
 
-# ---------------------------------------------------------------------------
-# La columna vertebral: evento <-> productora(s) <-> venue, y la mesa de testeo.
-#
-# Hasta el 2026-09-05 los 42 eventos del cuaderno 2025 estaban `unlinked` y sin
-# un solo candidato de productora o de venue: el testeo y el catalogo eran dos
-# islas. Estas tablas las unen, y admiten lo que la realidad tiene y una clave
-# foranea sola no: un evento con VARIAS productoras. "Espacio Riesco con
-# THE GRID + SUNDECK + GLOVOX" no es un error de datos ni tres eventos; es una
-# fecha en colaboracion, y cual de las tres es anfitriona se averigua, no se
-# asume.
-#
-# Cada vinculo declara como se supo: MEDIDO (esta escrito en la fuente),
-# DERIVADO (calculado desde otro dato) o SUPUESTO (inferencia). Ninguno se
-# presenta como hecho, y `estado_revision` mantiene la compuerta humana que
-# `data/rd_fuentes/README.md` exige antes de publicar un enlace.
-# ---------------------------------------------------------------------------
-_SCHEMA_RELACIONES = """
-CREATE TABLE IF NOT EXISTS evento_productoras (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    evento_ref TEXT NOT NULL,
-    evento_origen TEXT NOT NULL,
-    productora_slug TEXT NOT NULL,
-    rol TEXT NOT NULL DEFAULT 'sin_determinar',
-    metodo TEXT NOT NULL,
-    evidencia TEXT,
-    confianza TEXT NOT NULL,
-    estado_revision TEXT NOT NULL DEFAULT 'pendiente_revision_humana',
-    UNIQUE(evento_ref, evento_origen, productora_slug)
-);
-
-CREATE TABLE IF NOT EXISTS evento_venues (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    evento_ref TEXT NOT NULL,
-    evento_origen TEXT NOT NULL,
-    venue_id TEXT,
-    venue_nombre TEXT NOT NULL,
-    metodo TEXT NOT NULL,
-    origen TEXT NOT NULL,
-    confianza TEXT NOT NULL,
-    estado_revision TEXT NOT NULL DEFAULT 'pendiente_revision_humana',
-    UNIQUE(evento_ref, evento_origen, venue_nombre)
-);
-
-CREATE TABLE IF NOT EXISTS mesas_testeo (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    evento_ref TEXT NOT NULL,
-    evento_origen TEXT NOT NULL,
-    numero INTEGER,
-    etiqueta TEXT,
-    origen TEXT NOT NULL,
-    UNIQUE(evento_ref, evento_origen, etiqueta)
-);
-"""
-
-
-# Lo que la app de ingreso de muestras va a escribir. Se declara ahora para que
-# la relacion exista desde el primer dia y no haya que retro-encajarla: una
-# muestra pertenece a una mesa, la mesa a un evento, y el evento ya tiene
-# productoras y venue por las tablas de arriba.
-#
-# Es acumulativo, como `registros_testeo`: `build_rd_db()` lo rescata y lo
-# repone, nunca lo rederiva. Hereda la misma regla de privacidad: ninguna
-# columna de identidad, y `fecha` siempre YYYY-MM-DD sin hora.
-_SCHEMA_MUESTRAS = """
-CREATE TABLE IF NOT EXISTS muestras (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    fecha TEXT NOT NULL,
-    mesa_id INTEGER REFERENCES mesas_testeo(id),
-    evento_ref TEXT,
-    evento_origen TEXT,
-    codigo_muestra TEXT,
-    sustancia_declarada TEXT NOT NULL,
-    tipo_muestra TEXT,
-    color TEXT,
-    textura TEXT,
-    logo_o_marca TEXT,
-    peso_mg REAL,
-    foto_ref TEXT,
-    notas TEXT,
-    descartada INTEGER DEFAULT 0
-);
-
-CREATE TABLE IF NOT EXISTS muestra_resultados (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    muestra_id INTEGER NOT NULL REFERENCES muestras(id),
-    reactivo TEXT NOT NULL,
-    resultado_color TEXT,
-    familia_detectada TEXT,
-    coincide_con_declarada INTEGER,
-    adulterante_sospechado TEXT,
-    limitacion TEXT NOT NULL DEFAULT 'presuntivo: senal de presencia, no identidad ni pureza ni dosis',
-    orden INTEGER
-);
-
-CREATE TABLE IF NOT EXISTS muestra_capturas (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    muestra_id INTEGER NOT NULL REFERENCES muestras(id),
-    capture_key TEXT NOT NULL,
-    kind TEXT,
-    captured_at_epoch INTEGER,
-    sha256 TEXT,
-    photo_ref TEXT,
-    silhouette_ref TEXT,
-    silhouette_preview_ref TEXT,
-    relief_ref TEXT,
-    geometry_signature TEXT,
-    relief_signature TEXT,
-    silhouette_confidence REAL,
-    relief_confidence REAL,
-    circularity REAL,
-    solidity REAL,
-    symmetry REAL,
-    contour_point_count INTEGER,
-    UNIQUE(muestra_id, capture_key)
-);
-
-CREATE INDEX IF NOT EXISTS idx_muestra_capturas_muestra
-    ON muestra_capturas(muestra_id);
-"""
-
-
 def _load_fuentes_module():
     global _FUENTES_MODULE
     if _FUENTES_MODULE is not None:
@@ -556,13 +435,83 @@ def _event_source_gate(source_text: Any) -> tuple[str, int]:
     )
 
 
+def _yaml_scalar(raw: str) -> Any:
+    """Decode the small scalar subset used by the canonical venue YAMLs."""
+    value = raw.strip()
+    if not value:
+        return {}
+    if value == "{}":
+        return {}
+    if value == "[]":
+        return []
+    if (value.startswith('"') and value.endswith('"')) or (
+        value.startswith("'") and value.endswith("'")
+    ):
+        return value[1:-1]
+    low = value.lower()
+    if low in {"true", "false"}:
+        return low == "true"
+    if low in {"null", "none", "~"}:
+        return None
+    try:
+        return int(value)
+    except ValueError:
+        return value
+
+
+def _load_yaml_minimal(path: Path) -> dict[str, Any] | None:
+    """Read the flat/one-level YAML subset needed by venue projections.
+
+    This is a dependency-free fallback, not a general YAML parser.  It keeps
+    top-level scalar fields and one-level mappings (the fields consumed by the
+    RD DB); list entries remain intentionally ignored rather than guessed.
+    """
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return None
+    data: dict[str, Any] = {}
+    section: dict[str, Any] | list[Any] | None = None
+    section_name = ""
+    for raw_line in lines:
+        if not raw_line.strip() or raw_line.lstrip().startswith("#"):
+            continue
+        indent = len(raw_line) - len(raw_line.lstrip(" "))
+        line = raw_line.strip()
+        if line.startswith("-"):
+            if section_name and isinstance(section, dict) and not section:
+                # A key with no scalar value followed by list items (currently
+                # used by the canonical venue `notes` fields).
+                section = []
+                data[section_name] = section
+            if isinstance(section, list):
+                item = line[1:].strip()
+                if ": " in item:
+                    item_key, item_value = item.split(": ", 1)
+                    section.append({item_key.strip(): _yaml_scalar(item_value)})
+                else:
+                    section.append(_yaml_scalar(item))
+            continue
+        match = re.match(r"^([A-Za-z_][A-Za-z0-9_-]*):(?:\s+(.*))?$", line)
+        if not match:
+            continue
+        key, raw_value = match.group(1), match.group(2) or ""
+        if indent == 0:
+            value = _yaml_scalar(raw_value)
+            data[key] = value
+            section = value if isinstance(value, dict) else None
+            section_name = key if section is not None else ""
+        elif section is not None and section_name:
+            section[key] = _yaml_scalar(raw_value)
+    return data
+
+
 def _load_yaml(path: Path) -> dict[str, Any] | None:
-    """Lee un yaml canonico si PyYAML esta disponible. Sin yaml, devuelve None
-    (la tabla venues queda vacia; el resto de la DB no se afecta)."""
+    """Read a canonical venue YAML, with a stdlib fallback when PyYAML is absent."""
     try:
         import yaml  # type: ignore
     except ImportError:
-        return None
+        return _load_yaml_minimal(path)
     try:
         data = yaml.safe_load(path.read_text(encoding="utf-8"))
         return data if isinstance(data, dict) else None
@@ -1233,248 +1182,6 @@ def _insert_testing_evidence(conn: sqlite3.Connection, doc: dict[str, Any]) -> N
         )
 
 
-def _rescatar_acumulativas(path: Path) -> dict[str, list[tuple]]:
-    """Las filas de terreno que un rebuild no debe destruir.
-
-    `build_rd_db()` borra el archivo y lo reescribe: eso esta bien para lo
-    derivado de fuentes canonicas, que se puede volver a derivar, y seria
-    destructivo para `registros_testeo`, `atenciones` y `encuestas`, que son
-    registros de terreno que no existen en ninguna otra parte.
-
-    Hasta el 2026-09-05 el problema se evitaba teniendolas en otro archivo,
-    `data/rd_datos.db`. El operador pidio una sola base, asi que se rescatan
-    aqui y se reponen despues del `CREATE`. Si `rd.db` todavia no las tiene y
-    la DB previa si, se traen de ahi una sola vez: esa es la migracion.
-
-    Devuelve por tabla la lista de filas, con las columnas en el orden en que
-    el archivo las declara, para que la reinsercion no dependa del schema
-    nuevo coincidiendo por posicion.
-    """
-    from . import datos as _datos
-
-    rescatadas: dict[str, list[tuple]] = {}
-    columnas: dict[str, list[str]] = {}
-    # Lo que la app de muestras escribe se acumula igual que los registros de
-    # terreno: una muestra fotografiada en una mesa no se puede volver a
-    # derivar de ninguna fuente canonica.
-    tablas = tuple(_datos.TABLAS_ACUMULATIVAS) + (
-        "muestras", "muestra_resultados", "muestra_capturas",
-        "xio_eventos", "xio_signal_events"
-    )
-    for origen in (path, _datos.LEGACY_DB_PATH):
-        if not origen.exists():
-            continue
-        conn = sqlite3.connect(f"file:{origen}?mode=ro", uri=True)
-        try:
-            for tabla in tablas:
-                if rescatadas.get(tabla):
-                    continue  # ya vino de una fuente anterior; no se duplica
-                try:
-                    cols = [r[1] for r in conn.execute(f"PRAGMA table_info({tabla})")]
-                    if not cols:
-                        continue
-                    filas = list(conn.execute(f'SELECT * FROM "{tabla}"'))
-                except sqlite3.DatabaseError:
-                    continue
-                if filas:
-                    rescatadas[tabla] = filas
-                    columnas[tabla] = cols
-        finally:
-            conn.close()
-    _RESCATE_COLUMNAS.clear()
-    _RESCATE_COLUMNAS.update(columnas)
-    return rescatadas
-
-
-_RESCATE_COLUMNAS: dict[str, list[str]] = {}
-
-
-def _reponer_acumulativas(
-    conn: sqlite3.Connection, rescatadas: dict[str, list[tuple]]
-) -> None:
-    """Crea las tablas acumulativas y devuelve sus filas al archivo nuevo."""
-    from . import datos as _datos
-
-    conn.executescript(_datos.SCHEMA_ACUMULATIVO)
-    conn.executescript(_SCHEMA_MUESTRAS)
-    from .xio_ingest import ensure_event_schema
-
-    ensure_event_schema(conn)
-    for tabla, filas in rescatadas.items():
-        cols = _RESCATE_COLUMNAS.get(tabla)
-        if not cols or not filas:
-            continue
-        marcas = ",".join("?" for _ in cols)
-        nombres = ",".join(f'"{c}"' for c in cols)
-        conn.executemany(
-            f'INSERT INTO "{tabla}" ({nombres}) VALUES ({marcas})', filas
-        )
-
-
-def _clave(texto: str) -> str:
-    """Comparable sin acentos, espacios ni puntuacion.
-
-    `Techno Youth`, `TECHNOYOUTH` y `technoyouth` son la misma productora
-    escrita de tres formas en el cuaderno 2025, y `Explicito` y `Explícito` son
-    la misma palabra. Comparar en crudo pierde esos vinculos en silencio.
-    """
-    limpio = unicodedata.normalize("NFKD", texto or "")
-    limpio = limpio.encode("ascii", "ignore").decode("ascii")
-    return re.sub(r"[^a-z0-9]+", "", limpio.lower())
-
-
-# Tres letras es el piso: por debajo, un alias como `TY` aparece dentro de
-# cualquier palabra y ata eventos que no le corresponden.
-_MIN_ALIAS = 3
-
-
-def _formas_por_productora(conn: sqlite3.Connection) -> dict[str, set[str]]:
-    """Cada productora con todas las formas en que se la puede nombrar."""
-    formas: dict[str, set[str]] = {}
-    for slug, nombre, aliases in conn.execute(
-        "SELECT slug, nombre, aliases FROM productoras"
-    ):
-        try:
-            lista = json.loads(aliases or "[]")
-        except (TypeError, ValueError):
-            lista = []
-        candidatas = {_clave(x) for x in ([slug, nombre] + list(lista)) if x}
-        formas[slug] = {c for c in candidatas if len(c) >= _MIN_ALIAS}
-    return formas
-
-
-def _mesa_desde_etiqueta(etiqueta: str) -> tuple[int | None, str | None]:
-    """La mesa de testeo, si el nombre de la hoja la nombra.
-
-    El cuaderno 2025 trae hojas como `Fiesta Dame 504 mesa 1` y `mesa 2`: en un
-    mismo evento hubo mas de una mesa y cada una llevo su planilla. Sin esto,
-    dos mesas del mismo evento se leen como dos eventos distintos.
-    """
-    m = re.search(r"\bmesa\s*(\d+)\b", etiqueta or "", flags=re.IGNORECASE)
-    if not m:
-        return None, None
-    return int(m.group(1)), m.group(0).strip()
-
-
-def _vincular_eventos_de_testeo(conn: sqlite3.Connection) -> dict[str, int]:
-    """Ata los 42 eventos del cuaderno 2025 al catalogo de productoras.
-
-    El vinculo sale del nombre del evento: el cuaderno los llama `Cachorros
-    0407`, `DAME 0911 A`, `Technoyouth 1209`. El nombre de la productora viene
-    dentro del nombre del evento, asi que se busca cada alias conocido dentro de
-    la etiqueta normalizada.
-
-    Lo que NO hace, a proposito:
-
-    - No inventa productoras. Un evento cuyo nombre no contiene ningun alias
-      conocido queda sin vinculo, y eso es informacion: son productoras que
-      faltan en el catalogo, no un fallo del emparejador.
-    - No decide el rol. Si un evento nombra a dos productoras, las dos entran
-      como `sin_determinar`: cual es anfitriona y cual colabora es un dato que
-      se averigua.
-    - No aprueba nada. Cada fila entra `pendiente_revision_humana`, que es la
-      compuerta que `data/rd_fuentes/README.md` exige antes de publicar.
-
-    El venue se propone solo si la productora tiene uno marcado `preferido`, y
-    entra como `SUPUESTO` con origen `habitual_de_productora`: que una
-    productora suela tocar en un lugar no prueba que esa fecha haya sido ahi.
-    """
-    formas = _formas_por_productora(conn)
-    habituales: dict[str, tuple[str | None, str]] = {}
-    for slug, venue_id, venue_nombre in conn.execute(
-        "SELECT productora_slug, venue_id, venue_nombre FROM productora_venues"
-        " WHERE preferido = 1"
-    ):
-        habituales.setdefault(slug, (venue_id, venue_nombre))
-
-    cuenta = {"eventos": 0, "vinculos": 0, "sin_vinculo": 0, "venues": 0, "mesas": 0}
-
-    for event_id, etiqueta in conn.execute(
-        "SELECT event_id, event_label_candidate FROM testeo_eventos_fuente"
-    ):
-        cuenta["eventos"] += 1
-        clave = _clave(etiqueta)
-        encontradas = sorted(
-            {
-                (slug, forma)
-                for slug, alias in formas.items()
-                for forma in alias
-                if forma and forma in clave
-            },
-            key=lambda par: (-len(par[1]), par[0]),
-        )
-        # Una productora puede coincidir por varios alias; se conserva el mas
-        # largo, que es el mas especifico.
-        mejor_por_slug: dict[str, str] = {}
-        for slug, forma in encontradas:
-            mejor_por_slug.setdefault(slug, forma)
-
-        if not mejor_por_slug:
-            cuenta["sin_vinculo"] += 1
-        for slug, forma in mejor_por_slug.items():
-            # Con una sola productora nombrada no se afirma que sea la
-            # anfitriona: solo que el nombre la nombra.
-            conn.execute(
-                "INSERT OR IGNORE INTO evento_productoras"
-                "(evento_ref, evento_origen, productora_slug, rol, metodo,"
-                " evidencia, confianza, estado_revision)"
-                " VALUES (?,?,?,?,?,?,?,?)",
-                (
-                    event_id,
-                    "testeo_2025",
-                    slug,
-                    "sin_determinar",
-                    "DERIVADO",
-                    f"alias '{forma}' dentro de la etiqueta '{etiqueta}'",
-                    "alta" if len(forma) >= 6 else "media",
-                    "pendiente_revision_humana",
-                ),
-            )
-            cuenta["vinculos"] += 1
-
-            venue = habituales.get(slug)
-            if venue is not None:
-                venue_id, venue_nombre = venue
-                conn.execute(
-                    "INSERT OR IGNORE INTO evento_venues"
-                    "(evento_ref, evento_origen, venue_id, venue_nombre,"
-                    " metodo, origen, confianza, estado_revision)"
-                    " VALUES (?,?,?,?,?,?,?,?)",
-                    (
-                        event_id,
-                        "testeo_2025",
-                        venue_id,
-                        venue_nombre,
-                        "SUPUESTO",
-                        "habitual_de_productora",
-                        "baja",
-                        "pendiente_revision_humana",
-                    ),
-                )
-                cuenta["venues"] += 1
-
-        numero, texto = _mesa_desde_etiqueta(etiqueta)
-        if texto is not None:
-            conn.execute(
-                "INSERT OR IGNORE INTO mesas_testeo"
-                "(evento_ref, evento_origen, numero, etiqueta, origen)"
-                " VALUES (?,?,?,?,?)",
-                (event_id, "testeo_2025", numero, texto, "etiqueta_2025"),
-            )
-            cuenta["mesas"] += 1
-
-    # El estado de enlace de la tabla de origen deja de mentir: ya no es
-    # `unlinked` cuando hay un candidato con evidencia.
-    conn.execute(
-        "UPDATE testeo_eventos_fuente SET link_status = 'candidate_from_label',"
-        " link_review_status = 'pendiente_revision_humana',"
-        " link_confidence = 'derivado_de_etiqueta'"
-        " WHERE event_id IN (SELECT evento_ref FROM evento_productoras"
-        "                    WHERE evento_origen = 'testeo_2025')"
-    )
-    return cuenta
-
-
 def build_rd_db(
     db_path: str | Path | None = None,
     *,
@@ -1492,16 +1199,12 @@ def build_rd_db(
     prod_dir = Path(productoras_dir) if productoras_dir is not None else _PRODUCTORAS_DIR
     ven_dir = Path(venues_dir) if venues_dir is not None else _VENUES_DIR
     path.parent.mkdir(parents=True, exist_ok=True)
-    # Antes de borrar nada: lo acumulado no se puede volver a derivar.
-    acumuladas = _rescatar_acumulativas(path)
     if path.exists():
         path.unlink()
 
     conn = sqlite3.connect(path)
     try:
         conn.executescript(_SCHEMA)
-        conn.executescript(_SCHEMA_RELACIONES)
-        _reponer_acumulativas(conn, acumuladas)
 
         # meta + reactivos
         reactivos_doc = json.loads(_REACTIVOS_JSON.read_text(encoding="utf-8"))
@@ -1578,12 +1281,13 @@ def build_rd_db(
 
         # productoras conocidas (store) + tablas hijas: tipos, venues, logos
         tipo_id = vnk_id = logo_id = prodev_id = 0
-        slugs_desde_json: set[str] = set()
         if prod_dir.exists():
             for pf in sorted(prod_dir.glob("*.json")):
                 try:
                     d = json.loads(pf.read_text(encoding="utf-8"))
                 except (OSError, ValueError):
+                    continue
+                if not _es_productora_rd(d):
                     continue
                 slug = pf.stem
                 conn.execute(
@@ -1598,7 +1302,6 @@ def build_rd_db(
                         d.get("notes"),
                     ),
                 )
-                slugs_desde_json.add(slug)
                 # tipos de fecha (vocabulario controlado)
                 from .vocab import normalize_tipos
 
@@ -1657,52 +1360,6 @@ def build_rd_db(
                         ),
                     )
 
-        # perfil operativo enriquecido (knowledge/productoras/*.yaml): affinity,
-        # service_preferences, relationship, venues_recurrentes, confidence...
-        # Antes de esto, extraccion_db.py leia data/productoras Y knowledge/
-        # productoras por separado para armar su catalogo de matching -- dos
-        # lecturas de la misma fuente. Ahora la DB es la unica fuente que
-        # consulta el matching (ver database.productoras()), asi que el perfil
-        # tiene que fusionarse aca. Nunca se ingesta una plantilla (id/name
-        # terminado en "template", ver rave_under_template.yaml: es un
-        # arquetipo de categoria, no una productora real).
-        if _KNOWLEDGE_PRODUCTORAS_DIR.exists():
-            for yf in sorted(_KNOWLEDGE_PRODUCTORAS_DIR.glob("*.yaml")):
-                perfil = _load_yaml(yf)
-                if not isinstance(perfil, dict):
-                    continue
-                pid = str(perfil.get("id") or yf.stem)
-                profile_name = str(perfil.get("name") or pid)
-                if pid.endswith("_template") or profile_name.strip().lower().endswith("template"):
-                    continue
-                aliases_extra = [
-                    a for a in (perfil.get("aliases") or []) if isinstance(a, str) and a.strip()
-                ]
-                perfil_json = json.dumps(perfil, ensure_ascii=False)
-                if pid in slugs_desde_json:
-                    row = conn.execute(
-                        "SELECT aliases FROM productoras WHERE slug = ?", (pid,)
-                    ).fetchone()
-                    existentes = json.loads(row[0]) if row and row[0] else []
-                    union = list(dict.fromkeys(existentes + aliases_extra))
-                    conn.execute(
-                        "UPDATE productoras SET aliases = ?, perfil_json = ? WHERE slug = ?",
-                        (json.dumps(union, ensure_ascii=False), perfil_json, pid),
-                    )
-                else:
-                    # productora que solo existe en knowledge/ (sin json propio
-                    # todavia en data/productoras/): igual entra al catalogo.
-                    conn.execute(
-                        "INSERT OR REPLACE INTO productoras"
-                        "(slug, nombre, instagram, aliases, confirmado, notas, perfil_json) "
-                        "VALUES (?,?,?,?,?,?,?)",
-                        (
-                            pid, profile_name, None,
-                            json.dumps(aliases_extra, ensure_ascii=False),
-                            None, None, perfil_json,
-                        ),
-                    )
-
         # eventos (jsons con forma de evento) + pack sugerido por voluntarios
         for i, (rel, d) in enumerate(_iter_evento_sources(), start=1):
             vol = d.get("voluntarios")
@@ -1730,11 +1387,6 @@ def build_rd_db(
         testing_doc = _load_testing_evidence()
         if testing_doc is not None:
             _insert_testing_evidence(conn, testing_doc)
-        # Con las productoras, los venues y la evidencia de testeo ya cargados,
-        # se atan: es lo ultimo porque necesita todo lo anterior en la misma
-        # transaccion.
-        _vincular_eventos_de_testeo(conn)
-
         conn.commit()
     finally:
         conn.close()
@@ -1813,14 +1465,13 @@ def suplementos(db_path: str | Path | None = None) -> list[dict[str, Any]]:
 
 
 def productoras(db_path: str | Path | None = None) -> list[dict[str, Any]]:
-    """Promotoras conocidas (aliases + perfil enriquecido deserializados)."""
+    """Promotoras conocidas (aliases deserializados)."""
     conn = connect(db_path)
     try:
         out: list[dict[str, Any]] = []
         for p in conn.execute("SELECT * FROM productoras ORDER BY slug").fetchall():
             d = dict(p)
             d["aliases"] = json.loads(d["aliases"]) if d.get("aliases") else []
-            d["perfil"] = json.loads(d["perfil_json"]) if d.get("perfil_json") else None
             out.append(d)
         return out
     finally:
@@ -1861,7 +1512,6 @@ def productora(slug: str, db_path: str | Path | None = None) -> dict[str, Any] |
             return None
         d = dict(row)
         d["aliases"] = json.loads(d["aliases"]) if d.get("aliases") else []
-        d["perfil"] = json.loads(d["perfil_json"]) if d.get("perfil_json") else None
         d["tipos_fecha"] = [
             r["tipo"] for r in conn.execute(
                 "SELECT tipo FROM productora_tipos WHERE productora_slug = ?", (slug,)

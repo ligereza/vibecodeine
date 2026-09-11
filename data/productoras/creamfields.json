@@ -31,11 +31,12 @@
   "notes": "Marca de festival EDM masivo. tipos_fecha son definicionales (festival de cabezas de cartel). El logo canónico existe en knowledge/logos/creamfields.yaml (source_needed). El venue Espacio Riesco es un ejemplo de escala, no una sede confirmada. Complementado con PR #210 (candidatos_db.jsonl match_ratio=1.0, obra_0304b8fe9a).",
   "eventos": [
     {
-      "nombre": "Creamfields Chile 2025",
-      "fecha": "11-12 octubre 2025",
-      "venue": "Club Hípico, Santiago",
-      "estado": "pasado",
-      "fuente": "PR #210 obra_0304b8fe9a (ruta_rel FLYER/SEGUNDOTRIPLE.mp4), fecha_cruda '11 - 12 Octubre 2025', match_ratio 1.0"
+     "nombre": "Creamfields Chile 2025",
+     "fecha": "11-12 octubre 2025",
+     "venue": "Club Hípico, Santiago",
+     "estado": "pasado",
+     "flyer_ref": "RD/FLYER/SEGUNDOTRIPLE.mp4",
+     "fuente": "PR #210 obra_0304b8fe9a (ruta_rel FLYER/SEGUNDOTRIPLE.mp4), fecha_cruda '11 - 12 Octubre 2025', match_ratio 1.0"
     }
   ]
 }

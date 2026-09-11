@@ -162,6 +162,7 @@ class EventoNormalizado:
     lineup: list[str] = field(default_factory=list)
     co_organiza: list[str] = field(default_factory=list)
     fuente: str = ""
+    extras: dict[str, Any] = field(default_factory=dict)
 
     def a_dict(self) -> dict[str, Any]:
         """Salida para el json: agrega campos SIN pisar los existentes."""
@@ -182,6 +183,17 @@ class EventoNormalizado:
             d["co_organiza"] = self.co_organiza
         if self.fuente:
             d["fuente"] = self.fuente
+        # Preserve only operational references/parameters that the RD panel
+        # is explicitly allowed to consume.  Contacts and arbitrary source
+        # fields never pass through this normalizer.
+        for key in (
+            "flyer_ref", "rider_ref", "layout_ref", "pack", "preset",
+            "duracion_horas", "asistentes_estimados", "voluntarios",
+            "layout_mode",
+        ):
+            value = self.extras.get(key)
+            if value not in (None, ""):
+                d[key] = value
         return d
 
 
@@ -199,6 +211,11 @@ def normalizar_evento(ev: dict[str, Any]) -> EventoNormalizado:
         lineup=lineup,
         co_organiza=co,
         fuente=str(ev.get("fuente") or ""),
+        extras={key: ev.get(key) for key in (
+            "flyer_ref", "rider_ref", "layout_ref", "pack", "preset",
+            "duracion_horas", "asistentes_estimados", "voluntarios",
+            "layout_mode",
+        ) if ev.get(key) not in (None, "")},
     )
 
 
