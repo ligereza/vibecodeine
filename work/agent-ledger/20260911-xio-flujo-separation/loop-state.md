@@ -172,14 +172,22 @@ completed:
       match XIO commit 11fbf66 byte-for-byte; live rd_field/info still reports
       the old shape and rd_field/view is 6214 bytes, while foh_monitor/view is
       still 404. This proves staging is correct and only runtime reload is left.
+  - item: Audited and rebuilt the native XIO-RD APK as the active measuring
+      device, separate from both browser hubs and FOH.
+    evidence: XIO/projects/rd-field/android source uses CAMERA/INTERNET,
+      local RdFieldDb/PhotoStore, exact host bootstrap event selection and
+      /api/plugins/rd_field/sync; Gradle testDebugUnitTest and assembleDebug
+      completed successfully; APK output is app/build/outputs/apk/debug/
+      app-debug.apk (7,564,079 bytes).
 current_state:
   files_or_resources:
     - XIO source and Xiaomi staging contain both generated hub.html files.
     - FLUJO source can rebuild rd.html and iskvw.html independently.
   tests_and_checks:
-    - typecheck, build, build:rd, build:iskvw: PASS
-    - XIO RD bridge/plugin and FOH context checks: PASS
-    - phone HTTP/listener/files/DB checks: PASS
+   - typecheck, build, build:rd, build:iskvw: PASS
+   - XIO RD bridge/plugin and FOH context checks: PASS
+   - phone HTTP/listener/files/DB checks: PASS
+    - XIO-RD Android Gradle unit tests and debug assembly: PASS
   assumptions:
     - The normal Termux launch path remains the only safe way to activate the
       staged HTML in the running phone process.
