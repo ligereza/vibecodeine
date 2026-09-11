@@ -197,3 +197,25 @@ current_state:
   next_action: When the existing Termux launch path is next used, verify /view
     and /info once; no code or database migration is required.
   next_checkpoint_trigger: live Termux launch or user interruption.
+
+## Checkpoint 2026-09-11 — reload audit
+
+status: active
+completed:
+  - item: Audited the existing XIO relaunch and selective reload paths.
+    evidence: run_server.sh copies /sdcard/xio_termux/new and
+      /sdcard/xio_termux/new-plugins into private $HOME paths before starting;
+      the generic HTTP plugin reload would therefore reload the old private
+      copy in the current process, not the staged files. ADB cannot read the
+      process environment due Android /proc permission denial.
+current_state:
+  files_or_resources:
+    - Staged source remains hash-identical to XIO commit 11fbf66.
+    - Live server remains healthy on port 5000 with durable RD DB present.
+tests_and_checks:
+  - No reload request sent; no force-stop, logout, login, or DB mutation.
+blockers:
+  - Activating staged files requires the existing normal Termux launch path.
+next_action: Wait for that normal launch or a user-visible external state change;
+  then verify the four route surfaces and hashes.
+next_checkpoint_trigger: Termux launch or user interruption.
