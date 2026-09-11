@@ -3,7 +3,7 @@
 # showcontrol -- the phone as a network show-control node
 
 This is the active control surface, not the read-only `foh_monitor` or
-`cultura/mak_xio_puente/monitor.py`. Its code being present in the repository does not
+`mak_xio_puente/monitor.py`. Its code being present in the repository does not
 prove that the plugin is installed or enabled on the Xiaomi; verify the runtime
 state and token before using any route in a live show.
 
@@ -122,7 +122,7 @@ POST /wol  {"mac":"AA:BB:CC:DD:EE:FF","verify_host":"1.2.3.4","verify_port":22,"
 ### OSC input (`orq` bidirectional -- the phone receives cues)
 ```bash
 POST /oscin        {"port":9001}                       # start listening (opt-in, off by default)
-POST /oscin        {"port":9001,"allow":["192.168.127.20"]}   # scope to source IPs
+POST /oscin        {"port":9001,"allow":["<IP-CLIENTE>"]}   # scope to source IPs
 POST /oscin/stop
 GET  /oscin                                            # listening?, port, rx/acted/ignored stats
 ```

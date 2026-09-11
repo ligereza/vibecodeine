@@ -482,6 +482,31 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 self._send_json({"productoras": [], "venues": [], "error": str(e)}, status=200)
             return
+        if path == "/api/vj/events":
+            query = parse_qs(parsed.query)
+            try:
+                self._send_json(self._get_vj_event_context(
+                    status=(query.get("status") or [None])[0],
+                    event_key=(query.get("eventKey") or [None])[0],
+                ))
+            except Exception as e:
+                self._send_json({
+                    "schema": "mak-vj-event-context-v1",
+                    "available": False,
+                    "read_only": True,
+                    "error": str(e)[:240],
+                }, status=200)
+            return
+        if path == "/api/vj/plano-draft":
+            event_key = (parse_qs(parsed.query).get("eventKey") or [""])[0].strip()
+            if not event_key:
+                self._send_json({"ok": False, "error": "eventKey es obligatorio"}, status=400)
+                return
+            try:
+                self._send_json(self._get_vj_plano_draft(event_key))
+            except Exception as e:
+                self._send_json({"ok": False, "error": str(e)[:240]}, status=200)
+            return
         if path == "/api/rd/muestras/bootstrap":
             if not self._xio_authorized():
                 self._send_json({"ok": False, "error": "xio_no_autorizado"}, status=401)
@@ -491,6 +516,40 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             except Exception as exc:
                 self._send_json({"ok": False, "error": str(exc)}, status=503)
             return
+        if path == "/api/rd/muestras":
+            if not self._xio_authorized():
+                self._send_json({"ok": False, "error": "xio_no_autorizado"}, status=401)
+                return
+            query = parse_qs(parsed.query)
+            event_ref = (query.get("eventRef") or [""])[0].strip()
+            if not event_ref:
+                self._send_json({"ok": False, "error": "eventRef es obligatorio"}, status=400)
+                return
+            sample_code = (query.get("sampleCode") or [""])[0].strip()
+            try:
+                self._send_json(self._get_xio_samples(event_ref, sample_code))
+            except (TypeError, ValueError) as exc:
+                self._send_json({"ok": False, "error": str(exc)[:240]}, status=400)
+            except Exception as exc:
+                self._send_json({"ok": False, "error": str(exc)[:240]}, status=503)
+            return
+        if path == "/api/rd/signals":
+            if not self._xio_authorized():
+                self._send_json({"ok": False, "error": "xio_no_autorizado"}, status=401)
+                return
+            session_id = (parse_qs(parsed.query).get("sessionId") or [""])[0].strip()
+            if not session_id:
+                self._send_json(
+                    {"ok": False, "error": "sessionId es obligatorio"},
+                    status=400,
+                )
+                return
+            try:
+                self._send_json(self._get_xio_application_events(session_id))
+            except Exception as exc:
+                self._send_json({"ok": False, "error": str(exc)[:240]}, status=503)
+            return
+
         if path == "/api/rd/topics":
             try:
                 self._send_json(rd_topics(self.root))
@@ -778,6 +837,36 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             try:
                 payload = json.loads(self.rfile.read(content_length).decode("utf-8") or "{}")
                 result = self._sync_xio_sample(payload)
+                self._send_json(result)
+            except (TypeError, ValueError, json.JSONDecodeError) as exc:
+                self._send_json({"ok": False, "error": str(exc)[:240]}, status=400)
+            except Exception as exc:
+                self._send_json({"ok": False, "error": str(exc)[:240]}, status=500)
+            return
+
+        if p == "/api/rd/eventos/sync":
+            if not self._xio_authorized():
+                self._send_json({"ok": False, "error": "xio_no_autorizado"}, status=401)
+                return
+            content_length = int(self.headers.get("Content-Length", 0) or 0)
+            try:
+                payload = json.loads(self.rfile.read(content_length).decode("utf-8") or "{}")
+                result = self._sync_xio_event(payload)
+                self._send_json(result)
+            except (TypeError, ValueError, json.JSONDecodeError) as exc:
+                self._send_json({"ok": False, "error": str(exc)[:240]}, status=400)
+            except Exception as exc:
+                self._send_json({"ok": False, "error": str(exc)[:240]}, status=500)
+            return
+
+        if p == "/api/rd/signals/sync":
+            if not self._xio_authorized():
+                self._send_json({"ok": False, "error": "xio_no_autorizado"}, status=401)
+                return
+            content_length = int(self.headers.get("Content-Length", 0) or 0)
+            try:
+                payload = json.loads(self.rfile.read(content_length).decode("utf-8") or "{}")
+                result = self._sync_xio_application_event(payload)
                 self._send_json(result)
             except (TypeError, ValueError, json.JSONDecodeError) as exc:
                 self._send_json({"ok": False, "error": str(exc)[:240]}, status=400)
@@ -1743,6 +1832,32 @@ class HubRequestHandler(BaseHTTPRequestHandler):
 
         return datos_panel(self.root)
 
+    def _get_vj_plano_draft(self, event_key: str) -> dict:
+        """Build a proposal-only Plano input from one exact VJ event key."""
+        from ..vj.event_context import (
+            DEFAULT_CONTEXT_DB_PATH, event_to_plano_draft, read_vj_event_context,
+        )
+
+        payload = read_vj_event_context(DEFAULT_CONTEXT_DB_PATH, event_key=event_key)
+        if not payload.get("available"):
+            return payload
+        events = payload.get("events") or []
+        if not events:
+            return {"schema": "mak-vj-plano-draft-v1", "available": False,
+                    "read_only": True, "reason": "event_not_found",
+                    "eventKey": event_key}
+        return event_to_plano_draft(events[0])
+
+
+
+    def _get_vj_event_context(self, *, status: str | None = None,
+                              event_key: str | None = None) -> dict:
+        """Read the separate, regenerable VJ event context; never builds it."""
+        from ..vj.event_context import DEFAULT_CONTEXT_DB_PATH, read_vj_event_context
+
+        return read_vj_event_context(DEFAULT_CONTEXT_DB_PATH,
+                                     status=status, event_key=event_key)
+
     def _xio_authorized(self) -> bool:
         """Optional shared token for the LAN-facing XIO collector."""
         expected = os.environ.get("XIO_FIELD_TOKEN", "").strip()
@@ -1754,11 +1869,39 @@ class HubRequestHandler(BaseHTTPRequestHandler):
 
         return bootstrap(DEFAULT_DB_PATH)
 
+    def _get_xio_samples(self, event_ref: str, sample_code: str = "") -> dict:
+        from ..rd.database import DEFAULT_DB_PATH
+        from ..rd.xio_ingest import load_samples
+
+        return load_samples(DEFAULT_DB_PATH, event_ref, sample_code)
+
     def _sync_xio_sample(self, payload: dict) -> dict:
         from ..rd.database import DEFAULT_DB_PATH
         from ..rd.xio_ingest import ingest
 
         return ingest(payload, DEFAULT_DB_PATH, workspace_root() / "xio_evidence")
+
+    def _sync_xio_event(self, payload: dict) -> dict:
+        from ..rd.database import DEFAULT_DB_PATH
+        from ..rd.xio_ingest import sync_event
+
+        return sync_event(payload, DEFAULT_DB_PATH)
+
+    def _sync_xio_application_event(self, payload: dict) -> dict:
+        from ..rd.database import DEFAULT_DB_PATH
+        from ..rd.xio_ingest import sync_application_event
+
+        return sync_application_event(payload, DEFAULT_DB_PATH)
+
+    def _get_xio_application_events(self, session_id: str) -> dict:
+        from ..rd.database import DEFAULT_DB_PATH
+        from ..rd.xio_ingest import load_application_events
+
+        return {
+            "schema": "xio-application-events-v1",
+            "sessionId": session_id,
+            "events": load_application_events(DEFAULT_DB_PATH, session_id),
+        }
 
     def _get_rd_datos_summary(self) -> dict:
         """GET /api/rd-datos-summary: resumen de la DB privacy-first de

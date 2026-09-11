@@ -500,6 +500,31 @@ CREATE TABLE IF NOT EXISTS muestra_resultados (
     limitacion TEXT NOT NULL DEFAULT 'presuntivo: senal de presencia, no identidad ni pureza ni dosis',
     orden INTEGER
 );
+
+CREATE TABLE IF NOT EXISTS muestra_capturas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    muestra_id INTEGER NOT NULL REFERENCES muestras(id),
+    capture_key TEXT NOT NULL,
+    kind TEXT,
+    captured_at_epoch INTEGER,
+    sha256 TEXT,
+    photo_ref TEXT,
+    silhouette_ref TEXT,
+    silhouette_preview_ref TEXT,
+    relief_ref TEXT,
+    geometry_signature TEXT,
+    relief_signature TEXT,
+    silhouette_confidence REAL,
+    relief_confidence REAL,
+    circularity REAL,
+    solidity REAL,
+    symmetry REAL,
+    contour_point_count INTEGER,
+    UNIQUE(muestra_id, capture_key)
+);
+
+CREATE INDEX IF NOT EXISTS idx_muestra_capturas_muestra
+    ON muestra_capturas(muestra_id);
 """
 
 
@@ -1232,7 +1257,10 @@ def _rescatar_acumulativas(path: Path) -> dict[str, list[tuple]]:
     # Lo que la app de muestras escribe se acumula igual que los registros de
     # terreno: una muestra fotografiada en una mesa no se puede volver a
     # derivar de ninguna fuente canonica.
-    tablas = tuple(_datos.TABLAS_ACUMULATIVAS) + ("muestras", "muestra_resultados")
+    tablas = tuple(_datos.TABLAS_ACUMULATIVAS) + (
+        "muestras", "muestra_resultados", "muestra_capturas",
+        "xio_eventos", "xio_signal_events"
+    )
     for origen in (path, _datos.LEGACY_DB_PATH):
         if not origen.exists():
             continue
@@ -1269,6 +1297,9 @@ def _reponer_acumulativas(
 
     conn.executescript(_datos.SCHEMA_ACUMULATIVO)
     conn.executescript(_SCHEMA_MUESTRAS)
+    from .xio_ingest import ensure_event_schema
+
+    ensure_event_schema(conn)
     for tabla, filas in rescatadas.items():
         cols = _RESCATE_COLUMNAS.get(tabla)
         if not cols or not filas:

@@ -12,7 +12,7 @@ Written 2026-07-16 by consolidating xio/**/*.md + the real scripts under xio/new
 Capability boundary: this runbook covers both the passive `foh_monitor` and the
 active `showcontrol` plugin. The former observes UDP traffic; the latter can
 send or receive show-control traffic when installed, enabled and authorized.
-Repository code is not runtime proof. Use [CAPACIDADES_MAK.md](../../CAPACIDADES_MAK.md) as
+Repository code is not runtime proof. Use [CAPACIDADES.md](CAPACIDADES.md) as
 the status matrix before a show.
 
 ## Index
@@ -29,31 +29,30 @@ the status matrix before a show.
 
 ## 1. Variables
 
-Fill in / verify before each show -- the hotspot subnet's 3rd octet is NOT stable
-across sessions (seen as `.127.x` in the main watcher, `.198.x` for the MAK box in
-a different session). Do not assume a value cold: run `ip addr show wlan1` (on
-device) or check `dumpsys wifi` for the live subnet, then update these.
+Fill in / verify before each show -- the hotspot address and subnet are session
+state, not configuration. Android can change the prefix and subnet mask between
+sessions. Do not assume a value cold: run `ip addr show wlan1` (on device) or
+check `dumpsys wifi` for the live address.
 
 ```bash
 PHONE_SERIAL=8299e66f                              # USB serial, stable across reboots
-PHONE_WIFI_ADB=192.168.127.125:5555                # wifi-adb target -- VERIFY subnet each show
+PHONE_WIFI_ADB=<IP_ACTUAL>:5555                   # optional wifi-adb override
 LOOPBACK_ADB=127.0.0.1:5555                        # on-device loopback target (watchdogs use this)
 XIO_PORT=5000                                       # Flask server port
 ADB=/c/IA/flujo/xio/actual/platform-tools/adb.exe   # PC-side adb.exe
-XIO_DENY_IPS=192.168.198.85                         # MAK/dell-11m LLM box -- denied source (see 5)
+XIO_DENY_IPS=                                      # optional; unset on private hotspot (see 5)
 ```
 Source: `xio/new/pc_reboot_watch.sh` (SERIAL, WIFI, ADB), `xio/new/server.py`
 (port 5000, `app.run(host="0.0.0.0", port=5000)`), `xio/new/run_server.sh`
-(XIO_DENY_IPS). NOTE: could not find a documented `127 -> 69 -> 198` subnet
-history anywhere in xio/*.md or scripts -- only `.127.x` and `.198.x` are
-verified in the sources above. If a `.69.x` session happened, it is not written
-down; flag to the user rather than guess.
+(XIO_DENY_IPS). Any observed subnet belongs to a session; there is no fixed
+`127 -> 69 -> 198` migration to rely on. If a new prefix appears, read
+`wlan1` and use that live value rather than guessing.
 
 ## 2. Show-day
 
 Architecture (3 layers, only layer 1 has to survive):
 ```
-Capa 1  LAN offline (hotspot AP 192.168.127.x)  <- carga el show. Sin senal 5G funciona.
+Capa 1  LAN offline (subred asignada al hotspot en esta sesion)  <- carga el show. Sin senal 5G funciona.
 Capa 2  server xio (Flask, Termux+Shizuku)       <- control/management. Nice-to-have.
 Capa 3  internet 5G + LLM operador (futuro)       <- solo cuando hay senal (venue-dependiente).
 ```
@@ -188,14 +187,14 @@ Source: `xio/HOTSPOT_SHOW_RUNBOOK.md`, `xio/new/hotspot_watch.sh`,
 Two independent layers on the phone (server.py), plus a separate plugin-level
 sandbox.
 
-**Layer A -- source denylist (isolate the MAK/dell-11m LLM box):** untrusted
-hosts on the hotspot (e.g. a local-LLM box that could pull a poisoned
-model/script and scan the LAN) must never drive xio, not even for reads.
-Enforced ON THE PHONE (a compromise of the denied host cannot lift it, unlike a
-firewall rule living on that host itself); DNS/internet stay separate services
-so a denied host keeps its own connectivity, it just cannot reach xio:
+**Layer A -- optional source denylist:** the private hotspot password is the
+normal access boundary for the RD/FOH field surfaces. `XIO_DENY_IPS` is an
+explicit per-show option only when the network is shared with an untrusted
+host; it is unset by default and must not contain MAK or a historical hotspot
+address. When deliberately configured, it is enforced on the phone before any
+handler runs:
 ```bash
-export XIO_DENY_IPS="192.168.198.85"     # set in run_server.sh before launch
+export XIO_DENY_IPS="<IP_AISLAR>[,<OTRA_IP>]"
 ```
 A request from a denied source gets `403 {"error":"forbidden","reason":"This
 source is denied by the xio controller."}` before any handler runs.
@@ -314,13 +313,30 @@ feed de eventos, bateria. Auto-refresh 2s; wake-lock best-effort (tocar la
 pantalla una vez lo arma; igual sube el timeout de pantalla en Ajustes pa show).
 
 **Apuntar las consolas al telefono:**
-- Art-Net: output del nodo/consola -> IP del telefono (o broadcast de la subred
-  del hotspot, p.ej. `192.168.x.255`), puerto 6454.
+- Art-Net: output del nodo/consola -> broadcast IPv4 del hotspot, puerto 6454;
+  si el equipo no admite broadcast, usa la IP actual del telefono obtenida en
+  el diagnostico de la sesion, nunca una IP historica.
 - sACN: UNICAST a la IP del telefono es lo garantizado. El plugin hace join
   multicast 239.255.u.u (universos config `sacn_universes`, default 1-16)
   best-effort; Android sin MulticastLock puede no entregar multicast -- el modo
   real queda anotado en `/status` (`sacn_mode`).
-- OSC: Resolume -> Preferences -> OSC -> OSC Output: IP del telefono, puerto 7000.
+- OSC: Chataigne/Resolume -> OSC Output: `255.255.255.255`, puerto 7000,
+  seleccionando la interfaz WiFi del hotspot. Si el software bloquea el
+  broadcast global, usa el broadcast `.255` de la subred actual.
+
+**Consultar la red de la sesion:**
+
+`connectivity_supervisor` calcula la direccion, red y broadcast desde `wlan1`;
+no depende de una IP historica:
+
+```bash
+curl http://<IP-XIO-ACTUAL>:5000/api/plugins/connectivity_supervisor/status
+```
+
+La URL HTTP siempre necesita la IP actual (o un nombre resoluble en esa red).
+Los protocolos UDP del show deben preferir broadcast para que un cambio de IP
+no rompa Chataigne/Resolume; si se usa unicast como fallback, se obtiene en esa
+misma sesion y no se guarda en un preset permanente.
 
 **Setlist:**
 ```bash
@@ -354,7 +370,7 @@ canal nunca visto = gris N/D (esperado si no se cablea); visto y perdido =
 rojo OFF (alerta real).
 
 Config Chataigne (5 min): abrir `xio/show_kit/festival_sentir.noisette`
-(generado con el builder validado del repo: modulo OSC -> 192.168.127.125:7000
+(generado con el builder validado del repo: modulo OSC -> 255.255.255.255:7000
 + Sound Card con LTC on). Manual restante: elegir la M-Audio como input del
 Sound Card y agregar un Mapping `Sound Card > LTC > Time` -> `OSC Custom
 Message /timecode`. Paso a paso + kit completo del dia (check GO/NO-GO,
@@ -425,8 +441,7 @@ Disparo:
 bash airdrop_push.sh /sdcard/Download/entrega.zip "mensaje corto"
 ```
 Verde = PR `airdrop/<tag>` lista para mergear desde el navegador del telefono.
-El gate sin PC queda definido por `.github/workflows/airdrop_gate.yml` y por
-la validación ejecutable en `scripts/validate_airdrop.py`.
+Detalle del canal: docs/AGENT_AIRDROP_PROTOCOL.md, seccion "Canal sin PC".
 Source: xio/new/airdrop_push.sh + .github/workflows/airdrop_gate.yml
 
 ## 8. Source docs

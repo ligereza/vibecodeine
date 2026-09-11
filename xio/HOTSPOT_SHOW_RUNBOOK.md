@@ -8,7 +8,7 @@ Cubre: qué se auto-cura, qué necesita tu mano, y por qué. Escrito 2026-07-13.
 ## Arquitectura en una mirada (3 capas)
 
 ```
-Capa 1  LAN offline (hotspot AP 192.168.127.x)  <- carga el show. Sin señal 5G funciona.
+Capa 1  LAN offline (subred asignada al hotspot en esta sesion)  <- carga el show. Sin señal 5G funciona.
 Capa 2  server xio (Flask, Termux+Shizuku)       <- control/management. Nice-to-have.
 Capa 3  internet 5G + LLM operador (futuro)       <- solo cuando hay señal (venue-dependiente).
 ```
@@ -16,7 +16,7 @@ Capa 3  internet 5G + LLM operador (futuro)       <- solo cuando hay señal (ven
 The show can use the server in two different ways: `foh_monitor` is passive
 observation, while `showcontrol` is active network control. This runbook's
 historical show path uses the passive monitor unless a show brief explicitly
-authorizes the active plugin. Check `../../CAPACIDADES_MAK.md`; do not infer Xiaomi
+authorizes the active plugin. Check `xio/CAPACIDADES.md`; do not infer Xiaomi
 installation from repository files.
 
 El show robusto corre sobre la **Capa 1**. El server y el internet son capas opcionales
@@ -37,7 +37,7 @@ la prueba definitiva es empirica y solo la puedo correr con 2 clientes reales.)
 
 ## Hotspot compartiendo internet vs router offline
 
-Misma antena, dos capas: la LAN local (`192.168.127.x`) SIEMPRE existe; el internet (NAT
+Misma antena, dos capas: la LAN local del hotspot SIEMPRE existe; el internet (NAT
 a 5G) se suma solo si hay señal. "Router offline" = el mismo hotspot sin señal. Bajo
 tierra / piso -6 la LAN sigue viva; solo mueren las features que necesitan internet real
 (ntfy, cloud, LLM).
