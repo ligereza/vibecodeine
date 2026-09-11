@@ -219,3 +219,18 @@ blockers:
 next_action: Wait for that normal launch or a user-visible external state change;
   then verify the four route surfaces and hashes.
 next_checkpoint_trigger: Termux launch or user interruption.
+
+## Checkpoint 2026-09-11 — verified wait
+
+status: active
+completed:
+  - item: Polled the live Xiaomi host again using its current wlan1 address.
+    evidence: server and RD DB remain healthy; rd_field/info is the old
+      response without hub_surface_present; rd_field/view has no RD hub marker;
+      foh_monitor/view remains HTTP 404.
+current_state:
+  - No external reload occurred. Staged files and published commits remain
+    unchanged; no further source mutation is justified until Termux launches.
+next_action: Stop active changes and resume verification only after the
+  existing Termux launch path changes the live process.
+next_checkpoint_trigger: live route change or user interruption.
