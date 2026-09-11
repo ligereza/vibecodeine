@@ -6,6 +6,7 @@ from pathlib import Path
 
 from flujo.knowledge.project_api import operational_status
 from flujo.knowledge.project_ir import LearningStore, build_project_ir
+from flujo.knowledge.system_status import system_status
 
 
 def test_operational_status_is_read_only_and_surfaces_next_actions(tmp_path: Path) -> None:
@@ -55,3 +56,15 @@ def test_operational_status_reports_missing_ledger_without_writing(tmp_path: Pat
     assert result["read_only"] is True
     assert result["attention"][0]["id"] == "learning_ledger"
     assert not database.exists()
+
+
+def test_system_status_keeps_component_contract_when_provider_box_is_absent(tmp_path: Path) -> None:
+    result = system_status(
+        tmp_path / "missing.sqlite",
+        repo_root=tmp_path,
+        physical_root=tmp_path,
+    )
+
+    assert result["schema"] == "mak-system-status-v1"
+    assert all("severity" in component for component in result["components"].values())
+    assert result["components"]["providers"]["severity"] == "attention"
