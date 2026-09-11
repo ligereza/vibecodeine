@@ -29,6 +29,18 @@ interface Element {
   category?: string;
 }
 
+interface VjEventRecord {
+  eventKey: string;
+  producerName?: string | null;
+  name?: string | null;
+  dateRaw?: string | null;
+  dateIso?: string | null;
+  venueName?: string | null;
+  status?: string | null;
+  lineup?: string[];
+  coOrganizers?: string[];
+}
+
 const ZONE_COLORS: Record<string, string> = {
   testeo: '#2d5a4a',
   contencion: '#7c3aed',
@@ -437,6 +449,11 @@ export default function PlanoTool() {
   const [eventDate, setEventDate] = useState('2026-06-28');
   const [eventVenue, setEventVenue] = useState('Parque Bicentenario');
   const [backendStatus, setBackendStatus] = useState('');
+  const [vjEvents, setVjEvents] = useState<VjEventRecord[]>([]);
+  const [selectedEventKey, setSelectedEventKey] = useState('');
+  const [eventCatalogStatus, setEventCatalogStatus] = useState(
+    'El catalogo aparece al abrir el plano desde el servidor del proyecto.'
+  );
 
   const [orgTexts, setOrgTexts] = useState({
     who: 'Fundada en 2018, Reduciendo Daño es una ONG líder en implementación y formulación de políticas e insumos de reducción de daños en Chile, siendo pionera en la fabricación, distribución de implementos, reactivos y servicios de análisis de sustancias psicoactivas en el país. La Organización desarrolla proyectos de intervención en terreno orientados a fiestas, espacios de ocio y eventos donde existe consumo de sustancias psicoactivas. Nuestro objetivo es acercar herramientas de prevención, reducción de riesgos y educación preventiva, promoviendo decisiones informadas, el autocuidado y espacios más seguros.',
@@ -445,6 +462,7 @@ export default function PlanoTool() {
 
   const svgRef = useRef<SVGSVGElement>(null);
   const selectedElement = elements.find(e => e.id === selectedId);
+  const selectedVjEvent = vjEvents.find(event => event.eventKey === selectedEventKey);
 
   useEffect(() => {
     try {
@@ -453,6 +471,39 @@ export default function PlanoTool() {
       // localStorage no disponible (modo privado, cuota, etc.) — no bloquear la UI
     }
   }, [checkedItems]);
+
+  useEffect(() => {
+    if (window.location.protocol === 'file:') return;
+    const controller = new AbortController();
+    setEventCatalogStatus('Consultando catalogo VJ existente...');
+    fetch('/api/vj/events', { signal: controller.signal })
+      .then(async response => {
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        return response.json();
+      })
+      .then(data => {
+        const events = Array.isArray(data?.events)
+          ? data.events.filter((event: any) => typeof event?.eventKey === 'string')
+          : [];
+        setVjEvents(events as VjEventRecord[]);
+        setEventCatalogStatus(
+          data?.available === false
+            ? 'El catalogo VJ todavia no esta construido.'
+            : events.length
+              ? String(events.length) + ' eventos existentes disponibles; no se creo otra fuente.'
+              : 'Catalogo VJ disponible, pero sin eventos con datos utilizables.'
+        );
+      })
+      .catch(error => {
+        if (error?.name === 'AbortError') return;
+        setVjEvents([]);
+        setEventCatalogStatus(
+          'Catalogo VJ no disponible en este servidor (' +
+          (error instanceof Error ? error.message : String(error)) + ').'
+        );
+      });
+    return () => controller.abort();
+  }, []);
 
   const applyPreset = (p: PackId) => {
     setPreset(p);
@@ -1247,7 +1298,12 @@ export default function PlanoTool() {
     const preset_layout = {
       formato: PRESET_FORMATO,
       guardado: new Date().toISOString(),
-      evento: { nombre: eventName, fecha: eventDate, lugar: eventVenue },
+      evento: {
+        nombre: eventName,
+        fecha: eventDate,
+        lugar: eventVenue,
+        eventKey: selectedEventKey || null,
+      },
       pack: preset,
       tema: exportTheme,
       leyenda: { visible: showLegend, x: legendPos.x, y: legendPos.y },
@@ -1287,6 +1343,7 @@ export default function PlanoTool() {
       if (d.evento?.nombre) setEventName(d.evento.nombre);
       if (d.evento?.fecha) setEventDate(d.evento.fecha);
       if (d.evento?.lugar) setEventVenue(d.evento.lugar);
+      if (typeof d.evento?.eventKey === 'string') setSelectedEventKey(d.evento.eventKey);
       if (d.pack) setPreset(d.pack as PackId);
       if (d.tema) setExportTheme(d.tema as ExportTheme);
       if (d.leyenda) {
@@ -1299,6 +1356,24 @@ export default function PlanoTool() {
     } catch {
       setBackendStatus('No se pudo leer el preset (archivo dañado o incompleto).');
     }
+  };
+
+  const selectVjEvent = (eventKey: string) => {
+    setSelectedEventKey(eventKey);
+    if (!eventKey) {
+      setBackendStatus('Edicion manual del evento; no se desvinculo ningun dato del catalogo.');
+      return;
+    }
+    const event = vjEvents.find(candidate => candidate.eventKey === eventKey);
+    if (!event) return;
+    if (event.name) setEventName(event.name);
+    if (event.dateIso) setEventDate(event.dateIso);
+    if (event.venueName) setEventVenue(event.venueName);
+    const lineup = event.lineup?.length ? event.lineup.join(', ') : 'sin lineup registrado';
+    setBackendStatus(
+      'Contexto VJ cargado: ' + (event.producerName || 'productora no indicada') +
+      ' - DJs: ' + lineup + '. Pack, duracion y asistentes siguen sin inferirse.'
+    );
   };
 
   const loadFromBackend = async (presetId: PackId = preset) => {
@@ -1317,7 +1392,8 @@ export default function PlanoTool() {
             nombre: eventName || 'Evento',
             fecha: eventDate,
             pack: presetId,
-            ubicacion: eventVenue || 'Por definir'
+            ubicacion: eventVenue || 'Por definir',
+            eventKey: selectedEventKey || undefined
           },
         }),
       });
@@ -1493,6 +1569,32 @@ export default function PlanoTool() {
           {/* Antecedentes Card */}
           <div className="p-6 rounded-xl border border-zinc-800 bg-zinc-900/30">
             <h3 className="text-sm font-black uppercase text-zinc-400 tracking-wider mb-4">Antecedentes del Evento</h3>
+            <div className="mb-4 rounded-lg border border-zinc-800 bg-black/20 p-3">
+              <label className="text-[10px] uppercase tracking-widest text-zinc-500 block mb-1 font-bold">
+                Evento existente en el catalogo VJ
+              </label>
+              <select
+                value={selectedEventKey}
+                onChange={e => selectVjEvent(e.target.value)}
+                disabled={!vjEvents.length}
+                className="w-full bg-black/40 border border-zinc-800 rounded px-3 py-2 text-sm focus:outline-none focus:border-zinc-600 disabled:opacity-60"
+              >
+                <option value="">Edicion manual (sin vincular)</option>
+                {vjEvents.map(event => (
+                  <option key={event.eventKey} value={event.eventKey}>
+                    {(event.dateIso || event.dateRaw || 'sin fecha') + ' - ' + (event.name || event.eventKey)}
+                  </option>
+                ))}
+              </select>
+              <p className="text-[11px] text-zinc-500 mt-2">{eventCatalogStatus}</p>
+              {selectedVjEvent && (
+                <p className="text-[11px] text-emerald-300/80 mt-1">
+                  Productora: {selectedVjEvent.producerName || 'no indicada'} - DJs:{' '}
+                  {selectedVjEvent.lineup?.length ? selectedVjEvent.lineup.join(', ') : 'sin lineup registrado'}
+                  {selectedVjEvent.venueName ? ' - Venue: ' + selectedVjEvent.venueName : ''}
+                </p>
+              )}
+            </div>
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className="text-[10px] uppercase tracking-widest text-zinc-500 block mb-1 font-bold">Nombre del Evento</label>
