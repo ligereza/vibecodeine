@@ -7,6 +7,7 @@ parámetros del evento.
 from __future__ import annotations
 
 import json
+import math
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
@@ -204,6 +205,211 @@ def _solve_grid_2x(mods: List[Dict], pasillo: float) -> Tuple[List[Caja], float,
     return cajas, ancho, alto
 
 
+# ============================================================
+# 3.1 OVERLAY OPERATIVO (zonas físicas + grafo lógico opcional)
+# ============================================================
+# El overlay no forma parte de la geometría base del stand. Es una capa
+# declarativa que permite ubicar XIO/FOH y sus rutas sin fingir que una señal
+# de red es otro módulo físico del rider.
+_OVERLAY_KEY = "zone_overlay"
+_OVERLAY_PLANES = {"physical", "logical"}
+_OVERLAY_MAX_ZONES = 32
+_OVERLAY_MAX_NODES = 64
+_OVERLAY_MAX_LINKS = 128
+
+
+def _overlay_float(value: Any, field_name: str, errors: List[str]) -> float | None:
+    if value is None or value == "":
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        errors.append(f"zone_overlay: {field_name} debe ser numerico.")
+        return None
+    if not math.isfinite(number):
+        errors.append(f"zone_overlay: {field_name} debe ser finito.")
+        return None
+    return number
+
+
+def _overlay_position(item: Dict[str, Any], label: str,
+                      errors: List[str], allow_point: bool = False) -> Dict[str, float] | None:
+    """Lee una posicion en metros, como rectangulo o punto de nodo."""
+    fields = {name: _overlay_float(item.get(name), f"{label}.{name}", errors)
+              for name in ("x_m", "y_m", "w_m", "h_m")}
+    present = [value is not None for value in fields.values()]
+    if not any(present):
+        return None
+    if allow_point and fields["x_m"] is not None and fields["y_m"] is not None \
+            and fields["w_m"] is None and fields["h_m"] is None:
+        return {key: float(fields[key]) for key in ("x_m", "y_m")}
+    if not all(present):
+        errors.append(f"zone_overlay: {label} requiere x_m, y_m, w_m y h_m juntos.")
+        return None
+    if fields["w_m"] <= 0 or fields["h_m"] <= 0:
+        errors.append(f"zone_overlay: {label} requiere w_m/h_m mayores que 0.")
+        return None
+    return {key: float(value) for key, value in fields.items()}
+
+
+def _normalize_zone_overlay(ev: Dict[str, Any]) -> Tuple[Dict[str, Any], List[str], List[str]]:
+    """Normaliza el overlay sin lanzar: el renderer puede seguir siendo legacy-safe."""
+    empty = {"enabled": False, "schema_version": "0.1", "zones": [],
+             "nodes": [], "links": []}
+    raw = ev.get(_OVERLAY_KEY)
+    if raw is None or raw is False:
+        return empty, [], []
+    errors: List[str] = []
+    warnings: List[str] = []
+    if raw is True:
+        raw = {}
+    if not isinstance(raw, dict):
+        return empty, ["zone_overlay debe ser un objeto."], []
+    if raw.get("enabled", True) is False:
+        return empty, [], []
+
+    overlay = {"enabled": True,
+               "schema_version": str(raw.get("schema_version", "0.1")),
+               "zones": [], "nodes": [], "links": []}
+
+    zones_raw = raw.get("zones", [])
+    nodes_raw = raw.get("nodes", [])
+    links_raw = raw.get("links", [])
+    if not isinstance(zones_raw, list):
+        errors.append("zone_overlay.zones debe ser una lista.")
+        zones_raw = []
+    if not isinstance(nodes_raw, list):
+        errors.append("zone_overlay.nodes debe ser una lista.")
+        nodes_raw = []
+    if not isinstance(links_raw, list):
+        errors.append("zone_overlay.links debe ser una lista.")
+        links_raw = []
+    if len(zones_raw) > _OVERLAY_MAX_ZONES:
+        errors.append(f"zone_overlay admite como maximo {_OVERLAY_MAX_ZONES} zonas.")
+        zones_raw = zones_raw[:_OVERLAY_MAX_ZONES]
+    if len(nodes_raw) > _OVERLAY_MAX_NODES:
+        errors.append(f"zone_overlay admite como maximo {_OVERLAY_MAX_NODES} nodos.")
+        nodes_raw = nodes_raw[:_OVERLAY_MAX_NODES]
+    if len(links_raw) > _OVERLAY_MAX_LINKS:
+        errors.append(f"zone_overlay admite como maximo {_OVERLAY_MAX_LINKS} enlaces.")
+        links_raw = links_raw[:_OVERLAY_MAX_LINKS]
+
+    zone_ids: set[str] = set()
+    for index, item in enumerate(zones_raw):
+        if not isinstance(item, dict):
+            errors.append(f"zone_overlay.zones[{index}] debe ser un objeto.")
+            continue
+        zone_id = str(item.get("zone_id") or item.get("id") or "").strip()
+        if not zone_id:
+            errors.append(f"zone_overlay.zones[{index}] requiere zone_id.")
+            continue
+        if zone_id in zone_ids:
+            errors.append(f"zone_overlay: zone_id duplicado: {zone_id}.")
+            continue
+        zone_ids.add(zone_id)
+        plane = str(item.get("plane", "physical")).strip().lower() or "physical"
+        if plane not in _OVERLAY_PLANES:
+            errors.append(f"zone_overlay: plano invalido para {zone_id}: {plane}.")
+            continue
+        position = _overlay_position(item, f"zone {zone_id}", errors)
+        zone = {
+            "zone_id": zone_id,
+            "label": str(item.get("label") or item.get("purpose") or zone_id).strip(),
+            "kind": str(item.get("kind") or "operational").strip(),
+            "plane": plane,
+            "purpose": str(item.get("purpose") or "").strip(),
+        }
+        if position:
+            zone.update(position)
+        elif plane == "physical":
+            warnings.append(f"zone_overlay: zona fisica {zone_id} no tiene coordenadas; se listara, no se dibujara.")
+        overlay["zones"].append(zone)
+
+    node_ids: set[str] = set()
+    for index, item in enumerate(nodes_raw):
+        if not isinstance(item, dict):
+            errors.append(f"zone_overlay.nodes[{index}] debe ser un objeto.")
+            continue
+        node_id = str(item.get("node_id") or item.get("id") or "").strip()
+        if not node_id:
+            errors.append(f"zone_overlay.nodes[{index}] requiere node_id.")
+            continue
+        if node_id in node_ids:
+            errors.append(f"zone_overlay: node_id duplicado: {node_id}.")
+            continue
+        node_ids.add(node_id)
+        zone_id = str(item.get("zone_id") or "").strip()
+        if zone_id and zone_id not in zone_ids:
+            errors.append(f"zone_overlay: {node_id} referencia zona inexistente: {zone_id}.")
+        position = _overlay_position(item, f"node {node_id}", errors, allow_point=True)
+        groups = item.get("writer_groups", [])
+        if isinstance(groups, str):
+            groups = [groups]
+        if not isinstance(groups, list):
+            errors.append(f"zone_overlay: writer_groups invalido para {node_id}.")
+            groups = []
+        node = {
+            "node_id": node_id,
+            "label": str(item.get("label") or node_id).strip(),
+            "zone_id": zone_id,
+            "role": str(item.get("role") or "node").strip(),
+            "mode": str(item.get("mode") or "observe").strip(),
+            "active_writer": bool(item.get("active_writer", False)),
+            "writer_groups": [str(group).strip() for group in groups if str(group).strip()],
+        }
+        if position:
+            node.update(position)
+        overlay["nodes"].append(node)
+
+    for index, item in enumerate(links_raw):
+        if not isinstance(item, dict):
+            errors.append(f"zone_overlay.links[{index}] debe ser un objeto.")
+            continue
+        source = str(item.get("from") or item.get("source") or "").strip()
+        target = str(item.get("to") or item.get("target") or "").strip()
+        if not source or not target:
+            errors.append(f"zone_overlay.links[{index}] requiere from y to.")
+            continue
+        if source not in node_ids or target not in node_ids:
+            errors.append(f"zone_overlay: enlace {source}->{target} referencia nodo inexistente.")
+            continue
+        overlay["links"].append({
+            "from": source,
+            "to": target,
+            "channel": str(item.get("channel") or "signal").strip(),
+            "transport": str(item.get("transport") or "unspecified").strip(),
+            "direction": str(item.get("direction") or "observe").strip(),
+        })
+
+    by_group: Dict[str, List[str]] = {}
+    for node in overlay["nodes"]:
+        if not node["active_writer"]:
+            continue
+        for group in node["writer_groups"]:
+            by_group.setdefault(group, []).append(node["node_id"])
+    for group, writers in by_group.items():
+        if len(writers) > 1:
+            errors.append(
+                f"zone_overlay: writer_group {group} tiene varios escritores activos: {', '.join(writers)}."
+            )
+    return overlay, errors, warnings
+
+
+def zone_overlay(ev: Dict[str, Any]) -> Dict[str, Any]:
+    """Devuelve el overlay normalizado; no modifica el evento de entrada."""
+    return _normalize_zone_overlay(ev)[0]
+
+
+def validate_zone_overlay(ev: Dict[str, Any]) -> Dict[str, Any]:
+    """Valida zonas/nodos/enlaces declarativos sin activar ningún transporte."""
+    overlay, errors, warnings = _normalize_zone_overlay(ev)
+    return {"ok": not errors, "errors": errors, "warnings": warnings,
+            "summary": {"enabled": overlay["enabled"],
+                        "zones": len(overlay["zones"]),
+                        "nodes": len(overlay["nodes"]),
+                        "links": len(overlay["links"])}}
+
+
 def _esc(s: str) -> str:
     return str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
@@ -251,6 +457,7 @@ def render_svg(ev: Dict[str, Any], px_por_metro: float = 90.0, tema: str = "dark
     _BG, _PANEL, _LIGHT = pal["bg"], pal["panel"], pal["light"]
     _MUTED, _STAND, _ZONA = pal["muted"], pal["stand"], pal["zona"]
     cajas, W_m, H_m = solve_layout(ev)
+    overlay = zone_overlay(ev)
     s = px_por_metro
     activos = set(iconos.simbolos_de_evento(ev))
     # zonas_de_iconos() ya trae los simbolos del catalogo editable; usar la
@@ -264,11 +471,31 @@ def render_svg(ev: Dict[str, Any], px_por_metro: float = 90.0, tema: str = "dark
     alto_grupo = 2.1          # titulo + fila de iconos (m)
     max_iconos = max((len(ks) for _, ks in grupos), default=1)
     ancho_iconos = max_iconos * paso_icono
-    W_m_total = max(W_m, ancho_iconos)
+    physical_overlay_items = [
+        item for item in overlay["zones"] + overlay["nodes"]
+        if item.get("plane") == "physical"
+        and all(item.get(key) is not None for key in ("x_m", "y_m"))
+    ]
+    overlay_right = max(
+        (float(item["x_m"]) + float(item.get("w_m") or 0.35)
+         for item in physical_overlay_items),
+        default=0.0,
+    )
+    overlay_bottom = max(
+        (float(item["y_m"]) + float(item.get("h_m") or 0.35)
+         for item in physical_overlay_items),
+        default=0.0,
+    )
+    W_m_total = max(W_m, ancho_iconos, overlay_right)
     H_iconos = len(grupos) * alto_grupo
+    overlay_rows = len(overlay["nodes"]) + len(overlay["links"])
+    H_overlay = 0.0
+    if overlay["enabled"]:
+        H_overlay = 1.15 + max(1, overlay_rows) * 0.28
 
     W = (W_m_total + 2 * margin) * s
-    H = (H_m + 1.4 + H_iconos + 2 * margin) * s
+    H_m_total = max(H_m, overlay_bottom)
+    H = (H_m_total + 1.4 + H_iconos + H_overlay + 2 * margin) * s
     ox, oy = margin * s, (margin + 0.9) * s
 
     out = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W:.0f}" height="{H:.0f}" viewBox="0 0 {W:.0f} {H:.0f}">']
@@ -296,8 +523,59 @@ def render_svg(ev: Dict[str, Any], px_por_metro: float = 90.0, tema: str = "dark
         out.append(f'<text x="{cx+8:.0f}" y="{cy+c.h*s-8:.0f}" font-family="Inter,Arial" '
                    f'font-size="{0.12*s:.0f}" fill="{_MUTED}">{c.w:g}×{c.h:g} m</text>')
 
+    # --- overlay operativo XIO/FOH/VJ (solo visualizacion declarativa) ---
+    if overlay["enabled"]:
+        overlay_nodes = {node["node_id"]: node for node in overlay["nodes"]}
+
+        for zone in overlay["zones"]:
+            if zone.get("plane") != "physical" or not all(
+                    zone.get(key) is not None for key in ("x_m", "y_m", "w_m", "h_m")):
+                continue
+            zx, zy = ox + zone["x_m"] * s, oy + zone["y_m"] * s
+            zw, zh = zone["w_m"] * s, zone["h_m"] * s
+            out.append(f'<rect x="{zx:.0f}" y="{zy:.0f}" width="{zw:.0f}" height="{zh:.0f}" '
+                       f'fill="none" stroke="{_ZONA}" stroke-width="2" stroke-dasharray="8 5" rx="6"/>')
+            out.append(f'<text x="{zx+6:.0f}" y="{zy+0.24*s:.0f}" font-family="Inter,Arial" '
+                       f'font-size="{0.12*s:.0f}" font-weight="700" fill="{_ZONA}">'
+                       f'{_esc(zone["label"])} · {_esc(zone["zone_id"])}</text>')
+
+        def node_center(node: Dict[str, Any]) -> Tuple[float, float] | None:
+            if node.get("x_m") is None or node.get("y_m") is None:
+                return None
+            x_m = float(node["x_m"])
+            y_m = float(node["y_m"])
+            if node.get("w_m") is not None and node.get("h_m") is not None:
+                x_m += float(node["w_m"]) / 2
+                y_m += float(node["h_m"]) / 2
+            return ox + x_m * s, oy + y_m * s
+
+        for link in overlay["links"]:
+            source = node_center(overlay_nodes[link["from"]])
+            target = node_center(overlay_nodes[link["to"]])
+            if source is None or target is None:
+                continue
+            out.append(f'<line x1="{source[0]:.0f}" y1="{source[1]:.0f}" '
+                       f'x2="{target[0]:.0f}" y2="{target[1]:.0f}" '
+                       f'stroke="#5eead4" stroke-width="2" stroke-dasharray="5 4" opacity="0.8"/>')
+            mx, my = (source[0] + target[0]) / 2, (source[1] + target[1]) / 2
+            out.append(f'<text x="{mx:.0f}" y="{my-5:.0f}" text-anchor="middle" '
+                       f'font-family="Inter,Arial" font-size="{0.10*s:.0f}" fill="#5eead4">'
+                       f'{_esc(link["transport"])} · {_esc(link["channel"])}</text>')
+
+        for node in overlay["nodes"]:
+            center = node_center(node)
+            if center is None:
+                continue
+            nx, ny = center
+            color = "#5eead4" if not node["active_writer"] else "#fb7185"
+            out.append(f'<circle cx="{nx:.0f}" cy="{ny:.0f}" r="{0.12*s:.0f}" '
+                       f'fill="{_BG}" stroke="{color}" stroke-width="3"/>')
+            out.append(f'<text x="{nx+0.16*s:.0f}" y="{ny-0.08*s:.0f}" font-family="Inter,Arial" '
+                       f'font-size="{0.11*s:.0f}" font-weight="700" fill="{color}">'
+                       f'{_esc(node["label"])} · {_esc(node["node_id"])}</text>')
+
     # --- iconos operativos por zona logica ---
-    y_base = oy + (H_m + 0.8) * s
+    y_base = oy + (H_m_total + 0.8) * s
     for titulo, keys in grupos:
         out.append(f'<line x1="{ox:.0f}" y1="{y_base:.0f}" x2="{ox + W_m_total*s:.0f}" y2="{y_base:.0f}" '
                    f'stroke="{pal["linea"]}" stroke-width="1"/>')
@@ -316,6 +594,28 @@ def render_svg(ev: Dict[str, Any], px_por_metro: float = 90.0, tema: str = "dark
                        f'{_esc(iconos.ETIQUETAS.get(key, key))}</text>')
         y_base += alto_grupo * s
 
+    if overlay["enabled"]:
+        panel_y = y_base + 0.12 * s
+        out.append(f'<line x1="{ox:.0f}" y1="{panel_y:.0f}" x2="{ox + W_m_total*s:.0f}" '
+                   f'y2="{panel_y:.0f}" stroke="{pal["linea"]}" stroke-width="1"/>')
+        out.append(f'<text x="{ox:.0f}" y="{panel_y+0.3*s:.0f}" font-family="Inter,Arial" '
+                   f'font-size="{0.15*s:.0f}" font-weight="700" fill="{_MUTED}" '
+                   f'letter-spacing="1">GRAFO OPERATIVO · SOLO OBSERVACIÓN</text>')
+        row_y = panel_y + 0.67 * s
+        for node in overlay["nodes"]:
+            writer = "ESCRITOR ACTIVO" if node["active_writer"] else "OBSERVADOR"
+            groups = ", ".join(node["writer_groups"]) or "sin grupo de escritura"
+            out.append(f'<text x="{ox:.0f}" y="{row_y:.0f}" font-family="Inter,Arial" '
+                       f'font-size="{0.11*s:.0f}" fill="{_LIGHT}">'
+                       f'{_esc(node["node_id"])} · {_esc(node["role"])} · {_esc(writer)} · {_esc(groups)}</text>')
+            row_y += 0.28 * s
+        for link in overlay["links"]:
+            out.append(f'<text x="{ox:.0f}" y="{row_y:.0f}" font-family="Inter,Arial" '
+                       f'font-size="{0.11*s:.0f}" fill="{_MUTED}">'
+                       f'{_esc(link["from"])} → {_esc(link["to"])} · {_esc(link["transport"])} · '
+                       f'{_esc(link["channel"])} · {_esc(link["direction"])}</text>')
+            row_y += 0.28 * s
+
     out.append('</svg>')
     return "\n".join(out)
 
@@ -331,6 +631,19 @@ def render_rider(ev: Dict[str, Any]) -> str:
     lines.append("Requerimientos (derivados por reglas):")
     for r in reglas_rider(ev):
         lines.append(f"  • {r}")
+    overlay = zone_overlay(ev)
+    if overlay["enabled"]:
+        lines.extend(["", "Grafo operativo XIO/FOH/VJ (declarativo; sin transporte activo):"])
+        lines.append(f"  Zonas: {len(overlay['zones'])} · Nodos: {len(overlay['nodes'])} · Enlaces: {len(overlay['links'])}")
+        for zone in overlay["zones"]:
+            plane = "física" if zone["plane"] == "physical" else "lógica"
+            lines.append(f"  • Zona {plane}: {zone['zone_id']} — {zone['label']}")
+        for node in overlay["nodes"]:
+            status = "ESCRITOR ACTIVO" if node["active_writer"] else "OBSERVADOR"
+            groups = ", ".join(node["writer_groups"]) or "sin grupo de escritura"
+            lines.append(f"  • Nodo {node['node_id']} — {node['label']} [{node['role']}; {status}; {groups}]")
+        for link in overlay["links"]:
+            lines.append(f"  • Ruta {link['from']} → {link['to']} — {link['transport']} / {link['channel']} ({link['direction']})")
     return "\n".join(lines)
 
 
@@ -353,6 +666,10 @@ def validate_evento(ev: Dict[str, Any]) -> Dict[str, Any]:
     """
     errors: List[str] = []
     warnings: List[str] = []
+
+    overlay_report = validate_zone_overlay(ev)
+    errors.extend(overlay_report["errors"])
+    warnings.extend(overlay_report["warnings"])
 
     nombre = str(ev.get("nombre", "")).strip()
     if not nombre:
@@ -424,12 +741,13 @@ def validate_evento(ev: Dict[str, Any]) -> Dict[str, Any]:
             "ancho_m": round(ancho_m, 2),
             "alto_m": round(alto_m, 2),
             "requerimientos": len(reglas_rider(ev)),
+            "zone_overlay": overlay_report["summary"],
         },
     }
 
 
 def render_validation_report(ev: Dict[str, Any]) -> str:
-    """Renderiza validate_evento como texto legible para el CLI."""
+    """Renderiza validate_evento como texto legible para CLI/airdrop."""
     report = validate_evento(ev)
     summary = report["summary"]
     lines = [
@@ -438,6 +756,7 @@ def render_validation_report(ev: Dict[str, Any]) -> str:
         f"Estado: {'OK' if report['ok'] else 'ERROR'}",
         f"Layout: {summary['layout_mode']} | modulos: {summary['modulos']} | tamano: {summary['ancho_m']} x {summary['alto_m']} m",
         f"Stands: {summary['stands']} | zonas: {summary['zonas']} | mesas: {summary['mesas']} | sillas: {summary['sillas']}",
+        f"Overlay operativo: {summary['zone_overlay']['zones']} zonas | {summary['zone_overlay']['nodes']} nodos | {summary['zone_overlay']['links']} enlaces",
         "",
     ]
     if report["errors"]:
