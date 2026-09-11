@@ -123,9 +123,15 @@ def main() -> int:
     # while still carrying obsolete behavior. Compare only the current source
     # files; this remains a read-only check and never repairs the phone.
     source_root = Path(__file__).resolve().parents[1]
+    # XIO is the canonical portable phone runtime. The FLUJO repository keeps
+    # a mirror for development, but it may intentionally omit a XIO-only
+    # route such as /raider; do not call that legitimate difference stale.
+    configured_xio = os.environ.get("XIO_SOURCE_ROOT", "").strip()
+    xio_root = Path(configured_xio) if configured_xio else source_root.parent / "XIO"
+    canonical_root = xio_root if (xio_root / "xio").is_dir() else source_root
     stale: list[str] = []
     for relative in SYNC_FILES:
-        local = source_root / "xio" / relative
+        local = canonical_root / "xio" / relative
         if not local.is_file():
             fail(errors, f"canonical source absent for hash comparison: {local}")
             continue
