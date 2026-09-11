@@ -195,13 +195,20 @@ def _service_component(
     process_tokens: Iterable[str],
     source_candidates: Iterable[Path] = (),
 ) -> dict[str, Any]:
+    candidates = tuple(source_candidates)
     source_evidence = _path_status(source)
+    if not source_evidence["exists"]:
+        for candidate in candidates:
+            fallback = _path_status(candidate)
+            if fallback["exists"]:
+                source_evidence = {**fallback, "declared_path": str(source), "role": "fallback"}
+                break
     listener = _listener(port)
     process = _process_snapshot(process_tokens)
     runtime_source = _runtime_source(
-        process_tokens, (source, *tuple(source_candidates))
+        process_tokens, (source, *candidates)
     )
-    source_evidence["role"] = "declared"
+    source_evidence.setdefault("role", "declared")
     return _component(
         component_id,
         label,
@@ -326,7 +333,15 @@ def _provider_component(repo: Path, physical: Path) -> dict[str, Any]:
         except ImportError:
             # No MAK departments in this checkout: the provider surface is
             # simply absent, which is a status, not a crash.
-            return {"available": False, "reason": "mak_box_absent"}
+            return _component(
+                "providers",
+                "API/model routes",
+                "attention",
+                severity="attention",
+                evidence={"available": False, "reason": "mak_box_absent",
+                          "runtime": "configuration_only_unverified"},
+                next_action="configure an authorized provider or use the local deterministic route",
+            )
 
         names: set[str] = set(os.environ)
         env_files = (
@@ -433,7 +448,10 @@ def system_status(
         "hub": _service_component(
             "hub", "MAK Hub 8900", repo / "cultura" / "mak_plataforma" / "hub.py", _PORTS["hub"],
             ("plataforma/hub.py", "mak_plataforma/hub.py"),
-            source_candidates=(physical / "plataforma" / "hub.py",),
+            source_candidates=(
+                physical / "cultura" / "mak_plataforma" / "hub.py",
+                physical / "plataforma" / "hub.py",
+            ),
         ),
         "research": _service_component(
             "research", "Research 8890", physical / "research" / "interfaz.py", _PORTS["research"],
