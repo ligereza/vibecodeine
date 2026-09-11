@@ -17,6 +17,18 @@ interface Props {
 
 export default function AppShell({ view, onViewChange, children }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [compactViewport, setCompactViewport] = useState(false);
+  // El mismo hub conserva sus herramientas de escritorio y adapta la
+  // presentación al dispositivo. No se duplica la aplicación ni se decide
+  // por un user-agent frágil: el ancho efectivo de la ventana es la señal que
+  // también usa Tailwind para el layout responsive.
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 1023px)');
+    const update = () => setCompactViewport(media.matches);
+    update();
+    media.addEventListener?.('change', update);
+    return () => media.removeEventListener?.('change', update);
+  }, []);
   // La version estuvo cableada a mano y quedo desactualizada semanas (decia
   // 0.51.0 con el repo en 0.56.1). Se lee del backend; sin backend se omite en
   // vez de mostrar un numero viejo.
@@ -126,6 +138,9 @@ export default function AppShell({ view, onViewChange, children }: Props) {
           <div className="mt-2 px-2 text-[9px] text-zinc-600 leading-relaxed">
             {profile.tagline}
           </div>
+          <div className="mt-2 px-2 text-[9px] uppercase tracking-wider text-zinc-700" aria-live="polite">
+            Vista detectada: {compactViewport ? 'celular' : 'escritorio'}
+          </div>
         </div>
 
         {/* Nav: editables primero, consulta despues */}
@@ -199,6 +214,7 @@ export default function AppShell({ view, onViewChange, children }: Props) {
               {profile.shortLabel}
             </span>
             <span className="text-sm font-bold">{currentLabel}</span>
+            <span className="ml-auto text-[9px] uppercase tracking-wider text-zinc-600">celular</span>
           </div>
         </header>
 
