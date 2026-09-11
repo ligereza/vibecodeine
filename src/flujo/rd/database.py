@@ -52,6 +52,20 @@ _CANDIDATE_REGISTRIES = {
 _FUENTES_PY = _REPO / "cultura" / "mak_research" / "fuentes.py"
 _VENUES_DIR = _REPO / "knowledge" / "venues"     # *.yaml canonicos
 _LOGOS_DIR = _REPO / "knowledge" / "logos"       # *.yaml canonicos
+
+
+def _es_productora_rd(datos: dict[str, Any]) -> bool:
+    """Keep non-RD artist/client records out of the RD projection.
+
+    MAK's broader catalogue may contain VJ artists alongside RD producers.
+    An explicit artist type is catalogue knowledge, not an event relation;
+    the source remains available to the broader catalogue but must not inflate
+    the RD database or its producer/event cards.
+    """
+    if datos.get("rd_scope") is False:
+        return False
+    tipo = str(datos.get("tipo") or "").strip().lower()
+    return tipo not in {"artist", "artist_dj", "dj"}
 # Directorios donde viven jsons con forma de evento (voluntarios/asistentes/...)
 _EVENTOS_GLOBS = (
     (_REPO / "jobs", "**/evento*.json"),
@@ -421,13 +435,83 @@ def _event_source_gate(source_text: Any) -> tuple[str, int]:
     )
 
 
+def _yaml_scalar(raw: str) -> Any:
+    """Decode the small scalar subset used by the canonical venue YAMLs."""
+    value = raw.strip()
+    if not value:
+        return {}
+    if value == "{}":
+        return {}
+    if value == "[]":
+        return []
+    if (value.startswith('"') and value.endswith('"')) or (
+        value.startswith("'") and value.endswith("'")
+    ):
+        return value[1:-1]
+    low = value.lower()
+    if low in {"true", "false"}:
+        return low == "true"
+    if low in {"null", "none", "~"}:
+        return None
+    try:
+        return int(value)
+    except ValueError:
+        return value
+
+
+def _load_yaml_minimal(path: Path) -> dict[str, Any] | None:
+    """Read the flat/one-level YAML subset needed by venue projections.
+
+    This is a dependency-free fallback, not a general YAML parser.  It keeps
+    top-level scalar fields and one-level mappings (the fields consumed by the
+    RD DB); list entries remain intentionally ignored rather than guessed.
+    """
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return None
+    data: dict[str, Any] = {}
+    section: dict[str, Any] | list[Any] | None = None
+    section_name = ""
+    for raw_line in lines:
+        if not raw_line.strip() or raw_line.lstrip().startswith("#"):
+            continue
+        indent = len(raw_line) - len(raw_line.lstrip(" "))
+        line = raw_line.strip()
+        if line.startswith("-"):
+            if section_name and isinstance(section, dict) and not section:
+                # A key with no scalar value followed by list items (currently
+                # used by the canonical venue `notes` fields).
+                section = []
+                data[section_name] = section
+            if isinstance(section, list):
+                item = line[1:].strip()
+                if ": " in item:
+                    item_key, item_value = item.split(": ", 1)
+                    section.append({item_key.strip(): _yaml_scalar(item_value)})
+                else:
+                    section.append(_yaml_scalar(item))
+            continue
+        match = re.match(r"^([A-Za-z_][A-Za-z0-9_-]*):(?:\s+(.*))?$", line)
+        if not match:
+            continue
+        key, raw_value = match.group(1), match.group(2) or ""
+        if indent == 0:
+            value = _yaml_scalar(raw_value)
+            data[key] = value
+            section = value if isinstance(value, dict) else None
+            section_name = key if section is not None else ""
+        elif section is not None and section_name:
+            section[key] = _yaml_scalar(raw_value)
+    return data
+
+
 def _load_yaml(path: Path) -> dict[str, Any] | None:
-    """Lee un yaml canonico si PyYAML esta disponible. Sin yaml, devuelve None
-    (la tabla venues queda vacia; el resto de la DB no se afecta)."""
+    """Read a canonical venue YAML, with a stdlib fallback when PyYAML is absent."""
     try:
         import yaml  # type: ignore
     except ImportError:
-        return None
+        return _load_yaml_minimal(path)
     try:
         data = yaml.safe_load(path.read_text(encoding="utf-8"))
         return data if isinstance(data, dict) else None
@@ -1202,6 +1286,8 @@ def build_rd_db(
                 try:
                     d = json.loads(pf.read_text(encoding="utf-8"))
                 except (OSError, ValueError):
+                    continue
+                if not _es_productora_rd(d):
                     continue
                 slug = pf.stem
                 conn.execute(

@@ -56,11 +56,13 @@
    "venues": [
     {
      "nombre": "Espacio Riesco",
+     "venue_id": "espacio_riesco",
      "estado": "ejemplo",
      "preferido": true
     },
     {
      "nombre": "Club Hípico, Santiago Chile",
+     "venue_id": null,
      "estado": "candidato_sin_confirmar",
      "preferido": false
     }
@@ -85,7 +87,139 @@
      "fuentes_primarias": [],
      "sin_fuente_primaria": true,
      "lineup": [],
-     "co_organiza": []
+     "co_organiza": [],
+     "flyer_ref": "RD/FLYER/SEGUNDOTRIPLE.mp4",
+     "event_key": "rd:creamfields:creamfields-chile-2025:2025-10-11",
+     "venue_link": {
+      "status": "pending_review",
+      "name": "Club Hípico, Santiago"
+     },
+     "venue_source_link": {
+      "status": "exact",
+      "name": "Club Hípico, Santiago Chile",
+      "venue_id": null,
+      "estado": "candidato_sin_confirmar",
+      "preferido": false,
+      "source": "data/productoras"
+     },
+     "flyer_link": {
+      "status": "explicit",
+      "generated_key": "rd:creamfields:creamfields-chile-2025:2025-10-11:flyer",
+      "ref": "RD/FLYER/SEGUNDOTRIPLE.mp4"
+     },
+     "rider_link": {
+      "status": "pending_review",
+      "generated_key": "rd:creamfields:creamfields-chile-2025:2025-10-11:rider"
+     },
+     "layout_link": {
+      "status": "pending_review",
+      "generated_key": "rd:creamfields:creamfields-chile-2025:2025-10-11:layout"
+     },
+     "database_link": {
+      "status": "exact",
+      "source": "data/rd.db",
+      "table": "productora_eventos",
+      "keys": [
+       "productora_slug",
+       "nombre",
+       "fecha"
+      ],
+      "id": 1,
+      "row": {
+       "productora_slug": "creamfields",
+       "nombre": "Creamfields Chile 2025",
+       "fecha": "11-12 octubre 2025",
+       "venue": "Club Hípico, Santiago",
+       "estado": "pasado",
+       "fuente": "PR #210 obra_0304b8fe9a (ruta_rel FLYER/SEGUNDOTRIPLE.mp4), fecha_cruda '11 - 12 Octubre 2025', match_ratio 1.0",
+       "fuentes_primarias": [],
+       "sin_fuente_primaria": true
+      },
+      "venue": {
+       "status": "exact",
+       "source": "data/rd.db",
+       "table": "productora_venues",
+       "keys": [
+        "productora_slug",
+        "venue_nombre"
+       ],
+       "id": 2,
+       "name": "Club Hípico, Santiago Chile",
+       "venue_id": null,
+       "preferido": false,
+       "estado": "candidato_sin_confirmar"
+      }
+     },
+     "triangulacion": {
+      "status": "exact",
+      "event_key": "rd:creamfields:creamfields-chile-2025:2025-10-11",
+      "catalogo": {
+       "status": "exact",
+       "source": "data/productoras"
+      },
+      "base_datos": {
+       "status": "exact",
+       "source": "data/rd.db",
+       "table": "productora_eventos",
+       "keys": [
+        "productora_slug",
+        "nombre",
+        "fecha"
+       ],
+       "id": 1,
+       "row": {
+        "productora_slug": "creamfields",
+        "nombre": "Creamfields Chile 2025",
+        "fecha": "11-12 octubre 2025",
+        "venue": "Club Hípico, Santiago",
+        "estado": "pasado",
+        "fuente": "PR #210 obra_0304b8fe9a (ruta_rel FLYER/SEGUNDOTRIPLE.mp4), fecha_cruda '11 - 12 Octubre 2025', match_ratio 1.0",
+        "fuentes_primarias": [],
+        "sin_fuente_primaria": true
+       },
+       "venue": {
+        "status": "exact",
+        "source": "data/rd.db",
+        "table": "productora_venues",
+        "keys": [
+         "productora_slug",
+         "venue_nombre"
+        ],
+        "id": 2,
+        "name": "Club Hípico, Santiago Chile",
+        "venue_id": null,
+        "preferido": false,
+        "estado": "candidato_sin_confirmar"
+       }
+      },
+      "venue_fuente": {
+       "status": "exact",
+       "name": "Club Hípico, Santiago Chile",
+       "venue_id": null,
+       "estado": "candidato_sin_confirmar",
+       "preferido": false,
+       "source": "data/productoras"
+      },
+      "venue_db": {
+       "status": "exact",
+       "source": "data/rd.db",
+       "table": "productora_venues",
+       "keys": [
+        "productora_slug",
+        "venue_nombre"
+       ],
+       "id": 2,
+       "name": "Club Hípico, Santiago Chile",
+       "venue_id": null,
+       "preferido": false,
+       "estado": "candidato_sin_confirmar"
+      },
+      "venue_canonico": {
+       "status": "pending_review",
+       "name": "Club Hípico, Santiago"
+      },
+      "identidad_completa": true
+     }
     }
    ],
    "logo_svg": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!-- Generator: visioncortex VTracer 0.6.12 -->\n<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" width=\"317\" height=\"62\">\n<path d=\"M0 0 C2.36 1.475 4.013 3.013 6 5 C6.33 3.35 6.66 1.7 7 0 C10.063 -0.081 13.124 -0.141 16.188 -0.188 C16.62 -0.2 16.62 -0.2 18.807 -0.264 C23.691 -0.32 27.08 -0.266 31 3 C33.065 6.098 33.295 6.954 33.312 10.5 C33.329 11.273 33.346 12.047 33.363 12.844 C32.916 15.501 32.123 16.389 30 18 C29.34 18 28.68 18 28 18 C28.433 18.771 28.866 19.542 29.312 20.336 C29.869 21.339 30.426 22.342 31 23.375 C31.557 24.373 32.114 25.37 32.688 26.398 C34 29 34 29 34 31 C30.815 31.637 28.153 31.872 25 31 C23.001 28.557 21.724 26.139 20.387 23.285 C19 21 19 21 15 20 C15 23.63 15 27.26 15 31 C12.36 31 9.72 31 7 31 C6.835 30.175 6.835 30.175 6 26 C5.093 26.804 4.185 27.609 3.25 28.438 C0.642 30.749 -0.357 31.089 -4 32 C-2.845 32.825 -2.845 32.825 3 37 C3.33 35.68 3.66 34.36 4 33 C6.64 33 9.28 33 12 33 C12 36.3 12 39.6 12 43 C14.97 43 17.94 43 21 43 C21 39.7 21 36.4 21 33 C23.31 33 25.62 33 28 33 C28 41.91 28 50.82 28 60 C25.69 60 23.38 60 21 60 C21 56.37 21 52.74 21 49 C18.03 49 15.06 49 12 49 C12 52.63 12 56.26 12 60 C9.36 60 6.72 60 4 60 C3.67 58.68 3.34 57.36 3 56 C2.402 56.639 1.804 57.279 1.188 57.938 C-2.352 61.275 -5.972 61.452 -10.641 61.422 C-14.726 60.691 -17.424 58.151 -20 55 C-21.833 49.5 -22.073 43.345 -19.438 38.062 C-16.454 34.314 -14.48 33.465 -10 32 C-10.908 31.608 -11.815 31.216 -12.75 30.812 C-17.148 28.36 -19.409 25.773 -21 21 C-21.746 14.405 -21.551 9.065 -17.543 3.598 C-12.669 -1.449 -6.413 -1.963 0 0 Z M-9.562 7.562 C-12.712 10.712 -12.923 12.598 -13 17 C-12.083 20.173 -11.337 21.663 -9 24 C-3.704 24.563 -3.704 24.563 -1.125 22.5 C-0.754 22.005 -0.383 21.51 0 21 C2.31 21.66 4.62 22.32 7 23 C7 18.05 7 13.1 7 8 C4.69 8.66 2.38 9.32 0 10 C-2.812 8.125 -2.812 8.125 -5 6 C-7 6 -7 6 -9.562 7.562 Z M15 7 C15 9.31 15 11.62 15 14 C21.625 14.25 21.625 14.25 25 12 C24.67 10.35 24.34 8.7 24 7 C21.03 7 18.06 7 15 7 Z M-11.75 40.125 C-13.542 42.813 -13.873 44.773 -14 48 C-12.057 53.42 -12.057 53.42 -9.062 55.062 C-7 55 -7 55 -5.188 53.5 C-3 52 -3 52 0.75 52.312 C1.286 52.426 1.286 52.426 4 53 C4 48.71 4 44.42 4 40 C2.845 40.495 2.845 40.495 -3 43 C-3.66 41.68 -4.32 40.36 -5 39 C-9.44 38.64 -9.44 38.64 -11.75 40.125 Z \" fill=\"#FFFFFF\" transform=\"translate(21,1)\"/>\n<path d=\"M0 0 C-1.019 2.778 -1.764 3.853 -4.312 5.438 C-7.917 6.192 -8.987 4.959 -12 3 C-14.812 2.812 -14.812 2.812 -17 3 C-16.835 3.495 -16.835 3.495 -16 6 C-13.164 6.844 -13.164 6.844 -9.625 7.5 C-3.518 8.637 -3.518 8.637 -1.113 10.32 C1.048 13.581 0.603 17.261 0 21 C-2.114 24.499 -3.117 25.706 -7 27 C-9.122 27.146 -11.249 27.221 -13.375 27.25 C-14.496 27.276 -15.618 27.302 -16.773 27.328 C-20.333 26.966 -22.156 26.127 -25 24 C-26.312 21.813 -26.312 21.813 -27 20 C-25.25 18.438 -25.25 18.438 -23 17 C-21.188 17.188 -21.188 17.188 -19 18 C-12.324 20.108 -12.324 20.108 -9 19 C-9 18.34 -9 17.68 -9 17 C-9.987 16.734 -10.975 16.469 -11.992 16.195 C-13.287 15.839 -14.581 15.482 -15.875 15.125 C-16.2 15.038 -16.2 15.038 -17.848 14.598 C-22.773 13.227 -22.773 13.227 -25 11 C-25.147 11.664 -25.294 12.328 -25.445 13.012 C-27.042 19.297 -28.387 22.588 -34 26 C-38.667 27.064 -43.261 27.132 -48.023 27.098 C-48.77 27.096 -49.516 27.095 -50.285 27.093 C-52.648 27.088 -55.012 27.075 -57.375 27.062 C-58.986 27.057 -60.596 27.053 -62.207 27.049 C-66.138 27.039 -70.069 27.019 -74 27 C-74 16.77 -74 6.54 -74 -4 C-71.36 -4 -68.72 -4 -66 -4 C-66 3.59 -66 11.18 -66 19 C-62.04 19 -58.08 19 -54 19 C-54 11.41 -54 3.82 -54 -4 C-51.504 -4.062 -49.009 -4.124 -46.438 -4.188 C-45.666 -4.215 -44.894 -4.242 -44.099 -4.27 C-38.991 -4.331 -35.527 -3.399 -31 -1 C-28.562 1.687 -28.562 1.687 -27 4 C-26.402 3.051 -25.804 2.103 -25.188 1.125 C-22.931 -2.099 -21.425 -3.597 -17.625 -4.672 C-11.443 -5.445 -5.007 -3.672 0 0 Z M-45 3 C-45 8.61 -45 14.22 -45 20 C-38 19 -38 19 -36.062 17.375 C-34.578 14.056 -34.615 11.597 -35 8 C-36.062 5.625 -36.062 5.625 -38 4 C-40.31 3.67 -42.62 3.34 -45 3 Z \" fill=\"#FFFFFF\" transform=\"translate(279,5)\"/>\n<path d=\"M0 0 C2.97 0 5.94 0 9 0 C12.686 8.565 15.921 17.203 19 26 C19.33 17.42 19.66 8.84 20 0 C24.29 0 28.58 0 33 0 C33.277 1.071 33.554 2.142 33.84 3.246 C34.206 4.643 34.571 6.04 34.938 7.438 C35.029 7.791 35.029 7.791 35.49 9.58 C36.887 14.887 36.887 14.887 38 16 C39.32 10.72 40.64 5.44 42 0 C45.96 0 49.92 0 54 0 C54 10.23 54 20.46 54 31 C51.36 31 48.72 31 46 31 C45.835 29.02 45.835 29.02 45 19 C44.01 22.96 43.02 26.92 42 31 C39.03 31 36.06 31 33 31 C32.01 27.37 31.02 23.74 30 20 C29.67 23.63 29.34 27.26 29 31 C23.06 31 17.12 31 11 31 C10.835 30.175 10.835 30.175 10 26 C8.374 26.06 6.749 26.149 5.125 26.25 C4.22 26.296 3.315 26.343 2.383 26.391 C0 27 0 27 -1.32 29.047 C-1.432 29.369 -1.432 29.369 -2 31 C-4.64 31 -7.28 31 -10 31 C-9.453 24.071 -6.933 18.003 -4.438 11.562 C-4.013 10.449 -3.588 9.336 -3.15 8.189 C-2.107 5.457 -1.056 2.727 0 0 Z M4 11 C3.34 13.64 2.68 16.28 2 19 C3.65 19 5.3 19 7 19 C6.744 16.657 6.407 14.322 6 12 C5.34 11.67 4.68 11.34 4 11 Z \" fill=\"#FFFFFF\" transform=\"translate(91,1)\"/>\n<path d=\"M0 0 C2.335 1.455 4.012 3.06 6 5 C6.639 4.175 7.279 3.35 7.938 2.5 C11.545 -0.445 13.323 -0.737 17.844 -0.504 C21.262 0.295 22.897 2.306 25 5 C25.165 5.165 25.165 5.165 26 6 C26.351 5.598 26.351 5.598 28.125 3.562 C31.327 0.709 32.766 0.088 37 0 C40.846 1.049 41.737 1.605 44 5 C43.625 7.187 43.625 7.187 43 9 C41.02 9 39.04 9 37 9 C36.835 8.67 36.835 8.67 36 7 C35.34 7 34.68 7 34 7 C34 7.99 34 8.98 34 10 C34.907 9.938 35.815 9.876 36.75 9.812 C40 10 40 10 42.312 11 C44.846 14.003 45.193 17.192 45 21 C43.776 23.962 42.769 25.443 40.188 27.312 C36.066 28.608 33.188 28.608 29.312 26.625 C26.011 22.877 25.126 18.795 24 14 C19 19.875 19 19.875 19 21 C20.98 21 22.96 21 25 21 C25 22.98 25 24.96 25 27 C18.73 27 12.46 27 6 27 C6 22 6 22 7.934 19.832 C8.76 19.166 9.586 18.499 10.438 17.812 C14.934 14.132 14.934 14.132 16 12 C16.04 10 16.043 8 16 6 C15.67 6.165 15.67 6.165 14 7 C13.375 9.062 13.375 9.062 13 11 C10.69 11 8.38 11 6 11 C6.017 11.29 6.017 11.29 6.105 12.758 C6.285 17.947 6.029 21.564 3 26 C0.65 27.783 -1.008 28.001 -3.938 28.438 C-8.041 27.851 -9.396 26.125 -12 23 C-14.321 18.358 -13.43 12.051 -13 7 C-10.6 0.528 -6.567 -0.657 0 0 Z M-5 6 C-7.321 11.324 -6.915 15.438 -6 21 C-5.34 21.165 -5.34 21.165 -2 22 C-0.635 19.269 -0.868 17.044 -0.875 14 C-0.874 13.464 -0.874 13.464 -0.867 10.75 C-1 8 -1 8 -2 6 C-2.99 6 -3.98 6 -5 6 Z M35 15 C34.34 15.66 33.68 16.32 33 17 C33.375 19.625 33.375 19.625 34 22 C35.32 21.67 36.64 21.34 38 21 C37.625 18.562 37.625 18.562 37 16 C36.34 15.67 35.68 15.34 35 15 Z \" fill=\"#FFFFFF\" transform=\"translate(139,34)\"/>\n<path d=\"M0 0 C7.92 0 15.84 0 24 0 C24 2.31 24 4.62 24 7 C18.72 7 13.44 7 8 7 C8 8.65 8 10.3 8 12 C12.62 12 17.24 12 22 12 C22 14.31 22 16.62 22 19 C17.38 19 12.76 19 8 19 C8 20.65 8 22.3 8 24 C13.28 24 18.56 24 24 24 C24 26.31 24 28.62 24 31 C16.08 31 8.16 31 0 31 C0 20.77 0 10.54 0 0 Z \" fill=\"#FFFFFF\" transform=\"translate(180,1)\"/>\n<path d=\"M0 0 C7.92 0 15.84 0 24 0 C24 2.31 24 4.62 24 7 C18.72 7 13.44 7 8 7 C8 8.65 8 10.3 8 12 C12.29 12 16.58 12 21 12 C21 14.31 21 16.62 21 19 C16.71 19 12.42 19 8 19 C8 20.65 8 22.3 8 24 C13.28 24 18.56 24 24 24 C24 26.31 24 28.62 24 31 C16.08 31 8.16 31 0 31 C0 20.77 0 10.54 0 0 Z \" fill=\"#FFFFFF\" transform=\"translate(56,1)\"/>\n<path d=\"M0 0 C2.375 0.875 2.375 0.875 4.375 2.875 C4.268 5.64 3.857 8.312 3.469 11.051 C3.361 14.309 3.718 16.066 5.375 18.875 C7.723 20.203 7.723 20.203 10.438 21.125 C15.342 22.842 15.342 22.842 16.375 23.875 C15.655 30.595 15.655 30.595 14.375 31.875 C11.156 32.425 9.128 32.402 6.41 30.5 C6.074 30.222 6.074 30.222 4.375 28.812 C0.748 25.897 0.748 25.897 -2.812 25.688 C-5.625 26.875 -5.625 26.875 -8.062 29.5 C-8.908 30.284 -9.754 31.067 -10.625 31.875 C-14.438 31.688 -14.438 31.688 -17.625 30.875 C-17.955 28.565 -18.285 26.255 -18.625 23.875 C-15.256 21.045 -11.65 19.589 -7.625 17.875 C-5.625 15.875 -5.625 15.875 -5.438 13.125 C-5.625 9.875 -5.625 9.875 -6.375 6.75 C-6.625 3.875 -6.625 3.875 -5 1.438 C-2.625 -0.125 -2.625 -0.125 0 0 Z M-3.188 18.375 C-3.992 19.2 -4.796 20.025 -5.625 20.875 C-3.315 21.535 -1.005 22.195 1.375 22.875 C1.045 20.565 0.715 18.255 0.375 15.875 C-0.625 15.875 -0.625 15.875 -3.188 18.375 Z \" fill=\"#FFFFFF\" transform=\"translate(300.625,1.125)\"/>\n<path d=\"M0 0 C7.92 0 15.84 0 24 0 C24 2.31 24 4.62 24 7 C18.72 7 13.44 7 8 7 C8 8.65 8 10.3 8 12 C12.62 12 17.24 12 22 12 C22 14.31 22 16.62 22 19 C17.38 19 12.76 19 8 19 C8 22.96 8 26.92 8 31 C5.36 31 2.72 31 0 31 C0 20.77 0 10.54 0 0 Z \" fill=\"#FFFFFF\" transform=\"translate(146,1)\"/>\n<path d=\"M0 0 C6.93 0 13.86 0 21 0 C21 1.98 21 3.96 21 6 C16.71 6 12.42 6 8 6 C8 7.32 8 8.64 8 10 C11.96 10 15.92 10 20 10 C20 11.98 20 13.96 20 16 C16.04 16 12.08 16 8 16 C8 17.65 8 19.3 8 21 C12.62 21 17.24 21 22 21 C22 22.98 22 24.96 22 27 C14.74 27 7.48 27 0 27 C0 18.09 0 9.18 0 0 Z \" fill=\"#FFFFFF\" transform=\"translate(83,34)\"/>\n<path d=\"M0 0 C3 1.438 3 1.438 5 4 C5.881 7.204 5.858 9.791 5 13 C2.982 16.023 0.649 18.52 -2 21 C0.31 21 2.62 21 5 21 C5 22.98 5 24.96 5 27 C-1.27 27 -7.54 27 -14 27 C-14 22 -14 22 -11.848 19.754 C-9.994 18.295 -8.14 16.837 -6.285 15.379 C-3.586 12.569 -3.259 10.826 -3 7 C-3.99 7 -4.98 7 -6 7 C-6.33 8.32 -6.66 9.64 -7 11 C-9.31 11 -11.62 11 -14 11 C-13.387 4.505 -13.387 4.505 -11.562 2.125 C-7.933 -0.489 -4.334 -0.563 0 0 Z \" fill=\"#FFFFFF\" transform=\"translate(120,34)\"/>\n<path d=\"M0 0 C2.31 0 4.62 0 7 0 C7 6.93 7 13.86 7 21 C10.3 21 13.6 21 17 21 C17 22.98 17 24.96 17 27 C11.39 27 5.78 27 0 27 C0 18.09 0 9.18 0 0 Z \" fill=\"#FFFFFF\" transform=\"translate(65,34)\"/>\n<path d=\"M0 0 C2.64 0 5.28 0 8 0 C8 10.23 8 20.46 8 31 C5.36 31 2.72 31 0 31 C0 20.77 0 10.54 0 0 Z \" fill=\"#FFFFFF\" transform=\"translate(171,1)\"/>\n<path d=\"M0 0 C2.64 0 5.28 0 8 0 C8 8.91 8 17.82 8 27 C5.36 27 2.72 27 0 27 C0 18.09 0 9.18 0 0 Z \" fill=\"#FFFFFF\" transform=\"translate(53,34)\"/>\n</svg>"
@@ -102,6 +236,7 @@
    "venues": [
     {
      "nombre": "Basel Venue Santiago",
+     "venue_id": null,
      "estado": "confirmado_ig_2026-07-23",
      "preferido": true
     }
@@ -126,7 +261,137 @@
      "fuentes_primarias": [],
      "sin_fuente_primaria": true,
      "lineup": [],
-     "co_organiza": []
+     "co_organiza": [],
+     "event_key": "rd:dame:dame-jeff-mills-30-years:2026-11-20",
+     "venue_link": {
+      "status": "pending_review",
+      "name": "Basel Venue Santiago"
+     },
+     "venue_source_link": {
+      "status": "exact",
+      "name": "Basel Venue Santiago",
+      "venue_id": null,
+      "estado": "confirmado_ig_2026-07-23",
+      "preferido": true,
+      "source": "data/productoras"
+     },
+     "flyer_link": {
+      "status": "pending_review",
+      "generated_key": "rd:dame:dame-jeff-mills-30-years:2026-11-20:flyer"
+     },
+     "rider_link": {
+      "status": "pending_review",
+      "generated_key": "rd:dame:dame-jeff-mills-30-years:2026-11-20:rider"
+     },
+     "layout_link": {
+      "status": "pending_review",
+      "generated_key": "rd:dame:dame-jeff-mills-30-years:2026-11-20:layout"
+     },
+     "database_link": {
+      "status": "exact",
+      "source": "data/rd.db",
+      "table": "productora_eventos",
+      "keys": [
+       "productora_slug",
+       "nombre",
+       "fecha"
+      ],
+      "id": 2,
+      "row": {
+       "productora_slug": "dame",
+       "nombre": "Dame -- Jeff Mills 30 years",
+       "fecha": "20 noviembre 2026",
+       "venue": "Basel Venue Santiago",
+       "estado": "activo_anunciado",
+       "fuente": "post IG 2026-07-23, descarga IG DbI68vBCSTc.jpg, captado en esta sesión",
+       "fuentes_primarias": [],
+       "sin_fuente_primaria": true
+      },
+      "venue": {
+       "status": "exact",
+       "source": "data/rd.db",
+       "table": "productora_venues",
+       "keys": [
+        "productora_slug",
+        "venue_nombre"
+       ],
+       "id": 3,
+       "name": "Basel Venue Santiago",
+       "venue_id": null,
+       "preferido": true,
+       "estado": "confirmado_ig_2026-07-23"
+      }
+     },
+     "triangulacion": {
+      "status": "exact",
+      "event_key": "rd:dame:dame-jeff-mills-30-years:2026-11-20",
+      "catalogo": {
+       "status": "exact",
+       "source": "data/productoras"
+      },
+      "base_datos": {
+       "status": "exact",
+       "source": "data/rd.db",
+       "table": "productora_eventos",
+       "keys": [
+        "productora_slug",
+        "nombre",
+        "fecha"
+       ],
+       "id": 2,
+       "row": {
+        "productora_slug": "dame",
+        "nombre": "Dame -- Jeff Mills 30 years",
+        "fecha": "20 noviembre 2026",
+        "venue": "Basel Venue Santiago",
+        "estado": "activo_anunciado",
+        "fuente": "post IG 2026-07-23, descarga IG DbI68vBCSTc.jpg, captado en esta sesión",
+        "fuentes_primarias": [],
+        "sin_fuente_primaria": true
+       },
+       "venue": {
+        "status": "exact",
+        "source": "data/rd.db",
+        "table": "productora_venues",
+        "keys": [
+         "productora_slug",
+         "venue_nombre"
+        ],
+        "id": 3,
+        "name": "Basel Venue Santiago",
+        "venue_id": null,
+        "preferido": true,
+        "estado": "confirmado_ig_2026-07-23"
+       }
+      },
+      "venue_fuente": {
+       "status": "exact",
+       "name": "Basel Venue Santiago",
+       "venue_id": null,
+       "estado": "confirmado_ig_2026-07-23",
+       "preferido": true,
+       "source": "data/productoras"
+      },
+      "venue_db": {
+       "status": "exact",
+       "source": "data/rd.db",
+       "table": "productora_venues",
+       "keys": [
+        "productora_slug",
+        "venue_nombre"
+       ],
+       "id": 3,
+       "name": "Basel Venue Santiago",
+       "venue_id": null,
+       "preferido": true,
+       "estado": "confirmado_ig_2026-07-23"
+      },
+      "venue_canonico": {
+       "status": "pending_review",
+       "name": "Basel Venue Santiago"
+      },
+      "identidad_completa": true
+     }
     }
    ]
   },
@@ -143,6 +408,7 @@
    "venues": [
     {
      "nombre": "Club Freedom",
+     "venue_id": null,
      "estado": "confirmado_usuario_2026-07-23",
      "preferido": true
     }
@@ -169,33 +435,143 @@
      ],
      "sin_fuente_primaria": false,
      "lineup": [],
-     "co_organiza": []
+     "co_organiza": [],
+     "event_key": "rd:freedom:festival-sentir:needs-confirmation",
+     "venue_link": {
+      "status": "pending_review",
+      "name": "Club Freedom (spot.freedom) -- confirmado por el usuario"
+     },
+     "venue_source_link": {
+      "status": "exact",
+      "name": "Club Freedom",
+      "venue_id": null,
+      "estado": "confirmado_usuario_2026-07-23",
+      "preferido": true,
+      "source": "data/productoras"
+     },
+     "flyer_link": {
+      "status": "pending_review",
+      "generated_key": "rd:freedom:festival-sentir:needs-confirmation:flyer"
+     },
+     "rider_link": {
+      "status": "pending_review",
+      "generated_key": "rd:freedom:festival-sentir:needs-confirmation:rider"
+     },
+     "layout_link": {
+      "status": "pending_review",
+      "generated_key": "rd:freedom:festival-sentir:needs-confirmation:layout"
+     },
+     "database_link": {
+      "status": "exact",
+      "source": "data/rd.db",
+      "table": "productora_eventos",
+      "keys": [
+       "productora_slug",
+       "nombre",
+       "fecha"
+      ],
+      "id": 3,
+      "row": {
+       "productora_slug": "freedom",
+       "nombre": "Festival Sentir",
+       "fecha": "needs_confirmation",
+       "venue": "Club Freedom (spot.freedom) -- confirmado por el usuario",
+       "estado": "confirmado_usuario_needs_confirmation_fecha",
+       "fuente": "reel Instagram https://www.instagram.com/reel/DZ3bAdGhp7y/ + palabra del usuario 2026-07-23 (video renderizandose como flyer el mismo dia)",
+       "fuentes_primarias": [
+        "https://www.instagram.com/reel/DZ3bAdGhp7y/"
+       ],
+       "sin_fuente_primaria": false
+      },
+      "venue": {
+       "status": "exact",
+       "source": "data/rd.db",
+       "table": "productora_venues",
+       "keys": [
+        "productora_slug",
+        "venue_nombre"
+       ],
+       "id": 4,
+       "name": "Club Freedom",
+       "venue_id": null,
+       "preferido": true,
+       "estado": "confirmado_usuario_2026-07-23"
+      }
+     },
+     "triangulacion": {
+      "status": "exact",
+      "event_key": "rd:freedom:festival-sentir:needs-confirmation",
+      "catalogo": {
+       "status": "exact",
+       "source": "data/productoras"
+      },
+      "base_datos": {
+       "status": "exact",
+       "source": "data/rd.db",
+       "table": "productora_eventos",
+       "keys": [
+        "productora_slug",
+        "nombre",
+        "fecha"
+       ],
+       "id": 3,
+       "row": {
+        "productora_slug": "freedom",
+        "nombre": "Festival Sentir",
+        "fecha": "needs_confirmation",
+        "venue": "Club Freedom (spot.freedom) -- confirmado por el usuario",
+        "estado": "confirmado_usuario_needs_confirmation_fecha",
+        "fuente": "reel Instagram https://www.instagram.com/reel/DZ3bAdGhp7y/ + palabra del usuario 2026-07-23 (video renderizandose como flyer el mismo dia)",
+        "fuentes_primarias": [
+         "https://www.instagram.com/reel/DZ3bAdGhp7y/"
+        ],
+        "sin_fuente_primaria": false
+       },
+       "venue": {
+        "status": "exact",
+        "source": "data/rd.db",
+        "table": "productora_venues",
+        "keys": [
+         "productora_slug",
+         "venue_nombre"
+        ],
+        "id": 4,
+        "name": "Club Freedom",
+        "venue_id": null,
+        "preferido": true,
+        "estado": "confirmado_usuario_2026-07-23"
+       }
+      },
+      "venue_fuente": {
+       "status": "exact",
+       "name": "Club Freedom",
+       "venue_id": null,
+       "estado": "confirmado_usuario_2026-07-23",
+       "preferido": true,
+       "source": "data/productoras"
+      },
+      "venue_db": {
+       "status": "exact",
+       "source": "data/rd.db",
+       "table": "productora_venues",
+       "keys": [
+        "productora_slug",
+        "venue_nombre"
+       ],
+       "id": 4,
+       "name": "Club Freedom",
+       "venue_id": null,
+       "preferido": true,
+       "estado": "confirmado_usuario_2026-07-23"
+      },
+      "venue_canonico": {
+       "status": "pending_review",
+       "name": "Club Freedom (spot.freedom) -- confirmado por el usuario"
+      },
+      "identidad_completa": true
+     }
     }
    ]
-  },
-  {
-   "slug": "frvr",
-   "nombre": "FRVR",
-   "aliases": [
-    "FRVR"
-   ],
-   "tipos": [],
-   "venues": [
-    {
-     "nombre": "Paralelo 89",
-     "estado": "inferido",
-     "preferido": true
-    }
-   ],
-   "logo": {
-    "estado": "sin_ficha",
-    "vector": false,
-    "archivo": false
-   },
-   "confirmada": false,
-   "confirmacion": "",
-   "fuente": "nombres de archivo del archivo de entregas (ENTREGA/FEBRERO), mapeo 2026-07-17; sin confirmar por humano",
-   "eventos": []
   },
   {
    "slug": "glovox",
@@ -317,6 +693,7 @@
    "venues": [
     {
      "nombre": "Central Cultural",
+     "venue_id": null,
      "estado": "candidato_sin_confirmar",
      "preferido": false
     }
@@ -341,7 +718,139 @@
      "fuentes_primarias": [],
      "sin_fuente_primaria": true,
      "lineup": [],
-     "co_organiza": []
+     "co_organiza": [],
+     "flyer_ref": "RD/FEBRERO/OPENKLUB.png",
+     "event_key": "rd:openklub:openklub-edicion-sin-identificar:viernes-6-febrero-18-00-04-00-ano-no-confirmado",
+     "venue_link": {
+      "status": "pending_review",
+      "name": "Central Cultural (needs_confirmation)"
+     },
+     "venue_source_link": {
+      "status": "exact",
+      "name": "Central Cultural",
+      "venue_id": null,
+      "estado": "candidato_sin_confirmar",
+      "preferido": false,
+      "source": "data/productoras"
+     },
+     "flyer_link": {
+      "status": "explicit",
+      "generated_key": "rd:openklub:openklub-edicion-sin-identificar:viernes-6-febrero-18-00-04-00-ano-no-confirmado:flyer",
+      "ref": "RD/FEBRERO/OPENKLUB.png"
+     },
+     "rider_link": {
+      "status": "pending_review",
+      "generated_key": "rd:openklub:openklub-edicion-sin-identificar:viernes-6-febrero-18-00-04-00-ano-no-confirmado:rider"
+     },
+     "layout_link": {
+      "status": "pending_review",
+      "generated_key": "rd:openklub:openklub-edicion-sin-identificar:viernes-6-febrero-18-00-04-00-ano-no-confirmado:layout"
+     },
+     "database_link": {
+      "status": "exact",
+      "source": "data/rd.db",
+      "table": "productora_eventos",
+      "keys": [
+       "productora_slug",
+       "nombre",
+       "fecha"
+      ],
+      "id": 4,
+      "row": {
+       "productora_slug": "openklub",
+       "nombre": "OpenKlub (edición sin identificar)",
+       "fecha": "viernes 6 febrero, 18:00-04:00 (año no confirmado)",
+       "venue": "Central Cultural (needs_confirmation)",
+       "estado": "pasado_needs_confirmation",
+       "fuente": "PR #210 obra_7879d3d141 (ruta_rel FEBRERO/OPENKLUB.png), fecha_cruda 'VIERNES_06FEBR 18:00_04:00'",
+       "fuentes_primarias": [],
+       "sin_fuente_primaria": true
+      },
+      "venue": {
+       "status": "exact",
+       "source": "data/rd.db",
+       "table": "productora_venues",
+       "keys": [
+        "productora_slug",
+        "venue_nombre"
+       ],
+       "id": 5,
+       "name": "Central Cultural",
+       "venue_id": null,
+       "preferido": false,
+       "estado": "candidato_sin_confirmar"
+      }
+     },
+     "triangulacion": {
+      "status": "exact",
+      "event_key": "rd:openklub:openklub-edicion-sin-identificar:viernes-6-febrero-18-00-04-00-ano-no-confirmado",
+      "catalogo": {
+       "status": "exact",
+       "source": "data/productoras"
+      },
+      "base_datos": {
+       "status": "exact",
+       "source": "data/rd.db",
+       "table": "productora_eventos",
+       "keys": [
+        "productora_slug",
+        "nombre",
+        "fecha"
+       ],
+       "id": 4,
+       "row": {
+        "productora_slug": "openklub",
+        "nombre": "OpenKlub (edición sin identificar)",
+        "fecha": "viernes 6 febrero, 18:00-04:00 (año no confirmado)",
+        "venue": "Central Cultural (needs_confirmation)",
+        "estado": "pasado_needs_confirmation",
+        "fuente": "PR #210 obra_7879d3d141 (ruta_rel FEBRERO/OPENKLUB.png), fecha_cruda 'VIERNES_06FEBR 18:00_04:00'",
+        "fuentes_primarias": [],
+        "sin_fuente_primaria": true
+       },
+       "venue": {
+        "status": "exact",
+        "source": "data/rd.db",
+        "table": "productora_venues",
+        "keys": [
+         "productora_slug",
+         "venue_nombre"
+        ],
+        "id": 5,
+        "name": "Central Cultural",
+        "venue_id": null,
+        "preferido": false,
+        "estado": "candidato_sin_confirmar"
+       }
+      },
+      "venue_fuente": {
+       "status": "exact",
+       "name": "Central Cultural",
+       "venue_id": null,
+       "estado": "candidato_sin_confirmar",
+       "preferido": false,
+       "source": "data/productoras"
+      },
+      "venue_db": {
+       "status": "exact",
+       "source": "data/rd.db",
+       "table": "productora_venues",
+       "keys": [
+        "productora_slug",
+        "venue_nombre"
+       ],
+       "id": 5,
+       "name": "Central Cultural",
+       "venue_id": null,
+       "preferido": false,
+       "estado": "candidato_sin_confirmar"
+      },
+      "venue_canonico": {
+       "status": "pending_review",
+       "name": "Central Cultural (needs_confirmation)"
+      },
+      "identidad_completa": true
+     }
     }
    ]
   },
@@ -382,6 +891,7 @@
    "venues": [
     {
      "nombre": "Parque Padre Hurtado",
+     "venue_id": null,
      "estado": "confirmado_ig_2026-07-23",
      "preferido": true
     }
@@ -410,7 +920,137 @@
      ],
      "co_organiza": [
       "GLOVOX"
-     ]
+     ],
+     "event_key": "rd:piknic:piknic-electronik-santiago-lineup-partiboi69-co-org-glovox:2026-09-12",
+     "venue_link": {
+      "status": "pending_review",
+      "name": "Parque Padre Hurtado"
+     },
+     "venue_source_link": {
+      "status": "exact",
+      "name": "Parque Padre Hurtado",
+      "venue_id": null,
+      "estado": "confirmado_ig_2026-07-23",
+      "preferido": true,
+      "source": "data/productoras"
+     },
+     "flyer_link": {
+      "status": "pending_review",
+      "generated_key": "rd:piknic:piknic-electronik-santiago-lineup-partiboi69-co-org-glovox:2026-09-12:flyer"
+     },
+     "rider_link": {
+      "status": "pending_review",
+      "generated_key": "rd:piknic:piknic-electronik-santiago-lineup-partiboi69-co-org-glovox:2026-09-12:rider"
+     },
+     "layout_link": {
+      "status": "pending_review",
+      "generated_key": "rd:piknic:piknic-electronik-santiago-lineup-partiboi69-co-org-glovox:2026-09-12:layout"
+     },
+     "database_link": {
+      "status": "exact",
+      "source": "data/rd.db",
+      "table": "productora_eventos",
+      "keys": [
+       "productora_slug",
+       "nombre",
+       "fecha"
+      ],
+      "id": 5,
+      "row": {
+       "productora_slug": "piknic",
+       "nombre": "Piknic Electronik Santiago -- lineup PARTIBOI69 (co-org GLOVOX)",
+       "fecha": "12 septiembre 2026",
+       "venue": "Parque Padre Hurtado",
+       "estado": "activo_venta",
+       "fuente": "post IG 2026-07-23, descarga IG DbG7Z2qCPrl_2.jpg (imagen + paleta), captado en esta sesión",
+       "fuentes_primarias": [],
+       "sin_fuente_primaria": true
+      },
+      "venue": {
+       "status": "exact",
+       "source": "data/rd.db",
+       "table": "productora_venues",
+       "keys": [
+        "productora_slug",
+        "venue_nombre"
+       ],
+       "id": 6,
+       "name": "Parque Padre Hurtado",
+       "venue_id": null,
+       "preferido": true,
+       "estado": "confirmado_ig_2026-07-23"
+      }
+     },
+     "triangulacion": {
+      "status": "exact",
+      "event_key": "rd:piknic:piknic-electronik-santiago-lineup-partiboi69-co-org-glovox:2026-09-12",
+      "catalogo": {
+       "status": "exact",
+       "source": "data/productoras"
+      },
+      "base_datos": {
+       "status": "exact",
+       "source": "data/rd.db",
+       "table": "productora_eventos",
+       "keys": [
+        "productora_slug",
+        "nombre",
+        "fecha"
+       ],
+       "id": 5,
+       "row": {
+        "productora_slug": "piknic",
+        "nombre": "Piknic Electronik Santiago -- lineup PARTIBOI69 (co-org GLOVOX)",
+        "fecha": "12 septiembre 2026",
+        "venue": "Parque Padre Hurtado",
+        "estado": "activo_venta",
+        "fuente": "post IG 2026-07-23, descarga IG DbG7Z2qCPrl_2.jpg (imagen + paleta), captado en esta sesión",
+        "fuentes_primarias": [],
+        "sin_fuente_primaria": true
+       },
+       "venue": {
+        "status": "exact",
+        "source": "data/rd.db",
+        "table": "productora_venues",
+        "keys": [
+         "productora_slug",
+         "venue_nombre"
+        ],
+        "id": 6,
+        "name": "Parque Padre Hurtado",
+        "venue_id": null,
+        "preferido": true,
+        "estado": "confirmado_ig_2026-07-23"
+       }
+      },
+      "venue_fuente": {
+       "status": "exact",
+       "name": "Parque Padre Hurtado",
+       "venue_id": null,
+       "estado": "confirmado_ig_2026-07-23",
+       "preferido": true,
+       "source": "data/productoras"
+      },
+      "venue_db": {
+       "status": "exact",
+       "source": "data/rd.db",
+       "table": "productora_venues",
+       "keys": [
+        "productora_slug",
+        "venue_nombre"
+       ],
+       "id": 6,
+       "name": "Parque Padre Hurtado",
+       "venue_id": null,
+       "preferido": true,
+       "estado": "confirmado_ig_2026-07-23"
+      },
+      "venue_canonico": {
+       "status": "pending_review",
+       "name": "Parque Padre Hurtado"
+      },
+      "identidad_completa": true
+     }
     },
     {
      "nombre": "Piknic (edición sin identificar)",
@@ -423,7 +1063,121 @@
      "fuentes_primarias": [],
      "sin_fuente_primaria": true,
      "lineup": [],
-     "co_organiza": []
+     "co_organiza": [],
+     "flyer_ref": "RD/FEBRERO/ULTIMA/PIKNIC.png",
+     "event_key": "rd:piknic:piknic-edicion-sin-identificar:mar-28-ano-no-confirmado",
+     "venue_link": {
+      "status": "pending_review",
+      "name": "Santiago"
+     },
+     "venue_source_link": {
+      "status": "pending_review",
+      "source": "data/productoras",
+      "reason": "el venue del evento no coincide exactamente con una declaración de la productora"
+     },
+     "flyer_link": {
+      "status": "explicit",
+      "generated_key": "rd:piknic:piknic-edicion-sin-identificar:mar-28-ano-no-confirmado:flyer",
+      "ref": "RD/FEBRERO/ULTIMA/PIKNIC.png"
+     },
+     "rider_link": {
+      "status": "pending_review",
+      "generated_key": "rd:piknic:piknic-edicion-sin-identificar:mar-28-ano-no-confirmado:rider"
+     },
+     "layout_link": {
+      "status": "pending_review",
+      "generated_key": "rd:piknic:piknic-edicion-sin-identificar:mar-28-ano-no-confirmado:layout"
+     },
+     "database_link": {
+      "status": "exact",
+      "source": "data/rd.db",
+      "table": "productora_eventos",
+      "keys": [
+       "productora_slug",
+       "nombre",
+       "fecha"
+      ],
+      "id": 6,
+      "row": {
+       "productora_slug": "piknic",
+       "nombre": "Piknic (edición sin identificar)",
+       "fecha": "MAR 28 (año no confirmado)",
+       "venue": "Santiago",
+       "estado": "pasado_needs_confirmation",
+       "fuente": "PR #210 obra_25745a1c93 (FEBRERO/ULTIMA/PIKNIC.png), fecha_cruda sin normalizar",
+       "fuentes_primarias": [],
+       "sin_fuente_primaria": true
+      },
+      "venue": {
+       "status": "pending_review",
+       "source": "data/rd.db",
+       "table": "productora_venues",
+       "keys": [
+        "productora_slug",
+        "venue_nombre"
+       ],
+       "reason": "el venue del evento no está declarado para la productora"
+      }
+     },
+     "triangulacion": {
+      "status": "exact",
+      "event_key": "rd:piknic:piknic-edicion-sin-identificar:mar-28-ano-no-confirmado",
+      "catalogo": {
+       "status": "exact",
+       "source": "data/productoras"
+      },
+      "base_datos": {
+       "status": "exact",
+       "source": "data/rd.db",
+       "table": "productora_eventos",
+       "keys": [
+        "productora_slug",
+        "nombre",
+        "fecha"
+       ],
+       "id": 6,
+       "row": {
+        "productora_slug": "piknic",
+        "nombre": "Piknic (edición sin identificar)",
+        "fecha": "MAR 28 (año no confirmado)",
+        "venue": "Santiago",
+        "estado": "pasado_needs_confirmation",
+        "fuente": "PR #210 obra_25745a1c93 (FEBRERO/ULTIMA/PIKNIC.png), fecha_cruda sin normalizar",
+        "fuentes_primarias": [],
+        "sin_fuente_primaria": true
+       },
+       "venue": {
+        "status": "pending_review",
+        "source": "data/rd.db",
+        "table": "productora_venues",
+        "keys": [
+         "productora_slug",
+         "venue_nombre"
+        ],
+        "reason": "el venue del evento no está declarado para la productora"
+       }
+      },
+      "venue_fuente": {
+       "status": "pending_review",
+       "source": "data/productoras",
+       "reason": "el venue del evento no coincide exactamente con una declaración de la productora"
+      },
+      "venue_db": {
+       "status": "pending_review",
+       "source": "data/rd.db",
+       "table": "productora_venues",
+       "keys": [
+        "productora_slug",
+        "venue_nombre"
+       ],
+       "reason": "el venue del evento no está declarado para la productora"
+      },
+      "venue_canonico": {
+       "status": "pending_review",
+       "name": "Santiago"
+      },
+      "identidad_completa": false
+     }
     }
    ],
    "logo_svg": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<svg id=\"Capa_1\" data-name=\"Capa 1\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 1105.2 264\">\n  <path d=\"M378.6036,264.0578l-13.3605-.0068c-19.8999-1.4285-39.3976-8.1306-46.7533-28.4677-2.5215-6.9715-4.1432-14.1414-4.1495-21.7184l-.023-27.3031c-.0048-5.7193,1.124-11.1853,2.6157-16.5928,4.4218-16.0282,16.3973-27.7988,32.4563-32.4684,21.7383-6.3209,52.037-4.4119,69.1237,11.5841,11.3685,10.6428,14.0666,27.8199,13.1951,42.8553l-45.2593-.0098c.1449-6.1229-.9513-14.8677-5.1429-17.6129-4.7891-3.1365-11.2135-3.1048-16.0732-.2327-4.466,2.6394-6.3633,10.4386-6.3421,15.8102l.0777,19.6856c.016,4.0626,1.1427,8.2602,3.3062,11.5202,2.5503,3.8429,7.1529,5.0464,11.5553,4.8119,10.4954-.5592,12.6602-10.5988,12.6145-20.7669l45.7719-.0103c.257,9.0602-.3237,18.146-3.2892,26.8669-7.8038,22.9495-27.9645,30.4958-50.3235,32.0557Z\"/>\n  <polygon points=\"1105.1994 260.434 1105.1919 261.3626 1057.9174 261.4659 1037.0859 215.9019 1027.0892 229.3767 1027.0882 261.477 985.1107 261.4681 985.1105 137.0454 1027.0722 137.0365 1027.1972 175.3456 1055.5871 137.0019 1105.2318 137.1234 1068.0488 185.4392 1105.1994 260.434\"/>\n  <path d=\"M736.5998,264.076l-10.3578-.0186c-27.281-2.1342-50.4272-21.2302-57.6347-47.1274-7.6981-27.6598,3.1837-56.6274,27.3315-72.385l16.8118,23.6797,4.2274-2.0874-9.2481-27.5609c35.5043-13.5551,74.9422,5.4236,86.0266,41.3983,8.6116,27.9491-2.2721,57.9401-26.8565,73.8795l-16.8804-23.7318-4.1618,2.1469,9.2518,27.5844c-6.3173,2.2884-12.3143,3.6728-18.5097,4.2225ZM747.8377,219.9341c9.2167-7.2349,12.5101-19.2014,8.3027-30.2512-3.7424-9.8287-13.6238-17.0109-24.8618-16.933-10.7484.0745-20.8,6.7404-24.7787,17.3217-4.2021,11.1756-.2455,23.6318,9.2613,30.5098,9.5283,6.8935,22.3178,7.013,32.0764-.6473Z\"/>\n  <polygon points=\"416.1856 127.4469 377.1068 127.4465 338.0132 67.4469 337.947 127.4564 297.9007 127.4506 297.9005 2.9917 338.2868 2.9715 376.2533 61.3064 376.3635 2.9819 416.1839 2.9862 416.1856 127.4469\"/>\n  <polygon points=\"922.4759 261.4497 883.3574 261.4497 844.0752 201.147 844.0108 261.4743 804.1899 261.4708 804.1903 137.0458 844.5854 137.0361 882.5771 195.4462 882.6625 137.0318 922.4746 137.0475 922.4759 261.4497\"/>\n  <path d=\"M658.5194,233.7825l.0168,27.6914-43.4078-.0024-.1418-27.0706c-.0296-5.6554-3.7723-9.2248-9.1916-9.7743l-12.5303-.1004-.0007,36.9479-41.7487.0012-.0043-124.4248,61.7245.0785c6.9552.0088,13.3433,1.2343,19.9128,2.6406,6.6254,1.9356,12.5575,4.6435,17.6588,9.3561,10.1766,9.4011,12.2867,26.1961,9.1089,39.4353-2.0673,8.6125-7.9133,15.1429-15.8627,19.601,5.8339,2.8212,9.8359,7.0485,12.1376,12.7757,1.3726,4.069,1.9636,8.1751,2.3284,12.8449ZM615.0162,188.0602c4.2043-4.2671,4.3104-10.3801.3145-14.6242-1.845-1.0356-4.2277-2.0682-6.4337-2.0777l-15.6338-.0671-.0003,19.013,15.06-.0964c2.2522-.0144,4.6334-1.0126,6.6934-2.1476Z\"/>\n  <polygon points=\"291.9872 127.4114 244.3492 127.4765 223.5165 81.9041 213.6782 95.1529 213.6636 127.4513 171.6893 127.4353 171.6872 2.9857 213.6405 2.9836 213.7135 41.3342 242.0186 2.9791 291.8385 2.9988 254.4775 51.4301 291.9872 127.4114\"/>\n  <path d=\"M537.2207,91.9808c6.2219.2053,10.8767-3.1751,12.5136-8.8451,1.0948-3.7923,1.4961-7.5689,1.587-12.0396l45.7468-.0196c.8087,25.5775-7.2075,47.1093-32.9414,55.3162-10.5506,3.3424-21.4131,4.3065-32.5083,3.7899-21.0663-.9809-41.3167-8.1932-48.6036-29.2226-2.2438-6.4756-3.8195-13.1018-3.8121-20.0594l.0316-29.8266c.008-7.5285,1.8996-14.6739,4.8235-21.4889,7.8521-18.3014,25.469-27.4704,44.9361-28.873l18.4059.0044c8.9527.6319,17.3147,2.9132,25.1785,6.8367,19.9708,10.4509,24.8631,28.8593,23.9684,50.3691l-45.231-.0194c-.2504-10.1449-1.5672-18.9282-11.7091-19.772-4.3392-.403-8.9926.434-11.8403,3.9698-2.4592,3.0534-3.5266,7.0943-3.864,11.0836-.6617,7.8223-.6208,15.4412-.0964,23.2647.5878,8.7691,4.1377,15.2258,13.4148,15.5319Z\"/>\n  <polygon points=\"94.6608 214.2452 42.1384 214.2547 42.1399 225.0259 97.309 225.0231 97.3088 261.4773 .4907 261.462 .4905 137.0528 96.5701 137.0349 96.5808 171.5641 42.1469 171.5733 42.1096 182.597 94.6511 182.6005 94.6608 214.2452\"/>\n  <polygon points=\"302.7136 214.2487 250.1422 214.255 250.1428 225.0243 305.3251 225.0236 305.3309 261.4779 208.6435 261.4634 208.6427 137.048 304.6005 137.0387 304.6366 171.5743 250.1928 171.5676 250.1296 182.6028 302.6847 182.5975 302.7136 214.2487\"/>\n  <path d=\"M84.0393,91.3862c-7.5362,2.7441-14.8203,3.5747-22.6236,4.1324l-19.2926.0336-.0082,31.9011-41.633-.0031V2.9783s59.7311.1251,59.7311.1251c8.1718.0171,15.7471,1.4953,23.3403,4.0042,12.2623,4.2427,21.2596,13.5157,24.8728,26.1006,3.243,11.2953,3.093,23.4683-.6919,34.6115-3.8555,11.3513-12.3263,19.6007-23.6949,23.5663ZM66.6352,55.8266c2.0849-4.6805,1.8713-9.6181-.7357-13.794-2.4196-2.5336-5.8535-3.9319-9.4797-3.9508l-14.3106-.0748.0184,22.809,15.7203-.1499c3.5549-.0339,6.6709-2.0413,8.7873-4.8394Z\"/>\n  <polygon points=\"511.6896 261.4542 468.9684 261.4803 468.9744 176.1081 438.7407 176.1111 438.7505 137.0424 541.9163 137.0387 541.9169 176.1055 511.6768 176.1119 511.6896 261.4542\"/>\n  <polygon points=\"199.0369 219.7498 199.0504 261.4768 106.9062 261.4635 106.9001 137.0419 151.2863 137.0381 151.2747 219.7468 199.0369 219.7498\"/>\n  <polygon points=\"162.0927 127.4376 118.4198 127.4636 118.4198 2.984 162.092 2.987 162.0927 127.4376\"/>\n  <polygon points=\"469.4544 127.4411 425.7801 127.4605 425.7801 2.9875 469.4516 2.9836 469.4544 127.4411\"/>\n  <polygon points=\"975.5173 261.4329 932.0726 261.4998 932.0691 137.0547 975.5129 137.0286 975.5173 261.4329\"/>\n  <polygon points=\"96.583 127.4484 52.2574 127.4538 52.1616 120.0006 96.559 102.905 96.583 127.4484\"/>\n  <path d=\"M728.9246,192.058c4.4111-1.4133,8.6995.9225,9.8292,4.9598,1.0968,3.9194-.8406,8.2134-4.9199,9.4719-3.8564,1.1897-8.1633-.6732-9.6577-4.7783-1.313-3.6069.4292-8.2696,4.7484-9.6535Z\"/>\n</svg>"
@@ -482,6 +1236,7 @@
    "venues": [
     {
      "nombre": "Espacio Riesco",
+     "venue_id": "espacio_riesco",
      "estado": "candidato_sin_confirmar",
      "preferido": false
     }
@@ -506,7 +1261,121 @@
      "fuentes_primarias": [],
      "sin_fuente_primaria": true,
      "lineup": [],
-     "co_organiza": []
+     "co_organiza": [],
+     "flyer_ref": "RD/HISTORIAS/SUNDECK.17.png",
+     "event_key": "rd:sundeck:sundeck-21-anos:2026-01-17",
+     "venue_link": {
+      "status": "pending_review",
+      "name": "needs_confirmation"
+     },
+     "venue_source_link": {
+      "status": "pending_review",
+      "source": "data/productoras",
+      "reason": "el venue del evento no coincide exactamente con una declaración de la productora"
+     },
+     "flyer_link": {
+      "status": "explicit",
+      "generated_key": "rd:sundeck:sundeck-21-anos:2026-01-17:flyer",
+      "ref": "RD/HISTORIAS/SUNDECK.17.png"
+     },
+     "rider_link": {
+      "status": "pending_review",
+      "generated_key": "rd:sundeck:sundeck-21-anos:2026-01-17:rider"
+     },
+     "layout_link": {
+      "status": "pending_review",
+      "generated_key": "rd:sundeck:sundeck-21-anos:2026-01-17:layout"
+     },
+     "database_link": {
+      "status": "exact",
+      "source": "data/rd.db",
+      "table": "productora_eventos",
+      "keys": [
+       "productora_slug",
+       "nombre",
+       "fecha"
+      ],
+      "id": 7,
+      "row": {
+       "productora_slug": "sundeck",
+       "nombre": "Sundeck 21 años",
+       "fecha": "17 enero 2026",
+       "venue": "needs_confirmation",
+       "estado": "pasado",
+       "fuente": "PR #210 obra_b94c5571dc / obra_99ef9a1f8a (ruta_rel HISTORIAS/SUNDECK.17.2.png, HISTORIAS/SUNDECK.17.png), match_ratio 0.636/1.0",
+       "fuentes_primarias": [],
+       "sin_fuente_primaria": true
+      },
+      "venue": {
+       "status": "pending_review",
+       "source": "data/rd.db",
+       "table": "productora_venues",
+       "keys": [
+        "productora_slug",
+        "venue_nombre"
+       ],
+       "reason": "el evento no tiene un venue identificable"
+      }
+     },
+     "triangulacion": {
+      "status": "exact",
+      "event_key": "rd:sundeck:sundeck-21-anos:2026-01-17",
+      "catalogo": {
+       "status": "exact",
+       "source": "data/productoras"
+      },
+      "base_datos": {
+       "status": "exact",
+       "source": "data/rd.db",
+       "table": "productora_eventos",
+       "keys": [
+        "productora_slug",
+        "nombre",
+        "fecha"
+       ],
+       "id": 7,
+       "row": {
+        "productora_slug": "sundeck",
+        "nombre": "Sundeck 21 años",
+        "fecha": "17 enero 2026",
+        "venue": "needs_confirmation",
+        "estado": "pasado",
+        "fuente": "PR #210 obra_b94c5571dc / obra_99ef9a1f8a (ruta_rel HISTORIAS/SUNDECK.17.2.png, HISTORIAS/SUNDECK.17.png), match_ratio 0.636/1.0",
+        "fuentes_primarias": [],
+        "sin_fuente_primaria": true
+       },
+       "venue": {
+        "status": "pending_review",
+        "source": "data/rd.db",
+        "table": "productora_venues",
+        "keys": [
+         "productora_slug",
+         "venue_nombre"
+        ],
+        "reason": "el evento no tiene un venue identificable"
+       }
+      },
+      "venue_fuente": {
+       "status": "pending_review",
+       "source": "data/productoras",
+       "reason": "el venue del evento no coincide exactamente con una declaración de la productora"
+      },
+      "venue_db": {
+       "status": "pending_review",
+       "source": "data/rd.db",
+       "table": "productora_venues",
+       "keys": [
+        "productora_slug",
+        "venue_nombre"
+       ],
+       "reason": "el evento no tiene un venue identificable"
+      },
+      "venue_canonico": {
+       "status": "pending_review",
+       "name": "needs_confirmation"
+      },
+      "identidad_completa": false
+     }
     }
    ],
    "logo_svg": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!-- Generator: visioncortex VTracer 0.6.12 -->\n<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" width=\"254\" height=\"48\">\n<path d=\"M0 0 C1.24 -0.003 2.48 -0.005 3.758 -0.008 C12.823 0.091 12.823 0.091 15.197 1.85 C17.006 4.384 17.251 6.412 17.375 9.5 C15.245 14.065 15.245 14.065 12.375 15.5 C10.636 15.653 8.893 15.749 7.148 15.816 C6.22 15.855 5.291 15.893 4.333 15.932 C3.742 15.953 3.742 15.953 0.75 16.062 C-1.127 16.135 -1.127 16.135 -10.625 16.5 C-6.335 16.665 -6.335 16.665 15.375 17.5 C15.375 19.81 15.375 22.12 15.375 24.5 C10.979 24.587 6.584 24.64 2.188 24.688 C1.565 24.7 1.565 24.7 -1.588 24.764 C-2.79 24.773 -3.992 24.783 -5.23 24.793 C-5.783 24.801 -5.783 24.801 -8.579 24.841 C-12.974 24.349 -15.543 22.582 -18.625 19.5 C-18.996 16.418 -18.996 16.418 -19.062 12.688 C-19.102 11.464 -19.142 10.241 -19.184 8.98 C-18.625 5.5 -18.625 5.5 -16.949 2.582 C-11.594 -0.772 -6.178 -0.142 0 0 Z M-10.625 6.5 C-10.955 7.16 -11.285 7.82 -11.625 8.5 C-4.695 8.5 2.235 8.5 9.375 8.5 C9.375 7.84 9.375 7.18 9.375 6.5 C2.775 6.5 -3.825 6.5 -10.625 6.5 Z \" fill=\"#FFFFFF\" transform=\"translate(165.625,15.5)\"/>\n<path d=\"M0 0 C1.98 0 3.96 0 6 0 C6.116 3.729 6.187 7.457 6.25 11.188 C6.267 11.715 6.267 11.715 6.352 14.385 C6.45 22.218 6.45 22.218 4.172 26.176 C-0.463 30.069 -6.062 29.257 -11.812 29.312 C-12.798 29.342 -13.783 29.371 -14.799 29.4 C-20.857 29.453 -24.413 29.087 -29 25 C-30.348 22.303 -30.169 20.134 -30.188 17.125 C-30.202 16.076 -30.216 15.026 -30.23 13.945 C-30 11.006 -29.635 9.423 -28 7 C-24.554 4.702 -23.289 4.764 -19.238 4.805 C-18.679 4.808 -18.679 4.808 -15.85 4.824 C-15.266 4.833 -15.266 4.833 -12.312 4.875 C-11.723 4.88 -11.723 4.88 -8.74 4.902 C-5.827 4.926 -2.913 4.959 0 5 C0 3.35 0 1.7 0 0 Z M-23 12 C-23.027 13.479 -23.046 14.958 -23.062 16.438 C-23.074 17.261 -23.086 18.085 -23.098 18.934 C-23 21 -23 21 -22 22 C-20.523 22.099 -19.042 22.131 -17.562 22.133 C-17.115 22.133 -17.115 22.133 -14.852 22.137 C-14.381 22.135 -14.381 22.135 -12 22.125 C-11.059 22.129 -10.118 22.133 -9.148 22.137 C-8.254 22.135 -7.359 22.134 -6.438 22.133 C-6.024 22.132 -6.024 22.132 -3.934 22.129 C-2 22 -2 22 -1 21 C-0.928 19.314 -0.916 17.625 -0.938 15.938 C-0.947 15.018 -0.956 14.099 -0.965 13.152 C-0.976 12.442 -0.988 11.732 -1 11 C-4.292 10.971 -7.583 10.953 -10.875 10.938 C-11.344 10.933 -11.344 10.933 -13.715 10.912 C-14.611 10.909 -15.507 10.906 -16.43 10.902 C-17.257 10.897 -18.085 10.892 -18.937 10.886 C-21 11 -21 11 -23 12 Z \" fill=\"#FFFFFF\" transform=\"translate(138,11)\"/>\n<path d=\"M0 0 C1.385 13.129 1.385 13.129 -2.004 17.707 C-4.5 19.812 -4.5 19.812 -7.031 21.582 C-7.681 22.05 -8.331 22.518 -9 23 C-9 23.66 -9 24.32 -9 25 C-7.505 25.884 -6.004 26.757 -4.5 27.625 C-1.989 29.46 -0.275 30.779 0.426 33.893 C0.807 38.618 0.458 43.292 0 48 C-4.094 46.304 -7.196 43.435 -10.5 40.562 C-11.635 39.584 -12.77 38.606 -13.906 37.629 C-14.172 37.396 -14.172 37.396 -15.519 36.217 C-17 35 -17 35 -19.352 33.629 C-22.007 31.005 -21.853 27.912 -21.875 24.375 C-21.883 19.903 -21.647 16.943 -19.074 13.191 C-16.501 10.882 -13.862 8.937 -11 7 C-9.328 5.652 -7.661 4.299 -6 2.938 C-2.27 0 -2.27 0 0 0 Z \" fill=\"#FFFFFF\" transform=\"translate(254,0)\"/>\n<path d=\"M0 0 C2.522 -0.341 2.522 -0.341 5.664 -0.293 C6.786 -0.283 7.907 -0.274 9.062 -0.264 C10.238 -0.239 11.414 -0.213 12.625 -0.188 C13.217 -0.181 13.217 -0.181 16.211 -0.146 C19.141 -0.111 22.07 -0.062 25 0 C25 1.98 25 3.96 25 6 C18.07 6 11.14 6 4 6 C4.33 6.66 4.66 7.32 5 8 C6.265 8.049 7.529 8.098 8.832 8.148 C10.492 8.223 12.152 8.299 13.812 8.375 C14.229 8.39 14.229 8.39 16.338 8.469 C17.14 8.507 17.943 8.546 18.77 8.586 C19.139 8.602 19.139 8.602 21.007 8.681 C23 9 23 9 26 11 C26.398 13.059 26.398 13.059 26.375 15.438 C26.383 16.22 26.39 17.002 26.398 17.809 C25.909 20.501 25.149 21.35 23 23 C20 24 18.026 24.116 14.895 24.098 C13.912 24.094 12.929 24.091 11.916 24.088 C10.892 24.08 9.868 24.071 8.812 24.062 C7.777 24.058 6.741 24.053 5.674 24.049 C3.116 24.037 0.558 24.021 -2 24 C-2 22.02 -2 20.04 -2 18 C1.465 17.835 1.465 17.835 19 17 C19.33 16.34 19.66 15.68 20 15 C18.819 15.023 17.638 15.046 16.422 15.07 C14.865 15.089 13.307 15.107 11.75 15.125 C10.973 15.142 10.195 15.159 9.395 15.176 C2.037 15.239 2.037 15.239 -1 13 C-2.564 9.873 -2.4 6.42 -2 3 C-1.34 2.01 -0.68 1.02 0 0 Z \" fill=\"#FFFFFF\" transform=\"translate(2,16)\"/>\n<path d=\"M0 0 C1.265 0.023 2.53 0.045 3.834 0.068 C6.953 0.127 10.07 0.209 13.188 0.312 C13.188 2.293 13.188 4.273 13.188 6.312 C12.466 6.338 11.744 6.363 11 6.388 C7.75 6.504 4.5 6.627 1.25 6.75 C0.114 6.789 -1.023 6.829 -2.193 6.869 C-3.273 6.911 -4.353 6.953 -5.465 6.996 C-6.465 7.033 -7.465 7.069 -8.496 7.107 C-10.812 7.312 -10.812 7.312 -11.812 8.312 C-11.938 11.812 -11.938 11.812 -11.812 15.312 C-10.098 17.027 -7.808 16.543 -5.465 16.629 C-4.925 16.65 -4.925 16.65 -2.193 16.756 C-1.057 16.795 0.079 16.834 1.25 16.875 C2.39 16.918 3.53 16.961 4.705 17.006 C7.532 17.112 10.36 17.214 13.188 17.312 C13.188 19.623 13.188 21.933 13.188 24.312 C9.125 24.4 5.063 24.453 1 24.5 C-0.15 24.525 -1.301 24.55 -2.486 24.576 C-3.598 24.586 -4.71 24.596 -5.855 24.605 C-6.366 24.613 -6.366 24.613 -8.95 24.653 C-13.221 24.145 -15.816 22.309 -18.812 19.312 C-19.184 16.23 -19.184 16.23 -19.25 12.5 C-19.29 11.277 -19.33 10.053 -19.371 8.793 C-18.812 5.312 -18.812 5.312 -17.148 2.383 C-11.744 -0.972 -6.213 -0.209 0 0 Z \" fill=\"#FFFFFF\" transform=\"translate(204.8125,15.6875)\"/>\n<path d=\"M0 0 C2.31 0 4.62 0 7 0 C7.33 5.28 7.66 10.56 8 16 C14.6 16 21.2 16 28 16 C29.481 13.038 29.353 10.165 29.562 6.875 C29.646 5.594 29.73 4.312 29.816 2.992 C29.847 2.498 29.847 2.498 30 0 C31.98 0 33.96 0 36 0 C36.108 2.897 36.187 5.79 36.25 8.688 C36.267 9.096 36.267 9.096 36.352 11.162 C36.418 15.261 36.341 17.437 34.172 21.02 C29.652 25.141 23.968 24.256 18.188 24.312 C17.202 24.342 16.217 24.371 15.201 24.4 C9.143 24.453 5.587 24.087 1 20 C-0.148 17.703 -0.116 16.417 -0.098 13.867 C-0.094 13.062 -0.091 12.256 -0.088 11.426 C-0.08 10.584 -0.071 9.742 -0.062 8.875 C-0.058 8.026 -0.053 7.176 -0.049 6.301 C-0.037 4.2 -0.019 2.1 0 0 Z \" fill=\"#FFFFFF\" transform=\"translate(31,16)\"/>\n<path d=\"M0 0 C1.128 -0.011 2.256 -0.022 3.418 -0.033 C11.556 0.039 11.556 0.039 15.719 2.348 C19.191 6.665 18.624 11.484 18.562 16.812 C18.558 17.558 18.553 18.303 18.549 19.07 C18.537 20.901 18.519 22.732 18.5 24.562 C16.19 24.562 13.88 24.562 11.5 24.562 C11.439 23.419 11.379 22.276 11.316 21.098 C11.232 19.607 11.147 18.116 11.062 16.625 C11.023 15.87 10.984 15.116 10.943 14.338 C10.613 8.676 10.613 8.676 9.5 7.562 C8.097 7.464 6.688 7.432 5.281 7.43 C4.432 7.428 3.582 7.427 2.707 7.426 C1.814 7.43 0.92 7.434 0 7.438 C-0.447 7.436 -0.447 7.436 -2.707 7.426 C-3.132 7.426 -3.132 7.426 -5.281 7.43 C-6.066 7.431 -6.85 7.432 -7.658 7.433 C-9.5 7.562 -9.5 7.562 -10.5 8.562 C-10.737 11.255 -10.922 13.927 -11.062 16.625 C-11.106 17.384 -11.149 18.142 -11.193 18.924 C-11.3 20.803 -11.4 22.683 -11.5 24.562 C-13.48 24.562 -15.46 24.562 -17.5 24.562 C-17.635 21.499 -17.734 18.441 -17.812 15.375 C-17.854 14.511 -17.896 13.646 -17.939 12.756 C-18.019 8.605 -17.833 6.152 -15.762 2.484 C-10.668 -0.517 -5.8 -0.123 0 0 Z \" fill=\"#FFFFFF\" transform=\"translate(87.5,15.4375)\"/>\n<path d=\"M0 0 C5 2 5 2 8 4 C8.342 6.506 8.492 8.761 8.504 11.273 C8.514 11.994 8.524 12.714 8.534 13.456 C8.549 14.981 8.556 16.505 8.556 18.03 C8.562 20.36 8.617 22.686 8.674 25.016 C8.683 26.497 8.689 27.979 8.691 29.461 C8.702 29.808 8.702 29.808 8.757 31.567 C8.729 33.548 8.729 33.548 8 37 C3.276 41 3.276 41 0 41 C0 27.47 0 13.94 0 0 Z \" fill=\"#FFFFFF\" transform=\"translate(224,6)\"/>\n</svg>"
@@ -7346,7 +8215,7 @@
   }
  ],
  "resumen": {
-  "productoras": 20,
+  "productoras": 19,
   "con_vector": 6,
   "confirmadas": 2,
   "venues": 3,
@@ -7354,7 +8223,12 @@
   "eventos_triangulables": 1,
   "eventos_sin_fuente_primaria": 6,
   "eventos_sin_fecha_iso": 3,
-  "eventos_sin_lineup": 6
+  "eventos_sin_lineup": 6,
+  "eventos_db_exactos": 7,
+  "eventos_db_pendientes": 0,
+  "eventos_venue_db_exactos": 5,
+  "eventos_venue_canonicos": 0,
+  "eventos_triangulacion_completa": 5
  },
  "excluido_a_proposito": [
   "instagram",
