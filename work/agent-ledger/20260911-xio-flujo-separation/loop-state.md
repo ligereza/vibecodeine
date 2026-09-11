@@ -167,6 +167,11 @@ completed:
   - item: Confirmed XIO worktree is clean and FLUJO worktree retains only
       unrelated pre-existing changes outside the published paths.
     evidence: post-push git status review.
+  - item: Revalidated the Xiaomi after publication without changing its session.
+    evidence: staged hashes for both plugin init files and both hub bundles
+      match XIO commit 11fbf66 byte-for-byte; live rd_field/info still reports
+      the old shape and rd_field/view is 6214 bytes, while foh_monitor/view is
+      still 404. This proves staging is correct and only runtime reload is left.
 current_state:
   files_or_resources:
     - XIO source and Xiaomi staging contain both generated hub.html files.
