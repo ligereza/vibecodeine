@@ -1,5 +1,18 @@
 # Operational Handoff
 
+## ROOT-0 — CURRENT — 2026-09-11 — continuidad MAK/FLUJO/XIO
+
+Responsable vigente: **ROOT-0**.
+
+- Estado operativo comprobado: `mak-hub.service`, `mak-research.service` y `mak-codex.service` activos; `GET /health` del Hub devuelve 200 y `GET /api/status` declara `repo_root=/home/mak` y `physical_root=/home/mak`.
+- RD: `/home/mak/flujo/data/rd.db` y la candidata transferida conservan SHA-256 `7f49c33bc2795a8920b50f915ad59b2b8f0f28526d6333af8a73a66c1838b233`, 92 tablas, 43.555 filas, `integrity_check=ok` y cero violaciones FK. `data/rd_datos.db` sigue siendo el shell legado vacio de 3 tablas.
+- Decision: el constructor portable de RD vuelve a conservar tablas acumulativas (`registros_testeo`, `atenciones`, `encuestas`, muestras) y fusiona perfiles de `knowledge/productoras`; `cultura/mak_research/fuentes.py` queda disponible dentro de FLUJO como compuerta canonica de fuentes. La base promovida no se reconstruyo ni se reemplazo.
+- XIO: se restauro la compatibilidad FOH que las pruebas y la APK ya exigian (`_record_tc_value`, binding exacto de setlist, `/ingest`, `/view`, `/resumen`) sin revertir el puente RD de `42495e7`.
+- Validaciones: XIO `36 passed`; conjunto RD/XIO/API de FLUJO `88 passed`; bateria por defecto de FLUJO `45 passed`; `py_compile` y `git diff --check` limpios para los cambios. La corrida completa sin `addopts` queda limitada por dos imports ausentes de herramientas MAK que no pertenecen a esta rama portable: `tools.mak_ops` y `tools.research_source_capture`.
+- Pendientes reales: integrar o reclasificar esas dos pruebas/herramientas en una futura decision de topologia; no bloquear la operacion actual por ellas. Los borrados locales preexistentes de `AGENTS.md` en `/home/mak` y `/home/mak/XIO`, y los artefactos no versionados de la caja, no fueron tocados.
+
+Firma: **ROOT-0**
+
 ## Agent bootstrap — CURRENT — 2026-08-31 — consolidación física posterior y límite documental abierto
 
 Este bloque supera el CURRENT anterior sólo para los hechos medidos el

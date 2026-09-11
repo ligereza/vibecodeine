@@ -42,6 +42,7 @@ _SUPLEMENTOS_JSON = (
     / "01_contenido" / "contenido_suplementos_rd.json"
 )
 _PRODUCTORAS_DIR = _REPO / "data" / "productoras"
+_KNOWLEDGE_PRODUCTORAS_DIR = _REPO / "knowledge" / "productoras"
 _TESTING_EVIDENCE_JSON = _REPO / "data" / "rd_fuentes" / "testeo_eventos_2025_evidence.json"
 _CANDIDATE_REGISTRIES = {
     "entity_universe_v0_1": (_REPO / "data" / "rd_fuentes" / "candidates" / "entity_universe_v0.1.json", "records"),
@@ -191,7 +192,8 @@ CREATE TABLE productoras (
     instagram TEXT,
     aliases   TEXT,                 -- JSON: formas literales que extrae la vision
     confirmado TEXT,                -- nota de confirmacion humana
-    notas     TEXT
+    notas     TEXT,
+    perfil_json TEXT
 );
 CREATE TABLE venues (
     id            TEXT PRIMARY KEY,   -- id canonico (espacio_riesco)
@@ -1182,6 +1184,109 @@ def _insert_testing_evidence(conn: sqlite3.Connection, doc: dict[str, Any]) -> N
         )
 
 
+def _rescatar_acumulativas(path: Path) -> dict[str, list[tuple]]:
+    """Las filas de terreno que un rebuild no debe destruir.
+
+    `build_rd_db()` borra el archivo y lo reescribe: eso esta bien para lo
+    derivado de fuentes canonicas, que se puede volver a derivar, y seria
+    destructivo para `registros_testeo`, `atenciones` y `encuestas`, que son
+    registros de terreno que no existen en ninguna otra parte.
+
+    Hasta el 2026-09-05 el problema se evitaba teniendolas en otro archivo,
+    `data/rd_datos.db`. El operador pidio una sola base, asi que se rescatan
+    aqui y se reponen despues del `CREATE`. Si `rd.db` todavia no las tiene y
+    la DB previa si, se traen de ahi una sola vez: esa es la migracion.
+
+    Devuelve por tabla la lista de filas, con las columnas en el orden en que
+    el archivo las declara, para que la reinsercion no dependa del schema
+    nuevo coincidiendo por posicion.
+    """
+    from . import datos as _datos
+
+    rescatadas: dict[str, list[tuple]] = {}
+    columnas: dict[str, list[str]] = {}
+    # Lo que la app de muestras escribe se acumula igual que los registros de
+    # terreno: una muestra fotografiada en una mesa no se puede volver a
+    # derivar de ninguna fuente canonica.
+    tablas = tuple(_datos.TABLAS_ACUMULATIVAS) + ("muestras", "muestra_resultados")
+    for origen in (path, _datos.LEGACY_DB_PATH):
+        if not origen.exists():
+            continue
+        conn = sqlite3.connect(f"file:{origen}?mode=ro", uri=True)
+        try:
+            for tabla in tablas:
+                if rescatadas.get(tabla):
+                    continue  # ya vino de una fuente anterior; no se duplica
+                try:
+                    cols = [r[1] for r in conn.execute(f"PRAGMA table_info({tabla})")]
+                    if not cols:
+                        continue
+                    filas = list(conn.execute(f'SELECT * FROM "{tabla}"'))
+                except sqlite3.DatabaseError:
+                    continue
+                if filas:
+                    rescatadas[tabla] = filas
+                    columnas[tabla] = cols
+        finally:
+            conn.close()
+    _RESCATE_COLUMNAS.clear()
+    _RESCATE_COLUMNAS.update(columnas)
+    return rescatadas
+
+
+_RESCATE_COLUMNAS: dict[str, list[str]] = {}
+
+
+def _reponer_acumulativas(
+    conn: sqlite3.Connection, rescatadas: dict[str, list[tuple]]
+) -> None:
+    """Crea las tablas acumulativas y devuelve sus filas al archivo nuevo."""
+    from . import datos as _datos
+
+    conn.executescript(_datos.SCHEMA_ACUMULATIVO)
+    conn.executescript(_SCHEMA_MUESTRAS)
+    for tabla, filas in rescatadas.items():
+        cols = _RESCATE_COLUMNAS.get(tabla)
+        if not cols or not filas:
+            continue
+        marcas = ",".join("?" for _ in cols)
+        nombres = ",".join(f'"{c}"' for c in cols)
+        conn.executemany(
+            f'INSERT INTO "{tabla}" ({nombres}) VALUES ({marcas})', filas
+        )
+
+# Capturas de campo son acumulativas y no se derivan de las fuentes canonicas.
+_SCHEMA_MUESTRAS = """
+CREATE TABLE IF NOT EXISTS muestras (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    fecha TEXT NOT NULL,
+    mesa_id INTEGER,
+    evento_ref TEXT,
+    evento_origen TEXT,
+    codigo_muestra TEXT,
+    sustancia_declarada TEXT NOT NULL,
+    tipo_muestra TEXT,
+    color TEXT,
+    textura TEXT,
+    logo_o_marca TEXT,
+    peso_mg REAL,
+    foto_ref TEXT,
+    notas TEXT,
+    descartada INTEGER DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS muestra_resultados (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    muestra_id INTEGER NOT NULL,
+    reactivo TEXT NOT NULL,
+    resultado_color TEXT,
+    familia_detectada TEXT,
+    coincide_con_declarada INTEGER,
+    adulterante_sospechado TEXT,
+    limitacion TEXT NOT NULL DEFAULT 'presuntivo: senal de presencia, no identidad ni pureza ni dosis',
+    orden INTEGER
+);
+"""
+
 def build_rd_db(
     db_path: str | Path | None = None,
     *,
@@ -1199,12 +1304,14 @@ def build_rd_db(
     prod_dir = Path(productoras_dir) if productoras_dir is not None else _PRODUCTORAS_DIR
     ven_dir = Path(venues_dir) if venues_dir is not None else _VENUES_DIR
     path.parent.mkdir(parents=True, exist_ok=True)
+    acumuladas = _rescatar_acumulativas(path)
     if path.exists():
         path.unlink()
 
     conn = sqlite3.connect(path)
     try:
         conn.executescript(_SCHEMA)
+        _reponer_acumulativas(conn, acumuladas)
 
         # meta + reactivos
         reactivos_doc = json.loads(_REACTIVOS_JSON.read_text(encoding="utf-8"))
@@ -1281,6 +1388,7 @@ def build_rd_db(
 
         # productoras conocidas (store) + tablas hijas: tipos, venues, logos
         tipo_id = vnk_id = logo_id = prodev_id = 0
+        slugs_desde_json: set[str] = set()
         if prod_dir.exists():
             for pf in sorted(prod_dir.glob("*.json")):
                 try:
@@ -1290,9 +1398,10 @@ def build_rd_db(
                 if not _es_productora_rd(d):
                     continue
                 slug = pf.stem
+                slugs_desde_json.add(slug)
                 conn.execute(
-                    "INSERT OR REPLACE INTO productoras(slug, nombre, instagram, aliases, confirmado, notas) "
-                    "VALUES (?,?,?,?,?,?)",
+                    "INSERT OR REPLACE INTO productoras(slug, nombre, instagram, aliases, confirmado, notas, perfil_json) "
+                    "VALUES (?,?,?,?,?,?,?)",
                     (
                         slug,
                         str(d.get("name", slug)),
@@ -1300,6 +1409,7 @@ def build_rd_db(
                         json.dumps(d.get("aliases", []), ensure_ascii=False),
                         d.get("confirmed"),
                         d.get("notes"),
+                        None,
                     ),
                 )
                 # tipos de fecha (vocabulario controlado)
@@ -1358,6 +1468,41 @@ def build_rd_db(
                             fuentes_primarias,
                             sin_fuente_primaria,
                         ),
+                    )
+
+        # Fusionar el perfil operativo de knowledge/ con la fila canonica sin
+        # duplicar productoras ni perder aliases declarados en data/.
+        if _KNOWLEDGE_PRODUCTORAS_DIR.exists():
+            for yf in sorted(_KNOWLEDGE_PRODUCTORAS_DIR.glob("*.yaml")):
+                perfil = _load_yaml(yf)
+                if not isinstance(perfil, dict):
+                    continue
+                pid = str(perfil.get("id") or yf.stem)
+                profile_name = str(perfil.get("name") or pid)
+                if pid.endswith("_template") or profile_name.strip().lower().endswith("template"):
+                    continue
+                aliases_extra = [
+                    a for a in (perfil.get("aliases") or [])
+                    if isinstance(a, str) and a.strip()
+                ]
+                perfil_json = json.dumps(perfil, ensure_ascii=False)
+                if pid in slugs_desde_json:
+                    row = conn.execute(
+                        "SELECT aliases FROM productoras WHERE slug = ?", (pid,)
+                    ).fetchone()
+                    existentes = json.loads(row[0]) if row and row[0] else []
+                    union = list(dict.fromkeys(existentes + aliases_extra))
+                    conn.execute(
+                        "UPDATE productoras SET aliases = ?, perfil_json = ? WHERE slug = ?",
+                        (json.dumps(union, ensure_ascii=False), perfil_json, pid),
+                    )
+                else:
+                    conn.execute(
+                        "INSERT OR REPLACE INTO productoras"
+                        "(slug, nombre, instagram, aliases, confirmado, notas, perfil_json) "
+                        "VALUES (?,?,?,?,?,?,?)",
+                        (pid, profile_name, None, json.dumps(aliases_extra, ensure_ascii=False),
+                         None, None, perfil_json),
                     )
 
         # eventos (jsons con forma de evento) + pack sugerido por voluntarios
@@ -1465,13 +1610,14 @@ def suplementos(db_path: str | Path | None = None) -> list[dict[str, Any]]:
 
 
 def productoras(db_path: str | Path | None = None) -> list[dict[str, Any]]:
-    """Promotoras conocidas (aliases deserializados)."""
+    """Promotoras conocidas (aliases y perfiles deserializados)."""
     conn = connect(db_path)
     try:
         out: list[dict[str, Any]] = []
         for p in conn.execute("SELECT * FROM productoras ORDER BY slug").fetchall():
             d = dict(p)
             d["aliases"] = json.loads(d["aliases"]) if d.get("aliases") else []
+            d["perfil"] = json.loads(d["perfil_json"]) if d.get("perfil_json") else None
             out.append(d)
         return out
     finally:
