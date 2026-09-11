@@ -263,3 +263,26 @@ evidence:
       foh_monitor/view is HTTP 404.
 stop_reason: No safe productive source action remains until the external
   Termux runtime state changes; goal remains resumable, not complete.
+
+## Completion audit — 2026-09-11, runtime activated
+
+status: complete
+completed:
+  - item: Relaunched the existing Termux server path without logout or Azure
+      session changes.
+    evidence: new python server process observed; no installation or DB reset.
+  - item: Activated both XIO browser hubs and preserved RD capture separately.
+    evidence: live Xiaomi HTTP 200 for rd_field/view, rd_field/field and
+      foh_monitor/view; RD view 603222 bytes with Base de datos RD marker; FOH
+      view 416194 bytes with Monitor FOH marker.
+  - item: Verified host data and exact event wiring in the active runtime.
+    evidence: rd_field/info reports hub_surface_present=true and
+      field_surface_present=true; bootstrap returns 42 events; samples returns
+      the requested exact eventRef; manifests expose /view, /field and FOH
+      /view.
+  - item: Completed source/build/runtime validation and published verifier fix.
+    evidence: phone runtime, dynamic host, RD plugin and FOH context checks
+      PASS; web typecheck/build:rd/build:iskvw PASS; XIO Android Gradle tests
+      and assembleDebug PASS; FLUJO commit 9ef5b2b7 pushed.
+remaining: none for the stated objective. Future changes can extend active FOH
+  signal interpretation, but are outside this completed separation milestone.
