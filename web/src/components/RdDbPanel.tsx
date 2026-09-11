@@ -390,6 +390,19 @@ export default function RdDbPanel() {
                 </button>
               </div>
               {activa.eventos?.length ? (
+                <>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-xl border border-dashed border-amber-900/60 bg-amber-950/10 p-4">
+                    <span className="block text-[10px] font-bold uppercase tracking-wider text-amber-400">Venue más repetido</span>
+                    <span className="mt-1 block text-sm text-zinc-300">Pendiente de conexión con <code>triangular.py</code></span>
+                    <span className="mt-1 block text-[11px] leading-relaxed text-zinc-600">No se inventa una frecuencia a partir de una lista de venues sin conteo.</span>
+                  </div>
+                  <div className="rounded-xl border border-zinc-800 bg-zinc-950/40 p-4">
+                    <span className="block text-[10px] font-bold uppercase tracking-wider text-zinc-600">Venues conocidos</span>
+                    <span className="mt-1 block text-sm text-zinc-300">{activa.venues.length ? activa.venues.map(v => v.nombre).join(' · ') : 'Aún no vinculados'}</span>
+                    <span className="mt-1 block text-[11px] leading-relaxed text-zinc-600">Referencia existente; no reemplaza el cálculo histórico.</span>
+                  </div>
+                </div>
                 <div className="mt-4 grid gap-3 md:grid-cols-2">
                   {activa.eventos.map((ev, index) => (
                     <article key={`${ev.nombre}-${index}`} className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-4">
@@ -408,6 +421,7 @@ export default function RdDbPanel() {
                     </article>
                   ))}
                 </div>
+                </>
               ) : (
                 <div className="mt-4 rounded-lg border border-dashed border-zinc-800 px-4 py-3 text-xs text-zinc-500">No hay eventos declarados para esta productora.</div>
               )}
