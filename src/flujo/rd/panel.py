@@ -9,6 +9,8 @@ contacto agregado manana entraria por la copia que nadie recuerda.
 from __future__ import annotations
 
 import json
+import sqlite3
+from collections import Counter
 from pathlib import Path
 
 
@@ -190,6 +192,7 @@ def datos_panel(root) -> dict:
     return {
         "productoras": prods,
         "venues": venues_cat,
+        "evidencia_2025": _evidencia_2025(root),
         "resumen": {
             "productoras": len(prods),
             "con_vector": sum(1 for p in prods if p["logo"]["vector"]),
@@ -204,3 +207,85 @@ def datos_panel(root) -> dict:
         "excluido_a_proposito": ["instagram", "contactos"],
         "connected": True,
     }
+
+
+def _evidencia_2025(root) -> list[dict]:
+    """Read-only projection of the 2025 testing evidence.
+
+    This is deliberately separate from ``productora_eventos``: the imported
+    workbook still has pending event/producer/venue links and the sheet name
+    is not enough evidence to invent one.  The web panel may therefore show
+    the historical source event and its exact ``event_id`` without attaching
+    it to the wrong producer.  Values are source wording only; no colour is
+    interpreted as identity, purity, dose or safety.
+    """
+    db_path = Path(root) / "data" / "rd.db"
+    if not db_path.is_file():
+        return []
+    uri = f"file:{db_path.resolve().as_posix()}?mode=ro"
+    try:
+        conn = sqlite3.connect(uri, uri=True)
+        conn.row_factory = sqlite3.Row
+        events = conn.execute(
+            "SELECT event_id, source_sheet_index, source_sheet_name, "
+            "event_label_candidate, source_period_label, date_iso_candidate, "
+            "date_status, duplicate_status, duplicate_group_size, "
+            "venue_name_candidate, producer_name_candidate, link_status "
+            "FROM testeo_eventos_fuente WHERE source_period_label = '2025' "
+            "ORDER BY COALESCE(date_iso_candidate, ''), source_sheet_index"
+        ).fetchall()
+        out: list[dict] = []
+        for event in events:
+            rows = conn.execute(
+                "SELECT format_raw, result_1_raw, result_2_raw, result_3_raw, "
+                "result_4_raw FROM testeo_filas_fuente "
+                "WHERE event_id = ? AND row_status = 'data' ORDER BY source_row",
+                (event["event_id"],),
+            ).fetchall()
+            declared = Counter()
+            results = Counter()
+            for row in rows:
+                label = str(row["format_raw"] or "").strip() or "sin registro"
+                declared[label] += 1
+                for field in ("result_1_raw", "result_2_raw", "result_3_raw", "result_4_raw"):
+                    value = str(row[field] or "").strip()
+                    if value:
+                        results[value] += 1
+
+            def distribution(counter: Counter) -> list[dict]:
+                total = sum(counter.values())
+                return [
+                    {"valor": value, "conteo": count,
+                     "porcentaje": round((count / total) * 100, 1) if total else 0}
+                    for value, count in counter.most_common()
+                ]
+
+            out.append({
+                "event_id": event["event_id"],
+                "hoja": event["source_sheet_name"],
+                "indice_hoja": event["source_sheet_index"],
+                "nombre": event["event_label_candidate"] or event["source_sheet_name"],
+                "periodo": event["source_period_label"],
+                "fecha_iso": event["date_iso_candidate"],
+                "estado_fecha": event["date_status"],
+                "estado_duplicado": event["duplicate_status"],
+                "tamano_grupo_duplicado": event["duplicate_group_size"],
+                "venue_fuente": event["venue_name_candidate"],
+                "productora_fuente": event["producer_name_candidate"],
+                "estado_enlace": event["link_status"],
+                "filas": len(rows),
+                "muestra_declarada": {
+                    "campo": "format_raw",
+                    "total": sum(declared.values()),
+                    "distribucion": distribution(declared),
+                },
+                "resultados_colorimetricos": {
+                    "campos": ["result_1_raw", "result_2_raw", "result_3_raw", "result_4_raw"],
+                    "total": sum(results.values()),
+                    "distribucion": distribution(results),
+                },
+            })
+        conn.close()
+        return out
+    except (OSError, sqlite3.Error):
+        return []

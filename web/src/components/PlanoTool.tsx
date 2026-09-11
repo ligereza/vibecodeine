@@ -1369,7 +1369,7 @@ export default function PlanoTool() {
   return (
     <div className="space-y-6">
       {/* Screen View (Interactive App Tool) */}
-      <div className="flex items-center justify-between print:hidden">
+      <div className="flex flex-col items-start gap-3 print:hidden sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-2xl font-bold flex items-center gap-2">
             Rider RD · Herramienta de Plano
@@ -1381,7 +1381,7 @@ export default function PlanoTool() {
             Documento operativo para intervención en terreno — Reduciendo Daño Chile
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto">
           <button
             onClick={() => setPage('req')}
             className={cn(
@@ -1467,13 +1467,13 @@ export default function PlanoTool() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-zinc-800 pb-0 print:hidden">
+      <div className="flex gap-1 overflow-x-auto border-b border-zinc-800 pb-0 print:hidden">
         {NAV_TABS.map(({ key, label }) => (
           <button
             key={key}
             onClick={() => setPage(key)}
             className={cn(
-              'px-4 py-2 text-sm font-medium rounded-t-lg transition-colors -mb-px border-b-2 flex items-center gap-2',
+              'shrink-0 px-4 py-2 text-sm font-medium rounded-t-lg transition-colors -mb-px border-b-2 flex items-center gap-2',
               page === key
                 ? 'border-emerald-500 text-emerald-400 bg-zinc-900/50'
                 : 'border-transparent text-zinc-500 hover:text-zinc-300'
@@ -1493,7 +1493,7 @@ export default function PlanoTool() {
           {/* Antecedentes Card */}
           <div className="p-6 rounded-xl border border-zinc-800 bg-zinc-900/30">
             <h3 className="text-sm font-black uppercase text-zinc-400 tracking-wider mb-4">Antecedentes del Evento</h3>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div>
                 <label className="text-[10px] uppercase tracking-widest text-zinc-500 block mb-1 font-bold">Nombre del Evento</label>
                 <input
@@ -1523,7 +1523,7 @@ export default function PlanoTool() {
           </div>
 
           {/* Modalidades Cards */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <ModalidadCard
               icon={<Heart className="w-5 h-5 text-emerald-400" />}
               title="Stand Informativo"
@@ -1623,9 +1623,9 @@ export default function PlanoTool() {
 
       {/* ── Map tab ── */}
       {page === 'map' && (
-        <div className="grid grid-cols-4 gap-6 print:hidden">
+        <div className="grid grid-cols-1 gap-6 print:hidden xl:grid-cols-4">
           {/* SVG Canvas and Controls */}
-          <div className="col-span-3 space-y-4">
+          <div className="space-y-4 xl:col-span-3">
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-1.5">
                 <button onClick={() => setZoom(z => Math.min(z + 0.15, 2.5))} className="p-2 bg-zinc-900 border border-zinc-800 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white" title="Zoom +"><Plus className="w-3.5 h-3.5"/></button>
@@ -1919,7 +1919,7 @@ export default function PlanoTool() {
                     )}
                   </div>
                 )}
-                <div key={refrescoSimbolos} className="grid grid-cols-4 gap-2 max-h-80 overflow-y-auto pr-1">
+                <div key={refrescoSimbolos} className="grid max-h-80 grid-cols-2 gap-2 overflow-y-auto pr-1 sm:grid-cols-4">
                   {catalogoCompleto().map(spec => (
                     <button
                       key={spec.key}
@@ -2006,7 +2006,7 @@ export default function PlanoTool() {
                     {/* Alignment buttons */}
                     <div className="space-y-2 border-t border-zinc-800/80 pt-3">
                       <label className="text-[10px] text-zinc-500 block">Alinear al marco / ordenar</label>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                         <button onClick={() => alignSelected('left')} className="py-1.5 bg-zinc-800 border border-zinc-700 rounded text-[9px] font-black uppercase hover:bg-zinc-700">Izq</button>
                         <button onClick={() => alignSelected('centerX')} className="py-1.5 bg-zinc-800 border border-zinc-700 rounded text-[9px] font-black uppercase hover:bg-zinc-700">Centro</button>
                         <button onClick={() => alignSelected('right')} className="py-1.5 bg-zinc-800 border border-zinc-700 rounded text-[9px] font-black uppercase hover:bg-zinc-700">Der</button>
