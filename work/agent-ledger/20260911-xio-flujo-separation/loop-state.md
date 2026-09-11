@@ -154,3 +154,33 @@ next_action: Run final targeted diffs/tests, commit only the separation and
   preserve unrelated dirty worktree files.
 next_checkpoint_trigger: Before each explicit commit/push and after verifying
   the exact staged paths.
+
+## Checkpoint 2026-09-11 — published
+
+status: active
+completed:
+  - item: Published the corrected XIO separation.
+    evidence: XIO commit 11fbf66 pushed to
+      origin/codex/obras-experimental-rehearsal-xio-root.
+  - item: Published FLUJO reduced hubs, live RD host read, docs and checks.
+    evidence: FLUJO commit 1e1edea5 pushed to origin/DIRECTOR.
+  - item: Confirmed XIO worktree is clean and FLUJO worktree retains only
+      unrelated pre-existing changes outside the published paths.
+    evidence: post-push git status review.
+current_state:
+  files_or_resources:
+    - XIO source and Xiaomi staging contain both generated hub.html files.
+    - FLUJO source can rebuild rd.html and iskvw.html independently.
+  tests_and_checks:
+    - typecheck, build, build:rd, build:iskvw: PASS
+    - XIO RD bridge/plugin and FOH context checks: PASS
+    - phone HTTP/listener/files/DB checks: PASS
+  assumptions:
+    - The normal Termux launch path remains the only safe way to activate the
+      staged HTML in the running phone process.
+  blockers:
+    - Live Xiaomi process has not reloaded staged hub/plugin files; ADB
+      RUN_COMMAND is denied and no force-stop/relogin was performed.
+  next_action: When the existing Termux launch path is next used, verify /view
+    and /info once; no code or database migration is required.
+  next_checkpoint_trigger: live Termux launch or user interruption.
