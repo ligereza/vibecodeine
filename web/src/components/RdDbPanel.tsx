@@ -13,7 +13,7 @@
 // flyer: un recorte es un derivado de baja calidad y sin fuente.
 
 import { useEffect, useRef, useState } from 'react';
-import { Database, Upload, CheckCircle2, CircleDashed, MapPin, AlertTriangle } from 'lucide-react';
+import { Database, Upload, CheckCircle2, CircleDashed, MapPin, AlertTriangle, BarChart3, ChevronRight, History, Layout, Radio } from 'lucide-react';
 
 interface Venue {
   nombre: string;
@@ -22,8 +22,36 @@ interface Venue {
 }
 interface Evento {
   nombre: string;
+  fecha?: string;
+  fecha_iso?: string | null;
+  venue?: string;
+  estado?: string;
+  fuente?: string;
+  lineup?: string[];
   fuentes_primarias?: string[];
   sin_fuente_primaria?: boolean;
+}
+interface Distribucion {
+  valor: string;
+  conteo: number;
+  porcentaje: number;
+}
+interface Evidencia2025 {
+  event_id: string;
+  hoja: string;
+  indice_hoja: number;
+  nombre: string;
+  periodo: string;
+  fecha_iso?: string | null;
+  estado_fecha?: string;
+  estado_duplicado?: string;
+  tamano_grupo_duplicado?: number;
+  venue_fuente?: string | null;
+  productora_fuente?: string | null;
+  estado_enlace?: string;
+  filas: number;
+  muestra_declarada: { campo: string; total: number; distribucion: Distribucion[] };
+  resultados_colorimetricos: { campos: string[]; total: number; distribucion: Distribucion[] };
 }
 interface Productora {
   slug: string;
@@ -55,6 +83,7 @@ interface Data {
   horneado?: boolean;
   productoras: Productora[];
   venues: VenueCat[];
+  evidencia_2025?: Evidencia2025[];
   resumen?: {
     productoras: number;
     con_vector: number;
@@ -85,6 +114,8 @@ export default function RdDbPanel() {
   const [estado, setEstado] = useState<'cargando' | 'ok' | 'error'>('cargando');
   const [subiendo, setSubiendo] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string>('');
+  const [productoraActiva, setProductoraActiva] = useState<string | null>(null);
+  const [evidenciaActiva, setEvidenciaActiva] = useState<string | null>(null);
   // Cache-buster: tras reemplazar un logo hay que forzar que el <img> lo relea.
   const [rev, setRev] = useState(0);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -162,6 +193,8 @@ export default function RdDbPanel() {
   };
 
   const r = data?.resumen;
+  const activa = data?.productoras.find(p => p.slug === productoraActiva) ?? null;
+  const evidencia = data?.evidencia_2025?.find(e => e.event_id === evidenciaActiva) ?? null;
 
   return (
     <div className="space-y-6">
@@ -230,7 +263,7 @@ export default function RdDbPanel() {
             </div>
             <div className="divide-y divide-zinc-800/60">
               {data!.productoras.map(p => (
-                <div key={p.slug} className="flex items-center gap-4 px-4 py-3">
+                <div key={p.slug} className={`flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:gap-4 ${productoraActiva === p.slug ? 'bg-emerald-950/15' : ''}`}>
                   <button
                     onClick={() => pedirArchivo(p.slug)}
                     disabled={subiendo === p.slug || !!data?.horneado}
@@ -275,7 +308,14 @@ export default function RdDbPanel() {
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-zinc-100">{p.nombre}</span>
+                      <button
+                        type="button"
+                        onClick={() => { setProductoraActiva(p.slug); setEvidenciaActiva(null); }}
+                        className="flex min-h-8 items-center gap-1 text-left font-medium text-zinc-100 hover:text-emerald-300"
+                        aria-pressed={productoraActiva === p.slug}
+                      >
+                        {p.nombre}<ChevronRight className="h-3.5 w-3.5 text-zinc-600" />
+                      </button>
                       <code className="text-[10px] text-zinc-600">{p.slug}</code>
                       {p.confirmada ? (
                         <span title={p.confirmacion} className="flex items-center gap-1 text-[10px] text-emerald-400">
@@ -333,6 +373,90 @@ export default function RdDbPanel() {
             </div>
           </section>
 
+          {activa && (
+            <section className="rounded-xl border border-emerald-900/60 bg-emerald-950/10 p-4 sm:p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-emerald-400">
+                    <Layout className="h-3.5 w-3.5" /> Ficha de productora
+                  </div>
+                  <h2 className="mt-1 text-lg font-bold text-zinc-100">{activa.nombre}</h2>
+                  <p className="mt-1 max-w-2xl text-xs leading-relaxed text-zinc-500">
+                    Aquí se unen los eventos declarados por la productora con el venue conocido. El rider/plano queda como referencia pendiente hasta que exista un enlace explícito; no se adivina.
+                  </p>
+                </div>
+                <button type="button" onClick={() => setProductoraActiva(null)} className="min-h-8 rounded-lg border border-zinc-800 px-3 text-xs text-zinc-500 hover:text-zinc-200">
+                  cerrar
+                </button>
+              </div>
+              {activa.eventos?.length ? (
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  {activa.eventos.map((ev, index) => (
+                    <article key={`${ev.nombre}-${index}`} className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <h3 className="font-semibold text-zinc-100">{ev.nombre}</h3>
+                          <p className="mt-1 text-xs text-zinc-500">{ev.fecha || 'Fecha pendiente'}</p>
+                        </div>
+                        <span className="rounded bg-zinc-800 px-2 py-1 text-[10px] text-zinc-400">{ev.estado || 'sin estado'}</span>
+                      </div>
+                      <div className="mt-3 grid gap-2 text-xs sm:grid-cols-3">
+                        <div><span className="block text-[10px] uppercase tracking-wider text-zinc-600">Venue</span><span className="text-zinc-300">{ev.venue || 'pendiente'}</span></div>
+                        <div><span className="block text-[10px] uppercase tracking-wider text-zinc-600">Rider / plano</span><span className="text-zinc-500">pendiente de enlace</span></div>
+                        <div><span className="block text-[10px] uppercase tracking-wider text-zinc-600">Fuente</span><span className="text-zinc-500">{ev.fuentes_primarias?.length ? 'primaria' : 'pendiente'}</span></div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-4 rounded-lg border border-dashed border-zinc-800 px-4 py-3 text-xs text-zinc-500">No hay eventos declarados para esta productora.</div>
+              )}
+            </section>
+          )}
+
+          {(data!.evidencia_2025?.length ?? 0) > 0 && (
+            <section className="rounded-xl border border-violet-900/50 bg-violet-950/10">
+              <div className="flex flex-wrap items-start justify-between gap-3 border-b border-violet-900/40 px-4 py-4">
+                <div>
+                  <h2 className="flex items-center gap-2 text-sm font-bold text-zinc-100"><History className="h-4 w-4 text-violet-300" /> Historial de evidencia 2025</h2>
+                  <p className="mt-1 max-w-3xl text-xs leading-relaxed text-zinc-500">Fuente histórica importada. Las hojas aún no tienen enlace humano confirmado a productora o venue; se muestran por su <code>event_id</code> exacto y no se asignan automáticamente.</p>
+                </div>
+                <span className="rounded bg-violet-950/60 px-2 py-1 text-[10px] text-violet-300">{data!.evidencia_2025!.length} hojas/eventos fuente</span>
+              </div>
+              <div className="grid gap-2 p-3 sm:grid-cols-2 lg:grid-cols-3">
+                {data!.evidencia_2025!.map(ev => (
+                  <button key={ev.event_id} type="button" onClick={() => { setEvidenciaActiva(ev.event_id); setProductoraActiva(null); }} className={`min-h-20 rounded-xl border p-3 text-left transition-colors ${evidenciaActiva === ev.event_id ? 'border-violet-500 bg-violet-950/40' : 'border-zinc-800 bg-zinc-950/40 hover:border-violet-800'}`}>
+                    <span className="block font-medium text-zinc-200">{ev.nombre}</span>
+                    <span className="mt-1 block text-[10px] text-zinc-600"><code>{ev.event_id}</code> · {ev.fecha_iso || 'fecha no resuelta'} · {ev.filas} filas</span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {evidencia && (
+            <section className="rounded-xl border border-violet-700/60 bg-zinc-950/60 p-4 sm:p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-violet-300"><BarChart3 className="h-3.5 w-3.5" /> Resumen del evento fuente</div>
+                  <h2 className="mt-1 text-lg font-bold text-zinc-100">{evidencia.nombre}</h2>
+                  <p className="mt-1 text-xs text-zinc-500">{evidencia.hoja} · <code>{evidencia.event_id}</code> · {evidencia.filas} filas de datos</p>
+                </div>
+                <button type="button" onClick={() => setEvidenciaActiva(null)} className="min-h-8 rounded-lg border border-zinc-800 px-3 text-xs text-zinc-500 hover:text-zinc-200">cerrar</button>
+              </div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <DistributionCard title="Muestra declarada (campo format_raw)" total={evidencia.muestra_declarada.total} values={evidencia.muestra_declarada.distribucion} color="violet" />
+                <DistributionCard title="Resultados colorimétricos observados" total={evidencia.resultados_colorimetricos.total} values={evidencia.resultados_colorimetricos.distribucion} color="amber" />
+              </div>
+              <div className="mt-4 grid gap-2 text-xs sm:grid-cols-3">
+                <div className="rounded-lg border border-zinc-800 p-3"><span className="block text-[10px] uppercase tracking-wider text-zinc-600">Productora / venue</span><span className="text-zinc-400">{evidencia.productora_fuente || 'sin enlace'} · {evidencia.venue_fuente || 'sin enlace'}</span></div>
+                <div className="rounded-lg border border-zinc-800 p-3"><span className="block text-[10px] uppercase tracking-wider text-zinc-600">Enlace</span><span className="text-zinc-400">{evidencia.estado_enlace || 'pendiente de revisión humana'}</span></div>
+                <div className="rounded-lg border border-zinc-800 p-3"><span className="block text-[10px] uppercase tracking-wider text-zinc-600">Duplicados</span><span className="text-zinc-400">{evidencia.estado_duplicado || 'sin estado'}{evidencia.tamano_grupo_duplicado && evidencia.tamano_grupo_duplicado > 1 ? ` · grupo ${evidencia.tamano_grupo_duplicado}` : ''}</span></div>
+              </div>
+              <p className="mt-4 flex items-start gap-2 text-[11px] leading-relaxed text-zinc-600"><Radio className="mt-0.5 h-3.5 w-3.5 shrink-0" /> Los porcentajes describen la distribución literal de los campos fuente y no interpretan identidad, pureza, dosis ni seguridad.</p>
+            </section>
+          )}
+
           {data!.venues.length > 0 && (
             <section className="rounded-xl border border-zinc-800 bg-zinc-900/40">
               <div className="border-b border-zinc-800 px-4 py-3 text-sm font-bold">Venues</div>
@@ -357,6 +481,43 @@ export default function RdDbPanel() {
           )}
         </>
       )}
+    </div>
+  );
+}
+
+function DistributionCard({
+  title,
+  total,
+  values,
+  color,
+}: {
+  title: string;
+  total: number;
+  values: Distribucion[];
+  color: 'violet' | 'amber';
+}) {
+  const bar = color === 'violet' ? 'bg-violet-400' : 'bg-amber-400';
+  return (
+    <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4">
+      <div className="flex items-start justify-between gap-3">
+        <h3 className="text-xs font-bold text-zinc-300">{title}</h3>
+        <span className="shrink-0 text-[10px] text-zinc-600">n={total}</span>
+      </div>
+      <div className="mt-3 space-y-2">
+        {values.slice(0, 8).map(item => (
+          <div key={item.valor}>
+            <div className="flex items-center justify-between gap-3 text-[11px]">
+              <span className="min-w-0 truncate text-zinc-400" title={item.valor}>{item.valor}</span>
+              <span className="shrink-0 text-zinc-500">{item.conteo} · {item.porcentaje.toFixed(1).replace('.0', '')}%</span>
+            </div>
+            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-zinc-800">
+              <div className={`h-full rounded-full ${bar}`} style={{ width: `${Math.min(item.porcentaje, 100)}%` }} />
+            </div>
+          </div>
+        ))}
+        {values.length > 8 && <p className="text-[10px] text-zinc-600">Se muestran los 8 valores más frecuentes; el total incluye todos.</p>}
+        {!values.length && <p className="text-[11px] text-zinc-600">Sin valores registrados.</p>}
+      </div>
     </div>
   );
 }

@@ -2,8 +2,8 @@ import { ExternalLink } from 'lucide-react';
 
 export default function MappingTool() {
   return (
-    <div className="flex h-[calc(100vh-2rem)] flex-col gap-2">
-      <div className="flex items-center justify-between">
+    <div className="flex h-[calc(100vh-2rem)] min-h-[520px] flex-col gap-2">
+      <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-sm font-bold text-zinc-200">Mapping LED</h2>
           <p className="text-[10px] text-zinc-600">Event Rigging Master Console - pixel mapping / rigging 3D</p>
