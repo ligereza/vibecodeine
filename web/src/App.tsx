@@ -10,6 +10,7 @@ import PlanoTool from './components/PlanoTool';
 import SvgVisualizer from './components/SvgVisualizer';
 import EventsPanel from './components/EventsPanel';
 import ResolumePanel from './components/ResolumePanel';
+import FohPanel from './components/FohPanel';
 import MappingTool from './components/MappingTool';
 import CulturaPanel from './components/CulturaPanel';
 import ShowPanel from './components/ShowPanel';
@@ -49,6 +50,7 @@ export default function App() {
       {view === 'visualizer' && <SvgVisualizer />}
       {view === 'events' && <EventsPanel />}
       {view === 'resolume' && <ResolumePanel />}
+      {view === 'foh' && <FohPanel />}
       {view === 'mapping' && <MappingTool />}
       {view === 'show' && <ShowPanel />}
       {view === 'automatizaciones' && <AutomatizacionesPanel />}

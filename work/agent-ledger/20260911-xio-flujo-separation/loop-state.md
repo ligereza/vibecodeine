@@ -87,4 +87,70 @@ current_state:
   next_action: Keep the normal Termux launch path as the only remaining runtime
     action; do not force it from adb. Report host ownership, source/staging
     status, and the exact live-reload limitation.
-  next_checkpoint_trigger: After the audit and one coherent corrective milestone.
+next_checkpoint_trigger: After the audit and one coherent corrective milestone.
+
+## Checkpoint 2026-09-11 — corrected split and live RD host read
+
+status: active
+
+completed:
+  - item: FLUJO-ISKVW has its own reduced entry and FOH section; FLUJO-RD
+      remains a separate RD-only entry without ISKVW or Main panels.
+    evidence: web/src/mainIskvw.tsx, web/iskvw.html, web/vite.iskvw.config.ts,
+      web/src/mainRd.tsx, build:iskvw and build:rd passed.
+  - item: XIO routes now distinguish the RD browser hub from the optional
+      browser capture surface, and FOH /view serves the ISKVW/FOH hub.
+    evidence: xio/new-plugins/rd_field/__init__.py routes /view and /field;
+      xio/new-plugins/foh_monitor/__init__.py route /view.
+  - item: RD hub reads host bootstrap and exact-event samples when served by
+      XIO, while file:// standalone remains embedded and request-free.
+    evidence: web/src/components/RdDbPanel.tsx; build:rd passed; live Xiaomi
+      bootstrap returned schema xio-flujo-rd-v1, 42 events and samples endpoint
+      returned a valid zero-sample result for an exact event_id.
+  - item: XIO source and FLUJO mirror target plugin files were synchronized;
+      updated RD/FOH hub bundles were staged to Xiaomi without restarting it.
+    evidence: hashes match for target plugin source/static files; adb push of
+      rd_field/static/hub.html and foh_monitor/static/hub.html succeeded.
+  - item: Phone runtime checker no longer rejects a healthy large plugin list
+      because of response truncation.
+    evidence: tests/check_xio_phone_runtime.py now reads the complete JSON;
+      HTTP=PASS against http://10.248.64.39:5000/api/plugins.
+
+files_or_resources:
+  - C:\IA\flujo\web\src\components\RdDbPanel.tsx
+  - C:\IA\flujo\web\src\components\FohPanel.tsx
+  - C:\IA\flujo\web\src\mainIskvw.tsx
+  - C:\IA\flujo\web\src\mainRd.tsx
+  - C:\IA\XIO\xio\new-plugins\rd_field
+  - C:\IA\XIO\xio\new-plugins\foh_monitor
+  - Xiaomi /sdcard/xio_termux/new-plugins/{rd_field,foh_monitor}
+
+tests_and_checks:
+  - XIO compileall, check_xio_rd_bridge.py, check_xio_rd_plugin.py: PASS
+  - FLUJO check_xio_foh_context.py: PASS
+  - web typecheck, build, build:rd, build:iskvw: PASS
+  - phone runtime: HTTP, listener, DB and files PASS; source sync NO-GO only
+      because the existing live Termux process has not been relaunched.
+
+assumptions:
+  - The RD hub may show the embedded historical projection plus a live host
+      section; this preserves offline standalone use without pretending the
+      embedded snapshot is the current Xiaomi DB.
+  - No phone restart is necessary to validate source/build correctness and is
+      not forced while ADB lacks the configured Termux RUN_COMMAND permission.
+
+blockers:
+  - Normal existing Termux launch path is required before the new static hub
+      is visible at the live /view routes. Current server and DB remain healthy.
+
+last_critique: >-
+  Continuing with a small host-read section had lower total risk than changing
+  the standalone RD bundle into a server-dependent build. It satisfies the
+  distinction between historical projection and Xiaomi-owned live records;
+  the remaining uncertainty is runtime reload, not architecture.
+estimated_remaining_effort: low
+next_action: Run final targeted diffs/tests, commit only the separation and
+  host-read changes in each repository, and push their existing branches;
+  preserve unrelated dirty worktree files.
+next_checkpoint_trigger: Before each explicit commit/push and after verifying
+  the exact staged paths.

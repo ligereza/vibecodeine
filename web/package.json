@@ -11,6 +11,7 @@
     "build:plano": "vite build --config vite.plano.config.ts && node scripts/copy-plano-share.mjs",
     "preview": "vite preview",
     "build:rd": "vite build --config vite.rd.config.ts && node scripts/copy-rd-share.mjs"
+    ,"build:iskvw": "vite build --config vite.iskvw.config.ts && node scripts/copy-iskvw-share.mjs"
   },
   "dependencies": {
     "clsx": "2.1.1",
