@@ -99,6 +99,54 @@ interface Data {
   error?: string;
 }
 
+interface RdHostProducer {
+  productora_slug?: string;
+  logo_loaded?: boolean;
+  logo_status?: string;
+}
+interface RdHostVenue {
+  venue_nombre?: string;
+}
+interface RdHostEvent {
+  event_id: string;
+  event_label_candidate?: string;
+  link_status?: string;
+  link_review_status?: string;
+  productoras?: RdHostProducer[];
+  venues?: RdHostVenue[];
+  mesas?: Array<{ etiqueta?: string }>;
+}
+interface RdHostBootstrap {
+  schema?: string;
+  events?: RdHostEvent[];
+  xioEvents?: Array<{ client_event_id?: string; event_name?: string }>;
+}
+interface RdHostTest {
+  reagent?: string;
+  resultColor?: string;
+  family?: string;
+  matchesDeclared?: boolean | null;
+  limitation?: string;
+}
+interface RdHostSample {
+  sampleId: number;
+  date?: string;
+  eventRef?: string;
+  sampleCode?: string;
+  substanceDeclared?: string;
+  sampleType?: string;
+  color?: string;
+  texture?: string;
+  photoRef?: string;
+  captures?: Array<{ kind?: string; silhouettePreviewRef?: string; reliefRef?: string }>;
+  tests?: RdHostTest[];
+}
+interface RdHostSamples {
+  eventRef?: string;
+  sampleCount?: number;
+  samples?: RdHostSample[];
+}
+
 // Los estados del logo llegan como llaves del dato ("sin_ficha",
 // "no_encontrado"). Mostrados tal cual parecen un error del sistema; acá se
 // dicen como se los diría una persona.
@@ -116,6 +164,10 @@ export default function RdDbPanel() {
   const [aviso, setAviso] = useState<string>('');
   const [productoraActiva, setProductoraActiva] = useState<string | null>(null);
   const [evidenciaActiva, setEvidenciaActiva] = useState<string | null>(null);
+  const [hostBootstrap, setHostBootstrap] = useState<RdHostBootstrap | null>(null);
+  const [hostEventRef, setHostEventRef] = useState('');
+  const [hostSamples, setHostSamples] = useState<RdHostSamples | null>(null);
+  const [hostError, setHostError] = useState('');
   // Cache-buster: tras reemplazar un logo hay que forzar que el <img> lo relea.
   const [rev, setRev] = useState(0);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -149,6 +201,40 @@ export default function RdDbPanel() {
   useEffect(() => {
     cargar();
   }, []);
+
+  // The same RD bundle is also served by XIO at /rd_field/view. Only there do
+  // we ask the host for its live DB projection; a file:// standalone build
+  // stays autonomous and does not produce failing 404 requests.
+  useEffect(() => {
+    const servedByXio = typeof window !== 'undefined'
+      && window.location.pathname.includes('/api/plugins/rd_field');
+    if (!SIN_SERVIDOR || !servedByXio) return;
+    let active = true;
+    fetch('/api/plugins/rd_field/bootstrap', { cache: 'no-store' })
+      .then(response => response.ok ? response.json() : Promise.reject(new Error(`HTTP ${response.status}`)))
+      .then((next: RdHostBootstrap) => {
+        if (!active) return;
+        setHostBootstrap(next);
+        setHostEventRef(current => current || next.events?.[0]?.event_id || '');
+        setHostError('');
+      })
+      .catch(error => {
+        if (active) setHostError(`No se pudo leer la DB del host XIO (${String(error?.message || error)}).`);
+      });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!hostEventRef) return;
+    let active = true;
+    fetch(`/api/plugins/rd_field/samples?eventRef=${encodeURIComponent(hostEventRef)}`, { cache: 'no-store' })
+      .then(response => response.ok ? response.json() : Promise.reject(new Error(`HTTP ${response.status}`)))
+      .then((next: RdHostSamples) => { if (active) setHostSamples(next); })
+      .catch(error => {
+        if (active) setHostError(`No se pudieron leer las muestras de ${hostEventRef} (${String(error?.message || error)}).`);
+      });
+    return () => { active = false; };
+  }, [hostEventRef]);
 
   const pedirArchivo = (slug: string) => {
     objetivo.current = slug;
@@ -195,6 +281,16 @@ export default function RdDbPanel() {
   const r = data?.resumen;
   const activa = data?.productoras.find(p => p.slug === productoraActiva) ?? null;
   const evidencia = data?.evidencia_2025?.find(e => e.event_id === evidenciaActiva) ?? null;
+  const hostEvent = hostBootstrap?.events?.find(event => event.event_id === hostEventRef) ?? null;
+  const hostTests = (hostSamples?.samples || []).flatMap(sample => sample.tests || []);
+  const hostColors = hostTests.reduce<Record<string, number>>((counts, test) => {
+    const value = String(test.resultColor || '').trim() || 'sin resultado';
+    counts[value] = (counts[value] || 0) + 1;
+    return counts;
+  }, {});
+  const hostColorRows = Object.entries(hostColors)
+    .sort(([, left], [, right]) => right - left)
+    .slice(0, 8);
 
   return (
     <div className="space-y-6">
@@ -253,6 +349,68 @@ export default function RdDbPanel() {
               </div>
             ))}
           </div>
+
+          {hostBootstrap && (
+            <section className="rounded-xl border border-sky-900/60 bg-sky-950/10 p-4 sm:p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-sky-300">
+                    <Radio className="h-3.5 w-3.5" /> Host XIO · registros de terreno
+                  </div>
+                  <h2 className="mt-1 text-lg font-bold text-zinc-100">DB offline del dispositivo que corre el server</h2>
+                  <p className="mt-1 max-w-3xl text-xs leading-relaxed text-zinc-500">
+                    Lectura en vivo del mismo host que recibe la APK. Se conserva el <code>event_id</code> exacto; esta vista no crea ni enlaza eventos por nombre.
+                  </p>
+                </div>
+                <span className="rounded-lg border border-sky-900/60 px-2 py-1 text-[10px] text-sky-300">{hostBootstrap.schema || 'xio-flujo-rd'}</span>
+              </div>
+
+              <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]">
+                <label className="block rounded-xl border border-zinc-800 bg-zinc-950/40 p-4">
+                  <span className="block text-[10px] font-bold uppercase tracking-wider text-zinc-600">Evento exacto del host</span>
+                  <select value={hostEventRef} onChange={event => setHostEventRef(event.target.value)} className="mt-2 min-h-10 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 text-sm text-zinc-200">
+                    {(hostBootstrap.events || []).map(event => {
+                      const producer = event.productoras?.map(item => item.productora_slug).filter(Boolean).join(' · ');
+                      const venue = event.venues?.map(item => item.venue_nombre).filter(Boolean).join(' · ');
+                      return <option key={event.event_id} value={event.event_id}>{event.event_label_candidate || event.event_id}{producer ? ` · ${producer}` : ''}{venue ? ` · ${venue}` : ''}</option>;
+                    })}
+                  </select>
+                  {hostEvent && <p className="mt-2 text-[11px] text-zinc-500"><code>{hostEvent.event_id}</code> · {hostEvent.link_status || 'estado de enlace pendiente'} · {hostEvent.productoras?.some(item => item.logo_loaded) ? 'logo cargado en el catálogo' : 'sin logo cargado'}</p>}
+                </label>
+
+                <div className="rounded-xl border border-zinc-800 bg-zinc-950/40 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-600">Resultados colorimétricos registrados</span>
+                    <span className="text-xs text-zinc-400">{hostSamples?.sampleCount ?? 0} muestras · {hostTests.length} pruebas</span>
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    {hostColorRows.map(([value, count]) => {
+                      const percentage = hostTests.length ? (count / hostTests.length) * 100 : 0;
+                      return <div key={value}><div className="flex items-center justify-between gap-3 text-[11px]"><span className="min-w-0 truncate text-zinc-400" title={value}>{value}</span><span className="shrink-0 text-zinc-500">{count} · {percentage.toFixed(1).replace('.0', '')}%</span></div><div className="mt-1 h-1.5 overflow-hidden rounded-full bg-zinc-800"><div className="h-full rounded-full bg-sky-400" style={{ width: `${Math.min(percentage, 100)}%` }} /></div></div>;
+                    })}
+                    {!hostColorRows.length && <p className="text-[11px] text-zinc-600">Aún no hay resultados para este evento.</p>}
+                  </div>
+                </div>
+              </div>
+
+              {hostSamples?.samples?.length ? (
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  {hostSamples.samples.map(sample => (
+                    <article key={sample.sampleId} className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-4">
+                      <div className="flex items-start justify-between gap-3"><div><h3 className="font-bold text-zinc-100">{sample.sampleCode || `Muestra ${sample.sampleId}`}</h3><p className="mt-1 text-[11px] text-zinc-500">{sample.date || 'sin fecha'} · {sample.sampleType || 'tipo no indicado'}</p></div><span className="rounded border border-sky-900/60 px-2 py-1 text-[10px] text-sky-300">{sample.substanceDeclared || 'sustancia no declarada'}</span></div>
+                      <div className="mt-3 grid grid-cols-2 gap-2 text-[11px]"><div className="rounded-lg border border-zinc-800 p-2"><span className="block text-zinc-600">Color declarado</span><span className="text-zinc-300">{sample.color || 'sin registro'}</span></div><div className="rounded-lg border border-zinc-800 p-2"><span className="block text-zinc-600">Textura</span><span className="text-zinc-300">{sample.texture || 'sin registro'}</span></div></div>
+                      <div className="mt-3 space-y-1 text-[11px] text-zinc-500">{(sample.tests || []).map(test => <div key={`${sample.sampleId}-${test.reagent}-${test.resultColor}`} className="flex justify-between gap-3 border-t border-zinc-800/70 pt-1"><span>{test.reagent || 'reactivo pendiente'}</span><span className="text-zinc-300">{test.resultColor || 'sin resultado'}</span></div>)}{!sample.tests?.length && <p>Sin pruebas registradas.</p>}</div>
+                      <p className="mt-3 text-[10px] text-zinc-600">Capturas: {sample.captures?.length || 0} · foto/máscara/relieve se conservan como referencias del host.</p>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-4 rounded-lg border border-dashed border-zinc-800 px-3 py-3 text-xs text-zinc-600">Este <code>event_id</code> existe en el catálogo, pero todavía no tiene muestras guardadas en el host.</p>
+              )}
+              {hostError && <p className="mt-3 text-xs text-amber-400">{hostError}</p>}
+              <p className="mt-4 flex items-start gap-2 text-[11px] leading-relaxed text-zinc-600"><Radio className="mt-0.5 h-3.5 w-3.5 shrink-0" /> Los porcentajes describen valores guardados; no interpretan identidad, pureza, dosis ni seguridad.</p>
+            </section>
+          )}
 
           <section className="rounded-xl border border-zinc-800 bg-zinc-900/40">
             <div className="flex flex-wrap items-center gap-2 border-b border-zinc-800 px-4 py-3">

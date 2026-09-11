@@ -38,3 +38,36 @@ el alcance y podían romper el despliegue existente.
 - La base de datos sigue perteneciendo al proceso que corre el servidor: XIO
   en Xiaomi para operación offline, o el PC cuando éste es el host. El cliente
   del Xiaomi sólo consume la superficie HTTP del host.
+
+## Revisión de enfoque — 2026-09-11, separación corregida
+
+objective: Mantener RD y FOH como productos distintos, con hub RD/FOH separado
+del dispositivo activo y sin romper el motor FLUJO.
+
+acceptance_criteria: FLUJO-RD sólo RD; FLUJO-ISKVW sólo herramientas VJ/FOH;
+XIO-RD mide y XIO-FOH escucha; el host conserva la DB; la vista RD muestra
+proyección histórica y registros vivos del host sin inventar enlaces.
+
+verified_evidence: Los dos bundles compilan por separado; bridge RD, plugin RD,
+contexto FOH y typecheck pasan; Xiaomi responde al bootstrap RD con 42 eventos
+y al endpoint de muestras con event_id exacto.
+
+strongest_failure_mode: Servir una copia visualmente correcta pero desconectada
+de la DB actual, o mezclar una vista RD con herramientas ISKVW.
+
+options:
+  - action: continue
+    expected_benefit: Integrar lectura host sólo cuando el bundle está en XIO.
+    rework_risk: bajo; fallback embebido permanece.
+  - action: change_method
+    expected_benefit: Crear un build servidor completamente distinto.
+    rework_risk: alto; duplicaría entry/config y rompería el archivo autónomo.
+
+selected_action: continue
+confidence: alta para la separación; media para la visibilidad inmediata en
+Xiaomi porque el runtime no fue relanzado.
+decision_delta: se añadió lectura viva RD por host sin convertir el standalone
+en una app dependiente del servidor.
+verification_signal: build:rd PASS y bootstrap/samples HTTP PASS en Xiaomi.
+next_checkpoint: revisar diff acotado, commitear paths explícitos y dejar claro
+que el nuevo /view requiere el próximo lanzamiento normal de Termux.

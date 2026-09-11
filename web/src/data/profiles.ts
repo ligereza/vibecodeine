@@ -24,6 +24,7 @@ export type AppView =
   | 'visualizer'
   | 'events'
   | 'resolume'
+  | 'foh'
   | 'mapping'
   | 'show'
   | 'automatizaciones'
@@ -123,6 +124,7 @@ const MAIN_NAV: NavItem[] = [
 // misma persona haciendo lo mismo en dos escalas, no dos areas.
 const ISKVW_NAV: NavItem[] = [
   { view: 'hub', icon: LayoutDashboard, label: 'Dashboard', desc: 'Vista general iskvw', edit: false },
+  { view: 'foh', icon: Radio, label: 'FOH', desc: 'Monitor de señales y contexto del show', edit: false },
   { view: 'show', icon: Clapperboard, label: 'Show kit', desc: 'Setlist, cues y registros de show', edit: true },
   { view: 'mapping', icon: Lightbulb, label: 'Mapping LED', desc: 'Rigging / pixel mapping', edit: true },
   { view: 'resolume', icon: Radio, label: 'Resolume / Chataigne', desc: 'Comando SMPTE/OSC', edit: false },
