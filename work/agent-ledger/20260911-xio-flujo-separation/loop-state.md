@@ -234,3 +234,32 @@ current_state:
 next_action: Stop active changes and resume verification only after the
   existing Termux launch path changes the live process.
 next_checkpoint_trigger: live route change or user interruption.
+
+## Completion audit — 2026-09-11
+
+status: blocked
+requirements:
+  - requirement: Native RD APK measures locally and syncs exact host events.
+    result: proved; Android source and Gradle unit/build checks pass.
+  - requirement: FLUJO-RD is RD-only and has responsive graphical database
+      fichas plus descriptive result distributions.
+    result: proved by isolated rd build and bundle marker checks; live host
+      section uses bootstrap/samples without inventing event links.
+  - requirement: FLUJO-ISKVW is separate and includes FOH/VJ tools.
+    result: proved by isolated iskvw build and marker checks.
+  - requirement: XIO-RD and XIO-FOH serve those surfaces offline on port 5000.
+    result: source and staged files proved; live runtime not proved because it
+      still serves the pre-staging process.
+  - requirement: No session/logout/DB destruction and no whole-repo copy to
+      Xiaomi.
+    result: proved by command history, staging hashes and clean XIO worktree.
+blocker:
+  - The existing Termux process must be launched through its normal path to
+      copy staged files into private runtime. ADB RUN_COMMAND is denied; a
+      force-stop, UI injection, logout or relaunch was not authorized/safe.
+evidence:
+  - Final phone probe: DB/listener/files/HTTP PASS, source sync NO-GO for
+      stale server.py; rd_field/info lacks hub_surface_present and
+      foh_monitor/view is HTTP 404.
+stop_reason: No safe productive source action remains until the external
+  Termux runtime state changes; goal remains resumable, not complete.
