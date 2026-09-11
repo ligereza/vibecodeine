@@ -38,6 +38,10 @@ completed:
     evidence: MAK /home/mak/flujo/data/rd.db en sólo lectura tiene 37 tablas y
       42 eventos; Xiaomi mantiene servidor :5000 y rd_field/rd.db local de
       3067904 bytes.
+  - item: XIO y el espejo FLUJO sincronizados y publicados.
+    evidence: XIO commit 1759038; FLUJO commits f91bd057 y e8d0fe59; bridge,
+      PWA y recursos estáticos comparten hash entre ambos equipos y staging
+      `/sdcard/xio_termux/new-plugins/rd_field`.
 
 current_state:
   files_or_resources:
@@ -71,7 +75,8 @@ current_state:
       distinction before closing the objective.
   blockers: runtime static reload requires the already-configured Termux path;
     source and staging are ready, but avoid forcing a user-visible phone
-    session solely for a static refresh.
+    session solely for a static refresh. The server remains healthy and the
+    existing bridge is already live; only the new PWA selector awaits reload.
   research_refs: none
   delegation_refs: none
   last_critique: >-
@@ -79,7 +84,7 @@ current_state:
     added explicit viewport detection. The remaining uncertainty is deployment
     reload, not an unbounded redesign; keep the live server and DB untouched.
   estimated_remaining_effort: low
-  next_action: Verify FOH route/context and final diffs, then commit only the
-    targeted XIO and FLUJO changes and report the runtime reload limitation
-    precisely.
+  next_action: Keep the normal Termux launch path as the only remaining runtime
+    action; do not force it from adb. Report host ownership, source/staging
+    status, and the exact live-reload limitation.
   next_checkpoint_trigger: After the audit and one coherent corrective milestone.
