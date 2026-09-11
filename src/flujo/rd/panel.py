@@ -25,7 +25,196 @@ def _event_key(productora_slug: str, nombre: str, fecha: str = "") -> str:
     return f"rd:{token(productora_slug)}:{token(nombre)}:{token(fecha)}"
 
 
-def _wire_event_links(productora_slug: str, event: dict, venues: list[dict]) -> None:
+def _norm_link_value(value: object) -> str:
+    """Normalize only values used to compare two existing DB projections."""
+    plain = unicodedata.normalize("NFD", str(value or "").lower())
+    plain = "".join(c for c in plain if unicodedata.category(c) != "Mn")
+    return re.sub(r"[^a-z0-9]+", " ", plain).strip()
+
+
+def _venue_link_key(value: object) -> str:
+    """Normalize a venue label without turning a guess into an identity.
+
+    Event sources sometimes append editorial evidence to the venue (for
+    example ``-- confirmado por el usuario`` or ``(needs_confirmation)``).
+    Those annotations are not part of the venue name.  The comparison keeps
+    the actual place text and removes only those unambiguous suffixes plus a
+    trailing country word.  It does not use fuzzy matching.
+    """
+    text = str(value or "").strip()
+    if not text or text.lower() == "needs_confirmation":
+        return ""
+    text = re.split(r"\s+--\s+", text, maxsplit=1)[0]
+    text = re.sub(r"\s*\([^)]*\)", "", text)
+    key = _norm_link_value(text)
+    if key.endswith(" chile"):
+        key = key[:-6].rstrip()
+    return key
+
+
+def _database_event_link(root: Path, productora_slug: str, event: dict) -> dict:
+    """Check the event card against the existing SQLite projection.
+
+    ``data/productoras/*.json`` remains the source of truth.  SQLite is a
+    regenerable projection, so this function never writes to it and never
+    turns a missing row into a new event.  The three stable keys are the
+    productora slug, the literal event name and the literal source date.
+    """
+    result = {
+        "status": "unavailable",
+        "source": "data/rd.db",
+        "table": "productora_eventos",
+        "keys": ["productora_slug", "nombre", "fecha"],
+    }
+    db_path = Path(root) / "data" / "rd.db"
+    if not db_path.is_file():
+        result["reason"] = "la proyección SQLite no está construida"
+        return result
+
+    uri = f"file:{db_path.resolve().as_posix()}?mode=ro"
+    conn = None
+    try:
+        conn = sqlite3.connect(uri, uri=True)
+        conn.row_factory = sqlite3.Row
+        table = conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?",
+            ("productora_eventos",),
+        ).fetchone()
+        if table is None:
+            result["reason"] = "la tabla productora_eventos no existe"
+            return result
+        rows = conn.execute(
+            "SELECT id, productora_slug, nombre, fecha, venue, estado, fuente, "
+            "fuentes_primarias, sin_fuente_primaria "
+            "FROM productora_eventos "
+            "WHERE productora_slug=? AND nombre=? AND fecha IS ? "
+            "ORDER BY id",
+            (productora_slug, event.get("nombre", ""), event.get("fecha")),
+        ).fetchall()
+        if len(rows) == 0:
+            result["status"] = "missing"
+            result["reason"] = "la ficha JSON no tiene una fila correspondiente en SQLite"
+            return result
+        if len(rows) > 1:
+            result["status"] = "ambiguous"
+            result["row_ids"] = [int(row["id"]) for row in rows]
+            result["reason"] = "más de una fila para la misma clave estable"
+            return result
+
+        row = dict(rows[0])
+        same_identity = all(
+            _norm_link_value(row.get(field)) == _norm_link_value(event.get(field))
+            for field in ("nombre", "fecha", "venue", "estado")
+        )
+        result["status"] = "exact" if same_identity else "divergent"
+        result["id"] = int(row["id"])
+        result["row"] = {
+            "productora_slug": row["productora_slug"],
+            "nombre": row["nombre"],
+            "fecha": row["fecha"],
+            "venue": row["venue"],
+            "estado": row["estado"],
+            "fuente": row["fuente"],
+            "fuentes_primarias": _json_list(row.get("fuentes_primarias")),
+            "sin_fuente_primaria": bool(row.get("sin_fuente_primaria")),
+        }
+        if not same_identity:
+            result["reason"] = "la clave existe, pero venue/estado no coincide"
+        return result
+    except (OSError, sqlite3.Error) as exc:
+        result["reason"] = f"no se pudo leer SQLite en modo solo lectura: {exc}"
+        return result
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+def _database_venue_link(root: Path, productora_slug: str, event: dict) -> dict:
+    """Resolve an event venue against the existing productora_venues rows.
+
+    This is deliberately separate from the canonical venue catalogue.  A
+    productora can have a declared venue that still lacks a curated
+    ``venue_id``; that is useful evidence, but it is not a canonical venue
+    identity.  The read-only relation prevents the panel from silently
+    creating or merging venues.
+    """
+    result = {
+        "status": "pending_review",
+        "source": "data/rd.db",
+        "table": "productora_venues",
+        "keys": ["productora_slug", "venue_nombre"],
+    }
+    venue_key = _venue_link_key(event.get("venue"))
+    if not venue_key:
+        result["reason"] = "el evento no tiene un venue identificable"
+        return result
+    db_path = Path(root) / "data" / "rd.db"
+    if not db_path.is_file():
+        result["status"] = "unavailable"
+        result["reason"] = "la proyección SQLite no está construida"
+        return result
+
+    uri = f"file:{db_path.resolve().as_posix()}?mode=ro"
+    conn = None
+    try:
+        conn = sqlite3.connect(uri, uri=True)
+        conn.row_factory = sqlite3.Row
+        table = conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?",
+            ("productora_venues",),
+        ).fetchone()
+        if table is None:
+            result["status"] = "unavailable"
+            result["reason"] = "la tabla productora_venues no existe"
+            return result
+        rows = conn.execute(
+            "SELECT id, venue_nombre, venue_id, preferido, estado "
+            "FROM productora_venues WHERE productora_slug=? ORDER BY id",
+            (productora_slug,),
+        ).fetchall()
+        matches = [row for row in rows if _venue_link_key(row["venue_nombre"]) == venue_key]
+        if not matches:
+            result["reason"] = "el venue del evento no está declarado para la productora"
+            return result
+        if len(matches) > 1:
+            result["status"] = "ambiguous"
+            result["row_ids"] = [int(row["id"]) for row in matches]
+            result["reason"] = "hay más de una declaración del mismo venue"
+            return result
+        row = matches[0]
+        result["status"] = "exact"
+        result["id"] = int(row["id"])
+        result["name"] = row["venue_nombre"]
+        result["venue_id"] = row["venue_id"]
+        result["preferido"] = bool(row["preferido"])
+        result["estado"] = row["estado"]
+        return result
+    except (OSError, sqlite3.Error) as exc:
+        result["status"] = "unavailable"
+        result["reason"] = f"no se pudo leer productora_venues en modo solo lectura: {exc}"
+        return result
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+def _json_list(value: object) -> list:
+    """Decode a JSON list from the DB without letting malformed evidence leak."""
+    if isinstance(value, list):
+        return value
+    try:
+        decoded = json.loads(value or "[]")
+    except (TypeError, ValueError):
+        return []
+    return decoded if isinstance(decoded, list) else []
+
+
+def _wire_event_links(
+    productora_slug: str,
+    event: dict,
+    venues: list[dict],
+    declared_venues: list[dict] | None = None,
+) -> None:
     """Add deterministic links without guessing a venue or rider asset.
 
     An exact normalized venue match is safe to automate. Rider/layout files
@@ -50,6 +239,41 @@ def _wire_event_links(productora_slug: str, event: dict, venues: list[dict]) -> 
         # cadena vacía como si fuera un dato de venue.
         venue_link["name"] = event_venue
     event["venue_link"] = venue_link
+    declared_venues = declared_venues or []
+    declared_matches = [
+        v for v in declared_venues
+        if _venue_link_key(v.get("nombre")) == _venue_link_key(event_venue)
+    ]
+    source_venue_link = {
+        "status": "pending_review",
+        "source": "data/productoras",
+        "reason": "el venue del evento no coincide exactamente con una declaración de la productora",
+    }
+    if len(declared_matches) == 1 and _venue_link_key(event_venue):
+        declared = declared_matches[0]
+        source_venue_link = {
+            "status": "exact",
+            "name": declared.get("nombre"),
+            "venue_id": declared.get("venue_id"),
+            "estado": declared.get("estado"),
+            "preferido": bool(declared.get("preferido")),
+            "source": "data/productoras",
+        }
+    elif len(declared_matches) > 1:
+        source_venue_link = {
+            "status": "ambiguous",
+            "source": "data/productoras",
+            "reason": "la productora declara el mismo venue más de una vez",
+        }
+    event["venue_source_link"] = source_venue_link
+    flyer_ref = str(event.get("flyer_ref") or "").strip()
+    flyer_link = {
+        "status": "explicit" if flyer_ref else "pending_review",
+        "generated_key": event["event_key"] + ":flyer",
+    }
+    if flyer_ref:
+        flyer_link["ref"] = flyer_ref
+    event["flyer_link"] = flyer_link
     rider_ref = str(event.get("rider_ref") or "").strip()
     layout_ref = str(event.get("layout_ref") or "").strip()
     rider_link = {
@@ -104,6 +328,14 @@ def rd_event_link(root: Path, event_key: str, overrides: dict | None = None) -> 
 
     required = ("pack", "duracion_horas", "asistentes_estimados")
     missing = [key for key in required if draft.get(key) in (None, "")]
+    links = {
+        "flyer": event.get("flyer_link"),
+        "venue": event.get("venue_link"),
+        "venue_source": event.get("venue_source_link"),
+        "rider": event.get("rider_link"),
+        "layout": event.get("layout_link"),
+        "database": event.get("database_link"),
+    }
     result = {
         "status": "pending_review" if missing else "ready",
         "event_key": wanted,
@@ -111,15 +343,23 @@ def rd_event_link(root: Path, event_key: str, overrides: dict | None = None) -> 
         "productora": productora["nombre"],
         "event": event,
         "missing": missing,
-        "links": {
-            "venue": event.get("venue_link"),
-            "rider": event.get("rider_link"),
-            "layout": event.get("layout_link"),
-        },
+        "links": links,
+        "triangulacion": event.get("triangulacion"),
     }
     if not missing:
         from ..serve.server import api_plano_render
         result["render"] = api_plano_render(draft)
+        # The existing engine rendered the two documents for this exact
+        # event.  Mark them generated in this response only; the catalogue is
+        # not mutated and no fake file reference is persisted.
+        for asset in ("rider", "layout"):
+            link = result["links"].get(asset)
+            if isinstance(link, dict) and link.get("status") == "pending_review":
+                result["links"][asset] = {
+                    **link,
+                    "status": "generated",
+                    "generated_from": "flujo.plano",
+                }
     return result
 
 
@@ -177,6 +417,9 @@ def datos_panel(root) -> dict:
                 d = json.loads(f.read_text(encoding="utf-8"))
             except Exception:
                 continue
+            from ..rd.database import _es_productora_rd
+            if not _es_productora_rd(d):
+                continue
             slug = f.stem
             # Estado del logo: el json referencia el id; el archivo real vive
             # en knowledge/logos/. Se reporta lo que existe en disco, no lo
@@ -209,6 +452,7 @@ def datos_panel(root) -> dict:
             venues = [
                 {
                     "nombre": str(v.get("nombre") or ""),
+                    "venue_id": str(v.get("venue_id") or "") or None,
                     "estado": str(v.get("estado") or ""),
                     "preferido": bool(v.get("preferido")),
                 }
@@ -245,6 +489,13 @@ def datos_panel(root) -> dict:
                             eventos_norm[-1]["rider_ref"] = str(ev["rider_ref"])
                         if ev.get("layout_ref"):
                             eventos_norm[-1]["layout_ref"] = str(ev["layout_ref"])
+                        if ev.get("flyer_ref"):
+                            eventos_norm[-1]["flyer_ref"] = str(ev["flyer_ref"])
+                        for key in ("pack", "preset", "duracion_horas",
+                                    "asistentes_estimados", "voluntarios",
+                                    "layout_mode"):
+                            if ev.get(key) not in (None, ""):
+                                eventos_norm[-1][key] = ev[key]
             except Exception:
                 eventos_norm = []
 
@@ -302,7 +553,28 @@ def datos_panel(root) -> dict:
     # para que el operador pueda completar el enlace sin crear otro evento.
     for productora in prods:
         for evento in productora["eventos"]:
-            _wire_event_links(productora["slug"], evento, venues_cat)
+            _wire_event_links(productora["slug"], evento, venues_cat, productora["venues"])
+            # The JSON catalog is authoritative; this is a read-only
+            # consistency check against its existing SQLite projection.
+            db_link = _database_event_link(root, productora["slug"], evento)
+            db_venue_link = _database_venue_link(root, productora["slug"], evento)
+            db_link["venue"] = db_venue_link
+            evento["database_link"] = db_link
+            evento["triangulacion"] = {
+                "status": db_link["status"],
+                "event_key": evento["event_key"],
+                "catalogo": {"status": "exact", "source": "data/productoras"},
+                "base_datos": db_link,
+                "venue_fuente": evento.get("venue_source_link"),
+                "venue_db": db_venue_link,
+                "venue_canonico": evento.get("venue_link"),
+                # This is identity triangulation only. Plano/Rider assets
+                # remain separate links and are not fabricated here.
+                "identidad_completa": (
+                    db_link["status"] == "exact"
+                    and db_venue_link["status"] == "exact"
+                ),
+            }
 
     # Estado de la triangulacion: cuantos eventos se pueden cruzar de verdad
     # (necesitan fecha ISO Y lineup). Es el numero que dice si esa tarea
@@ -310,6 +582,18 @@ def datos_panel(root) -> dict:
     todos_ev = [e for p in prods for e in p["eventos"]]
     triangulables = [e for e in todos_ev if e.get("fecha_iso") and e.get("lineup")]
     sin_fuente_primaria = [e for e in todos_ev if e.get("sin_fuente_primaria")]
+    db_exactos = [e for e in todos_ev if e.get("database_link", {}).get("status") == "exact"]
+    venue_db_exactos = [
+        e for e in todos_ev
+        if e.get("triangulacion", {}).get("venue_db", {}).get("status") == "exact"
+    ]
+    venue_canonicos = [
+        e for e in todos_ev
+        if e.get("triangulacion", {}).get("venue_canonico", {}).get("status") == "exact"
+    ]
+    identidad_completa = [
+        e for e in todos_ev if e.get("triangulacion", {}).get("identidad_completa")
+    ]
 
     return {
         "productoras": prods,
@@ -325,6 +609,11 @@ def datos_panel(root) -> dict:
             "eventos_sin_fuente_primaria": len(sin_fuente_primaria),
             "eventos_sin_fecha_iso": sum(1 for e in todos_ev if not e.get("fecha_iso")),
             "eventos_sin_lineup": sum(1 for e in todos_ev if not e.get("lineup")),
+            "eventos_db_exactos": len(db_exactos),
+            "eventos_db_pendientes": len(todos_ev) - len(db_exactos),
+            "eventos_venue_db_exactos": len(venue_db_exactos),
+            "eventos_venue_canonicos": len(venue_canonicos),
+            "eventos_triangulacion_completa": len(identidad_completa),
         },
         "excluido_a_proposito": ["instagram", "contactos"],
         "connected": True,

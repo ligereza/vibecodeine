@@ -17,6 +17,7 @@ import { Database, Upload, CheckCircle2, CircleDashed, MapPin, AlertTriangle, Ba
 
 interface Venue {
   nombre: string;
+  venue_id?: string | null;
   estado: string;
   preferido: boolean;
 }
@@ -31,11 +32,24 @@ interface Evento {
   lineup?: string[];
   fuentes_primarias?: string[];
   sin_fuente_primaria?: boolean;
+  pack?: string;
+  duracion_horas?: number;
+  asistentes_estimados?: number;
   rider_ref?: string;
   layout_ref?: string;
   venue_link?: { id?: string | null; name?: string; status?: string };
+  venue_source_link?: { name?: string; venue_id?: string | null; estado?: string; status?: string; reason?: string };
+  flyer_link?: { ref?: string; status?: string; generated_key?: string };
   rider_link?: { ref?: string; status?: string; generated_key?: string };
   layout_link?: { ref?: string; status?: string; generated_key?: string };
+  database_link?: { id?: number; status?: string; reason?: string; table?: string; venue?: { id?: number; venue_id?: string | null; status?: string; reason?: string } };
+  triangulacion?: {
+    status?: string;
+    event_key?: string;
+    identidad_completa?: boolean;
+    venue_db?: { id?: number; venue_id?: string | null; status?: string; reason?: string };
+    venue_canonico?: { id?: string | null; name?: string; status?: string };
+  };
 }
 interface Distribucion {
   valor: string;
@@ -100,6 +114,11 @@ interface Data {
     eventos_sin_fuente_primaria?: number;
     eventos_sin_fecha_iso?: number;
     eventos_sin_lineup?: number;
+    eventos_db_exactos?: number;
+    eventos_db_pendientes?: number;
+    eventos_venue_db_exactos?: number;
+    eventos_venue_canonicos?: number;
+    eventos_triangulacion_completa?: number;
   };
   excluido_a_proposito?: string[];
   error?: string;
@@ -174,7 +193,11 @@ export default function RdDbPanel() {
   const [hostEventRef, setHostEventRef] = useState('');
   const [hostSamples, setHostSamples] = useState<RdHostSamples | null>(null);
   const [hostError, setHostError] = useState('');
-  const [planoEstado, setPlanoEstado] = useState<{ key: string; status: 'cargando' | 'ready' | 'pending_review' | 'error'; missing?: string[]; error?: string } | null>(null);
+  const [planoEstado, setPlanoEstado] = useState<{ key: string; status: 'cargando' | 'ready' | 'pending_review' | 'error'; missing?: string[]; error?: string; generated?: boolean } | null>(null);
+  const [planoDraftKey, setPlanoDraftKey] = useState<string | null>(null);
+  const [planoDraftPack, setPlanoDraftPack] = useState('');
+  const [planoDraftDuration, setPlanoDraftDuration] = useState('');
+  const [planoDraftAttendees, setPlanoDraftAttendees] = useState('');
   // Cache-buster: tras reemplazar un logo hay que forzar que el <img> lo relea.
   const [rev, setRev] = useState(0);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -298,7 +321,7 @@ export default function RdDbPanel() {
   const hostColorRows = Object.entries(hostColors)
     .sort(([, left], [, right]) => right - left)
     .slice(0, 8);
-  const enlacePendiente = (ev: Evento) => [ev.rider_link?.status !== 'explicit', ev.layout_link?.status !== 'explicit'].filter(Boolean).length;
+  const enlacePendiente = (ev: Evento) => [ev.flyer_link?.status !== 'explicit', ev.rider_link?.status !== 'explicit', ev.layout_link?.status !== 'explicit'].filter(Boolean).length;
   const venueResumen = activa?.eventos?.reduce<Record<string, number>>((counts, ev) => {
     const venue = ev.venue_link?.name || ev.venue;
     if (venue) counts[venue] = (counts[venue] || 0) + 1;
@@ -306,22 +329,54 @@ export default function RdDbPanel() {
   }, {}) ?? {};
   const venueMasRepetido = Object.entries(venueResumen).sort(([, left], [, right]) => right - left)[0];
 
-  const abrirPlanoRider = async (eventKey: string) => {
+  const abrirPlanoRider = async (eventKey: string, overrides?: { pack: string; duracion_horas: number; asistentes_estimados: number }) => {
     setPlanoEstado({ key: eventKey, status: 'cargando' });
     try {
       const response = await fetch('/api/rd-db/event-link', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ event_key: eventKey }),
+        body: JSON.stringify({ event_key: eventKey, ...(overrides ? { overrides } : {}) }),
       });
       const result = await response.json();
       if (!response.ok || result.status === 'error' || result.status === 'not_found') {
         throw new Error(result.error || `HTTP ${response.status}`);
       }
-      setPlanoEstado({ key: eventKey, status: result.status, missing: result.missing });
+      setPlanoEstado({ key: eventKey, status: result.status, missing: result.missing, generated: result.links?.rider?.status === 'generated' || result.links?.layout?.status === 'generated' });
     } catch (error) {
       setPlanoEstado({ key: eventKey, status: 'error', error: String(error instanceof Error ? error.message : error) });
     }
+  };
+
+  const prepararPlanoRider = (ev: Evento) => {
+    if (!ev.event_key) return;
+    if (ev.pack && ev.duracion_horas && ev.asistentes_estimados) {
+      abrirPlanoRider(ev.event_key, {
+        pack: ev.pack,
+        duracion_horas: ev.duracion_horas,
+        asistentes_estimados: ev.asistentes_estimados,
+      });
+      return;
+    }
+    setPlanoDraftKey(ev.event_key);
+    setPlanoDraftPack(ev.pack || '');
+    setPlanoDraftDuration(ev.duracion_horas ? String(ev.duracion_horas) : '');
+    setPlanoDraftAttendees(ev.asistentes_estimados ? String(ev.asistentes_estimados) : '');
+    setPlanoEstado(null);
+  };
+
+  const generarPlanoRider = (eventKey: string) => {
+    const duration = Number(planoDraftDuration);
+    const attendees = Number(planoDraftAttendees);
+    if (!planoDraftPack || !(duration > 0) || !(attendees > 0)) {
+      setPlanoEstado({ key: eventKey, status: 'error', error: 'Completa pack, duración y asistentes con valores mayores que cero.' });
+      return;
+    }
+    setPlanoDraftKey(null);
+    abrirPlanoRider(eventKey, {
+      pack: planoDraftPack,
+      duracion_horas: duration,
+      asistentes_estimados: attendees,
+    });
   };
 
   return (
@@ -373,6 +428,9 @@ export default function RdDbPanel() {
               { k: 'Sin fuente primaria', v: r.eventos_sin_fuente_primaria ?? 0, ayuda: 'Falta URL oficial, ticketera o venue' },
               { k: 'Sin lineup', v: r.eventos_sin_lineup ?? 0, ayuda: 'Falta cargarles el lineup' },
               { k: 'Sin fecha', v: r.eventos_sin_fecha_iso ?? 0, ayuda: 'Falta cargarles la fecha' },
+              { k: 'DB exacta', v: `${r.eventos_db_exactos ?? 0}/${r.eventos ?? 0}`, ayuda: 'La ficha coincide con productora_eventos en SQLite' },
+              { k: 'Venue en DB', v: `${r.eventos_venue_db_exactos ?? 0}/${r.eventos ?? 0}`, ayuda: 'El venue del evento coincide con productora_venues' },
+              { k: 'Identidad unida', v: `${r.eventos_triangulacion_completa ?? 0}/${r.eventos ?? 0}`, ayuda: 'Evento y venue coinciden con sus dos filas SQLite' },
             ].map(c => (
               <div key={c.k} title={c.ayuda} className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4">
                 <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">{c.k}</div>
@@ -595,22 +653,46 @@ export default function RdDbPanel() {
                         </div>
                         <div className="flex shrink-0 items-center gap-1.5">
                           <span className="rounded bg-zinc-800 px-2 py-1 text-[10px] text-zinc-400">{ev.estado || 'sin estado'}</span>
-                          {!SIN_SERVIDOR && ev.event_key && <button type="button" onClick={() => abrirPlanoRider(ev.event_key!)} className="rounded border border-emerald-900/60 px-2 py-1 text-[10px] text-emerald-300 hover:bg-emerald-950/40">Plano / rider</button>}
+                          {!SIN_SERVIDOR && ev.event_key && <button type="button" onClick={() => prepararPlanoRider(ev)} className="rounded border border-emerald-900/60 px-2 py-1 text-[10px] text-emerald-300 hover:bg-emerald-950/40">Plano / rider</button>}
                         </div>
                       </div>
                       <div className="mt-3 flex flex-wrap items-center gap-1.5 text-[10px]">
                         {(ev.venue_link?.name || ev.venue) && <span className="rounded border border-sky-900/50 bg-sky-950/20 px-2 py-1 text-sky-300">⌖ {ev.venue_link?.name || ev.venue}</span>}
                         {ev.venue_link?.status === 'exact' && <span className="rounded border border-emerald-900/50 bg-emerald-950/20 px-2 py-1 text-emerald-300">venue exacto</span>}
+                        {ev.triangulacion?.venue_db?.status === 'exact' && <span className="rounded border border-sky-900/50 bg-sky-950/20 px-2 py-1 text-sky-300" title="Coincidencia con la declaración de venue de la productora en SQLite">venue en DB</span>}
+                        {ev.flyer_link?.status === 'explicit' && <span className="rounded border border-zinc-800 px-2 py-1 text-zinc-500">Flyer: {ev.flyer_link.ref}</span>}
                         {ev.rider_link?.status === 'explicit' && <span className="rounded border border-zinc-800 px-2 py-1 text-zinc-500">Rider: {ev.rider_link.ref}</span>}
                         {ev.layout_link?.status === 'explicit' && <span className="rounded border border-zinc-800 px-2 py-1 text-zinc-500">Layout: {ev.layout_link.ref}</span>}
+                        {ev.triangulacion?.status === 'exact' && <span className="rounded border border-emerald-900/50 bg-emerald-950/20 px-2 py-1 text-emerald-300" title="Coincidencia de clave estable con data/rd.db">DB exacta{ev.database_link?.id ? ` · fila ${ev.database_link.id}` : ''}</span>}
+                        {ev.triangulacion?.status && ev.triangulacion.status !== 'exact' && <span className="rounded border border-amber-900/50 bg-amber-950/20 px-2 py-1 text-amber-300" title={ev.database_link?.reason || 'La proyección SQLite requiere revisión'}>DB {ev.triangulacion.status === 'missing' ? 'sin fila' : 'revisar'}</span>}
                         {ev.fuentes_primarias?.length ? <span className="rounded border border-zinc-800 px-2 py-1 text-zinc-500">fuente primaria</span> : null}
                         {enlacePendiente(ev) > 0 && <span className="rounded border border-amber-900/50 bg-amber-950/20 px-2 py-1 text-amber-300">{enlacePendiente(ev)} enlace{enlacePendiente(ev) > 1 ? 's' : ''} pendiente{enlacePendiente(ev) > 1 ? 's' : ''}</span>}
                         {ev.event_key && <code className="max-w-full truncate px-1 text-[9px] text-zinc-700" title={ev.event_key}>{ev.event_key}</code>}
                       </div>
+                      {planoDraftKey === ev.event_key && (
+                        <div className="mt-3 rounded-lg border border-emerald-900/50 bg-emerald-950/10 p-3">
+                          <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Generar desde este evento</div>
+                          <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                            <select value={planoDraftPack} onChange={e => setPlanoDraftPack(e.target.value)} className="min-h-8 rounded border border-zinc-700 bg-zinc-900 px-2 text-[11px] text-zinc-200">
+                              <option value="">Pack…</option>
+                              <option value="INFO">INFO · Informativo</option>
+                              <option value="TESTEO">TESTEO · Testeo e informativo</option>
+                              <option value="COMPLETO">COMPLETO · Servicio completo</option>
+                            </select>
+                            <input type="number" min="0.5" step="0.5" placeholder="Duración (h)" value={planoDraftDuration} onChange={e => setPlanoDraftDuration(e.target.value)} className="min-h-8 rounded border border-zinc-700 bg-zinc-900 px-2 text-[11px] text-zinc-200 placeholder:text-zinc-600" />
+                            <input type="number" min="1" step="1" placeholder="Asistentes" value={planoDraftAttendees} onChange={e => setPlanoDraftAttendees(e.target.value)} className="min-h-8 rounded border border-zinc-700 bg-zinc-900 px-2 text-[11px] text-zinc-200 placeholder:text-zinc-600" />
+                          </div>
+                          <div className="mt-2 flex items-center gap-2">
+                            <button type="button" onClick={() => generarPlanoRider(ev.event_key!)} className="rounded border border-emerald-800 bg-emerald-950/40 px-2 py-1 text-[10px] text-emerald-300">Generar</button>
+                            <button type="button" onClick={() => setPlanoDraftKey(null)} className="rounded border border-zinc-800 px-2 py-1 text-[10px] text-zinc-500">Cancelar</button>
+                            <span className="text-[10px] text-zinc-600">No modifica la base; usa el motor existente.</span>
+                          </div>
+                        </div>
+                      )}
                       {(() => {
                         const estadoEvento = planoEstado?.key === ev.event_key ? planoEstado : null;
                         return estadoEvento && estadoEvento.status !== 'cargando' && <p className={`mt-2 text-[10px] ${estadoEvento.status === 'error' ? 'text-red-300' : estadoEvento.status === 'ready' ? 'text-emerald-300' : 'text-amber-300'}`}>
-                          {estadoEvento.status === 'ready' ? 'Motor Plano-Rider listo para este evento.' : estadoEvento.status === 'pending_review' ? `Pendiente: faltan ${(estadoEvento.missing || []).join(', ')}.` : `No se pudo abrir: ${estadoEvento.error}`}
+                          {estadoEvento.status === 'ready' ? (estadoEvento.generated ? 'Plano y rider generados por el motor para este evento.' : 'Motor Plano-Rider listo para este evento.') : estadoEvento.status === 'pending_review' ? `Pendiente: faltan ${(estadoEvento.missing || []).join(', ')}.` : `No se pudo abrir: ${estadoEvento.error}`}
                         </p>;
                       })()}
                     </article>
