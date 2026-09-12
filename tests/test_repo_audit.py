@@ -117,7 +117,9 @@ def test_tool_consumer_inventory_is_explicit_and_bounded():
     # off and emits a blank worksheet; it never writes a role, because a
     # role is a claim a person makes about their own work. Consumed by
     # `tests/test_rol_candidatos.py`.
-    assert result["count"] == 110
+    # 110 -> 111 on 2026-09-12: branch_contract.py became a shared runtime
+    # consumer contract.
+    assert result["count"] == 111
     assert len(result["files"]) == result["count"]
     summary = result["summary"]
     assert summary["with_production_reference"] + summary["tests_only"] \
