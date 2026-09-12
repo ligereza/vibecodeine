@@ -162,28 +162,60 @@ def _motor_root(repo: Path) -> Path:
     return candidates[0]
 
 
-def _repo_component(repo: Path) -> dict[str, Any]:
+def _repo_component(repo: Path, physical: Path) -> dict[str, Any]:
     motor = _motor_root(repo)
     required = {
-        # 2026-09-03: the lowercase `agents.md` was deleted by the operator's
-        # order along with every other contract file. The one contract is
-        # `AGENTS.md`. Requiring the old name made this status -- the command
-        # the contract itself points at for facts -- report a file missing
-        # that was removed on purpose.
         "contract": repo / "AGENTS.md",
         "hub_source": repo / "cultura" / "mak_plataforma" / "hub.py",
         "knowledge_api": motor / "knowledge" / "project_api.py",
         "web_source": repo / "web" / "package.json",
     }
     evidence = {name: _path_status(path) for name, path in required.items()}
-    ok = all(row["exists"] for row in evidence.values())
+    if not evidence["hub_source"]["exists"]:
+        physical_hub = physical / "cultura" / "mak_plataforma" / "hub.py"
+        if physical_hub.is_file():
+            evidence["hub_source"] = {
+                **_path_status(physical_hub),
+                "declared_path": str(required["hub_source"]),
+                "role": "fallback",
+            }
+    policy_paths = (
+        repo / "context" / "diagnostics" / "contracts" / "core.md",
+        physical / "context" / "diagnostics" / "contracts" / "core.md",
+    )
+    contract_policy = policy_paths[0]
+    policy_text = ""
+    for candidate in policy_paths:
+        try:
+            candidate_text = candidate.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+        if not contract_policy.is_file():
+            contract_policy = candidate
+        if "There is no contract file, and that is the decision" in candidate_text:
+            contract_policy = candidate
+            policy_text = candidate_text
+            break
+    intentional_absence = (
+        not evidence["contract"]["exists"]
+        and "There is no contract file, and that is the decision" in policy_text
+    )
+    evidence["contract"]["policy"] = {
+        "path": str(contract_policy),
+        "exists": contract_policy.is_file(),
+        "state": "intentionally_absent" if intentional_absence else "unresolved",
+    }
+    source_ready = all(
+        row["exists"] for name, row in evidence.items() if name != "contract"
+    )
+    ok = source_ready and (evidence["contract"]["exists"] or intentional_absence)
     return _component(
         "repo",
         "MAK source",
         "ready" if ok else "attention",
         severity="none" if ok else "attention",
         evidence=evidence,
-        next_action=None if ok else "restore the missing source contract before changing consumers",
+        next_action=None if ok else "resolve the source contract policy before changing consumers",
     )
 
 
@@ -459,7 +491,7 @@ def system_status(
     database_path = Path(database).expanduser().resolve()
     ledger = operational_status(database_path, repo_root=repo)
     components = {
-        "repo": _repo_component(repo),
+        "repo": _repo_component(repo, physical),
         "hub": _service_component(
             "hub", "MAK Hub 8900", repo / "cultura" / "mak_plataforma" / "hub.py", _PORTS["hub"],
             ("plataforma/hub.py", "mak_plataforma/hub.py"),
