@@ -13,7 +13,16 @@ from typing import Any, Mapping
 
 
 CANONICAL_REFS = frozenset({"main", "MAK", "FLUJO", "historia"})
-LANES = frozenset({"main", "MAK", "FLUJO", "integrated"})
+LANES = frozenset({"main", "MAK", "FLUJO", "integrated", "historical"})
+
+# ``integration_target`` is the final promotion destination.  It is not the
+# ref against which a lane is compared right now; that is ``comparison_ref``.
+CANONICAL_DEFAULTS = {
+    "main": {"lane": "integrated", "kind": "integrated", "integration_target": "main", "comparison_ref": "main"},
+    "MAK": {"lane": "MAK", "kind": "operational", "integration_target": "main", "comparison_ref": "MAK"},
+    "FLUJO": {"lane": "FLUJO", "kind": "operational", "integration_target": "main", "comparison_ref": "FLUJO"},
+    "historia": {"lane": "historical", "kind": "historical", "integration_target": None, "comparison_ref": None},
+}
 
 
 def ref_name(value: str | None) -> str:
@@ -50,7 +59,7 @@ def _pattern_kind(current_ref: str) -> str:
 
 
 def interpret_ref(current_ref: str | None, profile: Mapping[str, Any] | None = None) -> dict[str, Any]:
-    """Return one semantic view without claiming a topic is its parent ref."""
+    """Return one semantic view without conflating comparison and promotion."""
     current = ref_name(current_ref)
     profile = profile if isinstance(profile, Mapping) else {}
     declared = str(
@@ -73,7 +82,7 @@ def interpret_ref(current_ref: str | None, profile: Mapping[str, Any] | None = N
         lane = (
             str(profile.get("lane"))
             if profile.get("lane") in LANES
-            else "integrated" if canonical == "main" else canonical
+            else str(CANONICAL_DEFAULTS.get(canonical, {}).get("lane") or canonical)
         )
     else:
         canonical = declared if declared in {"MAK", "FLUJO", "main", "historia"} else None
@@ -83,14 +92,8 @@ def interpret_ref(current_ref: str | None, profile: Mapping[str, Any] | None = N
         else:
             lane = "integrated" if canonical == "main" else canonical
 
-    if kind == "historical":
-        target = None
-    elif kind == "integrated" or lane == "integrated":
-        target = "main"
-    else:
-        target = lane if lane in {"MAK", "FLUJO"} else None
-
     explicit_current = profile.get("current_ref")
+    explicit_integration_target = profile.get("integration_target")
     issues: list[str] = []
     if current in CANONICAL_REFS and canonical != current:
         issues.append(f"profile_branch_mismatch:{canonical or declared or None}->{current}")
@@ -108,12 +111,46 @@ def interpret_ref(current_ref: str | None, profile: Mapping[str, Any] | None = N
         if profile.get("canonical_ref") is not None or profile.get("lane") is not None:
             issues.append(f"profile_lane_mismatch:{declared}->{canonical}")
 
+    defaults = CANONICAL_DEFAULTS.get(canonical or "")
+    if current in CANONICAL_REFS and defaults:
+        if lane != defaults["lane"]:
+            issues.append(f"profile_lane_mismatch:{lane}->{defaults['lane']}")
+        if kind != defaults["kind"]:
+            issues.append(f"profile_kind_mismatch:{kind}->{defaults['kind']}")
+
+    if explicit_integration_target is not None:
+        if explicit_integration_target not in {"main", "MAK", "FLUJO"}:
+            issues.append(f"integration_target_invalid:{explicit_integration_target}")
+        integration_target = explicit_integration_target
+    elif defaults:
+        integration_target = defaults["integration_target"]
+    elif kind == "historical" or lane == "historical":
+        integration_target = None
+    else:
+        # Inherited operational work promotes through the integrated baseline.
+        integration_target = "main" if lane in {"MAK", "FLUJO", "integrated"} else None
+
+    if current in CANONICAL_REFS and defaults:
+        expected_target = defaults["integration_target"]
+        if integration_target != expected_target:
+            issues.append(f"integration_target_mismatch:{integration_target}->{expected_target}")
+
+    if kind == "historical" or lane == "historical":
+        comparison_ref = None
+    elif current in CANONICAL_REFS:
+        comparison_ref = current
+    elif "main-union" in current or lane == "integrated":
+        comparison_ref = "main"
+    else:
+        comparison_ref = lane if lane in {"MAK", "FLUJO"} else None
+
     return {
         "current_ref": current or None,
         "canonical_ref": canonical,
         "lane": lane,
         "kind": kind,
-        "integration_target": target,
+        "comparison_ref": comparison_ref,
+        "integration_target": integration_target,
         "profile_declared_ref": declared or None,
         "profile_scope": "canonical" if current in CANONICAL_REFS else "inherited",
         "issues": issues,
