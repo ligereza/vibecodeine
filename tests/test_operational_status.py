@@ -51,6 +51,9 @@ def test_operational_status_is_read_only_and_surfaces_next_actions(tmp_path: Pat
     assert "projects:review_required" in ids
     assert "episodes:needs_evidence" in ids
     assert result["next_actions"]
+    project_attention = next(item for item in result["attention"] if item["id"] == "projects:review_required")
+    assert "source kinds: folder=1" in project_attention["reason"]
+    assert "open episodes: 1" in project_attention["reason"]
     review_queue = result["learning"]["review_queue"]
     assert review_queue["projects"]["total"] == 1
     assert review_queue["projects"]["by_source_kind"] == {"folder": 1}
