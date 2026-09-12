@@ -685,9 +685,10 @@ def ingest(payload: dict[str, Any], db_path: str | Path, evidence_root: str | Pa
             else:
                 cur = conn.execute(
                     "INSERT INTO muestra_resultados(muestra_id, reactivo, resultado_color, "
-                    "familia_detectada, coincide_con_declarada, adulterante_sospechado, orden) "
-                    "VALUES (?,?,?,?,?,?,?)",
-                    (sample_id, reagent, color_result, family, coincide, adulterant, order),
+                    "familia_detectada, coincide_con_declarada, adulterante_sospechado, "
+                    "limitacion, orden) VALUES (?,?,?,?,?,?,?,?)",
+                    (sample_id, reagent, color_result, family, coincide, adulterant,
+                     LIMITATION, order),
                 )
                 result_id = int(cur.lastrowid)
             result_ids.append(result_id)

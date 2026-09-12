@@ -74,6 +74,9 @@ def main():
         index_html = (PLUGIN.parent / "static" / "index.html").read_text(encoding="utf-8")
         assert "state.events.push(event);" not in app_js
         assert "if (!event || !event.remote)" in app_js
+        assert "loadRemoteSamplesForEvent" in app_js
+        assert "samples?eventRef=" in app_js
+        assert "sample_loaded_from_rd_host" in app_js
         assert 'window.location.protocol === "file:"' in app_js
         assert 'id="newEventButton"' in index_html and "disabled" in index_html
         assert "Conecta el host RD para cargar un evento preparado" in index_html
