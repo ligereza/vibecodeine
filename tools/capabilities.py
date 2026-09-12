@@ -494,6 +494,11 @@ def _ref_inventory(root: Path) -> dict[str, object]:
         target = semantics.get("integration_target")
         target_ref = None
         sync: dict[str, int | None] = {"ahead": None, "behind": None}
+        ancestry: dict[str, int | None] = {
+            "exclusive_commit_count": None,
+            "patch_unique_count": None,
+            "patch_equivalent_count": None,
+        }
         if isinstance(target, str) and target:
             for candidate in (target, f"vibecodeine-legacy/{target}"):
                 if run_git("rev-parse", "--verify", candidate):
@@ -503,6 +508,13 @@ def _ref_inventory(root: Path) -> dict[str, object]:
                 counts = run_git("rev-list", "--left-right", "--count", f"{target_ref}...{full_ref}").split()
                 if len(counts) == 2:
                     sync = {"behind": int(counts[0]), "ahead": int(counts[1])}
+                exclusive = run_git("rev-list", f"{target_ref}..{full_ref}").splitlines()
+                cherry = run_git("cherry", target_ref, full_ref).splitlines()
+                ancestry = {
+                    "exclusive_commit_count": len(exclusive),
+                    "patch_unique_count": sum(line.startswith("+") for line in cherry),
+                    "patch_equivalent_count": sum(line.startswith("-") for line in cherry),
+                }
         row = {
             "ref": full_ref,
             "name": name,
@@ -512,6 +524,7 @@ def _ref_inventory(root: Path) -> dict[str, object]:
             "disposition": _disposition(name, semantics),
             "integration_ref": target_ref,
             "sync": sync,
+            "ancestry": ancestry,
         }
         refs.append(row)
         by_sha.setdefault(sha, []).append(name)
