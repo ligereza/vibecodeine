@@ -808,7 +808,7 @@
    "cmd": "rd-datos ingest",
    "invocacion": "py -m flujo rd-datos ingest",
    "grupo": "rd-datos",
-   "desc": "Ingesta un CSV de datos de campo (testeo de reactivos, atenciones o encuestas) a la DB privacy-first data/rd_datos.db. Toda fila pasa por flujo.privacy.scan_text ANTES de persistir: RUT chileno o numero de tarjeta detectados rechazan la fila SIEMPRE (nunca se loguea el contenido).",
+   "desc": "Ingesta un CSV de datos de campo (testeo de reactivos, atenciones o encuestas) a la DB privacy-first data/rd.db. Toda fila pasa por flujo.privacy.scan_text ANTES de persistir: RUT chileno o numero de tarjeta detectados rechazan la fila SIEMPRE (nunca se loguea el contenido).",
    "requiere": "un CSV de campo; la DB privacy-first se crea sola",
    "estado": "falta: un CSV de campo; la DB privacy-first se crea sola",
    "destructivo": null
