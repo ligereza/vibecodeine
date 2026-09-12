@@ -297,9 +297,23 @@ def operational_status(database: str | Path, *, repo_root: str | Path | None = N
                     "inspect the project evidence and unblock only after a bounded validation",
                 )
             elif state == "review_required":
+                queue = summary.get("review_queue") or {}
+                project_queue = queue.get("projects") if isinstance(queue, dict) else {}
+                source_counts = project_queue.get("by_source_kind", {}) if isinstance(project_queue, dict) else {}
+                source_detail = ", ".join(
+                    f"{kind}={amount}" for kind, amount in sorted(source_counts.items())
+                )
+                open_episodes = (queue.get("episodes", {}).get("open_total")
+                                 if isinstance(queue, dict) and isinstance(queue.get("episodes"), dict)
+                                 else None)
+                reason = f"{count} project(s) require review"
+                if source_detail:
+                    reason += f"; source kinds: {source_detail}"
+                if open_episodes is not None:
+                    reason += f"; open episodes: {open_episodes}"
                 add_item(
                     f"projects:{state}", "projects", state, "attention",
-                    f"{count} project(s) require review",
+                    reason,
                     "review evidence and consumer before allowing a project transition",
                 )
 
