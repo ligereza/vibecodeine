@@ -24,7 +24,9 @@ from __future__ import annotations
 import json
 import hashlib
 import importlib.util
+import os
 import re
+import shutil
 import sqlite3
 import unicodedata
 from collections import Counter
@@ -53,6 +55,8 @@ _CANDIDATE_REGISTRIES = {
 _FUENTES_PY = _REPO / "cultura" / "mak_research" / "fuentes.py"
 _VENUES_DIR = _REPO / "knowledge" / "venues"     # *.yaml canonicos
 _LOGOS_DIR = _REPO / "knowledge" / "logos"       # *.yaml canonicos
+_COMPLETE_RD_VERSION = "rd-canonical-complete-20260911-v1"
+_COMPLETE_RD_ENV = "FLUJO_RD_CANONICAL_SOURCE"
 
 
 def _es_productora_rd(datos: dict[str, Any]) -> bool:
@@ -1246,7 +1250,11 @@ def _rescatar_acumulativas(path: Path) -> dict[str, list[tuple]]:
     # Lo que la app de muestras escribe se acumula igual que los registros de
     # terreno: una muestra fotografiada en una mesa no se puede volver a
     # derivar de ninguna fuente canonica.
-    tablas = tuple(_datos.TABLAS_ACUMULATIVAS) + ("muestras", "muestra_resultados")
+    tablas = tuple(_datos.TABLAS_ACUMULATIVAS) + (
+        "evento_productoras", "evento_venues", "mesas_testeo",
+        "muestras", "muestra_resultados", "muestra_capturas",
+        "xio_eventos", "xio_signal_events",
+    )
     for origen in (path, _datos.LEGACY_DB_PATH):
         if not origen.exists():
             continue
@@ -1283,15 +1291,104 @@ def _reponer_acumulativas(
 
     conn.executescript(_datos.SCHEMA_ACUMULATIVO)
     conn.executescript(_SCHEMA_MUESTRAS)
+    # Operational XIO tables are additive and must survive a rebuild too.
+    # The column intersection keeps older portable schemas compatible with the
+    # promoted candidate, which has an extra evento_origen field on links.
+    from .xio_ingest import ensure_capture_schema, ensure_event_schema
+
+    ensure_event_schema(conn)
+    ensure_capture_schema(conn)
     for tabla, filas in rescatadas.items():
         cols = _RESCATE_COLUMNAS.get(tabla)
         if not cols or not filas:
             continue
-        marcas = ",".join("?" for _ in cols)
-        nombres = ",".join(f'"{c}"' for c in cols)
+        destino = {
+            row[1] for row in conn.execute(f'PRAGMA table_info("{tabla}")')
+        }
+        comunes = [column for column in cols if column in destino]
+        if not comunes:
+            continue
+        posiciones = [cols.index(column) for column in comunes]
+        marcas = ",".join("?" for _ in comunes)
+        nombres = ",".join(f'"{c}"' for c in comunes)
         conn.executemany(
-            f'INSERT INTO "{tabla}" ({nombres}) VALUES ({marcas})', filas
+            f'INSERT INTO "{tabla}" ({nombres}) VALUES ({marcas})',
+            [tuple(row[index] for index in posiciones) for row in filas],
         )
+
+
+def _complete_db_summary(path: Path) -> dict[str, Any] | None:
+    """Return a complete-DB summary only when its own release gates pass."""
+    if not path.is_file():
+        return None
+    try:
+        # ``immutable`` keeps this validation read-only even when the live DB
+        # has WAL mode enabled; it must not create .db-shm/.db-wal sidecars.
+        conn = sqlite3.connect(
+            f"file:{path.resolve().as_posix()}?mode=ro&immutable=1", uri=True
+        )
+        tables = {
+            row[0] for row in conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' "
+                "AND name NOT LIKE 'sqlite_%'"
+            )
+        }
+        meta = conn.execute(
+            "SELECT valor FROM meta WHERE clave='rd_merge_version'"
+        ).fetchone()
+        manifest = conn.execute(
+            "SELECT COUNT(*) FROM rd_merge_manifest"
+        ).fetchone()[0]
+        integrity = conn.execute("PRAGMA integrity_check").fetchone()[0]
+        foreign_keys = conn.execute("PRAGMA foreign_key_check").fetchall()
+        conn.close()
+    except (OSError, sqlite3.DatabaseError, TypeError):
+        return None
+    if (
+        not meta
+        or meta[0] != _COMPLETE_RD_VERSION
+        or manifest < 3
+        or len(tables) < 92
+        or integrity != "ok"
+        or foreign_keys
+    ):
+        return None
+    return {
+        "tables": len(tables),
+        "manifest_rows": manifest,
+        "integrity": integrity,
+        "foreign_key_errors": len(foreign_keys),
+    }
+
+
+def _complete_source_path(source: str | Path | None) -> Path | None:
+    """Resolve only an explicit complete source; never guess a Windows path."""
+    raw = source if source is not None else os.environ.get(_COMPLETE_RD_ENV, "")
+    if not str(raw).strip():
+        return None
+    return Path(raw).expanduser().resolve()
+
+
+def _restore_complete_source(path: Path, source: Path) -> Path:
+    """Promote one validated complete source atomically into ``path``."""
+    summary = _complete_db_summary(source)
+    if summary is None:
+        raise ValueError(
+            "canonical_source no es una base RD completa validada "
+            f"({_COMPLETE_RD_VERSION}, 92 tablas, integridad y FK): {source}"
+        )
+    if path.resolve() == source:
+        return path
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(path.name + ".complete.tmp")
+    try:
+        shutil.copy2(source, temporary)
+        if _complete_db_summary(temporary) is None:
+            raise RuntimeError("la copia temporal de la base completa no pasó validación")
+        os.replace(temporary, path)
+    finally:
+        temporary.unlink(missing_ok=True)
+    return path
 
 # Capturas de campo son acumulativas y no se derivan de las fuentes canonicas.
 _SCHEMA_MUESTRAS = """
@@ -1493,15 +1590,31 @@ def build_rd_db(
     *,
     productoras_dir: str | Path | None = None,
     venues_dir: str | Path | None = None,
+    canonical_source: str | Path | None = None,
 ) -> Path:
-    """(Re)construye la DB RD desde las fuentes canonicas. Idempotente:
-    borra el archivo previo y lo reescribe entero. Devuelve la ruta.
+    """Construye la proyección RD o restaura una fuente completa validada.
+
+    La ruta portable sigue reconstruyendo desde JSON/YAML y conserva datos
+    acumulativos. Cuando se entrega ``canonical_source`` (o
+    ``FLUJO_RD_CANONICAL_SOURCE``), se promueve atómicamente la candidata de
+    92 tablas tras validar su manifiesto, integridad y claves foráneas. Si el
+    destino ya es una base completa y no se entrega esa fuente, se rechaza la
+    operación para evitar degradarla silenciosamente a 34 tablas.
 
     productoras_dir/venues_dir permiten apuntar a directorios de prueba (los
     tests cargan una productora sintetica con venue preferido sin tocar el
     store real). Por defecto usan los canonicos del repo.
     """
     path = Path(db_path) if db_path is not None else DEFAULT_DB_PATH
+    source = _complete_source_path(canonical_source)
+    if source is not None:
+        return _restore_complete_source(path, source)
+    if _complete_db_summary(path) is not None:
+        raise RuntimeError(
+            f"se rechazo degradar {path}: es una base RD completa de "
+            f"{_COMPLETE_RD_VERSION}; entrega canonical_source o define "
+            f"{_COMPLETE_RD_ENV}"
+        )
     prod_dir = Path(productoras_dir) if productoras_dir is not None else _PRODUCTORAS_DIR
     ven_dir = Path(venues_dir) if venues_dir is not None else _VENUES_DIR
     path.parent.mkdir(parents=True, exist_ok=True)
