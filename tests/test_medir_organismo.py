@@ -25,3 +25,19 @@ def test_snapshot_preserves_unknown_external_probes(monkeypatch):
     assert snapshot["branch_protection"]["available"] is False
     assert snapshot["branch_protection"]["classic_present"] is None
     assert snapshot["branch_protection"]["ruleset_count"] is None
+
+
+def test_repository_snapshot_fails_closed_when_git_is_unavailable(monkeypatch, tmp_path):
+    repo = tmp_path / "repo"
+    (repo / ".git").mkdir(parents=True)
+    monkeypatch.setattr(organismo, "REPOSITORIES", (("fixture", repo),))
+    monkeypatch.setattr(organismo, "sh_result", lambda *args, **kwargs: ("", "boom", False))
+
+    result = organismo.repository_snapshot()
+
+    assert result == [{
+        "name": "fixture",
+        "path": str(repo),
+        "available": False,
+        "reason": "git_probe_failed",
+    }]
