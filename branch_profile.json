@@ -1,6 +1,10 @@
 {
   "schema": "vibecodeine-branch-profile-v1",
   "branch": "MAK",
+  "canonical_ref": "MAK",
+  "lane": "MAK",
+  "kind": "operational",
+  "integration_target": "main",
   "role": "Linux MAK box and department surface",
   "default_test_selector": "-m mak",
   "capabilities": "CAPACIDADES_MAK.md",
