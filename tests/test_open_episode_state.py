@@ -102,3 +102,21 @@ def test_the_real_ledger_keeps_history_while_reporting_open_work():
         reported = int(open_evidence["reason"].split()[0])
         assert reported <= total, (
             f"attention reports {reported} open but history holds {total}")
+
+
+def test_an_explicit_successor_replaces_only_its_parent_in_the_open_projection():
+    con = sqlite3.connect(":memory:")
+    con.execute(
+        "CREATE TABLE project_episodes ("
+        "episode_id TEXT, project_id TEXT, phase TEXT, status TEXT, "
+        "parent_episode_id TEXT)"
+    )
+    con.executemany(
+        "INSERT INTO project_episodes VALUES (?, ?, ?, ?, ?)",
+        [
+            ("old", "p1", "production", "needs_evidence", None),
+            ("new", "p1", "production", "needs_evidence", "old"),
+        ],
+    )
+
+    assert _open_episode_states(con) == {"needs_evidence": 1}

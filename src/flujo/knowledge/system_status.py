@@ -13,9 +13,11 @@ not as a successful external API call.
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import socket
+import sqlite3
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -321,7 +323,129 @@ def _portfolio_component(physical: Path) -> dict[str, Any]:
     )
 
 
-def _mount_component(physical: Path) -> dict[str, Any]:
+def _latest_storage_success(database: Path, mount_name: str) -> dict[str, Any] | None:
+    """Read the latest bounded storage probe from the existing event ledger."""
+    if not database.is_file():
+        return None
+    try:
+        with sqlite3.connect(f"file:{database}?mode=ro", uri=True) as connection:
+            table = connection.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='mak_operational_events'"
+            ).fetchone()
+            if table is None:
+                return None
+            rows = connection.execute(
+                "SELECT event_json FROM mak_operational_events "
+                "WHERE archive_id='storage' AND proposition_id=? "
+                "ORDER BY recorded_at DESC, rowid DESC",
+                (f"storage:{mount_name}",),
+            )
+            for (encoded,) in rows:
+                try:
+                    event = json.loads(encoded)
+                except (TypeError, json.JSONDecodeError):
+                    continue
+                result = event.get("result") if isinstance(event, dict) else None
+                if isinstance(result, dict) and result.get("status") == "succeeded":
+                    return {
+                        "event_id": event.get("event_id"),
+                        "recorded_at": event.get("recorded_at"),
+                        "operation": result.get("operation"),
+                        "status": result.get("status"),
+                    }
+    except (OSError, sqlite3.Error):
+        return None
+    return None
+
+
+def _gdrive_recency(database: Path) -> dict[str, Any]:
+    """Classify Drive rate-limit lines against the last successful probe.
+
+    Journal lines before the latest successful probe are historical evidence;
+    only a later rate-limit line makes the current mount degraded.  This keeps
+    old quota incidents from dominating the present operational projection.
+    """
+    service = {
+        "unit": "rclone-gdrive.service",
+        "active": None,
+        "sub_state": None,
+        "exec_status": None,
+        "started_at": None,
+    }
+    try:
+        state = subprocess.run(
+            [
+                "systemctl", "--user", "show", "rclone-gdrive.service",
+                "-p", "ActiveState", "-p", "SubState", "-p", "ExecMainStatus",
+                "-p", "ExecMainStartTimestamp", "--no-pager",
+            ], capture_output=True, text=True, timeout=2, check=False,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        service["probe_error"] = type(exc).__name__
+    else:
+        fields: dict[str, str] = {}
+        for line in state.stdout.splitlines():
+            key, separator, value = line.partition("=")
+            if separator:
+                fields[key] = value.strip()
+        service.update({
+            "active": fields.get("ActiveState") == "active",
+            "sub_state": fields.get("SubState"),
+            "exec_status": fields.get("ExecMainStatus"),
+            "started_at": fields.get("ExecMainStartTimestamp") or None,
+        })
+
+    rate_limit_at: str | None = None
+    try:
+        journal = subprocess.run(
+            [
+                "journalctl", "--user", "-u", "rclone-gdrive.service",
+                "--since", "7 days ago", "--no-pager", "-o", "short-iso",
+            ], capture_output=True, text=True, timeout=3, check=False,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        journal = None
+        journal_error = type(exc).__name__
+    else:
+        journal_error = None
+        for line in journal.stdout.splitlines():
+            if "RATE_LIMIT_EXCEEDED" not in line:
+                continue
+            timestamp = line.split(" ", 1)[0]
+            if rate_limit_at is None or timestamp > rate_limit_at:
+                rate_limit_at = timestamp
+
+    last_success = _latest_storage_success(database, "GoogleDrive")
+    success_at = str(last_success.get("recorded_at")) if last_success else None
+
+    def timestamp(value: str | None) -> datetime | None:
+        if not value:
+            return None
+        try:
+            return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(timezone.utc)
+        except ValueError:
+            return None
+
+    rate_limit_time = timestamp(rate_limit_at)
+    success_time = timestamp(success_at)
+    if rate_limit_at and rate_limit_time and success_time and rate_limit_time > success_time:
+        classification = "current_error"
+    elif rate_limit_at and rate_limit_time and success_time:
+        classification = "historical_error"
+    elif rate_limit_at:
+        classification = "needs_probe"
+    else:
+        classification = "no_current_rate_limit"
+    return {
+        "service": service,
+        "last_rate_limit_at": rate_limit_at,
+        "last_successful_probe": last_success,
+        "rate_limit_classification": classification,
+        "journal_probe_error": journal_error,
+    }
+
+
+def _mount_component(physical: Path, database: Path | None = None) -> dict[str, Any]:
     """Probe configured local FUSE mounts without reading remote contents."""
     mounts: dict[str, dict[str, Any]] = {}
     for directory in _MOUNT_DIRS:
@@ -344,14 +468,21 @@ def _mount_component(physical: Path) -> dict[str, Any]:
             evidence["mounted"] = probe.returncode == 0
             evidence["probe"] = "ok" if probe.returncode in (0, 1) else "failed"
         mounts[directory] = evidence
-    healthy = all(item.get("mounted") is True for item in mounts.values())
+    gdrive_recency = _gdrive_recency(database) if database is not None and mounts.get("GoogleDrive", {}).get("mounted") is True else None
+    gdrive_unproven = bool(
+        gdrive_recency and gdrive_recency.get("rate_limit_classification") in {"current_error", "needs_probe"}
+    )
+    healthy = all(item.get("mounted") is True for item in mounts.values()) and not gdrive_unproven
+    evidence = {"mounts": mounts, "read_only_probe": True}
+    if gdrive_recency is not None:
+        evidence["GoogleDrive_operational_recency"] = gdrive_recency
     return _component(
         "storage",
         "Cloud storage mounts",
         "ready" if healthy else "attention",
         severity="none" if healthy else "attention",
-        evidence={"mounts": mounts, "read_only_probe": True},
-        next_action=None if healthy else "check the local FUSE mount and remote quota before reading cloud-backed material",
+        evidence=evidence,
+        next_action=None if healthy else "check the local FUSE mount, latest remote probe and current quota errors before reading cloud-backed material",
     )
 
 
@@ -407,6 +538,16 @@ def _provider_component(repo: Path, physical: Path) -> dict[str, Any]:
         # are changed.
         import sys as _sys
         source_root = _provider_source_root(repo, physical)
+        if source_root is None:
+            return _component(
+                "providers",
+                "API/model routes",
+                "attention",
+                severity="attention",
+                evidence={"available": False, "reason": "mak_box_absent",
+                          "runtime": "configuration_only_unverified"},
+                next_action="configure an authorized provider or use the local deterministic route",
+            )
         if source_root is not None:
             source_text = str(source_root)
             if source_text not in _sys.path:
@@ -553,7 +694,7 @@ def system_status(
         "events": _runner_component(repo, physical),
         "render": _render_component(repo, physical),
         "portfolio": _portfolio_component(physical),
-        "storage": _mount_component(physical),
+        "storage": _mount_component(physical, database_path),
         "dependencies": _dependency_component(repo),
         "providers": _provider_component(repo, physical),
         "lanes": _lane_registry_component(repo),

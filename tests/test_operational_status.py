@@ -153,6 +153,47 @@ def test_system_status_reports_local_storage_mounts_without_remote_access(tmp_pa
     ]
 
 
+def test_storage_status_separates_historical_rate_limit_from_current_error(tmp_path: Path, monkeypatch) -> None:
+    from flujo.knowledge.project_ir import LearningStore
+    import flujo.knowledge.system_status as status_module
+
+    (tmp_path / "GoogleDrive").mkdir()
+    (tmp_path / "OneDrive").mkdir()
+    database = tmp_path / "learning.sqlite"
+    LearningStore(database).append_operational_event({
+        "event_id": "storage-health:test-success",
+        "archive_id": "storage",
+        "proposition_id": "storage:GoogleDrive",
+        "event_type": "health_probe",
+        "recorded_at": "2026-09-12T02:14:26+00:00",
+        "result": {"status": "succeeded", "operation": "root_list"},
+    })
+
+    def fake_run(args, **_kwargs):
+        if args[0] == "mountpoint":
+            return SimpleNamespace(returncode=0, stdout="", stderr="")
+        if args[0] == "systemctl":
+            return SimpleNamespace(
+                returncode=0,
+                stdout=(
+                    "ActiveState=active\nSubState=running\nExecMainStatus=0\n"
+                    "ExecMainStartTimestamp=Fri 2026-09-11 22:06:57 -03\n"
+                ),
+                stderr="",
+            )
+        return SimpleNamespace(
+            returncode=0,
+            stdout="2026-09-09T23:32:16-0300 host rclone RATE_LIMIT_EXCEEDED\n",
+            stderr="",
+        )
+
+    monkeypatch.setattr(status_module.subprocess, "run", fake_run)
+    result = _mount_component(tmp_path, database)
+
+    assert result["status"] == "ready"
+    assert result["evidence"]["GoogleDrive_operational_recency"]["rate_limit_classification"] == "historical_error"
+
+
 def test_flujo_adapter_resolves_physical_learning_authority(tmp_path: Path, monkeypatch) -> None:
     from flujo.web import hub
 
