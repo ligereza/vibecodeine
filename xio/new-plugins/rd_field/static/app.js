@@ -191,6 +191,110 @@ function mergeRemoteEvents(rawEvents) {
   state.selectedSampleId = currentSample?.id || null;
 }
 
+function mapRemoteSample(raw, event) {
+  const sampleId = String(raw?.sampleId ?? "").trim();
+  const code = String(raw?.sampleCode || (sampleId ? `RD-${sampleId}` : "")).trim();
+  if (!sampleId || !code || !event) return null;
+  const recordedAt = raw.date ? `${raw.date}T12:00:00.000Z` : isoNow();
+  const captures = Array.isArray(raw.captures) ? raw.captures : [];
+  const remoteEvidence = captures.map((capture) => capture.photoRef || capture.silhouetteRef).filter(Boolean);
+  if (raw.photoRef && !remoteEvidence.includes(raw.photoRef)) remoteEvidence.push(raw.photoRef);
+  const tests = (Array.isArray(raw.tests) ? raw.tests : []).map((test, index) => ({
+    id: `rd-remote-test-${test.resultId ?? `${sampleId}-${index + 1}`}`,
+    method: "Registro host RD",
+    reagent: test.reagent || "Otro / método local",
+    startedAt: null,
+    endedAt: null,
+    elapsedSeconds: 0,
+    observation: test.limitation || "",
+    reactionColor: test.resultColor || "",
+    reactionEvolution: "",
+    operatorResult: "",
+    interpretation: test.family || "",
+    evidence: [],
+    status: test.resultColor || test.family ? "done" : "draft",
+    remote: true,
+  }));
+  return {
+    id: `rd-remote-sample-${sampleId}`,
+    eventId: event.id,
+    code,
+    createdAt: recordedAt,
+    updatedAt: recordedAt,
+    synthetic: false,
+    remote: true,
+    declaredSubstance: raw.substanceDeclared || "",
+    declaredOther: "",
+    format: raw.sampleType || "",
+    appearance: {
+      color: raw.color || "",
+      shape: "",
+      texture: raw.texture || "",
+      brand: raw.logoOrMark || "",
+      notes: raw.notes || "",
+    },
+    photo: null,
+    remoteEvidence,
+    visualProposal: null,
+    humanCorrection: null,
+    tests,
+    workflowStatus: tests.length ? "testing" : "draft",
+    syncStatus: "synced",
+    remoteSampleId: sampleId,
+    audit: [{ at: recordedAt, action: "sample_loaded_from_rd_host", actor: "host_rd" }],
+  };
+}
+
+function mergeRemoteSamples(event, payload) {
+  if (!event || !Array.isArray(payload?.samples)) return;
+  const mapped = payload.samples.map((raw) => mapRemoteSample(raw, event)).filter(Boolean);
+  const remoteIds = new Set(mapped.map((sample) => sample.remoteSampleId));
+  state.samples = state.samples.filter((sample) => (
+    sample.eventId !== event.id || sample.remote !== true || remoteIds.has(String(sample.remoteSampleId))
+  ));
+  mapped.forEach((remoteSample) => {
+    const current = state.samples.find((sample) => (
+      sample.eventId === event.id && String(sample.remoteSampleId || "") === remoteSample.remoteSampleId
+    ));
+    if (!current) {
+      state.samples.push(remoteSample);
+      return;
+    }
+    const localPhoto = current.photo?.dataUrl ? current.photo : null;
+    const localProposal = current.visualProposal || null;
+    const localCorrection = current.humanCorrection || null;
+    const localAudit = Array.isArray(current.audit) ? current.audit : [];
+    Object.assign(current, remoteSample, {
+      id: current.id,
+      photo: localPhoto,
+      visualProposal: localProposal,
+      humanCorrection: localCorrection,
+      audit: [...localAudit, ...remoteSample.audit],
+    });
+  });
+  if (!state.selectedSampleId || !eventSamples(event.id).some((sample) => sample.id === state.selectedSampleId)) {
+    state.selectedSampleId = eventSamples(event.id)[0]?.id || null;
+  }
+}
+
+async function loadRemoteSamplesForEvent(event) {
+  if (!event?.remote || !ui.remote.connected) return;
+  try {
+    const query = `samples?eventRef=${encodeURIComponent(event.eventRef)}`;
+    const response = await fetch(remoteUrl(query), { cache: "no-store" });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || payload.ok === false) throw new Error(payload.error || `HTTP ${response.status}`);
+    mergeRemoteSamples(event, payload);
+    ui.remote.lastSamplesAt = isoNow();
+    ui.remote.sampleError = "";
+    persist("Muestras reales cargadas desde el host RD");
+    renderAll();
+  } catch (error) {
+    ui.remote.sampleError = String(error?.message || error);
+    refreshStatus();
+  }
+}
+
 async function loadRemoteBootstrap() {
   if (window.location.protocol === "file:") return;
   try {
@@ -198,8 +302,9 @@ async function loadRemoteBootstrap() {
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const payload = await response.json();
     if (!Array.isArray(payload.events)) throw new Error("bootstrap RD sin eventos");
-    ui.remote = { connected: true, events: payload.events, lastBootstrapAt: isoNow(), error: "" };
+    ui.remote = { connected: true, events: payload.events, lastBootstrapAt: isoNow(), lastSamplesAt: null, sampleError: "", error: "" };
     mergeRemoteEvents(payload.events);
+    await loadRemoteSamplesForEvent(getEvent());
     persist("Host RD conectado · eventos cargados");
     renderAll();
   } catch (error) {
@@ -300,6 +405,10 @@ function renderWorkflow(sample) {
 }
 
 function renderPhoto(sample) {
+  if (!sample.photo && sample.remoteEvidence?.length) {
+    const refs = sample.remoteEvidence.map((ref) => escapeHTML(ref)).join(" · ");
+    return `<div class="photo-box has-photo"><span class="photo-tag">Evidencia en host RD</span><div class="photo-placeholder"><div class="camera-glyph" aria-hidden="true"></div><p>La imagen no se descarga en el bootstrap.<br><small>${refs}</small></p></div></div>`;
+  }
   if (!sample.photo) return `<div class="photo-box"><div class="photo-placeholder"><div class="camera-glyph" aria-hidden="true"></div><p>Añade una foto de referencia<br>desde cámara o archivo.</p></div></div>`;
   return `<div class="photo-box has-photo"><span class="photo-tag">${sample.photo.synthetic ? "Demo sintética" : "Evidencia local"}</span><img src="${sample.photo.dataUrl}" alt="Evidencia visual de ${escapeHTML(sample.code)}"><button type="button" class="photo-tag" style="left:auto;right:9px;border:0;cursor:pointer" data-action="remove-sample-photo">× quitar</button></div>`;
 }
@@ -655,9 +764,12 @@ async function syncCurrentSample() {
     const result = await response.json().catch(() => ({}));
     if (!response.ok || result.ok === false) throw new Error(result.error || `HTTP ${response.status}`);
     sample.syncStatus = "synced";
+    sample.remote = true;
+    sample.synthetic = false;
     sample.remoteSampleId = result.sampleId || null;
     sample.remoteSyncedAt = isoNow();
     sample.audit.push({ at: isoNow(), action: "sample_synced_to_rd_host", actor: "operator", remoteSampleId: sample.remoteSampleId });
+    await loadRemoteSamplesForEvent(event);
     persist("Muestra guardada en el host RD");
     renderAll();
     showToast(`${sample.code} guardada en el host RD.`);
@@ -760,6 +872,7 @@ document.addEventListener("change", (event) => {
     state.selectedSampleId = first?.id || null;
     ui.filter = "all";
     renderAll();
+    loadRemoteSamplesForEvent(getEvent());
   }
 });
 
