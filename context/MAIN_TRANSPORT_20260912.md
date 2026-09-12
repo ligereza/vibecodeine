@@ -34,6 +34,21 @@ de contenido: `MAK` local está 27 commits por delante de
 commit por delante de su remoto. El envío de esos refs es una operación
 posterior separada; no se hace rebase ni se fuerza ningún historial.
 
+## Revalidación remota posterior
+
+Entre la primera medición y la publicación, el remoto `main` avanzó con
+`b5452cbb` y `7f3b97dc`, ambos orientados a retirar instrucciones de agente.
+Se fusionaron como segundo padre en `7b1cae65`; `AGENTS.md` quedó eliminado,
+coincidiendo con el borrado local preexistente, y `main` quedó publicado en
+fast-forward con divergencia `0/0`.
+
+El checkpoint de FLUJO `7c1ff0e7` también quedó publicado en
+`integration/flujo-canonical-20260911`. La rama remota `MAK` avanzó de forma
+independiente a `b7267021` con dos commits de limpieza que divergen de los 27
+commits locales de MAK; esa rama no se sobreescribe. Su reconciliación requiere
+comparar contenido por archivo y conservar explícitamente las decisiones de
+limpieza, no un push forzado.
+
 ## Estado físico/local
 
 No se encontró un commit del rango cuyo conjunto de rutas sea exclusivamente
