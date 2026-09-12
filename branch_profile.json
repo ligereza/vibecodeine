@@ -1,7 +1,10 @@
 {
   "schema": "vibecodeine-branch-profile-v1",
   "branch": "main",
+  "canonical_ref": "main",
+  "lane": "integrated",
   "kind": "integrated",
+  "integration_target": "main",
   "role": "integrated MAK + FLUJO baseline; validation and release composition",
   "default_test_selector": "-m \"mak or flujo or integration or repo_hygiene\"",
   "capabilities": "CAPACIDADES_MAIN.md",

@@ -56,6 +56,20 @@ from pathlib import Path
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
+try:
+    from .branch_contract import interpret_ref
+except ImportError:  # direct ``python tools/runtime_preflight.py`` execution
+    import importlib.util
+
+    _contract_spec = importlib.util.spec_from_file_location(
+        "mak_branch_contract", Path(__file__).with_name("branch_contract.py")
+    )
+    if _contract_spec is None or _contract_spec.loader is None:
+        raise ImportError("branch_contract_unavailable")
+    _contract_module = importlib.util.module_from_spec(_contract_spec)
+    _contract_spec.loader.exec_module(_contract_module)
+    interpret_ref = _contract_module.interpret_ref
+
 SCHEMA = "mak-runtime-preflight-v1"
 PHYSICAL_ROOT = Path("/home/mak")
 # /home/mak/flujo is no longer a compatibility adapter: it is the physical
@@ -175,7 +189,7 @@ SURFACES: tuple[Surface, ...] = (
         # only auto-detects when the requested port is exactly the default.
         fallback_ports=(8766, 8767, 8768, 8769, 8770, 8771, 8772),
         http_paths=("/",),
-        process_match=("-m", "flujo", "app"),
+        process_match=("flujo.web.hub", "run_server"),
         import_probe="flujo.web.hub",
     ),
     Surface(
@@ -252,10 +266,14 @@ def _sha256(path: Path) -> str | None:
         return None
 
 
-def _run(command: list[str], timeout: float = 5.0) -> tuple[int, str, str]:
+def _run(
+    command: list[str], timeout: float = 5.0, *, cwd: str | None = None,
+    env: dict[str, str] | None = None,
+) -> tuple[int, str, str]:
     try:
         result = subprocess.run(
-            command, check=False, capture_output=True, text=True, timeout=timeout
+            command, check=False, capture_output=True, text=True, timeout=timeout,
+            cwd=cwd, env=env,
         )
     except (FileNotFoundError, subprocess.TimeoutExpired, OSError) as exc:
         return 127, "", str(exc)
@@ -421,11 +439,24 @@ def adapter_report(root: Path) -> dict[str, object]:
     worktrees = [line.split(" ", 1)[1] for line in out.splitlines() if line.startswith("worktree ")]
     code_b, out_b, _ = _run(["git", "-C", str(adapter), "branch", "--show-current"])
     branch = out_b.strip() if code_b == 0 else None
+    profile = {}
+    if branch:
+        code_profile, out_profile, _ = _run(
+            ["git", "-C", str(adapter), "show", f"{branch}:branch_profile.json"]
+        )
+        if code_profile == 0:
+            try:
+                value = json.loads(out_profile)
+                profile = value if isinstance(value, dict) else {}
+            except json.JSONDecodeError:
+                profile = {}
+    semantics = interpret_ref(branch, profile)
     return {
         "path": str(adapter),
         "role": "flujo_physical_checkout",
         "branch": branch,
-        "is_flujo_checkout": branch == "FLUJO",
+        "branch_semantics": semantics,
+        "is_flujo_checkout": semantics.get("lane") == "FLUJO",
         "source_root": str(root / FLUJO_SOURCE_ROOT),
         "exists": adapter.is_dir(),
         "is_symlink": adapter.is_symlink(),
@@ -463,9 +494,11 @@ def branch_context(root: Path) -> dict[str, object]:
             profile = json.loads(local.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             profile = {}
+    semantics = interpret_ref(checkout, profile)
     return {
         "checkout_branch": checkout or None,
-        "checkout_branch_kind": profile.get("kind", "runtime") if profile else None,
+        "checkout_branch_kind": semantics.get("kind") if profile else None,
+        "checkout_branch_semantics": semantics,
         "checkout_selector": profile.get("default_test_selector") if profile else None,
         "profiles": {
             name: _branch_profile(root, name) for name in ("MAK", "FLUJO", "main", "historia")
@@ -719,7 +752,8 @@ def _find_manual_pid(surface: Surface) -> int | None:
         argv = _proc_cmdline(int(entry.name))
         if not argv:
             continue
-        if all(token in argv for token in surface.process_match):
+        command = " ".join(argv)
+        if all(token in command for token in surface.process_match):
             return int(entry.name)
     return None
 
@@ -735,9 +769,15 @@ def _import_probe(report: SurfaceReport, root: Path, surface: Surface, interpret
 
     if not surface.import_probe:
         return
+    probe_env = os.environ.copy()
+    source_root = root / FLUJO_SOURCE_ROOT
+    existing_path = probe_env.get("PYTHONPATH", "")
+    probe_env["PYTHONPATH"] = os.pathsep.join(
+        part for part in (str(source_root), existing_path) if part
+    )
     code, out, err = _run(
         [interpreter, "-c", f"import {surface.import_probe} as m; print(m.__file__)"],
-        timeout=20.0,
+        timeout=20.0, cwd=str(root / FLUJO_CHECKOUT), env=probe_env,
     )
     if code != 0:
         report.data["import_probe"] = None
