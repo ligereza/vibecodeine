@@ -96,12 +96,9 @@ TOOL_INVENTORY_EXCLUDE = {"test_lane_map.py", "__init__.py"}
 # support.  Neither status asserts a consumer, retirement, or execution
 # permission.
 NO_REFERENCE_CLASSIFICATIONS = {
-    # separation_20260902: the MAK/FLUJO split removed the tools and tests that
-    # referenced these, so each lost its consumer evidence without changing.
-    # They are operator-invoked, which is what manual_only means; the audit
-    # keeps them declared rather than letting an unreferenced tool pass
-    # silently.
-    "capabilities": {"status": "manual_only", "source": "separation_20260902"},
+    # capabilities.py has current consumer evidence in tests and the
+    # integrated workflow, so it is intentionally absent from this
+    # zero-reference disposition table.
     # `gen_propuesta_directiva` left this table on 2026-09-04: it now has a
     # consumer, `tests/test_gen_propuesta_directiva.py`, which holds it to the
     # three promises its docstring makes about a document the board reads.
