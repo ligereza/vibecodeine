@@ -6,7 +6,11 @@ from pathlib import Path
 
 from flujo.knowledge.project_api import operational_status
 from flujo.knowledge.project_ir import LearningStore, build_project_ir
-from flujo.knowledge.system_status import _provider_source_root, system_status
+from flujo.knowledge.system_status import (
+    _provider_source_root,
+    _repo_component,
+    system_status,
+)
 
 
 def test_operational_status_is_read_only_and_surfaces_next_actions(tmp_path: Path) -> None:
@@ -78,6 +82,31 @@ def test_system_status_resolves_provider_box_from_physical_adapter_root(tmp_path
     provider.write_text("# fixture provider registry\n", encoding="utf-8")
 
     assert _provider_source_root(repo, physical) == physical
+
+
+def test_system_status_accepts_declared_absence_of_root_contract(tmp_path: Path) -> None:
+    repo = tmp_path / "flujo"
+    physical = tmp_path / "mak"
+    (physical / "cultura" / "mak_plataforma").mkdir(parents=True)
+    (repo / "src" / "flujo" / "knowledge").mkdir(parents=True)
+    (repo / "web").mkdir()
+    (repo / "context" / "diagnostics" / "contracts").mkdir(parents=True)
+    (physical / "cultura" / "mak_plataforma" / "hub.py").write_text("# fixture\n", encoding="utf-8")
+    (repo / "src" / "flujo" / "knowledge" / "project_api.py").write_text("# fixture\n", encoding="utf-8")
+    (repo / "web" / "package.json").write_text("{}\n", encoding="utf-8")
+    (repo / "context" / "diagnostics" / "contracts" / "core.md").write_text(
+        "There is no contract file, and that is the decision.\n", encoding="utf-8"
+    )
+
+    result = _repo_component(repo, physical)
+
+    assert result["status"] == "ready"
+    assert result["evidence"]["contract"]["exists"] is False
+    assert result["evidence"]["contract"]["policy"]["state"] == "intentionally_absent"
+    assert result["evidence"]["hub_source"]["role"] == "fallback"
+    assert result["evidence"]["hub_source"]["path"] == str(
+        physical / "cultura" / "mak_plataforma" / "hub.py"
+    )
 
 
 def test_flujo_adapter_resolves_physical_learning_authority(tmp_path: Path, monkeypatch) -> None:
