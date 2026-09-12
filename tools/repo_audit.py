@@ -102,7 +102,6 @@ NO_REFERENCE_CLASSIFICATIONS = {
     # keeps them declared rather than letting an unreferenced tool pass
     # silently.
     "audit_blend_scene": {"status": "manual_only", "source": "separation_20260902"},
-    "capabilities": {"status": "manual_only", "source": "separation_20260902"},
     "compile_opportunity_constraints": {"status": "manual_only", "source": "separation_20260902"},
     "compile_opportunity_delta": {"status": "manual_only", "source": "separation_20260902"},
     "compile_research_frontier": {"status": "manual_only", "source": "separation_20260902"},
