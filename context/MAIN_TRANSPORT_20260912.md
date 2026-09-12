@@ -46,12 +46,14 @@ es la medición de refs canónicos antes del commit de este registro
 | `FLUJO` | `87c849fd` |
 | `integration/flujo-canonical-20260911` | `87c849fd` |
 
-El alias de integración FLUJO es el mismo contenido que `FLUJO`. El alias
-`main-union-mak-flujo` está **2 commits exclusivos / 31 commits detrás** de
-`main`: uno es
+El alias de integración FLUJO es el mismo contenido que `FLUJO`. En la base de
+auditoría `f72476dd`, el alias `main-union-mak-flujo` estaba **2 commits
+exclusivos / 31 commits detrás** de `main`: uno es
 patch-equivalente al borrado de instrucciones de agente ya representado en
 `main`, y el segundo es un commit vacío intermedio; no queda trabajo portable
-nuevo que transportar. `worktree-ciclo02-obras` y
+nuevo que transportar. Los dos commits de ROOT-0 posteriores a esa base son
+registro/gate y no alteran esa interpretación; por eso la medición viva actual
+es 2 exclusivos / 33 detrás. `worktree-ciclo02-obras` y
 `worktree-hub-portafolio-trim` contienen, respectivamente, commits cuya
 modificación ya es patch-equivalente en `MAK`; sus refs se conservan como
 checkpoints, no como entidades nuevas.
