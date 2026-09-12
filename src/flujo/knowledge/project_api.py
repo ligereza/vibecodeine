@@ -70,18 +70,36 @@ def _review_queue_summary(
 ) -> dict[str, Any]:
     """Expose bounded review composition without creating a second queue."""
     by_source_kind: dict[str, int] = {}
+    project_items: list[dict[str, Any]] = []
     total_projects = 0
-    for encoded in con.execute(
-        "SELECT ir_json FROM project_records WHERE state='review_required'"
+    for project_id, title, encoded in con.execute(
+        "SELECT project_id,title,ir_json FROM project_records "
+        "WHERE state='review_required' ORDER BY project_id"
     ):
         total_projects += 1
         try:
-            record = json.loads(encoded[0])
+            record = json.loads(encoded)
         except (TypeError, json.JSONDecodeError):
             record = {}
         source = record.get("source", {}) if isinstance(record, dict) else {}
         kind = str(source.get("kind") or "unknown") if isinstance(source, dict) else "unknown"
         by_source_kind[kind] = by_source_kind.get(kind, 0) + 1
+        evidence = record.get("evidence", []) if isinstance(record, dict) else []
+        evidence_kinds = sorted({
+            str(item.get("kind")) for item in evidence
+            if isinstance(item, dict) and item.get("kind")
+        })
+        project_items.append({
+            "project_id": str(project_id),
+            "title": str(title),
+            "source_kind": kind,
+            "source_root_observed_present": (
+                source.get("root_exists") if isinstance(source, dict) else None
+            ),
+            "unknown_count": len(record.get("unknowns", [])) if isinstance(record, dict) and isinstance(record.get("unknowns", []), list) else 0,
+            "evidence_kinds": evidence_kinds,
+            "next_action": str(record.get("next_action") or "") if isinstance(record, dict) else "",
+        })
 
     by_phase_status: dict[str, dict[str, int]] = {}
     for _project, phase, status in open_episode_rows:
@@ -93,6 +111,9 @@ def _review_queue_summary(
         "projects": {
             "total": total_projects,
             "by_source_kind": dict(sorted(by_source_kind.items())),
+            "items": sorted(project_items, key=lambda item: (
+                item["source_kind"], item["project_id"]
+            )),
         },
         "episodes": {
             "open_total": len(open_episode_rows),
