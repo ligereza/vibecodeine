@@ -99,7 +99,14 @@ def interpret_ref(current_ref: str | None, profile: Mapping[str, Any] | None = N
     if current not in CANONICAL_REFS and not canonical:
         issues.append("profile_canonical_ref_missing")
     if current not in CANONICAL_REFS and declared and declared != canonical:
-        issues.append(f"profile_lane_mismatch:{declared}->{canonical}")
+        # The legacy ``branch`` field is an inherited lane for topics and
+        # worktrees.  A topology-named integration ref may therefore quite
+        # legitimately inherit MAK/FLUJO while resolving to another
+        # canonical integration ref.  Only an explicit canonical/lane claim
+        # is contradictory here; do not turn inherited metadata into a
+        # false-positive blocker.
+        if profile.get("canonical_ref") is not None or profile.get("lane") is not None:
+            issues.append(f"profile_lane_mismatch:{declared}->{canonical}")
 
     return {
         "current_ref": current or None,
