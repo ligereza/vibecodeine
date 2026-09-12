@@ -1203,6 +1203,7 @@ DIRTY_RULES = (
     ("work/", "operator_owned", "local work state"),
     ("workspaces/", "operator_owned", "local workspace state"),
     ("context/coordination/", "session_dossier", "coordination dossier written this session"),
+    ("context/MAIN_TRANSPORT_20260912.md", "durable_doc", "ROOT-0 transport and ref audit"),
     (".github/workflows/", "release_candidate", "workflow contract"),
     ("CAPACIDADES_MAK.md", "durable_doc", "MAK capability contract"),
     ("CAPACIDADES_FLUJO.md", "durable_doc", "FLUJO capability contract"),
