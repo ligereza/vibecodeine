@@ -144,10 +144,9 @@ BASELINE_REQUIRED_INTEGRATED = (
 )
 
 # A historical ref is a frozen evidence snapshot, not a deployment target.
-# `historia` legitimately predates tools/test_lane_map.py, and calling that a
-# release blocker would be a manufactured finding. What it must carry is the
-# profile that declares it historical.
-BASELINE_REQUIRED_HISTORICAL = ("branch_profile.json",)
+# Its profile is optional: requiring a modern profile would manufacture a
+# commit on frozen history. If a profile exists, it is still validated.
+BASELINE_REQUIRED_HISTORICAL = ()
 
 # The two hub implementations.  Each side may consume the other's typed
 # contracts; importing the other side's hub module is the boundary violation
@@ -366,10 +365,34 @@ def check_branch(gate: Gate, root: Path, branch: str) -> dict[str, object]:
         if remote_sha:
             row["remote_sha"] = remote_sha
             row["ref_source"] = remote_ref
+            if not file_in_ref(root, remote_ref, "branch_profile.json"):
+                row["profile"] = None
+                row["profile_kind"] = "historical"
+                row["profile_policy"] = "optional_absent_frozen_ref"
+                row["semantics"] = interpret_ref(branch, {"kind": "historical"})
+                return row
             profile, error = json_from_ref(root, remote_ref, "branch_profile.json")
+            if profile is None:
+                row["profile_error"] = error
+                gate.add(
+                    "branch_profile_unreadable",
+                    SEV_BLOCKER,
+                    f"{branch}: {error}",
+                    evidence=f"git show {remote_ref}:branch_profile.json",
+                )
+                return row
             row["profile"] = profile
             row["profile_kind"] = "historical"
-            row["profile_error"] = error
+            row["profile_policy"] = "optional_if_absent"
+            semantics = interpret_ref(branch, profile)
+            row["semantics"] = semantics
+            for issue in semantics.get("issues", []):
+                gate.add(
+                    "branch_semantics_invalid",
+                    SEV_BLOCKER,
+                    f"{branch}: {issue}",
+                    evidence=f"git show {remote_ref}:branch_profile.json",
+                )
             return row
     if row["local_sha"] is None:
         gate.add(
@@ -383,6 +406,11 @@ def check_branch(gate: Gate, root: Path, branch: str) -> dict[str, object]:
 
     profile, error = json_from_ref(root, branch, "branch_profile.json")
     if profile is None:
+        if branch in HISTORICAL_BRANCHES and not file_in_ref(root, branch, "branch_profile.json"):
+            row["profile_policy"] = "optional_absent_frozen_ref"
+            row["profile_kind"] = "historical"
+            row["semantics"] = interpret_ref(branch, {"kind": "historical"})
+            return row
         gate.add(
             "branch_profile_unreadable",
             SEV_BLOCKER,
@@ -393,7 +421,13 @@ def check_branch(gate: Gate, root: Path, branch: str) -> dict[str, object]:
     row["profile"] = profile
     semantics = interpret_ref(branch, profile)
     row["semantics"] = semantics
-    declared_branch = profile.get("canonical_ref") or profile.get("branch")
+    for issue in semantics.get("issues", []):
+        gate.add(
+            "branch_semantics_invalid",
+            SEV_BLOCKER,
+            f"{branch}: {issue}",
+            evidence=f"git show {branch}:branch_profile.json",
+        )
     kind = profile.get("kind", "runtime")
     row["profile_kind"] = kind
     row["selector"] = profile.get("default_test_selector")
@@ -407,14 +441,6 @@ def check_branch(gate: Gate, root: Path, branch: str) -> dict[str, object]:
         item.get("module") for item in declared_hubs
         if isinstance(item, dict) and isinstance(item.get("module"), str)
     ]
-
-    if declared_branch != branch:
-        gate.add(
-            "profile_branch_mismatch",
-            SEV_BLOCKER,
-            f"{branch}: branch_profile.json declares branch={declared_branch!r}",
-            evidence=f"git show {branch}:branch_profile.json",
-        )
 
     required = list(
         BASELINE_REQUIRED_OPERATIONAL
@@ -1179,6 +1205,7 @@ DIRTY_RULES = (
     ("context/coordination/", "session_dossier", "coordination dossier written this session"),
     (".github/workflows/", "release_candidate", "workflow contract"),
     ("CAPACIDADES_MAK.md", "durable_doc", "MAK capability contract"),
+    ("CAPACIDADES_FLUJO.md", "durable_doc", "FLUJO capability contract"),
     ("branch_profile.json", "release_candidate", "branch semantic contract"),
     ("README.md", "durable_doc", "repository entry document"),
     ("requirements-integration.txt", "release_candidate", "integration dependency contract"),

@@ -364,6 +364,7 @@ def _branch_result(root: Path) -> dict[str, object]:
         "canonical_ref": None,
         "lane": None,
         "kind": None,
+        "comparison_ref": None,
         "integration_target": None,
         "profile_scope": None,
         "profile_kind": None,
@@ -392,7 +393,8 @@ def _branch_result(root: Path) -> dict[str, object]:
     profile_kind = semantics["kind"]
     result["profile_branch"] = profile_branch
     result.update({key: semantics.get(key) for key in (
-        "current_ref", "canonical_ref", "lane", "kind", "integration_target", "profile_scope"
+        "current_ref", "canonical_ref", "lane", "kind", "comparison_ref",
+        "integration_target", "profile_scope"
     )})
     result["profile_kind"] = profile_kind
     result["selector"] = profile.get("default_test_selector")
@@ -456,20 +458,20 @@ def _branch_result(root: Path) -> dict[str, object]:
 
 
 def _ref_inventory(root: Path) -> dict[str, object]:
-    """Inventory local/remote refs using the shared branch semantics contract."""
+    """Inventory heads, remote-tracking refs and tags using shared semantics."""
     try:
         raw = subprocess.run(
             [
                 "git", "-C", str(root), "for-each-ref",
-                "--format=%(refname)\t%(objectname)",
-                "refs/heads", "refs/remotes/vibecodeine-legacy",
+                "--format=%(refname)\t%(objectname)\t%(objecttype)",
+                "refs/heads", "refs/remotes", "refs/tags",
             ], capture_output=True, text=True, timeout=8, check=False,
         ).stdout
     except (OSError, subprocess.SubprocessError):
-        return {"schema": "mak-branch-ref-inventory-v1", "available": False, "refs": []}
+        return {"schema": "mak-branch-ref-inventory-v2", "available": False, "refs": []}
 
     refs: list[dict[str, object]] = []
-    by_sha: dict[str, list[str]] = {}
+    by_identity: dict[tuple[str, str], list[str]] = {}
 
     def run_git(*args: str) -> str:
         result = subprocess.run(
@@ -479,19 +481,31 @@ def _ref_inventory(root: Path) -> dict[str, object]:
         return result.stdout.strip()
 
     for line in raw.splitlines():
-        full_ref, sha = line.split("\t", 1)
+        full_ref, sha, object_type = line.split("\t", 2)
         if full_ref.endswith("/HEAD"):
             continue
-        if full_ref.startswith("refs/remotes/vibecodeine-legacy/"):
-            name = full_ref.removeprefix("refs/remotes/vibecodeine-legacy/")
+        remote_name = None
+        if full_ref.startswith("refs/remotes/"):
+            remote_path = full_ref.removeprefix("refs/remotes/")
+            remote_name, name = remote_path.split("/", 1)
+            ref_kind = "remote_tracking"
+        elif full_ref.startswith("refs/tags/"):
+            name = full_ref.removeprefix("refs/tags/")
+            ref_kind = "annotated_tag" if object_type == "tag" else "tag"
         else:
             name = full_ref.removeprefix("refs/heads/")
+            ref_kind = "head"
+        peeled_commit_sha = None
+        if ref_kind == "annotated_tag":
+            peeled = run_git("rev-parse", f"{full_ref}^{{}}")
+            if peeled and run_git("cat-file", "-t", peeled) == "commit":
+                peeled_commit_sha = peeled
         try:
             profile = json.loads(run_git("show", f"{full_ref}:branch_profile.json"))
         except (json.JSONDecodeError, OSError, ValueError):
             profile = {}
         semantics = interpret_ref(name, profile)
-        target = semantics.get("integration_target")
+        comparison_ref = semantics.get("comparison_ref")
         target_ref = None
         sync: dict[str, int | None] = {"ahead": None, "behind": None}
         ancestry: dict[str, int | None] = {
@@ -499,8 +513,12 @@ def _ref_inventory(root: Path) -> dict[str, object]:
             "patch_unique_count": None,
             "patch_equivalent_count": None,
         }
-        if isinstance(target, str) and target:
-            for candidate in (target, f"vibecodeine-legacy/{target}"):
+        if isinstance(comparison_ref, str) and comparison_ref:
+            for candidate in (
+                comparison_ref,
+                f"vibecodeine-legacy/{comparison_ref}",
+                f"origin/{comparison_ref}",
+            ):
                 if run_git("rev-parse", "--verify", candidate):
                     target_ref = candidate
                     break
@@ -519,30 +537,50 @@ def _ref_inventory(root: Path) -> dict[str, object]:
             "ref": full_ref,
             "name": name,
             "sha": sha,
+            "object_sha": sha,
+            "object_type": object_type,
+            "ref_kind": ref_kind,
+            "remote_name": remote_name,
+            "peeled_commit_sha": peeled_commit_sha,
             "profile_present": bool(profile),
             **semantics,
             "disposition": _disposition(name, semantics),
-            "integration_ref": target_ref,
+            "comparison_ref": comparison_ref,
+            "comparison_git_ref": target_ref,
             "sync": sync,
             "ancestry": ancestry,
         }
         refs.append(row)
-        by_sha.setdefault(sha, []).append(name)
+        # An annotated tag is a named historical object, not an alias merely
+        # because it peels to the same commit as a branch.
+        identity = ("head_remote_commit", sha) if ref_kind in {"head", "remote_tracking"} else ("tag", full_ref)
+        by_identity.setdefault(identity, []).append(name)
 
     for row in refs:
-        row["aliases"] = sorted(set(by_sha.get(str(row["sha"]), [])))
+        ref_kind = str(row["ref_kind"])
+        identity = (
+            ("head_remote_commit", str(row["object_sha"]))
+            if ref_kind in {"head", "remote_tracking"}
+            else ("tag", str(row["ref"]))
+        )
+        row["aliases"] = sorted(set(by_identity.get(identity, [])))
     alias_groups = [
-        {"sha": sha, "refs": sorted(set(names))}
-        for sha, names in by_sha.items()
+        {"identity": identity[0], "sha": identity[1], "refs": sorted(set(names))}
+        for identity, names in by_identity.items()
         if len(set(names)) > 1
     ]
+    counts = {
+        kind: sum(1 for row in refs if row["ref_kind"] == kind)
+        for kind in ("head", "remote_tracking", "tag", "annotated_tag")
+    }
     return {
-        "schema": "mak-branch-ref-inventory-v1",
+        "schema": "mak-branch-ref-inventory-v2",
         "available": True,
         "ref_count": len(refs),
-        "unique_sha_count": len(by_sha),
+        "unique_sha_count": len({str(row["object_sha"]) for row in refs}),
+        "ref_counts": counts,
         "alias_group_count": len(alias_groups),
-        "alias_groups": sorted(alias_groups, key=lambda row: row["sha"]),
+        "alias_groups": sorted(alias_groups, key=lambda row: (row["identity"], row["sha"])),
         "refs": sorted(refs, key=lambda row: str(row["ref"])),
     }
 
