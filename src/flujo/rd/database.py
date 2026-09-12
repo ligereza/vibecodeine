@@ -409,6 +409,44 @@ JOIN rd_reactivos_candidatos AS candidate
 """
 
 
+_SCHEMA_RELACIONES = """
+CREATE TABLE IF NOT EXISTS evento_productoras (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    evento_ref TEXT NOT NULL,
+    evento_origen TEXT NOT NULL,
+    productora_slug TEXT NOT NULL,
+    rol TEXT NOT NULL DEFAULT 'sin_determinar',
+    metodo TEXT NOT NULL,
+    evidencia TEXT,
+    confianza TEXT NOT NULL,
+    estado_revision TEXT NOT NULL DEFAULT 'pendiente_revision_humana',
+    UNIQUE(evento_ref, evento_origen, productora_slug)
+);
+
+CREATE TABLE IF NOT EXISTS evento_venues (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    evento_ref TEXT NOT NULL,
+    evento_origen TEXT NOT NULL,
+    venue_id TEXT,
+    venue_nombre TEXT NOT NULL,
+    metodo TEXT NOT NULL,
+    origen TEXT NOT NULL,
+    confianza TEXT NOT NULL,
+    estado_revision TEXT NOT NULL DEFAULT 'pendiente_revision_humana',
+    UNIQUE(evento_ref, evento_origen, venue_nombre)
+);
+
+CREATE TABLE IF NOT EXISTS mesas_testeo (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    evento_ref TEXT NOT NULL,
+    evento_origen TEXT NOT NULL,
+    numero INTEGER,
+    etiqueta TEXT,
+    origen TEXT NOT NULL,
+    UNIQUE(evento_ref, evento_origen, etiqueta)
+);
+"""
+
 def _load_fuentes_module():
     global _FUENTES_MODULE
     if _FUENTES_MODULE is not None:
@@ -1287,6 +1325,169 @@ CREATE TABLE IF NOT EXISTS muestra_resultados (
 );
 """
 
+def _clave(texto: str) -> str:
+    """Comparable sin acentos, espacios ni puntuacion.
+
+    `Techno Youth`, `TECHNOYOUTH` y `technoyouth` son la misma productora
+    escrita de tres formas en el cuaderno 2025, y `Explicito` y `Explícito` son
+    la misma palabra. Comparar en crudo pierde esos vinculos en silencio.
+    """
+    limpio = unicodedata.normalize("NFKD", texto or "")
+    limpio = limpio.encode("ascii", "ignore").decode("ascii")
+    return re.sub(r"[^a-z0-9]+", "", limpio.lower())
+
+
+# Tres letras es el piso: por debajo, un alias como `TY` aparece dentro de
+# cualquier palabra y ata eventos que no le corresponden.
+_MIN_ALIAS = 3
+
+
+def _formas_por_productora(conn: sqlite3.Connection) -> dict[str, set[str]]:
+    """Cada productora con todas las formas en que se la puede nombrar."""
+    formas: dict[str, set[str]] = {}
+    for slug, nombre, aliases in conn.execute(
+        "SELECT slug, nombre, aliases FROM productoras"
+    ):
+        try:
+            lista = json.loads(aliases or "[]")
+        except (TypeError, ValueError):
+            lista = []
+        candidatas = {_clave(x) for x in ([slug, nombre] + list(lista)) if x}
+        formas[slug] = {c for c in candidatas if len(c) >= _MIN_ALIAS}
+    return formas
+
+
+def _mesa_desde_etiqueta(etiqueta: str) -> tuple[int | None, str | None]:
+    """La mesa de testeo, si el nombre de la hoja la nombra.
+
+    El cuaderno 2025 trae hojas como `Fiesta Dame 504 mesa 1` y `mesa 2`: en un
+    mismo evento hubo mas de una mesa y cada una llevo su planilla. Sin esto,
+    dos mesas del mismo evento se leen como dos eventos distintos.
+    """
+    m = re.search(r"\bmesa\s*(\d+)\b", etiqueta or "", flags=re.IGNORECASE)
+    if not m:
+        return None, None
+    return int(m.group(1)), m.group(0).strip()
+
+
+def _vincular_eventos_de_testeo(conn: sqlite3.Connection) -> dict[str, int]:
+    """Ata los 42 eventos del cuaderno 2025 al catalogo de productoras.
+
+    El vinculo sale del nombre del evento: el cuaderno los llama `Cachorros
+    0407`, `DAME 0911 A`, `Technoyouth 1209`. El nombre de la productora viene
+    dentro del nombre del evento, asi que se busca cada alias conocido dentro de
+    la etiqueta normalizada.
+
+    Lo que NO hace, a proposito:
+
+    - No inventa productoras. Un evento cuyo nombre no contiene ningun alias
+      conocido queda sin vinculo, y eso es informacion: son productoras que
+      faltan en el catalogo, no un fallo del emparejador.
+    - No decide el rol. Si un evento nombra a dos productoras, las dos entran
+      como `sin_determinar`: cual es anfitriona y cual colabora es un dato que
+      se averigua.
+    - No aprueba nada. Cada fila entra `pendiente_revision_humana`, que es la
+      compuerta que `data/rd_fuentes/README.md` exige antes de publicar.
+
+    El venue se propone solo si la productora tiene uno marcado `preferido`, y
+    entra como `SUPUESTO` con origen `habitual_de_productora`: que una
+    productora suela tocar en un lugar no prueba que esa fecha haya sido ahi.
+    """
+    formas = _formas_por_productora(conn)
+    habituales: dict[str, tuple[str | None, str]] = {}
+    for slug, venue_id, venue_nombre in conn.execute(
+        "SELECT productora_slug, venue_id, venue_nombre FROM productora_venues"
+        " WHERE preferido = 1"
+    ):
+        habituales.setdefault(slug, (venue_id, venue_nombre))
+
+    cuenta = {"eventos": 0, "vinculos": 0, "sin_vinculo": 0, "venues": 0, "mesas": 0}
+
+    for event_id, etiqueta in conn.execute(
+        "SELECT event_id, event_label_candidate FROM testeo_eventos_fuente"
+    ):
+        cuenta["eventos"] += 1
+        clave = _clave(etiqueta)
+        encontradas = sorted(
+            {
+                (slug, forma)
+                for slug, alias in formas.items()
+                for forma in alias
+                if forma and forma in clave
+            },
+            key=lambda par: (-len(par[1]), par[0]),
+        )
+        # Una productora puede coincidir por varios alias; se conserva el mas
+        # largo, que es el mas especifico.
+        mejor_por_slug: dict[str, str] = {}
+        for slug, forma in encontradas:
+            mejor_por_slug.setdefault(slug, forma)
+
+        if not mejor_por_slug:
+            cuenta["sin_vinculo"] += 1
+        for slug, forma in mejor_por_slug.items():
+            # Con una sola productora nombrada no se afirma que sea la
+            # anfitriona: solo que el nombre la nombra.
+            conn.execute(
+                "INSERT OR IGNORE INTO evento_productoras"
+                "(evento_ref, evento_origen, productora_slug, rol, metodo,"
+                " evidencia, confianza, estado_revision)"
+                " VALUES (?,?,?,?,?,?,?,?)",
+                (
+                    event_id,
+                    "testeo_2025",
+                    slug,
+                    "sin_determinar",
+                    "DERIVADO",
+                    f"alias '{forma}' dentro de la etiqueta '{etiqueta}'",
+                    "alta" if len(forma) >= 6 else "media",
+                    "pendiente_revision_humana",
+                ),
+            )
+            cuenta["vinculos"] += 1
+
+            venue = habituales.get(slug)
+            if venue is not None:
+                venue_id, venue_nombre = venue
+                conn.execute(
+                    "INSERT OR IGNORE INTO evento_venues"
+                    "(evento_ref, evento_origen, venue_id, venue_nombre,"
+                    " metodo, origen, confianza, estado_revision)"
+                    " VALUES (?,?,?,?,?,?,?,?)",
+                    (
+                        event_id,
+                        "testeo_2025",
+                        venue_id,
+                        venue_nombre,
+                        "SUPUESTO",
+                        "habitual_de_productora",
+                        "baja",
+                        "pendiente_revision_humana",
+                    ),
+                )
+                cuenta["venues"] += 1
+
+        numero, texto = _mesa_desde_etiqueta(etiqueta)
+        if texto is not None:
+            conn.execute(
+                "INSERT OR IGNORE INTO mesas_testeo"
+                "(evento_ref, evento_origen, numero, etiqueta, origen)"
+                " VALUES (?,?,?,?,?)",
+                (event_id, "testeo_2025", numero, texto, "etiqueta_2025"),
+            )
+            cuenta["mesas"] += 1
+
+    # El estado de enlace de la tabla de origen deja de mentir: ya no es
+    # `unlinked` cuando hay un candidato con evidencia.
+    conn.execute(
+        "UPDATE testeo_eventos_fuente SET link_status = 'candidate_from_label',"
+        " link_review_status = 'pendiente_revision_humana',"
+        " link_confidence = 'derivado_de_etiqueta'"
+        " WHERE event_id IN (SELECT evento_ref FROM evento_productoras"
+        "                    WHERE evento_origen = 'testeo_2025')"
+    )
+    return cuenta
+
 def build_rd_db(
     db_path: str | Path | None = None,
     *,
@@ -1311,6 +1512,7 @@ def build_rd_db(
     conn = sqlite3.connect(path)
     try:
         conn.executescript(_SCHEMA)
+        conn.executescript(_SCHEMA_RELACIONES)
         _reponer_acumulativas(conn, acumuladas)
 
         # meta + reactivos
@@ -1532,6 +1734,7 @@ def build_rd_db(
         testing_doc = _load_testing_evidence()
         if testing_doc is not None:
             _insert_testing_evidence(conn, testing_doc)
+        _vincular_eventos_de_testeo(conn)
         conn.commit()
     finally:
         conn.close()
