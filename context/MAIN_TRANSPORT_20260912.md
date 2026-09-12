@@ -42,12 +42,12 @@ Se fusionaron como segundo padre en `7b1cae65`; `AGENTS.md` quedó eliminado,
 coincidiendo con el borrado local preexistente, y `main` quedó publicado en
 fast-forward con divergencia `0/0`.
 
-El checkpoint de FLUJO `7c1ff0e7` también quedó publicado en
-`integration/flujo-canonical-20260911`. La rama remota `MAK` avanzó de forma
-independiente a `b7267021` con dos commits de limpieza que divergen de los 27
-commits locales de MAK; esa rama no se sobreescribe. Su reconciliación requiere
-comparar contenido por archivo y conservar explícitamente las decisiones de
-limpieza, no un push forzado.
+El checkpoint de FLUJO `7c1ff0e7` quedó publicado en
+`integration/flujo-canonical-20260911`. La rama remota `MAK` había avanzado de
+forma independiente a `b7267021` con dos commits de limpieza. La comparación
+3-way encontró sólo el borrado común de `AGENTS.md`; el merge no-forzado
+`6a3da7a8` conservó los 27 commits locales, incorporó los 2 remotos y quedó
+publicado en `MAK`.
 
 ## Estado físico/local
 
