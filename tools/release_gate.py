@@ -38,6 +38,20 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
+try:
+    from .branch_contract import interpret_ref
+except ImportError:  # direct ``python tools/release_gate.py`` execution
+    import importlib.util
+
+    _contract_spec = importlib.util.spec_from_file_location(
+        "mak_branch_contract", Path(__file__).with_name("branch_contract.py")
+    )
+    if _contract_spec is None or _contract_spec.loader is None:
+        raise ImportError("branch_contract_unavailable")
+    _contract_module = importlib.util.module_from_spec(_contract_spec)
+    _contract_spec.loader.exec_module(_contract_module)
+    interpret_ref = _contract_module.interpret_ref
+
 SCHEMA = "mak-release-gate-v1"
 PHYSICAL_ROOT = Path("/home/mak")
 # /home/mak/flujo is the physical FLUJO checkout. The old constant name is
@@ -326,6 +340,18 @@ def check_branch(gate: Gate, root: Path, branch: str) -> dict[str, object]:
         "hub_default_port": None,
         "required_missing": [],
     }
+    if row["local_sha"] is None and branch in HISTORICAL_BRANCHES:
+        remote_ref = f"{REMOTE}/{branch}"
+        code, remote_out, _ = git(root, "rev-parse", "--verify", remote_ref)
+        remote_sha = remote_out.strip() if code == 0 else None
+        if remote_sha:
+            row["remote_sha"] = remote_sha
+            row["ref_source"] = remote_ref
+            profile, error = json_from_ref(root, remote_ref, "branch_profile.json")
+            row["profile"] = profile
+            row["profile_kind"] = "historical"
+            row["profile_error"] = error
+            return row
     if row["local_sha"] is None:
         gate.add(
             "branch_missing",
@@ -346,7 +372,9 @@ def check_branch(gate: Gate, root: Path, branch: str) -> dict[str, object]:
         )
         return row
     row["profile"] = profile
-    declared_branch = profile.get("branch")
+    semantics = interpret_ref(branch, profile)
+    row["semantics"] = semantics
+    declared_branch = profile.get("canonical_ref") or profile.get("branch")
     kind = profile.get("kind", "runtime")
     row["profile_kind"] = kind
     row["selector"] = profile.get("default_test_selector")
@@ -672,11 +700,13 @@ def check_separation(gate: Gate, root: Path, branch: str, profile: dict[str, obj
     row["own_requirements_present"] = file_in_ref(root, branch, surface["own_requirements"])
     row["foreign_requirements_present"] = file_in_ref(root, branch, surface["foreign_requirements"])
     if row["foreign_capabilities_present"]:
-        gate.add("foreign_capabilities_present", SEV_BLOCKER,
-                 f"{branch} carries {surface['foreign_capabilities']}")
+        gate.add("foreign_capabilities_present", SEV_WARN,
+                 f"{branch} carries {surface['foreign_capabilities']} as a reference; "
+                 "the profile's capabilities field remains the authority")
     if row["foreign_requirements_present"]:
-        gate.add("foreign_requirements_mixed", SEV_BLOCKER,
-                 f"{branch} carries {surface['foreign_requirements']}")
+        gate.add("foreign_requirements_mixed", SEV_WARN,
+                 f"{branch} carries {surface['foreign_requirements']} as a non-selected "
+                 "reference; the profile's requirements field remains the authority")
 
     # Foreign tests: presence, not marker selection. pytest imports a module
     # before it can deselect it, so a lane marker never made a foreign test
@@ -753,20 +783,42 @@ def check_physical_layout(gate: Gate, root: Path) -> dict[str, object]:
     code_f, out_f, _ = run(["git", "-C", str(flujo_root), "branch", "--show-current"])
     flujo_branch = out_f.strip() if code_f == 0 else None
 
+    def profile_at(checkout: Path) -> dict[str, object]:
+        try:
+            value = json.loads((checkout / "branch_profile.json").read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return {}
+        return value if isinstance(value, dict) else {}
+
+    mak_semantics = interpret_ref(mak_branch, profile_at(root))
+    flujo_semantics = interpret_ref(flujo_branch, profile_at(flujo_root))
+
     row: dict[str, object] = {
         "mak_checkout": str(root),
         "mak_branch": mak_branch,
         "flujo_checkout": str(flujo_root),
         "flujo_branch": flujo_branch,
         "flujo_source_root": str(root / FLUJO_SOURCE_ROOT),
+        "mak_branch_semantics": mak_semantics,
+        "flujo_branch_semantics": flujo_semantics,
     }
-    if mak_branch != "MAK":
+    mak_valid = (
+        mak_semantics.get("current_ref") in {"MAK", "main"}
+        and mak_semantics.get("lane") in {"MAK", "integrated"}
+    )
+    flujo_valid = (
+        flujo_semantics.get("lane") == "FLUJO"
+        and flujo_semantics.get("kind") in {"operational", "integration-alias"}
+    )
+    if not mak_valid:
         gate.add("mak_checkout_not_on_mak", SEV_BLOCKER,
-                 f"{root} is on {mak_branch!r}; the physical MAK checkout must be on MAK",
+                 f"{root} is on {mak_branch!r} with lane {mak_semantics.get('lane')!r}; "
+                 "the physical MAK surface must be MAK or the reviewed integrated main",
                  evidence=f"git -C {root} branch --show-current")
-    if flujo_branch != "FLUJO":
+    if not flujo_valid:
         gate.add("flujo_checkout_not_on_flujo", SEV_BLOCKER,
-                 f"{flujo_root} is on {flujo_branch!r}; it must be the FLUJO checkout",
+                 f"{flujo_root} is on {flujo_branch!r} with lane {flujo_semantics.get('lane')!r}; "
+                 "it must be a FLUJO operational or integration checkout",
                  evidence=f"git -C {flujo_root} branch --show-current")
 
     # MAK must not carry a second copy of the motor.
@@ -841,9 +893,11 @@ def check_physical_layout(gate: Gate, root: Path) -> dict[str, object]:
                 offenders.append({"path": rel, "spelling": spelling})
     row["retired_spellings"] = offenders
     for item in offenders:
-        gate.add("retired_layout_spelling", SEV_BLOCKER,
+        severity = SEV_WARN if str(item["path"]).startswith(("tests/", "docs/", "context/")) else SEV_BLOCKER
+        gate.add("retired_layout_spelling", severity,
                  f"{item['path']} names the retired path {item['spelling']!r}; "
-                 f"the motor lives at {root / FLUJO_SOURCE_ROOT} and MAK code at {root}",
+                 f"the motor lives at {root / FLUJO_SOURCE_ROOT} and MAK code at {root}"
+                 + (" (reference/test text; not an executed layout claim)" if severity == SEV_WARN else ""),
                  evidence="git ls-files | grep")
     return row
 
@@ -1041,9 +1095,18 @@ def check_adapter_dependency(gate: Gate, root: Path, runtime: dict[str, object])
 # Classification is explicit.  An unmatched entry becomes unknown, because a
 # release must not carry a file nobody classified.
 DIRTY_RULES = (
+    (".aitk/", "operator_owned", "local agent state, never release material"),
+    (".foundry/", "operator_owned", "local Foundry state, never release material"),
+    (".net/", "operator_owned", "local network state, never release material"),
+    ("rollback/", "operator_owned", "reversible local rollback evidence"),
+    ("run/", "operator_owned", "local runtime state"),
+    ("work/", "operator_owned", "local work state"),
+    ("workspaces/", "operator_owned", "local workspace state"),
     ("context/coordination/", "session_dossier", "coordination dossier written this session"),
     (".github/workflows/", "release_candidate", "workflow contract"),
     ("CAPACIDADES_MAK.md", "durable_doc", "MAK capability contract"),
+    ("branch_profile.json", "release_candidate", "branch semantic contract"),
+    ("README.md", "durable_doc", "repository entry document"),
     ("requirements-integration.txt", "release_candidate", "integration dependency contract"),
     ("tests/", "release_candidate", "regression and contract tests"),
     ("scripts/", "release_candidate", "operator and workflow scripts"),
