@@ -30,6 +30,7 @@ import argparse
 import ast
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -117,8 +118,9 @@ SEV_BLOCKER = "blocker"
 SEV_UNKNOWN = "unknown"
 
 OPERATIONAL_BRANCHES = ("MAK", "FLUJO")
-HISTORICAL_BRANCHES = ("main", "historia")
-ALL_BRANCHES = OPERATIONAL_BRANCHES + HISTORICAL_BRANCHES
+INTEGRATED_BRANCHES = ("main",)
+HISTORICAL_BRANCHES = ("historia",)
+ALL_BRANCHES = OPERATIONAL_BRANCHES + INTEGRATED_BRANCHES + HISTORICAL_BRANCHES
 
 # An operational ref must carry the tooling that runs it.
 BASELINE_REQUIRED_OPERATIONAL = (
@@ -128,12 +130,23 @@ BASELINE_REQUIRED_OPERATIONAL = (
     "tools/test_lane_map.py",
 )
 
+# `main` is the reviewed MAK + FLUJO tree. Its lane branches remain the
+# deployment surfaces, but the integrated ref must carry both source roots and
+# the local composition requirements instead of pretending to be historical.
+BASELINE_REQUIRED_INTEGRATED = (
+    "branch_profile.json",
+    "pyproject.toml",
+    "requirements.txt",
+    "requirements-integration.txt",
+    "tools/test_lane_map.py",
+    "cultura/mak_plataforma/hub.py",
+    "src/flujo/web/hub.py",
+)
+
 # A historical ref is a frozen evidence snapshot, not a deployment target.
-# Demanding the current tooling from it contradicts what `kind: historical`
-# means: `historia` legitimately predates tools/test_lane_map.py, and calling
-# that a release blocker would be a manufactured finding.  What it must carry
-# is the profile that declares it historical.
-BASELINE_REQUIRED_HISTORICAL = ("branch_profile.json",)
+# Its profile is optional: requiring a modern profile would manufacture a
+# commit on frozen history. If a profile exists, it is still validated.
+BASELINE_REQUIRED_HISTORICAL = ()
 
 # The two hub implementations.  Each side may consume the other's typed
 # contracts; importing the other side's hub module is the boundary violation
@@ -332,12 +345,17 @@ def check_branch(gate: Gate, root: Path, branch: str) -> dict[str, object]:
         "local_sha": ref_sha(root, branch),
         "remote_ref": f"{REMOTE}/{branch}",
         "remote_sha": ref_sha(root, f"{REMOTE}/{branch}"),
-        "expected_kind": "operational" if branch in OPERATIONAL_BRANCHES else "historical",
+        "expected_kind": (
+            "operational" if branch in OPERATIONAL_BRANCHES
+            else "integrated" if branch in INTEGRATED_BRANCHES
+            else "historical"
+        ),
         "profile": None,
         "profile_kind": None,
         "selector": None,
         "hub_module": None,
         "hub_default_port": None,
+        "hub_modules": [],
         "required_missing": [],
     }
     if row["local_sha"] is None and branch in HISTORICAL_BRANCHES:
@@ -347,10 +365,34 @@ def check_branch(gate: Gate, root: Path, branch: str) -> dict[str, object]:
         if remote_sha:
             row["remote_sha"] = remote_sha
             row["ref_source"] = remote_ref
+            if not file_in_ref(root, remote_ref, "branch_profile.json"):
+                row["profile"] = None
+                row["profile_kind"] = "historical"
+                row["profile_policy"] = "optional_absent_frozen_ref"
+                row["semantics"] = interpret_ref(branch, {"kind": "historical"})
+                return row
             profile, error = json_from_ref(root, remote_ref, "branch_profile.json")
+            if profile is None:
+                row["profile_error"] = error
+                gate.add(
+                    "branch_profile_unreadable",
+                    SEV_BLOCKER,
+                    f"{branch}: {error}",
+                    evidence=f"git show {remote_ref}:branch_profile.json",
+                )
+                return row
             row["profile"] = profile
             row["profile_kind"] = "historical"
-            row["profile_error"] = error
+            row["profile_policy"] = "optional_if_absent"
+            semantics = interpret_ref(branch, profile)
+            row["semantics"] = semantics
+            for issue in semantics.get("issues", []):
+                gate.add(
+                    "branch_semantics_invalid",
+                    SEV_BLOCKER,
+                    f"{branch}: {issue}",
+                    evidence=f"git show {remote_ref}:branch_profile.json",
+                )
             return row
     if row["local_sha"] is None:
         gate.add(
@@ -364,6 +406,11 @@ def check_branch(gate: Gate, root: Path, branch: str) -> dict[str, object]:
 
     profile, error = json_from_ref(root, branch, "branch_profile.json")
     if profile is None:
+        if branch in HISTORICAL_BRANCHES and not file_in_ref(root, branch, "branch_profile.json"):
+            row["profile_policy"] = "optional_absent_frozen_ref"
+            row["profile_kind"] = "historical"
+            row["semantics"] = interpret_ref(branch, {"kind": "historical"})
+            return row
         gate.add(
             "branch_profile_unreadable",
             SEV_BLOCKER,
@@ -374,25 +421,32 @@ def check_branch(gate: Gate, root: Path, branch: str) -> dict[str, object]:
     row["profile"] = profile
     semantics = interpret_ref(branch, profile)
     row["semantics"] = semantics
-    declared_branch = profile.get("canonical_ref") or profile.get("branch")
+    for issue in semantics.get("issues", []):
+        gate.add(
+            "branch_semantics_invalid",
+            SEV_BLOCKER,
+            f"{branch}: {issue}",
+            evidence=f"git show {branch}:branch_profile.json",
+        )
     kind = profile.get("kind", "runtime")
     row["profile_kind"] = kind
     row["selector"] = profile.get("default_test_selector")
     hub = profile.get("hub") if isinstance(profile.get("hub"), dict) else None
+    declared_hubs = profile.get("hubs") if isinstance(profile.get("hubs"), list) else []
+    if hub is not None and not declared_hubs:
+        declared_hubs = [hub]
     row["hub_module"] = hub.get("module") if hub else None
     row["hub_default_port"] = hub.get("default_port") if hub else None
-
-    if declared_branch != branch:
-        gate.add(
-            "profile_branch_mismatch",
-            SEV_BLOCKER,
-            f"{branch}: branch_profile.json declares branch={declared_branch!r}",
-            evidence=f"git show {branch}:branch_profile.json",
-        )
+    row["hub_modules"] = [
+        item.get("module") for item in declared_hubs
+        if isinstance(item, dict) and isinstance(item.get("module"), str)
+    ]
 
     required = list(
         BASELINE_REQUIRED_OPERATIONAL
         if branch in OPERATIONAL_BRANCHES
+        else BASELINE_REQUIRED_INTEGRATED
+        if branch in INTEGRATED_BRANCHES
         else BASELINE_REQUIRED_HISTORICAL
     )
     if branch in OPERATIONAL_BRANCHES:
@@ -469,6 +523,48 @@ def check_branch(gate: Gate, root: Path, branch: str) -> dict[str, object]:
                     )
             else:
                 required.append(consumer)
+    elif branch in INTEGRATED_BRANCHES:
+        if kind != "integrated":
+            gate.add(
+                "integrated_branch_not_marked",
+                SEV_BLOCKER,
+                f"{branch} must declare kind=integrated; it declares {kind!r}",
+                evidence=f"git show {branch}:branch_profile.json",
+            )
+        if not isinstance(row["selector"], str) or not row["selector"]:
+            gate.add(
+                "integrated_selector_missing",
+                SEV_BLOCKER,
+                f"{branch} declares no default_test_selector",
+            )
+        for key in ("capabilities", "requirements"):
+            value = profile.get(key)
+            if isinstance(value, str) and value:
+                required.append(value)
+            else:
+                gate.add(
+                    f"profile_{key}_undeclared",
+                    SEV_BLOCKER,
+                    f"{branch} declares no {key} document",
+                )
+        for value in profile.get("secondary_capabilities", []) or []:
+            if isinstance(value, str) and value:
+                required.append(value)
+        if len(declared_hubs) < 2:
+            gate.add(
+                "integrated_hubs_missing",
+                SEV_BLOCKER,
+                f"{branch} must declare both MAK and FLUJO hubs",
+            )
+        for item in declared_hubs:
+            if not isinstance(item, dict) or not isinstance(item.get("module"), str):
+                gate.add(
+                    "integrated_hub_undeclared",
+                    SEV_BLOCKER,
+                    f"{branch} contains a hub entry without a module",
+                )
+            else:
+                required.append(item["module"])
     else:
         if kind != "historical":
             gate.add(
@@ -501,7 +597,7 @@ def check_branch(gate: Gate, root: Path, branch: str) -> dict[str, object]:
             evidence=f"git cat-file -e {branch}:<path>",
         )
 
-    if branch in OPERATIONAL_BRANCHES and isinstance(row["selector"], str):
+    if branch in OPERATIONAL_BRANCHES + INTEGRATED_BRANCHES and isinstance(row["selector"], str):
         check_selector(gate, root, branch, row["selector"])
     return row
 
@@ -509,7 +605,11 @@ def check_branch(gate: Gate, root: Path, branch: str) -> dict[str, object]:
 def check_selector(gate: Gate, root: Path, branch: str, selector: str) -> None:
     """A selector must name a marker the ref's own pyproject registers."""
 
-    marker = selector.replace("-m", "").strip()
+    expression = re.sub(r"^\s*-m\s*", "", selector).strip()
+    markers = {
+        token for token in re.findall(r"[A-Za-z_][A-Za-z0-9_]*", expression)
+        if token not in {"and", "or", "not"}
+    }
     code, out, err = git(root, "show", f"{branch}:pyproject.toml")
     if code != 0:
         gate.add(
@@ -524,12 +624,12 @@ def check_selector(gate: Gate, root: Path, branch: str, selector: str) -> None:
         for line in out.splitlines()
         if line.strip().startswith('"') and ":" in line
     ]
-    if marker not in registered:
+    missing = sorted(markers.difference(registered))
+    if missing:
         gate.add(
             "selector_marker_unregistered",
             SEV_BLOCKER,
-            f"{branch} selector {selector!r} names marker {marker!r}, "
-            "which its own pyproject does not register",
+            f"{branch} selector {selector!r} names unregistered markers {missing!r}",
             evidence=f"git show {branch}:pyproject.toml",
         )
 
@@ -1105,6 +1205,7 @@ DIRTY_RULES = (
     ("context/coordination/", "session_dossier", "coordination dossier written this session"),
     (".github/workflows/", "release_candidate", "workflow contract"),
     ("CAPACIDADES_MAK.md", "durable_doc", "MAK capability contract"),
+    ("CAPACIDADES_FLUJO.md", "durable_doc", "FLUJO capability contract"),
     ("branch_profile.json", "release_candidate", "branch semantic contract"),
     ("README.md", "durable_doc", "repository entry document"),
     ("requirements-integration.txt", "release_candidate", "integration dependency contract"),
@@ -1224,6 +1325,14 @@ def build_push_plans(branches: list[dict[str, object]]) -> dict[str, object]:
     plans: dict[str, object] = {}
     for row in branches:
         branch = str(row["branch"])
+        if branch in INTEGRATED_BRANCHES:
+            plans[branch] = {
+                "publishable": False,
+                "why": "main is the integrated MAK + FLUJO validation baseline; deploy from an explicit lane",
+                "steps": [],
+                "executed": False,
+            }
+            continue
         if branch not in OPERATIONAL_BRANCHES:
             plans[branch] = {
                 "publishable": False,
@@ -1331,9 +1440,10 @@ def build_report(root: Path) -> dict[str, object]:
 
     verdict_mak = branch_verdict("MAK")
     verdict_flujo = branch_verdict("FLUJO")
-    if blockers or VERDICT_NOT_READY in (verdict_mak, verdict_flujo):
+    verdict_main = branch_verdict("main")
+    if blockers or VERDICT_NOT_READY in (verdict_main, verdict_mak, verdict_flujo):
         verdict = VERDICT_NOT_READY
-    elif unknowns or VERDICT_UNKNOWN in (verdict_mak, verdict_flujo):
+    elif unknowns or VERDICT_UNKNOWN in (verdict_main, verdict_mak, verdict_flujo):
         verdict = VERDICT_UNKNOWN
     else:
         verdict = VERDICT_IMPLEMENTED
@@ -1345,6 +1455,7 @@ def build_report(root: Path) -> dict[str, object]:
         "physical_root": str(root),
         "verdict": verdict,
         "verdict_overall": verdict,
+        "verdict_main": verdict_main,
         "verdict_MAK": verdict_mak,
         "verdict_FLUJO": verdict_flujo,
         "ready_to_push": verdict == VERDICT_READY,
@@ -1391,7 +1502,8 @@ def build_report(root: Path) -> dict[str, object]:
 def render_text(report: dict[str, object]) -> str:
     lines = [
         f"RESULTADO_GATE: {report['verdict']}",
-        f"verdict_MAK={report['verdict_MAK']} verdict_FLUJO={report['verdict_FLUJO']} "
+        f"verdict_main={report['verdict_main']} verdict_MAK={report['verdict_MAK']} "
+        f"verdict_FLUJO={report['verdict_FLUJO']} "
         f"verdict_overall={report['verdict_overall']}",
         f"{report['schema']} | root={report['physical_root']} | {report['date']}",
         f"scope: {report['verdict_scope']}",
