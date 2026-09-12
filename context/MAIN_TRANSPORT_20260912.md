@@ -52,8 +52,9 @@ exclusivos / 31 commits detrás** de `main`: uno es
 patch-equivalente al borrado de instrucciones de agente ya representado en
 `main`, y el segundo es un commit vacío intermedio; no queda trabajo portable
 nuevo que transportar. Los commits de ROOT-0 posteriores a esa base son
-reconciliación CI y registro/gate; no alteran esa interpretación. La medición
-viva antes de este último commit documental era 2 exclusivos / 34 detrás.
+reconciliación CI y registro/gate; no alteran esa interpretación. El inventario
+debe volver a medirse para cifras vivas; esta relación 2/31
+queda fijada sólo contra la base `f1d1d512`.
 `worktree-ciclo02-obras` y
 `worktree-hub-portafolio-trim` contienen, respectivamente, commits cuya
 modificación ya es patch-equivalente en `MAK`; sus refs se conservan como
@@ -89,8 +90,10 @@ forma real `python -c ... flujo.web.hub ... run_server`. Resultado live:
 topología; sus warnings restantes son higiene, referencias históricas o
 suites que el gate no ejecuta.
 
-El workflow remoto `CI integrated main` run `34674065535` sobre
-`f72476dd` terminó verde: **5152 passed, 110 skipped, 9 deselected**.
+El workflow remoto `CI integrated main` correspondiente al HEAD publicado al
+cierre de esta reconciliación terminó verde: **5152 passed, 110 skipped, 9
+deselected**. El run reproducible queda enlazado por el historial de Actions
+del commit de cierre, no por un SHA escrito dentro de este mismo registro.
 
 ## Decisiones
 
