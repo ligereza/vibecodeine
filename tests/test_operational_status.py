@@ -60,6 +60,7 @@ def test_operational_status_is_read_only_and_surfaces_next_actions(tmp_path: Pat
         "source_kind": "folder",
         "source_root_observed_present": True,
         "unknown_count": 1,
+        "unknowns": ["evidence"],
         "evidence_kinds": [],
         "next_action": "review_evidence",
     }]
