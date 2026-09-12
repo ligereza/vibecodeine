@@ -10,6 +10,7 @@ stays isolated, traceable, and pending review.
 from __future__ import annotations
 
 import json
+import sqlite3
 from pathlib import Path
 
 import pytest
@@ -31,6 +32,41 @@ def _tables(path: Path) -> dict[str, int]:
         }
     finally:
         conn.close()
+
+
+def _complete_seed(path: Path) -> None:
+    """Minimal complete-source marker for the promotion guard tests."""
+    conn = sqlite3.connect(path)
+    conn.execute("CREATE TABLE meta (clave TEXT PRIMARY KEY, valor TEXT)")
+    conn.execute(
+        "INSERT INTO meta VALUES (?, ?)",
+        ("rd_merge_version", "rd-canonical-complete-20260911-v1"),
+    )
+    conn.execute(
+        "CREATE TABLE rd_merge_manifest (source_id TEXT PRIMARY KEY, "
+        "source_path TEXT, sha256 TEXT, table_count INTEGER, row_count INTEGER, "
+        "action TEXT, note TEXT)"
+    )
+    for index in range(3):
+        conn.execute(
+            "INSERT INTO rd_merge_manifest VALUES (?, '', '', 0, 0, '', '')",
+            (f"source-{index}",),
+        )
+    for index in range(90):
+        conn.execute(f'CREATE TABLE "complete_layer_{index}" (value TEXT)')
+    conn.commit()
+    conn.close()
+
+
+def test_complete_source_promotion_is_atomic_and_guarded(tmp_path: Path):
+    source = tmp_path / "complete-source.db"
+    target = tmp_path / "rd.db"
+    _complete_seed(source)
+
+    db.build_rd_db(target, canonical_source=source)
+    assert db._complete_db_summary(target)["tables"] == 92
+    with pytest.raises(RuntimeError, match="se rechazo degradar"):
+        db.build_rd_db(target)
 
 
 def test_build_crea_las_6_tablas_con_datos(rd_db: Path):
