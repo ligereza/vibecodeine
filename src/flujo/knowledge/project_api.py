@@ -92,6 +92,9 @@ def _review_queue_summary(
             str(item.get("kind")) for item in evidence
             if isinstance(item, dict) and item.get("kind")
         })
+        unknowns = record.get("unknowns", []) if isinstance(record, dict) else []
+        safe_unknowns = [str(item)[:300] for item in unknowns
+                         if isinstance(item, (str, int, float))]
         project_items.append({
             "project_id": str(project_id),
             "title": str(title),
@@ -100,6 +103,7 @@ def _review_queue_summary(
                 source.get("root_exists") if isinstance(source, dict) else None
             ),
             "unknown_count": len(record.get("unknowns", [])) if isinstance(record, dict) and isinstance(record.get("unknowns", []), list) else 0,
+            "unknowns": safe_unknowns,
             "evidence_kinds": evidence_kinds,
             "next_action": str(record.get("next_action") or "") if isinstance(record, dict) else "",
         })
