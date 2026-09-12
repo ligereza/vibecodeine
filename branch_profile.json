@@ -1,6 +1,10 @@
 {
   "schema": "vibecodeine-branch-profile-v1",
   "branch": "FLUJO",
+  "canonical_ref": "FLUJO",
+  "lane": "FLUJO",
+  "kind": "operational",
+  "integration_target": "main",
   "role": "portable workflow engine",
   "default_test_selector": "-m flujo",
   "capabilities": "CAPACIDADES_FLUJO.md",
