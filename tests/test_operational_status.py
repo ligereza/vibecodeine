@@ -49,6 +49,15 @@ def test_operational_status_is_read_only_and_surfaces_next_actions(tmp_path: Pat
     assert "projects:review_required" in ids
     assert "episodes:needs_evidence" in ids
     assert result["next_actions"]
+    review_queue = result["learning"]["review_queue"]
+    assert review_queue["projects"] == {
+        "total": 1,
+        "by_source_kind": {"folder": 1},
+    }
+    assert review_queue["episodes"] == {
+        "open_total": 1,
+        "by_phase_status": {"gate": {"needs_evidence": 1}},
+    }
 
 
 def test_operational_status_reports_missing_ledger_without_writing(tmp_path: Path) -> None:

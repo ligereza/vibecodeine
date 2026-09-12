@@ -25,8 +25,8 @@ from .learning_policy import learning_summary as learning_policy_summary
 from .learning_policy import VERIFIED_OUTCOME_STATUSES as VERIFIED_EPISODE_STATUSES
 
 
-def _open_episode_states(con: sqlite3.Connection) -> dict[str, int]:
-    """Count only the episode states a project has not resolved yet.
+def _open_episode_rows(con: sqlite3.Connection) -> list[tuple[str, str, str]]:
+    """Return open episode rows after applying the per-project resolution gate.
 
     Episodes are immutable history. A project that recorded ``needs_evidence``
     and later recorded a verified execution has answered that item, so counting
@@ -37,23 +37,71 @@ def _open_episode_states(con: sqlite3.Connection) -> dict[str, int]:
     Read-only: this only reads ``project_episodes`` in row order.
     """
     latest_verified: dict[str, int] = {}
-    rows: list[tuple[int, str, str]] = []
-    for rowid, project_id, status in con.execute(
-        "SELECT rowid, project_id, status FROM project_episodes ORDER BY rowid"
+    rows: list[tuple[int, str, str, str]] = []
+    for rowid, project_id, phase, status in con.execute(
+        "SELECT rowid, project_id, phase, status FROM project_episodes ORDER BY rowid"
     ):
         state = str(status or "").casefold()
         project = str(project_id or "")
-        rows.append((int(rowid), project, state))
+        rows.append((int(rowid), project, str(phase or "unknown"), state))
         if state in VERIFIED_EPISODE_STATUSES:
             latest_verified[project] = int(rowid)
-    counts: dict[str, int] = {}
-    for rowid, project, state in rows:
+    open_rows: list[tuple[str, str, str]] = []
+    for rowid, project, phase, state in rows:
         if state in VERIFIED_EPISODE_STATUSES:
             continue
         if latest_verified.get(project, -1) > rowid:
             continue  # a later verified episode answered this one
+        open_rows.append((project, phase, state))
+    return open_rows
+
+
+def _open_episode_states(con: sqlite3.Connection) -> dict[str, int]:
+    """Count only the episode states a project has not resolved yet."""
+    counts: dict[str, int] = {}
+    for _project, _phase, state in _open_episode_rows(con):
         counts[state] = counts.get(state, 0) + 1
     return counts
+
+
+def _review_queue_summary(
+    con: sqlite3.Connection,
+    open_episode_rows: list[tuple[str, str, str]],
+) -> dict[str, Any]:
+    """Expose bounded review composition without creating a second queue."""
+    by_source_kind: dict[str, int] = {}
+    total_projects = 0
+    for encoded in con.execute(
+        "SELECT ir_json FROM project_records WHERE state='review_required'"
+    ):
+        total_projects += 1
+        try:
+            record = json.loads(encoded[0])
+        except (TypeError, json.JSONDecodeError):
+            record = {}
+        source = record.get("source", {}) if isinstance(record, dict) else {}
+        kind = str(source.get("kind") or "unknown") if isinstance(source, dict) else "unknown"
+        by_source_kind[kind] = by_source_kind.get(kind, 0) + 1
+
+    by_phase_status: dict[str, dict[str, int]] = {}
+    for _project, phase, status in open_episode_rows:
+        phase_key = str(phase or "unknown")
+        status_key = str(status or "unknown")
+        phase_counts = by_phase_status.setdefault(phase_key, {})
+        phase_counts[status_key] = phase_counts.get(status_key, 0) + 1
+    return {
+        "projects": {
+            "total": total_projects,
+            "by_source_kind": dict(sorted(by_source_kind.items())),
+        },
+        "episodes": {
+            "open_total": len(open_episode_rows),
+            "by_phase_status": {
+                phase: dict(sorted(statuses.items()))
+                for phase, statuses in sorted(by_phase_status.items())
+            },
+        },
+    }
 
 
 def _read_only_connection(path: Path) -> sqlite3.Connection:
@@ -86,7 +134,13 @@ def learning_summary(database: str | Path) -> dict[str, Any]:
         # episode stays open only while that project has no later verified one,
         # which is exactly what its own next_action describes ("attach
         # verifiable evidence, then run the validator again").
-        result["episodes_open"] = _open_episode_states(con)
+        open_episode_rows = _open_episode_rows(con)
+        result["episodes_open"] = {
+            status: sum(1 for _project, _phase, row_status in open_episode_rows
+                        if row_status == status)
+            for status in sorted({row[2] for row in open_episode_rows})
+        }
+        result["review_queue"] = _review_queue_summary(con, open_episode_rows)
         result["rules"] = {row[0]: row[1] for row in con.execute("SELECT status,COUNT(*) FROM semantic_rules GROUP BY status")} if "semantic_rules" in tables else {}
         if "project_contracts" in tables:
             result["contracts"] = {
