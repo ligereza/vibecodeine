@@ -38,8 +38,11 @@ def _open_episode_rows(con: sqlite3.Connection) -> list[tuple[str, str, str]]:
     """
     latest_verified: dict[str, int] = {}
     rows: list[tuple[int, str, str, str]] = []
+    columns = {row[1] for row in con.execute("PRAGMA table_info(project_episodes)")}
+    phase_expression = "phase" if "phase" in columns else "''"
     for rowid, project_id, phase, status in con.execute(
-        "SELECT rowid, project_id, phase, status FROM project_episodes ORDER BY rowid"
+        f"SELECT rowid, project_id, {phase_expression}, status "
+        "FROM project_episodes ORDER BY rowid"
     ):
         state = str(status or "").casefold()
         project = str(project_id or "")

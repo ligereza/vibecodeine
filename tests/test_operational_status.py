@@ -59,7 +59,7 @@ def test_operational_status_is_read_only_and_surfaces_next_actions(tmp_path: Pat
         "source_root_observed_present": True,
         "unknown_count": 1,
         "evidence_kinds": [],
-        "next_action": "",
+        "next_action": "review_evidence",
     }]
     assert review_queue["episodes"] == {
         "open_total": 1,
