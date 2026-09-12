@@ -15,6 +15,7 @@ What it answers, in order of consequence:
     3. whether `main` has branch protection, because a cron line merges PRs
     4. how many cron lines would start if resumed
     5. the Python environments and their size
+    6. the bounded Git state of the active component checkouts
 
 It changes nothing: not the crontab, not a service, not a file.
 
@@ -37,6 +38,18 @@ from pathlib import Path
 HOME = Path("/home/mak")
 REPO = HOME / "flujo"
 ORGANS = [("research", 8890), ("codex", 8891), ("plataforma", 8900)]
+REPOSITORIES = (
+    ("MAK", HOME),
+    ("FLUJO", REPO),
+    ("XIO", HOME / "XIO"),
+    ("LUCIDA", HOME / "LUCIDA"),
+    ("WACHUMA", HOME / "WACHUMA"),
+    ("FARMAKSIA", HOME / "FARMAKSIA"),
+    ("VIZZ", HOME / "VIZZ"),
+    ("IRIS", HOME / "IRIS"),
+    ("bucle", HOME / "bucle"),
+    ("PUPILA", HOME / "PUPILA"),
+)
 
 
 def sh_result(*args: str, timeout: int = 60) -> tuple[str, str, bool]:
@@ -162,6 +175,52 @@ def cron_details(paused_lines: list[str]) -> list[dict[str, str | int | bool | N
     return details
 
 
+def repository_snapshot() -> list[dict[str, object]]:
+    """Measure bounded Git transport state without fetch, checkout or writes."""
+    rows: list[dict[str, object]] = []
+    for name, path in REPOSITORIES:
+        if not (path / ".git").exists():
+            rows.append({"name": name, "path": str(path), "available": False,
+                         "reason": "git_missing"})
+            continue
+        branch, branch_err, branch_ok = sh_result(
+            "git", "-C", str(path), "branch", "--show-current")
+        head, head_err, head_ok = sh_result(
+            "git", "-C", str(path), "rev-parse", "--short", "HEAD")
+        if not branch_ok or not head_ok:
+            rows.append({"name": name, "path": str(path), "available": False,
+                         "reason": "git_probe_failed"})
+            continue
+        status, _status_err, status_ok = sh_result(
+            "git", "-C", str(path), "status", "--porcelain=v1")
+        upstream, _upstream_err, upstream_ok = sh_result(
+            "git", "-C", str(path), "rev-parse", "--abbrev-ref",
+            "--symbolic-full-name", "@{upstream}")
+        upstream_name = upstream.strip() if upstream_ok and upstream.strip() else None
+        ahead = behind = None
+        if upstream_name:
+            transport, _transport_err, transport_ok = sh_result(
+                "git", "-C", str(path), "rev-list", "--left-right", "--count",
+                "HEAD...@{upstream}")
+            if transport_ok:
+                fields = transport.split()
+                if len(fields) == 2 and all(field.isdigit() for field in fields):
+                    ahead, behind = int(fields[0]), int(fields[1])
+        rows.append({
+            "name": name,
+            "path": str(path),
+            "available": True,
+            "branch": branch.strip(),
+            "head": head.strip(),
+            "upstream": upstream_name,
+            "ahead": ahead,
+            "behind": behind,
+            "dirty_files": len(status.splitlines()) if status_ok else None,
+            "status_probe": "ok" if status_ok else "failed",
+        })
+    return rows
+
+
 def heartbeat_snapshot(active: int, paused_lines: list[str],
                        *, cron_available: bool = True) -> dict[str, object]:
     """Emit a machine-readable organism pulse without changing the machine."""
@@ -204,6 +263,7 @@ def heartbeat_snapshot(active: int, paused_lines: list[str],
             "details": details,
         },
         "organs": organs,
+        "repositories": repository_snapshot(),
         "branch_protection": {
             "available": protection_ok or protection_not_found,
             "classic_present": (bool(protection.strip()) and not protection_not_found)
@@ -303,6 +363,16 @@ def main(argv: list[str] | None = None) -> int:
         if (env / "bin" / "python").exists():
             size = sh("du", "-sh", str(env), timeout=90).split("\t")[0] or "?"
             print(f"     {size:>7}  {env}")
+    print("\n6. repositorios: estado Git acotado (sin fetch ni escritura)")
+    for row in repository_snapshot():
+        if not row["available"]:
+            print(f"     {row['name']:<10} no disponible ({row['reason']})")
+            continue
+        transport = "sin upstream" if row["upstream"] is None else (
+            f"ahead={row['ahead']} behind={row['behind']}"
+        )
+        print(f"     {row['name']:<10} {row['branch'] or '(detached)':<36} "
+              f"{row['head']}  dirty={row['dirty_files']}  {transport}")
     return 0 if cron_available else 1
 
 
