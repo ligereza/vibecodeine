@@ -20,9 +20,6 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[1]
-# The FLUJO checkout, as seen from this one. It is a separate worktree excluded
-# from this branch, so a path under it resolves on the box and nowhere else.
-PEER_CHECKOUT = "flujo"
 WEB_SRC = ROOT / "web" / "src"
 MODULE_SUFFIXES = {".ts", ".tsx"}
 STALE_TOKENS = (
@@ -39,28 +36,28 @@ DB_PATHS = (
 )
 DB_CONSUMERS = {
     "data/rd.db": (
-        "flujo/src/flujo/rd/database.py",
-        "flujo/src/flujo/departments.py",
-        "flujo/src/flujo/knowledge/operational_bridge.py",
+        "src/flujo/rd/database.py",
+        "src/flujo/departments.py",
+        "src/flujo/knowledge/operational_bridge.py",
         "tools/gen_propuesta_directiva.py",
         "cultura/mak_plataforma/hub.py",
     ),
     "data/rd_datos.db": (
-        "flujo/src/flujo/rd/datos.py",
-        "flujo/src/flujo/rd/informe.py",
-        "flujo/src/flujo/departments.py",
-        "flujo/src/flujo/web/hub.py",
+        "src/flujo/rd/datos.py",
+        "src/flujo/rd/informe.py",
+        "src/flujo/departments.py",
+        "src/flujo/web/hub.py",
     ),
     "data/mak_knowledge.db": (
-        "flujo/src/flujo/knowledge/project_api.py",
-        "flujo/src/flujo/knowledge/system_status.py",
-        "flujo/src/flujo/knowledge/operational_bridge.py",
-        "flujo/src/flujo/web/hub.py",
+        "src/flujo/knowledge/project_api.py",
+        "src/flujo/knowledge/system_status.py",
+        "src/flujo/knowledge/operational_bridge.py",
+        "src/flujo/web/hub.py",
         "cultura/mak_plataforma/hub.py",
         "tools/build_application_intake.py",
         "tools/mak_status.py",
     ),
-    "data/flujo.db": ("flujo/src/flujo/index/db.py", "flujo/src/flujo/cli.py"),
+    "data/flujo.db": ("src/flujo/index/db.py", "src/flujo/cli.py"),
 }
 
 TOOL_SEARCH_ROOTS = (
@@ -85,9 +82,7 @@ TOOL_SKIP_DIRS = {
 # operator-facing MAK tool.  Keep it out of the consumer inventory so adding
 # a classifier does not change the inventory contract or count it as its own
 # consumer.
-# `__init__.py` is the package marker that pins `tools.__path__` to this
-# repository; it declares no capability and has no consumer to name.
-TOOL_INVENTORY_EXCLUDE = {"test_lane_map.py", "__init__.py"}
+TOOL_INVENTORY_EXCLUDE = {"test_lane_map.py"}
 
 # A missing in-tree reference is not a consumer decision.  The paths below are
 # the explicit disposition for every current zero-reference top-level tool.
@@ -96,38 +91,29 @@ TOOL_INVENTORY_EXCLUDE = {"test_lane_map.py", "__init__.py"}
 # support.  Neither status asserts a consumer, retirement, or execution
 # permission.
 NO_REFERENCE_CLASSIFICATIONS = {
-    # capabilities.py has current consumer evidence in tests and the
-    # integrated workflow, so it is intentionally absent from this
-    # zero-reference disposition table.
-    # `gen_propuesta_directiva` left this table on 2026-09-04: it now has a
-    # consumer, `tests/test_gen_propuesta_directiva.py`, which holds it to the
-    # three promises its docstring makes about a document the board reads.
-    # `substrate_scan` left this table on 2026-09-04: it now has a consumer,
-    # `tests/test_substrate_scan_manifest.py`, which holds `build_manifest` to
-    # the repeatability contract the module's docstring describes.
-    "verify_learning_hashmaps": {"status": "manual_only", "source": "separation_20260902"},
     "aep_reference_scan": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "arica01_portfolio": {"status": "manual_only", "source": "capabilities_5_ter"},
     "bake_static_materials": {"status": "manual_only", "source": "capabilities_5_ter"},
     "build_duplicate_decision_report": {"status": "historical_support", "source": "cli_declared"},
     "build_effort_consumer_crosswalk": {"status": "manual_only", "source": "capabilities_5_ter"},
     "build_mak_canonical_map": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "certified_query": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "classification_review": {"status": "manual_only", "source": "capabilities_5_ter"},
     "compile_contracurator": {"status": "manual_only", "source": "capabilities_5_ter"},
-    # `compute_effort_residuals` left this table on 2026-09-04: it now has a
-    # consumer, `tests/test_compute_effort_residuals.py`, which holds
-    # `robust_scale` to the robustness its own docstring claims.
-    # `consolidate_static_duplicates` left this table on 2026-09-04: it now has
-    # a consumer, `tests/test_consolidate_static_duplicates.py`, which measures
-    # the `check_path` gate that keeps the tool out of WIN, GoogleDrive,
-    # OneDrive and the flujo checkout. A zero-reference classification for a
-    # referenced tool is exactly the staleness this table's own check reports.
+    "compile_portfolio": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "compile_ssd_order_foundation": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "compute_effort_residuals": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "consolidate_static_duplicates": {"status": "historical_support", "source": "cli_declared"},
     "context_pack": {"status": "manual_only", "source": "cli_declared"},
     "drenar_material": {"status": "manual_only", "source": "capabilities_5_ter"},
     "execute_research_job": {"status": "manual_only", "source": "capabilities_5_ter"},
     "gen_dashboard_productoras": {"status": "manual_only", "source": "capabilities_5_ter"},
     "gen_iskvw_prototipo": {"status": "manual_only", "source": "capabilities_5_ter"},
     "gen_presentacion_db": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "gen_rd_standalone": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "handoff": {"status": "manual_only", "source": "cli_declared"},
+    "import_project_reconstruction": {"status": "manual_only", "source": "capabilities_5_ter"},
     "instalar_enviar_a_mak": {"status": "historical_support", "source": "cli_declared"},
-    "link_motor_checkout": {"status": "manual_only", "source": "cli_declared"},
     "mak_fuse_roots": {"status": "historical_support", "source": "cli_declared"},
     "mak_materialize_fused_root": {"status": "historical_support", "source": "cli_declared"},
     "mak_status": {"status": "manual_only", "source": "runtime_status_cli"},
@@ -140,29 +126,20 @@ NO_REFERENCE_CLASSIFICATIONS = {
     "project_learning": {"status": "manual_only", "source": "capabilities_5_ter"},
     "reconcile_garden_knowledge": {"status": "manual_only", "source": "capabilities_5_ter"},
     "render_archaeology_deliverables": {"status": "manual_only", "source": "cli_declared"},
+    "run_vision_feedback": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "show_asset_usage": {"status": "manual_only", "source": "capabilities_5_ter"},
     "substrate_experiment": {"status": "manual_only", "source": "capabilities_5_ter"},
     "tapiz_live_loop": {"status": "manual_only", "source": "cli_declared"},
+    "tennis_mcp_ingest": {"status": "manual_only", "source": "capabilities_5_ter"},
     "token_budget": {"status": "manual_only", "source": "cli_declared"},
     "triangulate_project_context": {"status": "manual_only", "source": "capabilities_5_ter"},
+    "venue_screen_setup": {"status": "manual_only", "source": "capabilities_5_ter"},
     "verify_all": {"status": "manual_only", "source": "cli_declared"},
     "verify_learning_hashmaps": {"status": "manual_only", "source": "cli_declared"},
     "watsonx_coder_bench": {"status": "manual_only", "source": "cli_declared"},
     "watsonx_smoke": {"status": "manual_only", "source": "cli_declared"},
     "watsonx_vision_bench": {"status": "manual_only", "source": "cli_declared"},
     "watsonx_vision_smoke": {"status": "manual_only", "source": "cli_declared"},
-    # These FLUJO tools are carried by integrated main but have no in-tree
-    # consumer; their explicit CLI remains the evidence for manual use.
-    "arica01_portfolio": {"status": "manual_only", "source": "integrated_main_union"},
-    "certified_query": {"status": "manual_only", "source": "integrated_main_union"},
-    "classification_review": {"status": "manual_only", "source": "integrated_main_union"},
-    "compile_portfolio": {"status": "manual_only", "source": "integrated_main_union"},
-    "compile_ssd_order_foundation": {"status": "manual_only", "source": "integrated_main_union"},
-    "gen_rd_standalone": {"status": "manual_only", "source": "integrated_main_union"},
-    "import_project_reconstruction": {"status": "manual_only", "source": "integrated_main_union"},
-    "run_vision_feedback": {"status": "manual_only", "source": "integrated_main_union"},
-    "show_asset_usage": {"status": "manual_only", "source": "integrated_main_union"},
-    "tennis_mcp_ingest": {"status": "manual_only", "source": "integrated_main_union"},
-    "venue_screen_setup": {"status": "manual_only", "source": "integrated_main_union"},
 }
 
 
@@ -440,23 +417,9 @@ def _db_inventory() -> list[dict[str, Any]]:
             "exists": path.is_file(),
             "consumers": list(DB_CONSUMERS.get(relative, ())),
         }
-        # Most declared consumers of these databases are motor files under
-        # `flujo/`, which is the FLUJO checkout: a separate worktree, excluded
-        # from this branch, present on the box and absent from a fresh clone or
-        # any agent worktree. Checking them as if they were tracked content
-        # reported four consumers "missing" and flipped `ok` to False, so the
-        # audit read as a broken inventory whenever it ran anywhere but
-        # /home/mak. Measured 2026-09-02. Absent-because-elsewhere is not a
-        # finding; it is the topology, and it gets its own field.
-        peer = [consumer for consumer in item["consumers"]
-                if Path(consumer).parts[:1] == (PEER_CHECKOUT,)]
-        peer_present = (ROOT / PEER_CHECKOUT).is_dir()
-        item["peer_consumers"] = list(peer)
-        item["unverifiable_consumers"] = [] if peer_present else list(peer)
         item["missing_consumers"] = [
             consumer for consumer in item["consumers"]
             if not (ROOT / consumer).is_file()
-            and consumer not in item["unverifiable_consumers"]
         ]
         if not path.is_file():
             inventory.append(item)
