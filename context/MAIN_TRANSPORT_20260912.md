@@ -36,24 +36,25 @@ hereda `branch=MAK` queda correctamente resuelto como integración `main`; sólo
 ## Auditoría de contenido y genealogía
 
 Los cuatro refs canónicos locales/remotos están en paridad `0/0`; la siguiente
-es la medición de refs canónicos antes del commit de este registro
-(`audit_base_sha=f72476dd` para `main`):
+es la medición de refs canónicos antes de la reconciliación CI
+(`audit_base_sha=f1d1d512` para `main`):
 
 | ref | commit publicado |
 |---|---|
-| `main` | `audit_base_sha=f72476dd` |
+| `main` | `audit_base_sha=f1d1d512` |
 | `MAK` | `ef85f6be` |
 | `FLUJO` | `87c849fd` |
 | `integration/flujo-canonical-20260911` | `87c849fd` |
 
 El alias de integración FLUJO es el mismo contenido que `FLUJO`. En la base de
-auditoría `f72476dd`, el alias `main-union-mak-flujo` estaba **2 commits
+auditoría `f1d1d512`, el alias `main-union-mak-flujo` estaba **2 commits
 exclusivos / 31 commits detrás** de `main`: uno es
 patch-equivalente al borrado de instrucciones de agente ya representado en
 `main`, y el segundo es un commit vacío intermedio; no queda trabajo portable
-nuevo que transportar. Los dos commits de ROOT-0 posteriores a esa base son
-registro/gate y no alteran esa interpretación; por eso la medición viva actual
-es 2 exclusivos / 33 detrás. `worktree-ciclo02-obras` y
+nuevo que transportar. Los commits de ROOT-0 posteriores a esa base son
+reconciliación CI y registro/gate; no alteran esa interpretación. La medición
+viva antes de este último commit documental era 2 exclusivos / 34 detrás.
+`worktree-ciclo02-obras` y
 `worktree-hub-portafolio-trim` contienen, respectivamente, commits cuya
 modificación ya es patch-equivalente en `MAK`; sus refs se conservan como
 checkpoints, no como entidades nuevas.
