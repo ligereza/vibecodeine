@@ -41,3 +41,27 @@ def test_repository_snapshot_fails_closed_when_git_is_unavailable(monkeypatch, t
         "available": False,
         "reason": "git_probe_failed",
     }]
+
+
+def test_mount_snapshot_reports_mount_probe_without_remote_access(monkeypatch, tmp_path):
+    mount = tmp_path / "mount"
+    mount.mkdir()
+    monkeypatch.setattr(organismo, "MOUNTS", (("fixture", mount),))
+    calls = []
+
+    def fake_sh_result(*args, **kwargs):
+        calls.append(args)
+        return "", "", True
+
+    monkeypatch.setattr(organismo, "sh_result", fake_sh_result)
+
+    result = organismo.mount_snapshot()
+
+    assert result == [{
+        "name": "fixture",
+        "path": str(mount),
+        "exists": True,
+        "mounted": True,
+        "probe": "ok",
+    }]
+    assert calls == [("mountpoint", "-q", str(mount))]

@@ -50,6 +50,10 @@ REPOSITORIES = (
     ("bucle", HOME / "bucle"),
     ("PUPILA", HOME / "PUPILA"),
 )
+MOUNTS = (
+    ("google_drive", HOME / "GoogleDrive"),
+    ("onedrive", HOME / "OneDrive"),
+)
 
 
 def sh_result(*args: str, timeout: int = 60) -> tuple[str, str, bool]:
@@ -231,6 +235,22 @@ def repository_snapshot() -> list[dict[str, object]]:
     return rows
 
 
+def mount_snapshot() -> list[dict[str, object]]:
+    """Measure configured FUSE mountpoints without touching remote contents."""
+    rows: list[dict[str, object]] = []
+    for name, path in MOUNTS:
+        exists = path.exists()
+        if not exists:
+            rows.append({"name": name, "path": str(path), "exists": False,
+                         "mounted": False, "probe": "path_missing"})
+            continue
+        _stdout, stderr, ok = sh_result("mountpoint", "-q", str(path))
+        probe = "ok" if ok or not stderr else "failed"
+        rows.append({"name": name, "path": str(path), "exists": True,
+                     "mounted": ok if probe == "ok" else None, "probe": probe})
+    return rows
+
+
 def heartbeat_snapshot(active: int, paused_lines: list[str],
                        *, cron_available: bool = True) -> dict[str, object]:
     """Emit a machine-readable organism pulse without changing the machine."""
@@ -274,6 +294,7 @@ def heartbeat_snapshot(active: int, paused_lines: list[str],
         },
         "organs": organs,
         "repositories": repository_snapshot(),
+        "mounts": mount_snapshot(),
         "branch_protection": {
             "available": protection_ok or protection_not_found,
             "classic_present": (bool(protection.strip()) and not protection_not_found)
@@ -385,6 +406,13 @@ def main(argv: list[str] | None = None) -> int:
         )
         print(f"     {row['name']:<10} {row['branch'] or '(detached)':<36} "
               f"{row['head']}  dirty={row['dirty_files']}  {transport}")
+    print("\n7. mounts FUSE")
+    for row in mount_snapshot():
+        if row["probe"] == "failed":
+            state = "INDETERMINADO"
+        else:
+            state = "MONTADO" if row["mounted"] else "NO MONTADO"
+        print(f"     {row['name']:<12} {state:<13} {row['path']}")
     return 0 if cron_available else 1
 
 
