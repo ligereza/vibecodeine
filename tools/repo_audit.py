@@ -96,28 +96,15 @@ TOOL_INVENTORY_EXCLUDE = {"test_lane_map.py", "__init__.py"}
 # support.  Neither status asserts a consumer, retirement, or execution
 # permission.
 NO_REFERENCE_CLASSIFICATIONS = {
-    # separation_20260902: the MAK/FLUJO split removed the tools and tests that
-    # referenced these, so each lost its consumer evidence without changing.
-    # They are operator-invoked, which is what manual_only means; the audit
-    # keeps them declared rather than letting an unreferenced tool pass
-    # silently.
-    "audit_blend_scene": {"status": "manual_only", "source": "separation_20260902"},
-    "capabilities": {"status": "manual_only", "source": "separation_20260902"},
-    "compile_opportunity_constraints": {"status": "manual_only", "source": "separation_20260902"},
-    "compile_opportunity_delta": {"status": "manual_only", "source": "separation_20260902"},
-    "compile_research_frontier": {"status": "manual_only", "source": "separation_20260902"},
-    "compile_selective_recompute_receipt": {"status": "manual_only", "source": "separation_20260902"},
-    "compile_vigia_capture_plans": {"status": "manual_only", "source": "separation_20260902"},
+    # capabilities.py has current consumer evidence in tests and the
+    # integrated workflow, so it is intentionally absent from this
+    # zero-reference disposition table.
     # `gen_propuesta_directiva` left this table on 2026-09-04: it now has a
     # consumer, `tests/test_gen_propuesta_directiva.py`, which holds it to the
     # three promises its docstring makes about a document the board reads.
-    "generate_artistic_program_hypotheses": {"status": "manual_only", "source": "separation_20260902"},
-    "inspect_operational_memberships": {"status": "manual_only", "source": "separation_20260902"},
-    "order_projection": {"status": "manual_only", "source": "separation_20260902"},
     # `substrate_scan` left this table on 2026-09-04: it now has a consumer,
     # `tests/test_substrate_scan_manifest.py`, which holds `build_manifest` to
     # the repeatability contract the module's docstring describes.
-    "triangulate_research_evidence": {"status": "manual_only", "source": "separation_20260902"},
     "verify_learning_hashmaps": {"status": "manual_only", "source": "separation_20260902"},
     "aep_reference_scan": {"status": "manual_only", "source": "capabilities_5_ter"},
     "bake_static_materials": {"status": "manual_only", "source": "capabilities_5_ter"},
@@ -163,6 +150,19 @@ NO_REFERENCE_CLASSIFICATIONS = {
     "watsonx_smoke": {"status": "manual_only", "source": "cli_declared"},
     "watsonx_vision_bench": {"status": "manual_only", "source": "cli_declared"},
     "watsonx_vision_smoke": {"status": "manual_only", "source": "cli_declared"},
+    # These FLUJO tools are carried by integrated main but have no in-tree
+    # consumer; their explicit CLI remains the evidence for manual use.
+    "arica01_portfolio": {"status": "manual_only", "source": "integrated_main_union"},
+    "certified_query": {"status": "manual_only", "source": "integrated_main_union"},
+    "classification_review": {"status": "manual_only", "source": "integrated_main_union"},
+    "compile_portfolio": {"status": "manual_only", "source": "integrated_main_union"},
+    "compile_ssd_order_foundation": {"status": "manual_only", "source": "integrated_main_union"},
+    "gen_rd_standalone": {"status": "manual_only", "source": "integrated_main_union"},
+    "import_project_reconstruction": {"status": "manual_only", "source": "integrated_main_union"},
+    "run_vision_feedback": {"status": "manual_only", "source": "integrated_main_union"},
+    "show_asset_usage": {"status": "manual_only", "source": "integrated_main_union"},
+    "tennis_mcp_ingest": {"status": "manual_only", "source": "integrated_main_union"},
+    "venue_screen_setup": {"status": "manual_only", "source": "integrated_main_union"},
 }
 
 
