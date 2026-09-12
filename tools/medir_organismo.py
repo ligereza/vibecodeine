@@ -197,6 +197,14 @@ def repository_snapshot() -> list[dict[str, object]]:
             "git", "-C", str(path), "rev-parse", "--abbrev-ref",
             "--symbolic-full-name", "@{upstream}")
         upstream_name = upstream.strip() if upstream_ok and upstream.strip() else None
+        default_remote, _default_err, default_ok = sh_result(
+            "git", "-C", str(path), "symbolic-ref", "--quiet", "--short",
+            "refs/remotes/origin/HEAD"
+        )
+        branch_ref = f"refs/remotes/origin/{branch.strip()}"
+        _remote_branch, _remote_branch_err, remote_branch_ok = sh_result(
+            "git", "-C", str(path), "show-ref", "--verify", "--quiet", branch_ref
+        )
         ahead = behind = None
         if upstream_name:
             transport, _transport_err, transport_ok = sh_result(
@@ -213,6 +221,8 @@ def repository_snapshot() -> list[dict[str, object]]:
             "branch": branch.strip(),
             "head": head.strip(),
             "upstream": upstream_name,
+            "origin_default": default_remote.strip() if default_ok and default_remote.strip() else None,
+            "branch_published": remote_branch_ok,
             "ahead": ahead,
             "behind": behind,
             "dirty_files": len(status.splitlines()) if status_ok else None,
@@ -368,8 +378,10 @@ def main(argv: list[str] | None = None) -> int:
         if not row["available"]:
             print(f"     {row['name']:<10} no disponible ({row['reason']})")
             continue
-        transport = "sin upstream" if row["upstream"] is None else (
-            f"ahead={row['ahead']} behind={row['behind']}"
+        transport = (
+            f"sin upstream; origin_default={row['origin_default']} "
+            f"branch_published={'si' if row['branch_published'] else 'no'}"
+            if row["upstream"] is None else f"ahead={row['ahead']} behind={row['behind']}"
         )
         print(f"     {row['name']:<10} {row['branch'] or '(detached)':<36} "
               f"{row['head']}  dirty={row['dirty_files']}  {transport}")
