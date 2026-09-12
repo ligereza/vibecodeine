@@ -319,15 +319,30 @@ def _dependency_component(repo: Path) -> dict[str, Any]:
     )
 
 
+def _provider_source_root(repo: Path, physical: Path) -> Path | None:
+    """Return the checkout that owns the provider registry for this topology."""
+    repo_provider = repo / "cultura" / "mak_plataforma" / "providers.py"
+    if repo_provider.is_file():
+        return repo
+    physical_provider = physical / "cultura" / "mak_plataforma" / "providers.py"
+    if physical_provider.is_file():
+        return physical
+    return None
+
+
 def _provider_component(repo: Path, physical: Path) -> dict[str, Any]:
     try:
         # The CLI is launched from ``tools/`` and therefore does not always
-        # have the repository root on sys.path.  Add only this known source
-        # root for the in-process registry import; no files are changed.
+        # have the repository root on sys.path.  A portable FLUJO checkout can
+        # also be an adapter whose MAK provider registry lives in the physical
+        # sibling root; resolve that authority before importing it. No files
+        # are changed.
         import sys as _sys
-        repo_text = str(repo)
-        if repo_text not in _sys.path:
-            _sys.path.insert(0, repo_text)
+        source_root = _provider_source_root(repo, physical)
+        if source_root is not None:
+            source_text = str(source_root)
+            if source_text not in _sys.path:
+                _sys.path.insert(0, source_text)
         try:
             from cultura.mak_plataforma import providers
         except ImportError:

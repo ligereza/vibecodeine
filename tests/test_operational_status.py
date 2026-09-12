@@ -6,7 +6,7 @@ from pathlib import Path
 
 from flujo.knowledge.project_api import operational_status
 from flujo.knowledge.project_ir import LearningStore, build_project_ir
-from flujo.knowledge.system_status import system_status
+from flujo.knowledge.system_status import _provider_source_root, system_status
 
 
 def test_operational_status_is_read_only_and_surfaces_next_actions(tmp_path: Path) -> None:
@@ -68,6 +68,16 @@ def test_system_status_keeps_component_contract_when_provider_box_is_absent(tmp_
     assert result["schema"] == "mak-system-status-v1"
     assert all("severity" in component for component in result["components"].values())
     assert result["components"]["providers"]["severity"] == "attention"
+
+
+def test_system_status_resolves_provider_box_from_physical_adapter_root(tmp_path: Path) -> None:
+    repo = tmp_path / "flujo"
+    physical = tmp_path / "mak"
+    provider = physical / "cultura" / "mak_plataforma" / "providers.py"
+    provider.parent.mkdir(parents=True)
+    provider.write_text("# fixture provider registry\n", encoding="utf-8")
+
+    assert _provider_source_root(repo, physical) == physical
 
 
 def test_flujo_adapter_resolves_physical_learning_authority(tmp_path: Path, monkeypatch) -> None:
