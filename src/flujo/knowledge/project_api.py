@@ -49,9 +49,30 @@ def _open_episode_rows(con: sqlite3.Connection) -> list[tuple[str, str, str]]:
         rows.append((int(rowid), project, str(phase or "unknown"), state))
         if state in VERIFIED_EPISODE_STATUSES:
             latest_verified[project] = int(rowid)
+    # A later episode that explicitly names an earlier episode is its
+    # successor in the same append-only lineage.  The parent remains useful
+    # history, but it is no longer a second current uncertainty.  Older
+    # fixtures may not have the parent column, hence the bounded compatibility
+    # path above and the separate query below.
+    superseded: set[int] = set()
+    if "parent_episode_id" in columns and "episode_id" in columns:
+        children = con.execute(
+            "SELECT parent_episode_id FROM project_episodes "
+            "WHERE parent_episode_id IS NOT NULL AND parent_episode_id != ''"
+        )
+        parent_ids = {str(row[0]) for row in children}
+        if parent_ids:
+            for rowid, episode_id, project in con.execute(
+                "SELECT rowid, episode_id, project_id FROM project_episodes"
+            ):
+                if str(episode_id) in parent_ids:
+                    superseded.add(int(rowid))
+
     open_rows: list[tuple[str, str, str]] = []
     for rowid, project, phase, state in rows:
         if state in VERIFIED_EPISODE_STATUSES:
+            continue
+        if rowid in superseded:
             continue
         if latest_verified.get(project, -1) > rowid:
             continue  # a later verified episode answered this one

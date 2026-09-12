@@ -4,6 +4,34 @@
 
 Responsable vigente: **ROOT-0**.
 
+- Resolución del ledger (2026-09-12): la correspondencia de los 32 proyectos
+  `portable_ssd_index` quedó confirmada contra `/media/mak/PortableSSD` y el
+  índice existente `/home/mak/labs/portable-ssd-index-20260813/archivo_index.sqlite`:
+  17.828/17.828 rutas, tamaños y `mtime_ns` exactos; 63 hashes completos ya
+  disponibles coinciden. No hubo conjuntos de artefactos duplicados entre los
+  32. Cada proyecto recibió un episodio `source_reconciliation` y una
+  transición append-only `review_required -> active`; la afirmación queda
+  limitada a correspondencia física, no a autoría, publicación o calidad.
+  Un episodio sucesor corrigió el contador de hashes de la primera medición
+  sin reescribirla; el SHA-256 del índice usado fue
+  `d3afb072fe1633125ac20da82aa1d3c7514f763cb8cac28655f19216ac53d8df`.
+- La biblioteca `declared_format_library` pasó append-only a `active`: sus 7
+  contratos JSON existen, declaran `publication=false`, `authorship_claimed=false`
+  y `training_permitted=false`. Los cinco episodios de producción de portafolio
+  no se cerraron: su resultado de consumidor sigue pendiente.
+- La proyección de estado ahora respeta genealogía append-only: un episodio
+  abierto con `parent_episode_id` deja de contarse como incertidumbre vigente
+  cuando ya tiene sucesor, aunque permanece en el historial. En la DB actual la
+  cola pasó a 6 proyectos y 13 episodios abiertos (10 `needs_evidence`, 3
+  `abstained`); los 6 proyectos restantes conservan sus unknowns reales.
+- Estado Google Drive resuelto en el status compartido: una lectura FUSE aislada
+  agotó 8 s, pero la sonda directa paced `rclone lsf` terminó RC 0 y lecturas
+  FUSE posteriores terminaron RC 0. El último probe exitoso quedó append-only
+  en `mak_operational_events` (`storage-health:de91da5640be17a6863df486ecde0c0f`,
+  2026-09-12T02:14:26Z); los únicos `RATE_LIMIT_EXCEEDED` del journal son del
+  2026-09-09 y el componente los clasifica como `historical_error`. Sólo un
+  error posterior al último éxito degrada el mount a `current_error`.
+
 - Estado operativo comprobado: `mak-hub.service`, `mak-research.service` y `mak-codex.service` activos; `GET /health` del Hub devuelve 200 y `GET /api/status` declara `repo_root=/home/mak` y `physical_root=/home/mak`.
 - RD: `/home/mak/flujo/data/rd.db` y la candidata transferida conservan SHA-256 `7f49c33bc2795a8920b50f915ad59b2b8f0f28526d6333af8a73a66c1838b233`, 92 tablas, 43.555 filas, `integrity_check=ok` y cero violaciones FK. `data/rd_datos.db` sigue siendo el shell legado vacio de 3 tablas.
 - Decision: el constructor portable de RD vuelve a conservar tablas acumulativas (`registros_testeo`, `atenciones`, `encuestas`, muestras) y fusiona perfiles de `knowledge/productoras`; `cultura/mak_research/fuentes.py` queda disponible dentro de FLUJO como compuerta canonica de fuentes. La base promovida no se reconstruyo ni se reemplazo.
