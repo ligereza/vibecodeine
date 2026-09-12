@@ -16,6 +16,7 @@ from __future__ import annotations
 import os
 import re
 import socket
+import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -35,6 +36,7 @@ _PORTS = {
     "search": 8888,
     "ollama": 11434,
 }
+_MOUNT_DIRS = ("GoogleDrive", "OneDrive")
 
 
 def _path_status(path: Path, *, kind: str = "file") -> dict[str, Any]:
@@ -319,6 +321,40 @@ def _portfolio_component(physical: Path) -> dict[str, Any]:
     )
 
 
+def _mount_component(physical: Path) -> dict[str, Any]:
+    """Probe configured local FUSE mounts without reading remote contents."""
+    mounts: dict[str, dict[str, Any]] = {}
+    for directory in _MOUNT_DIRS:
+        path = physical / directory
+        evidence: dict[str, Any] = {"path": str(path), "exists": path.is_dir()}
+        if not evidence["exists"]:
+            evidence["mounted"] = False
+            evidence["probe"] = "path_missing"
+            mounts[directory] = evidence
+            continue
+        try:
+            probe = subprocess.run(
+                ["mountpoint", "-q", str(path)],
+                capture_output=True, text=True, timeout=2, check=False,
+            )
+        except (OSError, subprocess.SubprocessError) as exc:
+            evidence["mounted"] = None
+            evidence["probe"] = type(exc).__name__
+        else:
+            evidence["mounted"] = probe.returncode == 0
+            evidence["probe"] = "ok" if probe.returncode in (0, 1) else "failed"
+        mounts[directory] = evidence
+    healthy = all(item.get("mounted") is True for item in mounts.values())
+    return _component(
+        "storage",
+        "Cloud storage mounts",
+        "ready" if healthy else "attention",
+        severity="none" if healthy else "attention",
+        evidence={"mounts": mounts, "read_only_probe": True},
+        next_action=None if healthy else "check the local FUSE mount and remote quota before reading cloud-backed material",
+    )
+
+
 def _dependency_component(repo: Path) -> dict[str, Any]:
     blender = resolve_blender(repo)
     # The inline candidate list used to stop at PATH plus one codex runtime, so
@@ -517,6 +553,7 @@ def system_status(
         "events": _runner_component(repo, physical),
         "render": _render_component(repo, physical),
         "portfolio": _portfolio_component(physical),
+        "storage": _mount_component(physical),
         "dependencies": _dependency_component(repo),
         "providers": _provider_component(repo, physical),
         "lanes": _lane_registry_component(repo),

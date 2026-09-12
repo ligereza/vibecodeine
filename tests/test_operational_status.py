@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from pathlib import Path
+from types import SimpleNamespace
 
 from flujo.knowledge.project_api import operational_status
 from flujo.knowledge.project_ir import LearningStore, build_project_ir
 from flujo.knowledge.system_status import (
+    _mount_component,
     _provider_source_root,
     _repo_component,
     system_status,
@@ -123,6 +125,28 @@ def test_system_status_accepts_declared_absence_of_root_contract(tmp_path: Path)
     assert result["evidence"]["hub_source"]["path"] == str(
         physical / "cultura" / "mak_plataforma" / "hub.py"
     )
+
+
+def test_system_status_reports_local_storage_mounts_without_remote_access(tmp_path: Path, monkeypatch) -> None:
+    (tmp_path / "GoogleDrive").mkdir()
+    (tmp_path / "OneDrive").mkdir()
+    calls = []
+
+    def fake_run(*args, **kwargs):
+        calls.append(args[0])
+        return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    import flujo.knowledge.system_status as status_module
+    monkeypatch.setattr(status_module.subprocess, "run", fake_run)
+
+    result = _mount_component(tmp_path)
+
+    assert result["status"] == "ready"
+    assert all(item["mounted"] is True for item in result["evidence"]["mounts"].values())
+    assert calls == [
+        ["mountpoint", "-q", str(tmp_path / "GoogleDrive")],
+        ["mountpoint", "-q", str(tmp_path / "OneDrive")],
+    ]
 
 
 def test_flujo_adapter_resolves_physical_learning_authority(tmp_path: Path, monkeypatch) -> None:
