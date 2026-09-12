@@ -68,3 +68,19 @@ def test_system_status_keeps_component_contract_when_provider_box_is_absent(tmp_
     assert result["schema"] == "mak-system-status-v1"
     assert all("severity" in component for component in result["components"].values())
     assert result["components"]["providers"]["severity"] == "attention"
+
+
+def test_flujo_adapter_resolves_physical_learning_authority(tmp_path: Path, monkeypatch) -> None:
+    from flujo.web import hub
+
+    repo = tmp_path / "flujo"
+    local = repo / "data" / "mak_knowledge.db"
+    physical = tmp_path / "data" / "mak_knowledge.db"
+    local.parent.mkdir(parents=True)
+    physical.parent.mkdir(parents=True)
+    local.write_bytes(b"")
+    physical.write_bytes(b"authoritative")
+    monkeypatch.delenv("MAK_LEARNING_DB", raising=False)
+    monkeypatch.setattr(hub, "repo_root", lambda: repo)
+
+    assert hub.project_learning_db() == physical

@@ -76,7 +76,19 @@ MAX_BODY_BYTES = 8 * 1024 * 1024
 
 def project_learning_db() -> Path:
     configured = os.environ.get("MAK_LEARNING_DB", "").strip()
-    return Path(configured).expanduser() if configured else repo_root() / "data" / "mak_knowledge.db"
+    if configured:
+        return Path(configured).expanduser()
+    local = repo_root() / "data" / "mak_knowledge.db"
+    # A FLUJO checkout can run as an adapter inside the physical MAK box. In
+    # that topology the authoritative transversal memory lives one level up;
+    # never create a second empty ledger inside the portable checkout when the
+    # physical authority already exists.
+    physical = repo_root().parent / "data" / "mak_knowledge.db"
+    if repo_root().name == "flujo" and physical.is_file() and (
+        not local.is_file() or local.stat().st_size == 0
+    ):
+        return physical
+    return local
 
 
 try:
