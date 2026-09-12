@@ -2,6 +2,29 @@
 
 Responsable: **ROOT-0**.
 
+## Ref contract — ROOT-0 — 2026-09-12
+
+La ref actual se mide con Git; `branch_profile.json` describe semántica
+heredada. Los perfiles canónicos declaran ahora `canonical_ref`, `lane`,
+`kind` e `integration_target`, manteniendo `branch` por compatibilidad.
+Una topic, worktree, Dependabot o alias de integración puede heredar lane MAK
+o FLUJO sin afirmar que su ref actual sea `MAK` o `FLUJO`.
+
+La auditoría viva de `tools/capabilities.py --format json` midió 32 refs
+(locales y remotas), 19 SHAs únicos y 6 grupos de alias. Sus disposiciones se
+derivan por patrón y perfil: `canonical`, `alias_or_checkpoint`, `topic`,
+`worktree`, `automated_reevaluate`, `historical_preserve` o
+`auxiliary_review`. `DIRECTOR` y `historia` quedan históricos; no son destinos
+de deployment. No se eliminó ninguna ref.
+
+`capabilities`, `runtime_preflight` y `release_gate` comparten la misma
+interpretación. El release gate acepta `/home/mak` en `main` integrado y
+`/home/mak/flujo` en un alias de lane FLUJO; el probe 8765 identifica la forma
+real `python -c ... flujo.web.hub ... run_server`. El status de gate actual es
+`IMPLEMENTATION_COMPLETE_TESTS_DEFERRED`: no hay blockers ni unknowns de
+topología; quedan warnings de higiene/referencias históricas y suites que el
+gate no ejecuta.
+
 ## Resultado
 
 `main` local (`0be7eba97eff`) ya no se trata como una caja negra frente a
