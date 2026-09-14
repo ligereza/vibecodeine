@@ -60,6 +60,9 @@ bucle ── experimentación visual vectorial y formas generativas
 - Relación: FLUJO intercambia contratos y `source_ref` con MAK y XIO. XIO-RD
   consume el contexto RD revisado; XIO-FOH consume el contexto ISKVW/VJ. Las
   pestañas RD e ISKVW son perfiles de la aplicación, no ramas de Git.
+- Cableado local RD: la SQLite no se versiona en FLUJO. En esta instalación la
+  única proyección canónica es `/home/mak/data/rd.db`; el Hub autónomo usa
+  `FLUJO_RD_DB` y el launcher XIO host la recibe por `MAK_RD_DB`/`XIO_RD_DB`.
 
 ### XIO
 
