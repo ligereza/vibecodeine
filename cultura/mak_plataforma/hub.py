@@ -226,22 +226,28 @@ def _source_supports_human_triage(source_root):
 def _resolve_flujo_source_root(repo_root):
     """Choose a compatible local motor without hiding an explicit override.
 
-    The Hub lives in the MAK checkout while its knowledge motor may be in a
-    sibling FLUJO checkout.  A newer Hub can legitimately require a keyword
-    that an older sibling does not expose; prefer the compatible in-checkout
-    source in that case, but let operators force another source explicitly.
+    The Hub lives in the MAK checkout while its knowledge motor lives in the
+    independent sibling FLUJO checkout. Prefer that autonomous source when it
+    is compatible; keep the in-checkout mirror only as a bounded fallback for
+    an incomplete local installation, and let operators force another source
+    explicitly.
     """
     override = os.environ.get("FLUJO_SOURCE_ROOT")
     if override:
         return os.path.abspath(override), "explicit_override"
     candidates = (
-        os.path.join(repo_root, "src"),
         os.path.join(repo_root, "flujo", "src"),
+        os.path.join(repo_root, "src"),
     )
     for candidate in candidates:
         if _source_supports_human_triage(candidate):
             return os.path.abspath(candidate), "compatible_local_source"
-    return os.path.abspath(candidates[-1]), "sibling_fallback"
+    # Keep an existing autonomous checkout as the reported fallback even when
+    # it is currently incompatible; this makes the missing contract visible
+    # instead of silently switching to a different source tree. If the sibling
+    # is absent, the in-checkout mirror is the only useful fallback.
+    fallback = candidates[0] if os.path.isdir(candidates[0]) else candidates[-1]
+    return os.path.abspath(fallback), "sibling_fallback"
 
 
 _FLUJO_SOURCE_ROOT, _FLUJO_SOURCE_ROOT_MODE = _resolve_flujo_source_root(_REPO_ROOT)
