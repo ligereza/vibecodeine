@@ -54,6 +54,45 @@ def _listener(port: int) -> dict[str, Any]:
         return {"host": "127.0.0.1", "port": port, "reachable": False}
 
 
+def _unix_listener(path: Path) -> dict[str, Any]:
+    """Check one private Unix listener without making an HTTP request."""
+    socket_path = path.expanduser().resolve()
+    try:
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
+            client.settimeout(0.25)
+            client.connect(str(socket_path))
+        return {"transport": "unix", "path": str(socket_path), "reachable": True}
+    except OSError:
+        return {"transport": "unix", "path": str(socket_path), "reachable": False}
+
+
+def _service_listener(port: int | None, socket_path: Path | None = None) -> dict[str, Any]:
+    """Prefer the deployed Unix socket and retain TCP only for standalone runs."""
+    if socket_path is not None:
+        unix = _unix_listener(socket_path)
+        # An existing socket path is authoritative. Do not report an unrelated
+        # legacy TCP process as the healthy consumer when the private service is
+        # present but unavailable.
+        if unix["reachable"] or Path(socket_path).expanduser().exists():
+            return unix
+        if port is not None:
+            tcp = _listener(port)
+            return {**tcp, "transport": "tcp", "role": "legacy_fallback", "unix": unix}
+        return unix
+    if port is not None:
+        return {**_listener(port), "transport": "tcp"}
+    return {"transport": "unknown", "reachable": False}
+
+
+def _service_socket_path(physical: Path, component_id: str) -> Path:
+    """Resolve the configured private socket relative to the live MAK root."""
+    env_name = f"MAK_{component_id.upper()}_SOCKET"
+    configured = os.environ.get(env_name, "").strip()
+    if configured:
+        return Path(configured).expanduser()
+    return physical / ".cache" / "mak" / f"{component_id}.sock"
+
+
 def _process_snapshot(tokens: Iterable[str]) -> dict[str, Any]:
     """Count matching local processes without returning command lines or PIDs."""
     wanted = tuple(token.lower() for token in tokens if token)
@@ -162,7 +201,7 @@ def _motor_root(repo: Path) -> Path:
     return candidates[0]
 
 
-def _repo_component(repo: Path) -> dict[str, Any]:
+def _repo_component(repo: Path, physical: Path | None = None) -> dict[str, Any]:
     motor = _motor_root(repo)
     required = {
         # 2026-09-03: the lowercase `agents.md` was deleted by the operator's
@@ -176,7 +215,37 @@ def _repo_component(repo: Path) -> dict[str, Any]:
         "web_source": repo / "web" / "package.json",
     }
     evidence = {name: _path_status(path) for name, path in required.items()}
-    ok = all(row["exists"] for row in evidence.values())
+    physical_root = physical or repo
+    policy_paths = (
+        repo / "context" / "diagnostics" / "contracts" / "core.md",
+        physical_root / "context" / "diagnostics" / "contracts" / "core.md",
+    )
+    policy_path = policy_paths[0]
+    policy_text = ""
+    for candidate in policy_paths:
+        try:
+            candidate_text = candidate.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+        if not policy_path.is_file():
+            policy_path = candidate
+        if "There is no contract file, and that is the decision" in candidate_text:
+            policy_path = candidate
+            policy_text = candidate_text
+            break
+    intentional_absence = (
+        not evidence["contract"]["exists"]
+        and "There is no contract file, and that is the decision" in policy_text
+    )
+    evidence["contract"]["policy"] = {
+        "path": str(policy_path),
+        "exists": policy_path.is_file(),
+        "state": "intentionally_absent" if intentional_absence else "unresolved",
+    }
+    source_ready = all(
+        row["exists"] for name, row in evidence.items() if name != "contract"
+    )
+    ok = source_ready and (evidence["contract"]["exists"] or intentional_absence)
     return _component(
         "repo",
         "MAK source",
@@ -191,12 +260,13 @@ def _service_component(
     component_id: str,
     label: str,
     source: Path,
-    port: int,
+    port: int | None,
     process_tokens: Iterable[str],
     source_candidates: Iterable[Path] = (),
+    socket_path: Path | None = None,
 ) -> dict[str, Any]:
     source_evidence = _path_status(source)
-    listener = _listener(port)
+    listener = _service_listener(port, socket_path)
     process = _process_snapshot(process_tokens)
     runtime_source = _runtime_source(
         process_tokens, (source, *tuple(source_candidates))
@@ -429,21 +499,23 @@ def system_status(
     database_path = Path(database).expanduser().resolve()
     ledger = operational_status(database_path, repo_root=repo)
     components = {
-        "repo": _repo_component(repo),
+        "repo": _repo_component(repo, physical),
         "hub": _service_component(
             "hub", "MAK Hub 8900", repo / "cultura" / "mak_plataforma" / "hub.py", _PORTS["hub"],
             ("plataforma/hub.py", "mak_plataforma/hub.py"),
             source_candidates=(physical / "plataforma" / "hub.py",),
         ),
         "research": _service_component(
-            "research", "Research 8890", physical / "research" / "interfaz.py", _PORTS["research"],
+            "research", "Research", physical / "research" / "interfaz.py", _PORTS["research"],
             ("research/interfaz.py",),
             source_candidates=(repo / "cultura" / "mak_research" / "interfaz.py",),
+            socket_path=_service_socket_path(physical, "research"),
         ),
         "codex": _service_component(
-            "codex", "Codex bridge 8891", physical / "codex" / "interfaz_codex.py", _PORTS["codex"],
+            "codex", "Codex bridge", physical / "codex" / "interfaz_codex.py", _PORTS["codex"],
             ("codex/interfaz_codex.py",),
             source_candidates=(repo / "cultura" / "mak_codex" / "interfaz_codex.py",),
+            socket_path=_service_socket_path(physical, "codex"),
         ),
         "search": _service_component(
             "search", "SearXNG 8888", physical / "searxng" / "settings.yml", _PORTS["search"],
