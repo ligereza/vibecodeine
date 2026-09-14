@@ -146,9 +146,9 @@ lastima a un tercero, y por lo tanto la única donde la abstención es correcta.
 | `prohibited` | no mostrable |
 
 RD (Reduciendo Daño) opera con datos de campo **agregados y anónimos por
-diseño**; su store privado `data/rd_datos.db` está declarado
-`rd_private_runtime_boundary` con la regla *«RD privacy data is not copied into
-MAK learning memory»*.
+diseño**; sus tablas de campo viven en la proyección única `data/rd.db`, con
+allowlist propia y la regla *«RD privacy data is not copied into MAK learning
+memory»*.
 
 ---
 
@@ -585,8 +585,8 @@ no depende de un tmp que se limpia.
 
 `docs/becas/caso_mak_rd.md` §5 «Límites declarados» lo dice: *«Los datos de
 campo mostrados en demos son ficticios (generados con semilla fija); los
-reportes reales sólo existirán con operación real en terreno.»* Y
-`data/rd_datos.db` con 0 filas lo corrobora.
+reportes reales sólo existirán con operación real en terreno.»* La proyección
+única `data/rd.db` no contiene todavía filas reales de campo.
 
 Mi declaración de `TABLA_RD` estaba conservadora en la dirección correcta pero
 por el motivo equivocado: puse `aggregate_only` por la frontera de privacidad,

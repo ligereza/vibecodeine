@@ -113,7 +113,7 @@ operativa queda fijada así:
 ```text
 data/mak_knowledge.db  = memoria MAK transversal
 data/rd.db             = proyección regenerable del catálogo RD
-data/rd_datos.db       = frontera privada de datos RD
+data/rd.db             = catálogo y tablas de campo RD, con allowlists separadas
 data/flujo.db          = índice de flyers FLUJO
 research/...sqlite     = Research/capturas versionadas
 labs/...sqlite         = índices y ejecuciones históricas
@@ -425,9 +425,9 @@ parecido textual.
 - `data/rd.db` es el catálogo activo de lectura para reactivos, packs,
   productoras, venues y consultas RD. Es una fuente/proyección delimitada; no
   se fusiona a ciegas con otro SQLite.
-- `data/rd_datos.db` es un almacén separado de datos de campo/privacidad y está
-  vacío por diseño según la verificación documentada. No se rellena con una
-  copia del catálogo.
+- La antigua ruta `data/rd_datos.db` fue retirada por estar vacía. Los datos de
+  campo RD, cuando exista autoridad explícita, viven en tablas propias de
+  `data/rd.db` y no se mezclan con el catálogo en las salidas públicas.
 - `data/venues/*.json` conserva la fuente declarativa de venues y sus esquemas.
   Los índices y HTML son salidas derivadas y regenerables.
 - Las memorias, credenciales, exports privados, bases protegidas y productos
@@ -550,7 +550,7 @@ handoff. Sus conclusiones durables se pueden entender por familias:
 | Inventario y genealogía | La autoridad es física (`/home/mak/*`); WIN es historia; Git es transporte. |
 | Crosswalk WIN -> MAK | Solo se migra un slice vertical con consumidor real; no se copia un árbol ni se convierte una idea en integración. |
 | Ownership y semántica | Cada herramienta tiene owner, consumidor, dependencia, idioma, plataforma, procedencia y estado. |
-| RD y datos | `rd.db`, `rd_datos.db`, venues y productos derivados tienen límites distintos; el almacén vacío no se rellena por conveniencia. |
+| RD y datos | `rd.db` es la proyección única; catálogo, evidencia y campo mantienen límites por tablas, privacidad y allowlists. |
 | Research y Curatoria | Discovery, captura, triangulación, claims y propuestas son pasos separados; candidatos no son hechos. |
 | Portfolio y Venue | Venue puede unir RD y Portfolio; SCD es una demostración geométrica y no sustituye una ficha técnica certificada. |
 | Salud y limpieza | Se valida antes de mover/borrar; basura confirmada se cuarentena de forma reversible; evidencia no se elimina. |

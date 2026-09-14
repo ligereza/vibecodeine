@@ -33,7 +33,6 @@ STALE_TOKENS = (
 )
 DB_PATHS = (
     ROOT / "data" / "rd.db",
-    ROOT / "data" / "rd_datos.db",
     ROOT / "data" / "mak_knowledge.db",
     ROOT / "data" / "flujo.db",
 )
@@ -44,12 +43,6 @@ DB_CONSUMERS = {
         "flujo/src/flujo/knowledge/operational_bridge.py",
         "tools/gen_propuesta_directiva.py",
         "cultura/mak_plataforma/hub.py",
-    ),
-    "data/rd_datos.db": (
-        "flujo/src/flujo/rd/datos.py",
-        "flujo/src/flujo/rd/informe.py",
-        "flujo/src/flujo/departments.py",
-        "flujo/src/flujo/web/hub.py",
     ),
     "data/mak_knowledge.db": (
         "flujo/src/flujo/knowledge/project_api.py",
