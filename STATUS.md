@@ -25,7 +25,7 @@ historia.
 - **Criterio:** conservar la autoridad de MAK, preservar cambios locales y
   distinguir sistema, clon, repositorio Git, contenido, fuente, observación,
   medición y representación.
-- **Última actualización:** `2026-09-14T19:46:48-03:00`
+- **Última actualización:** `2026-09-14T19:50:48-03:00`
 
 ## Orden operativo vigente
 
@@ -295,8 +295,9 @@ respecto de la referencia upstream actual.
   `git diff --check` sigue fallando solo por cambios CRLF/trailing whitespace
   en ese checkout sucio. Ninguno fue reseteado, stasheado o actualizado.
 - La auditoría Git final cubre 17 checkouts con `diff --check` limpio y deja
-  únicamente `XIO-IMPORT` como excepción de finales de línea; no se hicieron
-  commits ni pushes.
+  únicamente `XIO-IMPORT` como excepción de finales de línea. No se hicieron
+  commits ni pushes de cambios ajenos; esta fase publicó MAK `d5e2d0d0` en
+  `vibecodeine-legacy/main` y FLUJO `d96b9f7` en `origin/main`.
 - `FARMAKSIA/codex/iris-farmaksia-integration` validó el adaptador IRIS y su
   contrato; la referencia Node pasó syntax, smoke y regresión tras instalar
   sus dependencias solo en una copia temporal y crear el directorio `work/`.
