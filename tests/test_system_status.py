@@ -101,6 +101,26 @@ def test_repo_component_finds_motor_in_the_sibling_flujo_checkout(tmp_path: Path
     )
 
 
+def test_repo_component_accepts_contract_absence_declared_by_policy(tmp_path: Path) -> None:
+    repo = tmp_path / "mak"
+    for relative in (
+        "cultura/mak_plataforma/hub.py",
+        "src/flujo/knowledge/project_api.py",
+        "web/package.json",
+    ):
+        _touch(repo / relative, "fixture")
+    _touch(
+        repo / "context" / "diagnostics" / "contracts" / "core.md",
+        "There is no contract file, and that is the decision\n",
+    )
+
+    result = status_module._repo_component(repo)
+
+    assert result["status"] == "ready"
+    assert result["evidence"]["contract"]["exists"] is False
+    assert result["evidence"]["contract"]["policy"]["state"] == "intentionally_absent"
+
+
 def test_service_status_checks_canonical_runtime_source_candidates(tmp_path: Path, monkeypatch) -> None:
     wrapper = tmp_path / "research" / "interfaz.py"
     canonical = tmp_path / "flujo" / "cultura" / "mak_research" / "interfaz.py"
@@ -124,6 +144,38 @@ def test_service_status_checks_canonical_runtime_source_candidates(tmp_path: Pat
     assert result["status"] == "ready"
     assert canonical.resolve() in seen["candidates"]
     assert result["evidence"]["runtime_source"]["observed"] is True
+
+
+def test_service_status_prefers_private_unix_socket(tmp_path: Path, monkeypatch) -> None:
+    wrapper = tmp_path / "research" / "interfaz.py"
+    socket_path = tmp_path / ".cache" / "mak" / "research.sock"
+    _touch(wrapper, "wrapper")
+
+    monkeypatch.setattr(
+        status_module,
+        "_unix_listener",
+        lambda path: {"transport": "unix", "path": str(path), "reachable": True},
+    )
+    monkeypatch.setattr(
+        status_module,
+        "_listener",
+        lambda port: {"host": "127.0.0.1", "port": port, "reachable": False},
+    )
+    monkeypatch.setattr(
+        status_module, "_process_snapshot", lambda tokens: {"running": True, "count": 1}
+    )
+
+    result = status_module._service_component(
+        "research", "Research", wrapper, 8890, ("research/interfaz.py",),
+        socket_path=socket_path,
+    )
+
+    assert result["status"] == "ready"
+    assert result["evidence"]["listener"] == {
+        "transport": "unix",
+        "path": str(socket_path.resolve()),
+        "reachable": True,
+    }
 
 
 def test_lane_registry_is_reported_without_promotion() -> None:

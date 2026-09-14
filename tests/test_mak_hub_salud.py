@@ -102,6 +102,13 @@ class TestPaginaMarcoUnico:
         assert 'data-dep="research"' in hub.PAGINA
         assert 'data-dep="codex"' in hub.PAGINA
 
+    def test_superficies_secundarias_viven_en_menu_mas(self):
+        assert 'id="mas-menu"' in hub.PAGINA
+        for dep in ("render", "decisiones", "areas", "status", "diagnostics"):
+            assert f'data-dep="{dep}"' in hub.PAGINA
+        assert 'class="lk"' not in hub.PAGINA
+        assert "querySelectorAll('[data-dep]')" in hub.PAGINA
+
     def test_no_contiene_canvas_organismo_viejo(self):
         assert "crearEstatico" not in hub.PAGINA
         assert 'id="circuitos"' not in hub.PAGINA
