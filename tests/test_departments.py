@@ -28,10 +28,10 @@ def test_all_departments_have_contracts_and_handoffs():
     assert all(item["ready"] for item in data["areas"].values())
 
 
-def test_rd_summary_keeps_empty_runtime_database_separate():
+def test_rd_summary_reports_retired_runtime_database():
     data = rd_summary(ROOT)
     assert data["databases"]["data/rd.db"]["rows"] > 0
-    assert data["databases"]["data/rd_datos.db"]["rows"] == 0
+    assert data["databases"]["data/rd_datos.db"]["exists"] is False
 
 
 def test_rd_crosswalk_is_validated_and_read_only():

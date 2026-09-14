@@ -90,9 +90,9 @@ def test_api_rd_topics_separates_canonical_data_without_mutation():
     assert result["read_only"] is True
     assert result["mutation"] == "disabled"
     assert result["canonical_projection"] == "data/rd.db"
-    # Una sola base desde el 2026-09-05: las tablas acumulativas viven en la
-    # proyeccion y `rd_datos.db` queda como origen de la migracion. Lo que la
-    # API debe seguir separando no son dos archivos sino dos naturalezas.
+    # Una sola base: las tablas acumulativas viven en la proyeccion. El campo
+    # legacy sigue apareciendo como etiqueta de compatibilidad, pero su archivo
+    # fue retirado al estar vacio.
     assert result["legacy_runtime_boundary"] == "data/rd_datos.db"
     assert result["runtime_tables_in_projection"] == [
         "registros_testeo", "atenciones", "encuestas"
@@ -106,7 +106,7 @@ def test_api_rd_topics_separates_canonical_data_without_mutation():
 def test_api_rd_summary_keeps_database_boundaries():
     result = api_rd_summary()
     assert result["databases"]["data/rd.db"]["rows"] > 0
-    assert result["databases"]["data/rd_datos.db"]["rows"] == 0
+    assert result["databases"]["data/rd_datos.db"]["exists"] is False
 
 
 def test_api_rd_db_is_read_only_projection():
