@@ -672,9 +672,10 @@ def _audit_idle_decision(ts, online, verbo, depto, payload, status,
 
 def _post(url, data):
     fields = dict(data)
-    if isinstance(fields.get("work_contract"), dict):
-        fields["work_contract"] = json.dumps(
-            fields["work_contract"], ensure_ascii=True, sort_keys=True)
+    for key in ("work_contract", "portfolio_source"):
+        if isinstance(fields.get(key), (dict, list)):
+            fields[key] = json.dumps(
+                fields[key], ensure_ascii=True, sort_keys=True)
     body = urllib.parse.urlencode(fields).encode()
     req = urllib.request.Request(
         url, data=body, method="POST",
@@ -930,18 +931,24 @@ def _tarea(verbo, st):
         if not tarea:
             return None
         if tarea.get("depto") == "codex":
-            return ("codex", {"modo": tarea.get("modo", "generar"),
-                              "pedido": tarea["texto"], "densidad": "medio"})
+            payload = {"modo": tarea.get("modo", "generar"),
+                       "pedido": tarea["texto"], "densidad": "medio"}
+            if isinstance(tarea.get("source"), dict):
+                payload["portfolio_source"] = dict(tarea["source"])
+            return ("codex", payload)
         tema, motivo = tema_limpio(tarea["texto"])
         if not tema:
             print("tema descartado (%s): %.70s" % (motivo, tarea["texto"]),
                   flush=True)
             return None
         fmt, dens = format_for_task(verbo, tema)
-        return ("research", {"modo": tarea.get("modo", "research"),
-                             "tema": tema, "densidad": dens, "formato": fmt,
-                             "output_contract": contract_for_task(verbo, tema),
-                             "work_contract": work_contract(verbo, tema)})
+        payload = {"modo": tarea.get("modo", "research"),
+                   "tema": tema, "densidad": dens, "formato": fmt,
+                   "output_contract": contract_for_task(verbo, tema),
+                   "work_contract": work_contract(verbo, tema)}
+        if isinstance(tarea.get("source"), dict):
+            payload["portfolio_source"] = dict(tarea["source"])
+        return ("research", payload)
     if fuente == "concepto":
         if _memory_requires_review():
             return None

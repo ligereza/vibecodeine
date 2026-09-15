@@ -1894,7 +1894,7 @@ async function estudioResolveCandidate(ledgerId,decision,sourceId){
 async function estudioLoadGroups(){
   const panel=document.getElementById('estudio-action-panel');const item=ESTUDIO_ITEMS.find(candidate=>candidate.id===ESTUDIO_ACTIVE_ID);if(!panel||!item)return;panel.innerHTML='<div class="estudio-action-title">Triangulación candidata</div><div>consultando grupos existentes…</div>';try{const response=await fetch('/api/portfolio/triangulation',{cache:'no-store'});if(!response.ok)throw new Error(`HTTP ${response.status}`);const data=await response.json();const groups=(data.groups||[]).filter(group=>(group.items||[]).some(candidate=>candidate.id===item.id||candidate===item.id));panel.innerHTML=`<div class="estudio-action-title">Triangulación candidata</div><div>${groups.length?groups.map(group=>`${esc(group.key||'grupo')} · confianza ${esc(group.confidence??'desconocida')}`).join('<br>'):'No hay grupo directo para esta pieza.'}</div>`;}catch(error){panel.innerHTML='<div class="estudio-action-title">Triangulación no disponible</div><div>La pieza se conserva sin inventar relación.</div>';}}
 
-async function estudioSend(depto){const item=ESTUDIO_ITEMS.find(candidate=>candidate.id===ESTUDIO_ACTIVE_ID);const text=document.getElementById('estudio-send-text')?.value.trim()||'';if(!item)return;const panel=document.getElementById('estudio-action-panel');try{const response=await fetch('/api/portfolio/dispatch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:item.id,depto,texto:text||`Revisar pieza ${item.id} con su metadata original. No inventar hechos.`})});if(!response.ok)throw new Error(`HTTP ${response.status}`);const data=await response.json();if(panel)panel.innerHTML=data.ok?'<div class="estudio-action-title">Pedido enviado</div><div>La pieza conserva su foco y su identidad.</div>':'<div class="estudio-action-title">No se pudo enviar</div><div>El Hub conserva la pieza sin cambios.</div>';}catch(error){if(panel)panel.innerHTML='<div class="estudio-action-title">No se pudo enviar</div><div>El Hub no respondió; la pieza conserva su estado.</div>';}}
+async function estudioSend(depto){const item=ESTUDIO_ITEMS.find(candidate=>candidate.id===ESTUDIO_ACTIVE_ID);const text=document.getElementById('estudio-send-text')?.value.trim()||'';if(!item)return;const panel=document.getElementById('estudio-action-panel');try{const response=await fetch('/api/portfolio/dispatch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:item.id,depto,texto:text||`Revisar pieza ${item.id} con su metadata original. No inventar hechos.`})});if(!response.ok)throw new Error(`HTTP ${response.status}`);const data=await response.json();const title=data.department==='research'?'Plan de research registrado':'Pedido Codex en cola';if(panel)panel.innerHTML=data.ok?`<div class="estudio-action-title">${title}</div><div>La pieza conserva su foco y su identidad; el plan no publica ni afirma autoría.</div>`:'<div class="estudio-action-title">No se pudo enviar</div><div>El Hub conserva la pieza sin cambios.</div>';}catch(error){if(panel)panel.innerHTML='<div class="estudio-action-title">No se pudo enviar</div><div>El Hub no respondió; la pieza conserva su estado.</div>';}}
 
 async function cargarEstudioHub(){
   const app=document.getElementById('estudio-app');if(!app)return;app.hidden=false;
@@ -2271,7 +2271,8 @@ async function enviarPiezaActiva(depto){
     const r=await fetch('/api/portfolio/dispatch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:item.id,depto,texto})});
     if(!r.ok)throw new Error(`HTTP ${r.status}`);
     const d=await r.json();
-    panel.innerHTML=d.ok?'<div class="foco-panel-title">Pedido enviado</div><div class="foco-panel-help">La pieza sigue en esta vista y el pedido conserva su identidad.</div>':`<div class="foco-panel-title">No se envio</div><div class="foco-panel-help">${esc(d.error||'error')}</div>`;
+    const title=d.department==='research'?'Plan de research registrado':'Pedido Codex en cola';
+    panel.innerHTML=d.ok?`<div class="foco-panel-title">${title}</div><div class="foco-panel-help">La pieza sigue en esta vista y el pedido conserva su identidad; no se publica automáticamente.</div>`:`<div class="foco-panel-title">No se envio</div><div class="foco-panel-help">${esc(d.error||'error')}</div>`;
   }catch(error){panel.innerHTML='<div class="foco-panel-title">No se envio</div><div class="foco-panel-help">El Hub no respondió; la pieza no cambió.</div>';}
 }
 
@@ -2413,7 +2414,7 @@ async function enviarInbox(id,depto){
   try{
     const r=await fetch('/api/portfolio/dispatch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:id,depto,texto})});
     if(!r.ok)throw new Error(`HTTP ${r.status}`);
-    const d=await r.json(); alert(d.ok?`Enviado a ${depto}.`:`No se envio: ${d.error||'error'}`);
+    const d=await r.json(); alert(d.ok?(depto==='research'?'Plan de research registrado.':'Pedido Codex en cola.'):`No se envio: ${d.error||'error'}`);
   }catch(error){alert('No se envio: el Hub no respondió y la pieza no cambió.');}
 }
 

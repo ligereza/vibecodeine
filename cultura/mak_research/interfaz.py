@@ -581,7 +581,7 @@ def _cerrar_job(job, t0):
 
 
 def _lanzar(modo, tema, n, densidad="medio", memoria=False, formato=None,
-            work_contract=None, trigger="api:research"):
+            work_contract=None, trigger="api:research", portfolio_source=None):
     job = {
         "tema": tema, "modo": modo, "estado": "en cola",
         "path": "", "error": "", "t": time.strftime("%H:%M:%S"),
@@ -589,6 +589,8 @@ def _lanzar(modo, tema, n, densidad="medio", memoria=False, formato=None,
     }
     if work_contract:
         job["work_contract"] = work_contract
+    if isinstance(portfolio_source, dict):
+        job["portfolio_source"] = portfolio_source
     with JOBS_LOCK:
         JOBS.append(job)
 
@@ -3737,6 +3739,15 @@ class H(BaseHTTPRequestHandler):
                         work_contract = candidate
                 except (TypeError, ValueError):
                     work_contract = None
+            portfolio_source = None
+            raw_source = (q.get("portfolio_source") or [""])[0]
+            if raw_source:
+                try:
+                    candidate = json.loads(raw_source)
+                    if isinstance(candidate, dict):
+                        portfolio_source = candidate
+                except (TypeError, ValueError):
+                    portfolio_source = None
             try:
                 n = int((q.get("n") or [""])[0])
                 n = max(0, min(n, 10))
@@ -3745,8 +3756,12 @@ class H(BaseHTTPRequestHandler):
             if not tema and modo in MODO_SIN_TEMA:
                 tema = "corpus"  # placeholder: corpus ignora el tema
             if tema:
-                _lanzar(modo, tema, n, densidad, memoria, formato,
+                args = (modo, tema, n, densidad, memoria, formato,
                         work_contract, (q.get("trigger") or ["api:research"])[0])
+                if portfolio_source:
+                    _lanzar(*args, portfolio_source=portfolio_source)
+                else:
+                    _lanzar(*args)
                 return self._json_response({"ok": True})
             return self._json_response({"ok": False, "error": "tema vacío"}, 400)
 

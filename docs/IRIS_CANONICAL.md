@@ -1,11 +1,11 @@
 # IRIS -- canonical definition of MAK's ordering system
 
-> Written 2026-09-02 on the operator's direction. IRIS is the name of the
-> internal MAK system the operator created to order and work through the
-> archive. It is not the artist's portfolio, not `iskvw.cl`, and not a new
-> application. Anyone who reads this document and starts building a second
-> surface, a second database, a second corpus or a second definition of "obra"
-> has misread it.
+> Written 2026-09-02 on the operator's direction and refined 2026-09-14. IRIS
+> is the name of the internal MAK application the operator created to order
+> and work through the artist's own portfolio corpus. IRIS is not the corpus
+> itself and it is not `iskvw.cl`. Anyone who reads this document and starts
+> building a second surface, a second database, a second corpus or a second
+> definition of "obra" has misread it.
 >
 > Authority order for this subject: the operator -> `CLAUDE.md` ->
 > `context/LAST_HANDOFF.md` -> `docs/PORTAFOLIO_PRODUCCION.md` and
@@ -22,6 +22,13 @@ behind it is part of the same system. In the Hub on port 8900, the operator's
 working name for this same system/interface is **Atlas Campo del Orden** (the
 visible `campo de orden`). IRIS can prepare material for a portfolio, dossier,
 application or research output; it is not any one of those outputs.
+
+The private MAK portfolio corpus is an explicit input to IRIS: the artist or
+user supplies the common context, and a folder's files, folders and subfolders
+remain provenance for ordering. This membership relation is not an authorship
+claim. Semantic, visual and metadata signals propose connections and a
+workflow; they do not need to reach universal accuracy. IRIS learns the
+portfolio format and working habits that fit this corpus.
 
 It is an epistemic instrument, not a catalogue, a dashboard or a decorative
 graph. Its value is in what it refuses to assert.
@@ -56,7 +63,7 @@ implementation from which the interface grew. The URL and the editor filename
 are legacy implementation labels; they do not define IRIS and do not turn the
 route into `iskvw.cl`.
 
-**IRIS is the system the operator created to order the archive and prepare
+**IRIS is the application the operator created to order the archive and prepare
 defensible outputs.** Its engine -- `copilot.py`, the `/api/portfolio/*`
 namespace, the evidence states, the GTM atlas and the ordering field -- works
 on a richer model than a public list of obras: records, works, context and
@@ -85,7 +92,7 @@ filename alone never identifies IRIS, the public site or a current runtime.
 
 | Name | Role | Evidence/authority | Is not |
 |---|---|---|---|
-| IRIS / Atlas Campo del Orden | Internal MAK system for ordering the archive | `cultura/mak_plataforma/copilot.py` plus the Hub on `:8900` | The artist's portfolio or publication site |
+| IRIS / Atlas Campo del Orden | Internal MAK application for ordering the artist's supplied portfolio corpus | `cultura/mak_plataforma/copilot.py` plus the Hub on `:8900` | The corpus itself or the public publication site |
 | `/portafolio/` | Entry point for the same internal IRIS/Atlas interface | Active route in `cultura/mak_plataforma/hub.py` | A public URL or a product identity |
 | `iskvw/editor.html` | Implementation file of that same visible interface, co-located with the site tree | `MAK_PORTFOLIO_ROOT` and the served asset hash | The whole IRIS system or `iskvw.cl` |
 | `iskvw.cl` | Public artist website/output | `iskvw/piel/` and `publicar_iskvw.yml` | IRIS |
@@ -189,7 +196,7 @@ Measured on the MAK checkout, 2026-09-02.
 
 | piece | evidence |
 |---|---|
-| IRIS operator interface/adapter | `cultura/mak_plataforma/hub.py`, route `/portafolio/` -> `iskvw/editor.html` (legacy URL and mounted editor), 35 distinct `/api/portfolio/*` route names |
+| IRIS operator interface/adapter | `cultura/mak_plataforma/hub.py`, route `/portafolio/` -> `iskvw/editor.html` (legacy URL and mounted editor), corpus context, research candidates and source dispatch |
 | IRIS local ordering engine | `cultura/mak_plataforma/copilot.py`, 1820 lines, 46 module-level functions, standard library only, no model provider |
 | public portfolio output | `iskvw/`, published by `.github/workflows/publicar_iskvw.yml`; separate site and contract |
 | declared contracts | `faro-gtm-map-v1`, `faro-portfolio-atlas-v1`, `faro-ordering-field-v2`, `faro-ordering-replay-v1`, `faro-curatorial-inference-v1`, `faro-portfolio-vision-v1` |
@@ -229,7 +236,10 @@ Measured on the MAK checkout, 2026-09-02.
 - Historical note of multiple `editor.html` copies is confirmed and refined
   above: 16 physical files were measured on 2026-09-02; only the active route
   and served hash identify the current consumer.
-- `POST /api/portfolio/dispatch` has no measured reader.
+- The arbitrary-folder bridge is now explicit: `portfolio_corpus.py` reuses
+  `archive_observer` and `POST /api/portfolio/observe-folder` offers a
+  preview or `activate=true`. Activation is human-triggered, preserves a
+  recoverable prior inbox and never makes an authorship claim.
 - The learning loop is blocked on human decisions, not on code.
 
 ## 7. Where the pieces physically live
@@ -264,6 +274,7 @@ What may be consumed later, through a contract and nothing else:
 | `faro-ordering-field-v2` | anchors, uncertainty, activation state | no promoted label |
 | `faro-ordering-replay-v1` | evaluation, abstention apart from error | no promotion |
 | `mak-identity-v1` | stable `source_id`, declared entities | no personal data that never entered as a product |
+| `faro-portfolio-corpus-context-v1` | declared artist/corpus context and folder provenance | authorship inference or universal accuracy claim |
 
 The shared surface principle, for every one of them: `overlay_only`,
 `reversible`, `explains_why`, `host_untouched`.
