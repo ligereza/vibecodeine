@@ -18,16 +18,6 @@ MOTOR_SRC = Path(os.environ.get("FLUJO_SOURCE_ROOT", str(ROOT / "flujo" / "src")
 if MOTOR_SRC.is_dir() and str(MOTOR_SRC) not in sys.path:
     sys.path.insert(0, str(MOTOR_SRC))
 
-from flujo.knowledge.vigia_capture_bridge import (  # noqa: E402
-    VigiaCaptureBridgeError,
-    build_vigia_capture_plans,
-    capture_vigia_plans,
-    stable_json,
-    validate_vigia_capture_receipts,
-)
-from tools.research_source_capture import capture_one  # noqa: E402
-
-
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", required=True, type=Path)
@@ -38,6 +28,26 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--max-captures", type=int)
     parser.add_argument("--output", default="-", type=Path)
     args = parser.parse_args(list(argv) if argv is not None else None)
+    # Keep --help independent from optional motor imports. The repository
+    # hygiene probe asks what a tool does without granting it a checkout-wide
+    # import path or a capture backend.
+    try:
+        from flujo.knowledge.vigia_capture_bridge import (
+            VigiaCaptureBridgeError,
+            build_vigia_capture_plans,
+            capture_vigia_plans,
+            stable_json,
+            validate_vigia_capture_receipts,
+        )
+        from tools.research_source_capture import capture_one
+    except ImportError as exc:
+        sys.stderr.write(json.dumps({
+            "schema": "mak-vigia-capture-plans-error-v1",
+            "error": type(exc).__name__,
+            "reason": str(exc),
+        }, ensure_ascii=False, sort_keys=True) + "\n")
+        return 2
+
     try:
         discoveries = json.loads(args.input.read_text(encoding="utf-8"))
         plans = build_vigia_capture_plans(discoveries, root=args.root, backend=args.backend, max_plans=args.max_plans)

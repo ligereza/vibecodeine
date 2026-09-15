@@ -121,7 +121,9 @@ def test_tool_consumer_inventory_is_explicit_and_bounded():
     # tool surface in the same tree, so its inventory is intentionally larger
     # than the MAK operational lane inventory.  145 -> 146 on 2026-09-12:
     # branch_contract.py became a shared runtime consumer contract.
-    assert result["count"] == 146
+    # 146 -> 147 on 2026-09-15: the MAK-local grammar entrypoint was added
+    # and classified as manual-only because its consumer is the operator.
+    assert result["count"] == 147
     assert len(result["files"]) == result["count"]
     summary = result["summary"]
     assert summary["with_production_reference"] + summary["tests_only"] \

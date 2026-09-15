@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""interfaz_codex.py -- internal Codex service for the MAK Hub (port 8891).
+"""interfaz_codex.py -- internal Codex service for the MAK Hub.
+
+The persistent unit uses a private Unix socket; standalone runs fall back to
+the configured ``CODEX_PORT`` (8891).
 
 The service is reached through the Hub at /codex/. Set MAK_SERVICE_HOST to an
 explicit LAN address only when a legacy machine integration needs direct
@@ -17,9 +20,12 @@ import signal
 import sys
 import threading
 import time
+import urllib.error
 import urllib.parse
+import urllib.request
 from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import socketserver
 
 try:
     import fcntl
@@ -45,6 +51,9 @@ FECHA_RE = re.compile(r"^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})-(.+)\.(md|p
 # que llega en el CSV importa: define la cadena de fallback real.
 CADENA_CLAVES = ("nim-pro", "nim-flash", "ollama")
 CADENA_DEFAULT = "nim-pro,nim-flash,ollama"
+MICELIO_REINDEX_URL = os.environ.get(
+    "MAK_MICELIO_REINDEX_URL",
+    "http://127.0.0.1:8900/research/api/memoria/index")
 
 JOBS = []
 JOBS_LOCK = threading.Lock()
@@ -77,6 +86,23 @@ def _append_job_record(job):
                 f.flush()
         except OSError:
             pass
+
+
+def _solicitar_reindex_micelio():
+    """Ask the single Hub surface to absorb a finished CODEX product.
+
+    The request is best-effort: CODEX's result is already safely written, so
+    a temporarily unavailable Research service must not turn a valid piece
+    into a failed job. The endpoint itself coalesces concurrent reindexes.
+    """
+    try:
+        request = urllib.request.Request(
+            MICELIO_REINDEX_URL, data=b"rebuild=0", method="POST",
+            headers={"Content-Type": "application/x-www-form-urlencoded"})
+        with urllib.request.urlopen(request, timeout=5):
+            return True
+    except (OSError, urllib.error.URLError, TimeoutError):
+        return False
 
 PAGINA = """<!doctype html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -314,7 +340,14 @@ function mdMin(src){
 }
 function ver(d,nEnc){
   var n=decodeURIComponent(nEnc);
-  fetch(q('/f?d='+d+'&n='+nEnc)).then(function(r){return r.text();}).then(function(t){
+  fetch(q('/f?d='+d+'&n='+nEnc)).then(function(r){
+    if(!r.ok){
+      toast(r.status===404?'fuente ausente: '+n:'fuente no disponible (HTTP '+r.status+')');
+      return null;
+    }
+    return r.text();
+  }).then(function(t){
+    if(t===null)return;
     document.getElementById('ov-t').textContent=n;
     document.getElementById('ov-b').innerHTML=n.slice(-3)==='.py'?'<pre>'+esc(t)+'</pre>':mdMin(t);
     document.getElementById('ov').classList.add('show');
@@ -491,6 +524,8 @@ def _lanzar(modo, pedido, densidad, cadena=CADENA_DEFAULT,
             job["path"] = os.path.basename(r["path"]) if r["path"] else ""
             if not r["ok"]:
                 job["error"] = r["tail"][-1500:]
+            else:
+                _solicitar_reindex_micelio()
         except Exception as e:  # noqa: BLE001 - el job no tumba el server
             job["estado"] = "FALLO"
             job["error"] = str(e)[:1500]
@@ -623,19 +658,43 @@ class Servidor(ThreadingHTTPServer):
     daemon_threads = True
 
 
+class ServidorUnix(socketserver.ThreadingMixIn, socketserver.UnixStreamServer):
+    allow_reuse_address = True
+    daemon_threads = True
+
+
 def main():
     for d in DIRS.values():
         os.makedirs(d, exist_ok=True)
     _cargar_jobs()
-    server = Servidor((BIND_HOST, PORT), H)
+    socket_path = os.environ.get("MAK_SERVICE_SOCKET", "").strip()
+    if socket_path:
+        os.makedirs(os.path.dirname(os.path.abspath(socket_path)), exist_ok=True)
+        try:
+            os.unlink(socket_path)
+        except FileNotFoundError:
+            pass
+        server = ServidorUnix(socket_path, H)
+    else:
+        server = Servidor((BIND_HOST, PORT), H)
 
     def apagar(signum, frame):
         threading.Thread(target=server.shutdown, daemon=True).start()
 
     signal.signal(signal.SIGTERM, apagar)
     signal.signal(signal.SIGINT, apagar)
-    print("[codex] internal service on %s:%d" % (BIND_HOST, PORT), flush=True)
-    server.serve_forever()
+    if socket_path:
+        print("[codex] internal service on unix:%s" % socket_path, flush=True)
+    else:
+        print("[codex] internal service on %s:%d" % (BIND_HOST, PORT), flush=True)
+    try:
+        server.serve_forever()
+    finally:
+        if socket_path:
+            try:
+                os.unlink(socket_path)
+            except FileNotFoundError:
+                pass
     return 0
 
 

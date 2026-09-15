@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M4 24h24M8 24V12l8-5 8 5v12' fill='none' stroke='%23e8e4da' stroke-width='2'/%3E%3C/svg%3E">
-<title>ISKVW · sala</title>
+<title>FLUJO · venue 3D · SCD</title>
 <style>
   /* ── Misma piel que el campo: fondo casi negro, monoespaciada, sin menu.
        La sala no se explica: se orbita. ── */
@@ -51,11 +51,10 @@
 <div class="hud" id="medidor"></div>
 <div class="hud" id="leyenda"></div>
 <div class="hud" id="pista">arrastrar para orbitar · rueda o pellizco para acercar</div>
-<a id="volver" href="../campo/">campo</a>
-
+<a id="volver" href="../../iskvw/piel/campo/">portafolio</a>
 <script>
 /* ═══════════════════════════════════════════════════════════════════
-   ISKVW · sala
+   FLUJO · venue 3D · SCD
 
    Una sala es un conjunto de POLILINEAS MEDIDAS, no una malla, ni una foto,
    ni un splat. Solo lineas: es lo unico que un laser puede dibujar y lo unico
@@ -91,8 +90,8 @@ const PARAM = new URLSearchParams(location.search);
    path. The id form is what a link, a QR or the sequence tool can carry without
    knowing where this page lives. */
 const PEDIDO = PARAM.get("venue") || "";
-const RUTA = !PEDIDO ? "../../../data/venues/scd-plaza-egana.json"
-  : (/[/.]/.test(PEDIDO) ? PEDIDO : `../../../data/venues/${PEDIDO}.json`);
+const RUTA = !PEDIDO ? "../../data/venues/scd-plaza-egana.json"
+  : (/[/.]/.test(PEDIDO) ? PEDIDO : `../../data/venues/${PEDIDO}.json`);
 /* El tope existe para que 60 fps sea una promesa y no una esperanza. Se puede
    bajar por URL (?aristas=120) justamente para VER como avisa el recorte. */
 const TOPE = Math.max(1, parseInt(PARAM.get("aristas"), 10) || 800);

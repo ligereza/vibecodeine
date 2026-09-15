@@ -62,12 +62,34 @@ DELTA = re.compile(
     re.I,
 )
 # Palabras que convierten la cifra en una afirmacion sobre la suite entera.
-ALCANCE_SUITE = re.compile(r"\bsuite\b|green\s+tests?|tests?\s+verdes|todo\s+verde|0\s+rojos|exit\s+0", re.I)
+ALCANCE_SUITE = re.compile(r"\bsuites?\b|green\s+tests?|tests?\s+verdes|todo\s+verde|0\s+rojos|exit\s+0", re.I)
+MEASUREMENT_DATE = re.compile(r"\b20\d{2}[-/]\d{1,2}[-/]\d{1,2}\b")
+LIVE_STATE = re.compile(
+    r"\b(?:now|currently|current|today|hoy|actual(?:ly|mente)?|live|"
+    r"activo|active|carries|lleva)\b",
+    re.I,
+)
+CONTEXTO_TEST_LOCAL = re.compile(
+    r"\b(?:test_[A-Za-z0-9_]+\.py|m[oó]dulo|module|"
+    r"caso|case|funci[oó]n|function|family|familia|coverage|cobertura|"
+    r"invariant|invariante|lane|carril|plugin|unit|unidad)\b",
+    re.I,
+)
+REGISTROS_HISTORICOS = (
+    "context/HANDOFF_HISTORICO.md",
+    "docs/handoffs/archive/",
+    "work/",
+    "xio/imported_root/",
+)
 
 RANGO_INVARIANTES = re.compile(r"\bI1\s*-\s*I(\d+)\b")
 INVARIANTE_CONTRATO = re.compile(r"^-\s*I(\d+)\b", re.M)
 
-VERSION_AFIRMADA = re.compile(r"\bv(\d+\.\d+\.\d+)\s+live\b|\bversion\s+(\d+\.\d+\.\d+)\b", re.I)
+VERSION_AFIRMADA = re.compile(
+    r"\bversion\b\s*(?:[:=]\s*)?v?(\d+\.\d+\.\d+)\b"
+    r"|\bv(\d+\.\d+\.\d+)\s+live\b",
+    re.I,
+)
 VERSION_PYPROJECT = re.compile(r'^version\s*=\s*"([^"]+)"', re.M)
 
 
@@ -104,6 +126,21 @@ def _rel(p: Path) -> str:
     return p.relative_to(RAIZ).as_posix()
 
 
+def _is_suite_count(line: str, previous: str = "", path: Path | None = None) -> bool:
+    """Catch an unscoped live total without accusing dated evidence."""
+    context = previous + " " + line
+    if DELTA.search(context) or MEASUREMENT_DATE.search(context):
+        return False
+    if path is not None and any(
+        _rel(path) == prefix or _rel(path).startswith(prefix)
+        for prefix in REGISTROS_HISTORICOS
+    ):
+        return False
+    if ALCANCE_SUITE.search(line):
+        return True
+    return bool(LIVE_STATE.search(context)) and not CONTEXTO_TEST_LOCAL.search(context)
+
+
 def test_ningun_doc_vivo_afirma_el_total_de_la_suite():
     """El conteo de tests se mide, no se escribe. Deltas historicos si valen."""
     ofensas = []
@@ -116,7 +153,7 @@ def test_ningun_doc_vivo_afirma_el_total_de_la_suite():
                 continue
             # La marca de delta puede venir en la linea anterior: la prosa del
             # repo envuelve a ~75 columnas y parte "tests/test_x.py +\n18 tests".
-            if not DELTA.search(previa + " " + linea) and ALCANCE_SUITE.search(linea):
+            if _is_suite_count(linea, previa, p):
                 ofensas.append(f"{_rel(p)}:{n}: {linea.strip()}")
             previa = linea
 
@@ -182,4 +219,21 @@ def test_la_version_afirmada_coincide_con_pyproject():
     assert not ofensas, (
         "Version afirmada en doc viva distinta de pyproject.toml (la version "
         "manda).\n" + "\n".join(ofensas)
+    )
+
+
+@pytest.mark.parametrize("line", ["Version: v0.52.0", "version = v0.52.0"])
+def test_version_gate_reads_colon_and_v_prefix(line):
+    """Punctuation must not create a hole in the version claim gate."""
+    match = VERSION_AFIRMADA.search(line)
+    assert match and (match.group(1) or match.group(2)) == "0.52.0"
+
+
+def test_suite_gate_catches_live_unscoped_counts_but_keeps_records():
+    """Live totals fail; dated, local and handoff counts remain evidence."""
+    assert _is_suite_count("The runtime currently carries 20 tests")
+    assert not _is_suite_count("The runtime carries 20 tests measured 2026-08-28")
+    assert not _is_suite_count("test_hub.py: 20 tests")
+    assert not _is_suite_count(
+        "The handoff carries 20 tests", path=RAIZ / "context/HANDOFF_HISTORICO.md"
     )

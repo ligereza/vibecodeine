@@ -433,7 +433,7 @@ def ejecutar(accion, args):
         guard = _research_guard(tema, args)
         if guard:
             return guard
-        return _http_post_form("http://127.0.0.1:8890/run",
+        return _http_post_form("http://127.0.0.1:8900/research/run",
                                 {"tema": tema, "modo": "research", "densidad": "medio",
                                  "proposito": args.get("proposito", ""),
                                  "lane": args.get("lane", ""),
@@ -451,7 +451,7 @@ def ejecutar(accion, args):
                     "codificar (%s). El canal produce un archivo stdlib que "
                     "nadie ejecuta, asi que este pedido no puede cumplirse aqui."
                     % malo, "rechazado": pedido[:200]}
-        r = _http_post_form("http://127.0.0.1:8891/run",
+        r = _http_post_form("http://127.0.0.1:8900/codex/run",
                              {"pedido": pedido, "modo": "generar", "densidad": "medio"})
         if not r.get("ok"):
             try:

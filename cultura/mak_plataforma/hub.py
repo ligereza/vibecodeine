@@ -4240,11 +4240,14 @@ def _portfolio_suggestions(item_id, board_id="", include_map=False,
                    if item.get("id") == str(item_id)), source)
     feedback = _portfolio_feedback()
     visual_surface = _portfolio_visual_surface(item_id)
+    semantic_surface = _portfolio_semantic_surface(
+        item_id, inbox_items=inbox_items)
     result, suppressed = copilot.build_suggestions(
         source, inbox_items, selections=_portfolio_selections(),
         feedback=feedback, context=context, limit=24,
         focus_facet=focus_facet, shuffle=shuffle, shuffle_seed=shuffle_seed,
-        visual_relations=visual_surface.get("relations", []))
+        visual_relations=visual_surface.get("relations", []),
+        semantic_relations=semantic_surface.get("relations", []))
     map_surface = {"schema": copilot.GTM_SCHEMA,
                    "engine": "not_requested", "fit": {},
                    "source_position": None}
@@ -4298,6 +4301,7 @@ def _portfolio_suggestions(item_id, board_id="", include_map=False,
             "candidate_learning": copilot.review_profile(
                 _portfolio_external_review_rows()),
             "visual_similarity": visual_surface,
+            "micelio_semantic": semantic_surface,
             "xio_evidence": _portfolio_xio_evidence(),
             "suggestion_mode": "shuffle" if shuffle else focus_facet or "copilot",
             "suppressed_redundant": suppressed, "suggestions": result}
@@ -4381,6 +4385,8 @@ def _portfolio_scene(item_id, limit=10, focus_facet="", shuffle=False,
         map_surface = _portfolio_gtm_map(
             inbox_items, feedback=feedback_rows, stable_topology=True)
         visual_surface = _portfolio_visual_surface(item_id)
+        semantic_surface = _portfolio_semantic_surface(
+            item_id, inbox_items=inbox_items)
         suggestion_surface = {
             "provider": "gtm_order_projection",
             "learning": {"ordering": map_surface.get("ordering", {})},
@@ -4388,6 +4394,7 @@ def _portfolio_scene(item_id, limit=10, focus_facet="", shuffle=False,
             # The order surface is the active editor surface; keep the
             # derived visual channel visible there without loading the model.
             "visual_similarity": visual_surface,
+            "micelio_semantic": semantic_surface,
             "suggestion_groups": _portfolio_order_groups(
                 source, inbox_items, map_surface, limit=limit),
         }
@@ -4425,6 +4432,8 @@ def _portfolio_scene(item_id, limit=10, focus_facet="", shuffle=False,
     scene["learning"]["ordering"] = map_surface.get("ordering", {})
     scene["visual_similarity"] = suggestion_surface.get(
         "visual_similarity", {"available": False, "relations": []})
+    scene["micelio_semantic"] = suggestion_surface.get(
+        "micelio_semantic", {"available": False, "relations": []})
     scene["xio_evidence"] = suggestion_surface.get(
         "xio_evidence", _portfolio_xio_evidence())
     map_by_id = {
@@ -5595,6 +5604,61 @@ def _portfolio_visual_surface(item_id="", limit=8):
                 "relations": [], "profile": {"available": False}}
 
 
+def _portfolio_semantic_surface(item_id="", limit=8, inbox_items=None):
+    """Attach the public archive, or live Micelio, to current inbox ids.
+
+    ``archivo.json`` is ignored/generated, so a fresh MAK checkout cannot rely
+    on it being present. The live fallback uses the same Hub archive adapter;
+    both routes remain read-only and map through the explicit media identity.
+    """
+    archive_path = Path(PORTFOLIO_ROOT) / "datos" / "archivo.json"
+    source_ref = "iskvw/datos/archivo.json"
+    try:
+        if archive_path.is_file():
+            archive = json.loads(archive_path.read_text(encoding="utf-8"))
+        else:
+            archive = _archivo_publico()
+            source_ref = "/api/archivo (live Micelio)"
+        relations = contrato_archivo.portfolio_semantic_relations(
+            archive, item_id, limit=limit, source_ref=source_ref)
+    except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        return {
+            "available": False,
+            "reason": "micelio_archive_unavailable:%s" % type(exc).__name__,
+            "relations": [],
+            "profile": {"available": False, "model": "nomic-embed-text"},
+        }
+    by_media = {}
+    for item in inbox_items or []:
+        if not isinstance(item, dict):
+            continue
+        key = contrato_archivo.media_identity(item.get("id", ""))
+        if key:
+            by_media.setdefault(key, str(item["id"]))
+    mapped = []
+    for relation in relations:
+        target_id = by_media.get(
+            contrato_archivo.media_identity(relation.get("item_id", "")))
+        if not target_id:
+            continue
+        row = dict(relation)
+        row["item_id"] = target_id
+        row["identity_bridge"] = "portfolio_media_id"
+        mapped.append(row)
+    return {
+        "available": True,
+        "reason": "" if mapped else "no_current_inbox_media_match",
+        "relations": mapped,
+        "profile": {
+            "available": True,
+            "model": "nomic-embed-text",
+            "source_ref": source_ref,
+            "source_generated": str(archive.get("generado") or ""),
+            "matched_relations": len(mapped),
+        },
+    }
+
+
 def _portfolio_xio_evidence(limit=24):
     """Expose bounded XIO evidence and explicit human links."""
     if _xio_evidence is None:
@@ -6102,7 +6166,9 @@ def _archivo_publico():
     ahora = time.time()
     if ahora - _ARCHIVO_CACHE["t"] < 30 and _ARCHIVO_CACHE["data"]:
         return _ARCHIVO_CACHE["data"]
-    cuerpo = contrato_archivo.sustrato_publico(contrato_archivo.convertir(_micelio()))
+    cuerpo = contrato_archivo.deduplicate_media_sources(
+        contrato_archivo.sustrato_publico(contrato_archivo.convertir(_micelio()))
+    )
     _ARCHIVO_CACHE["data"] = cuerpo
     _ARCHIVO_CACHE["t"] = ahora
     return cuerpo
@@ -7322,6 +7388,21 @@ class H(BaseHTTPRequestHandler):
             payload = _portfolio_scene(
                 item_id, limit=limit, focus_facet=focus_facet,
                 shuffle=shuffle, shuffle_seed=shuffle_seed, surface=surface)
+            return self._json(payload, _status_for(payload))
+        if p == "/api/portfolio/copilot/suggestions":
+            # `iskvw/editor.html` asks for the lightweight suggestion surface;
+            # keep it as an alias to the same Copilot implementation used by
+            # `/scene` instead of creating a second relation engine.
+            query = urllib.parse.parse_qs(u.query)
+            item_id = (query.get("item_id") or [""])[0]
+            board_id = (query.get("board_id") or [""])[0]
+            focus_facet = (query.get("facet") or [""])[0]
+            shuffle = (query.get("mode") or [""])[0] == "shuffle"
+            shuffle_seed = (query.get("seed") or [""])[0]
+            payload = _portfolio_suggestions(
+                item_id, board_id=board_id, include_map=False,
+                focus_facet=focus_facet, shuffle=shuffle,
+                shuffle_seed=shuffle_seed)
             return self._json(payload, _status_for(payload))
         if p == "/api/portfolio/copilot/map":
             query = urllib.parse.parse_qs(u.query)

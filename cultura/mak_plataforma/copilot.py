@@ -1314,7 +1314,7 @@ def _confidence(score, prior):
 
 def build_suggestions(source, items, selections=None, feedback=None, context=None,
                       limit=24, focus_facet="", shuffle=False, shuffle_seed="",
-                      visual_relations=None):
+                      visual_relations=None, semantic_relations=None):
     selections = selections or {}
     feedback = feedback or []
     learned = feedback_index(feedback)
@@ -1480,6 +1480,79 @@ def build_suggestions(source, items, selections=None, feedback=None, context=Non
                 "similitud visual derivada; no establece identidad ni autoría",
                 "vecindad MobileCLIP/FAISS sobre la unidad editorial",
             ]))
+    semantic_targets = {str(row.get("item_id")) for row in result}
+    for semantic in semantic_relations or []:
+        candidate_id = str(semantic.get("item_id") or "").strip()
+        candidate = by_id.get(candidate_id)
+        if (not candidate or candidate_id == source_id
+                or selections.get(candidate_id, {}).get("decision") == "descartar"):
+            continue
+        if (source.get("publicacion_id") and candidate.get("publicacion_id")
+                and source.get("publicacion_id") == candidate.get("publicacion_id")):
+            continue
+        try:
+            semantic_score = float(semantic.get("semantic_score") or semantic.get("score") or 0.0)
+        except (TypeError, ValueError):
+            continue
+        if not math.isfinite(semantic_score) or semantic_score <= 0:
+            continue
+        semantic_score = max(0.0, min(1.0, semantic_score))
+        evidence = {
+            "kind": str(semantic.get("evidence_kind") or "micelio_semantic_relation"),
+            "facet": "text",
+            "strength": "medium",
+            "score": round(semantic_score, 6),
+            "model": str(semantic.get("model") or "nomic-embed-text"),
+            "source_ref": str(semantic.get("source_ref") or "iskvw/datos/archivo.json"),
+            "source_generated": str(semantic.get("source_generated") or ""),
+            "source_piece_id": str(semantic.get("source_piece_id") or ""),
+            "target_piece_id": str(semantic.get("target_piece_id") or ""),
+        }
+        # A semantic edge that points to a pair already proposed by shared text
+        # or vision is supporting evidence, not another raw relation. If the
+        # existing row is only a date/format/entity relation, keep a separate
+        # channel row; group_suggestions merges both into one target card and
+        # the text/semantic focus remains usable.
+        if candidate_id in semantic_targets:
+            existing = next((row for row in result
+                             if str(row.get("item_id")) == candidate_id
+                             and row.get("facet") in {"text", "visual_similarity"}), None)
+            if existing is not None:
+                supporting = existing.setdefault("supporting_evidence", [])
+                if evidence not in supporting:
+                    supporting.append(evidence)
+                channels = existing.setdefault("supporting_channels", [])
+                if "micelio_semantic" not in channels:
+                    channels.append("micelio_semantic")
+                semantic_rank = round(semantic_score * 8.0, 4)
+                if semantic_rank > float(existing.get("score") or 0.0):
+                    existing["score"] = semantic_rank
+                    existing["score_source"] = "micelio_semantic"
+                    reason = "ranking semántico Micelio; canal más fuerte"
+                else:
+                    reason = "apoyo semántico Micelio; sin score adicional"
+                if reason not in existing.setdefault("reasons", []):
+                    existing["reasons"].append(reason)
+            continue
+        semantic_targets.add(candidate_id)
+        result.append(dict(
+            {
+                "item_id": candidate_id,
+                "selection": selections.get(candidate_id, {}).get("decision", "pendiente"),
+                "feedback": "pendiente",
+                "source_role": source.get("record_kind") or source.get(
+                    "tipo_contenido") or "media_candidate",
+                "candidate_role": candidate.get("record_kind") or candidate.get(
+                    "tipo_contenido") or "media_candidate",
+            },
+            facet="text", relation_type="micelio_semantic_similarity",
+            score=round(semantic_score * 8.0, 4),
+            semantic_score=round(semantic_score, 6), scope="exploratory",
+            evidence=[evidence],
+            reasons=[
+                "similitud semántica derivada; no establece identidad ni autoría",
+                "vecindad Nomic/Micelio sobre la representación textual",
+            ]))
     for row in result:
         prior = learned_facets.get((source_id, row["item_id"],
                                     str(row.get("facet") or "unknown").lower()))
@@ -1558,6 +1631,9 @@ def group_suggestions(rows):
         if facet and facet not in group["facets"]:
             group["facets"].append(facet)
         for evidence in row.get("evidence", []) or []:
+            if evidence not in group["evidence"]:
+                group["evidence"].append(evidence)
+        for evidence in row.get("supporting_evidence", []) or []:
             if evidence not in group["evidence"]:
                 group["evidence"].append(evidence)
         for reason in row.get("reasons", []) or []:

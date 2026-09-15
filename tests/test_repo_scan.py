@@ -24,6 +24,7 @@ import subprocess
 
 import pytest
 
+import repo_scan
 from repo_scan import REPO, versionable_files
 
 
@@ -68,6 +69,27 @@ def test_ignored_files_stay_out():
         pytest.skip("not a usable git checkout")
     names = versionable_files()
     assert not [n for n in names if n.startswith((".venv/", "node_modules/"))]
+
+
+def test_protected_mounts_are_excluded_from_git_walk(monkeypatch):
+    """The enumerator must not ask Git to descend into protected roots."""
+    calls = []
+
+    def fake_run(command, **kwargs):
+        calls.append(command)
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    monkeypatch.setattr(repo_scan.subprocess, "run", fake_run)
+    versionable_files()
+
+    assert len(calls) == 2
+    for command in calls:
+        assert "--" in command
+        pathspecs = command[command.index("--") + 1:]
+        assert all(
+            f":(exclude){top}/**" in pathspecs
+            for top in repo_scan.UNSCANNED_TOPS
+        )
 
 
 def test_the_result_has_no_duplicates_and_is_stable():

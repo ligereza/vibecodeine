@@ -38,6 +38,7 @@ deliberately requested.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -63,6 +64,7 @@ CURADURIA = RAIZ / "iskvw" / "datos" / "curaduria.json"
 # It uses the same reproducible-snapshot principle as campo.json positions and
 # carries the micelio's measured links without opening a service.
 MICELIO_SNAPSHOT = RAIZ / "iskvw" / "datos" / "micelio.json"
+PORTAFOLIO = RAIZ / "iskvw" / "datos" / "portafolio.json"
 
 # Por defecto el micelio se pide a la variable de entorno, no a una IP escrita
 # en el repo: este repositorio es publico.
@@ -294,8 +296,12 @@ def desde_laser_manifiesto(campo_ruta: Path = CAMPO,
 
 
 def unir(*partes: dict) -> dict:
-    """Junta fuentes sin duplicar: una obra percibida por MAK y la misma obra
-    cargada a mano son UNA pieza. Gana la que trae mas datos."""
+    """Junta fuentes sin duplicar por id y por media ID explícito.
+
+    Una obra percibida por MAK y la misma obra cargada a mano son UNA pieza:
+    conserva la observación de campo y anexa la evidencia semántica, sin
+    tratarla como autoría ni como una segunda obra.
+    """
     piezas: dict[str, dict] = {}
     vinculos: dict[tuple[str, str], dict] = {}
     for parte in partes:
@@ -310,12 +316,88 @@ def unir(*partes: dict) -> dict:
             if clave not in vinculos or (v["clase"] == "semantico"
                                          and vinculos[clave]["clase"] != "semantico"):
                 vinculos[clave] = v
-    return {"piezas": list(piezas.values()), "vinculos": list(vinculos.values())}
+    return contrato_archivo.deduplicate_media_sources({
+        "piezas": list(piezas.values()),
+        "vinculos": list(vinculos.values()),
+    })
 
 
 def _riqueza(p: dict) -> int:
     return sum(1 for k in ("fecha", "resumen", "medio", "extra")
                if p.get(k) not in (None, "", [], {}, {"tipo": "ninguno"}))
+
+
+def _orden_portafolio(piezas: list[dict]) -> list[dict]:
+    """Give every source piece one deterministic place in the portfolio.
+
+    Measured positions lead when they exist. The rest are not held back for a
+    decision and are not discarded: their stable id gives them a reproducible
+    place until a measurement arrives. This is the visual portfolio order, not
+    a claim about authorship or semantic similarity.
+    """
+    def clave(p: dict) -> tuple:
+        pos = p.get("posicion") or {}
+        x, y = pos.get("x"), pos.get("y")
+        if isinstance(x, (int, float)) and not isinstance(x, bool) \
+                and isinstance(y, (int, float)) and not isinstance(y, bool):
+            return (0, y, x, str(p.get("id") or ""))
+        return (1, str(p.get("id") or ""))
+
+    return sorted(piezas, key=clave)
+
+
+def construir_portafolio(archive_data: dict, *, source_path: str,
+                         source_bytes: bytes) -> dict:
+    """Build the single visual-portafolio manifest consumed by every skin.
+
+    The archive remains the content source. This manifest only fixes its
+    complete selection, order, and available views, so missing metadata or
+    missing human decisions never turns into an omitted work.
+    """
+    piezas = list(archive_data.get("piezas") or [])
+    ordenadas = _orden_portafolio(piezas)
+    ids = [str(p["id"]) for p in ordenadas if p.get("id")]
+    posicionadas = sum(1 for p in ordenadas if isinstance(p.get("posicion"), dict)
+                       and isinstance(p["posicion"].get("x"), (int, float))
+                       and isinstance(p["posicion"].get("y"), (int, float)))
+    return {
+        "schema": "iskvw-portfolio-manifest-v1",
+        "version": 1,
+        "source": {
+            "path": source_path,
+            "sha256": hashlib.sha256(source_bytes).hexdigest(),
+            "piece_count": len(piezas),
+            "link_count": len(archive_data.get("vinculos") or []),
+        },
+        # The artist is the corpus context for this MAK portfolio. It is not
+        # an inferred authorship assertion; the archive's own `clase` and
+        # fields remain the authority for what each piece says.
+        "artist": {"id": "mak", "basis": "operator_context",
+                    "authorship_claimed": False},
+        "default_skin": "campo",
+        "skins": [
+            {"id": "campo", "path": "piel/campo/", "label": "campo",
+             "scope": "portfolio"},
+            {"id": "terminal", "path": "piel/terminal/", "label": "terminal",
+             "scope": "portfolio"},
+        ],
+        "sections": [{"id": "portfolio", "title": "Portafolio",
+                       "item_ids": ids}],
+        "order": ids,
+        "ordering": {
+            "algorithm": "measured_position_yx_then_stable_id",
+            "positioned_count": posicionadas,
+            "unpositioned_count": len(piezas) - posicionadas,
+        },
+        "selection": {"mode": "all_source_pieces", "omitted_count": 0},
+        "control": {
+            "publication": False,
+            "submission": False,
+            "training": False,
+            "source_mutation": False,
+            "authorship_claimed": False,
+        },
+    }
 
 
 def main() -> int:
@@ -435,8 +517,19 @@ def main() -> int:
         },
     }
     args.salida.parent.mkdir(parents=True, exist_ok=True)
-    args.salida.write_text(json.dumps(salida, ensure_ascii=False, indent=1),
-                           encoding="utf-8")
+    archive_bytes = json.dumps(salida, ensure_ascii=False, indent=1).encode("utf-8")
+    args.salida.write_bytes(archive_bytes)
+    portfolio_path = args.salida.with_name(PORTAFOLIO.name)
+    try:
+        source_manifest = args.salida.relative_to(RAIZ).as_posix()
+    except ValueError:
+        source_manifest = args.salida.name
+    portfolio_path.write_text(
+        json.dumps(construir_portafolio(
+            salida, source_path=source_manifest, source_bytes=archive_bytes),
+                   ensure_ascii=False, indent=1),
+        encoding="utf-8",
+    )
     # `relative_to` levanta ValueError con una salida fuera del repo, asi que
     # --salida a cualquier ruta absoluta de afuera reventaba DESPUES de haber
     # escrito bien el archivo. El nombre corto es una comodidad, no un requisito.
@@ -447,6 +540,7 @@ def main() -> int:
     print(f"{donde}: {len(datos['piezas'])} piezas, "
           f"{len(datos['vinculos'])} vinculos "
           f"({args.salida.stat().st_size / 1024:.1f} KB)")
+    print(f"  manifiesto: {portfolio_path.name} ({len(salida['piezas'])} ids)")
     print("  por clase:", salida["meta"]["por_clase"])
     return 0
 

@@ -395,7 +395,7 @@ App puede usar el siguiente puerto libre (por ejemplo, 8766).
 | Curatoria | `curatoria/`, `cultura/mak_curatoria/` | Carpetas caóticas -> clasificación, índice, procedencia, triangulación y dossier. |
 | Cultura / MAK + IRIS | `cultura/mak_plataforma/` | Orquestación local, sistema interno de ordenamiento IRIS, health, gobierno, backlog, entrega y exposición en 8900. |
 | Lenguaje / Vigía | `cultura/mak_lenguaje/`, `cultura/mak_vigia/` | Contratos de idioma y vigilancia de convocatorias sin convertir candidatos en hechos. |
-| Venue / SCD | `data/venues/`, `tools/venue*.py`, `tools/venue3d_smoke.mjs` | Ficha de venue, geometría, plano visual y demostración 3D. SCD es un demostrador, no un levantamiento técnico certificado. |
+| Venue / SCD | `data/venues/`, `tools/venue2d/`, `tools/venue*.py`, `tools/venue3d/` | Cadena 2D→3D, ficha de venue, geometría, plano/rider y demostración 3D. SCD es un demostrador, no un levantamiento técnico certificado. |
 
 RD y Portfolio comparten entidades y procedencia, pero no pierden su
 autoridad propia. Cultura puede investigar para cualquiera de los dos; no

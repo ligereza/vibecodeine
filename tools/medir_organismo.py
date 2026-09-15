@@ -11,7 +11,7 @@ Usage:
 
 What it answers, in order of consequence:
     1. how many cron lines are active and how many paused
-    2. which of the five organs declared in /home/mak/GENESIS.md respond
+    2. whether the single MAK Hub surface responds
     3. whether `main` has branch protection, because a cron line merges PRs
     4. how many cron lines would start if resumed
     5. the Python environments and their size
@@ -37,7 +37,7 @@ from pathlib import Path
 
 HOME = Path("/home/mak")
 REPO = HOME / "flujo"
-ORGANS = [("research", 8890), ("codex", 8891), ("plataforma", 8900)]
+ORGANS = [("plataforma", 8900)]
 REPOSITORIES = (
     ("MAK", HOME),
     ("FLUJO", REPO),
@@ -345,7 +345,7 @@ def main(argv: list[str] | None = None) -> int:
           f"{'pausado con el cron' if not active else 'segun cron'}"
           if cron_available else "     lenguaje     cli/cron  indeterminado")
     print(f"     {'xio_puente':<12} daemon    {xio if xio_known else 'indeterminado'}")
-    print(f"     -> {alive} de 5 organos responden")
+    print(f"     -> {alive} de 1 superficie TCP responden")
 
     print("\n3. proteccion de rama en main (hay un cron que mergea)")
     protection, protection_err, protection_ok = sh_result(

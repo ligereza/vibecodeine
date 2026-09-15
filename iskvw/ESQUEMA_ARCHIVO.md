@@ -1,8 +1,8 @@
 # El archivo, en una sola forma
 
-> **Forma operativa, con contenido regenerable (verificada 2026-08-15).** La
-> proyección local actual, construida con el snapshot MAK disponible, tiene
-> 1.690 piezas y 4.729 vínculos. Esas cifras cambian cuando avanza el snapshot;
+> **Forma operativa, con contenido regenerable (verificada 2026-09-15).** La
+> proyección local actual, construida con el estado MAK disponible, tiene
+> 1.830 piezas y 5.832 vínculos. Esas cifras cambian cuando avanza la fuente;
 > no son parte del contrato y no deben copiarse a una piel como constantes.
 >
 > Se genera cuando se necesita. `iskvw/datos/archivo.json` NO se versiona; es
@@ -17,7 +17,8 @@ Detrás hay dos familias que no se parecen en nada:
 - **Las obras del artista**: pocas, con datos ricos —título, año, técnica,
   descripción— y **ninguna relación explícita**. Sólo etiquetas.
 - **El micelio de MAK**: nodos de investigación y código con relaciones
-  semánticas medidas; en el snapshot local son 1.530 piezas y 4.921 vínculos.
+  semánticas medidas; el snapshot versionado contiene 1.530 piezas y 4.921
+  vínculos.
 
 Una tenía que ver la otra y no podía. Cada piel terminaba escribiendo su propio
 lector, y una piel nueva servía para una sola fuente. Con esta forma, una piel
@@ -39,6 +40,34 @@ pide *"dame las piezas y sus vínculos"* y siempre recibe lo mismo.
   "meta": { }
 }
 ```
+
+## El manifiesto del portafolio
+
+`datos/portafolio.json` se genera al mismo tiempo que el archivo. No duplica
+piezas: fija qué proyección completa se muestra y en qué orden la leen las
+pieles.
+
+```json
+{
+  "schema": "iskvw-portfolio-manifest-v1",
+  "source": {"path": "iskvw/datos/archivo.json", "sha256": "…",
+              "piece_count": 1830, "link_count": 5832},
+  "artist": {"id": "mak", "basis": "operator_context",
+             "authorship_claimed": false},
+  "default_skin": "campo",
+  "skins": [{"id": "campo", "path": "piel/campo/", "label": "campo", "scope": "portfolio"},
+            {"id": "terminal", "path": "piel/terminal/", "label": "terminal", "scope": "portfolio"}],
+  "order": ["id-de-pieza-1", "id-de-pieza-2"],
+  "selection": {"mode": "all_source_pieces", "omitted_count": 0}
+}
+```
+
+`order` contiene todos los ids de `archivo.json`. Las piezas con `posicion`
+medida se ordenan por `y`, luego `x`; las demás por id estable. La ausencia de
+una decisión, título, fecha o posición no elimina una pieza ni obliga a
+clasificarla como `unknown`: sólo limita lo que una piel puede afirmar sobre
+ella. `artist` identifica el contexto del corpus para poder ordenar; no es una
+inferencia de autoría.
 
 ### Una pieza
 
@@ -86,7 +115,7 @@ Los vínculos **no tienen dirección**: `de` y `a` son intercambiables.
 
 ---
 
-## Las cinco reglas
+## Las reglas
 
 Son las mismas del contrato y no se negocian. Repetidas acá porque quien escribe
 una piel lee este archivo:
@@ -104,6 +133,11 @@ Y una que sale de esta forma:
    conceptos y técnica por obra, van a llegar dentro de `extra`. Una piel vieja
    tiene que seguir funcionando el día que eso pase.
 
+7. **Las pieles de portafolio comparten la proyección.** `campo` y `terminal`
+   leen el mismo `portafolio.json` + `archivo.json`; la ausencia de una
+   decisión no excluye una pieza. Las herramientas 3D de venues declaran su
+   fuente geométrica aparte y no son pieles del portafolio.
+
 ---
 
 ## Cómo se genera
@@ -120,12 +154,13 @@ py tools/gen_archivo_iskvw.py --fuente todo --incluir-ensayos
 En esta verificación el micelio en vivo no fue alcanzable desde MAK (conexión
 rechazada), por lo que `--fuente todo` cayó correctamente al snapshot
 `iskvw/datos/micelio.json` —1.530 piezas y 4.921 vínculos— y produjo localmente
-1.690 piezas y 4.729 vínculos. La promoción de cambios se revisa en `main`;
+1.830 piezas y 5.832 vínculos en el corte 2026-09-15. La promoción de cambios se revisa en `main`;
 `source/*` conserva puntas históricas exactas y no es una fuente de runtime.
 El mismo principio usa `campo.json` para las posiciones: snapshot regenerable,
 no una promesa de conexión en vivo.
 
-Sale a `iskvw/datos/archivo.json`. Una piel lee ESE archivo y nada más.
+Sale a `iskvw/datos/archivo.json` junto con
+`iskvw/datos/portafolio.json`. Una piel usa esa pareja y nada más.
 
 **La fuente `obras`** deriva los vínculos de las etiquetas compartidas: dos obras
 con etiquetas en común quedan unidas, con peso según cuántas comparten. Esos

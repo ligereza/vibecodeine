@@ -34,7 +34,7 @@ def test_doctor_names_an_unmeasured_working_tree_when_git_status_fails(
     # The other two git checks over the SAME failed git invocation correctly
     # name the failure:
     assert "git branch" in result.output
-    assert "git origin" in result.output
+    assert "git remote" in result.output
     # The working-tree row must name the failed measurement rather than claim
     # that an unmeasured tree is clean.
     assert "git working tree" in result.output

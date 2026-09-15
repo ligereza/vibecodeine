@@ -61,7 +61,8 @@ LOG = os.path.join(HOME, "plataforma", "logs", "entregar_micelio.log")
 # Env override, not a LAN IP hardcoded in a public repo (same rule
 # tools/gen_archivo_iskvw.py follows). Default is correct only when this
 # script runs ON the box: 127.0.0.1 is the box's own research service.
-MICELIO_URL = os.environ.get("FLUJO_MAK_RESEARCH_URL", "http://127.0.0.1:8890")
+MICELIO_URL = os.environ.get(
+    "FLUJO_MAK_RESEARCH_URL", "http://127.0.0.1:8900/research")
 UMBRAL = float(os.environ.get("FLUJO_MICELIO_UMBRAL", "0.55"))
 
 

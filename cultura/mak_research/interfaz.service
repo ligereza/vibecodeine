@@ -15,6 +15,8 @@ TimeoutStopSec=15
 KillMode=control-group
 Environment=PYTHONUNBUFFERED=1
 Environment=MAK_SERVICE_HOST=127.0.0.1
+Environment=MAK_SERVICE_SOCKET=%h/.cache/mak/research.sock
+Environment=MAK_REINDEX_AFTER_JOB=1
 EnvironmentFile=-%h/research/research.env
 EnvironmentFile=-%h/n8n-local/research.env
 [Install]

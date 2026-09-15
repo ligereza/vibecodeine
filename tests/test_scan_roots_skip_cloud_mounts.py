@@ -22,6 +22,7 @@ import pytest
 
 from tools.build_mak_knowledge_db import ACTIVE_SKIP, should_skip_dir
 from tools.consolidate_static_duplicates import PROTECTED_TOPS
+from conftest import pytest_ignore_collect
 
 HOME = Path("/home/mak")
 
@@ -31,6 +32,13 @@ class TestTheProtectedSetIsTheContract:
         # If this shrinks, the tests below would pass while checking less.
         assert {"GoogleDrive", "OneDrive"} <= PROTECTED_TOPS
         assert {"WIN", "curatoria_inbox"} <= PROTECTED_TOPS
+
+    @pytest.mark.parametrize("protected", sorted(PROTECTED_TOPS))
+    def test_pytest_collection_rejects_protected_root_before_probing_it(
+        self, protected: str
+    ) -> None:
+        """Collection itself must not call pytest's virtualenv probe there."""
+        assert pytest_ignore_collect(HOME / protected, object()) is True
 
 
 class TestTheKnowledgeScannerStaysOut:

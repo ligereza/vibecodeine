@@ -17,8 +17,8 @@ del repo**. Aquí no hay commits: hay órganos que corren y piezas que nacen.
 
 | Órgano | Puerto | Qué hace |
 |---|---|---|
-| **research** | loopback :8890 | Servicio interno de investigación cultural multi-modelo: 7 modos (single, pipeline, discussion, adversarial, grafo, memoria, corpus) + micelio semántico del archivo |
-| **codex** | loopback :8891 | Servicio interno FULL CODER: genera, revisa y testea código con la cadena de modelos; sandbox con límites de recursos y filtro estático |
+| **research** | socket Unix privado detrás de :8900 | Servicio interno de investigación cultural multi-modelo: 7 modos (single, pipeline, discussion, adversarial, grafo, memoria, corpus) + micelio semántico del archivo |
+| **codex** | socket Unix privado detrás de :8900 | Servicio interno FULL CODER: genera, revisa y testea código con la cadena de modelos; sandbox con límites de recursos y filtro estático |
 | **curatoria** | cron/batch | Departamento de percepción y candidatos; no tiene una superficie Web humana separada ni un puerto operativo |
 | **lenguaje** | (cli/cron) | El idioma como señal: mide tildes/eñes/aperturas de cada pieza, corrige con el modelo capaz, construye el léxico vivo del corpus |
 | **plataforma** | loopback :8900 | El esqueleto que aloja a los demás: hub, salud, guardia de recursos, descargas seguras, respaldos, watchdog |
