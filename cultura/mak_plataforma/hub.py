@@ -16,6 +16,7 @@ Rutas: / (cara) · /research-garden/ · /health · /api/organismo · /api/miceli
 """
 import html
 import ast
+import hashlib
 import http.client
 import json
 import math
@@ -24,6 +25,7 @@ import mimetypes
 import os
 import re
 import signal
+import shutil
 import socket
 import sys
 import threading
@@ -72,6 +74,11 @@ try:
     import visual_index as _visual_index  # noqa: E402
 except Exception:  # noqa: BLE001 - visual layer is an optional projection
     _visual_index = None
+# Imported lazily by `_portfolio_observe_folder` after `_FLUJO_SOURCE_ROOT`
+# has been inserted below. Importing this adapter above would create a partial
+# namespace package when the Hub starts from `/home/mak`, and would then hide
+# the autonomous FLUJO package from every later knowledge import.
+_portfolio_corpus = None
 try:
     import xio_evidence as _xio_evidence  # noqa: E402
 except Exception:  # noqa: BLE001 - XIO evidence remains optional
@@ -748,6 +755,7 @@ def _create_research_job(body):
     from tools.research_job_router import create_job, render_job
 
     db_path = _research_registry_path()
+    db_path.parent.mkdir(parents=True, exist_ok=True)
     job_id, selected, scores = create_job(db_path, question, domain)
     json_path, report_path = render_job(db_path, db_path.parent.parent / "jobs", job_id, selected, scores)
     return {"ok": True, "id": job_id, "domain": selected, "scores": scores,
@@ -1872,6 +1880,7 @@ def _portfolio_inbox_uncached(compact=False):
                 "features", {})
     payload["selected_count"] = sum(
         1 for item in payload.get("items", []) if item["selection"] == "seleccionar")
+    payload["context"] = _portfolio_context()
     if compact:
         payload["items"] = [
             {field: item.get(field) for field in MESA_INBOX_FIELDS}
@@ -1884,6 +1893,173 @@ def _portfolio_inbox_uncached(compact=False):
 def _portfolio_item(item_id):
     return next((item for item in _portfolio_inbox().get("items", [])
                  if item.get("id") == str(item_id or "")), None)
+
+
+def _portfolio_context():
+    """Return the declared corpus context used by every IRIS projection.
+
+    The artist is an input to the archive, never an inference from filenames,
+    captions or embeddings.  The local inbox predates an explicit artist
+    field, so ``artist_id`` remains ``None`` until the operator supplies
+    ``MAK_PORTFOLIO_ARTIST_ID``.  ``corpus_id`` is deterministic and identifies
+    this source without making an authorship claim.
+    """
+    source_path = os.path.realpath(PORTFOLIO_INBOX)
+    stored_context = {}
+    try:
+        with open(PORTFOLIO_INBOX, encoding="utf-8") as fh:
+            stored_payload = json.load(fh)
+        if isinstance(stored_payload, dict) and isinstance(
+                stored_payload.get("context"), dict):
+            stored_context = stored_payload["context"]
+    except (OSError, ValueError, TypeError):
+        stored_context = {}
+    configured_corpus = (
+        os.environ.get("MAK_PORTFOLIO_CORPUS_ID", "").strip()
+        or str(stored_context.get("corpus_id") or "").strip()
+    )
+    corpus_id = configured_corpus or (
+        "portfolio-inbox:%s" % hashlib.sha256(source_path.encode("utf-8")).hexdigest()[:16]
+    )
+    artist_id = (
+        os.environ.get("MAK_PORTFOLIO_ARTIST_ID", "").strip()
+        or str(stored_context.get("artist_id") or "").strip()
+        or None
+    )
+    return {
+        "schema": "faro-portfolio-corpus-context-v1",
+        "corpus_id": corpus_id[:160],
+        "artist_id": artist_id[:160] if artist_id else None,
+        "artist_context": "declared" if artist_id else "not_supplied",
+        "source": "portfolio_inbox",
+        "membership": {
+            "relation": "belongs_to_declared_corpus",
+            "basis": "explicit_input_context",
+            "authorship_claim": False,
+        },
+        "preserved_provenance": ["relative_path", "folder", "subfolders", "metadata"],
+        "signals": {
+            "metadata": "ordering_and_declared_evidence",
+            "semantic": "candidate_relations_only",
+            "visual": "candidate_relations_only",
+        },
+        "workflow": {
+            "format": "artist_specific",
+            "precision_target": "workflow_fit",
+            "universal_accuracy_required": False,
+            "human_gate": True,
+        },
+    }
+
+
+def _portfolio_relative_path(item):
+    """Keep folder provenance while hiding absolute local paths."""
+    values = (item.get("relative_path"), item.get("source_path"),
+              item.get("asset_path"), item.get("path"))
+    raw = next((str(value).strip() for value in values if value), "")
+    if not raw:
+        return ""
+    raw = raw.split("?", 1)[0].replace("\\", "/")
+    for prefix in ("/portfolio-media/", "portfolio-media/"):
+        if raw.startswith(prefix):
+            raw = raw[len(prefix):]
+            break
+    if os.path.isabs(raw):
+        for root in (PORTFOLIO_MEDIA_ROOT, PORTFOLIO_ROOT, HOME):
+            root = os.path.realpath(root).replace("\\", "/").rstrip("/")
+            if raw == root:
+                raw = ""
+                break
+            if raw.startswith(root + "/"):
+                raw = raw[len(root) + 1:]
+                break
+    parts = [part for part in raw.split("/") if part not in ("", ".")]
+    if not parts or ".." in parts:
+        return ""
+    return "/".join(parts)[:500]
+
+
+def _portfolio_source_envelope(item):
+    """The explicit source identity passed to Research/Codex consumers."""
+    relative_path = _portfolio_relative_path(item)
+    parts = relative_path.split("/") if relative_path else []
+    context = _portfolio_context()
+    return {
+        "schema": "faro-portfolio-source-v1",
+        "source_id": str(item.get("id") or ""),
+        "corpus_id": context["corpus_id"],
+        "artist_id": context["artist_id"],
+        "relative_path": relative_path,
+        "folder": "/".join(parts[:-1]),
+        "subfolders": parts[:-1],
+        "membership": context["membership"],
+        "authorship_claim": False,
+    }
+
+
+def _portfolio_research_candidates(limit=24):
+    """Rank research candidates from human-confirmed relations only."""
+    items = {str(item.get("id")): item for item in
+             _portfolio_inbox().get("items", []) if item.get("id")}
+    confirmed_by_item = {}
+    confirmed_edges = set()
+    for row in _portfolio_feedback():
+        if row.get("action") not in {"accept", "correct"}:
+            continue
+        source_id = str(row.get("source_id") or "")
+        target_id = str(row.get("target_id") or "")
+        if (source_id not in items or target_id not in items
+                or source_id == target_id):
+            continue
+        facet = str(row.get("facet") or "unknown")
+        relation = str(row.get("relation") or "related")
+        edge = (*sorted((source_id, target_id)), facet, relation)
+        if edge in confirmed_edges:
+            continue
+        confirmed_edges.add(edge)
+        for item_id in (source_id, target_id):
+            confirmed_by_item.setdefault(item_id, []).append({
+                "target_id": target_id if item_id == source_id else source_id,
+                "facet": facet,
+                "relation": relation,
+                "action": row.get("action"),
+            })
+    rows = []
+    for item_id, edges in confirmed_by_item.items():
+        item = items[item_id]
+        if item.get("selection") == "descartar":
+            continue
+        rows.append({
+            "item_id": item_id,
+            "relative_path": _portfolio_relative_path(item),
+            "selection": item.get("selection", "pendiente"),
+            "confirmed_connection_count": len(edges),
+            "confirmed_relation_types": sorted({edge["relation"] for edge in edges}),
+            "connections": edges,
+            "status": "candidate_only",
+            "research_ready": False,
+            "next_action": "human_review_and_explicit_research_dispatch",
+            "source": _portfolio_source_envelope(item),
+        })
+    rows.sort(key=lambda row: (-row["confirmed_connection_count"], row["item_id"]))
+    try:
+        limit = max(1, min(int(limit), 100))
+    except (TypeError, ValueError):
+        limit = 24
+    return {
+        "schema": "faro-portfolio-research-candidates-v1",
+        "status": "candidate_only",
+        "items": rows[:limit],
+        "total": len(rows),
+        "confirmed_edge_count": len(confirmed_edges),
+        "policy": {
+            "basis": "human_confirmed_relation_feedback",
+            "semantic_and_visual_suggestions_are_not_truth": True,
+            "automatic_dispatch": False,
+            "promotion": "none",
+        },
+        "next_action": "revisar candidatos y enviar explícitamente una pieza a research",
+    }
 
 
 def _portfolio_metadata_index():
@@ -2026,6 +2202,7 @@ _ERROR_STATUS = {
     "tablero_no_encontrado": 404,
     "grupo_no_encontrado": 404,
     "candidato_no_encontrado": 404,
+    "item_descartado": 400,
     # The caller sent something this route cannot act on.
     "accion_invalida": 400,
     "decision_invalida": 400,
@@ -2038,6 +2215,10 @@ _ERROR_STATUS = {
     "proveedor_invalido": 400,
     "segment_id_invalido": 400,
     "source_id_requerido": 400,
+    "source_root_requerido": 400,
+    "source_root_invalido": 400,
+    "source_root_fuera_de_raices_permitidas": 400,
+    "max_files_invalido": 400,
     "undo_scope_invalid": 400,
     "valor_de_clasificacion_invalido": 400,
     "work_contract_invalid": 400,
@@ -2050,6 +2231,10 @@ _ERROR_STATUS = {
     "xio_evidence_unavailable": 503,
     "convocatorias_unavailable": 503,
     "convocatorias_ilegibles": 503,
+    "portfolio_codex_queue_unavailable": 503,
+    "portfolio_folder_adapter_unavailable": 503,
+    "portfolio_folder_observation_failed": 503,
+    "portfolio_dispatch_failed": 503,
 }
 _ERROR_STATUS_PREFIXES = (
     ("motor_no_disponible", 503),
@@ -3052,6 +3237,270 @@ def _portfolio_item_context(item_id):
                         "human_resolution": reviews[-1] if reviews else {}})
         break
     return context
+
+
+def _portfolio_research_job_for(item_id, question):
+    """Find a previous plan for the same source and exact human request."""
+    import sqlite3
+
+    try:
+        with sqlite3.connect(_research_registry_path()) as conn:
+            row = conn.execute(
+                """SELECT j.id FROM research_jobs j
+                   JOIN job_relations r ON r.job_id=j.id
+                   WHERE r.relation_type='portfolio_research_source'
+                     AND r.from_object=? AND j.question=?
+                   ORDER BY j.id DESC LIMIT 1""",
+                ("portfolio:item:%s" % item_id, question),
+            ).fetchone()
+    except (OSError, sqlite3.Error):
+        return None
+    return int(row[0]) if row else None
+
+
+def _link_portfolio_research_job(job_id, source):
+    """Attach a research job to the existing portfolio registry relation table."""
+    import sqlite3
+
+    item_id = str(source.get("source_id") or "").strip()
+    from_object = "portfolio:item:%s" % item_id
+    to_object = "research_job:%s" % int(job_id)
+    rationale = (
+        "Human-requested research from declared corpus %s; corpus membership "
+        "is not an authorship claim. Relative path: %s"
+        % (source.get("corpus_id", ""), source.get("relative_path", "") or "unknown")
+    )
+    db_path = _research_registry_path()
+    with sqlite3.connect(db_path) as conn:
+        row = conn.execute(
+            """SELECT id,job_id,relation_type,from_object,to_object,rationale
+               FROM job_relations
+               WHERE job_id=? AND relation_type='portfolio_research_source'
+                 AND from_object=?""",
+            (int(job_id), from_object),
+        ).fetchone()
+        if row is None:
+            conn.execute(
+                """INSERT INTO job_relations
+                   (job_id,relation_type,from_object,to_object,rationale)
+                   VALUES (?,?,?,?,?)""",
+                (int(job_id), "portfolio_research_source", from_object,
+                 to_object, rationale),
+            )
+            relation_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+            duplicate = False
+        else:
+            relation_id = row[0]
+            duplicate = True
+        conn.execute(
+            """INSERT INTO audit_events
+               (event_type,object_type,object_id,detail,created_at)
+               VALUES (?,?,?,?,?)""",
+            ("portfolio_source_link", "research_job", int(job_id),
+             json.dumps({"source": source, "relation_id": relation_id},
+                        ensure_ascii=False, sort_keys=True),
+             time.strftime("%Y-%m-%dT%H:%M:%S%z")),
+        )
+        conn.commit()
+    return {
+        "id": relation_id,
+        "type": "portfolio_research_source",
+        "from": from_object,
+        "to": to_object,
+        "duplicate": duplicate,
+    }
+
+
+def _enqueue_portfolio_codex(task):
+    """Use the existing material queue; no second Codex job store is created."""
+    try:
+        import material
+        queued = material.enqueue_front(task)
+    except Exception as exc:  # noqa: BLE001 - the Hub reports the missing seam
+        return {"ok": False, "error": "portfolio_codex_queue_unavailable",
+                "detail": type(exc).__name__}
+    return {"ok": True, "queued": bool(queued), "duplicate": not queued}
+
+
+def _portfolio_dispatch(body):
+    """Create a source-linked Research plan or queue an explicit Codex request.
+
+    This route is intentionally human-triggered. It records the bridge and
+    preserves the source, but never publishes, submits an application, or
+    treats a semantic/visual candidate as a fact.
+    """
+    item_id = str(body.get("item_id") or "").strip()[:160]
+    if not item_id:
+        return {"ok": False, "error": "item_no_encontrado"}
+    item = _portfolio_item(item_id)
+    if not item:
+        return {"ok": False, "error": "item_no_encontrado"}
+    if item.get("selection") == "descartar":
+        return {"ok": False, "error": "item_descartado"}
+    department = str(body.get("depto") or "").strip().lower()
+    if department not in {"research", "codex"}:
+        return {"ok": False, "error": "departamento_invalido"}
+    text = str(body.get("texto") or "").strip()[:2000]
+    if not text:
+        text = "Revisar la pieza con su metadata original. No inventar hechos."
+    source = _portfolio_source_envelope(item)
+    if department == "research":
+        question = "Portafolio MAK · pieza %s: %s" % (item_id, text)
+        question = question[:2000]
+        existing_id = _portfolio_research_job_for(item_id, question)
+        if existing_id:
+            relation = _link_portfolio_research_job(existing_id, source)
+            return {
+                "ok": True, "schema": "faro-portfolio-dispatch-v1",
+                "department": department, "status": "planned",
+                "duplicate": True, "job_id": existing_id,
+                "source": source, "relation": relation,
+                "micelio": {"status": "after_research_result",
+                             "source_id": item_id,
+                             "target": "research/memoria/index.jsonl"},
+                "human_gate": "review_plan_before_resume",
+                "promotion": "none",
+            }
+        planned = _create_research_job({
+            "question": question,
+            "domain": str(body.get("domain") or "").strip() or None,
+        })
+        if not planned.get("ok"):
+            return planned
+        relation = _link_portfolio_research_job(planned["id"], source)
+        return {
+            **planned,
+            "schema": "faro-portfolio-dispatch-v1",
+            "department": department,
+            "status": "planned",
+            "dispatch": False,
+            "source": source,
+            "relation": relation,
+            "micelio": {"status": "after_research_result",
+                         "source_id": item_id,
+                         "target": "research/memoria/index.jsonl"},
+            "human_gate": "review_plan_before_resume",
+            "promotion": "none",
+        }
+
+    task_payload = {
+        "id": "portfolio-codex:%s" % hashlib.sha256(
+            (item_id + "\x1f" + text).encode("utf-8")).hexdigest()[:24],
+        "origen": "portfolio",
+        "ficha": item_id,
+        "archivo": source.get("relative_path", ""),
+        "depto": "codex",
+        "modo": "generar",
+        "texto": "Portafolio MAK · pieza %s: %s" % (item_id, text),
+        "estado": "pendiente",
+        "source": source,
+        "human_request": "portfolio_editor",
+        "promotion": "none",
+        "ts": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+    }
+    queued = _enqueue_portfolio_codex(task_payload)
+    if not queued.get("ok"):
+        return queued
+    return {
+        "ok": True,
+        "schema": "faro-portfolio-dispatch-v1",
+        "department": department,
+        "status": "queued",
+        "dispatch": False,
+        "duplicate": queued.get("duplicate", False),
+        "task_id": task_payload["id"],
+        "source": source,
+        "micelio": {"status": "after_codex_result",
+                     "source_id": item_id,
+                     "target": "research/memoria/index.jsonl"},
+        "human_gate": "explicit_operator_request",
+        "promotion": "none",
+    }
+
+
+def _portfolio_write_inbox(payload):
+    """Install an imported inbox with a recoverable copy of the prior one."""
+    path = Path(PORTFOLIO_INBOX)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    backup = None
+    if path.is_file():
+        backup = path.with_name(
+            "%s.previous-%s-%s" % (
+                path.name, time.strftime("%Y%m%d%H%M%S"), uuid.uuid4().hex[:8]))
+        shutil.copy2(path, backup)
+    temporary = path.with_name(".%s.%s.tmp" % (path.name, uuid.uuid4().hex[:8]))
+    try:
+        temporary.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+                             encoding="utf-8")
+        os.replace(temporary, path)
+    finally:
+        if temporary.exists():
+            try:
+                temporary.unlink()
+            except OSError:
+                pass
+    _PORTFOLIO_INBOX_CACHE.clear()
+    return str(backup) if backup else None
+
+
+def _portfolio_observe_folder(body):
+    """Observe one local folder and optionally activate its derived inbox."""
+    adapter = _portfolio_corpus
+    if adapter is None:
+        try:
+            import portfolio_corpus as adapter  # noqa: WPS433 - lazy optional bridge
+        except Exception:  # noqa: BLE001 - report the unavailable seam below
+            adapter = None
+    if adapter is None:
+        return {"ok": False, "error": "portfolio_folder_adapter_unavailable"}
+    raw_root = str(body.get("source_root") or "").strip()
+    if not raw_root:
+        return {"ok": False, "error": "source_root_requerido"}
+    try:
+        source_root = Path(raw_root).expanduser().resolve()
+    except OSError:
+        return {"ok": False, "error": "source_root_invalido"}
+    allowed = (Path(HOME).resolve(), Path("/media/mak").resolve())
+    if not source_root.is_dir() or not any(
+            source_root == root or root in source_root.parents for root in allowed):
+        return {"ok": False, "error": "source_root_fuera_de_raices_permitidas"}
+    corpus_id = str(body.get("corpus_id") or "").strip()[:160] or None
+    artist_id = str(body.get("artist_id") or "").strip()[:160] or None
+    try:
+        raw_limit = body.get("max_files")
+        max_files = 20000 if raw_limit in (None, "") else max(1, min(int(raw_limit), 50000))
+    except (TypeError, ValueError):
+        return {"ok": False, "error": "max_files_invalido"}
+    try:
+        batch, inbox = adapter.observe_portfolio_folder(
+            source_root, corpus_id=corpus_id, artist_id=artist_id,
+            max_files=max_files)
+    except Exception as exc:  # noqa: BLE001 - caller receives a named boundary
+        return {"ok": False, "error": "portfolio_folder_observation_failed",
+                "detail": type(exc).__name__}
+    activated = body.get("activate") is True
+    backup = _portfolio_write_inbox(inbox) if activated else None
+    return {
+        "ok": True,
+        "schema": "faro-portfolio-folder-import-v1",
+        "status": "activated" if activated else "preview",
+        "activation": activated,
+        "source_root": str(source_root),
+        "corpus_id": inbox["context"]["corpus_id"],
+        "artist_id": inbox["context"]["artist_id"],
+        "context": inbox["context"],
+        "observation": inbox["observation"],
+        "portfolio": {
+            "total": inbox["total"],
+            "available_assets": inbox["available_assets"],
+            "sample_paths": [item["relative_path"] for item in inbox["items"][:20]],
+        },
+        "active_inbox": str(Path(PORTFOLIO_INBOX)) if activated else None,
+        "previous_inbox_backup": backup,
+        "human_gate": "explicit_activate_required",
+        "authorship_claim": False,
+        "promotion": "none",
+    }
 
 
 def _portfolio_select(item_id, decision, board_id="", session_id="", pass_size=0,
@@ -4957,6 +5406,8 @@ def _portfolio_learning():
                     "facet": row.get("facet", "general"),
                     "items": len(row.get("item_ids") or [])}
                    for row in boards],
+        "research_candidates": _portfolio_research_candidates(),
+        "context": _portfolio_context(),
         "next": "seguir seleccionando; las sugerencias cambian por faceta, no por una palabra aislada",
     }
 
@@ -5475,14 +5926,37 @@ def _portfolio_media(relative):
     value = str(relative or "").lstrip("/")
     if not value or ".." in value.split("/"):
         return None
-    root = os.path.realpath(PORTFOLIO_MEDIA_ROOT)
-    candidate = os.path.realpath(os.path.join(root, value))
+    roots = [os.path.realpath(PORTFOLIO_MEDIA_ROOT)]
+    # A folder imported through portfolio_corpus carries its explicit source
+    # root in the inbox. Allow that root for media delivery, but only when it
+    # remains under a local workspace boundary; the URL never accepts an
+    # arbitrary absolute path.
     try:
-        if os.path.commonpath((root, candidate)) != root:
-            return None
-    except ValueError:
-        return None
-    return candidate if os.path.isfile(candidate) else None
+        with open(PORTFOLIO_INBOX, encoding="utf-8") as fh:
+            payload = json.load(fh)
+        asset_root = str((payload or {}).get("asset_root") or "").strip()
+        if asset_root:
+            roots.append(os.path.realpath(asset_root))
+    except (OSError, ValueError, TypeError):
+        pass
+    configured_media_root = os.path.realpath(PORTFOLIO_MEDIA_ROOT)
+    allowed_roots = (os.path.realpath(HOME), os.path.realpath("/media/mak"))
+    for root in dict.fromkeys(roots):
+        explicitly_configured = root == configured_media_root
+        under_local_boundary = any(
+            root == boundary or root.startswith(boundary + os.sep)
+            for boundary in allowed_roots)
+        if not explicitly_configured and not under_local_boundary:
+            continue
+        candidate = os.path.realpath(os.path.join(root, value))
+        try:
+            if os.path.commonpath((root, candidate)) != root:
+                continue
+        except ValueError:
+            continue
+        if os.path.isfile(candidate):
+            return candidate
+    return None
 
 
 # ── feed de actividad (los dos departamentos, con la guardia inline) ──
@@ -6793,6 +7267,13 @@ class H(BaseHTTPRequestHandler):
             compact = (query.get("surface") or [""])[0] == "mesa"
             payload = _portfolio_inbox(compact=compact)
             return self._json(payload, _status_for(payload))
+        if p == "/api/portfolio/context":
+            return self._json(_portfolio_context())
+        if p == "/api/portfolio/research-candidates":
+            query = urllib.parse.parse_qs(u.query)
+            payload = _portfolio_research_candidates(
+                (query.get("limit") or [24])[0])
+            return self._json(payload)
         if p == "/api/portfolio/decision-index":
             return self._json(_portfolio_decision_index())
         if p == "/api/portfolio/audit":
@@ -6842,6 +7323,23 @@ class H(BaseHTTPRequestHandler):
                 item_id, limit=limit, focus_facet=focus_facet,
                 shuffle=shuffle, shuffle_seed=shuffle_seed, surface=surface)
             return self._json(payload, _status_for(payload))
+        if p == "/api/portfolio/copilot/map":
+            query = urllib.parse.parse_qs(u.query)
+            try:
+                width = max(1, min(int((query.get("width") or [8])[0]), 32))
+            except (TypeError, ValueError):
+                width = 8
+            try:
+                height = max(1, min(int((query.get("height") or [6])[0]), 32))
+            except (TypeError, ValueError):
+                height = 6
+            items = _portfolio_apply_human_context(
+                _portfolio_inbox().get("items", []))
+            payload = _portfolio_gtm_map(
+                items, feedback=_portfolio_feedback(), width=width,
+                height=height, stable_topology=True)
+            payload["context"] = _portfolio_context()
+            return self._json(payload)
         if p == "/api/portfolio/production":
             query = urllib.parse.parse_qs(u.query)
             payload = _portfolio_production(
@@ -7107,6 +7605,37 @@ class H(BaseHTTPRequestHandler):
             if not _xio_live_pulse(body):
                 return self._json({"ok": False, "error": "pulso_invalido"}, 400)
             return self._json({"ok": True})
+        if u.path == "/api/portfolio/dispatch":
+            length = _body_length(self.headers, 12000)
+            if length is None:
+                return self._json({"ok": False, "error": "content_length_invalido"}, 400)
+            try:
+                body = json.loads(self.rfile.read(length).decode("utf-8", "replace") or "{}")
+            except (ValueError, TypeError, json.JSONDecodeError):
+                return self._json({"ok": False, "error": "json invalido"}, 400)
+            if not isinstance(body, dict):
+                return self._json({"ok": False, "error": "json debe ser objeto"}, 400)
+            try:
+                return _answer(self, _portfolio_dispatch(body))
+            except Exception as exc:
+                return self._json({"ok": False, "error": "portfolio_dispatch_failed",
+                                   "detail": type(exc).__name__}, 503)
+        if u.path == "/api/portfolio/observe-folder":
+            length = _body_length(self.headers, 12000)
+            if length is None:
+                return self._json({"ok": False, "error": "content_length_invalido"}, 400)
+            try:
+                body = json.loads(self.rfile.read(length).decode("utf-8", "replace") or "{}")
+            except (ValueError, TypeError, json.JSONDecodeError):
+                return self._json({"ok": False, "error": "json invalido"}, 400)
+            if not isinstance(body, dict):
+                return self._json({"ok": False, "error": "json debe ser objeto"}, 400)
+            try:
+                return _answer(self, _portfolio_observe_folder(body))
+            except Exception as exc:
+                return self._json({"ok": False,
+                                   "error": "portfolio_folder_observation_failed",
+                                   "detail": type(exc).__name__}, 503)
         for prefix in SERVICE_PROXY_PREFIXES:
             if u.path.startswith("/" + prefix + "/"):
                 length = _body_length(self.headers, SERVICE_PROXY_MAX_BYTES + 1)

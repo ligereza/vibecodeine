@@ -139,13 +139,17 @@ bucle ── experimentación visual vectorial y formas generativas
 - Ruta: `/home/mak/IRIS`
 - Remoto: `ligereza/IRIS`
 - Rama activa: `postulacion/fondart-regional-2027`
-- Estado conceptual: archivo, relaciones, evidencia y ensamblaje de
-  presentaciones.
+- Estado conceptual: repositorio de propuesta y documentación; no es el
+  runtime de IRIS.
+- Runtime vigente: la aplicación IRIS/Atlas vive en MAK, en
+  `cultura/mak_plataforma/copilot.py` y el Hub `:8900`, sobre el corpus privado
+  de Portafolio suministrado por el artista.
 - Idea: transformar materiales dispersos en una estructura legible de
-  antecedentes, decisiones, fuentes, vacíos y propuestas.
-- Relación: recibe información desde FLUJO, FARMAKSIA, WACHUMA y proyectos
-  de eventos. Es una superficie de composición y lectura; no es el motor
-  matemático ni el capturador móvil.
+  antecedentes, decisiones, fuentes, vacíos y propuestas; el artista/usuario
+  es el contexto común declarado, no una autoría inferida.
+- Relación: FLUJO aporta contratos y consumidores de conocimiento; XIO puede
+  aportar capturas RD o FOH/ISKVW. Este repositorio conserva la propuesta IRIS
+  y no debe originar un segundo Hub, base, corpus o definición de obra.
 
 ### WACHUMA
 
