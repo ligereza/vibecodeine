@@ -100,9 +100,8 @@ corte.
 - Ruta: `/home/mak/flujo`
 - Remoto: `ligereza/flujo`
 - Rama permanente: `main`
-- Estado Git actual: `0/0` frente a `origin/main`, HEAD publicado `fa1eeca`;
-  worktree local con 22 cambios rastreados y 3 no rastreados de la separación
-  venue/ISKVW, todavía sin push.
+- Estado Git actual: `0/0` frente a `origin/main`, HEAD publicado `48ca1d4`;
+  worktree limpio. La separación venue/ISKVW ya está publicada en FLUJO.
 - Estado Git: separación autónoma completada; el worktree legado de
   VIBECODEINE se conserva como `/home/mak/flujo-vibecodeine-legacy-20260914`;
   la ruta activa ya es el clone autónomo.
