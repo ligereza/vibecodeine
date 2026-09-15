@@ -84,7 +84,7 @@ corte.
 - Ruta: `/home/mak`
 - Remoto: `ligereza/vibecodeine`
 - Rama operativa: `main` → `vibecodeine-legacy/main` (`0/0`); HEAD local y
-  publicado `2fa25b67` (`docs: align published MAK revision`).
+  publicado, verificado contra el remoto.
 - Estado conceptual: estación de trabajo y núcleo de integración. Reúne el
   entorno MAK, el código compartido, el Hub, los departamentos de cultura,
   investigación y operaciones, además de la base común que conecta los demás
@@ -100,7 +100,7 @@ corte.
 - Ruta: `/home/mak/flujo`
 - Remoto: `ligereza/flujo`
 - Rama permanente: `main`
-- Estado Git actual: `0/0` frente a `origin/main`, HEAD publicado `f2be9c0`;
+- Estado Git actual: `0/0` frente a `origin/main`, HEAD publicado y verificado;
   worktree limpio. La separación venue/ISKVW ya está publicada en FLUJO.
 - Estado Git: separación autónoma completada; el worktree legado de
   VIBECODEINE se conserva como `/home/mak/flujo-vibecodeine-legacy-20260914`;
