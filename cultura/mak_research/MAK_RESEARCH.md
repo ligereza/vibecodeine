@@ -11,7 +11,7 @@ servidor escucha solo en loopback y el Hub lo expone bajo `/research/`.
 ```
 tema X --> [Hub /research/]  [ntfy iPhone]  [CLI ssh]
                     |
-              [servicio interno :8890]
+              [socket Unix privado detrás de Hub :8900]
                     \                 |            /
                      worker.py (lock: 1 job a la vez)
                     /                              \
@@ -54,7 +54,8 @@ consume API; Tavily solo se intenta si hay llave y los anteriores no entregan.
 
 1. **Web humana (local):** http://127.0.0.1:8900/research/ -- formulario
    tema + modo + n; lista informes. El Hub es la unica superficie Web y
-   mantiene el servicio Research interno en `127.0.0.1:8890`.
+   mantiene el servicio Research interno en un socket Unix privado; `8900` es
+   la única superficie TCP del Hub.
 2. **ntfy (iPhone, sin PC):** publicar a `$NTFY_TOPIC_IN` (ver
    research.env). Formatos: `tema` (research), `panel: tema`,
    `research: tema`. Respuestas por `$NTFY_TOPIC_OUT`: ack, informe

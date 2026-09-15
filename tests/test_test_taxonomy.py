@@ -321,6 +321,7 @@ _OUT_OF_SCOPE = {
     "_archive/": "archived material, not runtime",
     "docs/": "documentation and recovered raw sessions, not runtime",
     "projects/": "project material and reference scripts, not service runtime",
+    "tools/venue2d/": "manual GUI reference, not service runtime",
     "iskvw/": "published-site surface, not the MAK service profile",
     "svg/": "product material, not runtime",
     "web/": "the Vite hub source, not a Python runtime",

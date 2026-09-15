@@ -146,18 +146,16 @@ pathname. RD and Plano standalone bundles are intentionally separate entries;
 their source comments explicitly avoid importing the full hub. This is a
 logical consolidation, not a physical flattening of files.
 
-### Venue/Portfolio bridge truth
+### Venue/Portfolio boundary truth
 
-`web/venues/index.html` is a generated offline open-base catalogue. Before
-Phase 428 it was stale and embedded only two examples; it is now regenerated
-from the canonical `data/venues/*.json` registry and contains the three current
-public records. It remains separate from the RD `knowledge/venues` catalogue.
-The actual SCD venue consumer is
-`iskvw/piel/venue/index.html`, which loads `data/venues/scd-plaza-egana.json`
-or a `?venue=<id>` registry entry. The portfolio field activates that venue
-link only when `iskvw/datos/tablero.json` declares `mejoras.venue3d=true`.
-Therefore the public venue demo and the portfolio venue skin must not be
-treated as one database or one interchangeable HTML file.
+`web/venues/index.html` is a generated offline open-base catalogue. It is
+regenerated from the canonical `data/venues/*.json` registry and remains
+separate from the RD `knowledge/venues` catalogue. The SCD 3D consumer is the
+FLUJO tool `tools/venue3d/index.html`, fed by
+`tools/venue_geometria_scd.py` and the `data/venues/` registry. The portfolio
+field has no venue switch and does not treat this technical projection as a
+skin or as a work list. This keeps the venue database, the rider/layout layer
+and the ISKVW portfolio as distinct consumers with explicit contracts.
 
 ### Role correction: OpenKlub
 

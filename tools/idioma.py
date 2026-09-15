@@ -19,9 +19,9 @@ What is measured -- and, just as important, what is NOT:
   Spanish with diacritics and must never be accused.
 - The full measurement uses `git ls-files -- '*.py'`. The change ratchet also
   reads untracked Python files deliberately, so new work cannot hide from it.
-- Files under DEAD_ZONE (archives), FOREIGN_ZONE (vendorized, third-party) and
-  QUARANTINE_ZONE (reversible evidence) and AUTHORSHIP_ZONE (the
-  operator's drafts and works) are excluded: the instrument must
+- Files under DEAD_ZONE (archives), FOREIGN_ZONE (vendorized, third-party),
+  QUARANTINE_ZONE (reversible evidence and local worktrees) and AUTHORSHIP_ZONE
+  (the operator's drafts and works) are excluded: the instrument must
   earn the right to accuse a file, and quarantine is not active code. Same
   convention as tests/test_higiene_docs.py.
 
@@ -98,6 +98,7 @@ FOREIGN_ZONE = (
 )
 QUARANTINE_ZONE = (
     "context/quarantine/",
+    "workspaces/",
 )
 # The applications workshop, one directory per convocatoria. What lives here is
 # the operator's own draft material and, in some cases, the work itself: the
@@ -283,14 +284,36 @@ def changed_python_files(root: Path = ROOT) -> List[str]:
 
 
 def _source_at_head(root: Path, relative: str) -> Optional[str]:
-    """Read a tracked file at HEAD, or return None for a new file."""
+    """Read a tracked file at HEAD, including a staged Git rename.
+
+    A rename is not a new source file: Git exposes its destination in the
+    changed-file list, but ``git show HEAD:<destination>`` quite correctly
+    fails because the destination did not exist at HEAD. Resolving the old
+    name here keeps the language ratchet about new content, not about moving
+    an existing module into its canonical directory.
+    """
     result = subprocess.run(
         ["git", "show", "HEAD:" + relative], cwd=root, capture_output=True,
         text=True, encoding="utf-8",
     )
-    if result.returncode != 0:
+    if result.returncode == 0:
+        return result.stdout
+    renamed = subprocess.run(
+        ["git", "diff", "HEAD", "--find-renames", "--name-status", "--",
+         "*.py"],
+        cwd=root, capture_output=True, text=True, encoding="utf-8",
+    )
+    if renamed.returncode != 0:
         return None
-    return result.stdout
+    for line in renamed.stdout.splitlines():
+        fields = line.split("\t")
+        if len(fields) >= 3 and fields[0].startswith("R") and fields[2] == relative:
+            previous = subprocess.run(
+                ["git", "show", "HEAD:" + fields[1]], cwd=root,
+                capture_output=True, text=True, encoding="utf-8",
+            )
+            return previous.stdout if previous.returncode == 0 else None
+    return None
 
 
 def declared_identifiers(source: str) -> set[str]:

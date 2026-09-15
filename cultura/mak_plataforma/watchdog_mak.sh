@@ -94,8 +94,8 @@ ensure_unit mak-research.service || true
 
 health_ok=1
 check_http mak-hub.service http://127.0.0.1:8900/health || health_ok=0
-check_http mak-codex.service http://127.0.0.1:8891/api/jobs || health_ok=0
-check_http mak-research.service http://127.0.0.1:8890/api/jobs || health_ok=0
+check_http mak-codex.service http://127.0.0.1:8900/codex/api/jobs || health_ok=0
+check_http mak-research.service http://127.0.0.1:8900/research/api/jobs || health_ok=0
 if [ "$health_ok" -eq 1 ]; then
   log "supervision check passed"
 else

@@ -11,7 +11,7 @@ en el mismo PR que lo detecte.
 ## El sitio en vivo
 
 El dominio visible → GitHub Pages de este repo, publicado por
-`.github/workflows/publicar_iskvw.yml` en cada push a `main` que toque `iskvw/`.
+`.github/workflows/publicar_iskvw.yml` mediante despacho explícito.
 Hoy el valor por defecto es `iskvw.cl`; la migración se prepara definiendo la
 variable de repositorio `PUBLIC_DOMAIN`, sin tocar la piel ni los datos.
 Sube **sólo `iskvw/`**: nada de RD, MAK ni xio. La raíz del sitio es la piel
@@ -32,20 +32,22 @@ iskvw/
     obras.json         8 piezas generativas del repo (VOLÁ, Campo, Cenefa…)
     campo.json         219 obras del archivo, con posición medida y capas
     curaduria.json     la mano del artista sobre lo percibido
+    portafolio.json    manifiesto regenerable: selección completa y orden
+    archivo.json       proyección regenerable piezas+vínculos (no versionada)
     tablero.json       qué mejoras están encendidas, y el patch de efectos
   piel/
     campo/             la piel viva: el organismo. Es la raíz del sitio
-    terminal/          piel anterior. Lee sólo obras.json (8 piezas)
+    terminal/          lectura de consola del mismo portafolio
     trazos/            208 SVG + _indice.json. La obra que puede viajar
-    lib/               librerías vendorizadas: tsne, trazo, gestos, distancia
+    lib/               runtime común y librerías vendorizadas
 ```
 
 ## Los números, medidos
 
 | | |
 |---|---|
-| **piezas que publica el sitio** (`archivo.json`) | **446** — 219 `pieza_grafica`, 227 `obra` |
-| **vínculos que publica el sitio** | **237** — 219 `manual`, 18 `etiqueta` |
+| **piezas que publica el sitio** (`archivo.json`) | **1.830** — medición local del corte 2026-09-15 |
+| **vínculos que publica el sitio** | **5.832** — medición local del corte 2026-09-15 |
 | obras con posición medida (`campo.json`, el respaldo) | **219**, todas de `posts/` |
 | con trazo publicado | **208** (las 11 restantes son video o sin contraste) |
 | capas | `tilde` en 219, `trazo` en 208 |
@@ -81,9 +83,9 @@ número; ninguno se acerca al techo.
 
 | | |
 |---|---|
-| sustrato `archivo.json` (1976 piezas) | **5158 vínculos** indexados una vez (20632 entradas) |
-| peor escenario de la grilla | **2492 segmentos por frame** (medio abierto) — el micelio ya llega al archivo público y el bloom láser pinta cada vínculo visible en dos pasadas |
-| todos-contra-todos, la referencia | 23.871 pares (219 obras) / 1.951.300 (1976 piezas) por frame |
+| sustrato `archivo.json` (1.830 piezas) | **5.594 vínculos** indexados una vez (22.376 entradas) |
+| peor escenario de la grilla | **3.350 segmentos por frame** (medio abierto), medido 2026-09-15 |
+| todos-contra-todos, la referencia | 23.871 pares (219 obras) / 1.673.535 (1.830 piezas) por frame |
 | sustrato `campo.json` (el respaldo vivo) | **0 segmentos** siempre: no publica vínculos |
 | banda densa abierta, trabajo por nodo | el nodo es glifo desde #433 (0 gradientes, 0 arcos): **656 `fillText`** por cuadro sobre `archivo.json` (370 sobre el respaldo `campo.json`), incluye el halo del glifo cuando es lo bastante opaco para necesitarlo |
 | techo fijado | 6000 segmentos por frame — 2,4× lo medido, 325× bajo el todos-contra-todos |
@@ -164,18 +166,26 @@ cuando lo que bajó fue la curaduría. Un valor que no es `true`/`false` se
 muestra de sólo lectura y viaja de vuelta intacto: el editor no destruye un dato
 que no entiende.
 
-**Se genera** y no se toca a mano: `datos/campo.json`,
-`piel/trazos/_indice.json`, `piel/lib/*.js`. `datos/archivo.json` se genera y
-**no se versiona**.
+**Se genera** y no se toca a mano: `datos/campo.json`, `datos/archivo.json`,
+`datos/portafolio.json`, `piel/trazos/_indice.json` y `piel/lib/*.js`. Los dos
+archivos del portafolio se generan juntos y no se versionan.
 
-**La piel pide el sustrato, y lo recibe** (medido 2026-08-01): `piel/campo` y
-`piel/terminal` intentan `datos/archivo.json` primero —piezas **y** vínculos—
-y si no está siguen con `campo.json` y `obras.json`.
+**La piel pide el sustrato, y lo recibe**: `piel/campo` y `piel/terminal`
+usan `piel/lib/skin_runtime.js`, intentan primero el manifiesto y
+`datos/archivo.json` —piezas **y** vínculos— y si no están siguen con
+`campo.json`, `obras.json` y el respaldo incrustado. El manifiesto no excluye
+piezas: ordena las medidas y agrega al final cualquier pieza nueva.
+
+El selector común ofrece las dos pieles de portafolio, `campo` y `terminal`; al
+cambiar conserva query y hash. Ambas comparten el archivo completo. La vista
+geométrica SCD no pertenece a este selector: es la herramienta
+`tools/venue3d/` de FLUJO y consume `data/venues/*.json`.
 
 `archivo.json` **no se versiona pero SÍ se publica**: el workflow lo genera con
 `gen_archivo_iskvw.py --fuente todo` antes de subir, y recién después verifica
 que exista. Desde el 2026-08-05 `todo` excluye ensayos por defecto: el sitio
-publica 446 piezas y 237 vínculos del archivo de obra/taller. La vista de
+publica el archivo completo regenerado (1.830 piezas y 5.832 vínculos en el
+corte local 2026-09-15). La vista de
 research ilustrado sigue viva con `--fuente ensayos` o
 `--fuente todo --incluir-ensayos`: 33 piezas y 32 vínculos adicionales en la
 medición local de ese día.
@@ -235,22 +245,15 @@ terminar un gesto. Misma semilla + mismo archivo = misma constelación, fijado
 por `tests/test_iskvw_semilla.py` contra este mismo archivo. Un enlace viejo de
 sólo id sigue funcionando.
 
-## Lo que falta, y de quién es
+## Estado cerrado del circuito visual
 
-- **La dirección**: qué es este archivo como obra. **Del usuario.**
-- **Si los ensayos se publican en iskvw.cl.** Decidido por frontera, no por
-  descarte: los ensayos y sus íconos son un producto válido del research, pero
-  no entran al archivo público por defecto. Se publican sólo por opt-in explícito
-  (`--incluir-ensayos`) o en una piel/vista separada de research.
-- ~~Qué son las 8 piezas de `obras.json`~~ **CONTESTADO por el usuario**: son
-  HERRAMIENTAS del repo (VOLÁ, Campo, Cenefa…), no obras. Siguió publicado como
-  pregunta abierta hasta el 2026-08-01 aunque la respuesta estaba escrita — que
-  es exactamente el defecto que el handoff existe para evitar.
-- ~~La piel `terminal` sigue leyendo sólo `obras.json`~~ **HECHO 2026-08-01**:
-  lee `archivo.json` con el mismo orden de respaldo que `campo`. Medido contra
-  el sustrato público actual: 446 piezas, 53 etiquetas, 8 categorías.
-- **Los vínculos del micelio no llegan al sitio**: el runner de CI no ve la caja
-  MAK, así que `--fuente todo` los omite y lo dice en el log. Las 446 piezas
-  salen del material público del repo; los ensayos ilustrados quedan en la vista
-  explícita de research.
-- 34 reels sin percibir en MAK. Ya están declarados en el filtro: entran solos.
+- El archivo completo y su orden tienen un único manifiesto regenerable.
+- `campo` y `terminal` consumen el mismo conjunto, sin depender de decisiones
+  humanas para incluir piezas.
+- `campo` y `terminal` pasan la misma batería; el selector conserva la lectura
+  URL y evita dejar al visitante atrapado en una piel.
+- La publicación comprueba hash, conteo, unicidad y cobertura del manifiesto
+  antes de subir Pages.
+- La curaduría, el research y la publicación siguen siendo capas distintas:
+  una decisión puede enriquecer una pieza, pero no bloquea la creación del
+  portafolio ni se interpreta como una afirmación automática de autoría.

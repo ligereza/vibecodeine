@@ -36,7 +36,8 @@ from research_lib import emitir_evento, mint_job_id  # noqa: E402
 
 LOCK = os.path.expanduser("~/research/.jobs.lock")
 STATUS_FILE = os.path.expanduser("~/research/.current_status.json")
-CODEX_RUN_URL = os.environ.get("MAK_CODEX_RUN_URL", "http://127.0.0.1:8891/run")
+CODEX_RUN_URL = os.environ.get(
+    "MAK_CODEX_RUN_URL", "http://127.0.0.1:8900/codex/run")
 AUTO_ICONOS_MAX = int(os.environ.get("MAK_AUTO_ICONOS_MAX", "6"))
 
 

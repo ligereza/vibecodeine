@@ -81,18 +81,10 @@
          color:#4a463f;letter-spacing:.18em;text-transform:uppercase;
          pointer-events:none;transition:opacity 1.4s ease}
   #pista.ido{opacity:0}
-  /* The venue-layer link. It only EXISTS when the artist turns mejoras.venue3d
-     on in datos/tablero.json; the stroke mirrors the "campo" link the venue
-     viewer already carries back to here, so the pair reads as one gesture. */
-  #sala{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);
-        font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;
-        color:#4a463f;text-decoration:none;border-bottom:1px solid #26241f;
-        pointer-events:auto}
-  #sala:hover{color:#8a857a}
   @media (prefers-reduced-motion:reduce){#aire{animation:none;opacity:.8}}
 </style>
 </head>
-<body>
+<body data-skin="campo">
 <canvas id="c"></canvas>
 <div id="aire"></div>
 <div id="pista">desliza</div>
@@ -105,6 +97,7 @@
   <div class="mas" id="f-mas"></div>
 </div>
 
+<script src="../lib/skin_runtime.js"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════
    ISKVW · campo
@@ -412,19 +405,11 @@ function medir(){
 }
 
 /* ── el campo ──
-   PENDIENTE DECLARADO, y no es menor. Hoy la posicion sale de un hash del
-   identificador: es estable, pero NO es distancia semantica. El propio
-   doublecup lo dejo escrito como el riesgo de su pieza:
-
-     "las posiciones de nodo se reparten por rango en cada eje: la cercania
-      entre nodos no es distancia semantica y el espectador la va a leer
-      como si lo fuera"
-
-   Esta piel comete hoy esa misma mentira. Se corrige cuando las posiciones
-   salgan de los 3157 vinculos MEDIDOS del micelio de MAK: ahi la cercania
-   pasa a significar, y el campo deja de afirmar lo que no sabe.
-   Mientras tanto NO se dibujan lineas entre nodos sin etiqueta compartida:
-   una linea es una afirmacion mas fuerte que una posicion. ── */
+   Las posiciones medidas viajan por pieza desde el archivo generado. Para una
+   pieza que todavía no tiene posición, el campo usa un reparto estable dentro
+   del mismo rango; eso permite mostrar el portafolio completo sin afirmar que
+   esa cercanía es semántica. Los vínculos, en cambio, sólo se dibujan cuando
+   ambos extremos existen y vienen declarados por el contrato. ── */
 /* ── el contrato, traducido a lo que esta piel ya sabe leer ──
    Una pieza del contrato no tiene la misma forma que una obra del campo: la
    posicion viaja en `posicion:{x,y}` (campo OPCIONAL, porque una pieza sin
@@ -1408,60 +1393,37 @@ function escribirSemilla(){
   }, 400);   // el gesto termina antes de que la URL se escriba
 }
 
-/* ── the venue layer, behind its flag ──────────────────────────────────
-   mejoras.venue3d in datos/tablero.json is the switch PR #418 shipped with no
-   consumer; this is the consumer. Off (or absent, or unreadable): the field
-   does not change by one pixel. On: a link to ../venue/ appears, in the same
-   stroke as the "campo" link the viewer already carries back to here. The
-   function is named and idempotent so the smoke can exercise BOTH branches. */
-let SALA_VISIBLE = false;
-function capaVenue(tablero){
-  const encendida = !!(tablero && tablero.mejoras && tablero.mejoras.venue3d === true);
-  if (!encendida || SALA_VISIBLE) return encendida;
-  const a = document.createElement('a');
-  a.id = 'sala'; a.href = '../venue/'; a.textContent = 'sala';
-  document.body.appendChild(a);
-  SALA_VISIBLE = true;
-  return true;
-}
-
 /* ── datos: fetch si hay servidor, respaldo incrustado si no ── */
 async function arrancar(){
   medir();
   let obras = RESPALDO.obras;
-  try {
-    // 1. El SUSTRATO: archivo.json trae piezas Y vinculos en la forma del
-    //    contrato (iskvw/ESQUEMA_ARCHIVO.md), asi que ademas de las obras
-    //    llegan los ensayos de MAK con sus conceptos e iconos. Hasta ahora
-    //    ninguna piel lo pedia: se generaba y nadie lo leia.
-    let r = await fetch('../../datos/archivo.json');
-    if (r.ok){
-      const d = await r.json();
-      if (d.piezas?.length){ obras = d.piezas.map(delContrato); VINCULOS = d.vinculos || []; REGIMEN = d.meta?.regimen || REGIMEN; }
-    }
-    // 2. Si no esta (hoy no se publica), el campo medido, igual que siempre.
-    if (obras === RESPALDO.obras){
-      r = await fetch('../../datos/campo.json');
-      if (r.ok){ const d = await r.json(); if (d.piezas?.length) obras = d.piezas; }
-      else {
-        r = await fetch('../../datos/obras.json');
-        if (r.ok){ const d = await r.json(); obras = Array.isArray(d) ? d : (d.obras||obras); }
-      }
-    }
-  } catch(e){ /* sin servidor se usa el respaldo, sin decir nada */ }
-  // 3. El TABLERO: se pide UNA vez y alimenta a sus DOS consumidores -- el
-  //    patch de efectos (`aplicarTablero`, llave `patch_efectos`) y la capa de
-  //    sala (`capaVenue`, llave `venue3d`). Que no este es el caso normal y no
-  //    es un error: sin tablero no hay patch, `capaVenue(null)` deja la sala
-  //    apagada, y la piel dibuja como siempre.
+  // La carga y el orden son comunes a todas las pieles. El manifiesto fija el
+  // portafolio completo; no espera decisiones humanas para incluir una pieza.
+  const cargado = await window.ISKVW_SKIN_RUNTIME.loadPortfolio({
+    portfolioPaths: ['../../datos/portafolio.json'],
+    sourcePaths: ['../../datos/archivo.json', '../../datos/campo.json', '../../datos/obras.json'],
+    fallback: RESPALDO.obras,
+  });
+  const d = cargado.data;
+  if (cargado.source.endsWith('/archivo.json') && d?.piezas?.length){
+    obras = d.piezas.map(delContrato);
+    VINCULOS = d.vinculos || [];
+    REGIMEN = d.meta?.regimen || REGIMEN;
+  } else if (cargado.source.endsWith('/campo.json') && d?.piezas?.length){
+    obras = d.piezas;
+  } else if (Array.isArray(d) && d.length){
+    obras = d;
+  }
+  // 3. El TABLERO: se pide una vez y alimenta al consumidor real del campo,
+  //    el patch de efectos. La geometría de venues pertenece a FLUJO y se
+  //    abre desde sus herramientas, no desde la piel del portafolio.
   try {
     const rt = await fetch('../../datos/tablero.json');
     if (rt.ok){
       const t = await rt.json();
       aplicarTablero(t);
-      capaVenue(t);
     }
-  } catch(e){ /* sin tablero: sin efectos y sin sala */ }
+  } catch(e){ /* sin tablero: sin efectos */ }
   sembrar(obras);
   // Se entra por el medio del archivo: no hay principio.
   // El `Math.max(0, ...)` de antes convertia el -1 de "no encontrado" en 0, asi

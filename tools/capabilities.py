@@ -108,7 +108,8 @@ SURFACES: tuple[Surface, ...] = (
         "cultura/mak_research/interfaz.py",
         ("Research", "cultura/mak_research/interfaz.py"),
         unit=".config/systemd/user/mak-research.service",
-        ports=(8890,),
+        # Research is an internal worker behind the single Hub listener.
+        ports=(),
         http_paths=("/",),
         expectation="service_active",
     ),
@@ -119,7 +120,8 @@ SURFACES: tuple[Surface, ...] = (
         "cultura/mak_codex/interfaz_codex.py",
         ("Codex bridge", "cultura/mak_codex/interfaz_codex.py"),
         unit=".config/systemd/user/mak-codex.service",
-        ports=(8891,),
+        # Codex is an internal worker behind the single Hub listener.
+        ports=(),
         http_paths=("/",),
         expectation="service_active",
     ),

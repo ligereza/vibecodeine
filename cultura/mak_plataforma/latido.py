@@ -34,7 +34,7 @@ SEMILLAS = os.path.join(HOME, "plataforma/semillas_latido.txt")
 IDX = os.path.join(HOME, "plataforma/.latido_idx")
 STATE = os.path.join(HOME, "plataforma/.latido_state.json")
 LOG = os.path.join(HOME, "plataforma/logs/latido.log")
-RESEARCH = "http://127.0.0.1:8890/run"
+RESEARCH = "http://127.0.0.1:8900/research/run"
 
 MAX_DIA = 5           # maximum heartbeats per day
 MIN_GAP_S = 2 * 3600  # at least two hours between heartbeats

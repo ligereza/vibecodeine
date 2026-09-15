@@ -266,12 +266,22 @@ repositorio. Las credenciales y tokens se mantienen fuera de Git.
 | `FIRECRAWL_API_KEY` | Clave opcional para captura estructurada de Research; el pipeline conserva fallback urllib si no existe. |
 | `MAK_RESEARCH_REGISTRY` | Ruta opcional del registro SQLite de jobs de Research; por defecto usa `/home/mak/research/jardines_interpretativos/jardines_interpretativos.sqlite`. |
 | `MAK_RESEARCH_ROOT` | Raíz opcional de las fuentes de investigación MAK que consulta RD; `main` prefiere `cultura/mak_research` local y el checkout FLUJO usa el hermano disponible. |
+| `MAK_RESEARCH_OUTPUT_ROOT` | Raíz opcional donde el Hub deja resultados de jobs de Research; por defecto usa `/home/mak/research/jobs`. |
+| `MAK_SERVICE_SOCKET` | Socket Unix del servicio interno que expone Research o Codex al Hub; no abre un puerto TCP. |
+| `MAK_RESEARCH_SOCKET`, `MAK_CODEX_SOCKET` | Rutas de los sockets Unix internos de Research y Codex que el Hub consume. |
 | `MAK_LEARNING_DB` | Ruta opcional del ledger SQLite de Project IR y contratos; por defecto usa `data/mak_knowledge.db`. |
+| `MAK_LICENSE_SOURCE_REVIEW_ARTIFACT`, `MAK_LICENSE_SOURCE_REVIEW_EXPECTED_SHA256` | Artefacto y digest esperados para la revisión local de fuentes/licencias de Research. |
+| `MAK_OPERATION_RECEIPT_ARTIFACT` | Ruta opcional del artefacto de recibo estructural de operaciones. |
+| `MAK_STRUCTURAL_DELTA_ARTIFACT`, `MAK_STRUCTURAL_DELTA_EXPECTED_SHA256` | Artefacto y digest esperados del delta estructural de origen. |
+| `MAK_VIZZ_LINEAGE_ARTIFACT`, `MAK_VIZZ_LINEAGE_EXPECTED_SHA256` | Artefacto y digest esperados de la línea de procedencia VIZZ. |
+| `MAK_VIZZ_MEASUREMENT_ARTIFACT`, `MAK_VIZZ_MEASUREMENT_EXPECTED_SHA256` | Artefacto y digest esperados del estado de medición VIZZ. |
 | `MAK_HEARTBEAT_NTFY_TOPIC` | Tema ntfy opcional para `tools/mak_heartbeat.py`; si falta, cae a `NTFY_TOPIC_OUT` de `research.env`. |
 | `MAK_DEPLOY_REPO`, `MAK_USER_REPO` | Rutas opcionales del repositorio de despliegue/sincronizacion local. |
 | `MAK_SYNC_BACKUP_ROOT`, `MAK_SYNC_RECOVERY_ROOT`, `MAK_SYNC_STAGING_ROOT` | Directorios de backup, recuperacion y staging del puente de sincronizacion. |
 | `MAK_SYNC_LOCK`, `MAK_SYNC_MANIFEST` | Rutas de bloqueo y manifiesto de una corrida de sincronizacion. |
 | `MAK_PORTFOLIO_CLASSIFICATIONS` | Ruta opcional de `classifications.jsonl`, el log del editor donde una persona ya declaró `triage: work/record/review/discard` por ítem; enriquece `/api/portfolio/archive-view` con un formato `documented-record` cuando el ítem existe. Por defecto usa `/home/mak/plataforma/director_runs/portfolio-editor-20260808/classifications.jsonl`; si el archivo falta, la vista sigue funcionando sin ese formato. |
+| `MAK_PORTFOLIO_ARTIST_ID`, `MAK_PORTFOLIO_CORPUS_ID` | Identificadores opcionales y explícitos del artista y corpus que el Hub usa para construir el contexto de portafolio. |
+| `MAK_MICELIO_REINDEX_URL` | Endpoint opcional de reindexación de Micelio usado por Codex; no se invoca sin configuración explícita. |
 | `MAK_AZURE_LANGUAGE_NER` | Habilita el respaldo remoto Azure Language para extracción NER; permanece desactivado salvo configuración explícita. |
 | `AZURE_LANGUAGE_ENDPOINT`, `AZURE_LANGUAGE_KEY`, `AZURE_LANGUAGE_API_VERSION`, `AZURE_LANGUAGE_TIMEOUT` | Endpoint, credencial, versión y timeout del respaldo Azure Language; son opcionales y no se guardan en Git. |
 | `XIO_FIELD_TOKEN` | Token opcional para la superficie XIO; si falta, la superficie funciona en modo local restringido. |

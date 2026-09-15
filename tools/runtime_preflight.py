@@ -44,6 +44,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import http.client
 import json
 import os
 import re
@@ -142,6 +143,9 @@ class Surface:
     # Repo files that call the surface.  Evidence of ownership, never evidence
     # of what the surface executes.
     consumer_sources: tuple[str, ...] = ()
+    # Internal services may have no TCP listener: the single public Hub owns
+    # :8900 and these workers are reached through private Unix sockets.
+    declared_socket: str | None = None
 
 
 # Keep this registry explicit and small.  Discovery cannot tell a compatibility
@@ -164,9 +168,10 @@ SURFACES: tuple[Surface, ...] = (
         owner_branch="MAK",
         source_declared="cultura/mak_research/interfaz.py",
         kind="systemd_user",
-        declared_port=8890,
+        declared_port=None,
         http_paths=("/",),
         unit="mak-research.service",
+        declared_socket="/home/mak/.cache/mak/research.sock",
     ),
     Surface(
         surface_id="mak_codex",
@@ -174,9 +179,10 @@ SURFACES: tuple[Surface, ...] = (
         owner_branch="MAK",
         source_declared="cultura/mak_codex/interfaz_codex.py",
         kind="systemd_user",
-        declared_port=8891,
+        declared_port=None,
         http_paths=("/",),
         unit="mak-codex.service",
+        declared_socket="/home/mak/.cache/mak/codex.sock",
     ),
     Surface(
         surface_id="flujo_app",
@@ -384,6 +390,38 @@ def _probe_http(port: int, paths: tuple[str, ...]) -> dict[str, object]:
         except (OSError, URLError, ValueError) as exc:
             last = str(exc)
     return {"http_path": paths[0] if paths else None, "http_status": None, "error": last if paths else None}
+
+
+class _UnixHTTPConnection(http.client.HTTPConnection):
+    """Small HTTP client used to verify an internal Unix service socket."""
+
+    def __init__(self, socket_path: str, timeout: float = 3):
+        super().__init__("localhost", timeout=timeout)
+        self.socket_path = socket_path
+
+    def connect(self):
+        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.sock.settimeout(self.timeout)
+        self.sock.connect(self.socket_path)
+
+
+def _probe_unix_http(socket_path: str, paths: tuple[str, ...]) -> dict[str, object]:
+    """Probe a private HTTP service without creating a TCP listener."""
+    for path in paths:
+        connection = _UnixHTTPConnection(socket_path)
+        try:
+            connection.request("GET", path, headers={"Connection": "close"})
+            response = connection.getresponse()
+            response.read(1 << 16)
+            return {"socket_open": True, "http_path": path,
+                    "http_status": int(response.status), "bytes": 0}
+        except (OSError, http.client.HTTPException, ValueError) as exc:
+            last = str(exc)
+        finally:
+            connection.close()
+    return {"socket_open": Path(socket_path).exists(),
+            "http_path": paths[0] if paths else None,
+            "http_status": None, "error": last if paths else None}
 
 
 def _inside(path: Path, root: Path) -> bool:
@@ -889,6 +927,57 @@ def _port_evidence(report: SurfaceReport, surface: Surface, listeners: dict[int,
     owned = [port for port, row in listeners.items() if pid is not None and row.get("pid") == pid]
     report.data["ports_owned_by_process"] = sorted(owned)
 
+    if surface.declared_socket:
+        socket_path = Path(os.path.expanduser(surface.declared_socket))
+        report.data["declared_socket"] = str(socket_path)
+        report.data["effective_socket"] = str(socket_path) if socket_path.is_socket() else None
+        report.data["effective_port"] = None
+        report.data["fallback_port"] = None
+        report.data["declared_port_open"] = False
+        if not socket_path.is_socket():
+            report.add(
+                "listener_missing",
+                STATUS_ERROR if surface.kind.startswith("systemd") else STATUS_WARN,
+                f"no Unix socket at {socket_path}",
+            )
+            report.data["http_path"] = None
+            report.data["http_status"] = None
+            return
+
+        probe = _probe_unix_http(str(socket_path), surface.http_paths)
+        report.data["http_path"] = probe.get("http_path")
+        report.data["http_status"] = probe.get("http_status")
+        report.data["http_bytes"] = probe.get("bytes")
+        if probe.get("http_status") is None:
+            report.add(
+                "http_no_answer",
+                STATUS_WARN,
+                f"Unix socket {socket_path} is open but no declared path answered",
+            )
+            return
+
+        source_proven = report.data.get("source_sha256") is not None and not any(
+            finding.code
+            in {
+                "executed_source_mismatch",
+                "executed_source_unverifiable",
+                "exec_start_outside_root",
+                "exec_start_historical",
+                "import_probe_failed",
+                "source_missing",
+                "process_missing",
+            }
+            for finding in report.findings
+        )
+        if not source_proven:
+            report.add(
+                "listener_source_unverified",
+                STATUS_ERROR,
+                f"Unix socket {socket_path} answered HTTP {probe.get('http_status')} "
+                "while the executed source could not be verified",
+            )
+        return
+
     effective: int | None = None
     fallback: int | None = None
     for port in candidates:
@@ -1140,6 +1229,11 @@ def render_text(report: dict[str, object]) -> str:
             f"    ports           : declared={row.get('declared_port')} "
             f"effective={row.get('effective_port')} fallback={row.get('fallback_port')}"
         )
+        if row.get("declared_socket"):
+            lines.append(
+                f"    unix_socket     : declared={row.get('declared_socket')} "
+                f"effective={row.get('effective_socket')}"
+            )
         lines.append(
             f"    http            : {row.get('http_path')} -> {row.get('http_status')}"
         )

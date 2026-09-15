@@ -1,23 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Every skin declares what it needs, and every skin passes the same battery.
+"""Every portfolio skin declares what it needs and passes the same battery.
 
-Measured 2026-07-31: there were THREE skins -- `campo` (1323 lines), `terminal`
-(772) and `venue` (505) -- and both `tools/iskvw_piel_smoke.mjs` and
+Measured 2026-07-31: there were two portfolio pages -- `campo` (1323 lines)
+and `terminal` (772) -- and both `tools/iskvw_piel_smoke.mjs` and
 `tools/iskvw_piel_medir.mjs` read the literal path `.../piel/campo/index.html`.
-So two of the three had NO verification of any kind and could have been broken
-for months without a word. When the battery was finally pointed at them, three
-things broke, and none of them was the skin:
+The second portfolio skin therefore had NO verification of the same kind and
+could have been broken for months without a word. The SCD venue prototype is a
+different FLUJO tool and has its own smoke test; it is not a portfolio skin.
 
-    terminal   canvas.getContext is not a function   (its canvas has another id)
-    venue      L.querySelectorAll is not a function  (element query never stubbed)
-    venue      per-node draw code never executed     (the metric counted
-                                                      gradients and glyphs --
-                                                      how CAMPO draws; venue
-                                                      draws polylines)
-
-The instrument was shaped like one skin and called that a verification. Both
-skins turned out to work: `venue` draws 503 edges, `terminal` 3.480 marks.
+The instrument was shaped like one skin and called that a verification.
+`terminal` turned out to work and the common battery now covers both skins.
 
 That is what `piel.json` is for. The battery cannot guess the name of a skin's
 variables, so the skin declares what it fetches and HOW WHAT IT DREW IS
@@ -46,11 +39,10 @@ NODE = shutil.which("node")
 sin_node = pytest.mark.skipif(NODE is None, reason="node no esta instalado")
 
 
-def test_there_is_more_than_one_skin_and_the_list_is_discovered():
-    """The list is not hardcoded anywhere: a fourth skin joins the battery by
-    existing, which is the whole point of swappable."""
-    assert len(PIELES) >= 3, PIELES
-    assert {"campo", "terminal", "venue"} <= set(PIELES)
+def test_there_are_two_portfolio_skins_and_the_list_is_discovered():
+    """The two portfolio skins are discovered from executable pages."""
+    assert len(PIELES) == 2, PIELES
+    assert set(PIELES) == {"campo", "terminal"}
 
 
 @pytest.mark.parametrize("piel", PIELES)
@@ -59,8 +51,8 @@ def test_every_skin_declares_a_manifest(piel):
     ruta = PIELES_DIR / piel / "piel.json"
     assert ruta.exists(), (
         f"{piel} no declara piel.json -- sin manifiesto la bateria tendria que "
-        f"adivinar el nombre de sus variables, que es como dos de tres pieles "
-        f"quedaron sin verificar")
+        f"adivinar el nombre de sus variables, que es como dejar una piel "
+        f"sin verificar")
     m = json.loads(ruta.read_text(encoding="utf-8"))
     for campo in ESQUEMA["required"]:
         assert campo in m, f"{piel}/piel.json no declara `{campo}`"
@@ -97,8 +89,7 @@ def test_every_declared_layer_names_the_datum_it_encodes(piel):
 @sin_node
 @pytest.mark.parametrize("piel", PIELES)
 def test_every_skin_passes_the_battery(piel):
-    """The same battery for all of them. This is the assertion that would have
-    caught, months ago, whatever `terminal` and `venue` might have been."""
+    """The same battery for both portfolio skins."""
     r = subprocess.run([NODE, str(RAIZ / "tools" / "iskvw_piel_smoke.mjs"), piel],
                        capture_output=True, text=True, encoding="utf-8",
                        cwd=str(RAIZ), timeout=180)

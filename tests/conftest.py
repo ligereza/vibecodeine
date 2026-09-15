@@ -28,6 +28,7 @@ from tools.test_lane_map import LANES as TEST_LANES
 from tools.test_lane_map import lane_for_test_path
 
 _REPO = Path(__file__).resolve().parents[1]
+_COLLECTION_PROTECTED_TOPS = {"WIN", "curatoria_inbox", "GoogleDrive", "OneDrive"}
 _SRC = _REPO / "src"
 if (_SRC / "flujo" / "__init__.py").is_file() and str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
@@ -302,6 +303,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     )
 
 
+@pytest.hookimpl(tryfirst=True)
 def pytest_ignore_collect(collection_path: Path, config: pytest.Config) -> bool:
     """Skip whole test modules when the selector names one exact lane.
 
@@ -309,7 +311,14 @@ def pytest_ignore_collect(collection_path: Path, config: pytest.Config) -> bool:
     persisted AST lane map is safe to consult before collection, so the
     default ``-m mak`` run does not parse the unrelated FLUJO modules.  More
     expressive marker expressions keep pytest's normal collection semantics.
+
+    The physical root also contains protected FUSE mounts. The lexical check
+    must run before pytest's own virtualenv probe: probing
+    ``OneDrive/pyvenv.cfg`` is enough to block collection on a disconnected
+    mount, even when no test intends to read that tree.
     """
+    if collection_path.parent == _REPO and collection_path.name in _COLLECTION_PROTECTED_TOPS:
+        return True
     expression = (config.getoption("markexpr") or "").strip()
     if expression not in TEST_LANES:
         return False

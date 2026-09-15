@@ -1,58 +1,68 @@
 # Contrato de la cara visible de iskvw.cl
 
-Este documento existe para que **el estilo del portafolio se pueda reemplazar
-entero sin tocar el contenido ni romper nada**. El portafolio cambia seguido;
-lo que no cambia es lo que hay que mostrar y lo que no se puede mentir.
+Este documento existe para que **el estilo del portafolio se pueda reemplazar o
+cambiar en vivo sin tocar el contenido ni romper nada**. El portafolio cambia
+seguido; lo que no cambia es el conjunto que se muestra y lo que no se puede
+mentir.
 
 Se lo podés pasar completo a un agente externo (Arena, Google AI Studio, el que
 sea) junto con `PROMPT_ESTETICA.md` y `ESQUEMA_ARCHIVO.md`, y lo que devuelva
 tiene que encajar acá sin que nadie edite los datos.
 
-**Corregido el 2026-08-01:** este documento mandaba leer `datos/obras.json`, que
-son 8 entradas y son HERRAMIENTAS del repo, mientras el sitio publicado sirve
-`datos/archivo.json`. Medido el 2026-08-05, el sustrato publico son 446 piezas
-del archivo de obra/taller; los ensayos de research son una vista explicita, no
-el default. Los tres archivos que se le pasan a un
-agente externo decian cosas distintas, asi que una piel encargada afuera se
-escribia contra datos que no existen -- y el error no aparece hasta publicarla.
+`datos/obras.json` conserva sólo el respaldo pequeño de herramientas del repo.
+La fuente publicada se genera como `datos/archivo.json` y el manifiesto que le
+fija selección y orden es `datos/portafolio.json`. Los ensayos de research son
+una vista explícita, no el default.
 
 ---
 
-## Las tres capas, y por qué están separadas
+## Las cuatro capas, y por qué están separadas
 
 ```
-  datos/archivo.json   CONTENIDO   -- no cambia cuando cambia el estilo
-  CONTRATO.md          CONTRATO    -- qué hay que mostrar y qué no se puede mentir
-  piel/<la-que-sea>/   PIEL        -- se despega y se reemplaza entera
+  datos/archivo.json       CONTENIDO   -- piezas y vínculos
+  datos/portafolio.json    FORMATO     -- selección completa, orden y pieles
+  CONTRATO.md              CONTRATO    -- qué hay que mostrar y qué no se puede mentir
+  piel/<la-que-sea>/       PIEL        -- representación intercambiable
 ```
 
-La piel **consume** los datos y **cumple** el contrato. No los modifica, no
-agrega campos, no inventa. Si una piel necesita un dato que no está en
-`archivo.json`, ese dato se agrega primero al contenido — nunca se hardcodea en
-la piel, porque entonces deja de ser reemplazable.
+El manifiesto `datos/portafolio.json` se genera junto con `archivo.json`. Incluye
+todos los ids de ese archivo, incluso cuando una pieza no tiene posición,
+decisión o metadata completa. Su orden es determinista: posición medida cuando
+existe; id estable cuando todavía no existe. Eso permite crear y mostrar un
+portafolio completo sin convertir cada ausencia en `unknown` ni en una revisión
+manual obligatoria.
+
+Una piel de portafolio **consume** el manifiesto y los datos y **cumple** el
+contrato. No los modifica, no agrega campos, no inventa. Si necesita un dato
+que no está en `archivo.json`, ese dato se agrega primero al contenido — nunca
+se hardcodea en la piel, porque entonces deja de ser reemplazable. La vista
+geométrica SCD no es una piel: es una herramienta especializada de FLUJO en
+`tools/venue3d/`, con su propio registro de venue y cadena de geometría.
 
 ---
 
 ## Qué recibe una piel
 
-Un único archivo: **`datos/archivo.json`**, con dos listas, `piezas` y
+Una piel de portafolio recibe dos archivos generados: **`datos/portafolio.json`** y
+**`datos/archivo.json`**. El primero fija la selección completa, orden, piel
+por defecto y pieles disponibles; el segundo tiene dos listas, `piezas` y
 `vinculos`. Su forma está en `ESQUEMA_ARCHIVO.md` y cada campo dice si es
-obligatorio o puede faltar. Medido el 2026-08-05 sobre lo que el sitio publica:
-446 piezas y 237 vínculos, y **ninguna pieza trae coordenadas** — si una piel
-necesita posiciones, las calcula ella.
+obligatorio o puede faltar.
 
-`datos/obras.json` y `datos/campo.json` siguen existiendo y son RESPALDOS: la
-piel viva los pide sólo si `archivo.json` no está. Una piel nueva se escribe
-contra `archivo.json`; que degrade a los otros es opcional y se declara.
+`datos/obras.json` y `datos/campo.json` siguen existiendo y son RESPALDOS: el
+runtime común los pide sólo si `archivo.json` no está. Una piel nueva se
+escribe contra el formato común; que degrade a los otros es opcional y se
+declara.
 
-Nada más. Sin API, sin backend, sin build propio del contenido. Una piel es
-HTML/CSS/JS (o un bundle) que lee ese JSON y lo dibuja.
+Nada más para una piel de portafolio. Sin API, sin backend, sin build propio
+del contenido. Una piel es HTML/CSS/JS (o un bundle) que lee ese JSON y lo
+dibuja.
 
 ---
 
 ## Lo que cualquier piel tiene que cumplir
 
-Estas cinco no son estéticas: son las que hacen que el sitio no mienta y que se
+Estas reglas no son estéticas: son las que hacen que el sitio no mienta y que se
 pueda cambiar sin miedo.
 
 1. **Ningún elemento afirma un dato que no tiene.**
@@ -82,6 +92,11 @@ pueda cambiar sin miedo.
    *Causa: es el defecto que este repo encontró cinco veces en dos días — una
    lista escrita a mano que dejó de coincidir con lo que existe.*
 
+7. **Las pieles de portafolio consumen la misma proyección.** El selector puede
+   cambiar `campo` o `terminal` conservando query y hash; cambiar la piel cambia
+   la lectura visual, no el archivo ni la selección. La vista geométrica SCD es
+   una herramienta de venue en FLUJO, no una piel ni una lista de obras.
+
 ---
 
 ## Lo que NO tiene que ser
@@ -100,13 +115,20 @@ Esto es dirección, y viene del autor:
 
 ---
 
-## Cómo se cambia el estilo
+## Cómo se cambia la piel
 
-1. Se le pasa a un agente `PROMPT_ESTETICA.md` + este contrato +
-   `ESQUEMA_ARCHIVO.md`. Los tres tienen que decir lo mismo: si se contradicen,
-   el agente escribe contra datos que no existen.
-2. Lo que devuelva se pone en `piel/<nombre-nuevo>/`.
-3. Se abre. Si cumple las cinco reglas de arriba y se ve bien, se apunta ahí.
-4. La piel anterior queda en su carpeta: cambiar de estilo no borra el anterior.
+1. El generador crea `datos/archivo.json` y su compañero
+   `datos/portafolio.json`.
+2. `campo` y `terminal` cargan ambos mediante `piel/lib/skin_runtime.js`; si el
+   manifiesto todavía no está, conservan el orden del archivo y degradan a los
+   respaldos. `sala` usa el mismo runtime para el selector, pero su contenido
+   es el registro geométrico declarado por su `piel.json`.
+3. El selector superior cambia entre las pieles declaradas y conserva query y
+   hash. La raíz publicada abre `campo`; `terminal` comparte el conjunto.
+4. Para agregar una piel de portafolio se pone en `piel/<nombre>/`, se declara
+   en su `piel.json` y se pasa la batería. Las pieles anteriores no se borran.
+
+La reemplazabilidad de archivos y la conmutación en ejecución son dos garantías
+distintas: ahora ambas están conectadas y verificadas.
 
 No hace falta tocar nada más. Ese es el punto.

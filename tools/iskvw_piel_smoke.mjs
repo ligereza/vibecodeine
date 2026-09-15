@@ -17,13 +17,14 @@ import { readFileSync } from "node:fs";
 import vm from "node:vm";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { scriptsDePiel } from "./lib/piel_scripts.mjs";
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 // Which skin. It used to be the literal string "campo", and that is why
-// `terminal` (772 lines) and `venue` (505) had NO verification at all: this
-// tool and the meter both pointed at one of the three skins, so two of them
-// could have been broken for months and nothing would have said so. `campo`
+// `terminal` had NO verification at all: this tool and the meter both pointed
+// at one of the two portfolio skins, so the second one could have been broken
+// for months and nothing would have said so. `campo`
 // stays the default so CI and every existing invocation keep working.
 //   node tools/iskvw_piel_smoke.mjs [piel]
 const PIEL = process.argv[2] || "campo";
@@ -35,8 +36,11 @@ try {
   console.error(`no existe la piel ${PIEL} (${rutaPiel})`);
   process.exit(2);
 }
-const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
-if (!scripts.length) { console.error("no inline <script> found"); process.exit(2); }
+// Las pieles comparten un runtime local. El mismo cargador que usan los otros
+// instrumentos respeta el orden del HTML y excluye el JSON incrustado.
+let scripts;
+try { scripts = scriptsDePiel(html, rutaPiel); }
+catch (e) { console.error(`no se pudo cargar el grafo de scripts de ${PIEL}: ${e.message}`); process.exit(2); }
 
 // El manifiesto: lo que la piel DECLARA que pide y como se mide lo que dibujo.
 // Sin esto la bateria tendria que adivinar el nombre de sus variables, y por eso
@@ -173,8 +177,7 @@ async function correr({ tablero = null, cuadros = 30, caminar = true, antes = nu
   // else -- which is exactly why this battery could never be pointed at another
   // skin. Measured 2026-07-31 the moment it was: `terminal` died on
   // `canvas.getContext is not a function` (its canvas has a different id) and
-  // `venue` on `L.querySelectorAll is not a function` (element-level query was
-  // not stubbed at all). Neither was a defect of the skin: the instrument was
+  // Neither was a defect of the skin: the instrument was
   // shaped like one skin and called that a verification.
   //
   // So every element can be a canvas and every element answers the DOM surface
@@ -191,8 +194,10 @@ async function correr({ tablero = null, cuadros = 30, caminar = true, antes = nu
       offsetWidth: 800, offsetHeight: 600, scrollTop: 0, scrollHeight: 600,
       children: [], childNodes: [], firstChild: null, parentNode: null,
       getContext: () => ctx2d,
-      appendChild: (h) => h, removeChild: (h) => h, insertBefore: (h) => h,
-      replaceChildren: noop, remove: noop, cloneNode: () => el(),
+      appendChild: function (h) { this.children.push(h); return h; },
+      removeChild: (h) => h, insertBefore: (h) => h,
+      replaceChildren: function () { this.children = []; },
+      remove: noop, cloneNode: () => el(),
       setAttribute: noop, removeAttribute: noop, getAttribute: () => null,
       hasAttribute: () => false,
       querySelector: () => el(), querySelectorAll: () => [],
@@ -230,10 +235,10 @@ async function correr({ tablero = null, cuadros = 30, caminar = true, antes = nu
           : { ok: false, json: async () => ({}) };
       }
       // Any repo-relative path, not just `datos/*.json`. The first version
-      // matched three filenames by name, so the `venue` skin -- which asks for
-      // `../../../data/venues/scd-plaza-egana.json` -- got a 404 from the
-      // instrument and its loader was never exercised. A battery that only
-      // serves the files one skin happens to want is not a battery.
+      // matched two filenames by name, so any portfolio skin with another
+      // source path got a 404 from the instrument and its loader was never
+      // exercised. A battery that only serves the files one skin happens to
+      // want is not a battery.
       // `..` segments are resolved and then REFUSED if they escape the repo:
       // this reads real files, and a skin should not be able to make it read
       // outside the checkout.
@@ -258,16 +263,26 @@ async function correr({ tablero = null, cuadros = 30, caminar = true, antes = nu
       } catch { return { ok: false, json: async () => ({}), text: async () => "" }; }
     },
     addEventListener: noop, removeEventListener: noop, history: { replaceState: noop },
-    location: { hash: "", href: "http://smoke.local/" },
+    location: { hash: "#semilla=smoke&centro=12", search: "?prueba=1",
+                pathname: `/iskvw/piel/${PIEL}/`, href: "http://smoke.local/" },
     navigator: { maxTouchPoints: 0 },
     devicePixelRatio: 1, innerWidth: 800, innerHeight: 600,
   };
   sandbox.window = sandbox;
+  const body = el();
+  body.dataset.skin = PIEL;
+  body.querySelector = (selector) => {
+    if (selector !== "[data-iskvw-skin-switcher]") return null;
+    return body.children.find(h => h.dataset && h.dataset.iskvwSkinSwitcher !== undefined) || null;
+  };
+  body.appendChild = (h) => { h.parentNode = body; body.children.push(h); return h; };
+  const head = el();
+  head.appendChild = (h) => { h.parentNode = head; head.children.push(h); return h; };
   sandbox.document = {
     getElementById: getEl,
     querySelector: () => el(), querySelectorAll: () => [],
     addEventListener: noop, removeEventListener: noop,
-    body: el(), documentElement: el(), hidden: false,
+    body, head, documentElement: el(), hidden: false,
     createElement: () => el(),
     // Namespaced: una piel que arma SVG lo usa, y sin esto moria en el primer
     // gesto que tocara esa rama -- que era justo la que nunca se ejercitaba.
@@ -324,9 +339,7 @@ async function correr({ tablero = null, cuadros = 30, caminar = true, antes = nu
     pos: leer("typeof E !== 'undefined' ? E.pos : null", null),
     emisores: leer("typeof EMIS !== 'undefined' ? EMIS.n : -1", -1),
     patchOn: leer("typeof PATCH !== 'undefined' ? PATCH.on : null", null),
-    // The venue layer's observables: whether the sala link exists after boot,
-    // and a hatch to call capaVenue() again inside this run's sandbox.
-    salaVisible: leer("typeof SALA_VISIBLE !== 'undefined' ? SALA_VISIBLE : null", null),
+    switcher: leer("(() => { const n = Array.from(document.body.children || []).find(h => h.dataset && h.dataset.iskvwSkinSwitcher !== undefined); return n ? Array.from(n.children || []).filter(h => h.dataset && h.dataset.skinTarget).map(h => [h.dataset.skinTarget, h.href]) : []; })()", []),
     evaluar: (expr, porDefecto) => leer(expr, porDefecto),
   };
 }
@@ -345,14 +358,29 @@ function morir(msg) {
 const base = await correr({});
 if (base.failed) morir(base.failed);
 
+// El selector es parte del contrato de intercambio: una piel que dibuja pero
+// no ofrece la salida deja al visitante atrapado en una implementación.
+const idsSwitcher = base.switcher.map(x => x[0]);
+if (idsSwitcher.length !== 2 || new Set(idsSwitcher).size !== 2
+    || !idsSwitcher.includes("campo") || !idsSwitcher.includes("terminal")
+    ) {
+  morir(new Error(`skin switcher incomplete: ${JSON.stringify(base.switcher)}`));
+}
+for (const [, href] of base.switcher) {
+  if (!String(href).includes("?prueba=1")
+      || !String(href).includes("#semilla=smoke&centro=12")) {
+    morir(new Error(`skin switcher lost URL state: ${href}`));
+  }
+}
+console.log(`OK: selector de pieles -- ${idsSwitcher.join(", ")} conserva query y hash`);
+
 // 1.a Dibujo de verdad. La traza la cuenta ESTA sonda sobre el canvas, asi que
 // no depende de como la piel llame a sus cosas ni de COMO dibuje. Cero marcas
 // es el modo clasico de sonda verde que no probo nada.
 //
 // `trabajoDeNodo` NO sirve aca aunque lo parezca: cuenta gradientes y glifos,
-// que es como dibuja `campo`. Medido al apuntar la bateria a la tercera piel:
-// `venue` dibuja polilineas -- moveTo/lineTo/stroke, ni un gradiente -- y daba
-// cero. La metrica tambien estaba con forma de una sola piel.
+// que es como dibuja `campo`. Cada herramienta de venue tiene su propio
+// smoke y su propio medidor en la línea FLUJO.
 if (!base.traza.length)
   morir(new Error("la piel no dibujo una sola marca: arranco sin material"));
 
@@ -460,31 +488,6 @@ if (!igual(base, conArchivo)) {
     + `(${base.traza.length} -> ${conArchivo.traza.length} marcas), que es lo que `
     + `sus llaves encendidas afirman hacer`);
 }
-
-// ── 2b. the venue layer, behind its own flag on the SAME tablero fetch ─────
-// Ported from the venue branch's smoke into this architecture: the shipped
-// boot above ran against the REAL tablero.json, so the sala link must mirror
-// exactly what mejoras.venue3d says; forcing the flag on must create it, and
-// a flag whose consumer vanished must fail here, not at the show.
-if (conArchivo.evaluar("typeof capaVenue === 'function'", false) !== true)
-  morir(new Error("capaVenue is missing: mejoras.venue3d has no consumer again"));
-if (!conArchivo.pedidos.some(u => /tablero\.json$/.test(u)))
-  morir(new Error("boot never asked for tablero.json: the flag is read by nobody"));
-const flagReal = tableroReal.mejoras.venue3d;
-if (conArchivo.salaVisible !== (flagReal === true))
-  morir(new Error(`venue layer visible=${conArchivo.salaVisible} with venue3d=${flagReal}: the flag does not gate`));
-if (base.salaVisible !== false)
-  morir(new Error(`no board and the venue layer is visible=${base.salaVisible}`));
-const conSala = await correr({
-  tablero: { ...tableroReal, mejoras: { ...tableroReal.mejoras, venue3d: true } },
-});
-if (conSala.failed) morir(conSala.failed);
-if (conSala.salaVisible !== true)
-  morir(new Error("forcing venue3d=true did not enable the venue layer"));
-if (conSala.evaluar("capaVenue({mejoras:{venue3d:false}})", null) !== false)
-  morir(new Error("capaVenue reports on for a tablero that says off"));
-console.log(`OK: venue layer gates on venue3d -- shipped ${flagReal === true ? "on" : "off"} `
-  + `(visible=${conArchivo.salaVisible}), forced on creates the sala link`);
 
 // ── 3. the patch on, with gains loud enough to be unambiguous ─────────────
 // The board's own routing, only louder, plus one node forced to carry the

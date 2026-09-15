@@ -460,6 +460,27 @@ def test_grafo_semantico_numpy_and_pure_python_paths_agree(isolated_grafo, monke
     assert edges_numpy  # the two documents are similar enough to connect
 
 
+def test_grafo_declares_source_availability(tmp_path, monkeypatch):
+    present = tmp_path / "presente.md"
+    missing = tmp_path / "ausente.md"
+    present.write_text("presente", encoding="utf-8")
+    monkeypatch.setattr(memoria, "INDEX_FILE", str(tmp_path / "index.jsonl"))
+    monkeypatch.setattr(memoria, "MEM_DIR", str(tmp_path))
+    monkeypatch.setattr(memoria, "GRAFO_CACHE", str(tmp_path / "grafo_cache.json"))
+    memoria._guardar_index([
+        {"path": str(present), "dir": "informes", "titulo": "Presente",
+         "vec": [1.0, 0.0], "chunk": "a", "doc_meta": {}, "calidad": {}},
+        {"path": str(missing), "dir": "informes", "titulo": "Ausente",
+         "vec": [0.0, 1.0], "chunk": "b", "doc_meta": {}, "calidad": {}},
+    ])
+
+    grafo = memoria.grafo_semantico(umbral=0.9)
+    states = {n["archivo"]: n["fuente_estado"] for n in grafo["nodes"]}
+    assert states == {"presente.md": "presente", "ausente.md": "ausente"}
+    assert grafo["meta"]["fuentes_presentes"] == 1
+    assert grafo["meta"]["fuentes_ausentes"] == 1
+
+
 def test_grafo_semantico_reuses_cache_without_recomputing(isolated_grafo, monkeypatch):
     memoria.grafo_semantico()  # first call builds and caches
 

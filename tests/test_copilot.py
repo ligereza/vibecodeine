@@ -102,6 +102,39 @@ def test_visual_similarity_is_a_derived_channel_and_metadata_does_not_duplicate_
     assert not any(row["facet"] == "visual_similarity" for row in rows)
 
 
+def test_micelio_semantic_similarity_is_connected_without_duplicate_cards():
+    source = item("a", description="sin coincidencia local")
+    semantic_only = item("b", date="2026-08-07", description="otra cosa",
+                         kind="published_media")
+    rows, _ = build_suggestions(source, [semantic_only], semantic_relations=[{
+        "item_id": "b",
+        "semantic_score": 0.83,
+        "model": "nomic-embed-text",
+        "source_ref": "iskvw/datos/archivo.json",
+        "source_piece_id": "corpus-a",
+        "target_piece_id": "corpus-b",
+    }])
+    semantic = next(row for row in rows
+                    if row["relation_type"] == "micelio_semantic_similarity")
+    assert semantic["facet"] == "text"
+    assert semantic["scope"] == "exploratory"
+    assert semantic["semantic_score"] == 0.83
+    assert semantic["evidence"][0]["model"] == "nomic-embed-text"
+
+    rows, _ = build_suggestions(
+        source, [semantic_only],
+        visual_relations=[{"item_id": "b", "score": .61, "margin": .03}],
+        semantic_relations=[{
+            "item_id": "b", "semantic_score": .83,
+            "source_ref": "iskvw/datos/archivo.json",
+        }],
+    )
+    assert len([row for row in rows if row["item_id"] == "b"]) == 1
+    visual = next(row for row in rows if row["item_id"] == "b")
+    assert visual["supporting_channels"] == ["micelio_semantic"]
+    assert visual["supporting_evidence"][0]["kind"] == "micelio_semantic_relation"
+
+
 def test_rejected_text_channel_does_not_hide_date_channel_for_same_pair():
     source = item("a", description="luz cuerpo")
     candidate = item("b", description="luz cuerpo")

@@ -31,6 +31,11 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 
+# These roots are deliberately outside a source-entry scan. Git's untracked
+# walk is lexical and can otherwise descend into the operator's FUSE mounts
+# before a caller gets a chance to reject the path.
+UNSCANNED_TOPS = ("GoogleDrive", "OneDrive", "WIN", "curatoria_inbox")
+
 
 def versionable_files(patterns: tuple[str, ...] = (), *,
                       repo: Path | None = None) -> list[str]:
@@ -43,10 +48,11 @@ def versionable_files(patterns: tuple[str, ...] = (), *,
     """
     root = repo or REPO
     seen: list[str] = []
+    pathspecs = list(patterns) if patterns else ["."]
+    pathspecs.extend(f":(exclude){top}/**" for top in UNSCANNED_TOPS)
     for extra in ([], ["--others", "--exclude-standard"]):
         command = ["git", "ls-files", *extra]
-        if patterns:
-            command += ["--", *patterns]
+        command += ["--", *pathspecs]
         result = subprocess.run(command, cwd=root, capture_output=True,
                                 text=True, encoding="utf-8", errors="replace")
         if result.returncode != 0:
