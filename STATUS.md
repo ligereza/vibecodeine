@@ -7,14 +7,13 @@ historia.
 ## Coordinación actual
 
 - **Responsable:** `LIBELULA`
-- **Fase:** primera simplificación visual del Hub aplicada; queda revisar la
-  nomenclatura interna de Research y la integración de paneles secundarios
-  `:8900` y saneamiento de referencias ausentes en MICELIO completados, sobre la base de la
-  auditoría de salud MAK/FLUJO/XIO y limpieza de RD ya verificada. La
-  separación autónoma de FLUJO ya está publicada; XIO sigue siendo un repo
-  externo: XIO-RD consume la única proyección RD del host mediante ruta
-  explícita o snapshot revisado; XIO-FOH consume el contexto VJ/portfolio de
-  la superficie `iskvw`/ISKVW mediante contexto de solo lectura.
+- **Fase:** auditoría y preparación del frente de Deep Learning para IRIS/
+  Portafolio, sobre la integración ya verificada de MAK, FLUJO y XIO. El
+  corpus del usuario es la entrada explícita; IRIS ordena, relaciona y
+  propone formatos propios del artista, sin inferir autoría ni buscar una
+  precisión universal. FLUJO es autónomo; XIO sigue siendo externo:
+  XIO-RD consume la única proyección RD del host y XIO-FOH consume el contexto
+  VJ/portfolio de `iskvw`/ISKVW en solo lectura.
 - **Directorio de trabajo:** `/home/mak`
 - **Fuente de mapa:** `/home/mak/REPOS.md`
 - **Contrato raíz repuesto desde historia Git:** `/home/mak/AGENTS.md`
@@ -25,22 +24,22 @@ historia.
 - **Criterio:** conservar la autoridad de MAK, preservar cambios locales y
   distinguir sistema, clon, repositorio Git, contenido, fuente, observación,
   medición y representación.
-- **Última actualización:** `2026-09-14T19:50:48-03:00`
+- **Última actualización:** `2026-09-15T11:36:21-03:00`
 
 ## Orden operativo vigente
 
 1. `FLUJO` autónomo (`/home/mak/flujo`) y su frontera con XIO/MAK.
-2. `MAK` (`/home/mak`) y su historia VIBECODEINE.
-3. `XIO` (`/home/mak/XIO`) y la procedencia auxiliar `XIO-IMPORT`.
-4. `MOSAIK`, `LUCIDA`, `PUPILA` y `FARMAKSIA`.
-5. `VIZZ`, `WACHUMA`, `IRIS` y `bucle`.
-6. `MAT-SI` y las superficies de evaluación; después los repositorios de
-   soporte.
+2. `XIO` (`/home/mak/XIO`) y la procedencia auxiliar `XIO-IMPORT`.
+3. `MAK` (`/home/mak`) y su historia VIBECODEINE, sólo como estación y
+   consumidor de los dos frentes anteriores.
+4. Auditoría de fuentes hermanas: `X-ANA-X`, `LUCIDA`, `PUPILA`, `FARMAKSIA`,
+   `VIZZ`, `WACHUMA`, `IRIS`, `MAT-SI` y `MOSAIK`.
+5. Portar únicamente una mejora que tenga consumidor explícito en FLUJO o
+   XIO; los demás repos quedan fuera del alcance activo.
 
-La actualización Git realizada fue conservadora: se ejecutó `git fetch
---all` en los checkouts con remoto; se hizo fast-forward solo en el checkout
-limpio `ml-mobileclip`; no se sobrescribió trabajo local ni se resolvieron
-divergencias por fuerza.
+Este corte se recalculó después de `git fetch --all` en los checkouts con
+remoto. No se hizo fast-forward, reset, merge ni sobrescritura; los cambios
+locales y las divergencias quedan visibles para una decisión posterior.
 
 ## Estado operativo medido
 
@@ -71,7 +70,7 @@ divergencias por fuerza.
   el menú se abre, marca la superficie activa y se cierra al volver al núcleo.
   Research y Codex siguen siendo aplicaciones completas dentro de iframes, por
   lo que el Hub conserva solo su selector exterior.
-- **Auditoría del Hub — redundancias candidatas:** `laboratorio` se solapa
+- **Auditoría del Hub — redundancias candidatas:** `jobs` se solapa
   semánticamente con Research aunque su función real son jobs persistentes;
   `ideas` funciona como bandeja de entrada pero repite acciones que también
   aparecen en Micelio; `render`, `decisiones`, `diagnóstico` y parte de
@@ -84,20 +83,138 @@ divergencias por fuerza.
   Permanecen como deuda visual `salud proveedores` sin datos y `No
   configurado` en nodos de Research, que puede confundirse con servicio caído
   aunque la configuración efectiva viva en el runtime.
-- **Corrección aplicada:** el contrato compartido de estado ahora prioriza
+- **Corrección aplicada:** el contrato compartido de estado prioriza
   `/home/mak/.cache/mak/research.sock` y
   `/home/mak/.cache/mak/codex.sock`, etiqueta ambos consumidores sin puertos
   retirados y conserva TCP solo como fallback explícito de ejecución aislada.
-  Se actualizó el espejo usado por el Hub y el checkout autónomo de FLUJO; la
-  prueba dirigida quedó en `7 passed`, se reinició solo `mak-hub.service` y
-
-  el smoke real volvió a confirmar las 10 superficies activables. La regresión dirigida del
-  Hub, salud y contrato de estado cerró en `28 passed`.
+  Se actualizó el espejo usado por el Hub y el checkout autónomo de FLUJO; se
+  reinició solo `mak-hub.service` y la regresión dirigida del Hub, salud y
+  contrato de estado cerró en `29 passed`.
 - **Navegación simplificada:** la barra principal conserva cinco superficies
   de uso frecuente —Research, jardines/jobs, Codex, Ideas y Portafolio— y
   agrupa en `más` las cinco superficies operativas restantes y los seis
   recursos de soporte. La prueba real confirmó apertura, selección, cierre del
   menú y retorno a Research; la regresión del Hub quedó en `29 passed`.
+
+## Frente Deep Learning / IRIS — medición actual
+
+- **Estado de la línea:** `deep_learning_micelio` está en `partial`; su
+  siguiente gate exige un holdout independiente para `logo-clean` y ejecutar
+  su validador. La compuerta mantiene `training_permitted=false`, incluso si
+  una tarea resulta elegible.
+- **Cómputo disponible:** MAK tiene una NVIDIA GeForce GTX 1650 de 4 GB;
+  PyTorch con CUDA está disponible en `/home/mak/.venv` (`2.13.0+cu130`) y en
+  el runtime de Plataforma (`2.14.0+cu130`). Esto permite inferencia local y
+  experimentos pequeños/adaptadores, no entrenamiento grande ni cómodo desde
+  cero.
+- **MobileCLIP:** `/home/mak/models/mobileclip/mobileclip_s0.pt` existe, pesa
+  `215934653` bytes y su hash coincide con el índice. El código fuente
+  upstream está limpio en `/home/mak/src/ml-mobileclip` (`main`, commit
+  `48faa0f`). El checkpoint es legible por PyTorch. El entorno dedicado
+  `/home/mak/venvs/visual-index-pilot` tiene `mobileclip`, `open_clip`,
+  `faiss-cpu` y CUDA; una prueba real cargó el encoder, generó un vector de
+  512 dimensiones y leyó el índice de 100 unidades. El runtime de
+  Plataforma/Hub no tiene esas dependencias pesadas: el builder no debe
+  ejecutarse desde el servicio web, sino desde ese worker explícito.
+- **Índice visual existente:** el índice FAISS/JSON fue generado el
+  `2026-08-10` con `MobileCLIP-S0`, 512 dimensiones, `100` unidades, `345`
+  vecinos elegibles y `455` abstenciones. Cubre una selección histórica de
+  Instagram (`213` medios), no los `7044` elementos del inbox actual; el
+  worker puede regenerarlo, pero debe tratarse como proyección derivada y
+  vencida hasta refrescarlo con un snapshot actual.
+- **Micelio textual:** el índice local tiene `5809` chunks, `1911` rutas y
+  vectores Nomic de `768` dimensiones. Ollama responde localmente con
+  `nomic-embed-text:latest`. Es recuperación semántica/RAG e inferencia de
+  embeddings congelados: no hay entrenamiento de IRIS ni conexión actual que
+  fusione esos vectores con el re-ranking del copilot.
+- **Señal humana disponible:** el audit del Portafolio registra `137` etiquetas
+  de triage (`33 work`, `32 record`, `1 review`, `71 discard`) y `6907` piezas
+  aún sin etiqueta; hay `20` feedbacks de relaciones, ninguno visual. El
+  baseline estructural de IRIS obtiene `0.518248` de accuracy y `0.25` de
+  macro-recall, por lo que la automatización sigue desactivada.
+- **Aprendizaje existente fuera de Deep Learning:** FLUJO compila `12`
+  episodios verificados y produjo un candidato Naive Bayes con `6` ejemplos
+  de train y `6` de holdout (`1.0` frente a baseline `0.833333`). Es una
+  política categórica de enrutamiento, no un modelo neuronal de imágenes ni
+  del portafolio.
+- **Dataset real:** `projects/logo_clean_lab/learning/mini_dataset.jsonl`
+  valida `3` casos de demostración (`2` aprobados, `1` rechazado), pero no
+  existe todavía `logo_clean_results.jsonl`, un manifiesto de tarea real,
+  train/holdout ni un modelo ajustado al usuario.
+
+## Condiciones pendientes para trabajar limpio
+
+- **P0 — una sola autoridad de FLUJO:** resuelto para el runtime: el Hub ahora
+  prefiere `/home/mak/flujo/src` y solo deja `/home/mak/src/flujo` como fallback
+  explícito. El checkout autónomo superó el smoke de MAK con `53 passed` y las
+  rutas RD, ISKVW, Research, Portafolio y Codex respondieron `200`. El espejo
+  MAK sigue existiendo y difiere en 44 archivos; queda pendiente retirarlo o
+  convertirlo en una sincronización declarada.
+- **P0 — clasificar MAK:** `/home/mak` tiene `M112 D0 ??80`. No se debe hacer
+  otro commit global: tras las exclusiones locales aún tiene `M112 D0 ??80`;
+  hay que separar cambios de Hub/MAK, documentación, datos, el árbol XIO
+  legado y residuos de worktrees; después se puede publicar por lotes
+  coherentes.
+- **P0 — duplicado XIO dentro de MAK:** `/home/mak/xio` conserva 160 archivos
+  rastreados y 151 elementos locales, mientras `/home/mak/XIO` es el checkout
+  externo activo. La decisión operativa es usar `/home/mak/XIO` como única
+  fuente de XIO. Todos los paths rastreados del árbol legado existen afuera;
+  17 contenidos difieren y deben conservarse/portarse antes de retirar ese
+  árbol de MAK.
+- **P1 — XIO activo:** resuelto en Git: `integration/xio-field-20260911` está
+  `0/0` con su upstream, el contrato de entrada está restaurado, los datos y
+  configs runtime quedaron ignorados y los commits `8373940`, `802ea7e` y
+  `6e8fa28` están publicados.
+- **P1 — política de ramas XIO:** RD y FOH/ISKVW no son ramas separadas hoy;
+  son namespaces/plugins (`rd_field` y `foh_monitor`) dentro de la rama de
+  integración activa, ahora declarada como canónica. `main` está divergente
+  `4/3` y varias ramas `codex/*` son snapshots parciales; queda revisarlas
+  antes de archivarlas o integrar una por un consumidor verificable.
+- **P1 — contrato ejecutable RD/FOH:** la separación semántica está probada
+  off-device —RD usa `eventRef`, FOH usa `eventKey`— y cada modo respondió en
+  su superficie. El preflight ya descubre ADB en Linux, pero devuelve `NO-GO`
+  porque el dispositivo `8299e66f` no está conectado; siguen pendientes
+  teléfono, red, ADB operativo y reconciliación post-show.
+- **P2 — estado operativo:** MAK Hub, Research y Codex están activos; `cola`
+  y `xio_monitor` no están ejecutándose. Hay que decidir si son opcionales o
+  parte del baseline, para que `attention` no mezcle fallas reales con
+  servicios deliberadamente apagados.
+- **P1 — fuentes hermanas auditadas sin integración:** `X-ANA-X` está limpio
+  en `LUCIDA` (`0619057`) y conserva `main`, `PUPILA`, `FARMAKSIA` y `LUCIDA`
+  como ramas de dominio. `PUPILA` está limpio y pasa 7 pruebas; `LUCIDA` es
+  un checkout documental limpio cuyo código canónico está en
+  `X-ANA-X/LUCIDA`; `FARMAKSIA` está limpio, pero su suite se detiene en el
+  experimento 039 por `cv2` ausente. No se detectó conflicto con FLUJO o XIO.
+- **P1 — alcance de transferencia:** esas fuentes no son consumidores activos
+  de MAK. Una mejora sólo se podrá portar a FLUJO o XIO cuando exista un
+  contrato de destino, un commit de origen y una prueba reproducible. No se
+  copia `X-ANA-X`, `LUCIDA`, `PUPILA`, `FARMAKSIA`, `MAT-SI` o `WACHUMA` dentro
+  de MAK para “conectarlos”.
+- **P1 — Hub/Portafolio mejorado:** la vista general ahora cachea por firma de
+  fuentes, el inbox serializa sus lecturas concurrentes, los errores de inbox
+  exponen un HTTP visible, la entrega de media cierra correctamente sus
+  archivos y el editor coalesce peticiones simultáneas. Se retiró texto
+  repetido de la cabecera y el contrato sin proyecto de evidencia responde
+  `200` como `unbound`, en vez de `503`.
+- **P1 — Portafolio/IRIS conectado:** el inbox expone `faro-portfolio-corpus-
+  context-v1`: el `artist_id` sólo aparece cuando lo declara el operador, el
+  `corpus_id` es estable y la pertenencia al corpus no equivale a autoría. Se
+  preservan `relative_path`, carpeta y subcarpetas. Las sugerencias de
+  Research se rankean sólo con relaciones humanas confirmadas y quedan como
+  `candidate_only`; el mapa heredado reutiliza el GTM real y dejó de llamar a
+  una ruta 404. `POST /api/portfolio/dispatch` ahora crea un plan Research
+  enlazado por `job_relations` en la SQLite existente o encola Codex en la
+  cola existente, manteniendo `promotion=false` y la compuerta humana.
+- **P1 — importación de carpetas arbitrarias:** resuelto el corte de conexión:
+  `cultura/mak_plataforma/portfolio_corpus.py` reutiliza
+  `flujo.knowledge.archive_observer` y `POST /api/portfolio/observe-folder`
+  ofrece vista previa por defecto o activación explícita. Convierte los
+  archivos observados al inbox de IRIS, conserva rutas, carpetas, subcarpetas,
+  hashes y snapshot, sirve la media desde el `asset_root` declarado y deja
+  una copia recuperable del inbox anterior. No copia ni modifica la carpeta
+  fuente, no asigna autoría y no reemplaza el corpus actual sin `activate=true`.
+  Queda como mejora de interfaz añadir un selector de carpeta al panel activo;
+  el contrato HTTP ya está listo y probado.
 - **CODEX/RESEARCH → Hub:** `:8900` es el único listener TCP del stack y
   responde 200 en `/research/`, `/codex/`, `/api/micelio`,
   `/api/research/catalog` y `/api/research/jobs`. RESEARCH y CODEX son
@@ -116,14 +233,20 @@ divergencias por fuerza.
   Hub; la unidad persistente `mak-research.service` tiene
   `MAK_REINDEX_AFTER_JOB=1`. La operación es best-effort y coalescida: una
   caída temporal de MICELIO no invalida una pieza ya escrita.
+- **Puente Portafolio → MICELIO:** un plan Research conserva `source_id`,
+  `corpus_id` y procedencia en `job_relations`; los jobs de Research/Codex
+  también reciben el sobre `portfolio_source`. El reindexado de resultados
+  sigue siendo posterior al resultado real, nunca una inferencia adelantada.
 - **FLUJO Hub:** con `FLUJO_RD_DB=/home/mak/data/rd.db`, `:8765` respondió 200
   en ping, RD summary/topics/read-only-context, RD panel, VJ events,
   dashboard y SVG. El read model VJ regenerable quedó construido con 7
   eventos, 3 venues y 21 productoras.
-- **XIO:** smoke real local del runtime `xio/new/server.py` en puerto de prueba
-  cargó 29 plugins; `rd_field` respondió con 42 eventos del host y
-  `foh_monitor` con 10 eventos VJ. La suite XIO dio `37 passed`; el launcher
-  de host ya no busca una DB inexistente dentro del checkout autónomo FLUJO.
+- **XIO:** smoke real local del runtime `xio/new/server.py` en modos separados:
+  `rd` cargó `rd_field` y respondió `200` con 42 eventos del host; `foh` cargó
+  `foh_monitor` y respondió `200` con 10 eventos VJ. No se levantaron ambos
+  dueños en el mismo proceso. La suite XIO dio `37 passed` y las 10 suites
+  directas de `showcontrol` dieron `69 passed`; el launcher de host ya no busca
+  una DB inexistente dentro del checkout autónomo FLUJO.
 - **RD:** `/home/mak/data/rd.db` está íntegra (`integrity_check=ok`), tiene 40
   tablas no-sistema, 8.040 filas de datos y ningún duplicado exacto ni clave
   lógica duplicada en las tablas operativas. `rd_datos.db` estaba íntegra pero
@@ -148,22 +271,22 @@ respecto de la referencia upstream actual.
 
 | Superficie | Ruta | Rama | Upstream / relación | Cambios locales | HEAD |
 |---|---|---|---|---:|---|
-| MAK | `/home/mak` | `main` | `vibecodeine-legacy/main` — 0/0 | `M91 D0 ??94` | `4703f101` — `docs: record single RD projection wiring` |
-| FLUJO autónomo | `/home/mak/flujo` | `main` | `origin/main` → `ligereza/flujo` — 0/0 | limpio | `32c54b34` — `chore(rd): retire legacy field boundary` |
-| FLUJO worktree legado preservado | `/home/mak/flujo-vibecodeine-legacy-20260914` | `integration/flujo-canonical-20260911` | `vibecodeine-legacy/integration/flujo-canonical-20260911` — 0/0 | `M57 D0 ??31` | `f2d08916f823` — 2026-09-12 — `fix(rd): guard complete database reproducibility` |
-| XIO | `/home/mak/XIO` | `integration/xio-field-20260911` | `origin/integration/xio-field-20260911` — 0/0 | `M0 D1 ??3` | `ff661cd68120` — `fix(rd): point host launcher at MAK projection` |
-| FARMAKSIA | `/home/mak/FARMAKSIA` | `fix/provenance-integrity` | `origin/fix/provenance-integrity` — 0/0 | `M3 D1 ??0` | `779ccd621241` — 2026-09-07 — `docs: leave a NEXT.md with open work, observations and what was not audited` |
+| MAK | `/home/mak` | `main` | `vibecodeine-legacy/main` — 0/0 | `M112 D0 ??80` | `a04f7a65` — `feat(portfolio): connect IRIS corpus and research bridges` |
+| FLUJO autónomo | `/home/mak/flujo` | `main` | `origin/main` → `ligereza/flujo` — 0/0 | limpio | `fa1eeca` — `fix(portfolio): represent unbound evidence plans` |
+| FLUJO worktree legado preservado | `/home/mak/flujo-vibecodeine-legacy-20260914` | `integration/flujo-canonical-20260911` | upstream remoto archivado/desaparecido | `M57 D0 ??31` | `f2d08916f823` — 2026-09-12 — `fix(rd): guard complete database reproducibility` |
+| XIO | `/home/mak/XIO` | `integration/xio-field-20260911` | `origin/integration/xio-field-20260911` — 0/0 | limpio | `6e8fa28` — `fix(xio): discover adb on the local host` |
+| X-ANA-X | `/home/mak/X-ANA-X` | `LUCIDA` | `origin/LUCIDA` — 0/0 | limpio | `0619057` — `normalize integrated surface identifiers` |
+| FARMAKSIA | `/home/mak/FARMAKSIA` | `fix/provenance-integrity` | `origin/fix/provenance-integrity` — 0/0 | `M0 D0 ??0` | `41b2ce8` — `define FARMAKSIA research-only boundary` |
 | VIZZ | `/home/mak/VIZZ` | `fix/readme-honesty` | `origin/fix/readme-honesty` — 0/0 | `M5 D0 ??7` | `0e72bf0a4636` — 2026-09-07 — `docs: leave a NEXT.md with open work, observations and what was not audited` |
-| PUPILA | `/home/mak/PUPILA` | `fix/ambiguity-consistency` | `origin/fix/ambiguity-consistency` — 0/0 | `M0 D0 ??0` | `8e921790ba53` — 2026-09-07 — `docs: leave a NEXT.md with open work, observations and what was not audited` |
-| LUCIDA | `/home/mak/LUCIDA` | `docs/next` | `origin/docs/next` — 0/0 | `M0 D0 ??0` | `8a707ab9ffb5` — 2026-09-07 — `docs: leave a NEXT.md with open work, observations and what was not audited` |
+| PUPILA | `/home/mak/PUPILA` | `fix/ambiguity-consistency` | `origin/fix/ambiguity-consistency` — 0/0 | `M0 D0 ??0` | `5bf9cc6` — `route research output to PUPILA` |
+| LUCIDA | `/home/mak/LUCIDA` | `docs/next` | `origin/docs/next` — 0/0 | `M0 D0 ??0` | `ca4e1dc` — `route research output to LUCIDA` |
 | IRIS | `/home/mak/IRIS` | `postulacion/fondart-regional-2027` | `origin/postulacion/fondart-regional-2027` — 0/0 | `M3 D0 ??0` | `e4cafd9887ff` — 2026-09-08 — `docs(iris): add a technical transfer note for the published commit` |
 | WACHUMA | `/home/mak/WACHUMA` | `postulacion/fondart-investigacion-2027` | `origin/postulacion/fondart-investigacion-2027` — 0/0 | `M2 D0 ??0` | `4507a29b75cf` — 2026-09-08 — `docs(wachuma): point the transfer note at the commit it actually describes` |
 | MOSAIK | `/home/mak/mosaik` | `codex/obras-experimental-rehearsal-mosaik-root` | `origin/codex/obras-experimental-rehearsal-mosaik-root` — 0/0 | `M4 D0 ??1` | `1ab2076cbfb6` — 2026-09-08 — `feat: project semantic lighting to Resolume and Titan` |
 | MAT-SI | `/home/mak/MAT-SI` → `/home/mak/Escritorio/MAT-SI` | `main` | `origin/main` — 0/0 | `M0 D0 ??0` | `f7cf473b58e7` — 2026-09-14 — `integrate selective KINO research into MAT-SI` |
-| bucle | `/home/mak/bucle` | `main` | `origin/main` — 0/0 | `M0 D0 ??0` | `90ecdf5573fc` — 2026-07-18 — `Merge pull request #3 from miskirabit/arena/019f74a1-bucle` |
 | mwb-linux | `/home/mak/src/mwb-linux` | `main` | `origin/main` — 0/2 | `M5 D0 ??0` | `6c3fab3a34f9` — 2026-08-03 — `build(deps): bump actions/setup-go from 6 to 7 (#38)` |
 | ml-mobileclip | `/home/mak/src/ml-mobileclip` | `main` | `origin/main` — 0/0 | `M0 D0 ??0` | `48faa0fea4b0` — 2026-09-11 — `Update root files` |
-| XIO-IMPORT | `/home/mak/curatoria_inbox/XIO-IMPORT` | `integration/xio-field-20260911` | `origin/integration/xio-field-20260911` — 0/34 | `M41 D1 ??0` | `42495e76512d` — 2026-09-11 — `Initialize RD operational schema for XIO bridge` |
+| XIO-IMPORT | `/home/mak/curatoria_inbox/XIO-IMPORT` | `integration/xio-field-20260911` | `origin/integration/xio-field-20260911` — 0/35 | `M41 D1 ??0` | `42495e76512d` — 2026-09-11 — `Initialize RD operational schema for XIO bridge` |
 | DIMENSIONES DEL ORDEN | `/home/mak/curatoria_inbox/DIMENSIONES DEL ORDEN` | `master` | sin commits ni upstream | `M0 D0 ??92` | sin commit inicial |
 | zorin-desktop-themes | `/home/mak/Escritorio/zorin-desktop-themes` | `master` | `origin/master` — 0/0 | `M0 D0 ??0` | `1b4c77f4c781` — 2026-03-24 — `Bump to version 5.2.3` |
 | zorin-icon-themes | `/home/mak/Escritorio/zorin-icon-themes` | `master` | `origin/master` — 0/0 | `M0 D0 ??0` | `0d9e56a9be0b` — 2026-06-24 — `Bump to version 4.0.8` |
@@ -203,115 +326,23 @@ respecto de la referencia upstream actual.
   conservarse como adaptador explícito; no equivale a que XIO controle la
   pestaña de FLUJO directamente.
 
-## Hitos y decisiones actuales
+## Decisiones vigentes
 
-- Se restauró `/home/mak/AGENTS.md` desde la restauración Git `c8937f96`,
-  porque `CONTRIBUTING.md`, `MAPA.md` y `DECISIONES.md` lo declaran el
-  contrato raíz.
-- Se restauró `/home/mak/README.md` exactamente desde `HEAD`, eliminando la
-  eliminación local que contradecía la orden activa y la superficie protegida.
-- Se corrigió `ORDEN_NOCTURNA_REPOS_20260914.md`: MOSAIK usa
-  `/home/mak/mosaik`, KINO es el núcleo integrado en MAT-SI y la rama pública
-  de MOSAIK ahora está verificada en `origin`.
-- LUCIDA e IRIS ahora resuelven correctamente sus upstream `origin/*`; sus
-  fetchspec fueron corregidos para incluir las ramas activas.
-- MOSAIK ahora rastrea su rama pública `origin/*`; el remoto
-  `windows-bundle` queda como transferencia auxiliar.
-- `ml-mobileclip` avanzó por fast-forward de `aecfb545` a `48faa0f` y quedó
-  limpio, recibiendo la eliminación remota de `CODE_OF_CONDUCT.md` y
-  `CONTRIBUTING.md`.
-- Se corrigió el CLI en las superficies `MAK` y `FLUJO`: `doctor` y
-  `github-sync --status` resuelven el remoto del upstream actual, incluyendo
-  `vibecodeine-legacy`, en vez de exigir el nombre `origin`.
-- FLUJO autónomo pasó `1571` pruebas de motor, `30` pruebas de
-  higiene, `compileall`, `python -m flujo --help`, `git diff --check`,
-  frontend `typecheck` y build Vite. No contiene `xio/`, bases SQLite,
-  `context-history`, worktrees de agentes ni secretos versionables.
-- La verificación dirigida pasó 26 pruebas en `MAK` y 28 en `FLUJO`; la
-  colección completa de pruebas de `MAK` también terminó con código 0.
-- `XIO` activo pasó 37 pruebas con `pytest` y las 10 suites directas de
-  `showcontrol`, todas con código 0; la verificación es off-device y no cubre
-  teléfono, red ni ADB.
-- `codex/xio-transport` (`144b2a4461e5`) diverge de la rama activa en
-  `58/1` commits y cambia 216 archivos, añadiendo `XIO_LAYER` pero eliminando
-  las superficies RD/FOH actuales; queda como candidato para revisión de
-  consumidor, no como merge automático.
-- La extracción aislada de `codex/xio-transport` pasó 152 pruebas
-  `unittest`; sus 13 módulos de prueba validan `XIO_LAYER`, pero la rama no
-  contiene las aplicaciones `projects/rd-field` ni `projects/foh-monitor`.
-- `codex/xio-interface-layer` pasó 13 pruebas aisladas y conserva solo el
-  núcleo mínimo de eventos, snapshots, replay, transporte, acción y auditoría;
-  elimina handoff, sesiones y conectividad.
-- `codex/xio-lucida-input-contract` (`cd3b4d3aef33`) pasó 179 pruebas
-  aisladas y añade `XIO_LAYER/adapters/lucida_input.py`, con resumen acotado y
-  redacción para un futuro reducer LUCIDA; tampoco contiene RD/FOH.
-- `codex/semantic-light-field` (`6d505cc79662`) pasó 13 pruebas de `pytest` y
-  11 directas; ofrece un renderer determinista de propuestas DMX/OSC con
-  `proposal_only=true` y `calibration_status=not_calibrated`, sin `XIO_LAYER`.
-- `codex/xio-import-review` (`da945d34182b`) pasó 32 pruebas de su superficie
-  XIO y 179 de `XIO_LAYER`, pero su worktree `/home/mak/XIO-import-review`
-  ya tenía cambios locales; contiene RD y visión, no FOH.
-- `XIO/main` no se actualizó: está divergente de `origin/main` en `4/3`
-  commits; la rama activa `integration/xio-field-20260911` sigue en `0/0` y
-  conserva las aplicaciones actuales.
-- `MOSAIK` pasó 299 pruebas, omitió 1 por alcance, validó 47 schemas con 44
-  referencias y completó los replays `plugin-bridges` y
-  `semantic-light-field` sin efectos externos; `pyserial 3.5` quedó instalado
-  desde su requisito declarado.
-- `codex/lucida-python-engine` pasó 111 pruebas aisladas. Su reducer produce
-  `RenderPlan` y overlay acotado, exige adaptadores explícitos y no ejecuta
-  acciones ni abre red, ventanas, Resolume o Adobe.
-- `PUPILA` pasó 7 pruebas y el smoke devolvió `CANDIDATES_AVAILABLE → save`
-  con `execution=not_performed`; la rama activa quedó en `0/0`.
-- `VIZZ` pasó 44 pruebas `unittest` en la rama activa
-  `fix/readme-honesty`; la geometría, el gate de medición y la composición
-  de contexto conservan el cierre por defecto (`CALIBRATION_REQUIRED` o
-  `CALIBRATION_EVIDENCE_REQUIRED`) sin autorizar profundidad métrica. La
-  rama está `2/1` frente a `main` y mantiene cambios locales deliberados;
-  no se hizo merge.
-- `WACHUMA` pasó `pnpm test` y la verificación de release completa con Node
-  22: typecheck, lint, 38 tareas de test, build y los 30 gates automatizados
-  terminaron en código 0. La política sigue declarando
-  `not-ready-for-broad-public-release` por requerir aprobación legal y
-  revisión comunitaria; no es un fallo técnico. Se excluyó `.claude/` de
-  Git/Prettier para que el worktree legado no contamine el alcance del
-  checkout; el directorio físico se conserva sin tocar.
-- `IRIS` mantiene el checkout de propuesta separado del runtime IRIS de MAK:
-  JSON válido, paquete PDF de 4 páginas y rama `0/0`. Se corrigió la
-  referencia de transferencia al HEAD publicado `e4cafd` y se hizo explícita
-  la ruta externa del documento canónico de MAK; el expediente queda con
-  decisiones de envío pendientes y no se envía nada.
-- `bucle` está limpio en `main` `0/0`; sus dos scripts Python compilan y los
-  22 SVG existentes pasan análisis XML. No tiene suite automatizada declarada.
-- `MAT-SI` está limpio en `main` `0/0`; su suite activa pasó 94 pruebas con
-  4 omitidas por fuentes privadas ausentes. KINO está integrado bajo
-  `src/matsi/kino/`; no existe un checkout separado que sincronizar.
-- `ml-mobileclip` está limpio en `main` `0/0`; se validaron en memoria la
-  sintaxis de 26 archivos Python y 25 JSON sin cambiar checkpoints ni
-  resultados.
-- `mwb-linux` conserva 5 archivos modificados y está `0/2` frente a
-  `origin/main`; la suite Go no pudo ejecutarse porque `go` no está instalado
-  o disponible en PATH. `XIO-IMPORT` conserva `M41 D1` y está `0/34`; su
-  `git diff --check` sigue fallando solo por cambios CRLF/trailing whitespace
-  en ese checkout sucio. Ninguno fue reseteado, stasheado o actualizado.
-- La auditoría Git final cubre 17 checkouts con `diff --check` limpio y deja
-  únicamente `XIO-IMPORT` como excepción de finales de línea. No se hicieron
-  commits ni pushes de cambios ajenos; esta fase publicó MAK `d5e2d0d0` en
-  `vibecodeine-legacy/main` y FLUJO `d96b9f7` en `origin/main`.
-- `FARMAKSIA/codex/iris-farmaksia-integration` validó el adaptador IRIS y su
-  contrato; la referencia Node pasó syntax, smoke y regresión tras instalar
-  sus dependencias solo en una copia temporal y crear el directorio `work/`.
-- `FARMAKSIA/codex/direct-iris-public-scope-20260907` mantuvo el contrato
-  IRIS Python y eliminó del alcance público la referencia privada Node y
-  WebGazer; el experimento y contrato pasan.
-- `mwb-linux` y `XIO-IMPORT` no se actualizaron por tener cambios locales; sus
-  divergencias quedan visibles para una intervención posterior con autoridad
-  explícita.
-- `git diff --check` pasó en 17 checkouts. `XIO-IMPORT` devuelve código 2 por
-  finales de línea CRLF interpretados como trailing whitespace en sus cambios;
-  al ignorar esos finales, el único cambio de contenido restante es la
-  eliminación local de `AGENTS.md`. No se normalizó el checkout sucio.
-- En VIBECODEINE se publicó el commit documental `5e61f1a7` y se limpiaron las
-  ramas retiradas después de archivarlas por tag. El repo autónomo FLUJO fue
-  committeado y publicado; ambos remotos quedaron verificados con sus límites
-  explícitos.
+- MAK/VIBECODEINE conserva `main` como rama operativa única; FLUJO es un
+  repositorio autónomo en `main`, sin relación de worktree activo con MAK.
+- El Hub publica una sola cara TCP en `127.0.0.1:8900`. Research y Codex son
+  consumidores internos por sockets Unix privados; `8890/8891` no son puertos
+  activos de la instalación persistente.
+- RD e ISKVW son perfiles de aplicación, no ramas Git. XIO-RD consume la
+  proyección RD canónica `/home/mak/data/rd.db`; XIO-FOH consume el contexto
+  VJ/portfolio de ISKVW en solo lectura.
+- El worktree legado `/home/mak/flujo-vibecodeine-legacy-20260914` se conserva
+  como procedencia y no se actualizará automáticamente; su upstream remoto fue
+  archivado.
+- `mwb-linux` y `XIO-IMPORT` mantienen cambios locales o divergencias, por lo
+  que no se actualizaron durante este corte. `XIO-IMPORT` queda 35 commits
+  detrás de su upstream y conserva la excepción CRLF de `diff --check`.
+- La simplificación del Hub y el detector de sockets siguen publicados; el
+  último endurecimiento del Portafolio quedó en MAK `a04f7a65` y la corrección
+  de planes sin proyecto en FLUJO `fa1eeca`; ambas ramas remotas están
+  sincronizadas.
