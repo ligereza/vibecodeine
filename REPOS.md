@@ -84,7 +84,7 @@ corte.
 - Ruta: `/home/mak`
 - Remoto: `ligereza/vibecodeine`
 - Rama operativa: `main` → `vibecodeine-legacy/main` (`0/0`); HEAD local y
-  publicado `2ce9a5c2` (`docs(status): audit deep learning runtime`).
+  publicado `90bfd286` (`docs: record clean post-push boundaries`).
 - Estado conceptual: estación de trabajo y núcleo de integración. Reúne el
   entorno MAK, el código compartido, el Hub, los departamentos de cultura,
   investigación y operaciones, además de la base común que conecta los demás
