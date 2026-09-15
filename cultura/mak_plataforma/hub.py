@@ -119,6 +119,9 @@ MESA_INBOX_FIELDS = (
     "asset_available", "selection", "classification", "decision_draft",
 )
 _PORTFOLIO_GTM_LOCK = threading.Lock()
+_PORTFOLIO_INBOX_LOCK = threading.Lock()
+_PORTFOLIO_ARCHIVE_CACHE_LOCK = threading.Lock()
+_PORTFOLIO_ARCHIVE_CACHE = None
 _PORTFOLIO_CONNECTION_LOCK = threading.Lock()
 _PORTFOLIO_FEEDBACK_LOCK = threading.Lock()
 _PORTFOLIO_SELECTION_LOCK = threading.Lock()
@@ -1818,13 +1821,16 @@ def _portfolio_inbox_signature():
 
 
 def _portfolio_inbox(compact=False):
-    signature = _portfolio_inbox_signature()
-    cached = _PORTFOLIO_INBOX_CACHE.get(bool(compact))
-    if cached is not None and cached[0] == signature:
-        return cached[1]
-    payload = _portfolio_inbox_uncached(compact=compact)
-    _PORTFOLIO_INBOX_CACHE[bool(compact)] = (signature, payload)
-    return payload
+    # The Hub is threaded. Without this guard, two first requests can both
+    # parse the inbox and publish whichever result wins the race.
+    with _PORTFOLIO_INBOX_LOCK:
+        signature = _portfolio_inbox_signature()
+        cached = _PORTFOLIO_INBOX_CACHE.get(bool(compact))
+        if cached is not None and cached[0] == signature:
+            return cached[1]
+        payload = _portfolio_inbox_uncached(compact=compact)
+        _PORTFOLIO_INBOX_CACHE[bool(compact)] = (signature, payload)
+        return payload
 
 
 def _portfolio_inbox_uncached(compact=False):
@@ -1907,8 +1913,23 @@ def _validate_archive_portfolio_envelope(payload):
     return True
 
 
+def _portfolio_archive_signature(archive_path):
+    """Identify read-only inputs that can change the archive projection."""
+    paths = (archive_path, Path(_PORTFOLIO_CLASSIFICATIONS_PATH),
+             Path(_SSD_ORDER_FOUNDATION_PATH))
+    signature = []
+    for path in paths:
+        try:
+            stat = path.stat()
+            signature.append((str(path), stat.st_mtime_ns, stat.st_size))
+        except OSError:
+            signature.append((str(path), None, None))
+    return tuple(signature)
+
+
 def _archive_portfolio_view_read_only():
     """Render the existing bounded archive view from its canonical input."""
+    global _PORTFOLIO_ARCHIVE_CACHE
     if _project_archive_portfolio_view is None or _compile_contracurator_exhibition is None:
         return {
             "ok": False,
@@ -1916,37 +1937,42 @@ def _archive_portfolio_view_read_only():
             "detail": _ARCHIVE_PORTFOLIO_VIEW_IMPORT_ERROR or _CONTRACURATOR_IMPORT_ERROR,
         }, 503
     archive_path = Path(PORTFOLIO_ROOT) / "datos" / "archivo.json"
-    human_triage = {}
-    if _read_human_decisions is not None and _triage_declarations is not None:
+    signature = _portfolio_archive_signature(archive_path)
+    with _PORTFOLIO_ARCHIVE_CACHE_LOCK:
+        cached = _PORTFOLIO_ARCHIVE_CACHE
+        if cached is not None and cached[0] == signature:
+            return cached[1], cached[2]
+        human_triage = {}
+        if _read_human_decisions is not None and _triage_declarations is not None:
+            try:
+                if os.path.isfile(_PORTFOLIO_CLASSIFICATIONS_PATH):
+                    human_triage = _triage_declarations(_read_human_decisions(
+                        classifications_path=_PORTFOLIO_CLASSIFICATIONS_PATH))
+            except Exception:  # noqa: BLE001 - triage enrichment is additive
+                human_triage = {}
         try:
-            if os.path.isfile(_PORTFOLIO_CLASSIFICATIONS_PATH):
-                human_triage = _triage_declarations(_read_human_decisions(
-                    classifications_path=_PORTFOLIO_CLASSIFICATIONS_PATH))
-        except Exception:  # noqa: BLE001 - triage enrichment is additive
-            human_triage = {}
-    try:
-        archive = json.loads(archive_path.read_text(encoding="utf-8"))
-        view = _project_archive_portfolio_view(
-            archive, max_items_per_format=24, human_triage=human_triage)
-        order_basis = None
-        order_basis_path = Path(_SSD_ORDER_FOUNDATION_PATH)
-        if order_basis_path.is_file():
-            order_basis = json.loads(order_basis_path.read_text(encoding="utf-8"))
-        # The established archive route remains the sole Hub consumer.  The
-        # contracurator receives its already-bounded 56-row projection; it
-        # never rescans the archive or writes the learning store on a GET.  The
-        # SSD order is attached only as an evidence boundary; an unresolved
-        # crosswalk cannot influence the ISKVW selection.
-        view["contracurator"] = _compile_contracurator_exhibition(
-            view, ssd_order_foundation=order_basis)
-        _validate_archive_portfolio_envelope(view)
-        return view, 200
-    except Exception as exc:  # noqa: BLE001 - malformed evidence fails closed
-        return {
-            "ok": False,
-            "error": "archive_portfolio_view_invalid",
-            "detail": type(exc).__name__,
-        }, 503
+            archive = json.loads(archive_path.read_text(encoding="utf-8"))
+            view = _project_archive_portfolio_view(
+                archive, max_items_per_format=24, human_triage=human_triage)
+            order_basis = None
+            order_basis_path = Path(_SSD_ORDER_FOUNDATION_PATH)
+            if order_basis_path.is_file():
+                order_basis = json.loads(order_basis_path.read_text(encoding="utf-8"))
+            # The established archive route remains the sole Hub consumer. The
+            # contracurator receives its bounded projection; it never rescans
+            # the archive or writes the learning store on a GET. Source mtimes
+            # invalidate this cache after an archive or human decision changes.
+            view["contracurator"] = _compile_contracurator_exhibition(
+                view, ssd_order_foundation=order_basis)
+            _validate_archive_portfolio_envelope(view)
+            _PORTFOLIO_ARCHIVE_CACHE = (signature, view, 200)
+            return view, 200
+        except Exception as exc:  # noqa: BLE001 - malformed evidence fails closed
+            return {
+                "ok": False,
+                "error": "archive_portfolio_view_invalid",
+                "detail": type(exc).__name__,
+            }, 503
 
 
 def _portfolio_gtm_map(items, **kwargs):
@@ -2018,6 +2044,8 @@ _ERROR_STATUS = {
     "xio_work_id_invalido": 400,
     # A dependency this route needs is not answering.
     "fuentes_ausentes": 503,
+    "inbox_no_disponible": 503,
+    "inbox_invalido": 503,
     "ledger_unavailable": 503,
     "xio_evidence_unavailable": 503,
     "convocatorias_unavailable": 503,
@@ -2097,14 +2125,14 @@ def _status_for(payload) -> int:
         return 200
     if payload.get("available") is False:
         return 503
-    if payload.get("ok") is False:
-        error = payload.get("error")
-        if isinstance(error, str):
-            if error in _ERROR_STATUS:
-                return _ERROR_STATUS[error]
-            for prefix, status in _ERROR_STATUS_PREFIXES:
-                if error.startswith(prefix):
-                    return status
+    error = payload.get("error")
+    if isinstance(error, str) and (
+            payload.get("ok") is False or error in _ERROR_STATUS):
+        if error in _ERROR_STATUS:
+            return _ERROR_STATUS[error]
+        for prefix, status in _ERROR_STATUS_PREFIXES:
+            if error.startswith(prefix):
+                return status
     return 200
 
 
@@ -6763,7 +6791,8 @@ class H(BaseHTTPRequestHandler):
         if p == "/api/portfolio/inbox":
             query = urllib.parse.parse_qs(u.query)
             compact = (query.get("surface") or [""])[0] == "mesa"
-            return self._json(_portfolio_inbox(compact=compact))
+            payload = _portfolio_inbox(compact=compact)
+            return self._json(payload, _status_for(payload))
         if p == "/api/portfolio/decision-index":
             return self._json(_portfolio_decision_index())
         if p == "/api/portfolio/audit":
@@ -6773,7 +6802,8 @@ class H(BaseHTTPRequestHandler):
             return self._json(audit, 404 if not audit.get("ok") else 200)
         if p == "/api/portfolio/external-candidates":
             item_id = (urllib.parse.parse_qs(u.query).get("item_id") or [""])[0]
-            return self._json(_portfolio_external_candidates(item_id))
+            payload = _portfolio_external_candidates(item_id)
+            return self._json(payload, _status_for(payload))
         if p == "/api/portfolio/review-operations-context":
             item_id = (urllib.parse.parse_qs(u.query).get("item_id") or [""])[0]
             payload, code = _portfolio_review_operations_context(item_id)
@@ -6826,8 +6856,12 @@ class H(BaseHTTPRequestHandler):
             asset = _portfolio_media(p[len("/portfolio-media/"):])
             if asset is None:
                 return self._send("(media no disponible en MAK)", "text/plain", 404)
-            return self._send_bytes(open(asset, "rb").read(),
-                                    mimetypes.guess_type(asset)[0] or "application/octet-stream")
+            try:
+                data = Path(asset).read_bytes()
+            except OSError:
+                return self._send("(media no disponible en MAK)", "text/plain", 404)
+            return self._send_bytes(
+                data, mimetypes.guess_type(asset)[0] or "application/octet-stream")
         if p == "/portafolio":
             self.send_response(301)
             self.send_header("Location", "/portafolio/")
