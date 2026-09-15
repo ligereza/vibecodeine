@@ -939,8 +939,8 @@
   <div class="archive-view-header">
     <div class="archive-view-heading">
       <span class="archive-view-kicker">portafolio general · lectura interna</span>
-      <h2 id="archive-portfolio-title">Tres lecturas del mismo archivo</h2>
-      <p>Obras declaradas, campo observado y contexto de práctica permanecen separados. Esta superficie consulta el Hub en modo lectura.</p>
+      <h2 id="archive-portfolio-title">Cuatro lecturas del mismo archivo</h2>
+      <p>Obras declaradas, registros documentados, campo observado y contexto de práctica permanecen separados.</p>
     </div>
     <button type="button" class="archive-view-refresh" onclick="cargarArchivePortfolioView()">actualizar lectura</button>
   </div>
@@ -1453,10 +1453,10 @@ function archiveViewReadyContent(view){
 
 function estudioArchivePortfolioView(){
   let content='<div class="archive-view-status" role="status">La lectura general todavía no se ha solicitado.</div>';
-  if(ARCHIVE_PORTFOLIO_STATE==='loading')content='<div class="archive-view-status" role="status">Cargando las tres lecturas del archivo…</div>';
+  if(ARCHIVE_PORTFOLIO_STATE==='loading')content='<div class="archive-view-status" role="status">Cargando las cuatro lecturas del archivo…</div>';
   if(ARCHIVE_PORTFOLIO_STATE==='unavailable')content='<div class="archive-view-status" data-kind="error" role="alert">Vista general no disponible. No se muestran datos parciales; el archivo y sus decisiones permanecen sin cambios.</div>';
   if(ARCHIVE_PORTFOLIO_STATE==='ready'&&ARCHIVE_PORTFOLIO_VIEW)content=archiveViewReadyContent(ARCHIVE_PORTFOLIO_VIEW);
-  return `<section id="archive-portfolio-view" class="archive-view" data-state="${esc(ARCHIVE_PORTFOLIO_STATE)}" aria-labelledby="archive-portfolio-title"><div class="archive-view-header"><div class="archive-view-heading"><span class="archive-view-kicker">portafolio general · lectura interna</span><h2 id="archive-portfolio-title">Tres lecturas del mismo archivo</h2><p>Obras declaradas, campo observado y contexto de práctica permanecen separados. Esta superficie consulta el Hub en modo lectura.</p></div><button type="button" class="archive-view-refresh" onclick="cargarArchivePortfolioView()" ${ARCHIVE_PORTFOLIO_STATE==='loading'?'disabled':''}>actualizar lectura</button></div><div id="archive-portfolio-content">${content}</div></section>`;
+  return `<section id="archive-portfolio-view" class="archive-view" data-state="${esc(ARCHIVE_PORTFOLIO_STATE)}" aria-labelledby="archive-portfolio-title"><div class="archive-view-header"><div class="archive-view-heading"><span class="archive-view-kicker">portafolio general · lectura interna</span><h2 id="archive-portfolio-title">Cuatro lecturas del mismo archivo</h2><p>Obras declaradas, registros documentados, campo observado y contexto de práctica permanecen separados.</p></div><button type="button" class="archive-view-refresh" onclick="cargarArchivePortfolioView()" ${ARCHIVE_PORTFOLIO_STATE==='loading'?'disabled':''}>actualizar lectura</button></div><div id="archive-portfolio-content">${content}</div></section>`;
 }
 
 function archiveViewRefreshPanel(){
@@ -1465,21 +1465,27 @@ function archiveViewRefreshPanel(){
 }
 
 async function cargarArchivePortfolioView(){
-  ARCHIVE_PORTFOLIO_VIEW=null;
-  ARCHIVE_PORTFOLIO_STATE='loading';
-  archiveViewRefreshPanel();
-  try{
-    const response=await fetch('/api/portfolio/archive-view',{cache:'no-store'});
-    if(!response.ok)throw new Error(`HTTP ${response.status}`);
-    const payload=await response.json();
-    if(!archiveViewValidate(payload))throw new Error('archive_portfolio_view_contract_invalid');
-    ARCHIVE_PORTFOLIO_VIEW=payload;
-    ARCHIVE_PORTFOLIO_STATE='ready';
-  }catch(error){
+  if(cargarArchivePortfolioView.request)return cargarArchivePortfolioView.request;
+  cargarArchivePortfolioView.request=(async()=>{
     ARCHIVE_PORTFOLIO_VIEW=null;
-    ARCHIVE_PORTFOLIO_STATE='unavailable';
-  }
-  archiveViewRefreshPanel();
+    ARCHIVE_PORTFOLIO_STATE='loading';
+    archiveViewRefreshPanel();
+    try{
+      const response=await fetch('/api/portfolio/archive-view',{cache:'no-store'});
+      if(!response.ok)throw new Error(`HTTP ${response.status}`);
+      const payload=await response.json();
+      if(!archiveViewValidate(payload))throw new Error('archive_portfolio_view_contract_invalid');
+      ARCHIVE_PORTFOLIO_VIEW=payload;
+      ARCHIVE_PORTFOLIO_STATE='ready';
+    }catch(error){
+      ARCHIVE_PORTFOLIO_VIEW=null;
+      ARCHIVE_PORTFOLIO_STATE='unavailable';
+    }finally{
+      cargarArchivePortfolioView.request=null;
+    }
+    archiveViewRefreshPanel();
+  })();
+  return cargarArchivePortfolioView.request;
 }
 
 function estudioOption(step,value,label,variant=''){
