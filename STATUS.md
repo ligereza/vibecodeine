@@ -25,7 +25,7 @@ La integración de MAK, FLUJO y XIO queda cerrada por frontera física y contrat
 
 | Superficie | Checkout y remoto | Rama / HEAD | Estado medido |
 |---|---|---|---|
-| MAK / vibecodeine | `/home/mak` · `ligereza/vibecodeine` · `vibecodeine-legacy` | `main` · `90bfd286` | VIBECODEINE propio limpio y publicado; sólo quedan cambios de los snapshots externos `src/flujo/`, `xio/` y el enlace `MAT-SI`; upstream 0/0 |
+| MAK / vibecodeine | `/home/mak` · `ligereza/vibecodeine` · `vibecodeine-legacy` | `main` · `2fa25b67` | VIBECODEINE propio limpio y publicado; sólo quedan cambios de los snapshots externos `src/flujo/`, `xio/` y el enlace `MAT-SI`; upstream 0/0 |
 | FLUJO | `/home/mak/flujo` · `ligereza/flujo` · `origin` | `main` · `48ca1d4` | limpio y publicado; upstream 0/0 |
 | XIO | `/home/mak/XIO` · `ligereza/XIO` · `origin` | `integration/xio-field-20260911` · `6e8fa28d` | limpio; upstream 0/0 |
 | Histórico FLUJO dentro del padre | `/home/mak/flujo-vibecodeine-legacy-20260914` | `integration/flujo-canonical-20260911` | preservación histórica; no es fuente activa |
