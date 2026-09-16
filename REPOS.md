@@ -124,7 +124,7 @@ corte.
 - Remoto: `ligereza/XIO`
 - Rama activa: `integration/xio-field-20260911`
 - Estado Git actual: `0/0` frente a `origin/integration/xio-field-20260911`;
-  worktree limpio en HEAD `6e8fa28`.
+  worktree limpio en HEAD `061bcec`.
 - Estado conceptual: sistema móvil y local-first para operar fuera de la
   estación fija.
 - Idea: combinar cámara, red local, servidor, sensores, registro temporal,
