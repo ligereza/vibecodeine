@@ -1,13 +1,13 @@
 # Document authority in MAK
 
-> Registro de una medición histórica (2026-08-28), no contrato vigente. La
-> autoridad actual es `/home/mak/AGENTS.md`; el estado se obtiene con
+> Registro de una medición histórica (2026-08-28), no contrato vigente. El
+> antiguo contrato `AGENTS.md` fue retirado; el estado se obtiene con
 > `.venv/bin/python tools/mak_status.py`.
 
 Measured and written 2026-08-28. This file exists because **nine documents in
 this repo declared themselves canonical and the loader reads three.**
 
-Language: English, ASCII. `AGENTS.md` is the current contract for operational metadata, and
+Language: English, ASCII. This file describes the retired contract layout, and
 the well-formed operational documents of this repo already comply -- see
 `docs/admissibility.md`, `context/OBJECTIVE_AUDIT.md`,
 `context/OWNER_MANIFEST.md` and `context/DEPENDENCY_SURFACE.md`, all English
@@ -16,7 +16,7 @@ diacritics, which was the wrong side of the same rule it was written to enforce.
 
 ## The real read order
 
-The current entry point is `/home/mak/AGENTS.md`, followed by a machine measurement:
+The retired entry point was `/home/mak/AGENTS.md`, followed by a machine measurement:
 
 ```
 AGENTS.md -> .venv/bin/python tools/mak_status.py -> context/HANDOFF_HISTORICO.md
@@ -31,7 +31,7 @@ is promoted to authority by writing "canonical" in its header.
 
 | Document | Claimed | What it actually is |
 |---|---|---|
-| `AGENTS.md` | "This file is canonical" | **Historical row.** The current contract is the root file. |
+| `AGENTS.md` | "This file is canonical" | **Historical row.** The entry contract was retired. |
 | `docs/MAK_CURRENT_STATE.md` | "Fuente canonica de orientacion" | **Authority. Correct.** #2 in the order. |
 | `context/LAST_HANDOFF.md` | continuity | **Authority. Correct.** #3 in the order. |
 | `docs/MAK_SYSTEM_DIRECTIVE.md` | "canonical direction for agents as of 2026-08-25" | **Mission doctrine.** Says what MAK wants to become, not what it is. Not in the order. |
@@ -67,7 +67,7 @@ docs/SCRIPTS_INVENTORY.md           6 ok    27 no path   26 broken    0 figures 
 docs/MAK_CURRENT_STATE.md          38 ok     8 no path    4 broken    3 figures     6 states
 docs/PORTAFOLIO_PRODUCCION.md      15 ok    12 no path    7 broken    8 figures     0 states
 MAPA.md                             6 ok     0 no path    0 broken    0 figures     2 states
-AGENTS.md                           historical row; current contract is measured at the root
+AGENTS.md                           historical row; no persistent entry contract remains
 ```
 
 The last two rows are the conclusion. The root contract and machine measurement
@@ -92,7 +92,7 @@ without a root anchor.
    invariant range and the version.
 4. **A prose state (`VIVO`, `activo`, `integridad OK`) states next to it how it
    was checked**, or it is not written.
-5. **Operational metadata is English ASCII** (`AGENTS.md`, Language section).
+5. **Operational metadata is English ASCII** (retired `AGENTS.md` Language section).
    Human-facing RD and Portfolio material keeps correct Spanish with diacritics.
 
 ### The gates exist and have one measured blind spot
