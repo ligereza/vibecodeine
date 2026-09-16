@@ -41,7 +41,7 @@ def _skip(d: str) -> bool:
     return d in _SKIP_DIRS or d.startswith(".") or d.startswith("_")
 # carpetas que son SALIDA generada (no tocar / no explorar a mano)
 _GENERADAS = {"jobs", "projects", "datadrops", "context/*.html"}
-_KEY_NAMES = {"README.md", "SKILL.md", "pyproject.toml", "cli.py", "AGENTS.md"}
+_KEY_NAMES = {"README.md", "SKILL.md", "pyproject.toml", "cli.py"}
 _MAXDEPTH = 3
 
 
@@ -249,7 +249,7 @@ _TASK_ROUTES = [
      [".claude/skills/entregas-rd/", ".claude/skills/taller-svg-rd/SKILL.md",
       "assets/logo/", "svg/suplementos_rd/ (derivar: muchos SVG)"]),
     (("voz", "gemini", "agente", "handoff", "contexto"),
-     ["AGENTS.md", "DECISIONES.md"]),
+     ["DECISIONES.md", "STATUS.md"]),
     (("resolume", "chataigne", "noisette"),
      ["src/flujo/resolume/automator.py",
       "BLOQUEADOR: sin .noisette real; no adivinar el schema"]),
@@ -264,10 +264,7 @@ def _task(keywords: str):
     kw = keywords.lower()
     print(f"# CONTEXTO PARA LA TAREA: {keywords}\n")
     print("== LEER PRIMERO (fuente de verdad, barato) ==")
-    # AGENTS.md se retiro el 2026-09-05 y se restauro el 2026-09-06 como
-    # punteros solamente (ver DECISIONES.md); los hechos se piden a
-    # tools/mak_status.py, no a un documento.
-    for r in ("AGENTS.md", "DECISIONES.md"):
+    for r in ("DECISIONES.md", "STATUS.md"):
         print(f"  {r}")
     hits = [routes for keys, routes in _TASK_ROUTES if any(k in kw for k in keys)]
     print("\n== RUTAS RELEVANTES A LA TAREA ==")

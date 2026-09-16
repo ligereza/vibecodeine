@@ -1,8 +1,9 @@
 # Estado actual de MAK
 
 > Esta es una instantánea narrativa fechada, no la autoridad del estado actual.
-> Para orientarse se lee `/home/mak/AGENTS.md` y se mide con
-> `.venv/bin/python tools/mak_status.py`. La continuidad histórica está en
+> El antiguo puntero `/home/mak/AGENTS.md` fue retirado. Para orientarse se
+> mide con `.venv/bin/python tools/mak_status.py` y
+> `tools/contexto_repo.py --json`. La continuidad histórica está en
 > `context/HANDOFF_HISTORICO.md`. Las rutas de contratos retirados que aparezcan
 > más abajo son evidencia histórica, no instrucciones vigentes.
 
@@ -536,8 +537,8 @@ requiere demostrar imports, entrypoints, tests, consumidores y rollback.
 - Cada cambio debe tener un consumidor, write set acotado, prueba foreground y
   rollback. Se hace `git add` explícito; no se publica un árbol completo por
   accidente.
-- Un agente externo debe empezar por `/home/mak/AGENTS.md` y medir el estado
-  actual. Este documento y `context/OWNER_MANIFEST.md` son contexto fechado;
+- Un agente externo debe medir el estado actual con Git y
+  `tools/contexto_repo.py --json`. Este documento y `context/OWNER_MANIFEST.md` son contexto fechado;
   no sustituyen la medición ni agregan un contrato por área.
 
 ## 10. Qué se aprendió de las fases históricas
@@ -807,7 +808,7 @@ reanudar** o gritará que esperaba 0 activas y hay 23.
 
 ## Referencias históricas y de medición
 
-- `AGENTS.md` (contrato vigente, fuera de esta instantánea)
+- `AGENTS.md` (contrato retirado, fuera de esta instantánea)
 - `.venv/bin/python tools/mak_status.py` (medición vigente, fuera de esta instantánea)
 - `context/LAST_HANDOFF.md` (solo el paquete `Agent bootstrap — CURRENT`; el
   resto es evidencia histórica de una organización anterior)

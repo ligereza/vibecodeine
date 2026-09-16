@@ -58,7 +58,7 @@ ya no forma parte del checkout actual.
 
 **Actual (2026-06):** `context/flujo_hub.html` + `svg_visualizer.html` + `plano_demo.html` + `LAST_HANDOFF.md` son la fuente de verdad diaria.
 
-Histórico (checkpoints, _archive, reference_old) se movió a `_archive/legacy_historico_previo/` y se RETIRÓ el 2026-07-30: era un archivo dentro de un archivo dentro de un archivo, 283 archivos que nadie volvió a abrir. Vive en el historial de git, que es para lo que existe. Mantener el root limpio; la orientación contractual está en `AGENTS.md`.
+Histórico (checkpoints, _archive, reference_old) se movió a `_archive/legacy_historico_previo/` y se RETIRÓ el 2026-07-30: era un archivo dentro de un archivo dentro de un archivo, 283 archivos que nadie volvió a abrir. Vive en el historial de git, que es para lo que existe. Mantener el root limpio; la orientación actual se obtiene desde Git, `STATUS.md` y `tools/contexto_repo.py --json`.
 
 **Herramientas de limpieza, estado 2026-07-30.** Vivas: `limpiar_basura.sh`
 (usado por `make clean`), `find_duplicates.py` y `suggest_repo_hygiene.py` --

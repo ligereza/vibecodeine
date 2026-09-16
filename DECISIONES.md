@@ -19,7 +19,7 @@ Lo que el operador decidio, con la fecha en que lo dijo.
   declarada indecidible.
 
 - **Todos los archivos de contrato se borran y se empieza de cero con un solo
-  `AGENTS.md`.** `CLAUDE.md`, el `AGENTS.md` anterior, el `agents.md` en
+  `AGENTS.md` (decisión superada el 2026-09-15).** `CLAUDE.md`, el `AGENTS.md` anterior, el `agents.md` en
   minusculas y los tres de `contracts/departments/`, en los dos checkouts.
 
 - **`LAST_HANDOFF.md` pasa a llamarse `HANDOFF_HISTORICO.md` y queda como
@@ -35,7 +35,8 @@ Lo que el operador decidio, con la fecha en que lo dijo.
 
 - **Nomenclatura fijada.** `MAK` solo, sin apellido, es el computador Linux.
   La rama y el directorio se dicen completos: "la rama MAK", "el checkout MAK".
-  El repositorio se llama `vibecodeine`. Queda escrita en `AGENTS.md`.
+  El repositorio se llama `vibecodeine`. Queda fijada en esta decisión y en
+  `REPOS.md`.
 
 - **Separar el sistema en repos propios es lo proximo, despues de ordenar.**
   `ligereza/MAK`, `ligereza/flujo` y `ligereza/IRIS` se dejan reservados y
@@ -78,6 +79,10 @@ Lo que el operador decidio, con la fecha en que lo dijo.
 ---
 
 ## 2026-09-15
+
+- **Se retiran los tres `AGENTS.md` raíz** de MAK, FLUJO y XIO. No hay contrato
+  de entrada persistente ni handoff operativo: Git, código, pruebas, `STATUS`
+  y los inventarios de cada repositorio son las fuentes consultables.
 
 - **FLUJO y XIO tienen una sola autoridad activa cada uno.** FLUJO se opera
   desde `/home/mak/flujo` en `main`; XIO se opera desde `/home/mak/XIO` en
