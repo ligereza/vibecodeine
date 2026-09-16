@@ -2,9 +2,11 @@
 
 Estado medido de LIBELULA, director de moscas.
 
-Corte: 2026-09-15T20:20:41-03:00
+Corte: 2026-09-15T21:00:56-03:00
 Máquina: MAK, Linux
 Método: `.venv/bin/python tools/mak_status.py`, `git`, `systemctl --user`, smoke HTTP y suites de cada autoridad.
+
+Contexto mecánico para agentes: `tools/contexto_repo.py --json --root <checkout> [--query "texto"]` produce `mak-repo-context-v1` con Git + AST Python + consumidores estáticos; no escribe archivos.
 
 Este archivo es una fotografía verificable del sistema. No es handoff, README ni bitácora: registra el estado y las decisiones vigentes, sin convertirlas en una lista de tareas.
 
