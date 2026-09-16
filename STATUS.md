@@ -2,7 +2,7 @@
 
 Estado medido de LIBELULA, director de moscas.
 
-Corte: 2026-09-15T21:00:56-03:00
+Corte: 2026-09-15T23:30:16-03:00
 Máquina: MAK, Linux
 Método: `.venv/bin/python tools/mak_status.py`, `git`, `systemctl --user`, smoke HTTP y suites de cada autoridad.
 
@@ -27,12 +27,12 @@ La integración de MAK, FLUJO y XIO queda cerrada por frontera física y contrat
 
 | Superficie | Checkout y remoto | Rama / HEAD | Estado medido |
 |---|---|---|---|
-| MAK / vibecodeine | `/home/mak` · `ligereza/vibecodeine` · `vibecodeine-legacy` | `main` · HEAD publicado | VIBECODEINE propio limpio y publicado; sólo quedan cambios de los snapshots externos `src/flujo/`, `xio/` y el enlace `MAT-SI`; upstream 0/0 |
+| MAK / vibecodeine | `/home/mak` · `ligereza/vibecodeine` · `vibecodeine-legacy` | `main` · HEAD publicado | limpio y publicado; el trabajo no mergeable de snapshots queda preservado en el stash local de auditoría; upstream 0/0 |
 | FLUJO | `/home/mak/flujo` · `ligereza/flujo` · `origin` | `main` · HEAD publicado | limpio y publicado; upstream 0/0 |
-| XIO | `/home/mak/XIO` · `ligereza/XIO` · `origin` | `integration/xio-field-20260911` · `6e8fa28d` | limpio; upstream 0/0 |
+| XIO | `/home/mak/XIO` · `ligereza/XIO` · `origin` | `integration/xio-field-20260911` · `061bcec0` | limpio; upstream 0/0 |
 | Histórico FLUJO dentro del padre | `/home/mak/flujo-vibecodeine-legacy-20260914` | `integration/flujo-canonical-20260911` | preservación histórica; no es fuente activa |
 
-El directorio MAK contiene trabajo local de usuario en múltiples frentes; por eso sus cambios no se interpretan como conflicto de repos. El estado de publicación de FLUJO y XIO sí está limpio y alineado con sus remotos.
+El directorio MAK está limpio y alineado con su remoto. Los snapshots de compatibilidad y el enlace externo permanecen físicamente disponibles; el material auditado que no era seguro mergear quedó preservado localmente, no publicado como runtime.
 
 ## Frontera física
 
