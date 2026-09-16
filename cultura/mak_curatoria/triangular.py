@@ -45,6 +45,17 @@ for _sub in ("mak_research", "mak_curatoria"):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
+# mak_forense is the shared provenance engine. Triangular owns the queue,
+# but it must not silently discard the history of a ficha when the same file is
+# perceived again: the engine marks that history and leaves the decision to a
+# person.
+try:
+    from cultura.mak_forense.patrones import analizar as _analizar_procedencia
+    from cultura.mak_forense.registro import Registro as _RegistroForense
+except ImportError:  # pragma: no cover - only for a partial checkout
+    _analizar_procedencia = None
+    _RegistroForense = None
+
 _RESEARCH_LIB = None
 _SOURCE_GATE = None
 _CATALOG_DB = None
@@ -252,6 +263,87 @@ def _txt(v):
     return str(v or "").strip()
 
 
+def _ficha_contenido(ficha: dict) -> tuple:
+    """Contenido comparable de una ficha, sin campos de identidad temporal.
+
+    fecha queda fuera a propósito: si la misma ficha aparece asociada a otra
+    fecha, eso es justamente una señal que debe quedar visible en la historia,
+    no una forma de esconder la repetición porque cambió un campo. Los campos
+    volátiles de percepción tampoco participan.
+    """
+    evento = dict(ficha.get("datos_evento") or {})
+    evento.pop("fecha", None)
+    evento.pop("fecha_evento", None)
+    return (
+        str(ficha.get("categoria") or "").strip().lower(),
+        json.dumps(evento, ensure_ascii=False, sort_keys=True, default=str),
+        json.dumps(ficha.get("vision") or {}, ensure_ascii=False,
+                   sort_keys=True, default=str),
+        str(ficha.get("ocr_texto") or "").strip().lower(),
+    )
+
+
+def _procedencia_fichas(versiones: list[dict]) -> dict:
+    """Resume la historia de una misma ficha usando mak_forense.
+
+    La cola conserva solo la versión más reciente para investigar, pero la
+    procedencia viaja con ella. Una segunda percepción nunca se convierte en
+    un reemplazo silencioso: queda marcada y revisable.
+    """
+    ids = [str(f.get("id") or "") for f in versiones]
+    fechas = sorted({
+        _txt((f.get("datos_evento") or {}).get("fecha"))
+        for f in versiones
+        if _txt((f.get("datos_evento") or {}).get("fecha"))
+    })
+    base = {
+        "motor": "mak_forense",
+        "versiones_observadas": len(versiones),
+        "ids": ids,
+        "fechas_observadas": fechas,
+        "revision_humana": "pendiente" if len(versiones) > 1 else "no_requerida",
+        "hallazgos": [],
+    }
+    if _analizar_procedencia is None or _RegistroForense is None:
+        base["revision_humana"] = "pendiente"
+        base["limite"] = "motor mak_forense no disponible"
+        return base
+
+    registros = [
+        _RegistroForense(
+            id=str(f.get("id") or f"version-{i}"),
+            grupo=str(f.get("fuente") or "sin_fuente") + ":" +
+                  str(f.get("ruta_rel") or "sin_ruta"),
+            orden=i,
+            contenido=_ficha_contenido(f),
+            fecha_declarada=_txt((f.get("datos_evento") or {}).get("fecha")) or None,
+            etiqueta=str(f.get("ruta_rel") or ""),
+        )
+        for i, f in enumerate(versiones)
+    ]
+    analisis = _analizar_procedencia(
+        registros,
+        limites_extra=(
+            "la historia de triangular solo compara percepciones del mismo "
+            "archivo; no prueba que dos archivos distintos sean la misma fuente",
+        ),
+    )
+    base["hallazgos"] = [
+        {
+            "patron": h.patron,
+            "certeza": h.certeza,
+            "registros": list(h.registros),
+            "origen": h.origen,
+            "evidencia": h.evidencia,
+            "explicacion": h.explicacion,
+        }
+        for h in analisis.hallazgos
+    ]
+    if analisis.hallazgos:
+        base["revision_humana"] = "pendiente"
+    return base
+
+
 # Venues/ciudades demasiado genericos como para ser una pista real: harian
 # que toda fila "descubrir" sin venue especifico pareciera tener señal.
 _VENUE_GENERICO = {"chile", "santiago", "santiago de chile", "region metropolitana"}
@@ -294,10 +386,17 @@ def _query_de(row: dict) -> str:
     venue = (row.get("venue") or "").strip()
     if venue.lower() in _VENUE_GENERICO:
         venue = ""
+    # El primer candidato SIN filtrar era el que entraba a la query, aunque
+    # `_senal_suficiente` hubiera dejado pasar la fila gracias a OTRO candidato
+    # legible. Medido sobre la cola real (200 preguntas): 83 queries llevaban
+    # basura de OCR adelante -- "¡ S", "AND)", "SAB 01/AGOSTO - 2026". Es el
+    # mismo filtro que ya se aplicaba dos funciones mas arriba.
+    heads = [h for h in (row.get("headliners_candidatos") or [])
+             if _candidato_legible(h)]
     partes = [p for p in (
         row.get("productora_declarada"),
         "productora evento",
-        (row.get("headliners_candidatos") or [None])[0],
+        heads[0] if heads else None,
         venue,
         row.get("fecha"),
     ) if p]
@@ -421,7 +520,7 @@ def despachar(filas: list[dict], catalogo: list[dict], limite: int | None = None
 def _build_queue() -> list[dict]:
     con_fecha = con_prod = preguntas = 0
     filas = []
-    ultimas = {}
+    historiales = {}
     with open(FICHAS, encoding="utf-8", errors="replace") as fh:
         for linea in fh:
             try:
@@ -429,8 +528,9 @@ def _build_queue() -> list[dict]:
             except Exception:
                 continue
             clave = "%s:%s" % (f.get("fuente", ""), f.get("ruta_rel", ""))
-            ultimas[clave] = f
-    for f in ultimas.values():
+            historiales.setdefault(clave, []).append(f)
+    for versiones in historiales.values():
+        f = versiones[-1]
         if f.get("fuente") != "rd":
             continue
         if f.get("categoria") not in ("flyer_evento", "foto_evento"):
@@ -482,6 +582,7 @@ def _build_queue() -> list[dict]:
             "headliners_candidatos": heads,
             "headliners_fuentes": headliner_evidence["fuentes"],
             "pregunta": pregunta,
+            "procedencia": _procedencia_fichas(versiones),
         })
 
     with open(SALIDA, "w", encoding="utf-8") as fh:
@@ -548,8 +649,26 @@ def main(argv=None):
     catalogo = edb.cargar_catalogo_productoras()
     results = despachar(filas, catalogo, limite=args.limite)
 
+    # `--limite 25` despacha 25 de 200, y el modo "w" con solo esas 25 borraba
+    # lo despachado en las corridas anteriores. Cada busqueda es una llamada
+    # real a un buscador: perderla obliga a pagarla de nuevo. Se conserva lo
+    # previo y la corrida de hoy pisa solo SU ficha.
+    previos = {}
+    if os.path.exists(DISPATCH_RESULTS_PATH):
+        with open(DISPATCH_RESULTS_PATH, encoding="utf-8", errors="replace") as fh:
+            for linea in fh:
+                linea = linea.strip()
+                if not linea:
+                    continue
+                try:
+                    fila = json.loads(linea)
+                except ValueError:
+                    continue
+                previos[fila.get("id_ficha") or fila.get("archivo")] = fila
+    for r in results:
+        previos[r.get("id_ficha") or r.get("archivo")] = r
     with open(DISPATCH_RESULTS_PATH, "w", encoding="utf-8") as fh:
-        for r in results:
+        for r in previos.values():
             fh.write(json.dumps(r, ensure_ascii=False) + "\n")
 
     counts = {}

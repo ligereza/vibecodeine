@@ -242,6 +242,17 @@ def test_senal_suficiente_ignora_venue_generico_y_headliners_ilegibles():
     }) is True
 
 
+def test_query_de_usa_el_primer_headliner_legible():
+    query = triangular._query_de({
+        "productora_declarada": "",
+        "headliners_candidatos": ["¡ S", "Carl Cox"],
+        "venue": "Blondie",
+        "fecha": "2025-09-16",
+    })
+    assert "Carl Cox" in query
+    assert "¡ S" not in query
+
+
 def test_despachar_sin_senal_nunca_toca_la_red(monkeypatch):
     fake = _FakeModulos()
     monkeypatch.setattr(triangular, "_research_lib_module", lambda: fake)
@@ -366,6 +377,10 @@ def test_main_dispatch_writes_result_and_never_touches_rd_db(monkeypatch, tmp_pa
     monkeypatch.setattr(triangular, "FICHAS", str(entrada))
     monkeypatch.setattr(triangular, "SALIDA", str(salida))
     monkeypatch.setattr(triangular, "DISPATCH_RESULTS_PATH", str(result_path))
+    result_path.write_text(json.dumps({
+        "id_ficha": "old",
+        "despacho": {"estado": "confirmado"},
+    }) + "\n", encoding="utf-8")
 
     llamadas = []
 
@@ -380,7 +395,24 @@ def test_main_dispatch_writes_result_and_never_touches_rd_db(monkeypatch, tmp_pa
     triangular.main(["--despachar", "--limite", "3"])
     assert llamadas and llamadas[0][2] == 3
     result_rows = [json.loads(l) for l in result_path.read_text(encoding="utf-8").splitlines()]
-    assert result_rows[0]["despacho"]["estado"] == "sin_busqueda"
+    assert {row["id_ficha"] for row in result_rows} == {"old", "f1"}
+    assert next(row for row in result_rows if row["id_ficha"] == "f1")["despacho"]["estado"] == "sin_busqueda"
+
+
+def test_main_conserva_procedencia_de_repercepcion(monkeypatch, tmp_path):
+    filas = _correr(monkeypatch, tmp_path, [
+        _ficha(id="version-1", ruta_rel="a.jpg",
+               datos_evento={"fecha": "2026-01-01", "venue": "Sala"}),
+        _ficha(id="version-2", ruta_rel="a.jpg",
+               datos_evento={"fecha": "2026-02-02", "venue": "Sala"}),
+    ])
+    assert len(filas) == 1
+    procedencia = filas[0]["procedencia"]
+    assert procedencia["motor"] == "mak_forense"
+    assert procedencia["versiones_observadas"] == 2
+    assert procedencia["ids"] == ["version-1", "version-2"]
+    assert procedencia["revision_humana"] == "pendiente"
+    assert any(h["patron"] == "lote_contiguo" for h in procedencia["hallazgos"])
 
 
 def test_main_conserva_diacriticos_en_la_pregunta(monkeypatch, tmp_path):
