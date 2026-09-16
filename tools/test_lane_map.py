@@ -70,6 +70,7 @@ _BOX_IMPORT_ROOTS = (
     "cultura/mak_research",
     "cultura/mak_codex",
     "cultura/mak_curatoria",
+    "cultura/mak_forense",
 )
 
 
