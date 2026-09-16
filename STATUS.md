@@ -2,7 +2,7 @@
 
 Estado medido de LIBELULA, director de moscas.
 
-Corte: 2026-09-15T23:30:16-03:00
+Corte: 2026-09-16T03:00:00-03:00
 Máquina: MAK, Linux
 Método: `.venv/bin/python tools/mak_status.py`, `git`, `systemctl --user`, smoke HTTP y suites de cada autoridad.
 
@@ -28,21 +28,24 @@ La integración de MAK, FLUJO y XIO queda cerrada por frontera física y contrat
 | Superficie | Checkout y remoto | Rama / HEAD | Estado medido |
 |---|---|---|---|
 | MAK / vibecodeine | `/home/mak` · `ligereza/vibecodeine` · `vibecodeine-legacy` | `main` · HEAD publicado | limpio y publicado; el trabajo no mergeable de snapshots queda preservado en el stash local de auditoría; upstream 0/0 |
-| FLUJO | `/home/mak/flujo` · `ligereza/flujo` · `origin` | `main` · HEAD publicado | limpio y publicado; upstream 0/0 |
-| XIO | `/home/mak/XIO` · `ligereza/XIO` · `origin` | `integration/xio-field-20260911` · `061bcec0` | limpio; upstream 0/0 |
+| FLUJO | `/home/mak/flujo` · `ligereza/flujo` · `origin` | `main` · `6fce84e` publicado | limpio y publicado; upstream 0/0 |
+| XIO | `/home/mak/XIO` · `ligereza/XIO` · `origin` | `integration/xio-field-20260911` · `f928ddf` publicado | limpio y publicado; upstream 0/0 |
 | Histórico FLUJO dentro del padre | `/home/mak/flujo-vibecodeine-legacy-20260914` | `integration/flujo-canonical-20260911` | preservación histórica; no es fuente activa |
 
 El directorio MAK está limpio y alineado con su remoto. Los snapshots de compatibilidad y el enlace externo permanecen físicamente disponibles; el material auditado que no era seguro mergear quedó preservado localmente, no publicado como runtime.
 
 ## Frontera física
 
-- `/home/mak/flujo/src` y `/home/mak/XIO/xio` son las fuentes operativas.
+- `/home/mak/flujo/src` es la fuente operativa de FLUJO. El host XIO se
+  ejecuta desde `/home/mak/XIO/xio/new/server.py`; su motor de plugins vive
+  en `xio/new/plugins` y la biblioteca desplegada en `xio/new-plugins`.
+  `xio/actual` es histórico.
 - `/home/mak/src/flujo` y `/home/mak/xio` son snapshots de compatibilidad del repositorio MAK; no se ejecutan como autoridades paralelas.
 - La comparación FLUJO registró 232 rutas comunes: 191 idénticas, 41 divergentes, 1 ruta solo en el padre y 5 solo en el checkout autónomo.
 - La comparación XIO registró 160 rutas canónicas presentes en el padre: 143 idénticas y 17 divergentes. No se mezclan por copia automática.
 - El inventario conserva 13 worktrees físicos: MAK, 11 worktrees efímeros de `.claude` y el worktree histórico de FLUJO. Se eliminó únicamente el puntero prunable sin directorio; no se eliminó trabajo de usuario.
 
-## Contrato Portfolio → IRIS → Micelio → XIO
+## Proyección del portafolio hacia superficies externas
 
 La cadena vigente es:
 
@@ -51,6 +54,7 @@ La cadena vigente es:
 - La autoría es el punto común declarado por el artista; IRIS no la adivina ni la redefine.
 - La identidad de medio se deduplica solo por el identificador explícito. Título, carpeta, parecido visual o autor no reemplazan ese identificador.
 - La evidencia Micelio se adjunta a la tarjeta visual/textual existente; no crea una segunda tarjeta ni un segundo grafo.
+- XIO no es el portafolio ni IRIS: solo consume proyecciones explícitas en sus perfiles RD o FOH cuando corresponde.
 - MobileCLIP visual, Nomic/Micelio semántico y GTM estructural permanecen como canales de evidencia distinguibles. No se afirma una fusión entrenada que todavía no existe.
 - RD y FOH/ISKVW usan contratos, `eventRef`/`eventKey` y consumidores; no ramas Git duplicadas.
 - `iskvw.cl` público y el Hub IRIS interno son superficies distintas, conectadas por el archivo/contrato y no por una falsa identidad de servicio.
@@ -90,7 +94,7 @@ Hub, usa el snapshot versionado y queda fijada por el medidor.
 | auto-vínculos | 0 |
 | vínculos duplicados | 0 |
 
-`data/rd.db` mide 3.035.136 bytes, 34 tablas de dominio, 8.040 filas de dominio y `pragma integrity_check = ok`. Las tablas no se fusionan por nombres parecidos: cada una conserva su dominio, procedencia y consumidor declarado.
+`data/rd.db` mide 3.067.904 bytes, 36 tablas de dominio y 8.040 filas de dominio; `pragma integrity_check = ok` y `foreign_key_check` no reporta errores. Las 34 tablas RD originales conservan exactamente sus datos de HEAD; las dos tablas adicionales (`xio_eventos` y `xio_signal_events`) están vacías y corresponden al esquema operativo del puente XIO. Las tablas no se fusionan por nombres parecidos: cada una conserva su dominio, procedencia y consumidor declarado.
 
 ## Runtime consolidado
 
