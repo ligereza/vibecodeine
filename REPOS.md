@@ -63,8 +63,10 @@ FLUJO o XIO mediante un contrato, un commit de origen y una prueba propia.
 Hay dos snapshots de compatibilidad dentro de este checkout padre:
 `/home/mak/src/flujo` y `/home/mak/xio`. No son los runtimes activos ni deben
 ser la primera fuente para editar. El runtime de FLUJO se ejecuta desde
-`/home/mak/flujo/src`; el runtime de XIO se mantiene en
-`/home/mak/XIO/xio`. Las copias del padre sobreviven porque la suite histórica
+`/home/mak/flujo/src`; el host XIO se ejecuta desde
+`/home/mak/XIO/xio/new/server.py`, con el motor de plugins en
+`/home/mak/XIO/xio/new/plugins` y la biblioteca viva en
+`/home/mak/XIO/xio/new-plugins`. `xio/actual` es histórico. Las copias del padre sobreviven porque la suite histórica
 de VIBECODEINE todavía las inspecciona y porque conservan procedencia local;
 una diferencia allí sólo se transporta después de comparar contrato, hash y
 prueba contra el checkout autónomo. Esta regla evita que un agente convierta
@@ -124,7 +126,7 @@ corte.
 - Remoto: `ligereza/XIO`
 - Rama activa: `integration/xio-field-20260911`
 - Estado Git actual: `0/0` frente a `origin/integration/xio-field-20260911`;
-  worktree limpio en HEAD `061bcec`.
+  worktree limpio en HEAD `f928ddf`.
 - Estado conceptual: sistema móvil y local-first para operar fuera de la
   estación fija.
 - Idea: combinar cámara, red local, servidor, sensores, registro temporal,
