@@ -321,3 +321,10 @@ web/venues/index.html
 
 # scratch de sesiones de trabajo automatizado (no forma parte del contrato)
 .scratch/
+
+# La proyeccion RD es regenerable (`py -m flujo rd-db build`) y lleva el
+# registro operativo de la ONG adentro: 2.861 testeos, 68 jornadas con su
+# fecha, 20 productoras. Este repo es PUBLICO. Se genera, no se versiona --
+# que es lo que ya decia el .gitignore de flujo.
+data/rd.db
+data/rd.db-*
