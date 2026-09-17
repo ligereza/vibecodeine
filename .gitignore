@@ -328,3 +328,12 @@ web/venues/index.html
 # que es lo que ya decia el .gitignore de flujo.
 data/rd.db
 data/rd.db-*
+
+# El corpus de testeos de RD: el libro original, las evidencias JSON y los
+# libros integrados. Es registro operativo de la ONG -- que jornada, con que
+# productora, que se testeo -- y este repositorio es PUBLICO. El codigo se
+# publica; la data queda en disco.
+data/rd_fuentes/testeo_eventos_*_evidence.json
+**/rd_testeos_eventos_*.json
+**/rd_testeos_eventos_*.xlsx
+**/Testeo?2025*.xlsx
