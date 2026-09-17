@@ -456,7 +456,6 @@ PERSISTED_LANE_DATA = {
   "tests/test_scoring_fallback_parser.py": "flujo",
   "tests/test_selective_recompute_receipt.py": "flujo",
   "tests/test_serve_api.py": "flujo",
-  "tests/test_showcontrol_token.py": "repo_hygiene",
   "tests/test_smoke.py": "flujo",
   "tests/test_source_learning.py": "flujo",
   "tests/test_source_pipeline.py": "repo_hygiene",
@@ -495,12 +494,10 @@ PERSISTED_LANE_DATA = {
   "tests/test_visual_index.py": "mak",
   "tests/test_vj_git_performance.py": "repo_hygiene",
   "tests/test_web_hub_endpoints.py": "flujo",
-  "tests/test_wifi_intelligence_plugin.py": "repo_hygiene",
   "tests/test_xio_evidence.py": "mak",
   "tests/test_xio_portfolio_link.py": "mak",
   "tests/test_xio_puente_monitor.py": "repo_hygiene",
   "tests/test_xio_puente_staged.py": "repo_hygiene",
-  "tests/test_xio_superficie.py": "repo_hygiene",
   "tests/test_zipper.py": "flujo",
   "tests/test_compute_effort_residuals.py": "mak",
   "tests/test_consolidate_static_duplicates.py": "mak",
@@ -593,7 +590,6 @@ REVIEW_LANE_ASSIGNMENTS = {
     "tests/test_source_pipeline.py": "mak",
     "tests/test_validate_airdrop.py": "flujo",
     "tests/test_vinculos_iskvw.py": "mak",
-    "tests/test_wifi_intelligence_plugin.py": "mak",
 }
 
 

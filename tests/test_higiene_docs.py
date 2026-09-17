@@ -79,7 +79,6 @@ REGISTROS_HISTORICOS = (
     "context/HANDOFF_HISTORICO.md",
     "docs/handoffs/archive/",
     "work/",
-    "xio/imported_root/",
 )
 
 RANGO_INVARIANTES = re.compile(r"\bI1\s*-\s*I(\d+)\b")

@@ -56,9 +56,11 @@ jobs:
           # dependencias reales siguen auditándose estrictamente.
           python -m pip freeze --exclude-editable > /tmp/flujo-ci-requirements.txt
           pip-audit -r /tmp/flujo-ci-requirements.txt --strict --no-deps
-          if [ -f xio/new/requirements.txt ]; then
-            pip-audit -r xio/new/requirements.txt --strict
-          fi
+          # El requirements de XIO (`flask>=3.0`) se audita en el repositorio
+          # XIO, que es donde vive desde que se retiro la copia de `xio/` de
+          # aca. El bloque que lo auditaba estaba tras un `if [ -f ... ]`: al
+          # desaparecer el archivo el job seguia verde sin auditar nada, que es
+          # justo lo que este paso no acepta.
 
       - name: npm audit
         working-directory: web

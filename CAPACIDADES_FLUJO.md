@@ -298,14 +298,25 @@ activo.
 | `venue3d_smoke.mjs` | Corre el JS del visor de salas en node con stubs de DOM: geometria cargada, aristas realmente trazadas, la proyeccion se mueve al orbitar, el recorte por presupuesto se reporta en pantalla, la camara por URL llega, y la orbita de ejemplo (`data/orbitas/`, `schemas/orbita.schema.json`) reproduce la vuelta por defecto cuadro por cuadro. `tests/test_venue3d_smoke.py`. |
 | `venue_secuencia.mjs` | Exporta la orbita de una sala como N SVGs de puras lineas desde la MISMA proyeccion del visor; `--orbita <archivo.json>` toma el recorrido de camara como dato (keyframes giro/alto/dist, validados numericamente antes de cortar un solo cuadro). |
 
-`xio/` (server telefono + show kit): server Flask (`xio/actual/server.py`,
-`xio/new/server.py`) corre ON-DEVICE en Termux (Shizuku/rish) en el Xiaomi,
-puerto 5000 (`XIO_PORT`), 63 archivos de plugins (controlador Xiaomi, hotspot
-router activo con auto-heal, FOH monitor). Documentación en este árbol:
-`xio/RUNBOOK.md` (23 KB, operación completa), `xio/HOTSPOT_SHOW_RUNBOOK.md`,
-`/home/mak/CAPACIDADES_MAK.md` (sección XIO), `xio/PLAN_SERVICIOS_SIN_ROOT.md`, `xio/FACES.md` (Face A
-hogar vs Face B show telefono-solo), `xio/show_kit/DIA_DEL_SHOW.md` y
+`xio/` ya no existe en este arbol. El sistema XIO -- server del telefono, los
+33 plugins vivos, show kit, `hotspot_boot_service`, seguridad y vision -- vive
+en su propio repositorio (`ligereza/XIO`, checkout local `/home/mak/XIO`) y ahi
+se sigue editando. La copia que habia aca quedo congelada: de los 24 archivos
+que divergian de verdad, los 24 eran mas viejos que los del repositorio XIO
+(medido el 2026-09-17, ninguno al reves), incluido un `DIA_DEL_SHOW.md` que
+todavia traia una IP de hotspot fija. El server Flask (`xio/new/server.py`)
+corre ON-DEVICE en Termux (Shizuku/rish) en el Xiaomi, puerto 5000
+(`XIO_PORT`). Su documentacion, ya en ese repositorio: `xio/RUNBOOK.md`
+(operacion completa), `xio/HOTSPOT_SHOW_RUNBOOK.md`, `xio/CAPACIDADES.md`,
+`xio/PLAN_SERVICIOS_SIN_ROOT.md`, `xio/FACES.md` (Face A hogar vs Face B show
+telefono-solo), `xio/show_kit/DIA_DEL_SHOW.md` y
 `xio/show_kit/ANOTACIONES_SHOW_20260724.md`.
+
+Lo unico que este repositorio conserva de XIO es el adaptador de solo lectura
+`cultura/mak_plataforma/xio_evidence.py`, que lee el show kit desde
+`/home/mak/XIO/xio/show_kit` (override `MAK_XIO_SHOW_ROOT`) para la pestana
+Portafolio del Hub. Es la unica ruta de este arbol que cruza al repositorio
+XIO, y esta declarada en un solo lugar.
 
 **Restaurados el 2026-08-28.** Los cuatro primeros faltaban en
 `/home/mak/flujo` y sólo estaban en `/home/mak/WIN/flujo/xio/`, mientras cuatro
@@ -314,9 +325,11 @@ del día de show. No estaban obsoletos, estaban ausentes: `xio/FACES.md` es
 byte-idéntico en ambos árboles, o sea que WIN no divergió. Se copiaron con
 `cp -p` desde el árbol legado, que no se modificó.
 
-Los scripts que estos runbooks nombran (`run_server.sh`, `hotspot_watch.sh`,
-`reboot_recover.sh`, `server_supervisor.sh`, `flujo_ondevice.sh`) viven todos en
-`xio/new/`; los runbooks los citan sin prefijo.
+Los scripts que esos runbooks nombran (`run_server.sh`, `hotspot_watch.sh`,
+`reboot_recover.sh`, `server_supervisor.sh`, `flujo_ondevice.sh`) viven todos
+en `xio/new/` del repositorio XIO; los runbooks los citan sin prefijo, y
+`xio/new/build_field_bundle.py` es el que arma el paquete de campo que se
+extrae en el telefono.
 
 `cultura/mak_plataforma/` (organismo MAK, corre en el runner self-hosted
 `mak`, Linux): `capataz.py` (capataz LOCAL-first con escalada por riesgo),
