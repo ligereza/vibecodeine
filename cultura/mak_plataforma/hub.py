@@ -159,8 +159,15 @@ PORTFOLIO_TRIANGULATION_REVIEW = os.path.join(
     HOME, "plataforma/director_runs/instagram-triangulacion-20260807/human_resolutions.jsonl")
 PORTFOLIO_VISUAL_INDEX_ROOT = os.path.abspath(os.environ.get(
     "MAK_VISUAL_INDEX_ROOT", os.path.join(HOME, "plataforma/derived/visual-index")))
-PORTFOLIO_XIO_SHOW_ROOT = os.path.abspath(os.environ.get(
-    "MAK_XIO_SHOW_ROOT", os.path.join(HOME, "xio", "show_kit")))
+# The show kit root (and its `MAK_XIO_SHOW_ROOT` override) is declared by
+# `xio_evidence.DEFAULT_ROOT`, the module that actually opens those files.
+# Keeping it here too was two sources for one path, and they ended up pointing
+# at different trees once the show kit moved to the XIO checkout. Without the
+# adapter there is no root to look at: `_portfolio_xio_evidence` already
+# returns before using it for that same reason.
+PORTFOLIO_XIO_SHOW_ROOT = (
+    os.path.abspath(str(_xio_evidence.DEFAULT_ROOT))
+    if _xio_evidence is not None else "")
 _PORTFOLIO_XIO_LIVE_LOCK = threading.Lock()
 _PORTFOLIO_XIO_LIVE = {
     "mode": "idle",  # idle | running | paused
@@ -4303,6 +4310,7 @@ def _portfolio_suggestions(item_id, board_id="", include_map=False,
             "visual_similarity": visual_surface,
             "micelio_semantic": semantic_surface,
             "xio_evidence": _portfolio_xio_evidence(),
+            "xio_knowledge": _portfolio_xio_knowledge(),
             "suggestion_mode": "shuffle" if shuffle else focus_facet or "copilot",
             "suppressed_redundant": suppressed, "suggestions": result}
 
@@ -5657,6 +5665,26 @@ def _portfolio_semantic_surface(item_id="", limit=8, inbox_items=None):
             "matched_relations": len(mapped),
         },
     }
+
+
+def _portfolio_xio_knowledge(subject="work"):
+    """Read what XIO measured across shows, as published for this Hub.
+
+    Additive beside `_portfolio_xio_evidence`, which reads the show kit files.
+    This one reads XIO's accumulated ledger, where a fact about a venue or a
+    work carries whether it was declared by a source or observed by an
+    instrument. Absent publication is reported, not shown as nothing known.
+    """
+    if _xio_evidence is None:
+        return {"ok": True, "available": False, "schema": "faro-xio-evidence-v1",
+                "source": "xio/foh_knowledge", "reason": "xio_adapter_unavailable",
+                "keys": {}}
+    try:
+        return _xio_evidence.load_foh_knowledge(subject)
+    except Exception as exc:  # noqa: BLE001 - additive surface, fail visible
+        return {"ok": False, "available": False, "schema": "faro-xio-evidence-v1",
+                "source": "xio/foh_knowledge",
+                "reason": f"xio_knowledge_error:{type(exc).__name__}", "keys": {}}
 
 
 def _portfolio_xio_evidence(limit=24):

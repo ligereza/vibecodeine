@@ -98,8 +98,11 @@ def test_single_human_hub_contract_has_no_direct_service_docs():
         _text("MAPA.md"),
         _text("cultura/mak_plataforma/GENESIS.md"),
         _text("cultura/mak_research/MAK_RESEARCH.md"),
-        _text("xio/FACES.md"),
     ]
+    # `xio/FACES.md` salio de esta lista cuando el sistema XIO paso a su propio
+    # repositorio: `_text` lee sin red de seguridad, asi que dejarlo nombrado
+    # rompia la prueba, y envolverlo en un `if exists` la habria dejado pasando
+    # sin medir nada. El documento se sigue revisando, en `/home/mak/XIO`.
     # RELEVO_MAK.md is a box-level projection, not part of this repo's
     # canonical source tree. Do not manufacture a stale copy just to satisfy
     # an inventory test; include it when a future active projection exists.

@@ -21,8 +21,22 @@ except Exception:  # pragma: no cover - standalone/local fixture use
 
 
 SCHEMA = "faro-xio-evidence-v1"
+# The show kit no longer lives in this repository: its source is the XIO
+# checkout (`ligereza/XIO`), where these same files keep being edited. The
+# copy under `/home/mak/xio` was a frozen tree and was retired; reading it
+# meant reading July's show. `MAK_XIO_SHOW_ROOT` still overrides this, and
+# this module is the single place where the path is declared.
 DEFAULT_ROOT = Path(os.environ.get(
-    "MAK_XIO_SHOW_ROOT", "/home/mak/xio/show_kit"))
+    "MAK_XIO_SHOW_ROOT", "/home/mak/XIO/xio/show_kit"))
+# The FOH knowledge XIO publishes for this Hub: one envelope per subject
+# (event, venue, artist, work), already written in this module's own
+# `faro-xio-evidence-v1` shape, so nothing here re-implements XIO's reader.
+# XIO builds it with `python -m xio.foh_knowledge --publish`; the directory is
+# measured state living outside both repositories and is regenerated from the
+# ledger, so its absence is normal and is reported as such.
+KNOWLEDGE_ROOT = Path(os.environ.get(
+    "MAK_XIO_KNOWLEDGE_DIR", "/home/mak/XIO/xio/data/foh_knowledge"))
+KNOWLEDGE_SUBJECTS = ("event", "venue", "artist", "work")
 MAX_SEGMENTS = 24
 
 
@@ -78,6 +92,53 @@ def _timecode_atoms(annotation: str, source: str):
 
 def _unknown(field: str, source: str):
     return {"field": field, "value": "", "status": "unknown", "source": source}
+
+
+def load_foh_knowledge(subject, key=None, root=None):
+    """Read the FOH knowledge envelope XIO published for one subject.
+
+    This is a read of a file, not a second implementation: the envelope already
+    carries `field/value/status/source` atoms in this module's schema, and the
+    two layers XIO keeps apart -- what a source declared and what an instrument
+    observed -- arrive labelled, so a venue somebody typed once never reads
+    like a venue that was measured.
+
+    An absent directory is reported, never treated as empty knowledge: the
+    difference between "XIO has not published yet" and "there is nothing to
+    know" is the whole point.
+    """
+    if subject not in KNOWLEDGE_SUBJECTS:
+        return {"ok": False, "available": False, "schema": SCHEMA,
+                "source": "xio/foh_knowledge",
+                "reason": f"subject desconocido: {subject}"}
+    base = Path(root or KNOWLEDGE_ROOT)
+    path = base / f"{subject}.json"
+    if not path.is_file():
+        return {"ok": True, "available": False, "schema": SCHEMA,
+                "source": "xio/foh_knowledge",
+                "reason": f"XIO no ha publicado {path.name} todavia",
+                "path": str(path), "evidence": [], "keys": {}}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        return {"ok": False, "available": False, "schema": SCHEMA,
+                "source": "xio/foh_knowledge",
+                "reason": f"envelope ilegible: {type(exc).__name__}",
+                "path": str(path)}
+    keys = payload.get("keys") or {}
+    if key is None:
+        return {"ok": True, "available": bool(keys), "schema": SCHEMA,
+                "source": "xio/foh_knowledge", "subject": subject,
+                "generated": payload.get("generated"),
+                "keys": {name: envelope.get("evidence") or []
+                         for name, envelope in keys.items()}}
+    envelope = keys.get(key)
+    if envelope is None:
+        return {"ok": True, "available": False, "schema": SCHEMA,
+                "source": "xio/foh_knowledge", "subject": subject, "key": key,
+                "reason": "XIO no tiene evidencia publicada de este sujeto",
+                "evidence": []}
+    return {**envelope, "generated": payload.get("generated")}
 
 
 def load_show_evidence(root=None, limit=MAX_SEGMENTS):
