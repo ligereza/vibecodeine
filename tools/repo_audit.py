@@ -98,10 +98,16 @@ NO_REFERENCE_CLASSIFICATIONS = {
     # `substrate_scan` left this table on 2026-09-04: it now has a consumer,
     # `tests/test_substrate_scan_manifest.py`, which holds `build_manifest` to
     # the repeatability contract the module's docstring describes.
+    # `build_duplicate_decision_report`, `instalar_enviar_a_mak`,
+    # `mak_fuse_roots`, `mak_materialize_fused_root` and
+    # `mak_triangulate_roots` left this table on 2026-09-17: their
+    # `historical_support` status was correct (the one-time MAK root fusion
+    # and the retired Windows SendTo integration), but the migration and the
+    # Windows node itself are both gone, so the files were retired rather than
+    # kept as zero-reference history.
     "verify_learning_hashmaps": {"status": "manual_only", "source": "separation_20260902"},
     "aep_reference_scan": {"status": "manual_only", "source": "capabilities_5_ter"},
     "bake_static_materials": {"status": "manual_only", "source": "capabilities_5_ter"},
-    "build_duplicate_decision_report": {"status": "historical_support", "source": "cli_declared"},
     "build_effort_consumer_crosswalk": {"status": "manual_only", "source": "capabilities_5_ter"},
     "build_mak_canonical_map": {"status": "manual_only", "source": "capabilities_5_ter"},
     "compile_contracurator": {"status": "manual_only", "source": "capabilities_5_ter"},
@@ -119,13 +125,9 @@ NO_REFERENCE_CLASSIFICATIONS = {
     "gen_dashboard_productoras": {"status": "manual_only", "source": "capabilities_5_ter"},
     "gen_iskvw_prototipo": {"status": "manual_only", "source": "capabilities_5_ter"},
     "gen_presentacion_db": {"status": "manual_only", "source": "capabilities_5_ter"},
-    "instalar_enviar_a_mak": {"status": "historical_support", "source": "cli_declared"},
     "link_motor_checkout": {"status": "manual_only", "source": "cli_declared"},
-    "mak_fuse_roots": {"status": "historical_support", "source": "cli_declared"},
-    "mak_materialize_fused_root": {"status": "historical_support", "source": "cli_declared"},
     "mak_status": {"status": "manual_only", "source": "runtime_status_cli"},
     "grammar_runner": {"status": "manual_only", "source": "mak_grammar_entrypoint"},
-    "mak_triangulate_roots": {"status": "historical_support", "source": "cli_declared"},
     "medir_test_overlap": {"status": "manual_only", "source": "capabilities_5_ter"},
     "medir_tests": {"status": "manual_only", "source": "capabilities_5_ter"},
     "optimize_blend_scene": {"status": "manual_only", "source": "capabilities_5_ter"},
