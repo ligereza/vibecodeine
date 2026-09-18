@@ -87,6 +87,17 @@ def export_dataset(db_path: str, out_root: str) -> tuple[Path, dict]:
                           "dataset_path": str(dataset_path)}
 
 
+def _patch_azureml_artifact_builder() -> str:
+    """Bridge MLflow 3's builder kwargs to azureml-mlflow 1.60.0.
+
+    The Azure plugin is otherwise usable for this workspace.  Its entry point
+    predates MLflow's ``tracking_uri``/``registry_uri`` constructor kwargs.
+    Keep the patch process-local and leave installed packages untouched.
+    """
+    from azure_ml_mlflow_compat import patch_azureml_artifact_builder
+    return patch_azureml_artifact_builder()
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="Exporta evaluaciones sanitizadas a MLflow Azure ML")
     parser.add_argument("--db", default=DEFAULT_DB)
@@ -109,17 +120,15 @@ def main(argv=None) -> int:
                 "dataset_rows": metadata["rows"],
                 "dataset_fingerprints": len(metadata["dataset_fingerprints"]),
             })
-            # The installed Azure ML MLflow artifact plugin currently fails
-            # with an incompatible ``tracking_uri`` argument.  Keep the
-            # dataset local and make its lineage explicit instead of marking
-            # a misleading artifact upload as successful.
+            metadata["artifact_builder"] = _patch_azureml_artifact_builder()
+            mlflow.log_artifact(str(dataset_path), artifact_path="datasets")
             mlflow.log_params({
                 "dataset_sha256": metadata["dataset_sha256"],
                 "dataset_local_path": str(dataset_path),
-                "artifact_upload": "deferred_plugin_compatibility",
+                "artifact_upload": "uploaded",
             })
             metadata["mlflow_run_id"] = run.info.run_id
-            metadata["artifact_upload"] = "deferred_plugin_compatibility"
+            metadata["artifact_upload"] = "uploaded"
         Path(metadata["receipt_path"]).write_text(
             json.dumps(metadata, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8")

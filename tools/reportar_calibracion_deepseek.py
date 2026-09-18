@@ -32,6 +32,8 @@ def main() -> int:
 
     try:
         import mlflow
+        from azure_ml_mlflow_compat import patch_azureml_artifact_builder
+        patch_azureml_artifact_builder()
         mlflow.set_tracking_uri(
             "azureml://brazilsouth.api.azureml.ms/mlflow/v1.0/subscriptions/"
             "6519fcfc-3807-407e-bae5-5f1f7f64e337/resourceGroups/makmak/"
