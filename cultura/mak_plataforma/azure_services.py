@@ -84,7 +84,7 @@ def _service_rows(resources: list[dict[str, Any]]) -> list[dict[str, Any]]:
         ("foundry", "Microsoft.CognitiveServices/accounts", "/api/azure/chat",
          "operational_guarded", "Opt-in model provider; deployment must be verified per call"),
         ("machine_learning", "Microsoft.MachineLearningServices/workspaces",
-         "/api/azure/status", "operational", "Workspace inventory and MLflow calibration"),
+         "tools/azure_ml_learning_dataset.py + /api/azure/status", "operational", "Sanitized evaluation lineage and MLflow calibration"),
         ("storage", "Microsoft.Storage/storageAccounts", "/api/azure/status",
          "metadata_only", "Metadata only until a data-plane role and consumer are approved"),
         ("key_vault", "Microsoft.KeyVault/vaults", "/api/azure/status",
