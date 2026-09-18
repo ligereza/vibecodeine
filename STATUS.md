@@ -27,18 +27,19 @@ La integración de MAK, FLUJO y XIO queda cerrada por frontera física y contrat
 
 | Superficie | Checkout y remoto | Rama / HEAD | Estado medido |
 |---|---|---|---|
-| MAK / vibecodeine | `/home/mak` · `ligereza/vibecodeine` · `vibecodeine-legacy` | `rd/forense-y-vocabulario` · `d0126f92` publicado (2026-09-17) | sin cambios trackeados sucios; upstream 0/0; dos directorios sin trackear nuevos, ver abajo |
-| FLUJO | `/home/mak/flujo` · `ligereza/flujo` · `origin` | `rd/ensayos-parallel-sets` · `06745df` publicado (2026-09-16) | limpio y publicado; upstream 0/0 |
-| XIO | `/home/mak/XIO` · `ligereza/XIO` · `origin` | `integration/xio-field-20260911` · `d9d4c4b` publicado (2026-09-17) | limpio y publicado; upstream 0/0 |
+| MAK / vibecodeine | `/home/mak` · `ligereza/vibecodeine` · `vibecodeine-legacy` | `rd/forense-y-vocabulario` · `dbefb7e8` publicado (2026-09-18) | sin cambios trackeados sucios; upstream 0/0; tres directorios sin trackear nuevos, ver abajo |
+| FLUJO | `/home/mak/flujo` · `ligereza/flujo` · `origin` | `rd/ensayos-parallel-sets` · `3d2649b` publicado (2026-09-18) | limpio y publicado; upstream 0/0 |
+| XIO | `/home/mak/XIO` · `ligereza/XIO` · `origin` | `integration/xio-field-20260911` · `ea02d4c` publicado (2026-09-18) | limpio y publicado; upstream 0/0 |
 | Histórico FLUJO dentro del padre | `/home/mak/flujo-vibecodeine-legacy-20260914` | `integration/flujo-canonical-20260911` | preservación histórica; no es fuente activa |
 
 Las tres autoridades avanzaron a ramas de trabajo distintas de `main` desde el
 corte anterior (2026-09-16T03:00); las tres siguen publicadas y sin
-divergencia (`0/0`) frente a su remoto. Dos directorios nuevos sin trackear
+divergencia (`0/0`) frente a su remoto. Tres directorios nuevos sin trackear
 aparecieron en `/home/mak` desde entonces: `mak/` (contiene `state/mak.db`,
-propósito propio, no es RD) y `pastillas/` (repositorio Git independiente con
-su propio dataset/modelos/src, sin relación declarada con VIBECODEINE). Ninguno
-se tocó ni se clasificó como autoridad.
+propósito propio, no es RD), `pastillas/` (repositorio Git independiente con
+su propio dataset/modelos/src, sin relación declarada con VIBECODEINE) y
+`.docker/` (cache de `docker buildx`, 44 KB). Ninguno se tocó ni se
+clasificó como autoridad.
 
 Este corte además deduplicó el árbol físico de copias de `rd.db`/`rd_datos.db`
 repartidas fuera de las tres autoridades (worktrees, jobs, workspaces): 5
@@ -248,9 +249,19 @@ de subir contenido adyacente a RD/curatoria ("Data Exfiltration"); esos
 bloqueos se respetaron siempre, sin reintentar con otro ángulo ni delegar
 la misma acción a DeepSeek como bypass.
 
-Dos directorios nuevos sin trackear en `/home/mak` (`mak/`, `pastillas/`,
+Tres directorios nuevos sin trackear en `/home/mak` (`mak/`, `pastillas/`,
 `.docker/`) no se tocaron ni se clasificaron: no tienen relación declarada
 con este ciclo de trabajo y no se agregaron al commit.
+
+Re-medido el 2026-09-18: `tests/test_idioma_ratchet.py` estaba roto por 7
+archivos nuevos de este ciclo (docstrings/comentarios en castellano) y por
+6 archivos de `cultura/mak_forense/` + 2 tests, rotos desde commits
+anteriores a este ciclo sin que nadie lo hubiera notado. Los 9 se
+tradujeron a inglés (identificadores y strings de producto quedan en
+castellano, tal como exige la regla). `CAPACIDADES_MAK.md` también traía 5
+filas fantasma de herramientas ya borradas; se retiraron y se agregaron las
+5 filas nuevas de este ciclo. `tests/test_idioma_ratchet.py` y
+`tests/test_higiene_repo.py` quedaron en verde (23 + 10 casos).
 
 ## Decisiones cerradas
 
