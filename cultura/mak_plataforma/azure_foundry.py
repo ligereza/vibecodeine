@@ -2,9 +2,9 @@
 """Small AAD-authenticated client for the Azure model deployed for MAK.
 
 This is an opt-in provider.  It uses the existing MAK ``az login`` session
-and the live deployment in ``makmak-5202-resource``; it does not fall back to
-ISSVKK credentials and it never becomes the automatic provider for existing
-Research jobs without an explicit provider selection.
+and the live deployment in ``makmak-5202-resource``; it never becomes the
+automatic provider for existing Research jobs without an explicit provider
+selection.
 """
 from __future__ import annotations
 
