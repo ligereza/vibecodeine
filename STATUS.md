@@ -179,6 +179,24 @@ grueso de resumen por lane, rompiendo `_load_lane_contract()`. Corregirlo
 requiere una edición manual del JSON que preserve su schema, no una
 regeneración automática.
 
+### Hallazgo abierto: dos vocabularios de dominio sin reconciliar
+
+`cultura/mak_plataforma/tandas.py:191` define `AREAS` (claves como
+`mak_quality`, `rd_evidence`, cada una con `purpose`/`default_paths`/
+`evidence_paths`/`actions` — es la agenda de tandas para un agente) y
+`cultura/mak_plataforma/ledger.py:23` define por separado
+`DOMAINS = ("rd", "iskvw", "portfolio", "mak", "svg", "adobe", "repo",
+"opportunities")` — el vocabulario de dominio del ledger. Nombran el mismo
+concepto (a qué área/dominio pertenece un dato o una accion) con dos
+listas independientes que no se referencian entre sí. Un intento de
+consolidar referencias en `tandas.py` hacia sucesores reales
+(`arqueologia.py`→`inferential_archaeology.py`,
+`esfuerzo.py`→`compute_effort_residuals.py`) se revirtió en este ciclo
+porque tocaba `AREAS` sin resolver primero esta duplicación de
+vocabulario; queda sin decidir si `AREAS` debe expresarse en términos de
+`DOMAINS` o si son legítimamente conceptos distintos (tandas de agente vs.
+dominio de dato).
+
 ## Estado global medido
 
 `.venv/bin/python tools/mak_status.py` devuelve:
