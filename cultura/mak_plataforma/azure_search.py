@@ -17,14 +17,15 @@ from __future__ import annotations
 
 import json
 import os
-import shutil
-import subprocess
-import threading
-import time
 import urllib.error
 import urllib.parse
 import urllib.request
 from typing import Any
+
+try:
+    from .azure_auth import token_for
+except ImportError:  # direct import from the Hub's module directory
+    from azure_auth import token_for
 
 
 SCHEMA = "mak-azure-search-tools-v1"
@@ -35,8 +36,6 @@ MAX_QUERY_LENGTH = 512
 MAX_FILTER_LENGTH = 160
 MAX_TOP = 50
 MAX_RESPONSE_BYTES = 1_000_000
-_TOKEN_LOCK = threading.Lock()
-_TOKEN_CACHE: tuple[str, float] | None = None
 
 
 def _endpoint() -> str:
@@ -66,33 +65,6 @@ def build_filter(area: str | None = None,
     return " and ".join(clauses) if clauses else None
 
 
-def _token_from_azure_cli() -> str:
-    """Read a short-lived Search data-plane token from the existing CLI login."""
-    global _TOKEN_CACHE
-    now = time.monotonic()
-    with _TOKEN_LOCK:
-        if _TOKEN_CACHE and _TOKEN_CACHE[1] > now:
-            return _TOKEN_CACHE[0]
-        az = os.environ.get("AZ_CLI") or shutil.which("az")
-        if not az:
-            raise RuntimeError("azure_cli_unavailable")
-        completed = subprocess.run(
-            [az, "account", "get-access-token", "--resource",
-             "https://search.azure.com", "--query", "accessToken", "-o", "tsv"],
-            check=False,
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
-        token = (completed.stdout or "").strip()
-        if completed.returncode != 0 or not token:
-            raise RuntimeError("azure_cli_token_unavailable")
-        # The CLI does not need to be called for every Hub request.  Five
-        # minutes is intentionally shorter than a normal token lifetime.
-        _TOKEN_CACHE = (token, now + 300)
-        return token
-
-
 def _search_request(query: str, filter_value: str | None, top: int) -> list[dict[str, Any]]:
     endpoint = _endpoint()
     index = os.environ.get("SEARCH_INDEX", DEFAULT_INDEX)
@@ -113,7 +85,7 @@ def _search_request(query: str, filter_value: str | None, top: int) -> list[dict
     if key:
         headers["api-key"] = key
     else:
-        headers["Authorization"] = "Bearer " + _token_from_azure_cli()
+        headers["Authorization"] = "Bearer " + token_for("https://search.azure.com")
     request = urllib.request.Request(
         url,
         data=json.dumps(body, ensure_ascii=False).encode("utf-8"),

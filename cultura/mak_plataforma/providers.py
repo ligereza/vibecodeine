@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import hashlib
 import os
+import shutil
 import time
 import urllib.request
 import sys
@@ -52,19 +53,21 @@ PROVIDER_CAPABILITIES = {
     "cerebras": {"text_review", "hypothesis"},
     "groq": {"text_review", "hypothesis"},
     "gemini": {"text_review", "hypothesis"},
+    "azure_mak": {"text_review", "hypothesis"},
     "ollama": {"local_judge", "text_review", "hypothesis"},
 }
 PROVIDER_TIERS = {
     "cerebras": "free_cloud", "groq": "free_cloud", "gemini": "free_cloud",
+    "azure_mak": "azure_credit",
     "ollama": "local_floor",
 }
-PROVIDER_ORDER = ("groq", "gemini", "cerebras", "ollama")
+PROVIDER_ORDER = ("groq", "gemini", "cerebras", "azure_mak", "ollama")
 # Cerebras stays declared so diagnostics can call it explicitly, but it must
 # never enter an automatic fallback: its billing endpoint answers HTTP 402
 # ``payment_required``, so an automatic hop to it is a guaranteed lost retry
 # before the local floor. A provider listed here is reachable only when the
 # caller names it in ``available``.
-OPT_IN_PROVIDERS = frozenset({"cerebras"})
+OPT_IN_PROVIDERS = frozenset({"cerebras", "azure_mak"})
 TASK_CAPABILITIES = {
     "visual": "vision", "vision": "vision", "research": "hypothesis",
     "curation": "hypothesis", "review": "text_review", "judge": "local_judge",
@@ -78,6 +81,10 @@ def _provider_configured(provider, environment):
         return bool(environment.get("CEREBRAS_API_KEY"))
     if provider == "gemini":
         return bool(environment.get("GEMINI_API_KEY"))
+    if provider == "azure_mak":
+        return bool(environment.get("MAK_AZURE_AI_ENDPOINT") or
+                    environment.get("AZURE_MAK_ENDPOINT") or
+                    shutil.which("az"))
     if provider == "ollama":
         return bool(environment.get("OLLAMA_BASE_URL") or
                     environment.get("OLLAMA_HOST"))
@@ -274,7 +281,7 @@ def _call_unobserved(provider, prompt, model=None, max_tokens=2500,
                      temperature=0.1, response_format=None, image_paths=None,
                      parent_job_id=None):
     provider = str(provider or "").lower()
-    if provider in ("cerebras", "groq", "gemini") and not _reserve_bounded_external(provider):
+    if provider in ("cerebras", "groq", "gemini", "azure_mak") and not _reserve_bounded_external(provider):
         raise RuntimeError("external_budget_exceeded:%s" % provider)
     if provider == "ollama":
         load_env()
@@ -300,6 +307,18 @@ def _call_unobserved(provider, prompt, model=None, max_tokens=2500,
     if provider == "gemini":
         return _gemini_chat(prompt, model=model, max_tokens=max_tokens,
                             response_format=response_format)
+    if provider == "azure_mak":
+        try:
+            from .azure_foundry import call_text
+        except ImportError:
+            from azure_foundry import call_text
+        return call_text(
+            prompt,
+            system="Return only valid JSON. No prose.",
+            model=model,
+            max_tokens=max_tokens,
+            temperature=temperature,
+        )
     raise ValueError("unknown_provider:%s" % provider)
 
 
