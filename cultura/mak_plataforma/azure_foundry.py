@@ -47,6 +47,12 @@ def _deployment(value: str | None = None) -> str:
             DEFAULT_DEPLOYMENT)
 
 
+def _credit_calls_allowed() -> bool:
+    return os.environ.get("MAK_AZURE_ALLOW_CREDIT", "").strip().lower() in {
+        "1", "true", "yes", "on"
+    }
+
+
 def chat(prompt: str, *, system: str | None = None,
          model: str | None = None, max_tokens: int = 512,
          temperature: float | None = None) -> dict[str, Any]:
@@ -55,6 +61,14 @@ def chat(prompt: str, *, system: str | None = None,
     if not user_text:
         return {"schema": SCHEMA, "available": False,
                 "error": "prompt_requerido"}
+    if not _credit_calls_allowed():
+        return {
+            "schema": SCHEMA,
+            "available": False,
+            "error": "azure_credit_guard_blocked",
+            "guard": "closed_by_default",
+            "enable_with": "MAK_AZURE_ALLOW_CREDIT=1",
+        }
     try:
         limit = max(1, min(int(max_tokens), MAX_TOKENS))
     except (TypeError, ValueError):

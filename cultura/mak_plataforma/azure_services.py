@@ -129,6 +129,11 @@ def snapshot() -> dict[str, Any]:
             "payload_policy": "metadata_only",
             "secrets_in_payload": False,
         },
+        "credit_policy": {
+            "student_model_calls": "blocked_by_default",
+            "enable_variable": "MAK_AZURE_ALLOW_CREDIT",
+            "search_free_route": "/api/azure/search/tools",
+        },
     }
 
 
