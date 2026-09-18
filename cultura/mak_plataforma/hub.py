@@ -83,6 +83,13 @@ try:
     import xio_evidence as _xio_evidence  # noqa: E402
 except Exception:  # noqa: BLE001 - XIO evidence remains optional
     _xio_evidence = None
+try:
+    from azure_search import search_tools as _azure_search_tools  # noqa: E402
+except Exception as _azure_search_exc:  # noqa: BLE001 - Azure is additive
+    _azure_search_tools = None
+    _AZURE_SEARCH_IMPORT_ERROR = type(_azure_search_exc).__name__
+else:
+    _AZURE_SEARCH_IMPORT_ERROR = ""
 
 PORT = int(os.environ.get("HUB_PORT", "8900"))
 HUB_HOST = os.environ.get("HUB_HOST", "127.0.0.1")
@@ -7039,6 +7046,39 @@ class H(BaseHTTPRequestHandler):
             except Exception as exc:
                 return self._json(
                     {"available": False, "jobs": [], "error": str(exc)[:200]}, 503)
+        if p == "/api/azure/search/tools":
+            query = urllib.parse.parse_qs(u.query)
+            text = (query.get("q") or query.get("consulta") or [""])[0]
+            area = (query.get("area") or [None])[0]
+            departamento = (query.get("departamento") or [None])[0]
+            raw_top = (query.get("top") or [10])[0]
+            if not str(text).strip():
+                return self._json({
+                    "schema": "mak-azure-search-tools-v1",
+                    "available": False,
+                    "read_only": True,
+                    "error": "consulta_requerida",
+                }, 400)
+            if _azure_search_tools is None:
+                return self._json({
+                    "schema": "mak-azure-search-tools-v1",
+                    "available": False,
+                    "read_only": True,
+                    "error": "azure_search_adapter_unavailable",
+                    "detail": _AZURE_SEARCH_IMPORT_ERROR,
+                }, 503)
+            try:
+                payload = _azure_search_tools(
+                    text, area=area, departamento=departamento, top=raw_top)
+            except Exception as exc:  # noqa: BLE001 - route must degrade cleanly
+                payload = {
+                    "schema": "mak-azure-search-tools-v1",
+                    "available": False,
+                    "read_only": True,
+                    "error": "azure_search_adapter_failed",
+                    "detail": type(exc).__name__,
+                }
+            return self._json(payload, _status_for(payload))
         if p == "/api/ping":
             return self._json({
                 "status": "ok",
