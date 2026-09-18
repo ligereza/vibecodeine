@@ -1,9 +1,10 @@
-"""Tests de `cultura/mak_forense` -- procedencia de un registro.
+"""Tests for `cultura/mak_forense` -- provenance of a record.
 
-El test que justifica el modulo es `test_lote_contiguo_no_se_cuenta_como_copia`:
-contar filas identicas y llamarlas duplicadas fue el error que inflo el daño
-en el analisis de `Testeo 2025`. La geometria -- no el contenido -- es lo que
-separa un bloque pegado de una tanda real de muestras iguales.
+The test that justifies the module is
+`test_lote_contiguo_no_se_cuenta_como_copia`: counting identical rows and
+calling them duplicates was the error that inflated the damage in the
+`Testeo 2025` analysis. Geometry -- not content -- is what separates a
+stitched block from a real batch of equal samples.
 """
 from __future__ import annotations
 
@@ -32,7 +33,7 @@ def _r(id_, grupo, orden, contenido, **kw):
 
 
 def _bloque(grupo, base, filas, copias, periodo):
-    """`filas` anotaciones distintas, pegadas `copias` veces cada `periodo`."""
+    """`filas` distinct annotations, stitched `copias` times every `periodo`."""
     salida = []
     for c in range(copias):
         for i, contenido in enumerate(filas):
@@ -46,7 +47,7 @@ def _patrones(hallazgos):
 
 
 # --------------------------------------------------------------------------
-# la distincion central
+# the central distinction
 
 def test_bloque_pegado_se_detecta_por_su_periodo():
     filas = [("mdma", "pastilla", "marquis", "negro"),
@@ -60,10 +61,10 @@ def test_bloque_pegado_se_detecta_por_su_periodo():
 
 
 def test_lote_contiguo_no_se_cuenta_como_copia():
-    """Cinco ketaminas seguidas con el mismo resultado son cinco muestras.
+    """Five ketamine samples in a row with the same result are five samples.
 
-    `DAME 1503` tiene 37 de sus 39 repeticiones asi. Llamarlas duplicadas
-    borraria testeos reales.
+    `DAME 1503` has 37 of its 39 repetitions like this. Calling them
+    duplicates would erase real tests.
     """
     misma = ("ket", "polvo", "morris", "morado")
     filas = [_r(f"x{i}", "DAME 1503", i, misma) for i in range(1, 6)]
@@ -76,16 +77,16 @@ def test_lote_contiguo_no_se_cuenta_como_copia():
 
 
 def test_periodo_dominante_exige_que_el_patron_explique_al_grupo():
-    """Una coincidencia suelta no convierte al grupo en un pegado."""
+    """A loose coincidence doesn't turn the group into a stitched block."""
     assert periodo_dominante([[1, 40]]) is None
     assert periodo_dominante([[1, 6], [2, 7], [3, 8]], minimo=3) == 5
 
 
 # --------------------------------------------------------------------------
-# tramos que vienen de otra jornada
+# runs that come from another session
 
 def _dos_jornadas(dias_entre=1):
-    """Una jornada original de 12 anotaciones propias y una copia diluida."""
+    """An original session with 12 own annotations and a diluted copy."""
     propias = [(f"s{i}", "polvo", "marquis", f"c{i}") for i in range(12)]
     origen = [_r(f"o{i}", "DAME 1503", i, c, fecha_declarada="2024-03-15")
               for i, c in enumerate(propias)]
@@ -116,7 +117,7 @@ def test_la_fecha_corrobora_y_el_hallazgo_queda_confirmado():
 
 
 def test_si_la_fecha_contradice_al_peso_nadie_decide_solo():
-    """Copiar del futuro no existe: cuando las senales chocan, va a revision."""
+    """Copying from the future doesn't exist: when signals clash, it goes to review."""
     h = tramos_ajenos(_dos_jornadas(dias_entre=-28))[0]
     assert h.certeza == "pendiente"
     assert h.evidencia["veredicto_fecha"] == "contradice"
@@ -124,7 +125,7 @@ def test_si_la_fecha_contradice_al_peso_nadie_decide_solo():
 
 
 def test_un_tramo_corto_no_alcanza():
-    """Tres filas genericas compartidas fueron un falso positivo real."""
+    """Three shared generic rows were a real false positive."""
     comunes = [("mdma", "tesla rosada", "marquis", "negro")] * 3
     a = [_r(f"a{i}", "Fiesta Dame", i, c) for i, c in enumerate(comunes)]
     b = [_r(f"b{i}", "Cachorros 35", i, c) for i, c in enumerate(comunes)]
@@ -132,7 +133,7 @@ def test_un_tramo_corto_no_alcanza():
 
 
 def test_las_replicas_internas_no_multiplican_el_tramo_ajeno():
-    """El tramo se trajo UNA vez; lo que pasa despues lo explica `repeticiones`."""
+    """The run was brought over ONCE; what happens after is explained by `repeticiones`."""
     filas = [(f"s{i}", "polvo", "marquis", f"c{i}") for i in range(8)]
     origen = [_r(f"o{i}", "Cachorros", i, c) for i, c in enumerate(filas)]
     copia = _bloque("Mamisonga", 0, filas, copias=10, periodo=8)
@@ -141,7 +142,7 @@ def test_las_replicas_internas_no_multiplican_el_tramo_ajeno():
 
 
 # --------------------------------------------------------------------------
-# el tiempo: lo que XIO-RD puede detectar y una planilla no
+# time: what XIO-RD can detect and a spreadsheet cannot
 
 def _instante(iso):
     return datetime.datetime.fromisoformat(iso).replace(
@@ -163,7 +164,7 @@ def test_muestra_cargada_en_un_evento_ya_pasado():
 
 
 def test_la_carga_dentro_de_su_jornada_no_se_marca():
-    """Una fiesta termina de madrugada y los datos se suben despues."""
+    """A party ends at dawn and the data gets uploaded afterward."""
     filas = [_r("m1", "evt", 1, ("mdma",), fecha_declarada="2026-09-15",
                 instante_registro=_instante("2026-09-16T06:30:00"))]
     assert anacronismos(filas) == []
@@ -187,7 +188,7 @@ def test_registro_sin_instante_no_se_marca_ni_se_absuelve():
 
 
 # --------------------------------------------------------------------------
-# el contrato del modulo
+# the module's contract
 
 def test_el_analisis_declara_lo_que_no_pudo_ver():
     analisis = analizar(sum(_dos_jornadas().values(), []))

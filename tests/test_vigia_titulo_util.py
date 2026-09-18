@@ -32,6 +32,6 @@ class TestTituloUtil:
     def test_titulo_real_largo_y_con_sentido_true(self):
         assert _titulo_util("Nueva exposicion de arte contemporaneo en el museo") is True
 
-    # Verificado por el agente: ningun valor de NAVEGACION tiene a la vez
-    # 12+ caracteres y 3+ palabras, asi que el filtro de NAVEGACION en si
-    # (independiente de longitud) no es probable con un caso real del set.
+    # Verified by the agent: no NAVEGACION value has both 12+ characters
+    # and 3+ words at once, so the NAVEGACION filter itself (independent
+    # of length) cannot be tested with a real case from that set.

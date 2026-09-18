@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-"""Adaptadores: de una fuente real a `Registro`. Todo en SOLO LECTURA.
+"""Adapters: from a real source into `Registro`. All READ-ONLY.
 
-Cada adaptador hace dos cosas y ninguna mas: arma los registros y declara los
-limites que esa fuente concreta le impone al analisis. Esos limites viajan
-hasta el informe (`Cobertura.limites`) para que un total nunca se lea como
-completo.
+Each adapter does two things and nothing else: it builds the records and
+declares the limits that concrete source imposes on the analysis. Those
+limits travel through to the report (`Cobertura.limites`) so a total is
+never read as complete.
 
-Los tres que hay hoy cubren las tres formas en que MAK registra hechos:
+The three that exist today cover the three ways MAK records facts:
 
-  testeos_rd  planilla heredada -- el problema historico, sin hora de carga
-  muestras_rd XIO-RD -- cada muestra con su instante real, que es lo que
-              permite detectar el evento equivocado
-  jsonl       cualquier otra area, mapeando campos por nombre
+  testeos_rd  legacy spreadsheet -- the historical problem, no load time
+  muestras_rd XIO-RD -- each sample with its real instant, which is what
+              lets the wrong event be detected
+  jsonl       any other area, mapping fields by name
 """
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ DB_RD = os.path.expanduser(os.environ.get("FLUJO_RD_DB", "~/data/rd.db"))
 
 
 def _abrir(db_path: str | Path) -> sqlite3.Connection:
-    """Conexion de solo lectura de verdad (uri mode=ro), no por convencion."""
+    """A genuinely read-only connection (uri mode=ro), not by convention."""
     ruta = Path(db_path).expanduser().resolve()
     if not ruta.is_file():
         raise FileNotFoundError(ruta)
@@ -52,12 +52,12 @@ def _tiene_tabla(conn: sqlite3.Connection, nombre: str) -> bool:
 
 
 def epoch(valor) -> float | None:
-    """Instante en epoch desde un numero o un ISO, o None.
+    """Epoch instant from a number or an ISO string, or None.
 
-    Una fecha SIN hora devuelve None a proposito: `2025-02-08` no dice cuando
-    se anoto, dice que dia paso. Tratarla como instante inventaria una hora
-    de carga (medianoche) y haria que cada registro de dia completo pareciera
-    cargado antes de su propio evento.
+    A date WITHOUT a time returns None on purpose: `2025-02-08` doesn't say
+    when it was recorded, it says which day passed. Treating it as an
+    instant would invent a load time (midnight) and would make every
+    whole-day record look like it was loaded before its own event.
     """
     if valor is None or valor == "":
         return None
@@ -80,13 +80,14 @@ def epoch(valor) -> float | None:
 # --------------------------------------------------------------------------
 
 def desde_testeos_rd(db_path: str | Path = DB_RD) -> tuple[list[Registro], tuple[str, ...]]:
-    """`testeo_filas_fuente` -- la planilla heredada, 2024/2025/2026.
+    """`testeo_filas_fuente` -- the legacy spreadsheet, 2024/2025/2026.
 
-    El contenido son los seis campos que definen una anotacion de testeo. Se
-    deja fuera `test_2_raw`/`result_2_raw` hacia adelante a proposito: en las
-    copias del corpus esas columnas varian entre copias del mismo bloque, asi
-    que incluirlas hacia que dos filas identicas parecieran distintas -- fue
-    exactamente el error que dio "26 jornadas unicas" donde habia 9.
+    The content is the six fields that define a testing annotation.
+    `test_2_raw`/`result_2_raw` are deliberately left out going forward:
+    in the corpus copies those columns vary between copies of the same
+    block, so including them made two identical rows look different --
+    that was exactly the error that produced "26 unique sessions" where
+    there were 9.
     """
     conn = _abrir(db_path)
     filas = conn.execute("""
@@ -131,14 +132,15 @@ def desde_testeos_rd(db_path: str | Path = DB_RD) -> tuple[list[Registro], tuple
 
 
 def desde_muestras_rd(db_path: str | Path = DB_RD) -> tuple[list[Registro], tuple[str, ...]]:
-    """`muestras` -- lo que carga XIO-RD en terreno.
+    """`muestras` -- what XIO-RD loads in the field.
 
-    Aca si hay instante de carga, y por eso aca si corren los detectores que
-    la planilla nunca pudo tener: una muestra guardada antes de que su evento
-    ocurra, o mucho despues, es el voluntario que eligio mal en la lista.
+    Here there IS a load instant, and that's why the detectors the
+    spreadsheet could never have run here: a sample saved before its
+    event happens, or long after, is the volunteer who picked the wrong
+    session from the list.
 
-    La fecha del evento se busca en el catalogo, NUNCA en la propia muestra:
-    comparar un campo contra si mismo no detecta nada.
+    The event date is looked up in the catalog, NEVER in the sample
+    itself: comparing a field against itself detects nothing.
     """
     conn = _abrir(db_path)
     fechas_evento: dict[str, str] = {}
@@ -193,10 +195,10 @@ def desde_muestras_rd(db_path: str | Path = DB_RD) -> tuple[list[Registro], tupl
                        _texto(r["color"]), _texto(r["textura"]),
                        _texto(r["logo_o_marca"]), _texto(r["peso_mg"])),
             fecha_declarada=declarada,
-            # `muestras.fecha` es la fecha declarada del evento, no la hora
-            # en que se capturo la muestra. El instante real vive en XIO en
-            # `muestra_capturas.captured_at_epoch`; si no existe, se deja
-            # ausente para que el informe declare la ceguera.
+            # `muestras.fecha` is the declared event date, not the time
+            # the sample was captured. The real instant lives in XIO in
+            # `muestra_capturas.captured_at_epoch`; if it doesn't exist,
+            # it's left absent so the report declares the blind spot.
             instante_registro=(
                 float(r["captured_at_epoch"])
                 if r["captured_at_epoch"] is not None else None
@@ -221,12 +223,13 @@ def desde_jsonl(path: str | Path, *, campo_grupo: str, campos_contenido: list[st
                 campo_fecha: str | None = None,
                 campo_instante: str | None = None,
                 ) -> tuple[list[Registro], tuple[str, ...]]:
-    """Cualquier otra area de MAK: un JSONL y el nombre de sus campos.
+    """Any other MAK area: a JSONL and the name of its fields.
 
-    Esta es la puerta que hace que el analisis no sea de la planilla. Lo unico
-    que hay que decidir por area es cual es el grupo y que campos definen
-    "la misma anotacion"; esa decision es del area y por eso se pide explicita
-    en vez de adivinarse.
+    This is the door that keeps the analysis from being just about the
+    spreadsheet. The only thing each area has to decide is which field is
+    the group and which fields define "the same annotation"; that
+    decision belongs to the area, so it's requested explicitly instead of
+    being guessed.
     """
     ruta = Path(path).expanduser()
     registros: list[Registro] = []

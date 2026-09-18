@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
-"""guarda_subida_externa.py -- envoltorio delgado sobre flujo.privacy.scan_text,
-para usar antes de subir cualquier documento a un servicio externo (Azure
-Search, un modelo, etc.).
+"""guarda_subida_externa.py -- thin wrapper over flujo.privacy.scan_text,
+meant to run before uploading any document to an external service (Azure
+Search, a model, etc.).
 
-Historia: el 2026-09-18 el clasificador de auto mode bloqueo un intento de
-subir informes de RD a Azure Search por "Data Exfiltration". La primera
-respuesta fue escribir una guarda nueva con 4 palabras clave -- ya existia
-flujo.privacy.scan_text, mas completo (RUT, telefono, tarjeta con Luhn,
-direccion, y palabras de riesgo alto que ya cubren "sustancias"/"droga"),
-usado en produccion por rd-datos ingest. Esta version no reinventa nada,
-solo lo conecta al caso de subida externa.
+History: on 2026-09-18 the auto-mode classifier blocked an attempt to
+upload RD reports to Azure Search as "Data Exfiltration". The first
+response was to write a new guard with 4 hardcoded keywords -- but
+flujo.privacy.scan_text already existed and is far more complete (RUT,
+phone number, Luhn-validated card, address, and high-risk keywords that
+already cover "substances"/"drugs"), and is used in production by
+rd-datos ingest. This version reinvents nothing, it just wires that
+existing module into the external-upload case.
 """
 import sys
 from pathlib import Path

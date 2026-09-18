@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
-"""Analisis forense de procedencia sobre un registro de MAK.
+"""Forensic provenance analysis over a MAK record.
 
     python3 cultura/mak_forense/forense.py testeos
     python3 cultura/mak_forense/forense.py muestras
     python3 cultura/mak_forense/forense.py jsonl ~/curatoria/fichas/fichas.jsonl \
         --grupo fuente --contenido categoria,datos_evento --instante indexado_en
 
-Responde una pregunta: de las anotaciones que hay aca, cuales son un hecho
-nuevo y cuales son el rastro de otra anotacion. Nunca escribe en la fuente y
-nunca borra: deja hallazgos con su certeza, y la exclusion la decide una
-persona. Mismo contrato que `triangular.py` con `revision_humana: pendiente`.
+Answers one question: of the annotations present here, which are a new
+fact and which are the trace of another annotation. Never writes to the
+source and never deletes: it leaves findings with their certainty level,
+and exclusion is decided by a person. Same contract as `triangular.py`
+with `revision_humana: pendiente`.
 """
 from __future__ import annotations
 
@@ -26,8 +27,8 @@ except ImportError:  # direct execution: python cultura/mak_forense/forense.py
     import fuentes  # noqa: E402
     from patrones import MINIMO_TRAMO, analizar  # noqa: E402
 
-# Orden de lectura del informe: lo que el analisis probo primero, lo que
-# necesita una persona al final.
+# Report reading order: what the analysis proved first, what needs a
+# person last.
 _ORDEN_CERTEZA = {"confirmado": 0, "probable": 1, "pendiente": 2}
 
 
