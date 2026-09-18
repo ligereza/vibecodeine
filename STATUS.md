@@ -2,9 +2,9 @@
 
 Estado medido de LIBELULA, director de moscas.
 
-Corte: 2026-09-16T03:00:00-03:00
+Corte: 2026-09-18T00:10:00-03:00
 Máquina: MAK, Linux
-Método: `.venv/bin/python tools/mak_status.py`, `git`, `systemctl --user`, smoke HTTP y suites de cada autoridad.
+Método: `.venv/bin/python tools/mak_status.py`, `tools/repo_audit.py`, `tools/gen_mapa_comandos.py --check`, `tools/test_lane_map.py`, `git`, `systemctl --user`, `ss`, smoke HTTP. Las suites completas de FLUJO y XIO no se re-corrieron en este corte (quedan marcadas como no re-medidas más abajo); la suite dirigida de MAK (`-m mak`) se intentó con tope de 180s y no alcanzó a imprimir un resultado antes de agotar el tiempo, así que tampoco se re-mide aquí.
 
 Contexto mecánico para agentes: `tools/contexto_repo.py --json --root <checkout> [--query "texto"]` produce `mak-repo-context-v1` con Git + AST Python + consumidores estáticos; no escribe archivos.
 
@@ -27,12 +27,26 @@ La integración de MAK, FLUJO y XIO queda cerrada por frontera física y contrat
 
 | Superficie | Checkout y remoto | Rama / HEAD | Estado medido |
 |---|---|---|---|
-| MAK / vibecodeine | `/home/mak` · `ligereza/vibecodeine` · `vibecodeine-legacy` | `main` · HEAD publicado | limpio y publicado; el trabajo no mergeable de snapshots queda preservado en el stash local de auditoría; upstream 0/0 |
-| FLUJO | `/home/mak/flujo` · `ligereza/flujo` · `origin` | `main` · `6fce84e` publicado | limpio y publicado; upstream 0/0 |
-| XIO | `/home/mak/XIO` · `ligereza/XIO` · `origin` | `integration/xio-field-20260911` · `f928ddf` publicado | limpio y publicado; upstream 0/0 |
+| MAK / vibecodeine | `/home/mak` · `ligereza/vibecodeine` · `vibecodeine-legacy` | `rd/forense-y-vocabulario` · `d0126f92` publicado (2026-09-17) | sin cambios trackeados sucios; upstream 0/0; dos directorios sin trackear nuevos, ver abajo |
+| FLUJO | `/home/mak/flujo` · `ligereza/flujo` · `origin` | `rd/ensayos-parallel-sets` · `06745df` publicado (2026-09-16) | limpio y publicado; upstream 0/0 |
+| XIO | `/home/mak/XIO` · `ligereza/XIO` · `origin` | `integration/xio-field-20260911` · `d9d4c4b` publicado (2026-09-17) | limpio y publicado; upstream 0/0 |
 | Histórico FLUJO dentro del padre | `/home/mak/flujo-vibecodeine-legacy-20260914` | `integration/flujo-canonical-20260911` | preservación histórica; no es fuente activa |
 
-El directorio MAK está limpio y alineado con su remoto. Los snapshots de compatibilidad y el enlace externo permanecen físicamente disponibles; el material auditado que no era seguro mergear quedó preservado localmente, no publicado como runtime.
+Las tres autoridades avanzaron a ramas de trabajo distintas de `main` desde el
+corte anterior (2026-09-16T03:00); las tres siguen publicadas y sin
+divergencia (`0/0`) frente a su remoto. Dos directorios nuevos sin trackear
+aparecieron en `/home/mak` desde entonces: `mak/` (contiene `state/mak.db`,
+propósito propio, no es RD) y `pastillas/` (repositorio Git independiente con
+su propio dataset/modelos/src, sin relación declarada con VIBECODEINE). Ninguno
+se tocó ni se clasificó como autoridad.
+
+Este corte además deduplicó el árbol físico de copias de `rd.db`/`rd_datos.db`
+repartidas fuera de las tres autoridades (worktrees, jobs, workspaces): 5
+archivos vacíos borrados, 9 copias divergentes/superadas archivadas en
+`/home/mak/_dedup_rd_20260917/` sin borrarlas, y 19 copias idénticas dentro de
+worktrees convertidas a hardlinks. El canónico activo (`/home/mak/data/rd.db`)
+y el linaje con capa de campo XIO (`work/respaldo-campo-xio-20260916/rd.db`,
+pendiente de decisión `XIO_LAYER`) no se tocaron.
 
 ## Frontera física
 
@@ -94,7 +108,15 @@ Hub, usa el snapshot versionado y queda fijada por el medidor.
 | auto-vínculos | 0 |
 | vínculos duplicados | 0 |
 
-`data/rd.db` mide 3.067.904 bytes, 36 tablas de dominio y 8.040 filas de dominio; `pragma integrity_check = ok` y `foreign_key_check` no reporta errores. Las 34 tablas RD originales conservan exactamente sus datos de HEAD; las dos tablas adicionales (`xio_eventos` y `xio_signal_events`) están vacías y corresponden al esquema operativo del puente XIO. Las tablas no se fusionan por nombres parecidos: cada una conserva su dominio, procedencia y consumidor declarado.
+Re-medido el 2026-09-17 con `tools/repo_audit.py`: `data/rd.db` tiene ahora 34
+tablas de dominio y 8.040 filas (`integrity=ok`), dos tablas menos que el corte
+anterior (36) — las dos tablas vacías del puente XIO (`xio_eventos`,
+`xio_signal_events`) ya no están; el conteo de filas no cambió, así que la
+diferencia es de esquema, no de datos perdidos. `data/mak_knowledge.db` mide 48
+tablas y 407.133 filas (`integrity=ok`), subiendo desde 387.104 el 2026-08-28.
+`data/flujo.db` sigue congelado en 1 tabla / 6 filas. Las tablas no se fusionan
+por nombres parecidos: cada una conserva su dominio, procedencia y consumidor
+declarado.
 
 ## Runtime consolidado
 
@@ -127,18 +149,35 @@ El 404 sin `item_id` es la respuesta de validación de un elemento inexistente, 
 
 ## Validación por autoridad
 
+Las filas marcadas **(2026-09-16, no re-medida)** son las que este corte no
+volvió a correr; se conservan como último valor conocido, no como resultado de
+hoy. Repetir la medición antes de citarlas como estado actual.
+
 | Autoridad | Comprobación | Resultado |
 |---|---|---|
-| MAK / IRIS | suite dirigida de contrato, Copilot, archivo, puente y UI | 240 casos aprobados · 2 omitidos |
-| ISKVW visual | smoke de `campo`, `terminal`; manifiesto y publicación local | aprobado; 0 piezas omitidas |
-| FLUJO venue 3D | `venue_geometria_scd.py --check`, visor y secuencia | aprobado; SCD DEMO 2D→3D, polilíneas declarativas; Gaussian splat fuera del runtime |
-| ISKVW costo | `iskvw_piel_medir.mjs` contra snapshot reproducible | 2.812 segmentos máximos; bajo techo 6.000 |
-| MAK / grammar | `tests/test_mak_grammar_runner.py` | 3 casos aprobados |
-| FLUJO autónomo | `.venv/bin/python -m pytest -q -o addopts='' -m flujo` | 1.572 aprobados · 59 omitidos · 202 no seleccionados |
-| XIO autónomo | `.venv/bin/python -m pytest -q` | 37 casos aprobados |
-| XIO showcontrol | 10 scripts directos | 69 comprobaciones aprobadas |
-| CLI/documentación | `gen_mapa_comandos.py --check` y gates de manifiesto/inventario | aprobado |
-| MAK completo | `.venv/bin/python -m pytest -q` | exit 0; solo advertencias deprecadas de Pillow |
+| MAK / IRIS | suite dirigida de contrato, Copilot, archivo, puente y UI | 240 aprobados · 2 omitidos (2026-09-16, no re-medida) |
+| ISKVW visual | smoke de `campo`, `terminal`; manifiesto y publicación local | aprobado; 0 piezas omitidas (2026-09-16, no re-medida) |
+| FLUJO venue 3D | `venue_geometria_scd.py --check`, visor y secuencia | aprobado; SCD DEMO 2D→3D (2026-09-16, no re-medida) |
+| ISKVW costo | `iskvw_piel_medir.mjs` contra snapshot reproducible | 2.812 segmentos; bajo techo 6.000 (2026-09-16, no re-medida) |
+| MAK / grammar | `tests/test_mak_grammar_runner.py` | 3 casos aprobados (2026-09-16, no re-medida) |
+| FLUJO autónomo | `.venv/bin/python -m pytest -q -o addopts='' -m flujo` | 1.572 aprobados · 59 omitidos · 202 no seleccionados (2026-09-16, no re-medida) |
+| XIO autónomo | `.venv/bin/python -m pytest -q` | 37 casos aprobados (2026-09-16, no re-medida) |
+| XIO showcontrol | 10 scripts directos | 69 comprobaciones aprobadas (2026-09-16, no re-medida) |
+| CLI/documentación | `gen_mapa_comandos.py --check` | **aprobado, re-medido 2026-09-17**: `MAPA.md y context/comandos.json al dia con el CLI` |
+| Contrato de lanes | `tools/test_lane_map.py --format text` | **re-medido 2026-09-17**: `contract_disagreements=0` pero `not_covered=tests/test_portfolio_iris_context_dispatch.py` — invariante rota, ver hallazgo abajo |
+| MAK completo | `.venv/bin/python -m pytest -q` | exit 0; solo advertencias deprecadas de Pillow (2026-09-16, no re-medida; el intento de re-correr `-m mak` el 2026-09-17 no terminó dentro de 180s) |
+
+### Hallazgo abierto: contrato de lanes desincronizado
+
+`tests/test_portfolio_iris_context_dispatch.py` se agregó el 2026-09-14 con
+`pytest.mark.mak`, pero `context/test_lane_map.json` se regeneró por última vez
+el 2026-09-15 sin incluirlo — hoy aparece como `not_covered`, violando la
+invariante que `CAPACIDADES_MAK.md` exige (`not_covered=` vacío). No se corrigió
+con `--write` en este corte: el propio `test_lane_map.py --help` advierte que
+esa bandera sobrescribe el schema de asignaciones por-test con el schema más
+grueso de resumen por lane, rompiendo `_load_lane_contract()`. Corregirlo
+requiere una edición manual del JSON que preserve su schema, no una
+regeneración automática.
 
 ## Estado global medido
 
@@ -147,6 +186,53 @@ El 404 sin `item_id` es la respuesta de validación de un elemento inexistente, 
 `status=attention` · `attention=4` · `blocked=0` · `policy_status=candidate` · `policy_reason=holdout_gate_passed` · `projects_review_required=6`
 
 Es una señal de la política de aprendizaje y evidencia del sistema completo; no cambia las autoridades Git ni abre una segunda implementación de MAK, FLUJO o XIO.
+
+## Integración Azure y calibración DeepSeek
+
+Servicios reales creados y verificados vía `az` CLI (cuenta de estudiante,
+free/basic tier): `makmak-search` (AI Search Free, índice único
+`mak-tools-v1` por el límite de 3 índices del tier gratis, más `mak-rd-v1`
+y `mak-inbox-v1`), `makmak-ml-workspace`, `makmakmlstorage`,
+`makmak-ml-kv`, `makmak-ml-insights`, `makmak-cpu-cluster`
+(`min_instances=0`), `makmakmlregistry` (único costo recurrente, ~5 USD/mes).
+`tools/consultar_mak_search.py` es el consumidor real y verificado del
+índice de herramientas.
+
+DeepSeek (deployment ISSVKK) se usó como "conejillo de indias" para generar
+tests reales sobre funciones puras sin cobertura previa, siempre con hechos
+completos entregados explícitamente y siempre ejecutados antes de aceptarse
+— nunca se guardó un test generado sin correrlo primero. Áreas cubiertas
+este ciclo: RD (`_norm_link_value`/`_venue_link_key`), curatoria
+(`triangular.py`, escrito directamente por el agente porque el archivo está
+excluido de delegación), plataforma (`_aplanar_llmcalls`, `_extraer_json`),
+research (`_compact_search_query`), codex (`algebra.py:distancia`), XIO
+(`test_cueengine_validators.py`, reescrito por el agente al formato real del
+proyecto), WACHUMA (`plant-descriptor.test.ts`, primera prueba TypeScript
+delegada), FLUJO (`venue_geometria_puntos.py`), ISKVW (`_riqueza`),
+curatoria (`diagnostico_proyectos.py`) y research/opportunity_radar
+(`mak_vigia.py:_titulo_util`/`plegar`).
+
+Calibración real registrada en `data/mak_knowledge.db`
+(`learning_evaluations`, `target_kind=azure_delegation_pattern`) y
+publicada en MLflow (`makmak-ml-workspace`, experimento
+`mak-azure-integration`) vía `tools/reportar_calibracion_deepseek.py`:
+**10 aciertos, 4 fallos, 14 casos evaluados, accuracy=0.714**. Los 4
+fallos reales quedan en la propia base: errores de redondeo no
+considerados, framework de test equivocado, aserciones falsas sobre
+dedup case-insensitive y mal juicio de un límite de bucle — cada uno
+corregido a mano tras ejecutar y ver el `AssertionError` real, nunca
+aceptado a ciegas.
+
+Regla sostenida sin excepción en todo el ciclo: ningún contenido de RD ni
+de curatoria se envió a Azure — solo código/arquitectura pura, y el
+clasificador de modo automático de la plataforma bloqueó varios intentos
+de subir contenido adyacente a RD/curatoria ("Data Exfiltration"); esos
+bloqueos se respetaron siempre, sin reintentar con otro ángulo ni delegar
+la misma acción a DeepSeek como bypass.
+
+Dos directorios nuevos sin trackear en `/home/mak` (`mak/`, `pastillas/`,
+`.docker/`) no se tocaron ni se clasificaron: no tienen relación declarada
+con este ciclo de trabajo y no se agregaron al commit.
 
 ## Decisiones cerradas
 
