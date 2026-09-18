@@ -265,7 +265,7 @@ Dependencias vivas: `makmakmlstorage` (`StorageV2`, `Standard_LRS`), `makmak-ml-
 
 **Ruta de datos propuesta:** staging local sanitizado en `/home/mak/research/azure-ml/staging/<run_id>/`; resultado remoto en job/data asset/model; receipt local en `/home/mak/research/azure-ml/runs/<run_id>/receipt.json`. Nunca escribir automaticamente `data/rd.db`.
 
-**Estado integrado para el alcance actual:** `tools/reportar_calibracion_deepseek.py` registro una corrida real en MLflow del workspace (`10` aciertos, `4` fallos, `accuracy=0.714`). No se crean jobs, endpoints ni datasets remotos automaticamente: no hay un dataset sanitizado ni una tarea de entrenamiento autorizada. La extension `az ml` sigue inutilizable por `No module named 'rpds.rpds'`, pero no bloquea el flujo de calibracion ni el inventario ARM read-only.
+**Estado integrado para el alcance actual:** `tools/reportar_calibracion_deepseek.py` registro una corrida real en MLflow del workspace (`10` aciertos, `4` fallos, `accuracy=0.714`). `tools/azure_ml_learning_dataset.py` exporto 28 evaluaciones sanitizadas, genero receipt/hash local y registro en MLflow una corrida `FINISHED` con `dataset_rows=28` y `dataset_fingerprints=26`. No se crean jobs, endpoints ni datasets remotos automaticamente: no hay entrenamiento autorizado. La extension `az ml` sigue inutilizable por `No module named 'rpds.rpds'`, pero no bloquea el flujo de lineage, calibracion ni el inventario ARM read-only. La carga de artefactos queda diferida por incompatibilidad del plugin MLflow AzureML, registrada explícitamente en params/receipt.
 
 ## 6. Calendario de un año
 
