@@ -80,29 +80,30 @@ def _service_rows(resources: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
     definitions = [
         ("search", "Microsoft.Search/searchServices", "/api/azure/search/tools",
-         "Hub route active; read-only corpus retrieval"),
+         "operational", "Hub route active; read-only corpus retrieval"),
         ("foundry", "Microsoft.CognitiveServices/accounts", "/api/azure/chat",
-         "Opt-in model provider; deployment must be verified per call"),
+         "operational_guarded", "Opt-in model provider; deployment must be verified per call"),
         ("machine_learning", "Microsoft.MachineLearningServices/workspaces",
-         "/api/azure/status", "Workspace inventory and MLflow calibration"),
+         "/api/azure/status", "operational", "Workspace inventory and MLflow calibration"),
         ("storage", "Microsoft.Storage/storageAccounts", "/api/azure/status",
-         "Metadata only until a data-plane role and consumer are approved"),
+         "metadata_only", "Metadata only until a data-plane role and consumer are approved"),
         ("key_vault", "Microsoft.KeyVault/vaults", "/api/azure/status",
-         "Dependency metadata only; never bulk-read secrets"),
+         "dependency_only", "Dependency metadata only; never bulk-read secrets"),
         ("container_registry", "Microsoft.ContainerRegistry/registries",
-         "/api/azure/status", "ML dependency metadata only"),
+         "/api/azure/status", "dependency_only", "ML dependency metadata only"),
         ("application_insights", "Microsoft.Insights/components",
-         "/api/azure/status", "Metadata-only technical telemetry"),
+         "/api/azure/status", "operational", "Metadata-only technical telemetry"),
         ("api_management", "Microsoft.ApiManagement/service", "/api/azure/status",
-         "Inventory only until a concrete backend exists"),
+         "not_operational", "Inventory only until a concrete backend exists"),
     ]
     result = []
-    for service_id, type_name, consumer, decision in definitions:
+    for service_id, type_name, consumer, integration_state, decision in definitions:
         service_rows = rows_for(type_name)
         result.append({
             "id": service_id,
             "resource_type": type_name,
-            "state": "live" if service_rows else "absent",
+            "resource_state": "live" if service_rows else "absent",
+            "integration_state": integration_state if service_rows else "absent",
             "consumer": consumer if service_rows else None,
             "decision": decision,
             "resources": service_rows,
