@@ -1,4 +1,4 @@
-"""Motor reusable de procedencia para registros de VIBECODEINE."""
+"""Reusable provenance engine for VIBECODEINE records."""
 
 from .estructura import (
     analizar_estructura,
@@ -16,8 +16,8 @@ __all__ = [
     "Hallazgo",
     "Registro",
     "analizar",
-    # La FORMA de la tabla, anterior al contenido de sus filas: si el lector
-    # supone una estructura que la fuente no tiene, todo lo demas es basura.
+    # The SHAPE of the table, prior to the content of its rows: if the reader
+    # assumes a structure the source doesn't have, everything else is garbage.
     "analizar_estructura",
     "bloques_desprendidos",
     "columnas_divergentes",

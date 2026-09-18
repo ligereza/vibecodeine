@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""reportar_calibracion_deepseek.py -- lee el evaluador real (learning_evaluations
-en data/mak_knowledge.db) para el patron azure_delegation_pattern, calcula la
-tasa de acierto real de DeepSeek con hechos completos, y la registra en MLflow
-(workspace makmak-ml-workspace) como una corrida repetible, no un numero
-mencionado en un chat.
+"""reportar_calibracion_deepseek.py -- reads the real evaluator
+(learning_evaluations in data/mak_knowledge.db) for the
+azure_delegation_pattern target, computes DeepSeek's real hit rate when
+given complete facts, and logs it to MLflow (workspace
+makmak-ml-workspace) as a repeatable run, not a number mentioned in chat.
 
-Uso:
+Usage:
     python3 tools/reportar_calibracion_deepseek.py
 """
 import sqlite3

@@ -1,69 +1,71 @@
 #!/usr/bin/env python3
-"""Modelo minimo para analizar la PROCEDENCIA de un registro.
+"""Minimal model for analyzing the PROVENANCE of a record.
 
-Nace del analisis de `Testeo 2025` (2026-09-16): una planilla donde cada
-voluntario armaba la hoja de su jornada copiando la del evento anterior y
-sobrescribiendo filas. Lo que no alcanzaba a sobrescribir quedaba como
-muestra que nadie testeo. 2.856 filas, de las cuales 645 eran un bloque
-pegado 31 veces y 132 venian de OTRA jornada.
+Born from analyzing `Testeo 2025` (2026-09-16): a spreadsheet where each
+volunteer built their session's sheet by copying the previous event's and
+overwriting rows. Whatever didn't get overwritten stayed as a sample
+nobody tested. 2,856 rows, of which 645 were a block stitched 31 times
+and 132 came from ANOTHER session.
 
-El modulo no es de la planilla. Es de la forma del problema, que se repite
-en cualquier registro humano bajo urgencia:
+The module isn't about the spreadsheet. It's about the shape of the
+problem, which repeats in any human record made under urgency:
 
-    anotacion + otra anotacion de otra fecha -> ¿son la misma?
-    y si lo son, ¿cual es el original y cual la copia?
+    annotation + another annotation from another date -> are they the same?
+    and if so, which is the original and which is the copy?
 
-Por eso el registro aca es abstracto: un `contenido` comparable, un `grupo`
-al que pertenece, un `orden` dentro de ese grupo, y -- cuando existe -- el
-instante real en que se anoto. Con eso alcanza para XIO-RD (una muestra
-cargada en el evento equivocado), para la planilla vieja, y para cualquier
-otra area de MAK que registre hechos en el tiempo.
+That's why the record here is abstract: a comparable `contenido`, a
+`grupo` it belongs to, an `orden` within that group, and -- when it
+exists -- the real instant it was recorded. That's enough for XIO-RD (a
+sample loaded under the wrong event), for the old spreadsheet, and for
+any other MAK area that records facts over time.
 
-Tres reglas del dominio RD que aca son estructura, no comentario:
+Three RD-domain rules that are structure here, not commentary:
 
-1. Nada se descarta. Un hallazgo MARCA un registro, nunca lo borra. La
-   decision de excluirlo es humana y posterior.
-2. La certeza se declara. `confirmado` / `probable` / `pendiente` no son
-   decoracion: separan lo que la matematica probo de lo que solo sugiere.
-3. El analisis declara lo que NO pudo ver. `Cobertura.limites` existe para
-   que un total nunca se lea como completo. Un detector silencioso sobre
-   sus puntos ciegos miente por omision.
+1. Nothing gets discarded. A finding MARKS a record, never deletes it.
+   The decision to exclude it is human and comes later.
+2. Certainty is declared. `confirmado` / `probable` / `pendiente` are not
+   decoration: they separate what the math proved from what merely
+   suggests.
+3. The analysis declares what it couldn't see. `Cobertura.limites`
+   exists so a total is never read as complete. A detector silent about
+   its blind spots lies by omission.
 """
 from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field, asdict
 
-# Lo que el analisis pudo probar sobre un hallazgo.
+# What the analysis was able to prove about a finding.
 #
-#   confirmado -- dos senales independientes coinciden (p.ej. el peso del
-#                 tramo y la fecha dicen lo mismo sobre quien copio a quien)
-#   probable   -- una sola senal, sin nada que la contradiga
-#   pendiente  -- hay senal, y las senales se contradicen, o falta el dato
-#                 que decidiria. Es un hallazgo igual: el pendiente se
-#                 muestra, no se esconde.
+#   confirmado -- two independent signals agree (e.g. the run's weight
+#                 and the date say the same thing about who copied whom)
+#   probable   -- a single signal, with nothing contradicting it
+#   pendiente  -- there is signal, and the signals contradict each other,
+#                 or the deciding fact is missing. It's still a finding:
+#                 pending is shown, not hidden.
 CERTEZAS = ("confirmado", "probable", "pendiente")
 
 
 @dataclass(frozen=True)
 class Registro:
-    """Una anotacion, con lo minimo para juzgar si se repite y de donde viene.
+    """An annotation, with the minimum needed to judge if it repeats and where it comes from.
 
-    `contenido` es la tupla de campos que definen "la misma anotacion". Que
-    campos entran es una decision del area, no de este modulo: en los testeos
-    son sustancia/formato/reactivos/resultados; en otra area seran otros. Lo
-    que este modulo garantiza es que dos registros con el mismo `contenido`
-    se traten como el mismo hecho anotado dos veces.
+    `contenido` is the tuple of fields that define "the same annotation".
+    Which fields go in is a decision for the area, not this module: in
+    the tests it's substance/format/reagents/results; in another area it
+    will be others. What this module guarantees is that two records with
+    the same `contenido` are treated as the same fact annotated twice.
 
-    `orden` es la posicion dentro del grupo (fila de la planilla, id
-    correlativo, indice de carga). Es el eje sobre el que se mide si una
-    repeticion es contigua o periodica, y por eso tiene que ser comparable
-    dentro del grupo -- no necesita ser global.
+    `orden` is the position within the group (spreadsheet row,
+    sequential id, load index). It's the axis a repetition is measured
+    as contiguous or periodic against, and that's why it has to be
+    comparable within the group -- it doesn't need to be global.
 
-    `fecha_declarada` es lo que el registro DICE de si mismo (la fecha del
-    evento). `instante_registro` es cuando se anoto DE VERDAD (epoch). La
-    distancia entre ambos es el detector mas util que existe para un registro
-    hecho en una app: si no coinciden, alguien eligio el evento equivocado.
+    `fecha_declarada` is what the record SAYS about itself (the event
+    date). `instante_registro` is when it was REALLY recorded (epoch).
+    The distance between the two is the most useful detector that exists
+    for a record made in an app: if they don't match, someone picked the
+    wrong event.
     """
 
     id: str
@@ -78,10 +80,10 @@ class Registro:
 
 @dataclass(frozen=True)
 class Hallazgo:
-    """Un patron encontrado, con la evidencia que lo sostiene.
+    """A pattern found, with the evidence that supports it.
 
-    `explicacion` esta en castellano y en una linea porque el destinatario no
-    es un log: es la persona que tiene que decidir que hacer con el registro.
+    `explicacion` is in Spanish and one line because its recipient isn't
+    a log: it's the person who has to decide what to do with the record.
     """
 
     patron: str
@@ -100,12 +102,13 @@ class Hallazgo:
 
 @dataclass(frozen=True)
 class Cobertura:
-    """Lo que el analisis vio, y sobre todo lo que NO pudo ver.
+    """What the analysis saw, and above all what it could NOT see.
 
-    Esto existe por una equivocacion concreta y reciente: el detector de
-    tramos copiados solo comparaba hojas dentro de una misma corrida, asi que
-    una hoja de 2025 copiada de una de 2024 le era invisible -- y el informe
-    no lo decia. Un numero sin su cobertura se lee como un total, y no lo era.
+    This exists because of a concrete, recent mistake: the copied-run
+    detector only compared sheets within the same run, so a 2025 sheet
+    copied from a 2024 one was invisible to it -- and the report didn't
+    say so. A number without its coverage reads as a total, and it
+    wasn't one.
     """
 
     registros: int

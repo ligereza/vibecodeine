@@ -1,30 +1,30 @@
 #!/usr/bin/env python3
-"""raton.py -- explorador mecanico de referencias rotas en MAK. Sin agente.
+"""raton.py -- mechanical scanner for broken references in MAK. No agent.
 
-No llama a ningun modelo, no ejecuta codigo ajeno, no escribe nada. Por cada
-archivo .py rastreado en git, extrae los literales de string que declaran una
-ruta de archivo (AST, no regex sobre texto), y comprueba si esa ruta existe
-de verdad, resuelta contra las raices fisicas conocidas de MAK (este repo,
-el checkout de FLUJO, y $HOME).
+Calls no model, executes no foreign code, writes nothing. For every .py
+file tracked in git, it extracts the string literals that declare a file
+path (AST, not text regex), and checks whether that path really exists,
+resolved against MAK's known physical roots (this repo, the FLUJO
+checkout, and $HOME).
 
-El area de movimiento del raton es el directorio de primer nivel del archivo
-que declara la referencia (tools/, cultura/, src/, tests/, docs/...). El
-raton reporta a que area pertenece cada hallazgo; no decide por si solo si
-puede cruzar de un area a otra -- esa es una decision aparte, humana o de
-otra capa, no de este script.
+The mouse's area is the top-level directory of the file that declares the
+reference (tools/, cultura/, src/, tests/, docs/...). It reports which
+area each finding belongs to; it does not decide on its own whether a
+reference is allowed to cross from one area into another -- that is a
+separate decision, human or from another layer, not this script's.
 
-Uso:
-    python3 tools/raton.py                 # reporte de texto
-    python3 tools/raton.py --json out.json # ademas, JSON completo
+Usage:
+    python3 tools/raton.py                 # text report
+    python3 tools/raton.py --json out.json # plus, full JSON
 
-Nota sobre ejecucion real (no solo esta lectura estatica): probado el
-2026-09-17 dentro de Docker con la copia del repo montada de solo lectura
-(-v repo:ro) y --network none. Un script adversarial de prueba confirmo que
-escribir o borrar dentro del repo montado y alcanzar la red quedan
-bloqueados por el sistema, no por costumbre. Un montaje de solo lectura sin
-carpeta de salida aparte rompe scripts legitimos que escriben su propio
-reporte (ej. scripts/flyer_duplicates_report.py); montar ademas un
-directorio de salida separado, en escritura, es la forma correcta.
+Note on real execution (not just this static read): tested on 2026-09-17
+inside Docker with the repo copy mounted read-only (-v repo:ro) and
+--network none. An adversarial test script confirmed that writing or
+deleting inside the mounted repo, and reaching the network, are both
+blocked by the system, not by convention. A read-only mount with no
+separate output folder breaks legitimate scripts that write their own
+report (e.g. scripts/flyer_duplicates_report.py); mounting a separate
+writable output directory as well is the correct form.
 """
 from __future__ import annotations
 
@@ -50,7 +50,7 @@ ROOTS = [
     Path(os.path.expanduser("~")) / "plataforma",
 ]
 
-# Prefijos que no son referencias de archivo local (URLs, plantillas, MIME).
+# Prefixes that are not local file references (URLs, templates, MIME).
 SKIP_PREFIXES = ("http://", "https://", "ftp://", "data:", "{", "%",
                   "vnd.", "application/", "text/", "image/")
 

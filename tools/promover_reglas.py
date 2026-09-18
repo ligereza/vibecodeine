@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-"""promover_reglas.py -- integra project_ir.promote_rule() al ciclo real.
+"""promover_reglas.py -- wires project_ir.promote_rule() into the real cycle.
 
-`promote_rule()` ya existe, completo y con criterios estrictos (soporte
-minimo, holdout aprobado, cero contradicciones); antes de este script solo
-lo invocaban los tests. Este script recorre todas las reglas candidatas y
-llama a la funcion ya construida sobre cada una. Nunca decide con criterio
-propio: solo asegura que el criterio que ya existe se aplique, en vez de
-quedar sin usar.
+`promote_rule()` already exists, complete with strict criteria (minimum
+support, holdout passed, zero contradictions); before this script only the
+tests called it. This script walks every candidate rule and calls the
+already-built function on each one. It never decides with its own
+criteria: it only makes sure the existing criteria actually gets applied
+instead of sitting unused.
 
-Cada regla termina en uno de dos estados, nunca en silencio:
-  - promovida: paso los criterios existentes.
-  - rechazada, con la razon exacta que devuelve promote_rule().
+Every rule ends in one of two states, never in silence:
+  - promoted: passed the existing criteria.
+  - rejected, with the exact reason promote_rule() returns.
 
-Uso:
+Usage:
     python3 tools/promover_reglas.py [--db data/mak_knowledge.db]
 """
 from __future__ import annotations

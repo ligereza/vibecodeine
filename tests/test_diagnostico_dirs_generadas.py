@@ -46,8 +46,8 @@ class TestCleanAnchorDir:
         assert result == ("ProyectoReal", "assets", "FinalArt")
 
     def test_all_dirs_generated_stops_at_one_remaining(self):
-        # while len(parts) > 1: nunca reduce a menos de 1 elemento,
-        # aunque ese ultimo elemento tambien sea "generado".
+        # while len(parts) > 1: never reduces below 1 element,
+        # even when that last element is also "generated".
         result = clean_anchor_dir(["renders", "cache", "backup"])
         assert result == ("renders",)
 

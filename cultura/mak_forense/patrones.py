@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Los detectores. Funciones puras: entran `Registro`, salen `Hallazgo`.
+"""The detectors. Pure functions: `Registro` in, `Hallazgo` out.
 
-Sin red, sin base de datos, sin escritura. Todo lo que lee viene por
-parametro, para que cada regla se pueda probar con ocho filas inventadas.
+No network, no database, no writes. Everything it reads comes through a
+parameter, so every rule can be tested with eight made-up rows.
 
-Las constantes de este archivo no son preferencias: cada una tiene detras una
-medicion sobre `Testeo 2025` que esta citada en su docstring. Cuando otra area
-las mueva, que las mueva con su propia medicion al lado.
+The constants in this file are not preferences: each one has a
+measurement on `Testeo 2025` behind it, cited in its docstring. When
+another area moves them, it should move them with its own measurement
+next to them.
 """
 from __future__ import annotations
 
@@ -18,37 +19,39 @@ try:
 except ImportError:  # direct execution through forense.py
     from registro import Analisis, Cobertura, Hallazgo, Registro
 
-# Un tramo compartido con otro grupo tiene que medir esto para contar.
+# A run shared with another group has to measure this to count.
 #
-# Medido: con 4 se marcaron 3 filas de `Fiesta Dame 504 mesa 1` como copiadas
-# de `Cachorros 35`, y eran falsas -- el supuesto origen era 28 dias POSTERIOR
-# y las tres filas eran MDMA «tesla rosada» con resultados distintos entre si.
-# Los tramos verdaderos del corpus miden 16, 17, 28 y 71: 6 los deja pasar a
-# todos y deja fuera la coincidencia generica.
+# Measured: at 4, 3 rows of `Fiesta Dame 504 mesa 1` got marked as copied
+# from `Cachorros 35`, and they were false -- the supposed origin was 28
+# days LATER and the three rows were MDMA "tesla rosada" with different
+# results from each other. The real runs in the corpus measure 16, 17, 28
+# and 71: 6 lets all of them through and keeps out the generic match.
 MINIMO_TRAMO = 6
 
-# Un bloque pegado se reconoce porque MUCHOS contenidos distintos se repiten
-# a la MISMA distancia. Ese es su periodo.
+# A stitched-together block is recognized because MANY different contents
+# repeat at the SAME distance. That distance is its period.
 #
-# Medido: `Mamisonga 8225` da delta 22 en 396 de sus ~640 repeticiones. El
-# resto de las hojas del corpus da delta 1 -- filas identicas una debajo de
-# otra, que es como se ve una tanda real de muestras iguales, no un pegado.
+# Measured: `Mamisonga 8225` has delta 22 in 396 of its ~640 repetitions.
+# The rest of the sheets in the corpus give delta 1 -- identical rows one
+# after another, which is what a real batch of equal samples looks like,
+# not a stitched block.
 MINIMO_BLOQUE = 8
 FRACCION_BLOQUE = 0.5
 
-# Ventana en que se acepta que una captura pertenezca al evento que declara.
-# Una jornada RD empieza antes de la fiesta y los datos se suben despues; lo
-# que esta fuera de esto no es tarde, es otro evento.
+# Window in which a capture is accepted as belonging to the event it
+# declares. An RD session starts before the party and the data gets
+# uploaded afterward; whatever falls outside this isn't late, it's
+# another event.
 MARGEN_PREVIO_H = 12.0
 MARGEN_POSTERIOR_H = 24.0
 
-# Corte robusto para "esta captura esta lejos del cumulo de su propio grupo".
-# 3.5 es el corte de Iglewicz-Hoaglin sobre el z modificado por MAD; el piso
-# en horas evita marcar una jornada que simplemente fue corta y pareja.
+# Robust cutoff for "this capture is far from its own group's cluster".
+# 3.5 is the Iglewicz-Hoaglin cutoff on the MAD-modified z-score; the
+# floor in hours avoids flagging a session that was simply short and even.
 Z_FUERA_DE_JORNADA = 3.5
 PISO_FUERA_DE_JORNADA_H = 12.0
 
-# Dos cargas separadas por menos de esto no las tipeo una persona.
+# Two loads separated by less than this were not typed by a person.
 PISO_RAFAGA_S = 3.0
 MINIMO_RAFAGA = 4
 
@@ -56,19 +59,20 @@ _HORA = 3600.0
 
 
 # --------------------------------------------------------------------------
-# repeticiones dentro de un mismo grupo
+# repetitions within the same group
 # --------------------------------------------------------------------------
 
 def periodo_dominante(posiciones_por_contenido,
                       minimo=MINIMO_BLOQUE,
                       fraccion=FRACCION_BLOQUE) -> int | None:
-    """El periodo de un bloque pegado dentro del grupo, o None.
+    """The period of a stitched block within the group, or None.
 
-    Un bloque pegado N veces deja, por cada contenido repetido, una distancia
-    constante igual al largo del bloque. Una tanda real de muestras iguales
-    deja distancia 1. Por eso solo se consideran distancias mayores a 1, y se
-    exige que la distancia modal explique la mitad de las repeticiones: una
-    coincidencia no manda sobre el grupo entero.
+    A block stitched N times leaves, for each repeated content, a
+    constant distance equal to the block's length. A real batch of equal
+    samples leaves distance 1. That's why only distances greater than 1
+    are considered, and the modal distance is required to explain half
+    of the repetitions: a single coincidence doesn't rule the whole
+    group.
     """
     deltas: Counter[int] = Counter()
     for posiciones in posiciones_por_contenido:
@@ -88,20 +92,21 @@ def periodo_dominante(posiciones_por_contenido,
 
 
 def repeticiones(registros: list[Registro]) -> list[Hallazgo]:
-    """Clasifica las repeticiones de un grupo segun su GEOMETRIA.
+    """Classifies a group's repetitions by their GEOMETRY.
 
-    Esta es la correccion que costo mas cara del analisis original: contar
-    "filas identicas" y llamarlas duplicadas inflaba el dano. De las 904
-    repeticiones del corpus, 645 eran un pegado real (periodo 22) y 139 eran
-    filas contiguas -- `DAME 1503` tiene 37 de sus 39 repeticiones pegadas una
-    debajo de otra, que es exactamente como se ve una mesa donde llegaron
-    cinco ketaminas seguidas con el mismo reactivo y el mismo color.
+    This is the correction that cost the most in the original analysis:
+    counting "identical rows" and calling them duplicates inflated the
+    damage. Of the corpus's 904 repetitions, 645 were a real stitched
+    block (period 22) and 139 were contiguous rows -- `DAME 1503` has 37
+    of its 39 repetitions stacked one after another, which is exactly
+    what a table looks like when five ketamine samples arrive in a row
+    with the same reagent and the same color.
 
-    La forma distingue lo que el contenido no puede:
+    Shape distinguishes what content cannot:
 
-      lote_contiguo        delta <= 1   probablemente muestras reales
-      bloque_periodico     delta == P   pegado, confirmado por el periodo
-      repeticion_dispersa  el resto     sin explicacion, queda pendiente
+      lote_contiguo        delta <= 1   probably real samples
+      bloque_periodico     delta == P   stitched, confirmed by the period
+      repeticion_dispersa  everything else, unexplained, stays pending
     """
     utiles = [r for r in registros if not r.es_encabezado]
     if not utiles:
@@ -172,7 +177,7 @@ def repeticiones(registros: list[Registro]) -> list[Hallazgo]:
 
 
 # --------------------------------------------------------------------------
-# tramos que vienen de OTRO grupo
+# runs that come from ANOTHER group
 # --------------------------------------------------------------------------
 
 def _fecha_de(registros: list[Registro]) -> str | None:
@@ -183,17 +188,18 @@ def _fecha_de(registros: list[Registro]) -> str | None:
 
 
 def _quien_copio(a: str, b: str, largo: int, distintos: dict[str, int]) -> tuple[str, str]:
-    """Devuelve (copia, origen) segun cuanto pesa el tramo en cada grupo.
+    """Returns (copy, origin) based on how much the run weighs in each group.
 
-    En el original, el tramo ES practicamente todo su contenido propio. En la
-    copia, el tramo queda diluido entre las anotaciones nuevas que si se
-    hicieron. Medido en el caso mas claro del corpus: el tramo de 71 filas
-    pesa 0,96 del contenido distinto de `DAME 1503` y 0,62 del de
-    `Psiquiatrico 1603` -- la copia es Psiquiatrico, que es ademas la hoja del
-    dia siguiente.
+    In the original, the run IS practically all of its own distinct
+    content. In the copy, the run gets diluted among the new annotations
+    that were actually made. Measured in the clearest case in the corpus:
+    the 71-row run weighs 0.96 of `DAME 1503`'s distinct content and 0.62
+    of `Psiquiatrico 1603`'s -- the copy is Psiquiatrico, which is also
+    the next day's sheet.
 
-    El umbral de 0,05 evita decidir por ruido cuando dos grupos son casi
-    iguales; ahi manda el nombre, porque `Copy of X` se llama asi por algo.
+    The 0.05 threshold avoids deciding on noise when two groups are
+    nearly equal; there, the name rules, because `Copy of X` is called
+    that for a reason.
     """
     peso_a = largo / max(distintos.get(a, 1), 1)
     peso_b = largo / max(distintos.get(b, 1), 1)
@@ -203,24 +209,25 @@ def _quien_copio(a: str, b: str, largo: int, distintos: dict[str, int]) -> tuple
     copias_b = b.lower().count("copy of") + b.lower().count("copia de")
     if copias_a != copias_b:
         return (a, b) if copias_a > copias_b else (b, a)
-    return tuple(sorted((a, b)))  # estable, y el hallazgo queda en 'pendiente'
+    return tuple(sorted((a, b)))  # stable, and the finding stays 'pendiente'
 
 
 def tramos_ajenos(grupos: dict[str, list[Registro]],
                   minimo: int = MINIMO_TRAMO) -> list[Hallazgo]:
-    """Tramos contiguos que un grupo comparte con otro: el pegado entre hojas.
+    """Contiguous runs a group shares with another: the stitching between sheets.
 
-    A diferencia del detector original, compara TODOS los grupos que reciba,
-    sin importar de que archivo o periodo vengan. Esa era la ceguera: 2024 y
-    2025 se importaban por separado, asi que una jornada que heredaba de la
-    del año anterior no se veia. La cobertura declara igual que solo se
-    compara lo que esta en esta corrida.
+    Unlike the original detector, this compares ALL the groups it
+    receives, regardless of which file or period they come from. That
+    was the blind spot: 2024 and 2025 were imported separately, so a
+    session that inherited from the previous year's went unseen.
+    Coverage still declares that only what's in this run gets compared.
 
-    La direccion se decide por peso (`_quien_copio`) y se CORROBORA con la
-    fecha: el grupo posterior es el que copio. Si ambas senales coinciden el
-    hallazgo queda `confirmado`; si solo hay una, `probable`; si se
-    contradicen queda `pendiente` con las dos hipotesis escritas, porque las
-    fechas del corpus vienen del nombre de la hoja y no son confiables solas.
+    Direction is decided by weight (`_quien_copio`) and CORROBORATED with
+    the date: the later group is the one that copied. If both signals
+    agree the finding stays `confirmado`; if only one exists, `probable`;
+    if they contradict each other it stays `pendiente` with both
+    hypotheses written out, because the corpus dates come from the
+    sheet's name and aren't reliable on their own.
     """
     conjuntos = {g: {r.contenido for r in rs if not r.es_encabezado}
                  for g, rs in grupos.items()}
@@ -248,7 +255,7 @@ def tramos_ajenos(grupos: dict[str, list[Registro]],
                 for otro in sorted(comun):
                     copia, origen = _quien_copio(grupo, otro, largo, distintos)
                     if copia != grupo:
-                        continue  # el hallazgo se emite del lado de la copia
+                        continue  # the finding is emitted from the copy's side
                     f_copia, f_origen = fechas.get(grupo), fechas.get(otro)
                     veredicto_fecha = None
                     if f_copia and f_origen and f_copia != f_origen:
@@ -286,13 +293,14 @@ def tramos_ajenos(grupos: dict[str, list[Registro]],
 
 
 def _primeras_apariciones(registros: list[Registro]) -> list[Registro]:
-    """El grupo sin sus propias repeticiones, en orden.
+    """The group without its own repetitions, in order.
 
-    Un tramo se trae de otra jornada UNA vez; lo que pasa despues dentro de la
-    hoja ya lo explica `repeticiones`. Sin esto, las 31 replicas internas de
-    `Mamisonga 8225` vuelven a matchear contra `Cachorros 18125` y el mismo
-    tramo de 20 filas se informa 31 veces -- 780 filas "ajenas" donde hay 20.
-    Los totales por patron dejarian de poder sumarse entre si.
+    A run is brought over from another session ONCE; what happens
+    afterward within the sheet is already explained by `repeticiones`.
+    Without this, `Mamisonga 8225`'s 31 internal replicas would match
+    against `Cachorros 18125` again and the same 20-row run would be
+    reported 31 times -- 780 "foreign" rows where there are 20. The
+    per-pattern totals would stop being addable to each other.
     """
     vistos: set[tuple] = set()
     salida: list[Registro] = []
@@ -308,7 +316,7 @@ def _primeras_apariciones(registros: list[Registro]) -> list[Registro]:
 
 
 def _dias_entre(a: str | None, b: str | None) -> int | None:
-    """Dias entre dos fechas ISO, sin pedir datetime si no hacen falta."""
+    """Days between two ISO dates, without importing datetime unless needed."""
     if not a or not b:
         return None
     import datetime
@@ -321,26 +329,26 @@ def _dias_entre(a: str | None, b: str | None) -> int | None:
 
 
 # --------------------------------------------------------------------------
-# el tiempo: lo que la planilla no podia detectar y una app si
+# time: what the spreadsheet could never detect and an app can
 # --------------------------------------------------------------------------
 
 def anacronismos(registros: list[Registro],
                  margen_previo_h: float = MARGEN_PREVIO_H,
                  margen_posterior_h: float = MARGEN_POSTERIOR_H) -> list[Hallazgo]:
-    """Capturas cuyo instante real no cabe en el evento que declaran.
+    """Captures whose real instant doesn't fit the event they declare.
 
-    Es el detector que la planilla nunca pudo tener y que XIO-RD si: una hoja
-    de calculo no sabe cuando se escribio una celda, una app sabe exactamente
-    cuando se guardo una muestra. Cubre los dos errores que se anticipan:
+    This is the detector the spreadsheet never could have and XIO-RD can:
+    a spreadsheet doesn't know when a cell was written, an app knows
+    exactly when a sample was saved. Covers the two anticipated errors:
 
-      registro_en_evento_futuro  -- se cargo ANTES de que el evento ocurriera;
-                                    el voluntario eligio una jornada que
-                                    todavia no pasa
-      registro_en_evento_pasado  -- se cargo mucho DESPUES; el voluntario
-                                    eligio una jornada anterior de la lista
+      registro_en_evento_futuro  -- loaded BEFORE the event happened; the
+                                    volunteer picked a session that hasn't
+                                    happened yet
+      registro_en_evento_pasado  -- loaded much LATER; the volunteer
+                                    picked an earlier session from the list
 
-    Un registro sin instante no se marca ni se absuelve: no se ve. Eso lo
-    cuenta la cobertura.
+    A record with no instant is neither flagged nor cleared: it simply
+    isn't seen. Coverage accounts for that.
     """
     import datetime
     salida: list[Hallazgo] = []
@@ -387,15 +395,17 @@ def anacronismos(registros: list[Registro],
 def fuera_de_jornada(registros: list[Registro],
                      z: float = Z_FUERA_DE_JORNADA,
                      piso_h: float = PISO_FUERA_DE_JORNADA_H) -> list[Hallazgo]:
-    """Capturas lejos del cumulo temporal de su propio grupo.
+    """Captures far from their own group's time cluster.
 
-    Sirve donde `anacronismos` no llega: cuando el evento no tiene fecha
-    declarada, el grupo igual la tiene implicita -- casi todas sus capturas
-    caen en unas pocas horas. La que no, se separa sola.
+    Useful where `anacronismos` doesn't reach: when the event has no
+    declared date, the group still has an implicit one -- almost all of
+    its captures fall within a few hours. The one that doesn't stands
+    apart on its own.
 
-    Usa mediana y MAD, no promedio y desviacion: si el grupo ya trae varias
-    capturas erradas, el promedio se corre hacia ellas y deja de verlas. El
-    piso en horas evita marcar dispersion normal en una jornada pareja.
+    Uses median and MAD, not mean and standard deviation: if the group
+    already carries several off-time captures, the mean shifts toward
+    them and stops seeing them. The floor in hours avoids flagging
+    normal spread in an evenly-paced session.
     """
     con_hora = [r for r in registros if r.instante_registro is not None]
     if len(con_hora) < 4:
@@ -430,12 +440,13 @@ def fuera_de_jornada(registros: list[Registro],
 def rafagas(registros: list[Registro],
             piso_s: float = PISO_RAFAGA_S,
             minimo: int = MINIMO_RAFAGA) -> list[Hallazgo]:
-    """Cargas demasiado seguidas para haberse tipeado.
+    """Loads too close together to have been typed by hand.
 
-    El caso que se quiere anticipar: la jornada se llena, nadie alcanza a
-    cargar en la app, y al final alguien vuelca todo de una. Los datos pueden
-    ser ciertos, pero no se observaron cuando dicen -- y eso cambia lo que se
-    puede afirmar de ellos. Por eso es un hallazgo, no un error.
+    The case this anticipates: the session fills up, nobody manages to
+    load into the app, and at the end someone dumps everything at once.
+    The data can be true, but it wasn't observed when it claims to have
+    been -- and that changes what can be asserted about it. That's why
+    it's a finding, not an error.
     """
     con_hora = sorted((r for r in registros if r.instante_registro is not None),
                       key=lambda r: r.instante_registro)
@@ -472,10 +483,11 @@ def _hallazgo_rafaga(corrida: list[Registro], piso_s: float) -> Hallazgo:
 
 
 def encabezados_intercalados(registros: list[Registro]) -> list[Hallazgo]:
-    """Un encabezado en medio del grupo marca la costura de un pegado.
+    """A header in the middle of the group marks the seam of a stitch.
 
-    En el corpus hay 94. Cada uno es el borde superior de un bloque que
-    alguien trajo de otra hoja, y ninguno se habia usado como señal.
+    There are 94 in the corpus. Each one is the top edge of a block
+    someone brought over from another sheet, and none of them had been
+    used as a signal before.
     """
     filas = sorted(registros, key=lambda r: r.orden)
     if not filas:
@@ -496,17 +508,17 @@ def encabezados_intercalados(registros: list[Registro]) -> list[Hallazgo]:
 
 
 # --------------------------------------------------------------------------
-# la corrida completa
+# the full run
 # --------------------------------------------------------------------------
 
 def analizar(registros: list[Registro],
              minimo_tramo: int = MINIMO_TRAMO,
              limites_extra: tuple[str, ...] = ()) -> Analisis:
-    """Corre todos los detectores y devuelve hallazgos + cobertura.
+    """Runs every detector and returns findings + coverage.
 
-    El orden de la salida es por cantidad, no por patron: lo primero que se
-    lee tiene que ser lo mas grande, que en el corpus real fue una sola hoja
-    explicando el 70% del dano.
+    The output is ordered by size, not by pattern: the first thing read
+    has to be the biggest, which in the real corpus was a single sheet
+    explaining 70% of the damage.
     """
     por_grupo: dict[str, list[Registro]] = defaultdict(list)
     for r in registros:

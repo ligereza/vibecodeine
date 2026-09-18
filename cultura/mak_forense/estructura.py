@@ -1,35 +1,38 @@
 #!/usr/bin/env python3
-"""Detectores sobre la FORMA de una tabla, no sobre el contenido de sus filas.
+"""Detectors over the SHAPE of a table, not the content of its rows.
 
-`patrones.py` responde «¿esta anotacion se repite, y de donde vino?». Este
-modulo responde algo anterior, y que si falla vuelve basura todo lo demas:
-**¿la tabla tiene la forma que el lector supone?**
+`patrones.py` answers "does this annotation repeat, and where did it come
+from?". This module answers something prior, and which turns everything
+else into garbage if it fails: **does the table have the shape the reader
+assumes?**
 
-Los cuatro patrones de aca salieron de medir `Testeo 2025` el 2026-09-16, y
-cada uno costo un error real en cifras que ya se habian reportado:
+The four patterns here came out of measuring `Testeo 2025` on 2026-09-16,
+and each one cost a real error in figures that had already been reported:
 
-1. `columnas_divergentes` -- 68 hojas con OCHO estructuras de encabezado
-   distintas. El lector mapeaba columnas por posicion fija, asi que en las
-   hojas con una columna de mas el formato entraba donde va el resultado y el
-   color donde va el reactivo. 87 muestras con su reactivo cambiado, y en el
-   vocabulario aparecian «reactivos» llamados `azul` y `celeste`.
+1. `columnas_divergentes` -- 68 sheets with EIGHT different header
+   structures. The reader mapped columns by fixed position, so on sheets
+   with one extra column the format landed where the result goes and the
+   color where the reagent goes. 87 samples with their reagent swapped,
+   and the vocabulary ended up with "reagents" called `azul` and
+   `celeste`.
 
-2. `bloques_desprendidos` -- una hoja con la jornada arriba y otro bloque 288
-   filas mas abajo. Si ese bloque no coincide con nada, se cuenta como
-   muestras reales sin que nadie lo mire.
+2. `bloques_desprendidos` -- a sheet with the session at the top and
+   another block 288 rows further down. If that block doesn't match
+   anything, it gets counted as real samples with nobody looking at it.
 
-3. `rotulos_intercalados` -- una fila que solo trae el primer campo y el resto
-   vacio, en medio de la tabla. No es un dato: es el titulo de OTRA jornada
-   metida en la misma hoja (`HABITACION DEL PANICO` dentro de `Psiquiatrico
-   1603`). Contarla suma una muestra que no existe y esconde una jornada.
+3. `rotulos_intercalados` -- a row that only carries the first field with
+   the rest empty, in the middle of the table. It's not data: it's the
+   title of ANOTHER session stuck inside the same sheet (`HABITACION DEL
+   PANICO` inside `Psiquiatrico 1603`). Counting it adds a sample that
+   doesn't exist and hides an entire session.
 
-4. `grupos_duplicados` -- un grupo cuyo contenido ya esta casi entero en otro.
-   `Copy of Copy of DAME 0911 A` traia las 31 filas de `DAME 0911 A`, y 14
-   escapaban al detector de tramos contiguos porque estaban intercaladas
-   entre repeticiones.
+4. `grupos_duplicados` -- a group whose content is already almost
+   entirely inside another one. `Copy of Copy of DAME 0911 A` carried the
+   31 rows of `DAME 0911 A`, and 14 escaped the contiguous-run detector
+   because they were interleaved among repetitions.
 
-Todo lo de aca MARCA, nunca borra: la decision de excluir es humana, igual
-que en `patrones.py`.
+Everything here MARKS, never deletes: the decision to exclude is human,
+same as in `patrones.py`.
 """
 from __future__ import annotations
 
@@ -39,18 +42,18 @@ from collections import Counter, defaultdict
 
 from .registro import Hallazgo
 
-# Un salto de filas mayor a esto separa dos bloques distintos, no una fila en
-# blanco. Medido: los bloques desprendidos reales del corpus saltan 100 y 288
-# filas; las separaciones cosmeticas dentro de una tabla saltan 6 a 12.
+# A row gap bigger than this separates two distinct blocks, not a blank
+# row. Measured: the real detached blocks in the corpus jump 100 and 288
+# rows; cosmetic gaps within a table jump 6 to 12.
 SALTO_BLOQUE = 40
 
-# Cuanto de un grupo tiene que estar dentro de otro para llamarlo duplicado.
-# Con 0.8 se marca `Copy of Copy of DAME 0911 A` (100%) y no se marcan los
-# pares de mesas de una misma fiesta, que comparten a lo sumo 29%.
+# How much of one group has to sit inside another to call it a duplicate.
+# At 0.8, `Copy of Copy of DAME 0911 A` (100%) gets marked, and the pairs
+# of tables from the same party, which share at most 29%, don't.
 FRACCION_DUPLICADO = 0.8
 
-# Cuantos grupos tienen que compartir una estructura para que sea LA
-# estructura. Por debajo de esto no hay mayoria y no se acusa a nadie.
+# How many groups have to share a structure for it to count as THE
+# structure. Below this there is no majority and nobody gets accused.
 MINIMO_MAYORIA = 3
 
 
@@ -62,15 +65,15 @@ def _clave(valor: object) -> str:
 
 def columnas_divergentes(encabezados: dict[str, list],
                          minimo_mayoria: int = MINIMO_MAYORIA) -> list[Hallazgo]:
-    """Grupos cuya fila de encabezado no tiene la forma de la mayoria.
+    """Groups whose header row doesn't have the shape of the majority.
 
-    `encabezados` es {grupo: [celda, celda, ...]} con la primera fila de cada
-    grupo. No se juzga el texto de cada celda sino la POSICION de los campos:
-    dos hojas que llamen `Test 1` y `test_1` a lo mismo son iguales; una que
-    tenga dos columnas vacias en medio, no.
+    `encabezados` is {group: [cell, cell, ...]} with the first row of each
+    group. It doesn't judge the text of each cell but the POSITION of the
+    fields: two sheets naming the same thing `Test 1` and `test_1` are
+    equal; one with two empty columns in the middle is not.
 
-    Devuelve un hallazgo por grupo divergente, con la forma esperada y la que
-    trae, para que se pueda leer sin abrir el archivo.
+    Returns one finding per divergent group, with the expected shape and
+    the one it has, so it can be read without opening the file.
     """
     formas: dict[tuple, list[str]] = defaultdict(list)
     for grupo, fila in encabezados.items():
@@ -80,8 +83,9 @@ def columnas_divergentes(encabezados: dict[str, list],
 
     forma_mayor, grupos_mayor = max(formas.items(), key=lambda kv: len(kv[1]))
     if len(grupos_mayor) < minimo_mayoria:
-        # Sin mayoria clara no hay divergencia que declarar: seria acusar a
-        # una hoja de no parecerse a otra igual de rara.
+        # With no clear majority there is no divergence to declare: it
+        # would mean accusing one sheet of not looking like another
+        # equally odd one.
         return []
 
     hallazgos = []
@@ -95,8 +99,9 @@ def columnas_divergentes(encabezados: dict[str, list],
         for grupo in grupos:
             hallazgos.append(Hallazgo(
                 patron="columnas_divergentes",
-                # Si hay campos corridos, el lector posicional YA esta leyendo
-                # mal: eso es comprobable, no una sospecha.
+                # If there are shifted fields, the positional reader is
+                # ALREADY reading it wrong: that is provable, not a
+                # suspicion.
                 certeza="confirmado" if corridos else "probable",
                 grupo=grupo,
                 n=len(corridos) or 1,
@@ -114,11 +119,12 @@ def columnas_divergentes(encabezados: dict[str, list],
 
 def bloques_desprendidos(posiciones: dict[str, list[int]],
                          salto: int = SALTO_BLOQUE) -> list[Hallazgo]:
-    """Grupos cuyas filas vienen en bloques separados por un hueco grande.
+    """Groups whose rows come in blocks separated by a large gap.
 
-    `posiciones` es {grupo: [numero_de_fila, ...]} con las filas que traen
-    dato. Un hueco de decenas de filas no es una linea en blanco de adorno:
-    es otro bloque, y hay que mirarlo antes de sumarlo al total.
+    `posiciones` is {group: [row_number, ...]} with the rows that carry
+    data. A gap of dozens of rows is not a decorative blank line: it's
+    another block, and it has to be looked at before adding it to the
+    total.
     """
     hallazgos = []
     for grupo, filas in posiciones.items():
@@ -140,12 +146,12 @@ def bloques_desprendidos(posiciones: dict[str, list[int]],
 
 
 def rotulos_intercalados(filas: dict[str, list[tuple[int, list]]]) -> list[Hallazgo]:
-    """Filas que traen SOLO el primer campo, en medio de una tabla con datos.
+    """Rows that carry ONLY the first field, in the middle of a table with data.
 
-    `filas` es {grupo: [(numero, [celda, ...]), ...]}. Una fila asi no es un
-    dato incompleto: es un titulo. En el corpus marcaba donde empezaba otra
-    jornada dentro de la misma hoja, asi que ademas de sumar una muestra
-    inexistente escondia un evento entero.
+    `filas` is {group: [(number, [cell, ...]), ...]}. A row like that is
+    not incomplete data: it's a title. In the corpus it marked where
+    another session started within the same sheet, so besides adding a
+    nonexistent sample it hid an entire event.
     """
     hallazgos = []
     for grupo, filas_grupo in filas.items():
@@ -156,7 +162,7 @@ def rotulos_intercalados(filas: dict[str, list[tuple[int, list]]]) -> list[Halla
             if str(celdas[0] or "").strip()
             and not any(str(c or "").strip() for c in celdas[1:])
         ]
-        # Solo cuenta si hay datos DESPUES: un rotulo al final es una nota.
+        # Only counts if there is data AFTER it: a label at the end is a note.
         ultima_con_datos = max(
             (n for n, celdas in filas_grupo
              if any(str(c or "").strip() for c in celdas[1:])), default=-1)
@@ -180,12 +186,12 @@ def rotulos_intercalados(filas: dict[str, list[tuple[int, list]]]) -> list[Halla
 
 def grupos_duplicados(contenidos: dict[str, set],
                       fraccion: float = FRACCION_DUPLICADO) -> list[Hallazgo]:
-    """Grupos cuyo contenido ya esta casi entero dentro de otro grupo.
+    """Groups whose content already sits almost entirely inside another group.
 
-    `contenidos` es {grupo: {contenido_comparable, ...}}. Complementa a
-    `tramos_ajenos`, que exige un tramo CONTIGUO: cuando la copia fue editada,
-    las coincidencias quedan intercaladas y ningun tramo llega al minimo, pero
-    el conjunto sigue estando repetido casi completo.
+    `contenidos` is {group: {comparable_content, ...}}. It complements
+    `tramos_ajenos`, which requires a CONTIGUOUS run: when the copy was
+    edited, the matches end up interleaved and no run reaches the
+    minimum, but the set as a whole is still almost entirely repeated.
     """
     hallazgos = []
     for grupo, propio in contenidos.items():
@@ -197,7 +203,7 @@ def grupos_duplicados(contenidos: dict[str, set],
             comun = propio & ajeno
             if len(comun) < fraccion * len(propio):
                 continue
-            # El mas chico es la copia; a igual tamano, el que lo dice.
+            # The smaller one is the copy; at equal size, whichever name says so.
             if len(propio) > len(ajeno):
                 continue
             if len(propio) == len(ajeno) and not _parece_copia(grupo, otro):
@@ -219,7 +225,7 @@ def grupos_duplicados(contenidos: dict[str, set],
 
 
 def _parece_copia(a: str, b: str) -> bool:
-    """`Copy of X` / `Copia de X` se declara copia en su propio nombre."""
+    """`Copy of X` / `Copia de X` declares itself a copy in its own name."""
     ka, kb = _clave(a), _clave(b)
     return (ka.startswith(("copy_of", "copia_de")) and not
             kb.startswith(("copy_of", "copia_de")))
@@ -229,11 +235,11 @@ def analizar_estructura(encabezados: dict[str, list] | None = None,
                         posiciones: dict[str, list[int]] | None = None,
                         filas: dict[str, list[tuple[int, list]]] | None = None,
                         contenidos: dict[str, set] | None = None) -> list[Hallazgo]:
-    """Corre los cuatro detectores con lo que se le haya dado.
+    """Runs the four detectors with whatever was given to it.
 
-    Cada argumento es opcional: un area que solo tenga los encabezados puede
-    correr solo ese. El orden de salida pone primero lo que invalida mas
-    lectura -- una columna corrida arruina todas las filas de su grupo.
+    Every argument is optional: an area that only has the headers can run
+    just that one. The output order puts first whatever invalidates the
+    most reading -- a shifted column ruins every row in its group.
     """
     hallazgos: list[Hallazgo] = []
     if encabezados:
