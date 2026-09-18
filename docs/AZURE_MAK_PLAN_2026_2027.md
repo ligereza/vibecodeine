@@ -1,6 +1,6 @@
 # Plan de integracion Azure para MAK — 2026-2027
 
-Fecha del corte: 2026-09-17  
+Fecha del corte: 2026-09-18  
 Alcance: usar Azure como apoyo acotado del motor local MAK, FLUJO y XIO.  
 Autoridad: MAK local y sus repositorios. Azure es una proyeccion auxiliar, nunca una segunda autoridad de datos.
 
@@ -15,7 +15,7 @@ Autoridad: MAK local y sus repositorios. Azure es una proyeccion auxiliar, nunca
 
 ## 2. Estado vivo que manda
 
-Comprobado desde MAK por Azure CLI el 2026-09-17:
+Comprobado desde MAK por Azure CLI y ARM REST el 2026-09-18:
 
 | Recurso | Estado/uso observado |
 |---|---|
@@ -26,6 +26,13 @@ Comprobado desde MAK por Azure CLI el 2026-09-17:
 | `makmak-7457-resource-appinsights` / `-logs` | recursos de observabilidad vivos |
 | `makinspace` | `FileStorage`, `StandardV2_GRS`; no es Blob Storage normal |
 | `maklinux` | `Microsoft.DesktopVirtualization/workspaces`; no confundirlo con VM de computo |
+| `makmak-ml-workspace` | workspace Azure Machine Learning en `brazilsouth`, provisioning `Succeeded` |
+| `makmak-cpu-cluster` | AmlCompute `Standard_DS2_v2`, 0 nodos actuales, min 0, max 1, scale-down `PT2M` |
+| `makmakmlstorage` | StorageV2 `Standard_LRS`, dependencia del workspace ML |
+| `makmak-ml-kv` | Key Vault `standard`, dependencia del workspace ML, acceso publico habilitado |
+| `makmakmlregistry` | Azure Container Registry `Basic`, admin local deshabilitado |
+| `makmak-ml-insights` | Application Insights `web`, dependencia del workspace ML |
+| `makmak-search` | Azure AI Search `Free`, `brazilsouth`, running, 1 particion y 1 replica |
 
 Nombres que aparecen en usage historico pero no en el inventario vivo actual: `mak-search-free`, `mak-postgres-free`, `mak-servicebus-free`, `mak-cloud-kv`, `mak-agente-libre`, `makloud` y `mak-language-free`. No deben usarse como si siguieran creados.
 
@@ -42,6 +49,9 @@ Estado local medido:
 - Configuracion Research: `/home/mak/research/research.env`, modo privado.
 - Contrato PostgreSQL: `/home/mak/flujo/src/flujo/knowledge/postgres_runtime.py`, por defecto socket Unix y database `mak_knowledge`.
 - Azure ISSVKK para el agente y Continue: `/home/mak/.config/issvkk/azure-issvkk.env`; Continue usa ademas `/home/mak/.continue/.env`. Esta es una credencial de inferencia del recurso ISSVKK, no una credencial de administracion de Azure for Students.
+- Azure ML: el workspace tiene los datastores predeterminados `workspaceworkingdirectory`, `workspaceartifactstore`, `workspaceblobstore` y `workspacefilestore`.
+- Azure ML: no hay jobs, data assets, modelos, online endpoints ni batch endpoints observados en el corte.
+- Azure ML: la extension CLI `az ml` no pudo ejecutarse por `No module named 'rpds.rpds'`; el estado se verifico mediante ARM REST y no se instalo nada.
 
 ## 3. Contrato de ejecucion del agente
 
@@ -109,25 +119,25 @@ Nunca debe ser:
 
 ### A. Azure AI Search — memoria consultable de Research
 
-**Estado:** no hay Search vivo confirmado. SearXNG local ya resuelve busqueda web; no se debe reemplazar.
+**Estado vivo e integrado:** `makmak-search` existe en `brazilsouth`, SKU `Free`, estado `running`, 1 particion y 1 replica. Se verificaron los tres indices existentes (`mak-inbox-v1`, `mak-rd-v1`, `mak-tools-v1`) sin imprimir claves. El consumidor canonico es el Hub MAK: `/api/azure/search/tools`; `tools/consultar_mak_search.py` quedo como wrapper diagnostico del mismo adaptador.
 
 **Ejecucion:**
 
 1. Medir el corpus real y seleccionar solo Markdown final, transcripciones autorizadas, capturas verificadas, contratos y dossiers.
 2. Excluir claves, `.env`, Trash, caches, vendor trees, conversaciones privadas completas y la SQLite RD completa.
 3. Cada documento debe incluir `source_ref`, hash, fecha, dominio y estado de evidencia.
-4. Crear un unico indice Free solo si filesystem + SearXNG no bastan.
+4. Usar el servicio Free existente para un unico indice solo si filesystem + SearXNG no bastan; no crear otro Search.
 5. Sincronizar incrementalmente por hash; un documento sin cambios no se reenvia.
 
 **Se reutiliza:** `flujo/tools/research_job_router.py`, `tools/execute_research_job.py`, `cultura/mak_research/source_pipeline.py`, `flujo/src/flujo/web/hub.py`, `SourceCorpusStore` y los endpoints `/api/research/jobs` / `/api/research/operations-context`.
 
-**Falta conectar:** indexador y retriever por `source_ref`, no una nueva base de jobs. La propuesta de artefacto local es `/home/mak/research/azure/search/index_manifest.json`; el indice remoto seria `mak-knowledge-v1`.
+**Conectado:** retriever read-only sobre el indice compartido `mak-tools-v1`, con filtros por `area` y `departamento`, autenticacion AAD desde la sesion `az login`, y contrato estable `mak-azure-search-tools-v1`. No se creo otro indice ni se modifica RD.
 
 **Resultado:** la recuperacion devuelve fragmento + fuente + hash + fecha; el job registra la consulta en `job_sources`/`audit_events`; el contexto queda en `/home/mak/research/jobs/<job_id>/`. Nunca modifica `data/rd.db`.
 
 **Limite:** Free: 50 MB, 10.000 documentos y 3 indices. Usar un indice y una cuota de corpus definida.
 
-**Aceptacion:** indexar 10 documentos, recuperar por hash y termino, retirar uno por hash y comprobar que el original local y RD no cambian.
+**Aceptacion verificada:** consulta real desde el Hub devolvio documentos de `mak-tools-v1`; el CLI devolvio el mismo resultado; tests de contrato y degradacion pasaron. La indexacion/remocion no se activa desde MAK porque el objetivo actual es consulta gratuita y read-only.
 
 ### B. Storage — respaldos y archivos pesados
 
@@ -220,13 +230,13 @@ Nunca debe ser:
 
 ### I. Application Insights / Azure Monitor — medir sin subir contenido
 
-**Estado:** hay recursos App Insights y Log Analytics vivos para `makmak-5202` y `makmak-7457`. No se encontro exporter activo en el codigo MAK.
+**Estado integrado:** hay recursos App Insights y Log Analytics vivos para `makmak-5202`, `makmak-7457` y el workspace ML. `cultura/mak_plataforma/azure_services.py` envia eventos tecnicos mediante ingestion REST cuando se solicita el status o se usa el endpoint Foundry.
 
 **Ejecucion:** enviar solo `health`, `latency_ms`, `provider`, `model`, `status`, `error_class`, conteos de tokens y hash de `job_id`.
 
 **Se reutiliza:** `mak_heartbeat.py`, `_record_activity` de `research_lib.py`, `/api/status`, `cuotas.py` y `salud_proveedores.json`.
 
-**Falta:** exporter minimo, mapa de nombres job/local y dashboard. Si falla, el Hub local sigue funcionando.
+**Verificacion:** `/api/azure/status?emit=1` envio un evento real a `makmak-ml-insights`. Si falla, el Hub local sigue funcionando y el error queda nombrado; no se suben prompts, corpus, fotos, audio, transcripts, PII ni claves.
 
 **No enviar:** prompts, documentos, fotos, audio, transcripts, PII ni claves.
 
@@ -236,13 +246,34 @@ Nunca debe ser:
 
 **Decision:** mantener sin cambios. No conectar XIO, no publicar el gateway vacio y no sumar tokens/capas a la red hotspot. Solo serviria despues para una API read-only concreta con backend, rate limit, logging sin contenido y rollback.
 
+### K. Azure Machine Learning — estado vivo y uso recomendado
+
+**Estado al 2026-09-18:** el workspace `makmak-ml-workspace` ya existe en `brazilsouth` y esta `Succeeded`. Tiene `makmak-cpu-cluster` como AmlCompute `Standard_DS2_v2`, con 0 nodos actuales, minimo 0, maximo 1 e idle scale-down de 2 minutos. No se observaron jobs, data assets, modelos, online endpoints ni batch endpoints.
+
+Dependencias vivas: `makmakmlstorage` (`StorageV2`, `Standard_LRS`), `makmak-ml-kv` (`Key Vault standard`), `makmakmlregistry` (`ACR Basic`, admin local deshabilitado) y `makmak-ml-insights` (Application Insights). El workspace expone cuatro datastores predeterminados: `workspaceworkingdirectory`, `workspaceartifactstore`, `workspaceblobstore` y `workspacefilestore`.
+
+**Uso que si sirve para MAK:**
+
+- `Data assets`: versionar datasets sanitizados de RD, FOH o vision sin subir `data/rd.db` completa.
+- `Jobs` y `Pipelines`: ejecutar limpieza, entrenamiento, evaluacion y comparacion reproducibles.
+- `Model registry`: guardar versiones, hashes y metricas de modelos propios.
+- `Batch endpoints`: procesar lotes historicos de imagenes, texto o audio y liberar compute al terminar.
+- `Responsible AI`: revisar errores, interpretabilidad y cohortes cuando exista un modelo tabular propio; no es un auditor universal de DeepSeek ni de RD.
+- `Application Insights`: medir jobs, fallos y latencia sin enviar prompts, fotos, audio ni PII.
+
+**No usar por ahora:** online endpoints permanentes, compute instance siempre encendida, GPU, AKS o feature store. Para el credito anual conviene serverless o el cluster actual con `min_nodes=0`; el workspace ML no es el costo principal, pero Storage, Key Vault, ACR, Monitor y compute si consumen credito.
+
+**Ruta de datos propuesta:** staging local sanitizado en `/home/mak/research/azure-ml/staging/<run_id>/`; resultado remoto en job/data asset/model; receipt local en `/home/mak/research/azure-ml/runs/<run_id>/receipt.json`. Nunca escribir automaticamente `data/rd.db`.
+
+**Estado integrado para el alcance actual:** `tools/reportar_calibracion_deepseek.py` registro una corrida real en MLflow del workspace (`10` aciertos, `4` fallos, `accuracy=0.714`). No se crean jobs, endpoints ni datasets remotos automaticamente: no hay un dataset sanitizado ni una tarea de entrenamiento autorizada. La extension `az ml` sigue inutilizable por `No module named 'rpds.rpds'`, pero no bloquea el flujo de calibracion ni el inventario ARM read-only.
+
 ## 6. Calendario de un año
 
 ### Semanas 1-2: reconciliacion y freno de costos
 
 - Status read-only que marque cada recurso como `live`, `historic` o `absent`.
 - Reconciliar `backup.sh` contra `makinspace`.
-- Mantener sin crear Search, PostgreSQL, Service Bus, VM, Key Vault o APIM nuevos.
+- Mantener sin crear otro Search, PostgreSQL, Service Bus, VM, Key Vault o APIM nuevos.
 
 ### Meses 1-3: observabilidad y Language opt-in
 
@@ -250,10 +281,10 @@ Nunca debe ser:
 - Reconciliar Language y medir una muestra de OCR.
 - Mantener SearXNG/Ollama como ruta por defecto.
 
-### Meses 3-5: Search Free o decision de no crearlo
+### Meses 3-5: conectar el Search Free existente o decidir no usarlo
 
 - Medir corpus; si filesystem + SearXNG bastan, documentar no-creacion.
-- Si no bastan, crear un unico indice Free e integrarlo a `job_sources`.
+- Si no bastan, crear un unico indice en `makmak-search` e integrarlo a `job_sources`.
 
 ### Meses 5-7: Document Intelligence
 
@@ -287,6 +318,13 @@ Para cada servicio debe poder regenerarse una fila con recurso real, SKU, estado
 
 El plan no se considera ejecutado por crear recursos. Se considera ejecutado cuando la matriz se puede reconstruir desde comandos y archivos reales, y cada resultado puede volver a su fuente sin duplicar ninguna autoridad.
 
+En MAK la matriz viva se reconstruye desde `/api/azure/status`. Cada fila separa
+`resource_state` de `integration_state`: Search, MLflow y Application Insights
+son `operational`; Foundry es `operational_guarded`; Storage, Key Vault y ACR
+son `metadata_only`/`dependency_only`; APIM es `not_operational` porque su API
+no tiene backend. Los modelos estudiantiles permanecen bloqueados por defecto
+mediante `MAK_AZURE_ALLOW_CREDIT`.
+
 ## Fuentes locales consultadas
 
 - `/home/mak/REPOS.md`
@@ -304,3 +342,12 @@ El plan no se considera ejecutado por crear recursos. Se considera ejecutado cua
 - `/home/mak/tools/research_source_capture.py`
 - `/home/mak/flujo/src/flujo/knowledge/postgres_runtime.py`
 - `/home/mak/flujo/src/flujo/knowledge/postgres_migration.py`
+
+## Fuentes web oficiales consultadas el 2026-09-18
+
+- Azure Machine Learning pricing: https://azure.microsoft.com/en-us/pricing/details/machine-learning/
+- Azure ML workspace dependencies: https://learn.microsoft.com/en-us/azure/machine-learning/how-to-manage-rest
+- Azure ML serverless compute: https://learn.microsoft.com/en-us/azure/machine-learning/how-to-use-serverless-compute
+- Azure ML batch endpoints: https://learn.microsoft.com/en-us/azure/machine-learning/concept-endpoints-batch
+- Azure ML quotas: https://learn.microsoft.com/en-us/azure/machine-learning/how-to-manage-quotas
+- Azure ML data assets: https://learn.microsoft.com/en-us/azure/machine-learning/how-to-create-data-assets
