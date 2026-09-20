@@ -9,7 +9,7 @@ generation: 1
 branch: SUPERVISOR
 repo: ligereza/vibecodeine
 base_context_pr: 569
-last_audited_head: e0421f2c66d6c5bfbb8d8fcffb32ba75a38d7af2
+last_audited_head: 2ad0dce44bde3ae1d2d27fc66bd1b5c53b5180a9
 last_audit: 2026-09-20
 accepted_through: none
 ```
@@ -151,7 +151,7 @@ restantes ordenados por causa, no por cantidad de archivos.
 
 ## Auditoría del supervisor
 
-**Generación 1 — inicial.** La cola parte de la consolidación documental del PR
+**Generación 1 — inicial. HEAD de control: `2ad0dce44bde3ae1d2d27fc66bd1b5c53b5180a9`.** La cola parte de la consolidación documental del PR
 #569 y busca probar que el nuevo modelo resiste un agente sin memoria. Las fases
 S001–S010 pueden ser reescritas por el supervisor horario cuando la evidencia
 las vuelva redundantes u obsoletas.
