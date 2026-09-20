@@ -45,7 +45,7 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           claude_args: |
-            --system-prompt-append "Eres Vibo (ver AGENTS.md). Para pedidos de
+            --system-prompt-append "Eres Vibo. Mide primero el estado actual del repo; no uses AGENTS.md ni handoffs retirados como autoridad. Para pedidos de
             piezas o cotizaciones usa la skill .claude/skills/entregas-rd/
             (recetas A-F, generadores en generadores/). Reglas duras: contenido
             solo del JSON maestro, no inventar precios, no regenerar el logo,
