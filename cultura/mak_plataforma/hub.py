@@ -5226,11 +5226,10 @@ def _relevo_page():
     source = RELEVO
     source_label = "RELEVO_MAK.md"
     if not os.path.isfile(source):
-        # Renamed 2026-09-03: it is a record, not the state, and the label has
-        # to say so on the page. The active document is DECISIONES.md and the
-        # facts come from tools/mak_status.py.
-        source = os.path.join(_REPO_ROOT, "context", "HANDOFF_HISTORICO.md")
-        source_label = "context/HANDOFF_HISTORICO.md (registro, no estado)"
+        # Persistent handoffs were retired. SYSTEM.md is the durable entrypoint;
+        # current facts still come from measurement.
+        source = os.path.join(_REPO_ROOT, "SYSTEM.md")
+        source_label = "SYSTEM.md (contexto durable; hechos medidos)"
     try:
         with open(source, encoding="utf-8") as f:
             cuerpo = _md_html(f.read())
@@ -5246,11 +5245,14 @@ def _relevo_page():
 
 def _genesis_page():
     """Orient the user before exposing the historical genesis document."""
+    source = GENESIS
+    if not os.path.isfile(source):
+        source = os.path.join(_REPO_ROOT, "cultura", "mak_plataforma", "GENESIS.md")
     try:
-        with open(GENESIS, encoding="utf-8") as f:
+        with open(source, encoding="utf-8") as f:
             texto = _md_html(f.read())
     except OSError:
-        texto = "<p>(GENESIS.md no encontrado)</p>"
+        texto = "<p>(GENESIS histórico no encontrado)</p>"
     cuerpo = """
 <h1>génesis / archivo histórico</h1>
 <p>Esta página ubica el origen de MAK. No es una herramienta operativa ni
@@ -5265,7 +5267,7 @@ un mapa de runtime: el trabajo actual comienza en la cara del Hub y en sus
 </div>
 <p style="color:#9db67c">El documento original queda conservado abajo como
 evidencia histórica. No debe usarse como contrato operativo si contradice
-<code>DECISIONES.md</code> o <code>context/HANDOFF_HISTORICO.md</code>.</p>
+<code>SYSTEM.md</code> o una medición actual del sistema.</p>
 <details><summary>ver GENESIS.md histórico</summary>
 <article style="margin-top:16px">%s</article>
 </details>
