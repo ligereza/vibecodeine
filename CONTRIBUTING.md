@@ -4,10 +4,9 @@ Personal creative-operations repo with a unified CLI (`flujo`).
 
 ## Mandatory entry point
 
-1. Measure the current checkout with `python tools/contexto_repo.py --json`.
-2. Use `python tools/mak_status.py --json` when MAK runtime status matters.
-3. Use `DECISIONES.md` only for explicit human decisions; do not infer current
-   state from historical prose.
+1. Read `SYSTEM.md` for durable identities and invariants.
+2. Measure the current checkout with `python tools/contexto_repo.py --json`.
+3. Use `python tools/mak_status.py --json` when MAK runtime status matters.
 4. The persistent `AGENTS.md` / handoff entry contract is retired.
 
 ## Proposing changes
