@@ -32,7 +32,7 @@ def _isolated_log(tmp_path, monkeypatch):
 
     This matters more than it looks. The MAK organism has been paused since
     2026-08-14 and those logs are the evidence of what ran and when. A test
-    writing into them destroys the evidence. See docs/MAK_ORGANISMO.md.
+    writing into them destroys the evidence. See SYSTEM.md for the durable evidence rule.
     """
     monkeypatch.setattr(EM, "LOG", str(tmp_path / "entregar_micelio.log"))
 
