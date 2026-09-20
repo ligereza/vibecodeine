@@ -1,5 +1,29 @@
 # NEXT — open work, observations, suggestions
 
+## Incremento integrado: crosswalk y sesión completa (2026-09-20)
+
+- FLUJO incorpora una proyección SQLite regenerable del ledger MAK. Valida la
+  cadena hash y resuelve sólo `eventRef`, `eventKey`, productoras y venues
+  exactos; no empareja por nombre, fecha ni semejanza.
+- El hub expone la proyección en modo lectura por
+  `/api/events/crosswalk?eventId=...`; la CLI la construye con
+  `flujo eventos crosswalk-build --ledger ...`.
+- XIO compone preflight, observaciones canónicas, GLB/SPZ, snapshot, propuesta,
+  acción explícita, resultado, auditoría y cierre IRIS en
+  `XIO_LAYER.core.event_session`.
+- El cierre `iris-event-memory-v1` conserva fuente/modelo/confianza/abstención
+  y fingerprints de evidencia, pero excluye outputs, referencias directas y
+  sujetos de observaciones.
+- Smoke sobre autoridades locales reales: 68 referencias RD y 7 VJ
+  disponibles; dos crosswalks independientes (uno RD y uno VJ) resolvieron
+  2/2 mediante igualdad exacta. No se declaró una relación RD↔VJ ausente.
+
+Próximo incremento de mayor valor: obtener del operador una relación real
+revisada que contenga simultáneamente `eventRef` y `eventKey`, persistirla en
+el ledger MAK y ejecutar la sesión con hashes GLB/SPZ de una captura real. La
+infraestructura ya falla de forma explícita si falta una autoridad, evidencia
+o revisión espacial.
+
 ## Continuacion orientadora: evento, 3D y vision (2026-09-20)
 
 Esta seccion fue escrita despues de inspeccionar e implementar la primera

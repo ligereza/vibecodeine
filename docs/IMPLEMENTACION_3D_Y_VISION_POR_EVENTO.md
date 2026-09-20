@@ -165,3 +165,29 @@ observacion -> snapshot -> propuesta -> accion explicita -> resultado -> audit
 
 Este orden produce utilidad de campo temprano y evita que una reconstruccion
 3D o un modelo visual no calibrado se conviertan en autoridad.
+
+## 7. Vertical ejecutable integrada
+
+El incremento del 2026-09-20 materializa dos piezas que faltaban:
+
+1. FLUJO consume el ledger append-only de MAK, verifica su cadena hash y crea
+   una proyección SQLite regenerable. Cada referencia se consulta por igualdad
+   exacta en su autoridad: `eventRef` en RD y `eventKey` en VJ/FOH. Los nombres,
+   fechas y productoras nunca producen una equivalencia automática.
+2. `XIO_LAYER.core.event_session` compone preflight, observaciones, GLB/SPZ,
+   snapshot, propuesta, acción explícita, resultado, auditoría y cierre. La
+   validación completa precede a cualquier escritura o handler.
+
+El cierre `iris-event-memory-v1` no copia outputs ni sujetos de observaciones.
+Conserva fuente, modelo, confianza, abstención y fingerprints SHA-256 de la
+evidencia, además de relaciones de evento y hashes de artefactos espaciales.
+El GLB sigue perteneciendo a `venue_revision_ref`; el SPZ conserva memoria
+expresiva de `event_id` y no adquiere autoridad geométrica.
+
+En el smoke local había 68 referencias RD y 7 eventos VJ. Dos crosswalks
+independientes apuntaron a una referencia real de cada autoridad y ambos se
+resolvieron exactamente. No se unieron como una misma ocurrencia porque no
+existe evidencia revisada que autorice esa relación. La sesión completa se
+validó con un fixture representativo que incluye una observación RD protegida,
+una observación de venue, GLB, SPZ, propuesta, autorización, resultado,
+auditoría y memoria IRIS sanitizada.
