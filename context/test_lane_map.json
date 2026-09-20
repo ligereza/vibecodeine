@@ -3513,10 +3513,6 @@
       "lane": "mak",
       "reason": "assigned by local subject and import evidence for integrated main"
     },
-    "tests/test_consolidate_static_duplicates.py": {
-      "lane": "mak",
-      "reason": "assigned by local subject and import evidence for integrated main"
-    },
     "tests/test_contract_audit.py": {
       "lane": "flujo",
       "reason": "carried from the FLUJO lane contract into integrated main"
