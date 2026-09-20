@@ -562,8 +562,9 @@ Ollama.
 | Ollama | `LLM._ollama(..., max_tok=8)` | OK; respuesta de 3 caracteres |
 
 El 402 de Cerebras es un limite de cuenta, no un fallo de instalacion o
-formato. Azure no participa del runtime y no tiene adaptador activo. Canva y
-ntfy no estan en el entorno seleccionado y no se consideran activos.
+formato. Azure participa sólo como proveedor `azure_mak` opt-in y permanece
+fuera del fallback automático. Canva y ntfy no estan en el entorno seleccionado
+y no se consideran activos.
 
 `GITHUB_TOKEN` no es necesario en el runtime local: `gh auth status` devolvio
 exit 0 y la sesion local de `gh` esta autenticada. El puente
@@ -581,7 +582,7 @@ Solo existencia + donde se configura. Nunca el valor de una llave.
 | Groq | Proveedor rapido para roles `razonar`/`bulk` | `GROQ_API_KEY`, `GROQ_MODEL` en `cultura/mak_research/research_lib.py` (defaults linea 32) y `.env` |
 | Gemini | Reemplazo cloud probado para sintesis y razonamiento cuando Cerebras no tiene crédito | `GEMINI_API_KEY`, `GEMINI_MODEL` en `research_lib.py`; usa `gemini-3.6-flash` |
 | Cerebras | Proveedor rapido, `CEREBRAS_MODEL=gpt-oss-120b` | `CEREBRAS_API_KEY`, `CEREBRAS_MODEL` en `research_lib.py` (linea 33) y `.env` |
-| Azure AI | Retirado por decisión del usuario; no se carga ni se ofrece como fallback | Solo referencias históricas preservadas fuera de la ruta activa |
+| Azure AI | Proveedor opt-in con guard de crédito; no entra al fallback automático | `cultura/mak_plataforma/azure_foundry.py`, sesión AAD de Azure CLI y `MAK_AZURE_ALLOW_CREDIT=1` |
 | DashScope / Qwen | Coder barato de volumen (gate, nunca directo a Claude) | `DASHSCOPE_API_KEY` / `QWEN_API_KEY` en `.env.example` |
 | NVIDIA NIM | Alternativa barata (Qwen/DeepSeek/Nemotron) | `NVIDIA_API_KEY` / `NVIDIA_NIM_API_KEY` en `.env.example` |
 | OpenRouter | Router/fallback de modelos | `OPENROUTER_API_KEY` en `.env.example` |
@@ -618,17 +619,21 @@ su material queda como referencia historica separada.
 
 ## 4. Como arrancar proyecto nuevo (receta)
 
-1. Read `agents.md` + `context/LAST_HANDOFF.md` + this inventory. Nothing else before starting.
-2. Clasificar la ruta destino: nucleo vivo / operacion diaria / historico / generado (ver mapa de `CLAUDE.md`) antes de tocar nada.
+1. Leer `DECISIONES.md`, medir con `tools/mak_status.py` y abrir sólo el contrato
+   del dominio afectado; no existe handoff activo.
+2. Clasificar la ruta destino: nucleo vivo / operacion diaria / historico /
+   generado usando `context/diagnostics/domains.json` antes de tocar nada.
 3. Elegir dominio: `mak/`, `rd/`, `portfolio/`, `data/`, `capabilities/`,
    `products/`, `operations/` o `tests/`; estos no son ramas permanentes.
 4. Si toca producción aislada: worktree propio (`EnterWorktree`/`git worktree
    add`) y rama temporal `codex/*` desde `origin/main`.
-5. Elegir el modelo mas barato que resuelva la tarea (tabla seccion 2 + `CLAUDE.md` "Regulacion de gasto"); escala solo si aplica un trigger.
+5. Elegir el modelo mas barato que resuelva la tarea según el registro medido
+   de proveedores; escala sólo si aplica un trigger.
 6. Si es pieza cultural nueva: aplicar motor-omega (Omega11 declarada + fracaso no se reinterpreta) antes de exponer.
 7. Cambios minimos, completos, verificables -- nada a medias, nada de TODO/placeholder.
 8. Verificacion minima segun area tocada (Python: compileall+pytest+`flujo verify`; Web: typecheck+build:context;
-9. Entregables (datos/docs/piezas) en espanol correcto UTF-8; `CLAUDE.md`/`context/*.md` operativos en ASCII.
+9. Entregables (datos/docs/piezas) en espanol correcto UTF-8; metadata
+   operativa en ingles ASCII.
 10. PR siempre contra `main`, CI verde obligatorio; el director hace la
     promoción curada al dominio o superficie correspondiente.
 

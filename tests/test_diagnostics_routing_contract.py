@@ -81,7 +81,7 @@ def test_a_declared_check_never_names_a_test_file_this_branch_lacks():
                     assert (ROOT / token).is_file(), (name, check, token)
 
 
-def test_the_core_domain_routes_to_the_only_contract_that_exists():
+def test_the_core_domain_routes_without_retired_contract_files():
     """There is no contract file at the root, and `core` must not name one.
 
     Every contract this repository had was deleted by the operator's order:
@@ -123,7 +123,7 @@ def test_no_domain_tells_an_agent_to_avoid_a_machine_that_is_gone():
             assert "Windows" not in entry, (name, entry)
 
 
-def test_there_is_exactly_one_contract_file_and_no_case_variant():
+def test_there_is_no_root_contract_file_or_case_variant():
     """Two entry points differing only in case was the trap; it is gone.
 
     `AGENTS.md` and `agents.md` were both tracked at this root and each was
@@ -133,9 +133,8 @@ def test_there_is_exactly_one_contract_file_and_no_case_variant():
     deliberate; the current invariant is that no root-level contract
     entrypoint or case variant reappears.
 
-    What it pins is the property the trap was about, which the reversal did not
-    touch: exactly one contract at this root, and no second file reachable by
-    changing its case.
+    What it pins is the current property: no retired root contract can
+    reappear under a case variant.
     """
     variants = sorted(path.name for path in ROOT.iterdir()
                       if path.is_file() and path.name.lower() in

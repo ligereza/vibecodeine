@@ -4,12 +4,12 @@ Personal creative-operations repo with a unified CLI (`flujo`).
 
 ## Mandatory entry point
 
-1. Read `/home/mak/AGENTS.md`: current contract and pointers. Measure the
-   machine with `.venv/bin/python tools/mak_status.py`; use
-   `context/HANDOFF_HISTORICO.md` only as historical context.
-2. Decisions already closed are recorded in `DECISIONES.md`; current state is
-   not inferred from prose.
-3. Vocabulary and continuity already settled (what MAK, `vibecodeine`, IRIS,
+1. Read `DECISIONES.md` for operator decisions and measure the machine with
+   `.venv/bin/python tools/mak_status.py`. There is intentionally no root
+   agent-contract or active handoff file.
+2. Current state is not inferred from prose;
+   `context/HANDOFF_HISTORICO.md` is consulted only to investigate history.
+3. Vocabulary already settled (what MAK, `vibecodeine`, IRIS,
    RD and Portfolio each mean) live in `MEMORIAS.md`. Read it before answering
    a nomenclature question instead of re-deriving it from scattered docs.
 

@@ -1,10 +1,10 @@
 # Estado actual de MAK
 
 > Esta es una instantánea narrativa fechada, no la autoridad del estado actual.
-> Para orientarse se lee `/home/mak/AGENTS.md` y se mide con
-> `.venv/bin/python tools/mak_status.py`. La continuidad histórica está en
-> `context/HANDOFF_HISTORICO.md`. Las rutas de contratos retirados que aparezcan
-> más abajo son evidencia histórica, no instrucciones vigentes.
+> Para orientarse se leen las decisiones en `/home/mak/DECISIONES.md` y se
+> mide con `.venv/bin/python tools/mak_status.py`. No hay contrato raíz ni
+> handoff activo. `context/HANDOFF_HISTORICO.md` es evidencia histórica; las
+> rutas de contratos retirados que aparezcan más abajo no son instrucciones.
 
 Este documento consolida decisiones durables. No reemplaza la evidencia
 histórica, no convierte cada experimento en una obligación y no afirma que una
@@ -536,9 +536,9 @@ requiere demostrar imports, entrypoints, tests, consumidores y rollback.
 - Cada cambio debe tener un consumidor, write set acotado, prueba foreground y
   rollback. Se hace `git add` explícito; no se publica un árbol completo por
   accidente.
-- Un agente externo debe empezar por `/home/mak/AGENTS.md` y medir el estado
-  actual. Este documento y `context/OWNER_MANIFEST.md` son contexto fechado;
-  no sustituyen la medición ni agregan un contrato por área.
+- Un agente externo debe empezar por `DECISIONES.md` y medir el estado actual.
+  Este documento y `context/OWNER_MANIFEST.md` son contexto fechado; no
+  sustituyen la medición ni agregan un contrato por área.
 
 ## 10. Qué se aprendió de las fases históricas
 
@@ -807,10 +807,9 @@ reanudar** o gritará que esperaba 0 activas y hay 23.
 
 ## Referencias históricas y de medición
 
-- `AGENTS.md` (contrato vigente, fuera de esta instantánea)
+- `DECISIONES.md` (decisiones del operador; no contiene estado medido)
 - `.venv/bin/python tools/mak_status.py` (medición vigente, fuera de esta instantánea)
-- `context/LAST_HANDOFF.md` (solo el paquete `Agent bootstrap — CURRENT`; el
-  resto es evidencia histórica de una organización anterior)
+- `context/HANDOFF_HISTORICO.md` (evidencia histórica, nunca lectura inicial)
 - `context/OWNER_MANIFEST.md`
 - `context/VIDEO_WORKFLOW_MAK_20260817.md`
 - `CAPACIDADES_MAK.md`

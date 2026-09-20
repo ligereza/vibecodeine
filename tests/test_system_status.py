@@ -32,6 +32,7 @@ def test_system_status_is_read_only_and_redacts_provider_values(tmp_path: Path, 
     for relative in (
         "AGENTS.md",
         "cultura/mak_plataforma/hub.py",
+        "cultura/mak_plataforma/providers.py",
         "src/flujo/knowledge/project_api.py",
         "web/package.json",
         ".github/workflows/issue_descarga_ig.yml",
@@ -54,6 +55,11 @@ def test_system_status_is_read_only_and_redacts_provider_values(tmp_path: Path, 
 
     monkeypatch.setattr(status_module, "_listener", lambda port: {"host": "127.0.0.1", "port": port, "reachable": True})
     monkeypatch.setattr(status_module, "_process_snapshot", lambda tokens: {"running": True, "count": 1})
+    monkeypatch.setattr(
+        status_module,
+        "_provider_source_root",
+        lambda repo, physical: Path(__file__).resolve().parents[1],
+    )
     fake_blender = physical / "blender" / "blender"
     _touch(fake_blender, "fixture")
     fake_blender.chmod(0o755)
