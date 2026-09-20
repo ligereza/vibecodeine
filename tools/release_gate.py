@@ -87,8 +87,8 @@ BRANCH_SURFACES = {
         "foreign_hub": "src/flujo/web/hub.py",
         "physical_root": "/home/mak",
         "foreign_entrypoint": "src/flujo/cli.py",
-        "own_capabilities": "CAPACIDADES_MAK.md",
-        "foreign_capabilities": "CAPACIDADES_FLUJO.md",
+        "own_capabilities": "tools/capabilities.py",
+        "foreign_capabilities": None,
         "own_requirements": "requirements-mak.txt",
         "foreign_requirements": "requirements-flujo.txt",
         "own_lane": "mak",
@@ -100,8 +100,8 @@ BRANCH_SURFACES = {
         "foreign_hub": "cultura/mak_plataforma/hub.py",
         "physical_root": "/home/mak/flujo",
         "foreign_entrypoint": "cultura/mak_research/interfaz.py",
-        "own_capabilities": "CAPACIDADES_FLUJO.md",
-        "foreign_capabilities": "CAPACIDADES_MAK.md",
+        "own_capabilities": "tools/capabilities.py",
+        "foreign_capabilities": None,
         "own_requirements": "requirements-flujo.txt",
         "foreign_requirements": "requirements-mak.txt",
         "own_lane": "flujo",
@@ -805,13 +805,16 @@ def check_separation(gate: Gate, root: Path, branch: str, profile: dict[str, obj
                  f"{branch} declares entrypoints it does not carry: {', '.join(missing_entrypoints)}")
 
     row["own_capabilities_present"] = file_in_ref(root, branch, surface["own_capabilities"])
-    row["foreign_capabilities_present"] = file_in_ref(root, branch, surface["foreign_capabilities"])
+    foreign_capabilities = surface.get("foreign_capabilities")
+    row["foreign_capabilities_present"] = bool(
+        foreign_capabilities and file_in_ref(root, branch, foreign_capabilities)
+    )
     row["own_requirements_present"] = file_in_ref(root, branch, surface["own_requirements"])
     row["foreign_requirements_present"] = file_in_ref(root, branch, surface["foreign_requirements"])
     if row["foreign_capabilities_present"]:
         gate.add("foreign_capabilities_present", SEV_WARN,
-                 f"{branch} carries {surface['foreign_capabilities']} as a reference; "
-                 "the profile's capabilities field remains the authority")
+                 f"{branch} carries {foreign_capabilities} as a legacy reference; "
+                 "tools/capabilities.py remains the authority")
     if row["foreign_requirements_present"]:
         gate.add("foreign_requirements_mixed", SEV_WARN,
                  f"{branch} carries {surface['foreign_requirements']} as a non-selected "
@@ -1213,8 +1216,6 @@ DIRTY_RULES = (
     ("workspaces/", "operator_owned", "local workspace state"),
     ("context/coordination/", "session_dossier", "coordination dossier written this session"),
     (".github/workflows/", "release_candidate", "workflow contract"),
-    ("CAPACIDADES_MAK.md", "durable_doc", "MAK capability contract"),
-    ("CAPACIDADES_FLUJO.md", "durable_doc", "FLUJO capability contract"),
     ("branch_profile.json", "release_candidate", "branch semantic contract"),
     ("arte-ascii-readme.svg", "durable_doc", "animated README artwork"),
     ("requirements-integration.txt", "release_candidate", "integration dependency contract"),
