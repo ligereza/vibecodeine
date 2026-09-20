@@ -100,6 +100,22 @@ Esto es dirección, y viene del autor:
 
 ---
 
+## Evento, productora y sesion VJ
+
+Una presentacion VJ ocurre en un evento fechado. La productora, el venue, el
+artista/cliente y el evento son entidades distintas, aunque una piel pueda
+mostrarlas relacionadas. Una fecha no hereda automaticamente propiedades de
+otra fecha de la misma productora, y una observacion de FOH no debe guardarse
+como atributo permanente de esa organizacion.
+
+Cuando exista integracion con XIO o IRIS, el `eventKey` VJ se conserva como
+autoridad del dominio y se relaciona mediante un `event_id` comun. El material
+RD permanece fuera del archivo artistico salvo una relacion de evento y un
+resumen operacional anonimo. Contrato transversal:
+[`ARQUITECTURA_EVENTO_PRODUCTORA_RD_VJ_IRIS_XIO.md`](../docs/ARQUITECTURA_EVENTO_PRODUCTORA_RD_VJ_IRIS_XIO.md).
+
+---
+
 ## Cómo se cambia el estilo
 
 1. Se le pasa a un agente `PROMPT_ESTETICA.md` + este contrato +

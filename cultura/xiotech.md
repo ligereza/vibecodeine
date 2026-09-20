@@ -127,6 +127,7 @@ Backbone de datos = **bus canónico**: medios sobre RTP/AES67, control sobre **O
 
 ### M5 · Pipeline / visor Gaussian Splatting (.ply/.spz)
 - **Objetivo:** capturar/renderizar radiance fields como material de instalación; splats reactivos vía OSC.
+- **Pertenencia:** la captura es evidencia de un evento y referencia una revisión fechada del venue. La geometría reutilizable pertenece al venue, no a la productora. Un splat conserva apariencia y atmósfera; no autoriza mediciones operacionales. El modelo GLB medible se mantiene separado. Ver [`IMPLEMENTACION_3D_Y_VISION_POR_EVENTO.md`](../docs/IMPLEMENTACION_3D_Y_VISION_POR_EVENTO.md).
 - **Stack:**
   - Entrenar (**offload**, NO en XIO): COLMAP + `gsplat`/nerfstudio/Inria 3DGS en GPU CUDA (notebook/nube).
   - Formatos: **PLY** maestro (lossless) → **SPZ** (Niantic, ~10× lossy) para entrega. glTF como bus canónico (extensión 3DGS, 2025).
