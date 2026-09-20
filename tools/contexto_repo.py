@@ -275,7 +275,6 @@ def _task(keywords: str):
     print("\n== COMO USARLO (bajo consumo) ==")
     print("  1. Lee tu las fuentes de verdad de arriba (poco volumen, critico).")
     print("  2. Rutas gordas -> derivar a un subagente Sonnet (Agent tool, model sonnet).")
-    print("  3. Da a Aider SOLO los archivos de la tarea. Ver docs/AIDER_API_SETUP.md.")
 
 
 def main():

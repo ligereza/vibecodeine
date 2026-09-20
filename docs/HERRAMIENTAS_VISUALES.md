@@ -8,7 +8,7 @@
 
 | **Archivo** | **Propósito** | **Usuarios** | **Referencia base** | **QUÉ MODIFICAR** | **QUÉ NO TOCAR** |
 |---|---|---|---|---|---|
-| `context/plano_demo.html` | **RIDER RD EVENTOS** profesional (requisitos + plano + checklist operativo) | Productoras de eventos, equipo RD logística | [docs/RIDER_EVENTOS.md](RIDER_EVENTOS.md) + [Propuesta_Reduciendo_Dano.txt](../datadrops/Propuesta_Reduciendo_Dano.txt) | Secciones de requerimientos, plano SVG, checklist, exportación PDF | Estructura base HTML/JS (a menos que haya spec explícita) |
+| `context/plano_demo.html` | **RIDER RD EVENTOS** profesional (requisitos + plano + checklist operativo) | Productoras de eventos, equipo RD logística | [Propuesta_Reduciendo_Dano.txt](../datadrops/Propuesta_Reduciendo_Dano.txt) | Secciones de requerimientos, plano SVG, checklist, exportación PDF | Estructura base HTML/JS (a menos que haya spec explícita) |
 | `context/svg_visualizer.html` | **Visor de Diseños SUPLEMENTOS** (etiquetas, flyers, diseños) | Equipo de diseño, tienda, redes sociales | [docs/BRIEF_SUPLEMENTOS_RD.md](BRIEF_SUPLEMENTOS_RD.md) | Búsqueda, filtros, presentación visual, zoom, exportación | Carga de SVG/índice (usa [svg_index.json](../svg_index.json) si lo cambias) |
 
 ---
@@ -19,7 +19,6 @@
 Documento **profesional para productoras de eventos** que detalla qué necesita Reduciendo Daño para intervenir en terreno.
 
 ### Referencia base obligatoria
-- [docs/RIDER_EVENTOS.md](RIDER_EVENTOS.md) — Estructura: página 1 (Requerimientos) + página 2 (Layout operativo)
 - [docs/RIDER_CHECKLIST.md](RIDER_CHECKLIST.md) — Checklist operativo por área
 - [datadrops/Propuesta_Reduciendo_Dano.txt](../datadrops/Propuesta_Reduciendo_Dano.txt) — Contenido RD: quiénes somos, objetivo, modalidades (Stand Informativo, Stand Testeo, Contención), coordinación, beneficios, costos
 
@@ -65,7 +64,7 @@ Layout: márgenes 15%, bloques modulares, altura línea 1.5
 ❌ Eliminar secciones sin documentar por qué  
 
 ### Regla de oro
-**Si no has leído `RIDER_EVENTOS.md` + `RIDER_CHECKLIST.md` + `Propuesta_Reduciendo_Dano.txt`, NO TOQUES ESTE ARCHIVO.**
+**Si no has leído `EVENTOS_PRESETS_RIDER.md` + `RIDER_CHECKLIST.md` + `Propuesta_Reduciendo_Dano.txt`, NO TOQUES ESTE ARCHIVO.**
 
 ---
 
@@ -141,7 +140,7 @@ Tipografía: Inter, sans-serif
 
 ### Antes de tocar `plano_demo.html`:
 ```
-[ ] He leído docs/RIDER_EVENTOS.md
+[ ] He leído docs/EVENTOS_PRESETS_RIDER.md y docs/RIDER_CHECKLIST.md
 [ ] He leído docs/RIDER_CHECKLIST.md
 [ ] He leído datadrops/Propuesta_Reduciendo_Dano.txt (entiendo el contexto RD)
 [ ] Entiendo que esto es un documento **operativo**, no un visor
@@ -177,7 +176,7 @@ Tipografía: Inter, sans-serif
 
 ## 6. Links de referencia rápida
 
-- **RIDER estructura:** [docs/RIDER_EVENTOS.md](RIDER_EVENTOS.md)
+- **RIDER operativo:** [docs/EVENTOS_PRESETS_RIDER.md](EVENTOS_PRESETS_RIDER.md) + [docs/RIDER_CHECKLIST.md](RIDER_CHECKLIST.md)
 - **RIDER checklist:** [docs/RIDER_CHECKLIST.md](RIDER_CHECKLIST.md)
 - **Propuesta RD (contenido):** [datadrops/Propuesta_Reduciendo_Dano.txt](../datadrops/Propuesta_Reduciendo_Dano.txt)
 - **Suplementos brief:** [docs/BRIEF_SUPLEMENTOS_RD.md](BRIEF_SUPLEMENTOS_RD.md)
