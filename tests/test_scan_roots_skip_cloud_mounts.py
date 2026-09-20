@@ -5,11 +5,10 @@
 Reading a file there downloads it, and on this box processes have been observed
 stuck in FUSE wait (`request_wait_answer`, `fuse_lock_inode`) for hours.
 
-`consolidate_static_duplicates.PROTECTED_TOPS` already names the four roots a
-tool must stay out of: WIN, curatoria_inbox, GoogleDrive and OneDrive. That set
-is the repository's decision, taken once. `build_mak_knowledge_db.ACTIVE_SKIP`
-carried only WIN, so its default `--active-root /home/mak` would descend into
-both mounts and hash -- which is to say download -- every file in them.
+`build_mak_knowledge_db.ACTIVE_SKIP` names the roots a tool must stay out of:
+WIN, curatoria_inbox, GoogleDrive and OneDrive. That set is the repository's
+decision, taken once. Its default `--active-root /home/mak` must not descend
+into both mounts and hash -- which is to say download -- every file in them.
 
 This module holds the two scanners to the same list, and is the place to add
 the next one rather than discovering the same hole a third time.
@@ -21,26 +20,25 @@ from pathlib import Path
 import pytest
 
 from tools.build_mak_knowledge_db import ACTIVE_SKIP, should_skip_dir
-from tools.consolidate_static_duplicates import PROTECTED_TOPS
 
 HOME = Path("/home/mak")
+PROTECTED_ROOTS = frozenset({"WIN", "curatoria_inbox", "GoogleDrive", "OneDrive"})
 
 
 class TestTheProtectedSetIsTheContract:
     def test_it_still_names_the_cloud_mounts(self) -> None:
         # If this shrinks, the tests below would pass while checking less.
-        assert {"GoogleDrive", "OneDrive"} <= PROTECTED_TOPS
-        assert {"WIN", "curatoria_inbox"} <= PROTECTED_TOPS
+        assert PROTECTED_ROOTS <= ACTIVE_SKIP
 
 
 class TestTheKnowledgeScannerStaysOut:
-    @pytest.mark.parametrize("protected", sorted(PROTECTED_TOPS))
+    @pytest.mark.parametrize("protected", sorted(PROTECTED_ROOTS))
     def test_every_protected_root_is_skipped(self, protected: str) -> None:
         assert should_skip_dir(HOME / protected, "active"), (
             f"the knowledge scan would descend into {protected}"
         )
 
-    @pytest.mark.parametrize("protected", sorted(PROTECTED_TOPS))
+    @pytest.mark.parametrize("protected", sorted(PROTECTED_ROOTS))
     def test_the_skip_list_names_it(self, protected: str) -> None:
         assert protected in ACTIVE_SKIP
 
@@ -75,7 +73,7 @@ class TestDecidingCostsNoFilesystem:
 
         monkeypatch.setattr(scanner, "is_virtual_environment", landmine)
 
-    @pytest.mark.parametrize("protected", sorted(PROTECTED_TOPS))
+    @pytest.mark.parametrize("protected", sorted(PROTECTED_ROOTS))
     def test_a_protected_root_is_skipped_without_being_probed(
         self, no_probe, protected: str
     ) -> None:

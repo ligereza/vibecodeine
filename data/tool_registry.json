@@ -40,7 +40,6 @@
     "release_gate.py": "VIVO",
     "runtime_preflight.py": "VIVO",
     "bridge_issue_render.py": "REVISAR",
-    "consolidate_static_duplicates.py": "REVISAR",
     "enviar_a_mak.py": "REVISAR",
     "compile_contracurator.py": "manual-only",
     "medir_organismo.py": "VIVO",
