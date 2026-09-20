@@ -30,21 +30,33 @@
       "paquete": "@thi.ng/hiccup",
       "version": "5.4.13",
       "exporta": "*",
-      "para": "Serializar una estructura de datos a markup. Es la mitad de abajo de hiccup-svg y hace falta explicita para `serialize`."
+      "para": "Serializar una estructura de datos a markup. Es la mitad de abajo de hiccup-svg y hace falta explicita para `serialize`.",
+      "estado": "en_uso",
+      "consumidores": [
+        "docs/cultura/lib/compilador.js"
+      ]
     },
     {
       "nombre": "hiccup-svg",
       "paquete": "@thi.ng/hiccup-svg",
       "version": "5.6.21",
       "exporta": "*",
-      "para": "Datos a SVG: retira la concatenacion de f-strings del compilador cuando el mismo spec se compila en el navegador. Es la #5 del ranking de 15 (prioridad muy alta) y la que se solapa de verdad con este motor."
+      "para": "Datos a SVG: retira la concatenacion de f-strings del compilador cuando el mismo spec se compila en el navegador. Es la #5 del ranking de 15 (prioridad muy alta) y la que se solapa de verdad con este motor.",
+      "estado": "en_uso",
+      "consumidores": [
+        "docs/cultura/lib/compilador.js"
+      ]
     },
     {
       "nombre": "color",
       "paquete": "@thi.ng/color",
       "version": "5.8.31",
       "exporta": "*",
-      "para": "Contraste WCAG y manejo de paletas. El compilador Python calcula la luminancia relativa a mano (`_lum`); del lado del navegador esa cuenta la hace la libreria, que ademas trae conversiones que no tenemos."
+      "para": "Contraste WCAG y manejo de paletas. El compilador Python calcula la luminancia relativa a mano (`_lum`); del lado del navegador esa cuenta la hace la libreria, que ademas trae conversiones que no tenemos.",
+      "estado": "en_uso",
+      "consumidores": [
+        "docs/cultura/lib/compilador.js"
+      ]
     }
   ]
 }
