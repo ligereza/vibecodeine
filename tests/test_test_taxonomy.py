@@ -291,10 +291,7 @@ _RUNTIME_PROVIDED = {
 # Hard requirements of a package the MAK profile DOES declare. Listed with the
 # declaration that guarantees them, so the guarantee is auditable here instead
 # of being inferred from whatever the venv happens to hold.
-_GUARANTEED_BY_DECLARED = {
-    "werkzeug": "Flask>=3.1.3 declares werkzeug>=3.1.0; xio/new/server.py "
-                "imports werkzeug.utils.secure_filename directly",
-}
+_GUARANTEED_BY_DECLARED = {}
 
 # Optional backends whose ImportError is handled by a CALLER, which no
 # single-file AST pass can see. Each entry names where the fallback lives, so
@@ -306,7 +303,7 @@ _CALLER_HANDLED_OPTIONAL = {
 }
 
 # What the MAK profile is actually responsible for running.
-_MAK_RUNTIME_PREFIXES = ("cultura/", "tools/", "xio/")
+_MAK_RUNTIME_PREFIXES = ("cultura/", "tools/")
 
 # Everything else, with the reason it is out of scope. `.claude/skills` is the
 # decided policy, not an oversight: `gen_vectorizar.py` imports fontTools

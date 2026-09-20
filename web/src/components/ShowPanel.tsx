@@ -1,11 +1,11 @@
-// ShowPanel — el show kit de xio dentro del hub.
+// ShowPanel — proyección read-only del show kit publicado por XIO.
 //
 // Contexto para quien lo lea despues: el dia del show hay DOS sistemas
-// independientes a proposito (ver xio/show_kit/DIA_DEL_SHOW.md):
+// independientes a propósito (fuente: repo XIO, xio/show_kit/DIA_DEL_SHOW.md):
 //   - LAPTOP (activo): Chataigne decodifica LTC -> OSC, cue_engine dispara clips
 //     en Resolume. Es el show en si.
 //   - XIO / telefono (pasivo): solo escucha y registra. Si muere, el show sigue.
-// Este panel NO controla nada del show: muestra lo que vive en el repo (setlist,
+// Este panel NO controla nada del show: muestra lo que publica XIO (setlist,
 // cues, duraciones, registros ya corridos) y da los comandos exactos del dia.
 // El estado en vivo del telefono se consulta directo a su IP, no via este hub.
 
@@ -88,7 +88,7 @@ export default function ShowPanel() {
           <h1 className="text-xl font-bold tracking-tight">Show kit</h1>
           <p className="text-sm text-zinc-500">
             Setlist con timecode, cues de Resolume y registros de shows corridos. Fuente:{' '}
-            <code className="text-zinc-400">xio/show_kit/</code>
+            <code className="text-zinc-400">XIO: xio/show_kit/</code>
           </p>
         </div>
       </header>
@@ -97,7 +97,7 @@ export default function ShowPanel() {
         <div className="flex items-start gap-2 rounded-xl border border-amber-800/50 bg-amber-950/30 p-4 text-sm text-amber-300">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <div>
-            Sin backend. Este panel lee el show kit desde el repo, así que necesita{' '}
+            Sin backend. Este panel lee el show kit publicado por XIO a través del backend, así que necesita{' '}
             <code className="text-amber-200">py -m flujo app</code> corriendo.
           </div>
         </div>
@@ -178,7 +178,7 @@ export default function ShowPanel() {
         <div className="flex items-center gap-2 border-b border-zinc-800 px-4 py-3">
           <Terminal className="h-4 w-4 text-violet-400" />
           <h2 className="text-sm font-bold">Día del show</h2>
-          <span className="text-[11px] text-zinc-600">xio/show_kit/DIA_DEL_SHOW.md</span>
+          <span className="text-[11px] text-zinc-600">repo XIO · xio/show_kit/DIA_DEL_SHOW.md</span>
         </div>
         <div className="space-y-3 p-4 text-sm">
           <div className="flex items-start gap-2 rounded-lg border border-amber-800/40 bg-amber-950/20 p-3 text-[13px] text-amber-300">

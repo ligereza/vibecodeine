@@ -3337,197 +3337,764 @@
       "resolution": "assigned_by_subject",
       "status": "agreement"
     },
-    "tests/test_admissibility.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_aepfile.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_airdrop.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_airdrop_checkpoint.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_airdrop_signing.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_analyze.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_analyze_export.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_application_research_package.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_archive_memory.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_archive_observer.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_archive_pipeline.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_archive_project_ir_adapter.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_archive_project_ir_evaluator.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_archive_reconstruction.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_archive_relation_evaluator.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_archive_relation_inference.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_archive_toolchain.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_archive_unit_evaluator.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_archive_unit_reconstruction.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_artistic_program_evaluator.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_artistic_program_hypotheses.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_auto_pending_flyers.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_autofit.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_autonomy_plan.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_blender_nodes.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_blender_nodes_video.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_blendfile.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_brand.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_build_application_intake.py": {"lane": "integration", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_canary.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_canva_and_blender.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_catalog_federation.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_certified_engine.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_certified_identity.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_classification_queue.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_cli_doctor_git_working_tree_defect.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_cli_github_sync.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_cli_micelio.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_cli_more_commands.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_cli_smoke.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_cli_v035.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_code_index.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_comercial_multiformato.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_compute_effort_residuals.py": {"lane": "mak", "reason": "assigned by local subject and import evidence for integrated main"},
-    "tests/test_consolidate_static_duplicates.py": {"lane": "mak", "reason": "assigned by local subject and import evidence for integrated main"},
-    "tests/test_contract_audit.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_cotizaciones_base.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_cross_archive_relations.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_cross_archive_research_frontier.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_dashboard.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_datadrop_scan.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_datadrops_pdf_support.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_deep_learning_gate.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_delegate_creative_director.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_director.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_entity_crosswalk.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_episode_runner.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_epistemics.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_eventos_flyer_auto.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_evidence_return.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_feature_policy.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_flujo_dispatcher.py": {"lane": "integration", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_flujo_port_contract.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_flyer_auto_parth.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_flyer_carousel_index.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_formats_catalogo.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_gen_postulacion.py": {"lane": "mak", "reason": "assigned by local subject and import evidence for integrated main"},
-    "tests/test_gen_propuesta_directiva.py": {"lane": "mak", "reason": "assigned by local subject and import evidence for integrated main"},
-    "tests/test_generar_catalogo_rd.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_git_state_measurement_defect.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_hotfix_03411.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_hub_comando_seguro.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_hub_comandos.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_hub_convocatorias.py": {"lane": "mak", "reason": "assigned by local subject and import evidence for integrated main"},
-    "tests/test_hub_payload_budget.py": {"lane": "mak", "reason": "assigned by local subject and import evidence for integrated main"},
-    "tests/test_hub_post_status_agrees_with_body.py": {"lane": "mak", "reason": "assigned by local subject and import evidence for integrated main"},
-    "tests/test_hub_route_answer_contract.py": {"lane": "mak", "reason": "assigned by local subject and import evidence for integrated main"},
-    "tests/test_identity_ties.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_ig_cffi_fallback.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_ig_download.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_ig_download_parth.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_ig_url_canonica.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_ig_usuario.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_illustrator_bridge.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_imap_apagado.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_index_db.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_intake.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_intake_json.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_intake_json_cli.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_interpretive_garden_workflow.py": {"lane": "mak", "reason": "assigned by local subject and import evidence for integrated main"},
-    "tests/test_iskvw_archive_view_ui.py": {"lane": "integration", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_jobs_brief.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_jobs_lifecycle.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_knowledge_reconciliation.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_learning_policy.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_learning_v2.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_mak_azure_backup.py": {"lane": "mak", "reason": "assigned by local subject and import evidence for integrated main"},
-    "tests/test_mak_merge_roots.py": {"lane": "mak", "reason": "assigned by local subject and import evidence for integrated main"},
-    "tests/test_mak_tandas_surface.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_manifest.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_math_kernel.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_micelio.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_micelio_cosecha.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_migrate_unified_knowledge.py": {"lane": "integration", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_noisette_real_fixture.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_open_episode_state.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_operational_bridge.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_operational_memberships.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_operational_status.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_opportunity_constraints.py": {"lane": "integration", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_opportunity_delta.py": {"lane": "integration", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_opportunity_fit.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_pilot_run_manifest.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_plano_module.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_plano_packs.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_plano_simbolos_alta.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_plano_simbolos_catalogo.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_plano_trazador.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_plano_validation.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_portfolio_dossier.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_portfolio_evidence.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_portfolio_gen.py": {"lane": "integration", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_portfolio_production_sources.py": {"lane": "mak", "reason": "assigned by local subject and import evidence for integrated main"},
-    "tests/test_possibility_field.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_postgres_migration.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_postgres_runtime.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_practice_evidence_state.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_practice_receipt_adapter.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_presets.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_privacy.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_product_episode.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_product_learning.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_product_plan.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_project_context.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_project_contracts.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_project_evidence.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_project_ir.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_project_reconstruction.py": {"lane": "integration", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_project_router.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_rd_database.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_rd_datos.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_rd_db_logos.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_rd_espina_relacional.py": {"lane": "flujo", "reason": "assigned by local subject and import evidence for integrated main"},
-    "tests/test_rd_eventos.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_rd_informe.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_reactivo_matcher.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_reception.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_reconstruction_adapter.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_render_flyer_mak.py": {"lane": "integration", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_render_formats.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_render_output_edges.py": {"lane": "integration", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_render_rescale.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_research_evidence_triangulation.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_research_frontier_bridge.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_research_simulation.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_resolume_automator.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_resolume_composition.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_resolume_screen_setup.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_resolution.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_resolve_identity_ties.py": {"lane": "mak", "reason": "assigned by local subject and import evidence for integrated main"},
-    "tests/test_review_queue.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_rol_candidatos.py": {"lane": "mak", "reason": "assigned by local subject and import evidence for integrated main"},
-    "tests/test_route_resolver.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_run_airdrop_checks.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_scan_roots_skip_cloud_mounts.py": {"lane": "mak", "reason": "assigned by local subject and import evidence for integrated main"},
-    "tests/test_scene_snapshot.py": {"lane": "integration", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_scoring_fallback_parser.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_selective_recompute_receipt.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_serve_api.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_smoke.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_source_learning.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_ssd_order_operator_frontier.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_substrate.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_substrate_scan_manifest.py": {"lane": "mak", "reason": "assigned by local subject and import evidence for integrated main"},
-    "tests/test_suplementos_config.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_suplementos_svg_validator.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_svg_illustrator_integration.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_svg_index_real.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_tapiz_vibecode.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_tarifa_una_sola_fuente.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_tennis_mcp.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_three_plane_manifest.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_title_resolution.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_venue.py": {"lane": "mak", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_venue_geometria_scd.py": {"lane": "mak", "reason": "assigned by local subject and import evidence for integrated main"},
-    "tests/test_vigia_capture_bridge.py": {"lane": "integration", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_vision_feedback_memory.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_vj_git_performance.py": {"lane": "integration", "reason": "carried from the FLUJO lane contract into integrated main"},
-    "tests/test_zipper.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"}
+    "tests/test_admissibility.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_aepfile.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_airdrop.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_airdrop_checkpoint.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_airdrop_signing.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_analyze.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_analyze_export.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_application_research_package.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_archive_memory.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_archive_observer.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_archive_pipeline.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_archive_project_ir_adapter.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_archive_project_ir_evaluator.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_archive_reconstruction.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_archive_relation_evaluator.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_archive_relation_inference.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_archive_toolchain.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_archive_unit_evaluator.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_archive_unit_reconstruction.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_artistic_program_evaluator.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_artistic_program_hypotheses.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_auto_pending_flyers.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_autofit.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_autonomy_plan.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_blender_nodes.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_blender_nodes_video.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_blendfile.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_brand.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_build_application_intake.py": {
+      "lane": "integration",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_canary.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_canva_and_blender.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_catalog_federation.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_certified_engine.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_certified_identity.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_classification_queue.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_cli_doctor_git_working_tree_defect.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_cli_github_sync.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_cli_micelio.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_cli_more_commands.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_cli_smoke.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_cli_v035.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_code_index.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_comercial_multiformato.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_compute_effort_residuals.py": {
+      "lane": "mak",
+      "reason": "assigned by local subject and import evidence for integrated main"
+    },
+    "tests/test_consolidate_static_duplicates.py": {
+      "lane": "mak",
+      "reason": "assigned by local subject and import evidence for integrated main"
+    },
+    "tests/test_contract_audit.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_cotizaciones_base.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_cross_archive_relations.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_cross_archive_research_frontier.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_dashboard.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_datadrop_scan.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_datadrops_pdf_support.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_deep_learning_gate.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_delegate_creative_director.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_director.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_entity_crosswalk.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_episode_runner.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_epistemics.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_eventos_flyer_auto.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_evidence_return.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_feature_policy.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_flujo_dispatcher.py": {
+      "lane": "integration",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_flujo_port_contract.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_flyer_auto_parth.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_flyer_carousel_index.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_formats_catalogo.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_gen_postulacion.py": {
+      "lane": "mak",
+      "reason": "assigned by local subject and import evidence for integrated main"
+    },
+    "tests/test_gen_propuesta_directiva.py": {
+      "lane": "mak",
+      "reason": "assigned by local subject and import evidence for integrated main"
+    },
+    "tests/test_generar_catalogo_rd.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_git_state_measurement_defect.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_hotfix_03411.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_hub_comando_seguro.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_hub_comandos.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_hub_convocatorias.py": {
+      "lane": "mak",
+      "reason": "assigned by local subject and import evidence for integrated main"
+    },
+    "tests/test_hub_payload_budget.py": {
+      "lane": "mak",
+      "reason": "assigned by local subject and import evidence for integrated main"
+    },
+    "tests/test_hub_post_status_agrees_with_body.py": {
+      "lane": "mak",
+      "reason": "assigned by local subject and import evidence for integrated main"
+    },
+    "tests/test_hub_route_answer_contract.py": {
+      "lane": "mak",
+      "reason": "assigned by local subject and import evidence for integrated main"
+    },
+    "tests/test_identity_ties.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_ig_cffi_fallback.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_ig_download.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_ig_download_parth.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_ig_url_canonica.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_ig_usuario.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_illustrator_bridge.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_imap_apagado.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_index_db.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_intake.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_intake_json.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_intake_json_cli.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_interpretive_garden_workflow.py": {
+      "lane": "mak",
+      "reason": "assigned by local subject and import evidence for integrated main"
+    },
+    "tests/test_iskvw_archive_view_ui.py": {
+      "lane": "integration",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_jobs_brief.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_jobs_lifecycle.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_knowledge_reconciliation.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_learning_policy.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_learning_v2.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_mak_azure_backup.py": {
+      "lane": "mak",
+      "reason": "assigned by local subject and import evidence for integrated main"
+    },
+    "tests/test_mak_merge_roots.py": {
+      "lane": "mak",
+      "reason": "assigned by local subject and import evidence for integrated main"
+    },
+    "tests/test_mak_tandas_surface.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_manifest.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_math_kernel.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_micelio.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_micelio_cosecha.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_migrate_unified_knowledge.py": {
+      "lane": "integration",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_noisette_real_fixture.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_open_episode_state.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_operational_bridge.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_operational_memberships.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_operational_status.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_opportunity_constraints.py": {
+      "lane": "integration",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_opportunity_delta.py": {
+      "lane": "integration",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_opportunity_fit.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_pilot_run_manifest.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_plano_module.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_plano_packs.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_plano_simbolos_alta.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_plano_simbolos_catalogo.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_plano_trazador.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_plano_validation.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_portfolio_dossier.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_portfolio_evidence.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_portfolio_gen.py": {
+      "lane": "integration",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_portfolio_production_sources.py": {
+      "lane": "mak",
+      "reason": "assigned by local subject and import evidence for integrated main"
+    },
+    "tests/test_possibility_field.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_postgres_migration.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_postgres_runtime.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_practice_evidence_state.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_practice_receipt_adapter.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_presets.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_privacy.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_product_episode.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_product_learning.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_product_plan.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_project_context.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_project_contracts.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_project_evidence.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_project_ir.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_project_reconstruction.py": {
+      "lane": "integration",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_project_router.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_rd_database.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_rd_datos.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_rd_db_logos.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_rd_espina_relacional.py": {
+      "lane": "flujo",
+      "reason": "assigned by local subject and import evidence for integrated main"
+    },
+    "tests/test_rd_eventos.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_rd_informe.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_reactivo_matcher.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_reception.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_reconstruction_adapter.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_render_flyer_mak.py": {
+      "lane": "integration",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_render_formats.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_render_output_edges.py": {
+      "lane": "integration",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_render_rescale.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_research_evidence_triangulation.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_research_frontier_bridge.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_research_simulation.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_resolume_automator.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_resolume_composition.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_resolume_screen_setup.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_resolution.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_resolve_identity_ties.py": {
+      "lane": "mak",
+      "reason": "assigned by local subject and import evidence for integrated main"
+    },
+    "tests/test_review_queue.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_rol_candidatos.py": {
+      "lane": "mak",
+      "reason": "assigned by local subject and import evidence for integrated main"
+    },
+    "tests/test_route_resolver.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_run_airdrop_checks.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_scan_roots_skip_cloud_mounts.py": {
+      "lane": "mak",
+      "reason": "assigned by local subject and import evidence for integrated main"
+    },
+    "tests/test_scene_snapshot.py": {
+      "lane": "integration",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_scoring_fallback_parser.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_selective_recompute_receipt.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_serve_api.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_smoke.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_source_learning.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_ssd_order_operator_frontier.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_substrate.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_substrate_scan_manifest.py": {
+      "lane": "mak",
+      "reason": "assigned by local subject and import evidence for integrated main"
+    },
+    "tests/test_suplementos_config.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_suplementos_svg_validator.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_svg_illustrator_integration.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_svg_index_real.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_tapiz_vibecode.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_tarifa_una_sola_fuente.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_tennis_mcp.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_three_plane_manifest.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_title_resolution.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_venue.py": {
+      "lane": "mak",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_venue_geometria_scd.py": {
+      "lane": "mak",
+      "reason": "assigned by local subject and import evidence for integrated main"
+    },
+    "tests/test_vigia_capture_bridge.py": {
+      "lane": "integration",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_vision_feedback_memory.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_vj_git_performance.py": {
+      "lane": "integration",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    },
+    "tests/test_zipper.py": {
+      "lane": "flujo",
+      "reason": "carried from the FLUJO lane contract into integrated main"
+    }
   },
- "generated_at_utc": "2026-09-02T00:44:00+00:00",
+  "generated_at_utc": "2026-09-02T00:44:00+00:00",
   "reconciled_at_utc": "2026-09-03T00:00:00Z",
   "root": "/home/mak",
   "schema": "mak-test-lane-map-v3",

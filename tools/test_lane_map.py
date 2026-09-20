@@ -630,13 +630,13 @@ def _infer_review_lane(path: Path) -> str:
                 lanes.add("flujo")
             elif candidate_text.startswith("projects/tapiz/"):
                 lanes.add("flujo")
-            elif candidate_text.startswith(("cultura/", "tools/", "iskvw/", "scripts/", "xio/", "projects/")):
+            elif candidate_text.startswith(("cultura/", "tools/", "iskvw/", "scripts/", "projects/")):
                 lanes.add("mak")
 
     if ("src/flujo/" in source or "flujo/src/flujo/" in source or
             "scripts/flujo.py" in source or "projects/tapiz/" in source):
         lanes.add("flujo")
-    if any(token in source for token in ("cultura/", "tools/", "iskvw/", "xio/", "projects/cultura/", "projects/plano/")):
+    if any(token in source for token in ("cultura/", "tools/", "iskvw/", "projects/cultura/", "projects/plano/")):
         lanes.add("mak")
 
     # Dynamic-import tests often name the module only in a docstring.  Resolve
