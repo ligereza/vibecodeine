@@ -1,185 +1,92 @@
 # SUPERVISOR
 
-Memoria de trabajo compacta del supervisor remoto de VIBECODEINE.
+Memoria compacta del supervisor remoto de VIBECODEINE. Git conserva la historia.
 
-Este archivo no es historia, handoff ni inventario. Se reescribe para que una
-ejecución amnésica pueda reconstruir rápidamente **qué estaba intentando hacer
-el proyecto y qué debe ocurrir después**. Git conserva el pasado.
+## Objetivo
 
-## Propósito
+El supervisor paga el contexto caro y mantiene un buffer secuencial de trabajo útil para Codex local.
+Meta de abastecimiento: aproximadamente 30-60 minutos de trabajo prevalidado, no un número fijo de tareas.
+Si sólo existen dos tareas buenas, deja dos. Nunca rellenes el buffer con auditorías inútiles.
 
-El supervisor no existe para auditar indefinidamente. Su trabajo es:
+## Orden de evidencia
 
-1. consumir el resultado del ejecutor local;
-2. reconstruir la intención reciente del proyecto;
-3. detectar qué quedó realmente incompleto o bloqueado;
-4. prevalidar una siguiente tarea útil;
-5. entregar a Codex una orden pequeña y ejecutable.
+Cuando el buffer se agota o bloquea:
+1. consume sus resultados;
+2. descubre la línea principal actual y lee aproximadamente sus últimos 10 commits;
+3. identifica líneas recientes y si ya fueron absorbidas;
+4. lee este snapshot y SYSTEM.md;
+5. abre sólo código, consumers, tests y contratos relacionados;
+6. preflight de cada item antes de meterlo al buffer.
 
-La higiene del repositorio es un medio. No es el producto.
+No recorrer todo el árbol para encontrar anomalías al azar.
 
-## Orden de evidencia para decidir
+## Prioridad
 
-No leer todo el repositorio y luego inventar prioridad.
+Preferir BUILD/FINISH. La higiene sólo entra si bloquea una trayectoria funcional, pruebas necesarias, ejecución o release.
+No encadenar inventarios, taxonomías o conteos por sí mismos.
 
-Cuando una orden termina, decidir en este orden:
+## Buffer
 
-1. **Resultado actual**: leer `ORDEN.md` y el delta producido por Codex.
-2. **Trayectoria reciente**: leer aproximadamente los últimos 10 commits de la
-   línea principal actual del repositorio y, cuando sea relevante, los últimos
-   commits de las líneas de trabajo que aparecen en esa trayectoria.
-3. **Absorción**: comparar esas líneas con la línea principal para distinguir
-   trabajo pendiente de trabajo ya integrado. El nombre de una rama explica
-   dónde nació algo; los commits recientes explican hacia dónde iba.
-4. **Memoria viva**: leer este archivo y `SYSTEM.md` para restricciones
-   durables y estado actual.
-5. **Código mínimo necesario**: abrir sólo los archivos, consumers, tests y
-   contratos directamente relacionados con la trayectoria elegida.
+ORDEN.md es el único buzón reemplazable.
+Estados top-level: READY, RUNNING, DEPLETED, BLOCKED, COMPLETE.
+Estados de item: READY, CONDITIONAL, RUNNING, DONE, BLOCKED, SKIPPED.
 
-El árbol completo, inventories globales y arqueología histórica son último
-recurso, no punto de partida.
+Un item CONDITIONAL sólo se ejecuta cuando sus dependencias están DONE y su condición es verdadera.
 
-## Regla anti-bucle
+## Ejecutor local
 
-No encadenar tareas cuyo único resultado sea demostrar otra vez que el
-repositorio coincide consigo mismo.
+Codex consume el buffer secuencialmente en la misma sesión:
+1. git fetch origin;
+2. toma el primer item READY;
+3. valida su guard;
+4. marca RUNNING;
+5. ejecuta sólo su write-set;
+6. corre pruebas;
+7. hace commit de producto;
+8. compacta el resultado de ese item dentro de ORDEN.md;
+9. promueve el siguiente CONDITIONAL si corresponde y continúa inmediatamente;
+10. al agotar el buffer deja state: DEPLETED.
 
-Una tarea de higiene/auditoría sólo tiene prioridad cuando:
-
-- bloquea tests, instalación, ejecución, release o el trabajo reciente;
-- una integración reciente dejó una contradicción ejecutable;
-- hay riesgo real de restaurar/romper una autoridad;
-- o Codex no puede continuar una capacidad funcional sin resolverla.
-
-Si la suite recolecta y existe una trayectoria funcional reciente que puede
-avanzar, esa trayectoria gana sobre completar catálogos, taxonomías o conteos.
-No encadenar dos ciclos puramente inventariales salvo bloqueo demostrado.
-
-## Modelo de dos agentes
-
-### Supervisor remoto
-
-Es amnésico entre ejecuciones y asume el costo de contexto.
-
-1. Localiza la superficie de control activa (`ORDEN.md` + este archivo) sin
-   asumir nombres permanentes de ramas o PRs.
-2. Lee primero y sólo `ORDEN.md`.
-3. Si está `READY`, termina sin cargar más contexto.
-4. Si está `DONE` o `BLOCKED`, reconstruye intención usando el orden de
-   evidencia anterior.
-5. Consume el resultado, reemplaza estado viejo de la cola viva y elige una
-   sola siguiente tarea.
-6. Hace preflight: rutas, owner/consumer, premisas, comandos, tests y criterio
-   de éxito deben comprobarse contra el árbol actual.
-7. Reemplaza `ORDEN.md` con una tarea `READY` autocontenida.
-
-No crea `ERRORES.md`, `RESULTADOS.md`, `NEXT.md`, handoffs, cierres de
-sesión ni diarios de decisiones.
-
-### Codex local
-
-Ejecuta; no redescubre el sistema.
-
-- Lee `ORDEN.md` y sólo los archivos necesarios.
-- Corrige fallos `task_local` dentro del write-set.
-- No amplía alcance por fallos externos o preexistentes.
-- Si aparecen muchos errores, los agrupa por causa raíz/firma; máximo cinco
-  grupos representativos.
-- Devuelve `DONE` si cumplió el objetivo aunque existan fallos externos.
-- Devuelve `BLOCKED` sólo si el objetivo no puede completarse dentro del
-  alcance.
-- Reemplaza el mismo `ORDEN.md`; no crea documentos auxiliares.
+No espera al supervisor entre items.
+Se detiene ante stale_code_base, blocker de alcance, contradicción de owner/consumer o decisión humana no autorizada.
+Muchos errores se agrupan por causa raíz, máximo cinco grupos.
+No crear ERRORES.md, RESULTADOS.md, NEXT.md, handoffs ni diarios.
 
 ## Concurrencia
 
-La superficie de control puede vivir junto al código auditado. Por eso una
-orden no debe confiar ciegamente en "HEAD actual == SHA fijo" si el propio
-supervisor escribió commits de control.
+El buffer registra base_product_head. Commits posteriores que sólo tocan SUPERVISOR.md u ORDEN.md son control-plane.
+Codex conserva el último commit de producto que creó. Antes de cada item vuelve a hacer fetch.
+Si aparece un cambio de producto ajeno posterior a ese HEAD, detiene el buffer con stale_code_base.
 
-Cada orden registra `code_base_expected`: el último HEAD de **producto**
-consumido. Codex permite cambios posteriores que sólo afecten archivos de
-control; cualquier otro cambio de producto implica `stale_code_base`.
+## Trayectoria consumida
 
-## Decisiones durables de esta limpieza
+Los últimos ciclos cerraron:
+- learning_evaluations -> MLflow/Azure ML;
+- lineage local seguro;
+- MAK -> FLUJO -> MakPanel visible sin polling a Azure.
 
-No restaurar sólo porque algo aparezca en historia:
+Azure queda cerrado por ahora; no continuar por inercia.
 
-- Airdrop retirado;
-- copia completa de XIO dentro de VIBECODEINE;
-- `AGENTS.md` como contrato persistente de entrada;
-- handoffs persistentes y `NEXT.md`;
-- Watsonx como runtime activo;
-- `tapiz_live_loop` como daemon sin consumer medido;
-- contratos `CAPACIDADES_*.md` sustituidos por superficies ejecutables.
+La trayectoria reciente de main también consolidó Hub/Portfolio/archivo y dejó:
+direction-context -> work-packet -> work-preview -> human review before execution.
 
-"Un solo contexto" no significa "un solo Markdown": preservar datos, evidencia,
-investigación, dossiers, obra, contratos técnicos consumidos y conocimiento
-humano real.
+El sistema ya previsualiza una de cuatro tareas, pero no tiene una transición explícita y trazable desde preview a revisión humana solicitada/confirmada.
 
-## Trayectoria actual
+## Límite del buffer actual
 
-La integración reciente muestra dos señales fuertes:
+Avanzar sólo hasta donde exista autoridad segura:
+1. hacer explícita la solicitud de revisión humana;
+2. permitir confirmación/rechazo idempotente sin ejecutar;
+3. producir readiness para structural_order sólo si la confirmación existe y el ejecutor estructural ya tiene autoridad comprobable.
 
-- Hub/Portfolio/archivo/Research se consolidaron como superficies operativas;
-- la línea RD/forense evolucionó hacia Azure Search + Hub y luego hacia
-  lineage de evaluaciones sanitizadas en Azure ML/MLflow.
+No fabricar autorización humana ni ejecutar una operación artística o semántica.
 
-La línea `rd/forense-y-vocabulario` ya fue absorbida por la línea principal:
-su valor actual es explicar la trayectoria, no actuar como backlog separado.
+## Deuda no prioritaria
 
-El ciclo `supervisor-002` ya cerró el productor/consumer local de lineage:
-
-- `learning_evaluations` produce un receipt sanitizado;
-- productor y consumer comparten `MAK_AZURE_ML_STAGING_ROOT`;
-- `azure_services.machine_learning_lineage()` proyecta sólo metadata segura;
-- `/api/azure/status` incluye esa proyección;
-- ausencia/corrupción degradan sin romper el status;
-- tests dedicados y colección pytest pasan.
-
-La siguiente costura no es otra auditoría. El lineage todavía no llega a la
-superficie humana existente: `MakPanel` consulta `/api/mak` cada 30 s y el
-backend FLUJO consulta sólo `/api/organismo` del box. No debe reutilizar
-`/api/azure/status` para polling porque ese status también resuelve inventario
-Azure. La visibilidad periódica debe usar una ruta local-only del receipt.
-
-## Cola viva
-
-Prioridad funcional actual:
-
-1. **Cerrar la última milla Azure ML -> operador**: exponer un endpoint MAK
-   local-only para `machine_learning_lineage()`, proyectarlo de forma
-   allowlisted por `/api/mak` y mostrarlo en el `MakPanel`, sin llamadas
-   Azure/MLflow/CLI nuevas durante el refresh de 30 s.
-2. Después, reconstruir otra vez la trayectoria desde commits recientes; no
-   asumir que Azure sigue siendo prioridad por inercia.
-
-Deuda de mantenimiento que no debe secuestrar la cola:
-
-- registry de tools incompleto;
-- clasificación stale de `mak_status`;
-- taxonomía de tests imperfecta;
-- dos tools `VIVO` con `--help` defectuoso;
-- referencias ejecutables restantes a autoridades retiradas;
-- opcionales sin fuente local.
-
-Resolver esas deudas cuando bloqueen trabajo, gates o cierre; no por turno.
-
-## Criterio de una buena siguiente orden
-
-Debe, preferentemente:
-
-- terminar una capacidad iniciada recientemente;
-- conectar productor con consumer;
-- transformar una integración en algo observable/usable;
-- corregir una ruptura encontrada al ejecutar esa capacidad;
-- o eliminar un blocker concreto que impide lo anterior.
-
-Una ronda sin cambio de producto es válida sólo cuando evita un error real o
-permite que la siguiente ronda construya.
+Registry incompleto, clasificación stale, taxonomía de tests, dos tools VIVO con --help defectuoso, referencias retiradas y opcionales ausentes.
+Sólo volver a ellas si bloquean trabajo real.
 
 ## Cierre
 
-Cuando la limpieza deje de ser necesaria, el supervisor no se queda sin
-trabajo por obligación ni inventa auditorías. Si no hay una tarea funcional
-respaldada por trayectoria reciente, deja `ORDEN.md` en `COMPLETE` hasta que
-aparezcan nuevos commits o una orden humana.
+Cuando el buffer quede DEPLETED, el supervisor reconstruye trayectoria reciente y lo reemplaza.
+Si no puede prevalidar más trabajo funcional, usa COMPLETE.
