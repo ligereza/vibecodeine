@@ -6,8 +6,10 @@ Lo que el operador decidio, con la fecha en que lo dijo.
 
 ## 2026-09-03
 
-- **No hay nodo Windows.** Era un equipo antiguo y ya no esta. Esta caja Linux
-  es todo el sistema.
+- **El antiguo nodo/runtime Windows fue retirado.** Eso NO significa que no exista
+  la estación Windows actual del usuario. MAK es el computador Linux; Windows
+  sigue siendo la estación física actual de control/desarrollo/render conectada
+  a MAK por la red privada y enlace Ethernet.
 
 - **El sistema crea formatos de portafolio primero y despues decide como
   ordenar las obras.** No busca el orden perfecto de una obra. En sus palabras:
@@ -18,9 +20,9 @@ Lo que el operador decidio, con la fecha en que lo dijo.
   eliminado.** Lo llamo estupido y tenia razon: dejaba la mitad del archivo
   declarada indecidible.
 
-- **Todos los archivos de contrato se borran y se empieza de cero con un solo
-  `AGENTS.md`.** `CLAUDE.md`, el `AGENTS.md` anterior, el `agents.md` en
-  minusculas y los tres de `contracts/departments/`, en los dos checkouts.
+- **Decisión histórica superada:** se intentó reiniciar la orientación con un
+  único `AGENTS.md`. El 2026-09-15 ese contrato persistente fue retirado; no
+  debe recrearse como autoridad.
 
 - **`LAST_HANDOFF.md` pasa a llamarse `HANDOFF_HISTORICO.md` y queda como
   historico.** En sus palabras, no sirve "para nada mas que revisar info que
@@ -35,7 +37,7 @@ Lo que el operador decidio, con la fecha en que lo dijo.
 
 - **Nomenclatura fijada.** `MAK` solo, sin apellido, es el computador Linux.
   La rama y el directorio se dicen completos: "la rama MAK", "el checkout MAK".
-  El repositorio se llama `vibecodeine`. Queda escrita en `AGENTS.md`.
+  El repositorio se llama `vibecodeine`.
 
 - **Separar el sistema en repos propios es lo proximo, despues de ordenar.**
   `ligereza/MAK`, `ligereza/flujo` y `ligereza/IRIS` se dejan reservados y
@@ -74,3 +76,12 @@ Lo que el operador decidio, con la fecha en que lo dijo.
   `git-topology.yml`, su parrafo en `MAPA.md` y `context/LAST_HANDOFF.md`
   salen de `main` de nuevo; `HANDOFF_HISTORICO.md` sigue siendo el unico
   historico, tal como quedo fijado el 2026-09-03.
+
+
+---
+
+## 2026-09-15
+
+- **Se retira el contrato persistente `AGENTS.md`.** El estado se mide desde
+  Git, código, consumidores, pruebas y herramientas de diagnóstico; no desde
+  un handoff o contrato narrativo permanente.
