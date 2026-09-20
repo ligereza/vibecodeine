@@ -31,7 +31,7 @@ projects/cultura/tilde_paridad.py
 projects/cultura/tilde_residuo.py
 projects/piezas_vectoriales/suplementos_rd/scripts/generar_flyers.py
 projects/plano/plano_stands.py
-tools/venue2d/referencia_plano_teatro.py
+projects/plano/referencia_plano_teatro.py
 projects/tapiz/example_agent.py
 projects/tapiz/vaso_animado.py
 projects/tapiz/vibecode/__init__.py

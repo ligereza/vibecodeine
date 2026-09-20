@@ -124,10 +124,21 @@ def test_no_domain_tells_an_agent_to_avoid_a_machine_that_is_gone():
 
 
 def test_there_is_exactly_one_contract_file_and_no_case_variant():
-    """The root has one uppercase contract and no case variant beside it.
+    """Two entry points differing only in case was the trap; it is gone.
 
-    `AGENTS.md` is supplied as the active workspace instruction by the host;
-    lowercase and Claude-specific variants remain forbidden.
+    `AGENTS.md` and `agents.md` were both tracked at this root and each was
+    written as the entry point, so on a case-sensitive filesystem they were two
+    files and an agent could be routed to either. On 2026-09-03 the operator
+    ordered every contract file deleted and one `AGENTS.md` written from zero.
+
+    This test then pinned zero contract files, after that one was deleted too.
+    That state was reversed: `AGENTS.md` was restored as the single entry
+    point, and `CONTRIBUTING.md` names reading it as the mandatory first step.
+    Pinning zero made this fail for holding the decided contract.
+
+    What it pins is the property the trap was about, which the reversal did not
+    touch: exactly one contract at this root, and no second file reachable by
+    changing its case.
     """
     variants = sorted(path.name for path in ROOT.iterdir()
                       if path.is_file() and path.name.lower() in

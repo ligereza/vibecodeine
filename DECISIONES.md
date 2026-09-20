@@ -19,7 +19,7 @@ Lo que el operador decidio, con la fecha en que lo dijo.
   declarada indecidible.
 
 - **Todos los archivos de contrato se borran y se empieza de cero con un solo
-  `AGENTS.md` (decisión superada el 2026-09-15).** `CLAUDE.md`, el `AGENTS.md` anterior, el `agents.md` en
+  `AGENTS.md`.** `CLAUDE.md`, el `AGENTS.md` anterior, el `agents.md` en
   minusculas y los tres de `contracts/departments/`, en los dos checkouts.
 
 - **`LAST_HANDOFF.md` pasa a llamarse `HANDOFF_HISTORICO.md` y queda como
@@ -35,8 +35,7 @@ Lo que el operador decidio, con la fecha en que lo dijo.
 
 - **Nomenclatura fijada.** `MAK` solo, sin apellido, es el computador Linux.
   La rama y el directorio se dicen completos: "la rama MAK", "el checkout MAK".
-  El repositorio se llama `vibecodeine`. Queda fijada en esta decisión y en
-  `REPOS.md`.
+  El repositorio se llama `vibecodeine`. Queda escrita en `AGENTS.md`.
 
 - **Separar el sistema en repos propios es lo proximo, despues de ordenar.**
   `ligereza/MAK`, `ligereza/flujo` y `ligereza/IRIS` se dejan reservados y
@@ -75,45 +74,3 @@ Lo que el operador decidio, con la fecha en que lo dijo.
   `git-topology.yml`, su parrafo en `MAPA.md` y `context/LAST_HANDOFF.md`
   salen de `main` de nuevo; `HANDOFF_HISTORICO.md` sigue siendo el unico
   historico, tal como quedo fijado el 2026-09-03.
-
----
-
-## 2026-09-15
-
-- **Se retiran los tres `AGENTS.md` raíz** de MAK, FLUJO y XIO. No hay contrato
-  de entrada persistente ni handoff operativo: Git, código, pruebas, `STATUS`
-  y los inventarios de cada repositorio son las fuentes consultables.
-
-- **FLUJO y XIO tienen una sola autoridad activa cada uno.** FLUJO se opera
-  desde `/home/mak/flujo` en `main`; XIO se opera desde `/home/mak/XIO` en
-  `integration/xio-field-20260911`. Las copias `/home/mak/src/flujo` y
-  `/home/mak/xio` quedan congeladas como compatibilidad del repositorio MAK y
-  no son fuentes de runtime.
-
-- **RD e ISKVW/FOH son perfiles de integración, no ramas.** La separación se
-  expresa en contratos, referencias de evento y consumidores; no se duplica el
-  código por perfil ni se crean ramas paralelas para ellos.
-
-- **El experimento grammar pertenece a MAK.** Su corpus, compilador
-  `semantic-icons-v1` y `Conductor` son de MAK; su módulo vive en
-  `cultura/mak_research/grammar.py` y su único entrypoint es
-  `tools/grammar_runner.py`. FLUJO no lo importa ni lo expone en su CLI.
-
-- **El portafolio visual de ISKVW tiene una proyección única y completa.**
-  `tools/gen_archivo_iskvw.py` genera `datos/archivo.json` y
-  `datos/portafolio.json` juntos; el manifiesto conserva todos los ids y fija
-  un orden determinista, sin convertir la falta de decisión o metadata en una
-  exclusión. `piel/lib/skin_runtime.js` es el lector común de las dos pieles de
-  portafolio, `campo` y `terminal`, y el selector conserva query y hash al
-  cambiar.
-
-- **SCD 3D no es una piel de ISKVW.** Su cadena canónica vive en FLUJO:
-  `tools/venue2d/referencia_plano_teatro.py` →
-  `tools/venue_geometria_scd.py` → `data/venues/*.json` →
-  `tools/venue3d/`, con `venue_secuencia.mjs` como salida reproducible. Es el
-  primer prototipo de venue 2D→3D para integrar XIO con renders, riders, planos
-  y layouts. Gaussian splat todavía no forma parte de la implementación ni se
-  presenta como geometría métrica.
-
-- **Este cierre se ejecuta en solitario por LIBELULA.** No hay agente delegado
-  ni rama de trabajo adicional; este frente queda bajo LIBELULA por ahora.

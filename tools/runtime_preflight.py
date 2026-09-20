@@ -44,7 +44,6 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import http.client
 import json
 import os
 import re
@@ -56,20 +55,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from urllib.error import URLError
 from urllib.request import Request, urlopen
-
-try:
-    from .branch_contract import interpret_ref
-except ImportError:  # direct ``python tools/runtime_preflight.py`` execution
-    import importlib.util
-
-    _contract_spec = importlib.util.spec_from_file_location(
-        "mak_branch_contract", Path(__file__).with_name("branch_contract.py")
-    )
-    if _contract_spec is None or _contract_spec.loader is None:
-        raise ImportError("branch_contract_unavailable")
-    _contract_module = importlib.util.module_from_spec(_contract_spec)
-    _contract_spec.loader.exec_module(_contract_module)
-    interpret_ref = _contract_module.interpret_ref
 
 SCHEMA = "mak-runtime-preflight-v1"
 PHYSICAL_ROOT = Path("/home/mak")
@@ -143,9 +128,6 @@ class Surface:
     # Repo files that call the surface.  Evidence of ownership, never evidence
     # of what the surface executes.
     consumer_sources: tuple[str, ...] = ()
-    # Internal services may have no TCP listener: the single public Hub owns
-    # :8900 and these workers are reached through private Unix sockets.
-    declared_socket: str | None = None
 
 
 # Keep this registry explicit and small.  Discovery cannot tell a compatibility
@@ -168,10 +150,9 @@ SURFACES: tuple[Surface, ...] = (
         owner_branch="MAK",
         source_declared="cultura/mak_research/interfaz.py",
         kind="systemd_user",
-        declared_port=None,
+        declared_port=8890,
         http_paths=("/",),
         unit="mak-research.service",
-        declared_socket="/home/mak/.cache/mak/research.sock",
     ),
     Surface(
         surface_id="mak_codex",
@@ -179,10 +160,9 @@ SURFACES: tuple[Surface, ...] = (
         owner_branch="MAK",
         source_declared="cultura/mak_codex/interfaz_codex.py",
         kind="systemd_user",
-        declared_port=None,
+        declared_port=8891,
         http_paths=("/",),
         unit="mak-codex.service",
-        declared_socket="/home/mak/.cache/mak/codex.sock",
     ),
     Surface(
         surface_id="flujo_app",
@@ -195,7 +175,7 @@ SURFACES: tuple[Surface, ...] = (
         # only auto-detects when the requested port is exactly the default.
         fallback_ports=(8766, 8767, 8768, 8769, 8770, 8771, 8772),
         http_paths=("/",),
-        process_match=("flujo.web.hub", "run_server"),
+        process_match=("-m", "flujo", "app"),
         import_probe="flujo.web.hub",
     ),
     Surface(
@@ -272,14 +252,10 @@ def _sha256(path: Path) -> str | None:
         return None
 
 
-def _run(
-    command: list[str], timeout: float = 5.0, *, cwd: str | None = None,
-    env: dict[str, str] | None = None,
-) -> tuple[int, str, str]:
+def _run(command: list[str], timeout: float = 5.0) -> tuple[int, str, str]:
     try:
         result = subprocess.run(
-            command, check=False, capture_output=True, text=True, timeout=timeout,
-            cwd=cwd, env=env,
+            command, check=False, capture_output=True, text=True, timeout=timeout
         )
     except (FileNotFoundError, subprocess.TimeoutExpired, OSError) as exc:
         return 127, "", str(exc)
@@ -392,38 +368,6 @@ def _probe_http(port: int, paths: tuple[str, ...]) -> dict[str, object]:
     return {"http_path": paths[0] if paths else None, "http_status": None, "error": last if paths else None}
 
 
-class _UnixHTTPConnection(http.client.HTTPConnection):
-    """Small HTTP client used to verify an internal Unix service socket."""
-
-    def __init__(self, socket_path: str, timeout: float = 3):
-        super().__init__("localhost", timeout=timeout)
-        self.socket_path = socket_path
-
-    def connect(self):
-        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.sock.settimeout(self.timeout)
-        self.sock.connect(self.socket_path)
-
-
-def _probe_unix_http(socket_path: str, paths: tuple[str, ...]) -> dict[str, object]:
-    """Probe a private HTTP service without creating a TCP listener."""
-    for path in paths:
-        connection = _UnixHTTPConnection(socket_path)
-        try:
-            connection.request("GET", path, headers={"Connection": "close"})
-            response = connection.getresponse()
-            response.read(1 << 16)
-            return {"socket_open": True, "http_path": path,
-                    "http_status": int(response.status), "bytes": 0}
-        except (OSError, http.client.HTTPException, ValueError) as exc:
-            last = str(exc)
-        finally:
-            connection.close()
-    return {"socket_open": Path(socket_path).exists(),
-            "http_path": paths[0] if paths else None,
-            "http_status": None, "error": last if paths else None}
-
-
 def _inside(path: Path, root: Path) -> bool:
     try:
         path.relative_to(root)
@@ -477,24 +421,11 @@ def adapter_report(root: Path) -> dict[str, object]:
     worktrees = [line.split(" ", 1)[1] for line in out.splitlines() if line.startswith("worktree ")]
     code_b, out_b, _ = _run(["git", "-C", str(adapter), "branch", "--show-current"])
     branch = out_b.strip() if code_b == 0 else None
-    profile = {}
-    if branch:
-        code_profile, out_profile, _ = _run(
-            ["git", "-C", str(adapter), "show", f"{branch}:branch_profile.json"]
-        )
-        if code_profile == 0:
-            try:
-                value = json.loads(out_profile)
-                profile = value if isinstance(value, dict) else {}
-            except json.JSONDecodeError:
-                profile = {}
-    semantics = interpret_ref(branch, profile)
     return {
         "path": str(adapter),
         "role": "flujo_physical_checkout",
         "branch": branch,
-        "branch_semantics": semantics,
-        "is_flujo_checkout": semantics.get("lane") == "FLUJO",
+        "is_flujo_checkout": branch == "FLUJO",
         "source_root": str(root / FLUJO_SOURCE_ROOT),
         "exists": adapter.is_dir(),
         "is_symlink": adapter.is_symlink(),
@@ -532,11 +463,9 @@ def branch_context(root: Path) -> dict[str, object]:
             profile = json.loads(local.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             profile = {}
-    semantics = interpret_ref(checkout, profile)
     return {
         "checkout_branch": checkout or None,
-        "checkout_branch_kind": semantics.get("kind") if profile else None,
-        "checkout_branch_semantics": semantics,
+        "checkout_branch_kind": profile.get("kind", "runtime") if profile else None,
         "checkout_selector": profile.get("default_test_selector") if profile else None,
         "profiles": {
             name: _branch_profile(root, name) for name in ("MAK", "FLUJO", "main", "historia")
@@ -790,8 +719,7 @@ def _find_manual_pid(surface: Surface) -> int | None:
         argv = _proc_cmdline(int(entry.name))
         if not argv:
             continue
-        command = " ".join(argv)
-        if all(token in command for token in surface.process_match):
+        if all(token in argv for token in surface.process_match):
             return int(entry.name)
     return None
 
@@ -807,15 +735,9 @@ def _import_probe(report: SurfaceReport, root: Path, surface: Surface, interpret
 
     if not surface.import_probe:
         return
-    probe_env = os.environ.copy()
-    source_root = root / FLUJO_SOURCE_ROOT
-    existing_path = probe_env.get("PYTHONPATH", "")
-    probe_env["PYTHONPATH"] = os.pathsep.join(
-        part for part in (str(source_root), existing_path) if part
-    )
     code, out, err = _run(
         [interpreter, "-c", f"import {surface.import_probe} as m; print(m.__file__)"],
-        timeout=20.0, cwd=str(root / FLUJO_CHECKOUT), env=probe_env,
+        timeout=20.0,
     )
     if code != 0:
         report.data["import_probe"] = None
@@ -926,57 +848,6 @@ def _port_evidence(report: SurfaceReport, surface: Surface, listeners: dict[int,
     candidates = ([declared] if declared is not None else []) + list(surface.fallback_ports)
     owned = [port for port, row in listeners.items() if pid is not None and row.get("pid") == pid]
     report.data["ports_owned_by_process"] = sorted(owned)
-
-    if surface.declared_socket:
-        socket_path = Path(os.path.expanduser(surface.declared_socket))
-        report.data["declared_socket"] = str(socket_path)
-        report.data["effective_socket"] = str(socket_path) if socket_path.is_socket() else None
-        report.data["effective_port"] = None
-        report.data["fallback_port"] = None
-        report.data["declared_port_open"] = False
-        if not socket_path.is_socket():
-            report.add(
-                "listener_missing",
-                STATUS_ERROR if surface.kind.startswith("systemd") else STATUS_WARN,
-                f"no Unix socket at {socket_path}",
-            )
-            report.data["http_path"] = None
-            report.data["http_status"] = None
-            return
-
-        probe = _probe_unix_http(str(socket_path), surface.http_paths)
-        report.data["http_path"] = probe.get("http_path")
-        report.data["http_status"] = probe.get("http_status")
-        report.data["http_bytes"] = probe.get("bytes")
-        if probe.get("http_status") is None:
-            report.add(
-                "http_no_answer",
-                STATUS_WARN,
-                f"Unix socket {socket_path} is open but no declared path answered",
-            )
-            return
-
-        source_proven = report.data.get("source_sha256") is not None and not any(
-            finding.code
-            in {
-                "executed_source_mismatch",
-                "executed_source_unverifiable",
-                "exec_start_outside_root",
-                "exec_start_historical",
-                "import_probe_failed",
-                "source_missing",
-                "process_missing",
-            }
-            for finding in report.findings
-        )
-        if not source_proven:
-            report.add(
-                "listener_source_unverified",
-                STATUS_ERROR,
-                f"Unix socket {socket_path} answered HTTP {probe.get('http_status')} "
-                "while the executed source could not be verified",
-            )
-        return
 
     effective: int | None = None
     fallback: int | None = None
@@ -1229,11 +1100,6 @@ def render_text(report: dict[str, object]) -> str:
             f"    ports           : declared={row.get('declared_port')} "
             f"effective={row.get('effective_port')} fallback={row.get('fallback_port')}"
         )
-        if row.get("declared_socket"):
-            lines.append(
-                f"    unix_socket     : declared={row.get('declared_socket')} "
-                f"effective={row.get('effective_socket')}"
-            )
         lines.append(
             f"    http            : {row.get('http_path')} -> {row.get('http_status')}"
         )

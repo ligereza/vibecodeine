@@ -1,15 +1,13 @@
 # Prompt para pedir una estética nueva
 
 Copiá todo lo que está bajo la línea y pegalo en Arena, en Google AI Studio o en
-el agente que uses, **junto con** `CONTRATO.md`,
-`cultura/mak_plataforma/contrato_archivo.py` y `ESQUEMA_ARCHIVO.md`. El módulo
-es el contrato ejecutable compartido; `CONTRATO.md` fija además las reglas
-visibles de la piel.
+el agente que uses, **junto con** `cultura/mak_plataforma/contrato_archivo.py`
+y `ESQUEMA_ARCHIVO.md`. Ese módulo es el contrato ejecutable compartido; no
+existe un `CONTRATO.md` separado en este repo.
 
-Los recursos tienen que decir lo MISMO. Esta versión separa el catálogo
-manual `obras.json`, la proyección `archivo.json`, el manifiesto completo
-`portafolio.json` y el contrato ejecutable; los ensayos ilustrados de research
-tampoco entran al archivo público por defecto.
+Los tres recursos tienen que decir lo MISMO. Esta versión separa el catálogo
+manual `obras.json`, la proyección `archivo.json` y el contrato ejecutable; los
+ensayos ilustrados de research tampoco entran al archivo público por defecto.
 Un modelo web que reciba instrucciones contradictorias escribe una piel para
 datos que no existen, y eso no se descubre hasta publicarla.
 
@@ -25,16 +23,16 @@ lo que importa es dejar ver la obra, no venderla.
 define la conversión compartida, y `ESQUEMA_ARCHIVO.md` define exactamente qué
 datos vas a recibir. Todo lo que muestres tiene que salir de ahí.
 
-Lo que recibís es un manifiesto `iskvw/datos/portafolio.json` y su contenido
-`iskvw/datos/archivo.json`, con dos listas: **piezas** y **vínculos entre
-piezas**. El manifiesto fija el orden y contiene todos los ids; no importa qué hay detrás — obras del
+Lo que recibís es **un solo archivo**, `iskvw/datos/archivo.json`, con dos listas:
+**piezas** y **vínculos entre piezas**. No importa qué hay detrás — obras del
 artista, piezas gráficas derivadas del taller, código — todo llega con la misma
 forma. Los informes y conceptos de research existen como vista explícita, pero
 no entran al archivo público por defecto. Eso es a propósito: tu piel no tiene que saber de dónde salió, y el día
 que aparezca un tipo de pieza nuevo, tu piel sigue funcionando sin tocarla.
 
-En la proyección local actual son **1.830 piezas y 5.832 vínculos** (corte
-MAK, 2026-09-15). Estas cifras son una medición de la fuente,
+En la proyección local actual son **1.690 piezas y 4.729 vínculos** (snapshot
+MAK, 2026-08-15). Se reparten en 104 `codigo` y 1.586 `obra`; los vínculos son
+4.711 `semantico` y 18 `etiqueta`. Estas cifras son una medición del snapshot,
 no un contrato fijo: al cambiar la fuente, el contador debe regenerarse.
 
 Cada pieza trae: `id`, `titulo`, `clase`, `fecha`, `resumen`, `etiquetas`,

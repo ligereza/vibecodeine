@@ -93,29 +93,14 @@ def _query_readers(dispatcher: ast.FunctionDef, source: str) -> set[str]:
     something the branch cannot get wrong. Measured on `do_GET`: 21 branches of
     83 read it.
     """
-    # `ast.get_source_segment` splits the complete source on every call. The
-    # old implementation did that for every statement in every `if`, making
-    # this small inventory quadratic in the size of the hub. Inspect the AST
-    # directly instead: these are the only two query-reading forms the
-    # contract recognises, and comments/string literals were never meant to be
-    # evidence here.
-    del source
     reading: set[str] = set()
     for node in ast.walk(dispatcher):
         if not isinstance(node, ast.If):
             continue
-        reads_query = any(
-            isinstance(child, ast.Name) and child.id == "parse_qs"
-            or isinstance(child, ast.Attribute)
-            and child.attr == "parse_qs"
-            or isinstance(child, ast.Attribute)
-            and child.attr == "query"
-            and isinstance(child.value, ast.Name)
-            and child.value.id == "u"
-            for statement in node.body
-            for child in ast.walk(statement)
+        body_text = "\n".join(
+            ast.get_source_segment(source, statement) or "" for statement in node.body
         )
-        if not reads_query:
+        if "parse_qs" not in body_text and "u.query" not in body_text:
             continue
         for child in ast.walk(node.test):
             if isinstance(child, ast.Constant) and isinstance(child.value, str):

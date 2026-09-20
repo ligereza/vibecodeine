@@ -33,6 +33,7 @@ STALE_TOKENS = (
 )
 DB_PATHS = (
     ROOT / "data" / "rd.db",
+    ROOT / "data" / "rd_datos.db",
     ROOT / "data" / "mak_knowledge.db",
     ROOT / "data" / "flujo.db",
 )
@@ -43,6 +44,12 @@ DB_CONSUMERS = {
         "flujo/src/flujo/knowledge/operational_bridge.py",
         "tools/gen_propuesta_directiva.py",
         "cultura/mak_plataforma/hub.py",
+    ),
+    "data/rd_datos.db": (
+        "flujo/src/flujo/rd/datos.py",
+        "flujo/src/flujo/rd/informe.py",
+        "flujo/src/flujo/departments.py",
+        "flujo/src/flujo/web/hub.py",
     ),
     "data/mak_knowledge.db": (
         "flujo/src/flujo/knowledge/project_api.py",
@@ -89,9 +96,12 @@ TOOL_INVENTORY_EXCLUDE = {"test_lane_map.py", "__init__.py"}
 # support.  Neither status asserts a consumer, retirement, or execution
 # permission.
 NO_REFERENCE_CLASSIFICATIONS = {
-    # capabilities.py has current consumer evidence in tests and the
-    # integrated workflow, so it is intentionally absent from this
-    # zero-reference disposition table.
+    # separation_20260902: the MAK/FLUJO split removed the tools and tests that
+    # referenced these, so each lost its consumer evidence without changing.
+    # They are operator-invoked, which is what manual_only means; the audit
+    # keeps them declared rather than letting an unreferenced tool pass
+    # silently.
+    "capabilities": {"status": "manual_only", "source": "separation_20260902"},
     # `gen_propuesta_directiva` left this table on 2026-09-04: it now has a
     # consumer, `tests/test_gen_propuesta_directiva.py`, which holds it to the
     # three promises its docstring makes about a document the board reads.

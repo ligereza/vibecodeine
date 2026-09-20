@@ -7,17 +7,14 @@ research and codex services through same-origin /research/ and /codex/ paths.
 Its historically named ``/portafolio/`` route is the operator-facing IRIS
 ordering/curation interface (Atlas Campo del Orden), not the artist's public
 portfolio; ``iskvw.cl`` is a separate downstream site.
-The services keep their existing routes and contracts; persistent deployments
-reach them through private Unix sockets, leaving :8900 as the only TCP face.
+The services keep their existing routes and contracts; their ports remain
+internal runtime boundaries.
 
 Rutas: / (cara) · /research-garden/ · /health · /api/organismo · /api/micelio · /api/archivo · /api/ejecutar (POST) ·
 /api/ideas (GET+POST) · /pieza · /api/salud · /api/actividad · /cuotas ·
 /doctrina · /reflexiones · /relevo · /genesis
 """
 import html
-import ast
-import hashlib
-import http.client
 import json
 import math
 from datetime import date
@@ -25,8 +22,6 @@ import mimetypes
 import os
 import re
 import signal
-import shutil
-import socket
 import sys
 import threading
 import time
@@ -74,11 +69,6 @@ try:
     import visual_index as _visual_index  # noqa: E402
 except Exception:  # noqa: BLE001 - visual layer is an optional projection
     _visual_index = None
-# Imported lazily by `_portfolio_observe_folder` after `_FLUJO_SOURCE_ROOT`
-# has been inserted below. Importing this adapter above would create a partial
-# namespace package when the Hub starts from `/home/mak`, and would then hide
-# the autonomous FLUJO package from every later knowledge import.
-_portfolio_corpus = None
 try:
     import xio_evidence as _xio_evidence  # noqa: E402
 except Exception:  # noqa: BLE001 - XIO evidence remains optional
@@ -149,9 +139,6 @@ MESA_INBOX_FIELDS = (
     "asset_available", "selection", "classification", "decision_draft",
 )
 _PORTFOLIO_GTM_LOCK = threading.Lock()
-_PORTFOLIO_INBOX_LOCK = threading.Lock()
-_PORTFOLIO_ARCHIVE_CACHE_LOCK = threading.Lock()
-_PORTFOLIO_ARCHIVE_CACHE = None
 _PORTFOLIO_CONNECTION_LOCK = threading.Lock()
 _PORTFOLIO_FEEDBACK_LOCK = threading.Lock()
 _PORTFOLIO_SELECTION_LOCK = threading.Lock()
@@ -223,18 +210,7 @@ SERVICE_PROXY_PREFIXES = {
     "research": RESEARCH_URL,
     "codex": CODEX_URL,
 }
-# The public surface is one TCP listener (:8900). In the persistent install
-# the two worker services use private Unix sockets; the HTTP URLs above remain
-# as a standalone/development fallback and keep the adapter testable.
-SERVICE_PROXY_SOCKETS = {
-    "research": os.environ.get("MAK_RESEARCH_SOCKET", "").strip(),
-    "codex": os.environ.get("MAK_CODEX_SOCKET", "").strip(),
-}
 SERVICE_PROXY_MAX_BYTES = 2_000_000
-_DEFAULT_SERVICE_URLS = {
-    "research": "http://127.0.0.1:8890",
-    "codex": "http://127.0.0.1:8891",
-}
 
 # The 8900 hub is launched from /home/mak/plataforma. The MAK checkout does
 # not carry a motor copy: its shared diagnostics and knowledge consumers live
@@ -249,48 +225,8 @@ _SSD_ORDER_FOUNDATION_PATH = os.path.join(
 _PORTFOLIO_CLASSIFICATIONS_PATH = os.environ.get(
     "MAK_PORTFOLIO_CLASSIFICATIONS",
     "/home/mak/plataforma/director_runs/portfolio-editor-20260808/classifications.jsonl")
-def _source_supports_human_triage(source_root):
-    """Return whether this motor checkout matches the Hub archive consumer."""
-    candidate = Path(source_root) / "flujo" / "knowledge" / "product_view.py"
-    try:
-        tree = ast.parse(candidate.read_text(encoding="utf-8"))
-    except (OSError, SyntaxError):
-        return False
-    for node in ast.walk(tree):
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == "project_archive_portfolio_view":
-            arguments = (*node.args.posonlyargs, *node.args.args, *node.args.kwonlyargs)
-            return any(argument.arg == "human_triage" for argument in arguments)
-    return False
-
-
-def _resolve_flujo_source_root(repo_root):
-    """Choose a compatible local motor without hiding an explicit override.
-
-    The Hub lives in the MAK checkout while its knowledge motor lives in the
-    independent sibling FLUJO checkout. Prefer that autonomous source when it
-    is compatible; keep the in-checkout mirror only as a bounded fallback for
-    an incomplete local installation, and let operators force another source
-    explicitly.
-    """
-    override = os.environ.get("FLUJO_SOURCE_ROOT")
-    if override:
-        return os.path.abspath(override), "explicit_override"
-    candidates = (
-        os.path.join(repo_root, "flujo", "src"),
-        os.path.join(repo_root, "src"),
-    )
-    for candidate in candidates:
-        if _source_supports_human_triage(candidate):
-            return os.path.abspath(candidate), "compatible_local_source"
-    # Keep an existing autonomous checkout as the reported fallback even when
-    # it is currently incompatible; this makes the missing contract visible
-    # instead of silently switching to a different source tree. If the sibling
-    # is absent, the in-checkout mirror is the only useful fallback.
-    fallback = candidates[0] if os.path.isdir(candidates[0]) else candidates[-1]
-    return os.path.abspath(fallback), "sibling_fallback"
-
-
-_FLUJO_SOURCE_ROOT, _FLUJO_SOURCE_ROOT_MODE = _resolve_flujo_source_root(_REPO_ROOT)
+_FLUJO_SOURCE_ROOT = os.path.abspath(os.environ.get(
+    "FLUJO_SOURCE_ROOT", os.path.join(_REPO_ROOT, "flujo", "src")))
 for _import_root in (_REPO_ROOT, _FLUJO_SOURCE_ROOT):
     if _import_root not in sys.path:
         sys.path.insert(0, _import_root)
@@ -359,304 +295,11 @@ else:
     _PROJECT_ROUTER_IMPORT_ERROR = ""
 
 try:
-    from flujo.knowledge.review_queue import (  # noqa: E402
-        load_queue as _load_review_queue,
-        summary as _review_queue_summary,
-    )
-except Exception as _review_queue_exc:  # noqa: BLE001 - review is additive
-    _load_review_queue = None
-    _review_queue_summary = None
-    _REVIEW_QUEUE_IMPORT_ERROR = type(_review_queue_exc).__name__
-else:
-    _REVIEW_QUEUE_IMPORT_ERROR = ""
-
-try:
-    from flujo.knowledge.portfolio_review_context import (  # noqa: E402
-        compile_portfolio_review_context as _compile_portfolio_review_context,
-        validate_portfolio_review_context as _validate_portfolio_review_context,
-    )
-except Exception as _portfolio_review_context_exc:  # noqa: BLE001 - additive surface
-    _compile_portfolio_review_context = None
-    _validate_portfolio_review_context = None
-    _PORTFOLIO_REVIEW_CONTEXT_IMPORT_ERROR = type(
-        _portfolio_review_context_exc).__name__
-else:
-    _PORTFOLIO_REVIEW_CONTEXT_IMPORT_ERROR = ""
-
-try:
-    from flujo.knowledge.operation_receipt import (  # noqa: E402
-        build_operation_receipt as _build_operation_receipt,
-        validate_operation_receipt as _validate_operation_receipt,
-    )
-except Exception as _operation_receipt_exc:  # noqa: BLE001 - additive surface
-    _build_operation_receipt = None
-    _validate_operation_receipt = None
-    _OPERATION_RECEIPT_IMPORT_ERROR = type(_operation_receipt_exc).__name__
-else:
-    _OPERATION_RECEIPT_IMPORT_ERROR = ""
-
-try:
-    from flujo.knowledge.vizz_measurement_status import (  # noqa: E402
-        build_vizz_measurement_status as _build_vizz_measurement_status,
-        validate_vizz_measurement_status as _validate_vizz_measurement_status,
-    )
-except Exception as _vizz_measurement_status_exc:  # noqa: BLE001 - additive surface
-    _build_vizz_measurement_status = None
-    _validate_vizz_measurement_status = None
-    _VIZZ_MEASUREMENT_STATUS_IMPORT_ERROR = type(_vizz_measurement_status_exc).__name__
-else:
-    _VIZZ_MEASUREMENT_STATUS_IMPORT_ERROR = ""
-
-try:
-    from flujo.knowledge.vizz_lineage_status import (  # noqa: E402
-        build_vizz_lineage_status as _build_vizz_lineage_status,
-        validate_vizz_lineage_status as _validate_vizz_lineage_status,
-    )
-except Exception as _vizz_lineage_status_exc:  # noqa: BLE001 - additive surface
-    _build_vizz_lineage_status = None
-    _validate_vizz_lineage_status = None
-    _VIZZ_LINEAGE_STATUS_IMPORT_ERROR = type(_vizz_lineage_status_exc).__name__
-else:
-    _VIZZ_LINEAGE_STATUS_IMPORT_ERROR = ""
-
-try:
-    from flujo.knowledge.structural_delta_status import (  # noqa: E402
-        build_structural_delta_status as _build_structural_delta_status,
-        validate_structural_delta_status as _validate_structural_delta_status,
-    )
-except Exception as _structural_delta_status_exc:  # noqa: BLE001 - additive surface
-    _build_structural_delta_status = None
-    _validate_structural_delta_status = None
-    _STRUCTURAL_DELTA_STATUS_IMPORT_ERROR = type(_structural_delta_status_exc).__name__
-else:
-    _STRUCTURAL_DELTA_STATUS_IMPORT_ERROR = ""
-
-try:
-    from flujo.knowledge.portfolio_direction_context import (  # noqa: E402
-        build_portfolio_direction_context as _build_portfolio_direction_context,
-        validate_portfolio_direction_context as _validate_portfolio_direction_context,
-    )
-except Exception as _portfolio_direction_context_exc:  # noqa: BLE001 - additive surface
-    _build_portfolio_direction_context = None
-    _validate_portfolio_direction_context = None
-    _PORTFOLIO_DIRECTION_CONTEXT_IMPORT_ERROR = type(_portfolio_direction_context_exc).__name__
-else:
-    _PORTFOLIO_DIRECTION_CONTEXT_IMPORT_ERROR = ""
-
-try:
-    from flujo.knowledge.portfolio_work_packet import (  # noqa: E402
-        build_portfolio_work_packet as _build_portfolio_work_packet,
-        validate_portfolio_work_packet as _validate_portfolio_work_packet,
-    )
-except Exception as _portfolio_work_packet_exc:  # noqa: BLE001 - additive surface
-    _build_portfolio_work_packet = None
-    _validate_portfolio_work_packet = None
-    _PORTFOLIO_WORK_PACKET_IMPORT_ERROR = type(_portfolio_work_packet_exc).__name__
-else:
-    _PORTFOLIO_WORK_PACKET_IMPORT_ERROR = ""
-
-try:
-    from flujo.knowledge.portfolio_work_preview import (  # noqa: E402
-        build_portfolio_work_preview as _build_portfolio_work_preview,
-        validate_portfolio_work_preview as _validate_portfolio_work_preview,
-    )
-except Exception as _portfolio_work_preview_exc:  # noqa: BLE001 - additive surface
-    _build_portfolio_work_preview = None
-    _validate_portfolio_work_preview = None
-    _PORTFOLIO_WORK_PREVIEW_IMPORT_ERROR = type(_portfolio_work_preview_exc).__name__
-else:
-    _PORTFOLIO_WORK_PREVIEW_IMPORT_ERROR = ""
-
-try:
-    from flujo.knowledge.portfolio_archive_orientation import (  # noqa: E402
-        build_archive_orientation as _build_archive_orientation,
-        validate_archive_orientation as _validate_archive_orientation,
-    )
-except Exception as _archive_orientation_exc:  # noqa: BLE001 - additive surface
-    _build_archive_orientation = None
-    _validate_archive_orientation = None
-    _ARCHIVE_ORIENTATION_IMPORT_ERROR = type(_archive_orientation_exc).__name__
-else:
-    _ARCHIVE_ORIENTATION_IMPORT_ERROR = ""
-
-try:
-    from flujo.knowledge.portfolio_relation_evidence_plan import (  # noqa: E402
-        build_relation_evidence_plan as _build_relation_evidence_plan,
-        validate_relation_evidence_plan as _validate_relation_evidence_plan,
-    )
-except Exception as _relation_evidence_plan_exc:  # noqa: BLE001 - additive surface
-    _build_relation_evidence_plan = None
-    _validate_relation_evidence_plan = None
-    _RELATION_EVIDENCE_PLAN_IMPORT_ERROR = type(_relation_evidence_plan_exc).__name__
-else:
-    _RELATION_EVIDENCE_PLAN_IMPORT_ERROR = ""
-
-try:
-    from flujo.knowledge.area_orientation import (  # noqa: E402
-        build_area_orientation as _build_area_orientation,
-        validate_area_orientation as _validate_area_orientation,
-    )
-except Exception as _area_orientation_exc:  # noqa: BLE001 - additive surface
-    _build_area_orientation = None
-    _validate_area_orientation = None
-    _AREA_ORIENTATION_IMPORT_ERROR = type(_area_orientation_exc).__name__
-else:
-    _AREA_ORIENTATION_IMPORT_ERROR = ""
-
-try:
-    from flujo.knowledge.operations_read_only_map import (  # noqa: E402
-        ENDPOINTS as _OPERATIONS_MAP_ENDPOINTS,
-        build_operations_read_only_map as _build_operations_read_only_map,
-        validate_operations_read_only_map as _validate_operations_read_only_map,
-    )
-except Exception as _operations_map_exc:  # noqa: BLE001 - additive observability surface
-    _OPERATIONS_MAP_ENDPOINTS = []
-    _build_operations_read_only_map = None
-    _validate_operations_read_only_map = None
-    _OPERATIONS_MAP_IMPORT_ERROR = type(_operations_map_exc).__name__
-else:
-    _OPERATIONS_MAP_IMPORT_ERROR = ""
-
-try:
-    from flujo.knowledge.operations_source_snapshot import (  # noqa: E402
-        build_operations_source_snapshot as _build_operations_source_snapshot,
-        validate_operations_source_snapshot as _validate_operations_source_snapshot,
-    )
-except Exception as _operations_snapshot_exc:  # noqa: BLE001 - additive observability surface
-    _build_operations_source_snapshot = None
-    _validate_operations_source_snapshot = None
-    _OPERATIONS_SNAPSHOT_IMPORT_ERROR = type(_operations_snapshot_exc).__name__
-else:
-    _OPERATIONS_SNAPSHOT_IMPORT_ERROR = ""
-
-try:
-    from flujo.knowledge.rd_read_only_context import (  # noqa: E402
-        build_rd_read_only_context as _build_rd_read_only_context,
-        validate_rd_read_only_context as _validate_rd_read_only_context,
-    )
-except Exception as _rd_context_exc:  # noqa: BLE001 - additive surface
-    _build_rd_read_only_context = None
-    _validate_rd_read_only_context = None
-    _RD_CONTEXT_IMPORT_ERROR = type(_rd_context_exc).__name__
-else:
-    _RD_CONTEXT_IMPORT_ERROR = ""
-
-try:
-    from flujo.knowledge.cultura_research_read_only_context import (  # noqa: E402
-        build_cultura_research_read_only_context as _build_cultura_research_context,
-        validate_cultura_research_read_only_context as _validate_cultura_research_context,
-    )
-except Exception as _cultura_research_context_exc:  # noqa: BLE001 - additive surface
-    _build_cultura_research_context = None
-    _validate_cultura_research_context = None
-    _CULTURA_RESEARCH_CONTEXT_IMPORT_ERROR = type(_cultura_research_context_exc).__name__
-else:
-    _CULTURA_RESEARCH_CONTEXT_IMPORT_ERROR = ""
-
-try:
-    from flujo.knowledge.portfolio_vizz_read_only_context import (  # noqa: E402
-        build_portfolio_vizz_read_only_context as _build_portfolio_vizz_context,
-        validate_portfolio_vizz_read_only_context as _validate_portfolio_vizz_context,
-    )
-except Exception as _portfolio_vizz_context_exc:  # noqa: BLE001 - additive surface
-    _build_portfolio_vizz_context = None
-    _validate_portfolio_vizz_context = None
-    _PORTFOLIO_VIZZ_CONTEXT_IMPORT_ERROR = type(_portfolio_vizz_context_exc).__name__
-else:
-    _PORTFOLIO_VIZZ_CONTEXT_IMPORT_ERROR = ""
-
-try:
-    from flujo.knowledge.learning_read_only_context import (  # noqa: E402
-        build_learning_read_only_context as _build_learning_context,
-        validate_learning_read_only_context as _validate_learning_context,
-    )
-except Exception as _learning_context_exc:  # noqa: BLE001 - additive surface
-    _build_learning_context = None
-    _validate_learning_context = None
-    _LEARNING_CONTEXT_IMPORT_ERROR = type(_learning_context_exc).__name__
-else:
-    _LEARNING_CONTEXT_IMPORT_ERROR = ""
-
-try:
-    from flujo.knowledge.research_operations_read_only_context import (  # noqa: E402
-        build_research_operations_read_only_context as _build_research_operations_context,
-        validate_research_operations_read_only_context as _validate_research_operations_context,
-    )
-except Exception as _research_operations_context_exc:  # noqa: BLE001 - additive surface
-    _build_research_operations_context = None
-    _validate_research_operations_context = None
-    _RESEARCH_OPERATIONS_CONTEXT_IMPORT_ERROR = type(_research_operations_context_exc).__name__
-else:
-    _RESEARCH_OPERATIONS_CONTEXT_IMPORT_ERROR = ""
-
-try:
-    from flujo.knowledge.research_job_operations_context import (  # noqa: E402
-        build_research_job_operations_context as _build_research_job_operations_context,
-        validate_research_job_operations_context as _validate_research_job_operations_context,
-    )
-except Exception as _research_job_operations_context_exc:  # noqa: BLE001 - additive surface
-    _build_research_job_operations_context = None
-    _validate_research_job_operations_context = None
-    _RESEARCH_JOB_OPERATIONS_CONTEXT_IMPORT_ERROR = type(_research_job_operations_context_exc).__name__
-else:
-    _RESEARCH_JOB_OPERATIONS_CONTEXT_IMPORT_ERROR = ""
-
-try:
-    from flujo.knowledge.portfolio_review_operations_context import (  # noqa: E402
-        build_portfolio_review_operations_context as _build_portfolio_review_operations_context,
-        validate_portfolio_review_operations_context as _validate_portfolio_review_operations_context,
-    )
-except Exception as _portfolio_review_operations_context_exc:  # noqa: BLE001 - additive surface
-    _build_portfolio_review_operations_context = None
-    _validate_portfolio_review_operations_context = None
-    _PORTFOLIO_REVIEW_OPERATIONS_CONTEXT_IMPORT_ERROR = type(_portfolio_review_operations_context_exc).__name__
-else:
-    _PORTFOLIO_REVIEW_OPERATIONS_CONTEXT_IMPORT_ERROR = ""
-
-try:
-    from flujo.knowledge.portfolio_review_cultura_research_context import (  # noqa: E402
-        build_portfolio_review_cultura_research_context as _build_portfolio_review_cultura_research_context,
-        validate_portfolio_review_cultura_research_context as _validate_portfolio_review_cultura_research_context,
-    )
-except Exception as _portfolio_review_cultura_research_context_exc:  # noqa: BLE001 - additive surface
-    _build_portfolio_review_cultura_research_context = None
-    _validate_portfolio_review_cultura_research_context = None
-    _PORTFOLIO_REVIEW_CULTURA_RESEARCH_CONTEXT_IMPORT_ERROR = type(_portfolio_review_cultura_research_context_exc).__name__
-else:
-    _PORTFOLIO_REVIEW_CULTURA_RESEARCH_CONTEXT_IMPORT_ERROR = ""
-
-try:
-    from flujo.knowledge.research_job_continuation import (  # noqa: E402
-        confirm_research_extraction as _confirm_research_extraction_contract,
-        license_compatibility_plan as _license_compatibility_plan_contract,
-        license_review as _license_review_contract,
-        license_source_review as _license_source_review_contract,
-        normalize_dry_run as _normalize_dry_run_contract,
-        normalize_plan as _normalize_plan_contract,
-        normalize_readiness as _normalize_readiness_contract,
-        resume_research_job as _resume_research_job_contract,
-    )
-except Exception as _research_continuation_exc:  # noqa: BLE001 - additive surface
-    _confirm_research_extraction_contract = None
-    _license_compatibility_plan_contract = None
-    _license_review_contract = None
-    _license_source_review_contract = None
-    _normalize_dry_run_contract = None
-    _normalize_plan_contract = None
-    _normalize_readiness_contract = None
-    _resume_research_job_contract = None
-    _RESEARCH_CONTINUATION_IMPORT_ERROR = type(_research_continuation_exc).__name__
-else:
-    _RESEARCH_CONTINUATION_IMPORT_ERROR = ""
-
-try:
     from flujo.knowledge.product_view import (  # noqa: E402
         project_archive_portfolio_view as _project_archive_portfolio_view,
-        validate_archive_portfolio_view as _validate_archive_portfolio_view,
     )
 except Exception as _archive_portfolio_view_exc:  # noqa: BLE001 - view is additive
     _project_archive_portfolio_view = None
-    _validate_archive_portfolio_view = None
     _ARCHIVE_PORTFOLIO_VIEW_IMPORT_ERROR = type(
         _archive_portfolio_view_exc).__name__
 else:
@@ -674,11 +317,9 @@ except Exception:  # noqa: BLE001 - triage enrichment is additive
 try:
     from flujo.knowledge.contracurator import (  # noqa: E402
         compile_contracurator_exhibition as _compile_contracurator_exhibition,
-        validate_contracurator_exhibition as _validate_contracurator_exhibition,
     )
 except Exception as _contracurator_exc:  # noqa: BLE001 - the consumer fails closed
     _compile_contracurator_exhibition = None
-    _validate_contracurator_exhibition = None
     _CONTRACURATOR_IMPORT_ERROR = type(_contracurator_exc).__name__
 else:
     _CONTRACURATOR_IMPORT_ERROR = ""
@@ -758,21 +399,11 @@ def _research_job(job_id):
             "SELECT step_order,process_key,input_semantics,output_semantics,status,provider_policy FROM job_steps WHERE job_id=? ORDER BY step_order", (int(job_id),))]
         relations = [dict(zip(("type", "from", "to", "rationale"), row)) for row in conn.execute(
             "SELECT relation_type,from_object,to_object,rationale FROM job_relations WHERE job_id=? ORDER BY id", (int(job_id),))]
-        sources = [dict(zip(("id", "url", "title", "capture_status", "http_status", "raw_sha256", "text_sha256", "license_state", "license_evidence"), row)) for row in conn.execute(
-            "SELECT id,url,title,capture_status,http_status,raw_sha256,text_sha256,license_state,license_evidence FROM job_sources WHERE job_id=? AND capture_status='captured' ORDER BY id", (int(job_id),))]
-        extract_input_sha256 = ""
-        try:
-            receipt = conn.execute("SELECT payload_json FROM research_continuation_receipts WHERE job_id=? ORDER BY id DESC LIMIT 1", (int(job_id),)).fetchone()
-            if receipt:
-                extract_input_sha256 = str(json.loads(receipt[0]).get("input_sha256") or "")
-        except (sqlite3.OperationalError, ValueError, TypeError):
-            pass
     return {"available": True, "job": {"id": job[0], "question": job[1],
         "domain": job[2], "adapter": job[3], "status": job[4],
         "next_process": job[5], "created_at": job[6], "description": job[7],
         "source_policy": job[8], "constraint_policy": job[9],
-        "steps": steps, "relations": relations, "sources": sources,
-        "extract_input_sha256": extract_input_sha256}}
+        "steps": steps, "relations": relations}}
 
 
 def _create_research_job(body):
@@ -785,69 +416,12 @@ def _create_research_job(body):
     from tools.research_job_router import create_job, render_job
 
     db_path = _research_registry_path()
-    db_path.parent.mkdir(parents=True, exist_ok=True)
     job_id, selected, scores = create_job(db_path, question, domain)
     json_path, report_path = render_job(db_path, db_path.parent.parent / "jobs", job_id, selected, scores)
     return {"ok": True, "id": job_id, "domain": selected, "scores": scores,
             "json": os.path.relpath(json_path, HOME),
             "report": os.path.relpath(report_path, HOME),
             "external_calls": 0, "status": "planned"}
-
-
-def _resume_research_job(body):
-    """Advance one persisted process with an explicit idempotency key."""
-    if _resume_research_job_contract is None:
-        return ({"ok": False, "error": "research_continuation_unavailable", "detail": _RESEARCH_CONTINUATION_IMPORT_ERROR}, 503)
-    if not isinstance(body, dict):
-        return ({"ok": False, "error": "json debe ser objeto"}, 400)
-    try:
-        job_id = int(body.get("job_id"))
-    except (TypeError, ValueError):
-        return ({"ok": False, "error": "job_id_invalido"}, 400)
-    expected_process = str(body.get("expected_process") or "").strip()
-    request_id = str(body.get("request_id") or "").strip()
-    output_root = os.environ.get("MAK_RESEARCH_OUTPUT_ROOT", "").strip() or os.path.join(HOME, "research", "jobs")
-    return _resume_research_job_contract(
-        _research_registry_path(), output_root,
-        job_id=job_id, expected_process=expected_process, request_id=request_id,
-    )
-
-
-def _confirm_research_extraction(body):
-    """Record a human review without advancing the research pipeline."""
-    if _confirm_research_extraction_contract is None:
-        return ({"ok": False, "error": "research_confirmation_unavailable", "detail": _RESEARCH_CONTINUATION_IMPORT_ERROR}, 503)
-    if not isinstance(body, dict):
-        return ({"ok": False, "error": "json debe ser objeto"}, 400)
-    try:
-        job_id = int(body.get("job_id"))
-    except (TypeError, ValueError):
-        return ({"ok": False, "error": "job_id_invalido"}, 400)
-    output_root = os.environ.get("MAK_RESEARCH_OUTPUT_ROOT", "").strip() or os.path.join(HOME, "research", "jobs")
-    return _confirm_research_extraction_contract(
-        _research_registry_path(), output_root,
-        job_id=job_id, actor=body.get("actor", ""),
-        input_sha256=body.get("input_sha256", ""), request_id=body.get("request_id", ""),
-    )
-
-
-def _list_jobs_for_dashboard():
-    """Expose the same local job projection used by the FLUJO dashboard."""
-    try:
-        from flujo.jobs.job import list_jobs
-        jobs = []
-        for job in list_jobs(include_examples=False):
-            jobs.append({
-                "name": job.name,
-                "path": str(job.path).replace("\\", "/"),
-                "estado": job.estado,
-                "tipo_pieza": job.tipo_pieza,
-                "proyecto": job.proyecto,
-                "pendientes": job.pendientes,
-            })
-        return {"jobs": jobs, "count": len(jobs), "connected": True, "source": "jobs"}
-    except Exception as exc:
-        return {"jobs": [], "count": 0, "connected": False, "source": "jobs", "error": str(exc)[:200]}
 
 
 def _department_page(area: str) -> str:
@@ -1001,8 +575,8 @@ html,body{height:100%;overflow:hidden}
 body{background:#080706;color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,monospace;
  display:flex;flex-direction:column;height:100vh}
 #topbar{flex:none;height:48px;display:flex;align-items:center;justify-content:space-between;
- padding:0 16px;background:#0d0b09;border-bottom:1px solid #211f18;gap:14px;position:relative;z-index:30}
-#topbar .izq{display:flex;align-items:center;gap:10px;min-width:0;flex:1 1 auto}
+ padding:0 16px;background:#0d0b09;border-bottom:1px solid #211f18;gap:14px}
+#topbar .izq{display:flex;align-items:center;gap:16px;min-width:0;flex:1 1 auto}
 #topbar h1{color:#9db67c;font-size:.92rem;letter-spacing:1px;font-weight:600;white-space:nowrap}
 #tabs{display:flex;gap:4px;min-width:0;flex:1 1 auto;overflow-x:auto;scrollbar-width:thin}
 #tabs button{flex:0 0 auto}
@@ -1010,21 +584,9 @@ body{background:#080706;color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,mo
  font-size:.76rem;padding:6px 13px;border-radius:6px;cursor:pointer;letter-spacing:.3px}
 #tabs button:hover{color:#c3bfb2;border-color:#3a372c}
 #tabs button.on{background:#1a2418;border-color:#39432c;color:#9db67c}
-#mas-wrap{position:relative;flex:none}
-#mas-toggle{background:transparent;border:1px solid #2a2820;color:#8a8577;font-family:inherit;
- font-size:.76rem;padding:6px 11px;border-radius:6px;cursor:pointer;letter-spacing:.3px;white-space:nowrap}
-#mas-toggle:hover,#mas-toggle.on{color:#9db67c;border-color:#39432c;background:#1a2418}
-#mas-menu{display:none;position:absolute;right:0;top:calc(100% + 9px);width:250px;max-height:calc(100vh - 62px);
- overflow-y:auto;padding:8px;background:#0d0b09;border:1px solid #39432c;border-radius:7px;
- box-shadow:0 12px 28px rgba(0,0,0,.45)}
-#mas-menu.on{display:block}
-#mas-menu .mas-titulo{color:#5f5b50;font-size:.6rem;text-transform:uppercase;letter-spacing:1px;
- padding:5px 8px 4px}
-#mas-menu .mas-separador{height:1px;background:#211f18;margin:7px 0}
-#mas-menu button,#mas-menu a{display:block;width:100%;background:transparent;border:none;border-radius:4px;
- color:#8a8577;font:inherit;font-size:.72rem;text-align:left;text-decoration:none;padding:7px 8px;cursor:pointer}
-#mas-menu button:hover,#mas-menu button.on,#mas-menu a:hover{color:#9db67c;background:#1a2418}
 #topbar .der{display:flex;align-items:center;gap:12px;font-size:.72rem;white-space:nowrap}
+#topbar .lk a{color:#8a8577;text-decoration:none;margin-right:11px}
+#topbar .lk a:hover{color:#d4a259}
 #topbar #guardia{color:#6e6a5e}
 #topbar #guardia b{color:#c46d5e}#topbar #guardia i{color:#9db67c;font-style:normal}
 #centro{flex:1;min-height:0;position:relative;background:#0a0908}
@@ -1181,35 +743,22 @@ body{background:#080706;color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,mo
 </style></head><body>
 <div id="topbar">
  <div class="izq">
- <h1>&#129744; MAK</h1>
+  <h1>&#129744; MAK</h1>
  <div id="tabs">
    <button data-dep="research" class="on">🔬 research</button>
-  <button data-dep="jardines">🌱 jobs</button>
+  <button data-dep="jardines">🌱 laboratorio</button>
    <button data-dep="codex">💻 codex</button>
    <button data-dep="ideas">💡 ideas</button>
-   <button data-dep="portafolio">✦ portafolio</button>
-  </div>
-  <div id="mas-wrap">
-   <button id="mas-toggle" type="button" aria-expanded="false">⋯ más</button>
-   <div id="mas-menu" role="menu" aria-label="superficies secundarias">
-    <div class="mas-titulo">operación</div>
-    <button type="button" role="menuitem" data-dep="render">🖼 render</button>
-    <button type="button" role="menuitem" data-dep="decisiones">◈ decisiones</button>
-    <button type="button" role="menuitem" data-dep="areas">▦ áreas</button>
-    <button type="button" role="menuitem" data-dep="status">● estado</button>
-    <button type="button" role="menuitem" data-dep="diagnostics">🩺 diagnóstico</button>
-    <div class="mas-separador"></div>
-    <div class="mas-titulo">recursos</div>
-    <a href="/context/flujo_hub.html">⚙️ panel de trabajo</a>
-    <a href="/doctrina">📜 doctrina</a>
-    <a href="/reflexiones">💭 reflexiones</a>
-    <a href="/cuotas">📊 cuotas</a>
-    <a href="/relevo">🪑 relevo</a>
-    <a href="/genesis">✴️ génesis / archivo</a>
-   </div>
+  <button data-dep="render">🖼 render</button>
+  <button data-dep="decisiones">◈ decisiones</button>
+  <button data-dep="portafolio">✦ portafolio</button>
+   <button data-dep="areas">▦ áreas</button>
+  <button data-dep="status">● estado</button>
+  <button data-dep="diagnostics">🩺 diagnóstico</button>
   </div>
  </div>
  <div class="der">
+ <span class="lk"><a href="/doctrina">📜 doctrina</a><a href="/reflexiones">💭 reflexiones</a><a href="/cuotas">📊 cuotas</a><a href="/relevo">🪑 relevo</a><a href="/genesis">✴️ génesis / archivo</a></span>
   <span id="guardia">guardia · <b>0</b> bloqueados · <i>0</i> pasaron</span>
  </div>
 </div>
@@ -1245,7 +794,7 @@ body{background:#080706;color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,mo
   <div id="d-lista">cargando…</div>
  </div>
  <div id="pan-areas">
-  <div class="intro">Las tres áreas operativas comparten esta interfaz. Cada tarjeta apunta a su contrato, superficie y dependencias sin obligar a leer todo MAK.</div>
+  <div class="intro">Las tres áreas operativas comparten esta interfaz en el puerto 8900. Cada tarjeta apunta a su contrato, superficie y dependencias sin obligar a leer todo MAK.</div>
   <div id="area-lista">cargando áreas…</div>
  </div>
  <div id="pan-status">
@@ -1303,15 +852,9 @@ var depActual='research';
 var IFR_SRC={research:'/research/', jardines:'/research-garden/', codex:'/codex/', portafolio:'/portafolio/'};
 function activarDep(dep){
  depActual=dep;
- document.querySelectorAll('[data-dep]').forEach(function(b){
+ document.querySelectorAll('#tabs button').forEach(function(b){
    b.classList.toggle('on', b.getAttribute('data-dep')===dep);
  });
- var mas=document.getElementById('mas-menu'), masToggle=document.getElementById('mas-toggle');
- if(mas){mas.classList.remove('on');}
- if(masToggle){
-   masToggle.setAttribute('aria-expanded','false');
-   masToggle.classList.toggle('on',['render','decisiones','areas','status','diagnostics'].indexOf(dep)>=0);
- }
  document.querySelectorAll('#centro iframe').forEach(function(f){
    f.classList.toggle('on', f.id==='ifr-'+dep);
  });
@@ -1345,16 +888,7 @@ function cargarEstado(){
    else{lista.innerHTML=keys.map(function(k){
      var c=comps[k]||{}, e=c.evidence||{}, st=String(c.status||'unknown');
      var col=st==='ready'||st==='active'?'#9db67c':st==='blocked'?'#c46d5e':'#d4a259';
-     var note=c.next_action;
-     if(!note){
-       if(st==='ready'||st==='active'){
-         note=e.listener&&e.listener.reachable
-           ? (e.listener.transport==='unix'?'socket Unix alcanzable':'listener local alcanzable')
-           : 'evidencia local verificada';
-       }else{
-         note=(e.listener&&e.listener.reachable)?'listener local alcanzable':'requiere inspeccion';
-       }
-     }
+     var note=c.next_action||((e.listener&&e.listener.reachable)?'listener local alcanzable':'requiere inspeccion');
      return '<div class="sc"><div class="sc-top"><b>'+esc(c.label||k)+'</b><em style="color:'+col+'">'+esc(st)+'</em></div><p>'+esc(note)+'</p><small>evidencia local · ' + (c.read_only===false?'con escritura':'solo lectura')+'</small></div>';
    }).join('');}
    var alerts=(d.attention||[]).filter(function(a){return a.severity!=='info';});
@@ -1364,22 +898,8 @@ function cargarEstado(){
    document.getElementById('status-lista').innerHTML='<div class="vacio">no se pudo leer /api/status</div>';
  });
 }
-document.querySelectorAll('[data-dep]').forEach(function(b){
+document.querySelectorAll('#tabs button').forEach(function(b){
  b.onclick=function(){activarDep(b.getAttribute('data-dep'));};
-});
-function toggleMas(){
- var menu=document.getElementById('mas-menu'), toggle=document.getElementById('mas-toggle');
- var abierto=!menu.classList.contains('on');
- menu.classList.toggle('on',abierto);
- toggle.setAttribute('aria-expanded',abierto?'true':'false');
-}
-document.getElementById('mas-toggle').onclick=toggleMas;
-document.addEventListener('click',function(e){
- var wrap=document.getElementById('mas-wrap');
- if(wrap && !wrap.contains(e.target)){
-   document.getElementById('mas-menu').classList.remove('on');
-   document.getElementById('mas-toggle').setAttribute('aria-expanded','false');
- }
 });
 activarDep('research');
 
@@ -1633,7 +1153,7 @@ function cargarSalud(){
  fetch('/api/salud').then(function(r){return r.json();}).then(function(d){
    var el=document.getElementById('f-salud');
    var provs=d.proveedores||[];
-   if(!provs.length){el.innerHTML='<div class="vacio">sin mediciones recientes de proveedores</div>';return;}
+   if(!provs.length){el.innerHTML='<div class="vacio">sin datos de salud aun</div>';return;}
    el.innerHTML=provs.map(function(p){
      var pct=Math.round((p.score||0)*100);
      var col=p.degradado?'#d98c7e':'#9db67c';
@@ -1859,16 +1379,13 @@ def _portfolio_inbox_signature():
 
 
 def _portfolio_inbox(compact=False):
-    # The Hub is threaded. Without this guard, two first requests can both
-    # parse the inbox and publish whichever result wins the race.
-    with _PORTFOLIO_INBOX_LOCK:
-        signature = _portfolio_inbox_signature()
-        cached = _PORTFOLIO_INBOX_CACHE.get(bool(compact))
-        if cached is not None and cached[0] == signature:
-            return cached[1]
-        payload = _portfolio_inbox_uncached(compact=compact)
-        _PORTFOLIO_INBOX_CACHE[bool(compact)] = (signature, payload)
-        return payload
+    signature = _portfolio_inbox_signature()
+    cached = _PORTFOLIO_INBOX_CACHE.get(bool(compact))
+    if cached is not None and cached[0] == signature:
+        return cached[1]
+    payload = _portfolio_inbox_uncached(compact=compact)
+    _PORTFOLIO_INBOX_CACHE[bool(compact)] = (signature, payload)
+    return payload
 
 
 def _portfolio_inbox_uncached(compact=False):
@@ -1910,7 +1427,6 @@ def _portfolio_inbox_uncached(compact=False):
                 "features", {})
     payload["selected_count"] = sum(
         1 for item in payload.get("items", []) if item["selection"] == "seleccionar")
-    payload["context"] = _portfolio_context()
     if compact:
         payload["items"] = [
             {field: item.get(field) for field in MESA_INBOX_FIELDS}
@@ -1925,217 +1441,13 @@ def _portfolio_item(item_id):
                  if item.get("id") == str(item_id or "")), None)
 
 
-def _portfolio_context():
-    """Return the declared corpus context used by every IRIS projection.
-
-    The artist is an input to the archive, never an inference from filenames,
-    captions or embeddings.  The local inbox predates an explicit artist
-    field, so ``artist_id`` remains ``None`` until the operator supplies
-    ``MAK_PORTFOLIO_ARTIST_ID``.  ``corpus_id`` is deterministic and identifies
-    this source without making an authorship claim.
-    """
-    source_path = os.path.realpath(PORTFOLIO_INBOX)
-    stored_context = {}
-    try:
-        with open(PORTFOLIO_INBOX, encoding="utf-8") as fh:
-            stored_payload = json.load(fh)
-        if isinstance(stored_payload, dict) and isinstance(
-                stored_payload.get("context"), dict):
-            stored_context = stored_payload["context"]
-    except (OSError, ValueError, TypeError):
-        stored_context = {}
-    configured_corpus = (
-        os.environ.get("MAK_PORTFOLIO_CORPUS_ID", "").strip()
-        or str(stored_context.get("corpus_id") or "").strip()
-    )
-    corpus_id = configured_corpus or (
-        "portfolio-inbox:%s" % hashlib.sha256(source_path.encode("utf-8")).hexdigest()[:16]
-    )
-    artist_id = (
-        os.environ.get("MAK_PORTFOLIO_ARTIST_ID", "").strip()
-        or str(stored_context.get("artist_id") or "").strip()
-        or None
-    )
-    return {
-        "schema": "faro-portfolio-corpus-context-v1",
-        "corpus_id": corpus_id[:160],
-        "artist_id": artist_id[:160] if artist_id else None,
-        "artist_context": "declared" if artist_id else "not_supplied",
-        "source": "portfolio_inbox",
-        "membership": {
-            "relation": "belongs_to_declared_corpus",
-            "basis": "explicit_input_context",
-            "authorship_claim": False,
-        },
-        "preserved_provenance": ["relative_path", "folder", "subfolders", "metadata"],
-        "signals": {
-            "metadata": "ordering_and_declared_evidence",
-            "semantic": "candidate_relations_only",
-            "visual": "candidate_relations_only",
-        },
-        "workflow": {
-            "format": "artist_specific",
-            "precision_target": "workflow_fit",
-            "universal_accuracy_required": False,
-            "human_gate": True,
-        },
-    }
-
-
-def _portfolio_relative_path(item):
-    """Keep folder provenance while hiding absolute local paths."""
-    values = (item.get("relative_path"), item.get("source_path"),
-              item.get("asset_path"), item.get("path"))
-    raw = next((str(value).strip() for value in values if value), "")
-    if not raw:
-        return ""
-    raw = raw.split("?", 1)[0].replace("\\", "/")
-    for prefix in ("/portfolio-media/", "portfolio-media/"):
-        if raw.startswith(prefix):
-            raw = raw[len(prefix):]
-            break
-    if os.path.isabs(raw):
-        for root in (PORTFOLIO_MEDIA_ROOT, PORTFOLIO_ROOT, HOME):
-            root = os.path.realpath(root).replace("\\", "/").rstrip("/")
-            if raw == root:
-                raw = ""
-                break
-            if raw.startswith(root + "/"):
-                raw = raw[len(root) + 1:]
-                break
-    parts = [part for part in raw.split("/") if part not in ("", ".")]
-    if not parts or ".." in parts:
-        return ""
-    return "/".join(parts)[:500]
-
-
-def _portfolio_source_envelope(item):
-    """The explicit source identity passed to Research/Codex consumers."""
-    relative_path = _portfolio_relative_path(item)
-    parts = relative_path.split("/") if relative_path else []
-    context = _portfolio_context()
-    return {
-        "schema": "faro-portfolio-source-v1",
-        "source_id": str(item.get("id") or ""),
-        "corpus_id": context["corpus_id"],
-        "artist_id": context["artist_id"],
-        "relative_path": relative_path,
-        "folder": "/".join(parts[:-1]),
-        "subfolders": parts[:-1],
-        "membership": context["membership"],
-        "authorship_claim": False,
-    }
-
-
-def _portfolio_research_candidates(limit=24):
-    """Rank research candidates from human-confirmed relations only."""
-    items = {str(item.get("id")): item for item in
-             _portfolio_inbox().get("items", []) if item.get("id")}
-    confirmed_by_item = {}
-    confirmed_edges = set()
-    for row in _portfolio_feedback():
-        if row.get("action") not in {"accept", "correct"}:
-            continue
-        source_id = str(row.get("source_id") or "")
-        target_id = str(row.get("target_id") or "")
-        if (source_id not in items or target_id not in items
-                or source_id == target_id):
-            continue
-        facet = str(row.get("facet") or "unknown")
-        relation = str(row.get("relation") or "related")
-        edge = (*sorted((source_id, target_id)), facet, relation)
-        if edge in confirmed_edges:
-            continue
-        confirmed_edges.add(edge)
-        for item_id in (source_id, target_id):
-            confirmed_by_item.setdefault(item_id, []).append({
-                "target_id": target_id if item_id == source_id else source_id,
-                "facet": facet,
-                "relation": relation,
-                "action": row.get("action"),
-            })
-    rows = []
-    for item_id, edges in confirmed_by_item.items():
-        item = items[item_id]
-        if item.get("selection") == "descartar":
-            continue
-        rows.append({
-            "item_id": item_id,
-            "relative_path": _portfolio_relative_path(item),
-            "selection": item.get("selection", "pendiente"),
-            "confirmed_connection_count": len(edges),
-            "confirmed_relation_types": sorted({edge["relation"] for edge in edges}),
-            "connections": edges,
-            "status": "candidate_only",
-            "research_ready": False,
-            "next_action": "human_review_and_explicit_research_dispatch",
-            "source": _portfolio_source_envelope(item),
-        })
-    rows.sort(key=lambda row: (-row["confirmed_connection_count"], row["item_id"]))
-    try:
-        limit = max(1, min(int(limit), 100))
-    except (TypeError, ValueError):
-        limit = 24
-    return {
-        "schema": "faro-portfolio-research-candidates-v1",
-        "status": "candidate_only",
-        "items": rows[:limit],
-        "total": len(rows),
-        "confirmed_edge_count": len(confirmed_edges),
-        "policy": {
-            "basis": "human_confirmed_relation_feedback",
-            "semantic_and_visual_suggestions_are_not_truth": True,
-            "automatic_dispatch": False,
-            "promotion": "none",
-        },
-        "next_action": "revisar candidatos y enviar explícitamente una pieza a research",
-    }
-
-
 def _portfolio_metadata_index():
     return contrato_archivo.portfolio_metadata_index(
         _portfolio_inbox().get("items", []))
 
 
-def _validate_archive_portfolio_envelope(payload):
-    """Validate the archive view and its optional Contracurador extension."""
-    if _validate_archive_portfolio_view is None:
-        raise ValueError("archive_portfolio_view_validator_unavailable")
-    if not isinstance(payload, dict):
-        raise ValueError("archive_portfolio_envelope_not_object")
-    base = {key: value for key, value in payload.items() if key != "contracurator"}
-    _validate_archive_portfolio_view(base)
-    contracurator = payload.get("contracurator")
-    if contracurator is None:
-        return True
-    if _validate_contracurator_exhibition is None:
-        raise ValueError("contracurator_validator_unavailable")
-    _validate_contracurator_exhibition(contracurator)
-    input_data = contracurator.get("input") or {}
-    if input_data.get("source_hash") != base["source"]["input_hash"]:
-        raise ValueError("archive_portfolio_envelope_source_hash_mismatch")
-    if input_data.get("visible_item_count") != len(base["items"]):
-        raise ValueError("archive_portfolio_envelope_visible_count_mismatch")
-    return True
-
-
-def _portfolio_archive_signature(archive_path):
-    """Identify read-only inputs that can change the archive projection."""
-    paths = (archive_path, Path(_PORTFOLIO_CLASSIFICATIONS_PATH),
-             Path(_SSD_ORDER_FOUNDATION_PATH))
-    signature = []
-    for path in paths:
-        try:
-            stat = path.stat()
-            signature.append((str(path), stat.st_mtime_ns, stat.st_size))
-        except OSError:
-            signature.append((str(path), None, None))
-    return tuple(signature)
-
-
 def _archive_portfolio_view_read_only():
     """Render the existing bounded archive view from its canonical input."""
-    global _PORTFOLIO_ARCHIVE_CACHE
     if _project_archive_portfolio_view is None or _compile_contracurator_exhibition is None:
         return {
             "ok": False,
@@ -2143,42 +1455,36 @@ def _archive_portfolio_view_read_only():
             "detail": _ARCHIVE_PORTFOLIO_VIEW_IMPORT_ERROR or _CONTRACURATOR_IMPORT_ERROR,
         }, 503
     archive_path = Path(PORTFOLIO_ROOT) / "datos" / "archivo.json"
-    signature = _portfolio_archive_signature(archive_path)
-    with _PORTFOLIO_ARCHIVE_CACHE_LOCK:
-        cached = _PORTFOLIO_ARCHIVE_CACHE
-        if cached is not None and cached[0] == signature:
-            return cached[1], cached[2]
-        human_triage = {}
-        if _read_human_decisions is not None and _triage_declarations is not None:
-            try:
-                if os.path.isfile(_PORTFOLIO_CLASSIFICATIONS_PATH):
-                    human_triage = _triage_declarations(_read_human_decisions(
-                        classifications_path=_PORTFOLIO_CLASSIFICATIONS_PATH))
-            except Exception:  # noqa: BLE001 - triage enrichment is additive
-                human_triage = {}
+    human_triage = {}
+    if _read_human_decisions is not None and _triage_declarations is not None:
         try:
-            archive = json.loads(archive_path.read_text(encoding="utf-8"))
-            view = _project_archive_portfolio_view(
-                archive, max_items_per_format=24, human_triage=human_triage)
-            order_basis = None
-            order_basis_path = Path(_SSD_ORDER_FOUNDATION_PATH)
-            if order_basis_path.is_file():
-                order_basis = json.loads(order_basis_path.read_text(encoding="utf-8"))
-            # The established archive route remains the sole Hub consumer. The
-            # contracurator receives its bounded projection; it never rescans
-            # the archive or writes the learning store on a GET. Source mtimes
-            # invalidate this cache after an archive or human decision changes.
-            view["contracurator"] = _compile_contracurator_exhibition(
-                view, ssd_order_foundation=order_basis)
-            _validate_archive_portfolio_envelope(view)
-            _PORTFOLIO_ARCHIVE_CACHE = (signature, view, 200)
-            return view, 200
-        except Exception as exc:  # noqa: BLE001 - malformed evidence fails closed
-            return {
-                "ok": False,
-                "error": "archive_portfolio_view_invalid",
-                "detail": type(exc).__name__,
-            }, 503
+            if os.path.isfile(_PORTFOLIO_CLASSIFICATIONS_PATH):
+                human_triage = _triage_declarations(_read_human_decisions(
+                    classifications_path=_PORTFOLIO_CLASSIFICATIONS_PATH))
+        except Exception:  # noqa: BLE001 - triage enrichment is additive
+            human_triage = {}
+    try:
+        archive = json.loads(archive_path.read_text(encoding="utf-8"))
+        view = _project_archive_portfolio_view(
+            archive, max_items_per_format=24, human_triage=human_triage)
+        order_basis = None
+        order_basis_path = Path(_SSD_ORDER_FOUNDATION_PATH)
+        if order_basis_path.is_file():
+            order_basis = json.loads(order_basis_path.read_text(encoding="utf-8"))
+        # The established archive route remains the sole Hub consumer.  The
+        # contracurator receives its already-bounded 56-row projection; it
+        # never rescans the archive or writes the learning store on a GET.  The
+        # SSD order is attached only as an evidence boundary; an unresolved
+        # crosswalk cannot influence the ISKVW selection.
+        view["contracurator"] = _compile_contracurator_exhibition(
+            view, ssd_order_foundation=order_basis)
+        return view, 200
+    except Exception as exc:  # noqa: BLE001 - malformed evidence fails closed
+        return {
+            "ok": False,
+            "error": "archive_portfolio_view_invalid",
+            "detail": type(exc).__name__,
+        }, 503
 
 
 def _portfolio_gtm_map(items, **kwargs):
@@ -2232,7 +1538,6 @@ _ERROR_STATUS = {
     "tablero_no_encontrado": 404,
     "grupo_no_encontrado": 404,
     "candidato_no_encontrado": 404,
-    "item_descartado": 400,
     # The caller sent something this route cannot act on.
     "accion_invalida": 400,
     "decision_invalida": 400,
@@ -2245,26 +1550,16 @@ _ERROR_STATUS = {
     "proveedor_invalido": 400,
     "segment_id_invalido": 400,
     "source_id_requerido": 400,
-    "source_root_requerido": 400,
-    "source_root_invalido": 400,
-    "source_root_fuera_de_raices_permitidas": 400,
-    "max_files_invalido": 400,
     "undo_scope_invalid": 400,
     "valor_de_clasificacion_invalido": 400,
     "work_contract_invalid": 400,
     "xio_work_id_invalido": 400,
     # A dependency this route needs is not answering.
     "fuentes_ausentes": 503,
-    "inbox_no_disponible": 503,
-    "inbox_invalido": 503,
     "ledger_unavailable": 503,
     "xio_evidence_unavailable": 503,
     "convocatorias_unavailable": 503,
     "convocatorias_ilegibles": 503,
-    "portfolio_codex_queue_unavailable": 503,
-    "portfolio_folder_adapter_unavailable": 503,
-    "portfolio_folder_observation_failed": 503,
-    "portfolio_dispatch_failed": 503,
 }
 _ERROR_STATUS_PREFIXES = (
     ("motor_no_disponible", 503),
@@ -2340,14 +1635,14 @@ def _status_for(payload) -> int:
         return 200
     if payload.get("available") is False:
         return 503
-    error = payload.get("error")
-    if isinstance(error, str) and (
-            payload.get("ok") is False or error in _ERROR_STATUS):
-        if error in _ERROR_STATUS:
-            return _ERROR_STATUS[error]
-        for prefix, status in _ERROR_STATUS_PREFIXES:
-            if error.startswith(prefix):
-                return status
+    if payload.get("ok") is False:
+        error = payload.get("error")
+        if isinstance(error, str):
+            if error in _ERROR_STATUS:
+                return _ERROR_STATUS[error]
+            for prefix, status in _ERROR_STATUS_PREFIXES:
+                if error.startswith(prefix):
+                    return status
     return 200
 
 
@@ -2364,576 +1659,13 @@ def _project_context_read_only(context_id=None, project_id=None):
     return _project_context_api(_learning_db_path(), context_id=context_id, project_id=project_id)
 
 
-def _project_review_queue_read_only(review_pass="prune"):
-    """Expose pending project evidence without making or applying decisions."""
-    if _load_review_queue is None or _review_queue_summary is None:
-        return {
-            "available": False,
-            "read_only": True,
-            "error": "review_queue_unavailable",
-            "detail": _REVIEW_QUEUE_IMPORT_ERROR,
-        }
-    try:
-        items = _load_review_queue(_learning_db_path(), review_pass=review_pass)
-        return {
-            "schema": "mak-review-queue-v1",
-            "available": True,
-            "read_only": True,
-            "review_pass": review_pass,
-            "summary": _review_queue_summary(items),
-            "items": [item.as_dict() for item in items],
-            "controls": {
-                "database_write": False,
-                "decision_write": False,
-                "promotion": "none",
-                "publication": False,
-            },
-            "provenance": {
-                "source": "project_records",
-                "database": str(_learning_db_path()),
-                "deterministic": True,
-                "decisions_require_external_human_actor": True,
-            },
-        }
-    except Exception as exc:  # noqa: BLE001 - queue must fail closed
-        return {
-            "available": False,
-            "read_only": True,
-            "error": "review_queue_invalid",
-            "detail": type(exc).__name__,
-        }
-
-
-def _portfolio_review_context_read_only(project_id=None):
-    """Compose archive and queue facts without inventing a cross-link."""
-    if (_compile_portfolio_review_context is None
-            or _validate_portfolio_review_context is None):
-        return {
-            "available": False,
-            "read_only": True,
-            "error": "portfolio_review_context_unavailable",
-            "detail": _PORTFOLIO_REVIEW_CONTEXT_IMPORT_ERROR,
-        }, 503
-    archive, archive_code = _archive_portfolio_view_read_only()
-    if archive_code != 200:
-        return {
-            "available": False,
-            "read_only": True,
-            "error": "archive_portfolio_view_unavailable",
-        }, archive_code
-    queue = _project_review_queue_read_only()
-    if queue.get("available") is not True:
-        return {
-            "available": False,
-            "read_only": True,
-            "error": "review_queue_unavailable",
-        }, _status_for(queue)
-    try:
-        payload = _compile_portfolio_review_context(
-            archive, queue.get("items", []), project_id=project_id)
-        _validate_portfolio_review_context(payload)
-        return payload, 200
-    except Exception as exc:  # fail closed without a partial relation
-        return {
-            "available": False,
-            "read_only": True,
-            "error": "portfolio_review_context_invalid",
-            "detail": type(exc).__name__,
-        }, 503
-
-
-def _portfolio_operation_receipt_read_only():
-    """Expose the last bounded structural execution without side effects."""
-    if _build_operation_receipt is None or _validate_operation_receipt is None:
-        return {
-            "available": False,
-            "read_only": True,
-            "error": "operation_receipt_unavailable",
-            "detail": _OPERATION_RECEIPT_IMPORT_ERROR,
-        }, 503
-    try:
-        payload = _build_operation_receipt()
-        _validate_operation_receipt(payload)
-        return payload, 200
-    except Exception as exc:  # fail closed; no partial receipt is useful
-        return {
-            "available": False,
-            "read_only": True,
-            "error": "operation_receipt_invalid",
-            "detail": type(exc).__name__,
-        }, 503
-
-
-def _portfolio_vizz_measurement_status_read_only():
-    """Expose a VIZZ measurement UNKNOWN without turning it into a decision."""
-    if (_build_vizz_measurement_status is None
-            or _validate_vizz_measurement_status is None):
-        return {
-            "available": False,
-            "read_only": True,
-            "error": "vizz_measurement_status_unavailable",
-            "detail": _VIZZ_MEASUREMENT_STATUS_IMPORT_ERROR,
-        }, 503
-    try:
-        payload = _build_vizz_measurement_status()
-        _validate_vizz_measurement_status(payload)
-        return payload, 200
-    except Exception as exc:  # fail closed; never expose a partial UNKNOWN
-        return {
-            "available": False,
-            "read_only": True,
-            "error": "vizz_measurement_status_invalid",
-            "detail": type(exc).__name__,
-        }, 503
-
-
-def _portfolio_vizz_lineage_status_read_only():
-    """Expose revision lineage as context without replacing current state."""
-    if _build_vizz_lineage_status is None or _validate_vizz_lineage_status is None:
-        return {
-            "available": False,
-            "read_only": True,
-            "error": "vizz_lineage_status_unavailable",
-            "detail": _VIZZ_LINEAGE_STATUS_IMPORT_ERROR,
-        }, 503
-    try:
-        payload = _build_vizz_lineage_status()
-        _validate_vizz_lineage_status(payload)
-        return payload, 200
-    except Exception as exc:
-        return {
-            "available": False,
-            "read_only": True,
-            "error": "vizz_lineage_status_invalid",
-            "detail": type(exc).__name__,
-        }, 503
-
-
-def _portfolio_structural_delta_status_read_only():
-    """Expose a measured revision delta without treating it as learning."""
-    if _build_structural_delta_status is None or _validate_structural_delta_status is None:
-        return {
-            "available": False,
-            "read_only": True,
-            "error": "structural_delta_status_unavailable",
-            "detail": _STRUCTURAL_DELTA_STATUS_IMPORT_ERROR,
-        }, 503
-    try:
-        payload = _build_structural_delta_status()
-        _validate_structural_delta_status(payload)
-        return payload, 200
-    except Exception as exc:
-        return {
-            "available": False,
-            "read_only": True,
-            "error": "structural_delta_status_invalid",
-            "detail": type(exc).__name__,
-        }, 503
-
-
-def _portfolio_direction_context_read_only(project_id=None):
-    """Compose vision/order/culture-computation without opening a gate."""
-    if (_build_portfolio_direction_context is None
-            or _validate_portfolio_direction_context is None):
-        return {
-            "available": False,
-            "read_only": True,
-            "error": "portfolio_direction_context_unavailable",
-            "detail": _PORTFOLIO_DIRECTION_CONTEXT_IMPORT_ERROR,
-        }, 503
-    archive, archive_code = _archive_portfolio_view_read_only()
-    if archive_code != 200:
-        return {"available": False, "read_only": True, "error": "archive_portfolio_view_unavailable"}, archive_code
-    review, review_code = _portfolio_review_context_read_only(project_id)
-    if review_code != 200:
-        return {"available": False, "read_only": True, "error": "portfolio_review_context_unavailable"}, review_code
-    surfaces = (
-        _portfolio_operation_receipt_read_only(),
-        _portfolio_vizz_measurement_status_read_only(),
-        _portfolio_vizz_lineage_status_read_only(),
-        _portfolio_structural_delta_status_read_only(),
-    )
-    if any(code != 200 for _, code in surfaces):
-        return {"available": False, "read_only": True, "error": "portfolio_direction_surface_unavailable"}, 503
-    try:
-        payload = _build_portfolio_direction_context(
-            archive, review, *(surface for surface, _ in surfaces))
-        _validate_portfolio_direction_context(payload)
-        return payload, 200
-    except Exception as exc:
-        return {
-            "available": False,
-            "read_only": True,
-            "error": "portfolio_direction_context_invalid",
-            "detail": type(exc).__name__,
-        }, 503
-
-
-def _portfolio_work_packet_read_only(project_id=None):
-    """Expose actionable portfolio layers without executing any task."""
-    if _build_portfolio_work_packet is None or _validate_portfolio_work_packet is None:
-        return {
-            "available": False,
-            "read_only": True,
-            "error": "portfolio_work_packet_unavailable",
-            "detail": _PORTFOLIO_WORK_PACKET_IMPORT_ERROR,
-        }, 503
-    direction, direction_code = _portfolio_direction_context_read_only(project_id)
-    if direction_code != 200:
-        return {"available": False, "read_only": True, "error": "portfolio_direction_context_unavailable"}, direction_code
-    try:
-        payload = _build_portfolio_work_packet(direction, project_id=project_id)
-        _validate_portfolio_work_packet(payload)
-        return payload, 200
-    except Exception as exc:
-        return {
-            "available": False,
-            "read_only": True,
-            "error": "portfolio_work_packet_invalid",
-            "detail": type(exc).__name__,
-        }, 503
-
-
-def _portfolio_work_preview_read_only(project_id=None, task_id=""):
-    """Expose one packet task for review without selecting or executing it."""
-    if _build_portfolio_work_preview is None or _validate_portfolio_work_preview is None:
-        return {
-            "available": False,
-            "read_only": True,
-            "error": "portfolio_work_preview_unavailable",
-            "detail": _PORTFOLIO_WORK_PREVIEW_IMPORT_ERROR,
-        }, 503
-    packet, packet_code = _portfolio_work_packet_read_only(project_id)
-    if packet_code != 200:
-        return {"available": False, "read_only": True, "error": "portfolio_work_packet_unavailable"}, packet_code
-    try:
-        payload = _build_portfolio_work_preview(packet, task_id)
-        _validate_portfolio_work_preview(payload)
-        return payload, 200
-    except ValueError as exc:
-        return {"available": False, "read_only": True, "error": str(exc)}, 400
-    except Exception as exc:
-        return {
-            "available": False,
-            "read_only": True,
-            "error": "portfolio_work_preview_invalid",
-            "detail": type(exc).__name__,
-        }, 503
-
-
-def _portfolio_archive_orientation_read_only():
-    """Expose archive axes without changing the bounded archive view."""
-    if _build_archive_orientation is None or _validate_archive_orientation is None:
-        return {
-            "available": False,
-            "read_only": True,
-            "error": "archive_orientation_unavailable",
-            "detail": _ARCHIVE_ORIENTATION_IMPORT_ERROR,
-        }, 503
-    archive, archive_code = _archive_portfolio_view_read_only()
-    if archive_code != 200:
-        return {"available": False, "read_only": True, "error": "archive_portfolio_view_unavailable"}, archive_code
-    try:
-        payload = _build_archive_orientation(archive)
-        _validate_archive_orientation(payload)
-        return payload, 200
-    except Exception as exc:
-        return {
-            "available": False,
-            "read_only": True,
-            "error": "archive_orientation_invalid",
-            "detail": type(exc).__name__,
-        }, 503
-
-
-def _portfolio_relation_evidence_plan_read_only(project_id=None):
-    """Expose missing relation evidence without inferring a relation."""
-    if _build_relation_evidence_plan is None or _validate_relation_evidence_plan is None:
-        return {
-            "available": False,
-            "read_only": True,
-            "error": "relation_evidence_plan_unavailable",
-            "detail": _RELATION_EVIDENCE_PLAN_IMPORT_ERROR,
-        }, 503
-
-
-    context, context_code = _portfolio_review_context_read_only(project_id)
-    if context_code != 200:
-        return {"available": False, "read_only": True, "error": "portfolio_review_context_unavailable"}, context_code
-    try:
-        payload = _build_relation_evidence_plan(context)
-        _validate_relation_evidence_plan(payload)
-        return payload, 200
-    except Exception as exc:
-        return {
-            "available": False,
-            "read_only": True,
-            "error": "relation_evidence_plan_invalid",
-            "detail": type(exc).__name__,
-        }, 503
-
-
-def _area_orientation_read_only():
-    """Compose existing MAK diagnostics into an area map without executing them."""
-    if _build_area_orientation is None or _validate_area_orientation is None:
-        return {
-            "available": False,
-            "read_only": True,
-            "error": "area_orientation_unavailable",
-            "detail": _AREA_ORIENTATION_IMPORT_ERROR,
-        }, 503
-
-
-    if domain_catalog is None:
-        return {"available": False, "read_only": True, "error": "diagnostics_unavailable"}, 503
-    try:
-        status = _system_status_read_only()
-        domains = domain_catalog(_REPO_ROOT)
-        learning = _learning_read_only()
-        vizz, vizz_code = _portfolio_vizz_measurement_status_read_only()
-        if vizz_code != 200:
-            vizz = {"status": "unknown_measurement_refused"}
-        payload = _build_area_orientation(
-            status,
-            domains,
-            vizz_status=vizz,
-            learning=learning,
-            departments=department_catalog(_REPO_ROOT) if department_catalog is not None else None,
-            generated_at=status.get("generated_at"),
-        )
-        _validate_area_orientation(payload)
-        return payload, 200
-    except Exception as exc:
-        return {
-            "available": False,
-            "read_only": True,
-            "error": "area_orientation_invalid",
-            "detail": type(exc).__name__,
-        }, 503
-
-
-def _operations_read_only_map():
-    """Read the whitelisted local GET surfaces and expose their contracts."""
-    if _build_operations_read_only_map is None or _validate_operations_read_only_map is None:
-        return {"available": False, "read_only": True, "error": "operations_map_unavailable", "detail": _OPERATIONS_MAP_IMPORT_ERROR}, 503
-    snapshots = {}
-    for endpoint in _OPERATIONS_MAP_ENDPOINTS:
-        try:
-            with urllib.request.urlopen(f"http://{HUB_HOST}:{PORT}{endpoint}", timeout=5) as response:
-                snapshots[endpoint] = {"http_status": response.status, "payload": json.loads(response.read().decode("utf-8"))}
-        except urllib.error.HTTPError as exc:
-            snapshots[endpoint] = {"http_status": exc.code, "payload": {}}
-        except (OSError, TimeoutError, json.JSONDecodeError):
-            snapshots[endpoint] = {"http_status": None, "payload": {}}
-    try:
-        payload = _build_operations_read_only_map(snapshots, generated_at=str(time.time()))
-        _validate_operations_read_only_map(payload)
-        return payload, 200
-    except Exception as exc:
-        return {"available": False, "read_only": True, "error": "operations_map_invalid", "detail": type(exc).__name__}, 503
-
-
-def _operations_source_snapshot():
-    """Expose local source counts separately from the shared map contract."""
-    if _build_operations_source_snapshot is None or _validate_operations_source_snapshot is None:
-        return {"available": False, "read_only": True, "error": "operations_snapshot_unavailable", "detail": _OPERATIONS_SNAPSHOT_IMPORT_ERROR}, 503
-    operations_map, code = _operations_read_only_map()
-    if code != 200:
-        return {"available": False, "read_only": True, "error": "operations_snapshot_source_unavailable", "detail": operations_map.get("error", "operations_map_unavailable")}, 503
-    try:
-        payload = _build_operations_source_snapshot(operations_map, generated_at=str(time.time()))
-        _validate_operations_source_snapshot(payload)
-        return payload, 200
-    except Exception as exc:
-        return {"available": False, "read_only": True, "error": "operations_snapshot_invalid", "detail": type(exc).__name__}, 503
-
-
-def _rd_read_only_context():
-    """Compose RD projection and candidate joins without mutating them."""
-    if _build_rd_read_only_context is None or _validate_rd_read_only_context is None:
-        return {"available": False, "read_only": True, "error": "rd_context_unavailable", "detail": _RD_CONTEXT_IMPORT_ERROR}, 503
-    if any(value is None for value in (rd_summary, rd_topics, rd_crosswalk, rd_cultura_relations)):
-        return {"available": False, "read_only": True, "error": "rd_surfaces_unavailable"}, 503
-    try:
-        payload = _build_rd_read_only_context(
-            rd_summary(_REPO_ROOT),
-            rd_topics(_REPO_ROOT),
-            rd_crosswalk(_REPO_ROOT),
-            rd_cultura_relations(_REPO_ROOT),
-            generated_at=str(time.time()),
-        )
-        _validate_rd_read_only_context(payload)
-        return payload, 200
-    except Exception as exc:
-        return {"available": False, "read_only": True, "error": "rd_context_invalid", "detail": type(exc).__name__}, 503
-
-
-def _cultura_research_read_only_context():
-    """Compose Cultura/Research surfaces without calling providers or mutating jobs."""
-    if _build_cultura_research_context is None or _validate_cultura_research_context is None:
-        return {"available": False, "read_only": True, "error": "cultura_research_context_unavailable", "detail": _CULTURA_RESEARCH_CONTEXT_IMPORT_ERROR}, 503
-    if any(value is None for value in (cultura_sources, cultura_capabilities, cultura_opportunity_gate)):
-        return {"available": False, "read_only": True, "error": "cultura_surfaces_unavailable"}, 503
-    try:
-        payload = _build_cultura_research_context(
-            cultura_sources(_REPO_ROOT),
-            cultura_capabilities(_REPO_ROOT),
-            cultura_opportunity_gate(_REPO_ROOT),
-            _research_catalog(),
-            _research_jobs(),
-            generated_at=str(time.time()),
-        )
-        _validate_cultura_research_context(payload)
-        return payload, 200
-    except Exception as exc:
-        return {"available": False, "read_only": True, "error": "cultura_research_context_invalid", "detail": type(exc).__name__}, 503
-
-
-def _portfolio_vizz_read_only_context(project_id=None):
-    """Compose VIZZ status, lineage, delta and preview without measurement."""
-    if _build_portfolio_vizz_context is None or _validate_portfolio_vizz_context is None:
-        return {"available": False, "read_only": True, "error": "vizz_context_unavailable", "detail": _PORTFOLIO_VIZZ_CONTEXT_IMPORT_ERROR}, 503
-    measurement, measurement_code = _portfolio_vizz_measurement_status_read_only()
-    lineage, lineage_code = _portfolio_vizz_lineage_status_read_only()
-    delta, delta_code = _portfolio_structural_delta_status_read_only()
-    preview, preview_code = _portfolio_work_preview_read_only(project_id, "vizz_calibration")
-    if any(code != 200 for code in (measurement_code, lineage_code, delta_code, preview_code)):
-        return {"available": False, "read_only": True, "error": "vizz_context_source_unavailable"}, 503
-    try:
-        payload = _build_portfolio_vizz_context(measurement, lineage, delta, preview, generated_at=str(time.time()))
-        _validate_portfolio_vizz_context(payload)
-        return payload, 200
-    except Exception as exc:
-        return {"available": False, "read_only": True, "error": "vizz_context_invalid", "detail": type(exc).__name__}, 503
-
-
-def _learning_read_only_context():
-    """Expose evaluation and ledger state without calling it learned knowledge."""
-    if _build_learning_context is None or _validate_learning_context is None:
-        return {"available": False, "read_only": True, "error": "learning_context_unavailable", "detail": _LEARNING_CONTEXT_IMPORT_ERROR}, 503
-    try:
-        payload = _build_learning_context(_system_status_read_only(), _learning_read_only(), generated_at=str(time.time()))
-        _validate_learning_context(payload)
-        return payload, 200
-    except Exception as exc:
-        return {"available": False, "read_only": True, "error": "learning_context_invalid", "detail": type(exc).__name__}, 503
-
-
-def _research_operations_read_only_context():
-    """Expose Research state, recovery and learning boundaries without side effects."""
-    if _build_research_operations_context is None or _validate_research_operations_context is None:
-        return {"available": False, "read_only": True, "error": "research_operations_context_unavailable", "detail": _RESEARCH_OPERATIONS_CONTEXT_IMPORT_ERROR}, 503
-    try:
-        payload = _build_research_operations_context(
-            _research_catalog(),
-            _research_jobs(),
-            _legacy_report_index(),
-            _legacy_rescue_queue(),
-            _learning_read_only(),
-            generated_at=str(time.time()),
-        )
-        _validate_research_operations_context(payload)
-        return payload, 200
-    except Exception as exc:
-        return {"available": False, "read_only": True, "error": "research_operations_context_invalid", "detail": type(exc).__name__}, 503
-
-
-def _research_job_operations_context(job_id):
-    """Join one job's read-only gates without resuming or attesting it."""
-    if _build_research_job_operations_context is None or _validate_research_job_operations_context is None:
-        return {"available": False, "read_only": True, "error": "research_job_operations_context_unavailable", "detail": _RESEARCH_JOB_OPERATIONS_CONTEXT_IMPORT_ERROR}, 503
-    try:
-        job_id = int(job_id)
-    except (TypeError, ValueError):
-        return {"available": False, "read_only": True, "error": "job_id_invalido"}, 400
-    if any(contract is None for contract in (
-        _normalize_readiness_contract,
-        _normalize_plan_contract,
-        _normalize_dry_run_contract,
-        _license_review_contract,
-        _license_source_review_contract,
-        _license_compatibility_plan_contract,
-    )):
-        return {"available": False, "read_only": True, "error": "research_continuation_unavailable"}, 503
-    inputs = [
-        _normalize_readiness_contract(_research_registry_path(), job_id=job_id),
-        _normalize_plan_contract(_research_registry_path(), job_id=job_id),
-        _normalize_dry_run_contract(_research_registry_path(), job_id=job_id),
-        _license_review_contract(_research_registry_path(), job_id=job_id),
-        _license_source_review_contract(_research_registry_path(), job_id=job_id),
-        _license_compatibility_plan_contract(_research_registry_path(), job_id=job_id),
-    ]
-    if any(code != 200 for _, code in inputs):
-        code = next(code for _, code in inputs if code != 200)
-        error = "research_job_not_found" if code == 404 else "research_job_operations_source_unavailable"
-        return {"available": False, "read_only": True, "error": error}, code if code in (400, 404) else 503
-    try:
-        job = _research_job(job_id)
-        payload = _build_research_job_operations_context(
-            job_id, job["job"], *[item for item, _ in inputs], _learning_read_only(), generated_at=str(time.time())
-        )
-        _validate_research_job_operations_context(payload)
-        return payload, 200
-    except ValueError as exc:
-        if str(exc) == "research job no existe":
-            return {"available": False, "read_only": True, "error": "research_job_not_found"}, 404
-        return {"available": False, "read_only": True, "error": "research_job_operations_context_invalid", "detail": type(exc).__name__}, 503
-    except Exception as exc:
-        return {"available": False, "read_only": True, "error": "research_job_operations_context_invalid", "detail": type(exc).__name__}, 503
-
-
-def _portfolio_review_operations_context(item_id):
-    """Join one item's logical source, human history and MAK direction frame."""
-    if _build_portfolio_review_operations_context is None or _validate_portfolio_review_operations_context is None:
-        return {"available": False, "read_only": True, "error": "portfolio_review_operations_context_unavailable", "detail": _PORTFOLIO_REVIEW_OPERATIONS_CONTEXT_IMPORT_ERROR}, 503
-    item_id = str(item_id or "").strip()
-    if not item_id:
-        return {"available": False, "read_only": True, "error": "item_id_requerido"}, 400
-    item = next((row for row in _portfolio_inbox().get("items", []) if isinstance(row, dict) and row.get("id") == item_id), None)
-    if item is None:
-        return {"available": False, "read_only": True, "error": "portfolio_item_not_found"}, 404
-    audit = _portfolio_audit(item_id)
-    direction, direction_code = _portfolio_direction_context_read_only()
-    candidates = _portfolio_external_candidates(item_id)
-    if direction_code != 200 or not audit.get("ok") or not candidates.get("ok"):
-        return {"available": False, "read_only": True, "error": "portfolio_review_operations_source_unavailable"}, 503
-    try:
-        payload = _build_portfolio_review_operations_context(item_id, {**item, "schema": _portfolio_inbox().get("schema")}, audit, direction, _portfolio_decision_index(), candidates, _learning_read_only(), generated_at=str(time.time()))
-        _validate_portfolio_review_operations_context(payload)
-        return payload, 200
-    except Exception as exc:
-        return {"available": False, "read_only": True, "error": "portfolio_review_operations_context_invalid", "detail": type(exc).__name__}, 503
-
-
-def _portfolio_review_cultura_research_context(item_id):
-    """Join Portafolio, Cultura and Research without inferring an origin relation."""
-    if _build_portfolio_review_cultura_research_context is None or _validate_portfolio_review_cultura_research_context is None:
-        return {"available": False, "read_only": True, "error": "portfolio_review_cultura_research_context_unavailable", "detail": _PORTFOLIO_REVIEW_CULTURA_RESEARCH_CONTEXT_IMPORT_ERROR}, 503
-    portfolio, portfolio_code = _portfolio_review_operations_context(item_id)
-    cultura, cultura_code = _cultura_research_read_only_context()
-    research, research_code = _research_job_operations_context(3)
-    if any(code != 200 for code in (portfolio_code, cultura_code, research_code)):
-        return {"available": False, "read_only": True, "error": "portfolio_review_cultura_research_source_unavailable"}, 503
-    try:
-        payload = _build_portfolio_review_cultura_research_context(item_id, portfolio, cultura, research, generated_at=str(time.time()))
-        _validate_portfolio_review_cultura_research_context(payload)
-        return payload, 200
-    except Exception as exc:
-        return {"available": False, "read_only": True, "error": "portfolio_review_cultura_research_context_invalid", "detail": type(exc).__name__}, 503
 def _system_status_read_only():
     """Return the shared local status without starting a consumer."""
     try:
         from flujo.knowledge.system_status import system_status
-        payload = system_status(
+        return system_status(
             _learning_db_path(), repo_root=_REPO_ROOT, physical_root=HOME
         )
-        payload["runtime_sources"] = {
-            "flujo_source_root": _FLUJO_SOURCE_ROOT,
-            "selection_mode": _FLUJO_SOURCE_ROOT_MODE,
-            "product_view": str(Path(_FLUJO_SOURCE_ROOT) / "flujo" / "knowledge" / "product_view.py"),
-            "archive_triage_compatible": _source_supports_human_triage(_FLUJO_SOURCE_ROOT),
-        }
-        return payload
     except Exception as exc:  # noqa: BLE001 - status must not take down 8900
         return {
             "schema": "mak-system-status-v1",
@@ -3267,270 +1999,6 @@ def _portfolio_item_context(item_id):
                         "human_resolution": reviews[-1] if reviews else {}})
         break
     return context
-
-
-def _portfolio_research_job_for(item_id, question):
-    """Find a previous plan for the same source and exact human request."""
-    import sqlite3
-
-    try:
-        with sqlite3.connect(_research_registry_path()) as conn:
-            row = conn.execute(
-                """SELECT j.id FROM research_jobs j
-                   JOIN job_relations r ON r.job_id=j.id
-                   WHERE r.relation_type='portfolio_research_source'
-                     AND r.from_object=? AND j.question=?
-                   ORDER BY j.id DESC LIMIT 1""",
-                ("portfolio:item:%s" % item_id, question),
-            ).fetchone()
-    except (OSError, sqlite3.Error):
-        return None
-    return int(row[0]) if row else None
-
-
-def _link_portfolio_research_job(job_id, source):
-    """Attach a research job to the existing portfolio registry relation table."""
-    import sqlite3
-
-    item_id = str(source.get("source_id") or "").strip()
-    from_object = "portfolio:item:%s" % item_id
-    to_object = "research_job:%s" % int(job_id)
-    rationale = (
-        "Human-requested research from declared corpus %s; corpus membership "
-        "is not an authorship claim. Relative path: %s"
-        % (source.get("corpus_id", ""), source.get("relative_path", "") or "unknown")
-    )
-    db_path = _research_registry_path()
-    with sqlite3.connect(db_path) as conn:
-        row = conn.execute(
-            """SELECT id,job_id,relation_type,from_object,to_object,rationale
-               FROM job_relations
-               WHERE job_id=? AND relation_type='portfolio_research_source'
-                 AND from_object=?""",
-            (int(job_id), from_object),
-        ).fetchone()
-        if row is None:
-            conn.execute(
-                """INSERT INTO job_relations
-                   (job_id,relation_type,from_object,to_object,rationale)
-                   VALUES (?,?,?,?,?)""",
-                (int(job_id), "portfolio_research_source", from_object,
-                 to_object, rationale),
-            )
-            relation_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
-            duplicate = False
-        else:
-            relation_id = row[0]
-            duplicate = True
-        conn.execute(
-            """INSERT INTO audit_events
-               (event_type,object_type,object_id,detail,created_at)
-               VALUES (?,?,?,?,?)""",
-            ("portfolio_source_link", "research_job", int(job_id),
-             json.dumps({"source": source, "relation_id": relation_id},
-                        ensure_ascii=False, sort_keys=True),
-             time.strftime("%Y-%m-%dT%H:%M:%S%z")),
-        )
-        conn.commit()
-    return {
-        "id": relation_id,
-        "type": "portfolio_research_source",
-        "from": from_object,
-        "to": to_object,
-        "duplicate": duplicate,
-    }
-
-
-def _enqueue_portfolio_codex(task):
-    """Use the existing material queue; no second Codex job store is created."""
-    try:
-        import material
-        queued = material.enqueue_front(task)
-    except Exception as exc:  # noqa: BLE001 - the Hub reports the missing seam
-        return {"ok": False, "error": "portfolio_codex_queue_unavailable",
-                "detail": type(exc).__name__}
-    return {"ok": True, "queued": bool(queued), "duplicate": not queued}
-
-
-def _portfolio_dispatch(body):
-    """Create a source-linked Research plan or queue an explicit Codex request.
-
-    This route is intentionally human-triggered. It records the bridge and
-    preserves the source, but never publishes, submits an application, or
-    treats a semantic/visual candidate as a fact.
-    """
-    item_id = str(body.get("item_id") or "").strip()[:160]
-    if not item_id:
-        return {"ok": False, "error": "item_no_encontrado"}
-    item = _portfolio_item(item_id)
-    if not item:
-        return {"ok": False, "error": "item_no_encontrado"}
-    if item.get("selection") == "descartar":
-        return {"ok": False, "error": "item_descartado"}
-    department = str(body.get("depto") or "").strip().lower()
-    if department not in {"research", "codex"}:
-        return {"ok": False, "error": "departamento_invalido"}
-    text = str(body.get("texto") or "").strip()[:2000]
-    if not text:
-        text = "Revisar la pieza con su metadata original. No inventar hechos."
-    source = _portfolio_source_envelope(item)
-    if department == "research":
-        question = "Portafolio MAK · pieza %s: %s" % (item_id, text)
-        question = question[:2000]
-        existing_id = _portfolio_research_job_for(item_id, question)
-        if existing_id:
-            relation = _link_portfolio_research_job(existing_id, source)
-            return {
-                "ok": True, "schema": "faro-portfolio-dispatch-v1",
-                "department": department, "status": "planned",
-                "duplicate": True, "job_id": existing_id,
-                "source": source, "relation": relation,
-                "micelio": {"status": "after_research_result",
-                             "source_id": item_id,
-                             "target": "research/memoria/index.jsonl"},
-                "human_gate": "review_plan_before_resume",
-                "promotion": "none",
-            }
-        planned = _create_research_job({
-            "question": question,
-            "domain": str(body.get("domain") or "").strip() or None,
-        })
-        if not planned.get("ok"):
-            return planned
-        relation = _link_portfolio_research_job(planned["id"], source)
-        return {
-            **planned,
-            "schema": "faro-portfolio-dispatch-v1",
-            "department": department,
-            "status": "planned",
-            "dispatch": False,
-            "source": source,
-            "relation": relation,
-            "micelio": {"status": "after_research_result",
-                         "source_id": item_id,
-                         "target": "research/memoria/index.jsonl"},
-            "human_gate": "review_plan_before_resume",
-            "promotion": "none",
-        }
-
-    task_payload = {
-        "id": "portfolio-codex:%s" % hashlib.sha256(
-            (item_id + "\x1f" + text).encode("utf-8")).hexdigest()[:24],
-        "origen": "portfolio",
-        "ficha": item_id,
-        "archivo": source.get("relative_path", ""),
-        "depto": "codex",
-        "modo": "generar",
-        "texto": "Portafolio MAK · pieza %s: %s" % (item_id, text),
-        "estado": "pendiente",
-        "source": source,
-        "human_request": "portfolio_editor",
-        "promotion": "none",
-        "ts": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
-    }
-    queued = _enqueue_portfolio_codex(task_payload)
-    if not queued.get("ok"):
-        return queued
-    return {
-        "ok": True,
-        "schema": "faro-portfolio-dispatch-v1",
-        "department": department,
-        "status": "queued",
-        "dispatch": False,
-        "duplicate": queued.get("duplicate", False),
-        "task_id": task_payload["id"],
-        "source": source,
-        "micelio": {"status": "after_codex_result",
-                     "source_id": item_id,
-                     "target": "research/memoria/index.jsonl"},
-        "human_gate": "explicit_operator_request",
-        "promotion": "none",
-    }
-
-
-def _portfolio_write_inbox(payload):
-    """Install an imported inbox with a recoverable copy of the prior one."""
-    path = Path(PORTFOLIO_INBOX)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    backup = None
-    if path.is_file():
-        backup = path.with_name(
-            "%s.previous-%s-%s" % (
-                path.name, time.strftime("%Y%m%d%H%M%S"), uuid.uuid4().hex[:8]))
-        shutil.copy2(path, backup)
-    temporary = path.with_name(".%s.%s.tmp" % (path.name, uuid.uuid4().hex[:8]))
-    try:
-        temporary.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
-                             encoding="utf-8")
-        os.replace(temporary, path)
-    finally:
-        if temporary.exists():
-            try:
-                temporary.unlink()
-            except OSError:
-                pass
-    _PORTFOLIO_INBOX_CACHE.clear()
-    return str(backup) if backup else None
-
-
-def _portfolio_observe_folder(body):
-    """Observe one local folder and optionally activate its derived inbox."""
-    adapter = _portfolio_corpus
-    if adapter is None:
-        try:
-            import portfolio_corpus as adapter  # noqa: WPS433 - lazy optional bridge
-        except Exception:  # noqa: BLE001 - report the unavailable seam below
-            adapter = None
-    if adapter is None:
-        return {"ok": False, "error": "portfolio_folder_adapter_unavailable"}
-    raw_root = str(body.get("source_root") or "").strip()
-    if not raw_root:
-        return {"ok": False, "error": "source_root_requerido"}
-    try:
-        source_root = Path(raw_root).expanduser().resolve()
-    except OSError:
-        return {"ok": False, "error": "source_root_invalido"}
-    allowed = (Path(HOME).resolve(), Path("/media/mak").resolve())
-    if not source_root.is_dir() or not any(
-            source_root == root or root in source_root.parents for root in allowed):
-        return {"ok": False, "error": "source_root_fuera_de_raices_permitidas"}
-    corpus_id = str(body.get("corpus_id") or "").strip()[:160] or None
-    artist_id = str(body.get("artist_id") or "").strip()[:160] or None
-    try:
-        raw_limit = body.get("max_files")
-        max_files = 20000 if raw_limit in (None, "") else max(1, min(int(raw_limit), 50000))
-    except (TypeError, ValueError):
-        return {"ok": False, "error": "max_files_invalido"}
-    try:
-        batch, inbox = adapter.observe_portfolio_folder(
-            source_root, corpus_id=corpus_id, artist_id=artist_id,
-            max_files=max_files)
-    except Exception as exc:  # noqa: BLE001 - caller receives a named boundary
-        return {"ok": False, "error": "portfolio_folder_observation_failed",
-                "detail": type(exc).__name__}
-    activated = body.get("activate") is True
-    backup = _portfolio_write_inbox(inbox) if activated else None
-    return {
-        "ok": True,
-        "schema": "faro-portfolio-folder-import-v1",
-        "status": "activated" if activated else "preview",
-        "activation": activated,
-        "source_root": str(source_root),
-        "corpus_id": inbox["context"]["corpus_id"],
-        "artist_id": inbox["context"]["artist_id"],
-        "context": inbox["context"],
-        "observation": inbox["observation"],
-        "portfolio": {
-            "total": inbox["total"],
-            "available_assets": inbox["available_assets"],
-            "sample_paths": [item["relative_path"] for item in inbox["items"][:20]],
-        },
-        "active_inbox": str(Path(PORTFOLIO_INBOX)) if activated else None,
-        "previous_inbox_backup": backup,
-        "human_gate": "explicit_activate_required",
-        "authorship_claim": False,
-        "promotion": "none",
-    }
 
 
 def _portfolio_select(item_id, decision, board_id="", session_id="", pass_size=0,
@@ -4270,14 +2738,11 @@ def _portfolio_suggestions(item_id, board_id="", include_map=False,
                    if item.get("id") == str(item_id)), source)
     feedback = _portfolio_feedback()
     visual_surface = _portfolio_visual_surface(item_id)
-    semantic_surface = _portfolio_semantic_surface(
-        item_id, inbox_items=inbox_items)
     result, suppressed = copilot.build_suggestions(
         source, inbox_items, selections=_portfolio_selections(),
         feedback=feedback, context=context, limit=24,
         focus_facet=focus_facet, shuffle=shuffle, shuffle_seed=shuffle_seed,
-        visual_relations=visual_surface.get("relations", []),
-        semantic_relations=semantic_surface.get("relations", []))
+        visual_relations=visual_surface.get("relations", []))
     map_surface = {"schema": copilot.GTM_SCHEMA,
                    "engine": "not_requested", "fit": {},
                    "source_position": None}
@@ -4331,7 +2796,6 @@ def _portfolio_suggestions(item_id, board_id="", include_map=False,
             "candidate_learning": copilot.review_profile(
                 _portfolio_external_review_rows()),
             "visual_similarity": visual_surface,
-            "micelio_semantic": semantic_surface,
             "xio_evidence": _portfolio_xio_evidence(),
             "xio_knowledge": _portfolio_xio_knowledge(),
             "suggestion_mode": "shuffle" if shuffle else focus_facet or "copilot",
@@ -4416,8 +2880,6 @@ def _portfolio_scene(item_id, limit=10, focus_facet="", shuffle=False,
         map_surface = _portfolio_gtm_map(
             inbox_items, feedback=feedback_rows, stable_topology=True)
         visual_surface = _portfolio_visual_surface(item_id)
-        semantic_surface = _portfolio_semantic_surface(
-            item_id, inbox_items=inbox_items)
         suggestion_surface = {
             "provider": "gtm_order_projection",
             "learning": {"ordering": map_surface.get("ordering", {})},
@@ -4425,7 +2887,6 @@ def _portfolio_scene(item_id, limit=10, focus_facet="", shuffle=False,
             # The order surface is the active editor surface; keep the
             # derived visual channel visible there without loading the model.
             "visual_similarity": visual_surface,
-            "micelio_semantic": semantic_surface,
             "suggestion_groups": _portfolio_order_groups(
                 source, inbox_items, map_surface, limit=limit),
         }
@@ -4463,8 +2924,6 @@ def _portfolio_scene(item_id, limit=10, focus_facet="", shuffle=False,
     scene["learning"]["ordering"] = map_surface.get("ordering", {})
     scene["visual_similarity"] = suggestion_surface.get(
         "visual_similarity", {"available": False, "relations": []})
-    scene["micelio_semantic"] = suggestion_surface.get(
-        "micelio_semantic", {"available": False, "relations": []})
     scene["xio_evidence"] = suggestion_surface.get(
         "xio_evidence", _portfolio_xio_evidence())
     map_by_id = {
@@ -5446,8 +3905,6 @@ def _portfolio_learning():
                     "facet": row.get("facet", "general"),
                     "items": len(row.get("item_ids") or [])}
                    for row in boards],
-        "research_candidates": _portfolio_research_candidates(),
-        "context": _portfolio_context(),
         "next": "seguir seleccionando; las sugerencias cambian por faceta, no por una palabra aislada",
     }
 
@@ -6041,37 +4498,14 @@ def _portfolio_media(relative):
     value = str(relative or "").lstrip("/")
     if not value or ".." in value.split("/"):
         return None
-    roots = [os.path.realpath(PORTFOLIO_MEDIA_ROOT)]
-    # A folder imported through portfolio_corpus carries its explicit source
-    # root in the inbox. Allow that root for media delivery, but only when it
-    # remains under a local workspace boundary; the URL never accepts an
-    # arbitrary absolute path.
+    root = os.path.realpath(PORTFOLIO_MEDIA_ROOT)
+    candidate = os.path.realpath(os.path.join(root, value))
     try:
-        with open(PORTFOLIO_INBOX, encoding="utf-8") as fh:
-            payload = json.load(fh)
-        asset_root = str((payload or {}).get("asset_root") or "").strip()
-        if asset_root:
-            roots.append(os.path.realpath(asset_root))
-    except (OSError, ValueError, TypeError):
-        pass
-    configured_media_root = os.path.realpath(PORTFOLIO_MEDIA_ROOT)
-    allowed_roots = (os.path.realpath(HOME), os.path.realpath("/media/mak"))
-    for root in dict.fromkeys(roots):
-        explicitly_configured = root == configured_media_root
-        under_local_boundary = any(
-            root == boundary or root.startswith(boundary + os.sep)
-            for boundary in allowed_roots)
-        if not explicitly_configured and not under_local_boundary:
-            continue
-        candidate = os.path.realpath(os.path.join(root, value))
-        try:
-            if os.path.commonpath((root, candidate)) != root:
-                continue
-        except ValueError:
-            continue
-        if os.path.isfile(candidate):
-            return candidate
-    return None
+        if os.path.commonpath((root, candidate)) != root:
+            return None
+    except ValueError:
+        return None
+    return candidate if os.path.isfile(candidate) else None
 
 
 # ── feed de actividad (los dos departamentos, con la guardia inline) ──
@@ -6112,7 +4546,7 @@ def _norm(j, depto):
 
 
 def _jobs_depto(port, jsonl, depto):
-    live = _service_json(depto, "/api/jobs")
+    live = _http_json("http://127.0.0.1:%d/api/jobs" % port)
     fuente = list(live) if isinstance(live, list) else []
     fuente += _tail_jsonl(jsonl)
     vistos, evs = set(), []
@@ -6150,6 +4584,7 @@ def _job_ids_conocidos(depto):
     """Union de job_id conocidos: (a) jobs.jsonl local, (b) /api/jobs en vivo del depto.
     Retorna (ids_set, alguna_fuente_ok_bool) -- ok indica si al menos una fuente respondio."""
     jsonl = RESEARCH_JOBS if depto == "research" else CODEX_JOBS
+    port = 8890 if depto == "research" else 8891
     ids = set()
     try:
         with open(jsonl, encoding="utf-8"):
@@ -6160,7 +4595,7 @@ def _job_ids_conocidos(depto):
         jid = j.get("job_id")
         if jid:
             ids.add(jid)
-    live = _service_json(depto, "/api/jobs")
+    live = _http_json("http://127.0.0.1:%d/api/jobs" % port)
     if live is not None:
         ok = True
         fuente = list(live) if isinstance(live, list) else []
@@ -6184,8 +4619,8 @@ def _marcar_sin_job(evs, ids, ok):
 
 
 def _actividad():
-    evs = _jobs_depto(0, RESEARCH_JOBS, "research") + \
-          _jobs_depto(0, CODEX_JOBS, "codex")
+    evs = _jobs_depto(8890, RESEARCH_JOBS, "research") + \
+          _jobs_depto(8891, CODEX_JOBS, "codex")
     evs.sort(key=lambda e: e.get("job_id") or e["t"], reverse=True)
     evs = evs[:26]
     bloq = sum(1 for e in evs if e["estado"] == "BLOQUEADO")
@@ -6204,8 +4639,7 @@ def _micelio():
     ahora = time.time()
     if ahora - _MIC_CACHE["t"] < 12 and _MIC_CACHE["data"]["nodes"]:
         return _MIC_CACHE["data"]
-    g = _service_json("research", "/api/memoria/grafo",
-                      query="umbral=0.5&limite=600", timeout=5.0)
+    g = _http_json(RESEARCH_URL + "/api/memoria/grafo?umbral=0.5&limite=600", timeout=5.0)
     if g and "nodes" in g:
         _MIC_CACHE["data"] = g
         _MIC_CACHE["t"] = ahora
@@ -6217,9 +4651,7 @@ def _archivo_publico():
     ahora = time.time()
     if ahora - _ARCHIVO_CACHE["t"] < 30 and _ARCHIVO_CACHE["data"]:
         return _ARCHIVO_CACHE["data"]
-    cuerpo = contrato_archivo.deduplicate_media_sources(
-        contrato_archivo.sustrato_publico(contrato_archivo.convertir(_micelio()))
-    )
+    cuerpo = contrato_archivo.sustrato_publico(contrato_archivo.convertir(_micelio()))
     _ARCHIVO_CACHE["data"] = cuerpo
     _ARCHIVO_CACHE["t"] = ahora
     return cuerpo
@@ -6626,21 +5058,19 @@ def _ejecutar(depto, modo, texto, densidad):
     if not texto:
         return {"ok": False, "error": "texto vacio"}
     if depto == "research":
-        data = {"modo": modo, "tema": texto, "densidad": densidad}
+        url, data = RESEARCH_URL + "/run", {"modo": modo, "tema": texto, "densidad": densidad}
     elif depto == "codex":
+        url = CODEX_URL + "/run"
         data = {"modo": modo, "pedido": texto, "densidad": densidad}
     else:
         return {"ok": False, "error": "departamento no ejecutable"}
     try:
         body = urllib.parse.urlencode(data).encode()
-        response = _service_request(
-            depto, "POST", "/run", body=body,
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
-            timeout=6)
-        try:
-            return json.loads(response.read(20000).decode("utf-8", "replace"))
-        finally:
-            _close_service_response(response)
+        req = urllib.request.Request(
+            url, data=body, method="POST",
+            headers={"Content-Type": "application/x-www-form-urlencoded"})
+        with urllib.request.urlopen(req, timeout=6) as r:
+            return json.loads(r.read(20000).decode("utf-8", "replace"))
     except Exception as e:  # noqa: BLE001
         return {"ok": False, "error": str(e)[:160]}
 
@@ -6846,97 +5276,17 @@ evidencia histórica. No debe usarse como contrato operativo si contradice
     return _articulo("génesis / archivo", top, cuerpo)
 
 
-def _service_relative_path(prefix, path, query=""):
-    """Return the validated route portion sent to an internal service."""
+def _service_proxy_target(prefix, path, query=""):
+    """Build a fixed internal target for a same-origin service route."""
+    upstream = SERVICE_PROXY_PREFIXES.get(prefix)
+    if upstream is None:
+        raise ValueError("unknown service proxy")
     root = "/" + prefix
     relative = path[len(root):] if path.startswith(root) else "/"
     relative = relative or "/"
     if not relative.startswith("/"):
         relative = "/" + relative
-    return relative + ("?" + query if query else "")
-
-
-def _service_proxy_target(prefix, path, query=""):
-    """Build a fixed HTTP fallback target for a same-origin service route."""
-    upstream = _service_upstream(prefix)
-    if upstream is None:
-        raise ValueError("unknown service proxy")
-    return upstream + _service_relative_path(prefix, path, query)
-
-
-def _service_upstream(prefix):
-    """Resolve the HTTP fallback while preserving runtime test overrides."""
-    configured = SERVICE_PROXY_PREFIXES.get(prefix)
-    if configured is None:
-        return None
-    declared = RESEARCH_URL if prefix == "research" else CODEX_URL
-    if configured == _DEFAULT_SERVICE_URLS.get(prefix):
-        return declared
-    return configured
-
-
-class _UnixHTTPConnection(http.client.HTTPConnection):
-    """Minimal HTTP/1.1 connection over a private Unix stream socket."""
-
-    def __init__(self, socket_path, timeout=15):
-        super().__init__("localhost", timeout=timeout)
-        self.socket_path = socket_path
-
-    def connect(self):
-        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.sock.settimeout(self.timeout)
-        self.sock.connect(self.socket_path)
-
-
-def _service_request(prefix, method, relative, query="", body=None,
-                     headers=None, timeout=15):
-    """Request an internal service over Unix socket, or HTTP fallback."""
-    socket_path = SERVICE_PROXY_SOCKETS.get(prefix)
-    headers = headers or {}
-    if socket_path:
-        connection = _UnixHTTPConnection(socket_path, timeout=timeout)
-        connection.request(method, relative + ("?" + query if query else ""),
-                           body=body, headers=headers)
-        response = connection.getresponse()
-        response._mak_connection = connection
-        return response
-    target = _service_upstream(prefix) + relative + (
-        "?" + query if query else "")
-    request = urllib.request.Request(target, data=body, method=method,
-                                     headers=headers)
-    return urllib.request.urlopen(request, timeout=timeout)
-
-
-def _close_service_response(response):
-    try:
-        response.close()
-    finally:
-        connection = getattr(response, "_mak_connection", None)
-        if connection is not None:
-            connection.close()
-
-
-def _service_json(prefix, relative, query="", timeout=5):
-    """Read one internal JSON response; dependency failures stay optional."""
-    if not SERVICE_PROXY_SOCKETS.get(prefix):
-        return _http_json(_service_upstream(prefix) + relative + (
-            "?" + query if query else ""), timeout=timeout)
-    response = None
-    try:
-        response = _service_request(prefix, "GET", relative, query=query,
-                                    timeout=timeout)
-        if getattr(response, "status", 200) >= 400:
-            return None
-        data = response.read(SERVICE_PROXY_MAX_BYTES + 1)
-        if len(data) > SERVICE_PROXY_MAX_BYTES:
-            return None
-        return json.loads(data.decode("utf-8", "replace"))
-    except (OSError, TimeoutError, urllib.error.URLError,
-            ValueError, json.JSONDecodeError):
-        return None
-    finally:
-        if response is not None:
-            _close_service_response(response)
+    return upstream + relative + ("?" + query if query else "")
 
 
 def _rewrite_service_html(data, prefix):
@@ -6990,31 +5340,27 @@ class H(BaseHTTPRequestHandler):
         if body is not None and len(body) > SERVICE_PROXY_MAX_BYTES:
             self._send("request too large", "text/plain; charset=utf-8", 413)
             return True
-        response = None
         try:
-            relative = _service_relative_path(prefix, u.path, u.query)
+            target = _service_proxy_target(prefix, u.path, u.query)
             headers = {}
             content_type = self.headers.get("Content-Type")
             if content_type:
                 headers["Content-Type"] = content_type
-            response = _service_request(prefix, method, relative, body=body,
-                                        headers=headers, timeout=15)
-            data = response.read(SERVICE_PROXY_MAX_BYTES + 1)
-            if len(data) > SERVICE_PROXY_MAX_BYTES:
-                self._send("upstream response too large",
-                           "text/plain; charset=utf-8", 502)
-                return True
-            if hasattr(response, "headers"):
+            request = urllib.request.Request(
+                target, data=body, method=method, headers=headers)
+            with urllib.request.urlopen(request, timeout=15) as response:
+                data = response.read(SERVICE_PROXY_MAX_BYTES + 1)
+                if len(data) > SERVICE_PROXY_MAX_BYTES:
+                    self._send("upstream response too large",
+                               "text/plain; charset=utf-8", 502)
+                    return True
                 response_type = response.headers.get(
                     "Content-Type", "application/octet-stream")
-            else:
-                response_type = response.getheader(
-                    "Content-Type", "application/octet-stream")
-            if response_type.lower().startswith("text/html"):
-                data = _rewrite_service_html(data, prefix)
-            self._send_bytes(data, ctype=response_type,
-                             code=getattr(response, "status", 200) or 200)
-            return True
+                if response_type.lower().startswith("text/html"):
+                    data = _rewrite_service_html(data, prefix)
+                self._send_bytes(data, ctype=response_type,
+                                 code=getattr(response, "status", 200) or 200)
+                return True
         except urllib.error.HTTPError as exc:
             data = exc.read(SERVICE_PROXY_MAX_BYTES)
             self._send_bytes(
@@ -7025,9 +5371,6 @@ class H(BaseHTTPRequestHandler):
             self._send("service unavailable: %s" % str(exc)[:160],
                        "text/plain; charset=utf-8", 502)
             return True
-        finally:
-            if response is not None:
-                _close_service_response(response)
 
     def do_HEAD(self):
         p = urllib.parse.urlparse(self.path).path
@@ -7201,23 +5544,12 @@ class H(BaseHTTPRequestHandler):
         if p == "/api/project/learning":
             payload = _learning_read_only()
             return self._json(payload, _status_for(payload))
-        if p == "/api/project/learning-read-only-context":
-            payload, code = _learning_read_only_context()
-            return self._json(payload, code)
-        if p == "/api/research/operations-read-only-context":
-            payload, code = _research_operations_read_only_context()
-            return self._json(payload, code)
         if p == "/api/project/context":
             query = urllib.parse.parse_qs(u.query)
             payload = _project_context_read_only(
                 context_id=(query.get("context_id") or [None])[0],
                 project_id=(query.get("project_id") or [None])[0],
             )
-            return self._json(payload, _status_for(payload))
-        if p == "/api/project/review-queue":
-            query = urllib.parse.parse_qs(u.query)
-            review_pass = (query.get("pass") or ["prune"])[0]
-            payload = _project_review_queue_read_only(review_pass)
             return self._json(payload, _status_for(payload))
         if p == "/api/status":
             return self._json(_system_status_read_only())
@@ -7261,9 +5593,6 @@ class H(BaseHTTPRequestHandler):
                 return self._json({"ok": False, "error": "rd_cultura_relations_unavailable",
                                    "detail": _DEPARTMENTS_IMPORT_ERROR}, 503)
             return self._json({"ok": True, **rd_cultura_relations(_REPO_ROOT)})
-        if p == "/api/rd/read-only-context":
-            payload, code = _rd_read_only_context()
-            return self._json(payload, code)
         if p == "/api/cultura/sources":
             if cultura_sources is None:
                 return self._json({"ok": False, "error": "cultura_sources_unavailable",
@@ -7279,9 +5608,6 @@ class H(BaseHTTPRequestHandler):
                 return self._json({"ok": False, "error": "cultura_opportunity_gate_unavailable",
                                    "detail": _DEPARTMENTS_IMPORT_ERROR}, 503)
             return self._json({"ok": True, **cultura_opportunity_gate(_REPO_ROOT)})
-        if p == "/api/cultura/research-read-only-context":
-            payload, code = _cultura_research_read_only_context()
-            return self._json(payload, code)
         if p.startswith("/departments/"):
             area = p[len("/departments/"):].strip("/")
             canonical = _DEPARTMENT_ALIASES.get(area)
@@ -7320,18 +5646,6 @@ class H(BaseHTTPRequestHandler):
             except OSError:
                 return self._send("(demo de plano no encontrado)",
                                   "text/plain; charset=utf-8", 404)
-        if p == "/context/flujo_hub.html":
-            # The React Hub is a generated, same-origin context artifact. Keep
-            # it behind the persistent MAK service so its relative API calls
-            # reach this Hub instead of leaving the local runtime. The source
-            # remains /home/mak/web; this route only serves the built artifact.
-            asset = Path(_REPO_ROOT) / "context" / "flujo_hub.html"
-            try:
-                return self._send_bytes(asset.read_bytes(),
-                                        "text/html; charset=utf-8")
-            except OSError:
-                return self._send("(Hub React no encontrado)",
-                                  "text/plain; charset=utf-8", 404)
         if p.startswith("/static/") or p.startswith("/context/"):
             return self._send("(recurso estático no encontrado)",
                               "text/plain; charset=utf-8", 404)
@@ -7340,18 +5654,6 @@ class H(BaseHTTPRequestHandler):
                 return self._json({"ok": False, "error": "diagnostics_unavailable",
                                    "detail": _DIAGNOSTICS_IMPORT_ERROR}, 503)
             return self._json(domain_catalog(_REPO_ROOT))
-        if p == "/api/mak/area-orientation":
-            payload, code = _area_orientation_read_only()
-            return self._json(payload, code)
-        if p == "/api/operations/read-only-map":
-            payload, code = _operations_read_only_map()
-            return self._json(payload, code)
-        if p == "/api/operations/source-snapshot":
-            scope = (urllib.parse.parse_qs(u.query).get("scope") or ["read_only"])[0]
-            if scope != "read_only":
-                return self._json({"schema": "mak-operations-source-snapshot-v1", "available": False, "read_only": True, "error": "scope_no_soportado"}, 400)
-            payload, code = _operations_source_snapshot()
-            return self._json(payload, code)
         if p == "/api/diagnostics":
             query = urllib.parse.parse_qs(u.query)
             fields = ("area", "idea", "operation", "error", "command",
@@ -7362,52 +5664,6 @@ class H(BaseHTTPRequestHandler):
             return self._json(_director_capabilities())
         if p == "/api/portfolio/archive-view":
             payload, code = _archive_portfolio_view_read_only()
-            return self._json(payload, code)
-        if p == "/api/portfolio/archive-orientation":
-            payload, code = _portfolio_archive_orientation_read_only()
-            return self._json(payload, code)
-        if p == "/api/portfolio/review-context":
-            query = urllib.parse.parse_qs(u.query)
-            payload, code = _portfolio_review_context_read_only(
-                (query.get("project_id") or [None])[0])
-            return self._json(payload, code)
-        if p == "/api/portfolio/relation-evidence-plan":
-            query = urllib.parse.parse_qs(u.query)
-            payload, code = _portfolio_relation_evidence_plan_read_only(
-                (query.get("project_id") or [None])[0])
-            return self._json(payload, code)
-        if p == "/api/portfolio/operation-receipt":
-            payload, code = _portfolio_operation_receipt_read_only()
-            return self._json(payload, code)
-        if p == "/api/portfolio/vizz-measurement-status":
-            payload, code = _portfolio_vizz_measurement_status_read_only()
-            return self._json(payload, code)
-        if p == "/api/portfolio/vizz-lineage-status":
-            payload, code = _portfolio_vizz_lineage_status_read_only()
-            return self._json(payload, code)
-        if p == "/api/portfolio/structural-delta-status":
-            payload, code = _portfolio_structural_delta_status_read_only()
-            return self._json(payload, code)
-        if p == "/api/portfolio/vizz-read-only-context":
-            query = urllib.parse.parse_qs(u.query)
-            payload, code = _portfolio_vizz_read_only_context(
-                (query.get("project_id") or [None])[0])
-            return self._json(payload, code)
-        if p == "/api/portfolio/direction-context":
-            query = urllib.parse.parse_qs(u.query)
-            payload, code = _portfolio_direction_context_read_only(
-                (query.get("project_id") or [None])[0])
-            return self._json(payload, code)
-        if p == "/api/portfolio/work-packet":
-            query = urllib.parse.parse_qs(u.query)
-            payload, code = _portfolio_work_packet_read_only(
-                (query.get("project_id") or [None])[0])
-            return self._json(payload, code)
-        if p == "/api/portfolio/work-preview":
-            query = urllib.parse.parse_qs(u.query)
-            payload, code = _portfolio_work_preview_read_only(
-                (query.get("project_id") or [None])[0],
-                (query.get("task_id") or [""])[0])
             return self._json(payload, code)
         if p == "/revision":
             self.send_response(301)
@@ -7432,15 +5688,7 @@ class H(BaseHTTPRequestHandler):
         if p == "/api/portfolio/inbox":
             query = urllib.parse.parse_qs(u.query)
             compact = (query.get("surface") or [""])[0] == "mesa"
-            payload = _portfolio_inbox(compact=compact)
-            return self._json(payload, _status_for(payload))
-        if p == "/api/portfolio/context":
-            return self._json(_portfolio_context())
-        if p == "/api/portfolio/research-candidates":
-            query = urllib.parse.parse_qs(u.query)
-            payload = _portfolio_research_candidates(
-                (query.get("limit") or [24])[0])
-            return self._json(payload)
+            return self._json(_portfolio_inbox(compact=compact))
         if p == "/api/portfolio/decision-index":
             return self._json(_portfolio_decision_index())
         if p == "/api/portfolio/audit":
@@ -7450,28 +5698,12 @@ class H(BaseHTTPRequestHandler):
             return self._json(audit, 404 if not audit.get("ok") else 200)
         if p == "/api/portfolio/external-candidates":
             item_id = (urllib.parse.parse_qs(u.query).get("item_id") or [""])[0]
-            payload = _portfolio_external_candidates(item_id)
-            return self._json(payload, _status_for(payload))
-        if p == "/api/portfolio/review-operations-context":
-            item_id = (urllib.parse.parse_qs(u.query).get("item_id") or [""])[0]
-            payload, code = _portfolio_review_operations_context(item_id)
-            return self._json(payload, code)
-        if p == "/api/portfolio/review-cultura-research-context":
-            item_id = (urllib.parse.parse_qs(u.query).get("item_id") or [""])[0]
-            payload, code = _portfolio_review_cultura_research_context(item_id)
-            return self._json(payload, code)
+            return self._json(_portfolio_external_candidates(item_id))
         if p == "/api/research/legacy-reports":
             query = urllib.parse.parse_qs(u.query)
             limit = (query.get("limit") or [100])[0]
             current = (query.get("classification") or [""])[0]
             return self._json(_legacy_report_index(limit, current))
-        if p == "/api/research/operations-context":
-            query = urllib.parse.parse_qs(u.query)
-            raw_id = (query.get("job_id") or query.get("id") or [""])[0].strip()
-            if not raw_id.isdigit():
-                return self._json({"schema": "mak-research-operations-context-v1", "available": False, "read_only": True, "error": "id_requerido"}, 400)
-            payload, code = _research_job_operations_context(int(raw_id))
-            return self._json(payload, code)
         if p == "/api/research/rescue":
             return self._json(_legacy_rescue_queue())
         if p == "/api/portfolio/copilot/scene":
@@ -7490,38 +5722,6 @@ class H(BaseHTTPRequestHandler):
                 item_id, limit=limit, focus_facet=focus_facet,
                 shuffle=shuffle, shuffle_seed=shuffle_seed, surface=surface)
             return self._json(payload, _status_for(payload))
-        if p == "/api/portfolio/copilot/suggestions":
-            # `iskvw/editor.html` asks for the lightweight suggestion surface;
-            # keep it as an alias to the same Copilot implementation used by
-            # `/scene` instead of creating a second relation engine.
-            query = urllib.parse.parse_qs(u.query)
-            item_id = (query.get("item_id") or [""])[0]
-            board_id = (query.get("board_id") or [""])[0]
-            focus_facet = (query.get("facet") or [""])[0]
-            shuffle = (query.get("mode") or [""])[0] == "shuffle"
-            shuffle_seed = (query.get("seed") or [""])[0]
-            payload = _portfolio_suggestions(
-                item_id, board_id=board_id, include_map=False,
-                focus_facet=focus_facet, shuffle=shuffle,
-                shuffle_seed=shuffle_seed)
-            return self._json(payload, _status_for(payload))
-        if p == "/api/portfolio/copilot/map":
-            query = urllib.parse.parse_qs(u.query)
-            try:
-                width = max(1, min(int((query.get("width") or [8])[0]), 32))
-            except (TypeError, ValueError):
-                width = 8
-            try:
-                height = max(1, min(int((query.get("height") or [6])[0]), 32))
-            except (TypeError, ValueError):
-                height = 6
-            items = _portfolio_apply_human_context(
-                _portfolio_inbox().get("items", []))
-            payload = _portfolio_gtm_map(
-                items, feedback=_portfolio_feedback(), width=width,
-                height=height, stable_topology=True)
-            payload["context"] = _portfolio_context()
-            return self._json(payload)
         if p == "/api/portfolio/production":
             query = urllib.parse.parse_qs(u.query)
             payload = _portfolio_production(
@@ -7536,12 +5736,8 @@ class H(BaseHTTPRequestHandler):
             asset = _portfolio_media(p[len("/portfolio-media/"):])
             if asset is None:
                 return self._send("(media no disponible en MAK)", "text/plain", 404)
-            try:
-                data = Path(asset).read_bytes()
-            except OSError:
-                return self._send("(media no disponible en MAK)", "text/plain", 404)
-            return self._send_bytes(
-                data, mimetypes.guess_type(asset)[0] or "application/octet-stream")
+            return self._send_bytes(open(asset, "rb").read(),
+                                    mimetypes.guess_type(asset)[0] or "application/octet-stream")
         if p == "/portafolio":
             self.send_response(301)
             self.send_header("Location", "/portafolio/")
@@ -7832,37 +6028,6 @@ class H(BaseHTTPRequestHandler):
             if not _xio_live_pulse(body):
                 return self._json({"ok": False, "error": "pulso_invalido"}, 400)
             return self._json({"ok": True})
-        if u.path == "/api/portfolio/dispatch":
-            length = _body_length(self.headers, 12000)
-            if length is None:
-                return self._json({"ok": False, "error": "content_length_invalido"}, 400)
-            try:
-                body = json.loads(self.rfile.read(length).decode("utf-8", "replace") or "{}")
-            except (ValueError, TypeError, json.JSONDecodeError):
-                return self._json({"ok": False, "error": "json invalido"}, 400)
-            if not isinstance(body, dict):
-                return self._json({"ok": False, "error": "json debe ser objeto"}, 400)
-            try:
-                return _answer(self, _portfolio_dispatch(body))
-            except Exception as exc:
-                return self._json({"ok": False, "error": "portfolio_dispatch_failed",
-                                   "detail": type(exc).__name__}, 503)
-        if u.path == "/api/portfolio/observe-folder":
-            length = _body_length(self.headers, 12000)
-            if length is None:
-                return self._json({"ok": False, "error": "content_length_invalido"}, 400)
-            try:
-                body = json.loads(self.rfile.read(length).decode("utf-8", "replace") or "{}")
-            except (ValueError, TypeError, json.JSONDecodeError):
-                return self._json({"ok": False, "error": "json invalido"}, 400)
-            if not isinstance(body, dict):
-                return self._json({"ok": False, "error": "json debe ser objeto"}, 400)
-            try:
-                return _answer(self, _portfolio_observe_folder(body))
-            except Exception as exc:
-                return self._json({"ok": False,
-                                   "error": "portfolio_folder_observation_failed",
-                                   "detail": type(exc).__name__}, 503)
         for prefix in SERVICE_PROXY_PREFIXES:
             if u.path.startswith("/" + prefix + "/"):
                 length = _body_length(self.headers, SERVICE_PROXY_MAX_BYTES + 1)

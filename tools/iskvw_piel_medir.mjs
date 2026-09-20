@@ -10,7 +10,7 @@
 // Milliseconds are reported as informative context only, never pinned.
 //
 // Technique: same as tools/iskvw_piel_smoke.mjs -- the PUBLISHED file's own
-// executable script graph runs in node inside a vm with DOM stubs; nothing in the skin
+// inline script runs in node inside a vm with DOM stubs; nothing in the skin
 // is modified. The 2d context is a counting proxy: every stroke() is one drawn
 // segment (the link loops do beginPath/moveTo/lineTo/stroke per link), every
 // arc/gradient/fillText is node-drawing work. Scenarios are REAL: the repo's
@@ -30,7 +30,6 @@ import { performance } from "node:perf_hooks";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
 import { documentoStub, elementoGenerico, resolverPedido } from "./lib/piel_dom.mjs";
-import { scriptsDePiel } from "./lib/piel_scripts.mjs";
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -48,8 +47,8 @@ if (!archivoPath) {
   if (existsSync(porDefecto)) archivoPath = porDefecto;
 }
 
-// Que piel se mide. Era el literal "campo", y por eso `terminal` nunca tuvo
-// una medicion de costo: no habia como pedirsela.
+// Que piel se mide. Era el literal "campo", y por eso `terminal` y `venue`
+// nunca tuvieron una medicion de costo: no habia como pedirsela.
 //   node tools/iskvw_piel_medir.mjs [--piel terminal]
 const PIEL = pielPedida || "campo";
 const rutaPiel = join(raiz, "iskvw", "piel", PIEL, "index.html");
@@ -70,9 +69,8 @@ try {
   MANIFIESTO = JSON.parse(readFileSync(join(raiz, "iskvw", "piel", PIEL, "piel.json"), "utf8"));
 } catch { /* sin manifiesto se mide igual, en modo comun */ }
 const GRILLA = (MANIFIESTO.capacidades || []).includes("posiciones_medidas");
-let scripts;
-try { scripts = scriptsDePiel(html, rutaPiel); }
-catch (e) { console.error(`no se pudo cargar el grafo de scripts de ${PIEL}: ${e.message}`); process.exit(2); }
+const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
+if (!scripts.length) { console.error("no inline <script> found"); process.exit(2); }
 
 const noop = () => {};
 
@@ -103,7 +101,7 @@ function arrancarPiel({ substrate, hash }) {
   });
   // Stubs compartidos con la sonda (tools/lib/piel_dom.mjs): cada herramienta
   // tenia su copia y las dos tenian la forma de `campo`, que es como dos de
-  // dos pieles quedaron sin medicion. Un arreglo duplicado es el mismo defecto
+  // tres pieles quedaron sin medicion. Un arreglo duplicado es el mismo defecto
   // que un padron de proveedores escrito a mano dos veces.
   const canvas = elementoGenerico(ctx2d);
   const el = () => elementoGenerico(ctx2d);

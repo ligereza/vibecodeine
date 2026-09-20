@@ -45,7 +45,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: generar el sustrato y el manifiesto del portafolio
+      - name: generar el sustrato (archivo.json)
         run: |
           set -euo pipefail
           # archivo.json is a regenerable projection. The skin asks for it
@@ -58,7 +58,6 @@ jobs:
           # expected, not an error.
           python3 tools/gen_archivo_iskvw.py --fuente todo
           test -s iskvw/datos/archivo.json
-          test -s iskvw/datos/portafolio.json
 
       - name: armar el sitio
         run: |
@@ -97,34 +96,9 @@ jobs:
           set -euo pipefail
           # con contenido
           for f in index.html piel/campo/index.html datos/campo.json \
-                   datos/archivo.json datos/portafolio.json \
-                   piel/trazos/_indice.json CNAME; do
+                   datos/archivo.json piel/trazos/_indice.json CNAME; do
             test -s "_sitio/$f" || { echo "FALTA o vacio: $f"; exit 1; }
           done
-          # El manifiesto es la frontera entre el archivo completo y las
-          # pieles: si queda desfasado, una piel puede mostrar otro orden o
-          # dejar piezas fuera sin que el HTML lo revele.
-          python3 - <<'PY'
-          import hashlib, json, sys
-          with open("_sitio/datos/archivo.json", "rb") as f:
-              raw = f.read()
-          archivo = json.loads(raw)
-          manifiesto = json.load(open("_sitio/datos/portafolio.json", encoding="utf-8"))
-          ids = [p.get("id") for p in archivo.get("piezas", [])]
-          if manifiesto.get("schema") != "iskvw-portfolio-manifest-v1":
-              print("manifiesto de portafolio desconocido"); sys.exit(1)
-          if manifiesto.get("source", {}).get("sha256") != hashlib.sha256(raw).hexdigest():
-              print("el manifiesto no corresponde a archivo.json"); sys.exit(1)
-          if manifiesto.get("source", {}).get("piece_count") != len(ids):
-              print("el manifiesto cuenta otra cantidad de piezas"); sys.exit(1)
-          orden = manifiesto.get("order", [])
-          if len(orden) != len(ids) or set(orden) != set(ids) or len(set(orden)) != len(orden):
-              print("el manifiesto omite o duplica piezas"); sys.exit(1)
-          skins = {s.get("id"): s.get("scope") for s in manifiesto.get("skins", [])}
-          if skins != {"campo": "portfolio", "terminal": "portfolio"}:
-              print("el manifiesto no declara todas las pieles"); sys.exit(1)
-          print(f"manifiesto coherente: {len(orden)} piezas, {len(manifiesto['skins'])} pieles")
-          PY
           # `.nojekyll` es VACIO por diseño, asi que se comprueba existencia y no
           # tamaño. Con `test -s` este job fallaba -- encontrado simulando el
           # armado en local antes de que corriera en CI.

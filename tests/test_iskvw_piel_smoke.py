@@ -74,7 +74,9 @@ def test_the_smoke_still_measures_the_effects_patch():
                      # luz is the only effect that touches SIZE, and reading it
                      # took teaching this bench to record radii at all.
                      "luz alone dilates",
-                    ):
+                     # The venue layer rides the SAME tablero fetch: its flag
+                     # must gate the sala link in both states.
+                     "venue layer gates on venue3d"):
         assert esperado in salida, (
             "the smoke no longer measures the effects patch (%r missing):\n%s"
             % (esperado, salida)

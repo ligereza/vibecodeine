@@ -53,7 +53,7 @@ free -h 2>&1 || true
 df -h / 2>&1 || true
 nvidia-smi --query-gpu=name,memory.total,memory.used --format=csv,noheader 2>&1 || true
 say PORTS
-ss -ltn 2>&1 | grep -E ':(8900|11434|1234)[[:space:]]' || true
+ss -ltn 2>&1 | grep -E ':(8890|8891|8900|11434|1234)[[:space:]]' || true
 say CRON
 crontab -l 2>&1 || true
 say PROCESSES

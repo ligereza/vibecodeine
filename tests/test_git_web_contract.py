@@ -86,15 +86,6 @@ def test_pages_publication_scope_excludes_rd_venue_mak_and_win():
     assert "cp -r . _sitio/" not in text
 
 
-def test_pages_publishes_and_verifies_the_complete_portfolio_manifest():
-    text = _workflow("publicar_iskvw.yml")
-    assert "test -s iskvw/datos/portafolio.json" in text
-    assert "datos/portafolio.json" in text
-    assert "iskvw-portfolio-manifest-v1" in text
-    assert "el manifiesto no corresponde a archivo.json" in text
-    assert "el manifiesto omite o duplica piezas" in text
-
-
 def test_workflows_do_not_treat_win_as_runtime():
     for path in WORKFLOWS.glob("*.yml"):
         text = path.read_text(encoding="utf-8")
