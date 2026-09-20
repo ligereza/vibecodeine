@@ -140,27 +140,44 @@ una decisión posterior explícita de reactivación.
 
 ## Orquestación de agentes
 
-El costo de contexto se concentra en el supervisor remoto; el ejecutor local no
-debe redescubrir el repositorio en cada ciclo.
+Los dos agentes son amnésicos entre ejecuciones, pero sus costos son distintos.
 
-- **Supervisor remoto (modo chat)**: lee el contexto amplio, mide Git y las
-  superficies actuales, decide la siguiente tarea y mantiene compacto el
-  contexto de la rama.
-- **Codex local**: ejecuta una tarea acotada. Parte desde `ORDEN.md` y sólo
-  abre los archivos que esa tarea necesita. No relee `SYSTEM.md`,
-  `SUPERVISOR.md` ni la historia completa salvo que la propia orden lo exija.
-- **`ORDEN.md`** es un buzón efímero de un solo slot. Se reemplaza completo;
-  nunca se usa como bitácora acumulativa.
-- El supervisor escribe una orden con estado `READY`.
-- Codex ejecuta y reemplaza el mismo archivo con estado `DONE` o `BLOCKED`,
-  incluyendo únicamente cambios, pruebas y el bloqueo actual.
-- En el ciclo siguiente el supervisor consume ese resultado, actualiza el
-  contexto vivo de la rama y reemplaza `ORDEN.md` por la siguiente tarea.
-- No crear `ERRORES.md`, `RESULTADOS.md`, handoffs o diarios de decisiones
-  para transportar estado entre ciclos. Git ya conserva la historia.
+- **Supervisor remoto (modo chat)**: reconstruye el contexto necesario y paga el
+  costo de decidir. `SUPERVISOR.md` está escrito precisamente para que esa
+  reconstrucción sea corta; Git conserva la historia.
+- **Codex local**: ejecuta una tarea ya investigada y prevalidada. No debe pagar
+  por volver a descubrir el problema que el supervisor ya resolvió.
+- **`ORDEN.md`** es un buzón efímero de un solo slot; se reemplaza completo y
+  nunca acumula historia.
 
-El objetivo es que el razonamiento caro y repetitivo ocurra una vez en el
-supervisor, mientras el ejecutor recibe sólo el contexto mínimo necesario.
+Protocolo del supervisor remoto:
+
+1. leer primero `ORDEN.md`;
+2. si está `READY`, terminar sin cargar más contexto;
+3. si está `DONE` o `BLOCKED`, leer `SYSTEM.md` y `SUPERVISOR.md`, medir
+   el delta necesario y consumir el resultado;
+4. antes de emitir la siguiente orden, hacer preflight: verificar rutas,
+   owners/consumers relevantes, supuestos y comandos contra el árbol actual;
+5. escribir una sola tarea `READY` con objetivo, write-set, pruebas y
+   condiciones de parada suficientes para que Codex no tenga que rehacer esa
+   investigación.
+
+Protocolo de Codex cuando aparecen fallos:
+
+- corrige fallos causados por su tarea si caben dentro del write-set;
+- no amplía el alcance para arreglar fallos ajenos o preexistentes;
+- si aparecen muchos errores, los agrupa por **causa raíz/firma**, no por línea
+  de log;
+- devuelve conteo total y como máximo cinco grupos representativos, indicando
+  cuáles parecen causados por la tarea, cuáles son externos y cuáles son
+  inciertos;
+- usa `DONE` si el objetivo quedó cumplido aunque existan fallos externos;
+  usa `BLOCKED` sólo si el objetivo no puede completarse dentro del alcance;
+- nunca pega logs masivos ni crea `ERRORES.md`, `RESULTADOS.md`, handoffs o
+  diarios de decisiones.
+
+El objetivo es concentrar investigación y contexto en el supervisor y dejar a
+Codex una ejecución pequeña, verificable y sin arqueología repetida.
 
 ## Documentación vs contenido
 
