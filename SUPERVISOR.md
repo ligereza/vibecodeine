@@ -127,22 +127,31 @@ La integración reciente muestra dos señales fuertes:
 La línea `rd/forense-y-vocabulario` ya fue absorbida por la línea principal:
 su valor actual es explicar la trayectoria, no actuar como backlog separado.
 
-El último tramo funcional de esa trayectoria creó un dataset sanitizado de
-`learning_evaluations`, registró lineage en MLflow y resolvió la subida del
-artefacto Azure ML. El estado general de Azure se expone por el Hub, pero el
-status actual aún no muestra el lineage de la última evaluación/dataset aunque
-se declara como consumer de Machine Learning.
+El ciclo `supervisor-002` ya cerró el productor/consumer local de lineage:
+
+- `learning_evaluations` produce un receipt sanitizado;
+- productor y consumer comparten `MAK_AZURE_ML_STAGING_ROOT`;
+- `azure_services.machine_learning_lineage()` proyecta sólo metadata segura;
+- `/api/azure/status` incluye esa proyección;
+- ausencia/corrupción degradan sin romper el status;
+- tests dedicados y colección pytest pasan.
+
+La siguiente costura no es otra auditoría. El lineage todavía no llega a la
+superficie humana existente: `MakPanel` consulta `/api/mak` cada 30 s y el
+backend FLUJO consulta sólo `/api/organismo` del box. No debe reutilizar
+`/api/azure/status` para polling porque ese status también resuelve inventario
+Azure. La visibilidad periódica debe usar una ruta local-only del receipt.
 
 ## Cola viva
 
 Prioridad funcional actual:
 
-1. **Cerrar visibilidad del lineage Azure ML en el Hub**: el status de Azure
-   debe exponer, en modo read-only y sin filtrar rutas locales ni contenido, el
-   último receipt sanitizado producido por el pipeline de learning.
-2. Después, continuar la trayectoria reciente que resulte más activa según
-   commits nuevos: Portfolio/archivo/Hub, RD/forense/learning o integración
-   MAK/FLUJO.
+1. **Cerrar la última milla Azure ML -> operador**: exponer un endpoint MAK
+   local-only para `machine_learning_lineage()`, proyectarlo de forma
+   allowlisted por `/api/mak` y mostrarlo en el `MakPanel`, sin llamadas
+   Azure/MLflow/CLI nuevas durante el refresh de 30 s.
+2. Después, reconstruir otra vez la trayectoria desde commits recientes; no
+   asumir que Azure sigue siendo prioridad por inercia.
 
 Deuda de mantenimiento que no debe secuestrar la cola:
 
