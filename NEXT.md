@@ -1,5 +1,44 @@
 # NEXT — open work, observations, suggestions
 
+## Continuacion orientadora: evento, 3D y vision (2026-09-20)
+
+Esta seccion fue escrita despues de inspeccionar e implementar la primera
+vertical. Tiene precedencia temporal sobre el snapshot historico que sigue.
+No es una lista cerrada: quien continue debe elegir el siguiente incremento
+con mayor utilidad comprobable para un evento real y dejar evidencia, pruebas
+y procedencia suficientes para que otro agente pueda retomarlo.
+
+### Estado recibido
+
+- Rama publicada: `codex/event-spine-3d-vision-20260920`.
+- `cultura/mak_plataforma/event_spine.py` mantiene el crosswalk append-only.
+- El wire contract coincide con `XIO_LAYER`: `event_id`, `rd_event_ref`,
+  `vj_event_key`, `producer_refs`, `venue_ref`, `venue_revision_ref`, fuentes y
+  estado de la relacion.
+- El evento es una ocurrencia; productora, venue y revision espacial son
+  entidades diferentes.
+- Arquitectura: `docs/ARQUITECTURA_EVENTO_PRODUCTORA_RD_VJ_IRIS_XIO.md`.
+- Implementacion: `docs/IMPLEMENTACION_3D_Y_VISION_POR_EVENTO.md`.
+
+### Direccion abierta
+
+1. Conectar el ledger con los eventos reales de FLUJO y el contexto FOH sin
+   inferir equivalencias por nombre, fecha o productora.
+2. Incorporar la relacion a IRIS como nodos y aristas con fuente, confianza y
+   vigencia; no copiar corpus protegidos.
+3. Construir dossiers previos y cierres posteriores por `event_id`, separando
+   observaciones de hechos confirmados.
+4. Aprender patrones longitudinales de venue y productora solo despues de
+   varias fechas; conservar cantidad de casos, excepciones y caducidad.
+5. Evaluar cada mejora con replay por evento/productora/serie para evitar
+   leakage y circularidad.
+6. Continuar mas alla de estos puntos cuando la evidencia lo justifique:
+   nuevos sensores, relaciones y modelos son admisibles si preservan
+   procedencia, privacidad, reversibilidad y la puerta de accion explicita.
+
+El criterio rector no es completar una checklist sino mejorar la preparacion,
+operacion o memoria de eventos reales sin confundir sus autoridades.
+
 Written from memory at the end of the 2026-09-07 session, without re-reading
 the tree. Re-measure any number here before acting on one.
 
