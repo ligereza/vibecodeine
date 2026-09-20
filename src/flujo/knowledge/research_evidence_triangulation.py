@@ -18,6 +18,8 @@ from collections.abc import Mapping, Sequence
 from urllib.parse import urlsplit
 from typing import Any
 
+from ._contract_helpers import optional_text as _text, sha256_ref as _digest, stable_json
+
 
 FRONTIER_SCHEMA = "mak-research-frontier-jobs-v1"
 RESULT_BATCH_SCHEMA = "mak-research-result-batch-v1"
@@ -52,21 +54,6 @@ class ResearchTriangulationError(ValueError):
     def __init__(self, message: str, report: Mapping[str, Any] | None = None) -> None:
         super().__init__(message)
         self.report = dict(report) if report is not None else None
-
-
-def stable_json(value: Any) -> str:
-    return json.dumps(
-        value, ensure_ascii=False, sort_keys=True, separators=(",", ":"),
-        allow_nan=False,
-    )
-
-
-def _digest(value: Any) -> str:
-    return "sha256:" + hashlib.sha256(stable_json(value).encode("utf-8")).hexdigest()
-
-
-def _text(value: Any) -> str:
-    return value.strip() if isinstance(value, str) and value.strip() else ""
 
 
 def _identifier(value: Any) -> str:

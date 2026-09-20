@@ -13,6 +13,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 EDITOR = REPO_ROOT / "iskvw" / "editor.html"
 NODE_AVAILABLE = pytest.mark.skipif(
     shutil.which("node") is None, reason="node no esta en el PATH")
+pytestmark = pytest.mark.mak
 
 
 def _html() -> str:

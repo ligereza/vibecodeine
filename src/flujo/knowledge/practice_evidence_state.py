@@ -15,6 +15,8 @@ import json
 from collections.abc import Mapping, Sequence
 from typing import Any
 
+from ._contract_helpers import sha256_ref as _hash, stable_json as _stable_json
+
 from .project_ir import SCHEMA as PROJECT_IR_SCHEMA, validate_project_ir
 
 
@@ -36,20 +38,6 @@ _MISSING = object()
 
 class PracticeEvidenceStateError(ValueError):
     """Raised when the input or a serialized state is not safe to project."""
-
-
-def _stable_json(value: Any) -> str:
-    return json.dumps(
-        value,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-        allow_nan=False,
-    )
-
-
-def _hash(value: Any) -> str:
-    return "sha256:" + hashlib.sha256(_stable_json(value).encode("utf-8")).hexdigest()
 
 
 def _text(value: Any) -> str:

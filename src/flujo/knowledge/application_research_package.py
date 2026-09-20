@@ -8,6 +8,9 @@ import json
 from pathlib import Path
 from typing import Any, Mapping
 
+from ._contract_helpers import nullable_text as _text
+from ._io_helpers import load_json_file as load_json
+
 
 PLAN_SCHEMA = "mak-product-plan-v1"
 OPPORTUNITY_SCHEMA = "mak-opportunity-constraints-v1"
@@ -31,10 +34,6 @@ def _stable_hash(value: Mapping[str, Any]) -> str:
         allow_nan=False,
     ).encode("utf-8")
     return "sha256:" + hashlib.sha256(encoded).hexdigest()
-
-
-def _text(value: Any) -> str | None:
-    return value.strip() if isinstance(value, str) and value.strip() else None
 
 
 def _refs(value: Any) -> list[str]:
@@ -259,8 +258,3 @@ def compile_application_research_package(plan: Mapping[str, Any], opportunity: M
 
 def _empty(errors: list[str]) -> dict[str, Any]:
     return {"schema": PACKAGE_SCHEMA, "application_draft": {"status": "blocked_with_reasons", "blocked_with_reasons": sorted(set(errors)), "submission_ready": False, "submission": False, "requirements": [], "sections": []}, "research_brief": {"jobs": [], "rejected_jobs": [], "gaps": [], "frontier": [], "dispatch": False}, "controls": {"submission": False, "dispatch": False, "promotion": "none", "training_permitted": False, "user_review_required": False}, "provenance": {"source_schemas": [PLAN_SCHEMA, OPPORTUNITY_SCHEMA], "errors": sorted(set(errors)), "deterministic": True}}
-
-
-def load_json(path: str | Path) -> Any:
-    with Path(path).open("r", encoding="utf-8") as handle:
-        return json.load(handle)

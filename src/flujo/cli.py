@@ -1011,11 +1011,19 @@ def github_sync(
         )
 
     branch_name = branch or (run_git("rev-parse", "--abbrev-ref", "HEAD").stdout.strip() or "main")
-    remote = run_git("remote", "get-url", "origin")
-    if remote.returncode == 0:
-        console.print(f"[cyan]Remote:[/] {remote.stdout.strip()}")
+    upstream = run_git("rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}")
+    remote_name = ""
+    if upstream.returncode == 0 and "/" in upstream.stdout.strip():
+        remote_name = upstream.stdout.strip().split("/", 1)[0]
+    if not remote_name:
+        remotes = run_git("remote")
+        names = remotes.stdout.splitlines() if remotes.returncode == 0 else []
+        remote_name = "origin" if "origin" in names else (names[0] if names else "")
+    remote = run_git("remote", "get-url", remote_name) if remote_name else None
+    if remote is not None and remote.returncode == 0:
+        console.print(f"[cyan]Remote ({remote_name}):[/] {remote.stdout.strip()}")
     else:
-        _warn("No hay remote 'origin' configurado. Añádelo con 'git remote add origin <url>'.")
+        _warn("No hay remote configurado para este checkout.")
 
     console.print(f"[cyan]Branch:[/] {branch_name}")
     status_proc = run_git("status", "--short")
@@ -1056,7 +1064,9 @@ def github_sync(
     else:
         _warn("No hay cambios para commitear.")
 
-    push_res = run_git("push", "-u", "origin", branch_name)
+    if not remote_name:
+        _err("No hay remote configurado; no se puede hacer el push.")
+    push_res = run_git("push", "-u", remote_name, branch_name)
     if push_res.returncode != 0:
         _err(push_res.stderr.strip() or push_res.stdout.strip() or "No se pudo hacer el push.")
 
@@ -1101,8 +1111,19 @@ def doctor():
     try:
         branch = subprocess.run(["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=root, capture_output=True, text=True, encoding="utf-8", errors="replace")
         add("git branch", branch.returncode == 0, branch.stdout.strip() or branch.stderr.strip())
-        remote = subprocess.run(["git", "remote", "get-url", "origin"], cwd=root, capture_output=True, text=True, encoding="utf-8", errors="replace")
-        add("git origin", remote.returncode == 0, (remote.stdout or remote.stderr).strip())
+        upstream = subprocess.run(["git", "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}"], cwd=root, capture_output=True, text=True, encoding="utf-8", errors="replace")
+        remote_name = ""
+        if upstream.returncode == 0 and "/" in upstream.stdout.strip():
+            remote_name = upstream.stdout.strip().split("/", 1)[0]
+        if not remote_name:
+            remotes = subprocess.run(["git", "remote"], cwd=root, capture_output=True, text=True, encoding="utf-8", errors="replace")
+            names = remotes.stdout.splitlines() if remotes.returncode == 0 else []
+            remote_name = "origin" if "origin" in names else (names[0] if names else "")
+        remote = subprocess.run(["git", "remote", "get-url", remote_name], cwd=root, capture_output=True, text=True, encoding="utf-8", errors="replace") if remote_name else None
+        if remote is None:
+            add("git remote", False, "No hay remote configurado")
+        else:
+            add("git remote", remote.returncode == 0, f"{remote_name}: {(remote.stdout or remote.stderr).strip()}")
         status = subprocess.run(["git", "status", "--short"], cwd=root, capture_output=True, text=True, encoding="utf-8", errors="replace")
         if status.returncode != 0:
             detail = status.stderr.strip() or status.stdout.strip() or "sin mensaje de git"

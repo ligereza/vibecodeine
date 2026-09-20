@@ -35,10 +35,22 @@ import time
 import base64
 from datetime import datetime
 from io import BytesIO
-from urllib.parse import urlparse, parse_qs, unquote
+from urllib.parse import urlparse, parse_qs, unquote, quote
+from urllib.request import urlopen
+from urllib.error import HTTPError
 
 from ..paths import context_dir, repo_root, asset_root, workspace_root, is_packaged as _is_packaged, datadrops_dir
-from ..departments import rd_topics
+from ..departments import (
+    catalog as project_department_catalog,
+    cultura_capabilities,
+    cultura_opportunity_gate,
+    cultura_sources,
+    rd_cultura_relations,
+    rd_crosswalk,
+    rd_summary,
+    rd_topics,
+)
+from ..diagnostics import domain_catalog as project_domain_catalog
 
 # analysis for datadrop metadata (colors + OCR via existing; privacy-safe local)
 try:
@@ -68,6 +80,119 @@ from ..knowledge.system_status import system_status as project_system_status
 from ..knowledge.project_api import route_payload as project_route_payload
 from ..knowledge.project_api import probe_payload as project_probe_payload
 from ..knowledge.project_context import read_context as project_context_read_only
+from ..knowledge.review_queue import load_queue as load_review_queue
+from ..knowledge.review_queue import summary as review_queue_summary
+from ..knowledge.portfolio_review_context import (
+    compile_portfolio_review_context,
+    validate_portfolio_review_context,
+)
+from ..knowledge.operation_receipt import (
+    build_operation_receipt,
+    validate_operation_receipt,
+)
+from ..knowledge.vizz_measurement_status import (
+    build_vizz_measurement_status,
+    validate_vizz_measurement_status,
+)
+from ..knowledge.vizz_lineage_status import (
+    build_vizz_lineage_status,
+    validate_vizz_lineage_status,
+)
+from ..knowledge.structural_delta_status import (
+    build_structural_delta_status,
+    validate_structural_delta_status,
+)
+from ..knowledge.portfolio_direction_context import (
+    build_portfolio_direction_context,
+    validate_portfolio_direction_context,
+)
+from ..knowledge.portfolio_work_packet import (
+    build_portfolio_work_packet,
+    validate_portfolio_work_packet,
+)
+from ..knowledge.portfolio_work_preview import (
+    build_portfolio_work_preview,
+    validate_portfolio_work_preview,
+)
+from ..knowledge.portfolio_archive_orientation import (
+    build_archive_orientation,
+    validate_archive_orientation,
+)
+from ..knowledge.portfolio_relation_evidence_plan import (
+    build_relation_evidence_plan,
+    validate_relation_evidence_plan,
+)
+from ..knowledge.area_orientation import (
+    build_area_orientation,
+    validate_area_orientation,
+)
+from ..knowledge.operations_read_only_map import (
+    ENDPOINTS as OPERATIONS_MAP_ENDPOINTS,
+    build_operations_read_only_map,
+    validate_operations_read_only_map,
+)
+from ..knowledge.operations_source_snapshot import (
+    build_operations_source_snapshot,
+    validate_operations_source_snapshot,
+)
+from ..knowledge.rd_read_only_context import (
+    build_rd_read_only_context,
+    validate_rd_read_only_context,
+)
+from ..knowledge.cultura_research_read_only_context import (
+    build_cultura_research_read_only_context,
+    validate_cultura_research_read_only_context,
+)
+from ..knowledge.portfolio_vizz_read_only_context import (
+    build_portfolio_vizz_read_only_context,
+    validate_portfolio_vizz_read_only_context,
+)
+from ..knowledge.learning_read_only_context import (
+    build_learning_read_only_context,
+    validate_learning_read_only_context,
+)
+from ..knowledge.research_operations_read_only_context import (
+    build_research_operations_read_only_context,
+    validate_research_operations_read_only_context,
+)
+from ..knowledge.research_job_operations_context import (
+    build_research_job_operations_context,
+    validate_research_job_operations_context,
+)
+from ..knowledge.portfolio_review_operations_context import (
+    build_portfolio_review_operations_context,
+    validate_portfolio_review_operations_context,
+)
+from ..knowledge.portfolio_review_cultura_research_context import (
+    build_portfolio_review_cultura_research_context,
+    validate_portfolio_review_cultura_research_context,
+)
+from ..knowledge.research_job_continuation import confirm_research_extraction, license_compatibility_plan, license_review, license_source_review, normalize_dry_run, normalize_plan, normalize_readiness, resume_research_job
+try:
+    from ..knowledge.human_decision_log import (
+        read_human_decisions,
+        triage_declarations,
+    )
+except Exception:
+    read_human_decisions = None
+    triage_declarations = None
+
+try:
+    from ..knowledge.product_view import (
+        project_archive_portfolio_view,
+        validate_archive_portfolio_view,
+    )
+except Exception:
+    project_archive_portfolio_view = None
+    validate_archive_portfolio_view = None
+try:
+    from ..knowledge.contracurator import (
+        compile_contracurator_exhibition,
+        validate_contracurator_exhibition,
+    )
+except Exception:
+    compile_contracurator_exhibition = None
+    validate_contracurator_exhibition = None
 
 # Global request-body cap (VCD-06). 8 MB: large enough for a photo sent to the
 # tracer, small enough that an unbounded body cannot exhaust memory.
@@ -91,6 +216,563 @@ def project_learning_db() -> Path:
     return local
 
 
+def project_review_queue_read_only(review_pass: str = "prune") -> dict:
+    """Expose pending project evidence without applying human decisions."""
+    try:
+        items = load_review_queue(project_learning_db(), review_pass=review_pass)
+        return {
+            "schema": "mak-review-queue-v1",
+            "available": True,
+            "read_only": True,
+            "review_pass": review_pass,
+            "summary": review_queue_summary(items),
+            "items": [item.as_dict() for item in items],
+            "controls": {
+                "database_write": False,
+                "decision_write": False,
+                "promotion": "none",
+                "publication": False,
+            },
+            "provenance": {
+                "source": "project_records",
+                "database": str(project_learning_db()),
+                "deterministic": True,
+                "decisions_require_external_human_actor": True,
+            },
+        }
+    except Exception as exc:  # fail closed without hiding the route
+        return {
+            "available": False,
+            "read_only": True,
+            "error": "review_queue_invalid",
+            "detail": type(exc).__name__,
+        }
+
+
+def _portfolio_archive_path(root: Path) -> Path | None:
+    """Find the local ISKVW archive without making a second archive model."""
+    configured = os.environ.get("MAK_PORTFOLIO_ARCHIVE", "").strip()
+    candidates = []
+    if configured:
+        candidates.append(Path(configured).expanduser())
+    base = Path(root or repo_root())
+    candidates.extend((
+        base / "iskvw" / "datos" / "archivo.json",
+        base.parent / "iskvw" / "datos" / "archivo.json",
+        base / "datos" / "archivo.json",
+    ))
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def _portfolio_human_triage(root: Path | None = None) -> dict:
+    """Read the existing named-person triage as optional archive enrichment."""
+    if read_human_decisions is None or triage_declarations is None:
+        return {}
+    configured = os.environ.get("MAK_PORTFOLIO_CLASSIFICATIONS", "").strip()
+    base = Path(root or repo_root())
+    candidates = []
+    if configured:
+        candidates.append(Path(configured).expanduser())
+    candidates.extend((
+        base / "plataforma" / "director_runs" / "portfolio-editor-20260808" / "classifications.jsonl",
+        base.parent / "plataforma" / "director_runs" / "portfolio-editor-20260808" / "classifications.jsonl",
+    ))
+    for candidate in candidates:
+        if not candidate.is_file():
+            continue
+        try:
+            return triage_declarations(read_human_decisions(
+                classifications_path=candidate))
+        except Exception:
+            return {}
+    return {}
+
+
+def archive_portfolio_view_read_only(root: Path | None = None) -> dict:
+    """Expose the bounded archive view and Contracurador as one GET contract.
+
+    FLUJO is also launched directly on this machine, so it must expose the
+    same read-only portfolio consumer as the persistent MAK Hub. It discovers
+    the sibling ISKVW archive by topology, never rescans or mutates it, and
+    fails closed when the canonical inputs are not available.
+    """
+    if (project_archive_portfolio_view is None
+            or validate_archive_portfolio_view is None
+            or compile_contracurator_exhibition is None
+            or validate_contracurator_exhibition is None):
+        return {
+            "available": False,
+            "read_only": True,
+            "error": "archive_portfolio_view_unavailable",
+        }
+    archive_path = _portfolio_archive_path(root)
+    if archive_path is None:
+        return {
+            "available": False,
+            "read_only": True,
+            "error": "archive_source_missing",
+        }
+    try:
+        archive = json.loads(archive_path.read_text(encoding="utf-8"))
+        view = project_archive_portfolio_view(
+            archive,
+            max_items_per_format=24,
+            human_triage=_portfolio_human_triage(root),
+        )
+        validate_archive_portfolio_view(view)
+        base = Path(root or repo_root())
+        order_candidates = (
+            base / "out" / "contracurator" / "ssd_order_foundation.json",
+            base.parent / "out" / "contracurator" / "ssd_order_foundation.json",
+        )
+        order_basis = None
+        for candidate in order_candidates:
+            if candidate.is_file():
+                order_basis = json.loads(candidate.read_text(encoding="utf-8"))
+                break
+        contracurator = compile_contracurator_exhibition(
+            view, ssd_order_foundation=order_basis)
+        validate_contracurator_exhibition(contracurator)
+        input_data = contracurator.get("input") or {}
+        if (input_data.get("source_hash") != view["source"]["input_hash"]
+                or input_data.get("visible_item_count") != len(view["items"])):
+            raise ValueError("archive_portfolio_envelope_binding_invalid")
+        view["contracurator"] = contracurator
+        return view
+    except Exception as exc:  # fail closed without a partial portfolio view
+        return {
+            "available": False,
+            "read_only": True,
+            "error": "archive_portfolio_view_invalid",
+            "detail": type(exc).__name__,
+        }
+
+
+def portfolio_review_context_read_only(
+    root: Path | None = None,
+    project_id: str | None = None,
+) -> dict:
+    """Join archive and review facts without inventing a relation."""
+    archive = archive_portfolio_view_read_only(root)
+    if archive.get("schema") != "mak-archive-portfolio-view-v1":
+        return {
+            "available": False,
+            "read_only": True,
+            "error": "archive_portfolio_view_unavailable",
+        }
+    queue = project_review_queue_read_only()
+    if queue.get("available") is not True:
+        return {
+            "available": False,
+            "read_only": True,
+            "error": "review_queue_unavailable",
+        }
+    try:
+        payload = compile_portfolio_review_context(
+            archive, queue.get("items", []), project_id=project_id)
+        validate_portfolio_review_context(payload)
+        return payload
+    except Exception as exc:
+        return {
+            "available": False,
+            "read_only": True,
+            "error": "portfolio_review_context_invalid",
+            "detail": type(exc).__name__,
+        }
+
+
+def operation_receipt_read_only() -> dict:
+    """Expose the bounded structural receipt without writing MAK state."""
+    try:
+        payload = build_operation_receipt()
+        validate_operation_receipt(payload)
+        return payload
+    except Exception as exc:
+        return {
+            "available": False,
+            "read_only": True,
+            "error": "operation_receipt_invalid",
+            "detail": type(exc).__name__,
+        }
+
+
+def vizz_measurement_status_read_only() -> dict:
+    """Expose a VIZZ measurement UNKNOWN without turning it into a decision."""
+    try:
+        payload = build_vizz_measurement_status()
+        validate_vizz_measurement_status(payload)
+        return payload
+    except Exception as exc:
+        return {
+            "available": False,
+            "read_only": True,
+            "error": "vizz_measurement_status_invalid",
+            "detail": type(exc).__name__,
+        }
+
+
+def vizz_lineage_status_read_only() -> dict:
+    """Expose revision lineage as context without replacing current state."""
+    try:
+        payload = build_vizz_lineage_status()
+        validate_vizz_lineage_status(payload)
+        return payload
+    except Exception as exc:
+        return {
+            "available": False,
+            "read_only": True,
+            "error": "vizz_lineage_status_invalid",
+            "detail": type(exc).__name__,
+        }
+
+
+def structural_delta_status_read_only() -> dict:
+    """Expose a measured revision delta without treating it as learning."""
+    try:
+        payload = build_structural_delta_status()
+        validate_structural_delta_status(payload)
+        return payload
+    except Exception as exc:
+        return {
+            "available": False,
+            "read_only": True,
+            "error": "structural_delta_status_invalid",
+            "detail": type(exc).__name__,
+        }
+
+
+def portfolio_direction_context_read_only(
+    root: Path | None = None,
+    project_id: str | None = None,
+) -> dict:
+    """Compose vision/order/culture-computation without opening a gate."""
+    archive = archive_portfolio_view_read_only(root)
+    if archive.get("schema") != "mak-archive-portfolio-view-v1":
+        return {"available": False, "read_only": True, "error": "archive_portfolio_view_unavailable"}
+    review = portfolio_review_context_read_only(root, project_id)
+    if review.get("available") is not True:
+        return {"available": False, "read_only": True, "error": "portfolio_review_context_unavailable"}
+    surfaces = (
+        operation_receipt_read_only(),
+        vizz_measurement_status_read_only(),
+        vizz_lineage_status_read_only(),
+        structural_delta_status_read_only(),
+    )
+    if any(surface.get("available") is not True for surface in surfaces):
+        return {"available": False, "read_only": True, "error": "portfolio_direction_surface_unavailable"}
+    try:
+        payload = build_portfolio_direction_context(archive, review, *surfaces)
+        validate_portfolio_direction_context(payload)
+        return payload
+    except Exception as exc:
+        return {"available": False, "read_only": True, "error": "portfolio_direction_context_invalid", "detail": type(exc).__name__}
+
+
+def portfolio_work_packet_read_only(
+    root: Path | None = None,
+    project_id: str | None = None,
+) -> dict:
+    """Expose actionable layers without executing or recording a task."""
+    direction = portfolio_direction_context_read_only(root, project_id)
+    if direction.get("available") is not True:
+        return {"available": False, "read_only": True, "error": "portfolio_direction_context_unavailable"}
+    try:
+        payload = build_portfolio_work_packet(direction, project_id=project_id)
+        validate_portfolio_work_packet(payload)
+        return payload
+    except Exception as exc:
+        return {"available": False, "read_only": True, "error": "portfolio_work_packet_invalid", "detail": type(exc).__name__}
+
+
+def portfolio_work_preview_read_only(
+    root: Path | None = None,
+    project_id: str | None = None,
+    task_id: str = "",
+) -> dict:
+    """Expose one work item as a non-executing preview."""
+    packet = portfolio_work_packet_read_only(root, project_id)
+    if packet.get("available") is not True:
+        return {"available": False, "read_only": True, "error": "portfolio_work_packet_unavailable"}
+    try:
+        payload = build_portfolio_work_preview(packet, task_id)
+        validate_portfolio_work_preview(payload)
+        return payload
+    except ValueError as exc:
+        return {"available": False, "read_only": True, "error": str(exc)}
+    except Exception as exc:
+        return {"available": False, "read_only": True, "error": "portfolio_work_preview_invalid", "detail": type(exc).__name__}
+
+
+def portfolio_archive_orientation_read_only(root: Path | None = None) -> dict:
+    """Expose archive axes without changing the bounded archive view."""
+    archive = archive_portfolio_view_read_only(root)
+    if archive.get("schema") != "mak-archive-portfolio-view-v1":
+        return {"available": False, "read_only": True, "error": "archive_portfolio_view_unavailable"}
+    try:
+        payload = build_archive_orientation(archive)
+        validate_archive_orientation(payload)
+        return payload
+    except Exception as exc:
+        return {"available": False, "read_only": True, "error": "archive_orientation_invalid", "detail": type(exc).__name__}
+
+
+def portfolio_relation_evidence_plan_read_only(
+    root: Path | None = None,
+    project_id: str | None = None,
+) -> dict:
+    """Expose missing relation evidence without inferring a relation."""
+    context = portfolio_review_context_read_only(root, project_id)
+    if context.get("available") is not True:
+        return {"available": False, "read_only": True, "error": "portfolio_review_context_unavailable"}
+    try:
+        payload = build_relation_evidence_plan(context)
+        validate_relation_evidence_plan(payload)
+        return payload
+    except Exception as exc:
+        return {"available": False, "read_only": True, "error": "relation_evidence_plan_invalid", "detail": type(exc).__name__}
+
+
+def area_orientation_read_only(root: Path | None = None) -> dict:
+    """Compose existing diagnostics into a bounded area map."""
+    root = root or repo_root()
+    try:
+        status = project_system_status(project_learning_db(), repo_root=root, physical_root=root.parent)
+        payload = build_area_orientation(
+            status,
+            project_domain_catalog(root),
+            vizz_status=vizz_measurement_status_read_only(),
+            learning=project_learning_summary(project_learning_db()),
+            departments=project_department_catalog(root),
+            generated_at=status.get("generated_at"),
+        )
+        validate_area_orientation(payload)
+        return payload
+    except Exception as exc:
+        return {"available": False, "read_only": True, "error": "area_orientation_invalid", "detail": type(exc).__name__}
+
+
+def operations_read_only_map(root: Path | None = None, port: int = 8765) -> dict:
+    """Index whitelisted local GET surfaces without calling external providers."""
+    snapshots = {}
+    for endpoint in OPERATIONS_MAP_ENDPOINTS:
+        try:
+            with urlopen(f"http://127.0.0.1:{port}{endpoint}", timeout=5) as response:
+                snapshots[endpoint] = {"http_status": response.status, "payload": json.loads(response.read().decode("utf-8"))}
+        except HTTPError as exc:
+            snapshots[endpoint] = {"http_status": exc.code, "payload": {}}
+        except (OSError, TimeoutError, json.JSONDecodeError):
+            snapshots[endpoint] = {"http_status": None, "payload": {}}
+    try:
+        payload = build_operations_read_only_map(snapshots, generated_at=datetime.now().isoformat())
+        validate_operations_read_only_map(payload)
+        return payload
+    except Exception as exc:
+        return {"available": False, "read_only": True, "error": "operations_map_invalid", "detail": type(exc).__name__}
+
+
+def operations_source_snapshot(root: Path | None = None, port: int = 8765) -> dict:
+    """Expose local source counts separately from the shared map contract."""
+    operations_map = operations_read_only_map(root, port)
+    if operations_map.get("available") is not True:
+        return {"available": False, "read_only": True, "error": "operations_snapshot_source_unavailable", "detail": operations_map.get("error", "operations_map_unavailable")}
+    try:
+        payload = build_operations_source_snapshot(operations_map, generated_at=datetime.now().isoformat())
+        validate_operations_source_snapshot(payload)
+        return payload
+    except Exception as exc:
+        return {"available": False, "read_only": True, "error": "operations_snapshot_invalid", "detail": type(exc).__name__}
+
+
+def rd_read_only_context(root: Path | None = None) -> dict:
+    """Compose RD projection and candidate joins without mutation."""
+    root = root or repo_root()
+    try:
+        payload = build_rd_read_only_context(
+            rd_summary(root), rd_topics(root), rd_crosswalk(root), rd_cultura_relations(root),
+            generated_at=datetime.now().isoformat(),
+        )
+        validate_rd_read_only_context(payload)
+        return payload
+    except Exception as exc:
+        return {"available": False, "read_only": True, "error": "rd_context_invalid", "detail": type(exc).__name__}
+
+
+def cultura_research_read_only_context(root: Path | None = None, research_catalog: dict | None = None, research_jobs: dict | None = None) -> dict:
+    """Compose Cultura and Research support surfaces without provider calls."""
+    root = root or repo_root()
+    try:
+        payload = build_cultura_research_read_only_context(
+            cultura_sources(root), cultura_capabilities(root), cultura_opportunity_gate(root),
+            research_catalog if research_catalog is not None else {"adapters": [], "jobs": 0},
+            research_jobs if research_jobs is not None else {"jobs": []},
+            generated_at=datetime.now().isoformat(),
+        )
+        validate_cultura_research_read_only_context(payload)
+        return payload
+    except Exception as exc:
+        return {"available": False, "read_only": True, "error": "cultura_research_context_invalid", "detail": type(exc).__name__}
+
+
+def portfolio_vizz_read_only_context(root: Path | None = None, project_id: str | None = None) -> dict:
+    """Compose VIZZ status, lineage, delta and preview without measuring."""
+    root = root or repo_root()
+    try:
+        payload = build_portfolio_vizz_read_only_context(
+            vizz_measurement_status_read_only(),
+            vizz_lineage_status_read_only(),
+            structural_delta_status_read_only(),
+            portfolio_work_preview_read_only(root, project_id, "vizz_calibration"),
+            generated_at=datetime.now().isoformat(),
+        )
+        validate_portfolio_vizz_read_only_context(payload)
+        return payload
+    except Exception as exc:
+        return {"available": False, "read_only": True, "error": "vizz_context_invalid", "detail": type(exc).__name__}
+
+
+def learning_read_only_context(root: Path | None = None) -> dict:
+    """Expose evaluation and ledger state without calling it learned knowledge."""
+    root = root or repo_root()
+    try:
+        status = project_system_status(project_learning_db(), repo_root=root, physical_root=root.parent)
+        payload = build_learning_read_only_context(status, project_learning_summary(project_learning_db()), generated_at=datetime.now().isoformat())
+        validate_learning_read_only_context(payload)
+        return payload
+    except Exception as exc:
+        return {"available": False, "read_only": True, "error": "learning_context_invalid", "detail": type(exc).__name__}
+
+
+def _research_catalog_for_context() -> dict:
+    """Read the portable research registry for the bounded context."""
+    import sqlite3
+
+    configured = os.environ.get("MAK_RESEARCH_REGISTRY", "").strip()
+    path = Path(configured).expanduser() if configured else Path.home() / "research" / "jardines_interpretativos" / "jardines_interpretativos.sqlite"
+    if not path.is_file():
+        return {"available": False, "adapters": [], "jobs": 0}
+    with sqlite3.connect(path) as conn:
+        adapters = [{"slug": row[0], "label": row[1], "description": row[2], "input_examples": row[3], "source_policy": row[4], "constraint_policy": row[5], "jobs": row[6]} for row in conn.execute("SELECT a.slug,a.label,a.description,a.input_examples,a.source_policy,a.constraint_policy,COUNT(j.id) FROM domain_adapters a LEFT JOIN research_jobs j ON j.adapter_id=a.id GROUP BY a.id ORDER BY a.slug")]
+        jobs = conn.execute("SELECT COUNT(*) FROM research_jobs").fetchone()[0]
+    return {"available": True, "adapters": adapters, "jobs": jobs}
+
+
+def _research_jobs_for_context() -> dict:
+    """Read job state only; this function never resumes or advances a job."""
+    import sqlite3
+
+    configured = os.environ.get("MAK_RESEARCH_REGISTRY", "").strip()
+    path = Path(configured).expanduser() if configured else Path.home() / "research" / "jardines_interpretativos" / "jardines_interpretativos.sqlite"
+    if not path.is_file():
+        return {"available": False, "jobs": [], "count": 0}
+    with sqlite3.connect(path) as conn:
+        rows = conn.execute("SELECT j.id,j.status,j.next_process,COUNT(s.id),SUM(CASE WHEN s.status='done' THEN 1 ELSE 0 END) FROM research_jobs j LEFT JOIN job_steps s ON s.job_id=j.id GROUP BY j.id ORDER BY j.id DESC").fetchall()
+    return {"available": True, "jobs": [{"id": row[0], "status": row[1], "next_process": row[2], "steps": row[3], "done_steps": row[4] or 0} for row in rows], "count": len(rows)}
+
+
+def _research_registry_for_context() -> Path:
+    configured = os.environ.get("MAK_RESEARCH_REGISTRY", "").strip()
+    return Path(configured).expanduser() if configured else Path.home() / "research" / "jardines_interpretativos" / "jardines_interpretativos.sqlite"
+
+
+def research_operations_read_only_context(root: Path | None = None) -> dict:
+    """Expose Research state without treating it as execution or learning."""
+    root = root or repo_root()
+    try:
+        payload = build_research_operations_read_only_context(
+            _research_catalog_for_context(),
+            _research_jobs_for_context(),
+            {"status": "unavailable", "counts": {}, "total": 0, "returned": 0, "sampled": False, "promotion": "none"},
+            {"status": "unavailable", "counts": {}, "promotion": "none"},
+            project_learning_summary(project_learning_db()),
+            generated_at=datetime.now().isoformat(),
+        )
+        validate_research_operations_read_only_context(payload)
+        return payload
+    except Exception as exc:
+        return {"available": False, "read_only": True, "error": "research_operations_context_invalid", "detail": type(exc).__name__}
+
+
+def research_job_operations_context(root: Path | None = None, job_id: int = 0) -> tuple[dict, int]:
+    """Join one job's read-only gates without resuming or attesting it."""
+    root = root or repo_root()
+    try:
+        job_id = int(job_id)
+    except (TypeError, ValueError):
+        return {"schema": "mak-research-operations-context-v1", "available": False, "read_only": True, "error": "job_id_invalido"}, 400
+    observed = next((item for item in _research_jobs_for_context().get("jobs", []) if item.get("id") == job_id), None)
+    if observed is None:
+        return {"schema": "mak-research-operations-context-v1", "available": False, "read_only": True, "error": "research_job_not_found"}, 404
+    db_path = _research_registry_for_context()
+    learning_db = project_learning_db()
+    inputs = [
+        normalize_readiness(db_path, job_id=job_id), normalize_plan(db_path, job_id=job_id), normalize_dry_run(db_path, job_id=job_id),
+        license_review(db_path, job_id=job_id), license_source_review(db_path, job_id=job_id), license_compatibility_plan(db_path, job_id=job_id),
+    ]
+    if any(code != 200 for _, code in inputs):
+        return {"schema": "mak-research-operations-context-v1", "available": False, "read_only": True, "error": "research_job_operations_source_unavailable"}, 503
+    try:
+        payload = build_research_job_operations_context(job_id, observed, *[item for item, _ in inputs], project_learning_summary(learning_db), generated_at=datetime.now().isoformat())
+        validate_research_job_operations_context(payload)
+        return payload, 200
+    except Exception as exc:
+        return {"schema": "mak-research-operations-context-v1", "available": False, "read_only": True, "error": "research_job_operations_context_invalid", "detail": type(exc).__name__}, 503
+
+
+def portfolio_review_operations_context(root: Path | None = None, item_id: str = "") -> tuple[dict, int]:
+    """Compose one MAK Portafolio item without production, copilot or writes."""
+    root = root or repo_root()
+    item_id = str(item_id or "").strip()
+    if not item_id:
+        return {"schema": "mak-portfolio-review-operations-context-v1", "available": False, "read_only": True, "error": "item_id_requerido"}, 400
+
+    def mak_get(path: str) -> dict:
+        with urlopen("http://127.0.0.1:8900" + path, timeout=10) as response:
+            return json.loads(response.read().decode("utf-8"))
+
+    try:
+        inbox = mak_get("/api/portfolio/inbox")
+        item = next((row for row in inbox.get("items", []) if isinstance(row, dict) and row.get("id") == item_id), None)
+        if item is None:
+            return {"schema": "mak-portfolio-review-operations-context-v1", "available": False, "read_only": True, "error": "portfolio_item_not_found"}, 404
+        audit = mak_get("/api/portfolio/audit?source_id=" + quote(item_id, safe=""))
+        candidates = mak_get("/api/portfolio/external-candidates?item_id=" + quote(item_id, safe=""))
+        decision_index = mak_get("/api/portfolio/decision-index")
+        direction = portfolio_direction_context_read_only(root, None)
+        learning = learning_read_only_context(root)
+        payload = build_portfolio_review_operations_context(item_id, {**item, "schema": inbox.get("schema")}, audit, direction, decision_index, candidates, learning, generated_at=datetime.now().isoformat())
+        validate_portfolio_review_operations_context(payload)
+        return payload, 200
+    except HTTPError as exc:
+        return {"schema": "mak-portfolio-review-operations-context-v1", "available": False, "read_only": True, "error": "mak_source_http_error"}, exc.code if exc.code in (400, 404) else 503
+    except Exception as exc:
+        return {"schema": "mak-portfolio-review-operations-context-v1", "available": False, "read_only": True, "error": "portfolio_review_operations_context_invalid", "detail": type(exc).__name__}, 503
+
+
+def portfolio_review_cultura_research_context(root: Path | None = None, item_id: str = "") -> tuple[dict, int]:
+    """Join existing local contexts without inferring a typed relationship."""
+    root = root or repo_root()
+    item_id = str(item_id or "").strip()
+    if not item_id:
+        return {"schema": "mak-portfolio-review-cultura-research-context-v1", "available": False, "read_only": True, "error": "item_id_requerido"}, 400
+
+    def mak_get(path: str) -> dict:
+        with urlopen("http://127.0.0.1:8900" + path, timeout=10) as response:
+            return json.loads(response.read().decode("utf-8"))
+
+    try:
+        portfolio = mak_get("/api/portfolio/review-operations-context?item_id=" + quote(item_id, safe=""))
+        cultura = mak_get("/api/cultura/research-read-only-context")
+        research = mak_get("/api/research/operations-context?job_id=3")
+        payload = build_portfolio_review_cultura_research_context(item_id, portfolio, cultura, research, generated_at=datetime.now().isoformat())
+        validate_portfolio_review_cultura_research_context(payload)
+        return payload, 200
+    except HTTPError as exc:
+        return {"schema": "mak-portfolio-review-cultura-research-context-v1", "available": False, "read_only": True, "error": "mak_source_http_error"}, exc.code if exc.code in (400, 404) else 503
+    except Exception as exc:
+        return {"schema": "mak-portfolio-review-cultura-research-context-v1", "available": False, "read_only": True, "error": "portfolio_review_cultura_research_context_invalid", "detail": type(exc).__name__}, 503
 try:
     from ..export.illustrator import prepare_supplement_job_assets
 except Exception:
@@ -446,6 +1128,60 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 self._send_json({"available": False, "jobs": [], "error": str(e)}, status=200)
             return
+        if path == "/api/research/job/normalize-readiness":
+            query = parse_qs(parsed.query)
+            raw_id = (query.get("id") or query.get("job_id") or [""])[0].strip()
+            if not raw_id.isdigit():
+                self._send_json({"schema": "mak-research-normalize-readiness-v1", "available": False, "read_only": True, "error": "id_requerido"}, status=400)
+                return
+            result, status = normalize_readiness(project_learning_db(), job_id=int(raw_id))
+            self._send_json(result, status=status)
+            return
+        if path == "/api/research/job/normalize-plan":
+            query = parse_qs(parsed.query)
+            raw_id = (query.get("id") or query.get("job_id") or [""])[0].strip()
+            if not raw_id.isdigit():
+                self._send_json({"schema": "mak-research-normalize-plan-v1", "available": False, "read_only": True, "error": "id_requerido"}, status=400)
+                return
+            result, status = normalize_plan(project_learning_db(), job_id=int(raw_id))
+            self._send_json(result, status=status)
+            return
+        if path == "/api/research/job/normalize-dry-run":
+            query = parse_qs(parsed.query)
+            raw_id = (query.get("id") or query.get("job_id") or [""])[0].strip()
+            if not raw_id.isdigit():
+                self._send_json({"schema": "mak-research-normalize-dry-run-v1", "available": False, "read_only": True, "error": "id_requerido"}, status=400)
+                return
+            result, status = normalize_dry_run(project_learning_db(), job_id=int(raw_id))
+            self._send_json(result, status=status)
+            return
+        if path == "/api/research/job/license-review":
+            query = parse_qs(parsed.query)
+            raw_id = (query.get("id") or query.get("job_id") or [""])[0].strip()
+            if not raw_id.isdigit():
+                self._send_json({"schema": "mak-research-license-review-v1", "available": False, "read_only": True, "error": "id_requerido"}, status=400)
+                return
+            result, status = license_review(project_learning_db(), job_id=int(raw_id))
+            self._send_json(result, status=status)
+            return
+        if path == "/api/research/job/license-source-review":
+            query = parse_qs(parsed.query)
+            raw_id = (query.get("id") or query.get("job_id") or [""])[0].strip()
+            if not raw_id.isdigit():
+                self._send_json({"schema": "mak-research-license-source-review-v1", "available": False, "read_only": True, "error": "id_requerido"}, status=400)
+                return
+            result, status = license_source_review(project_learning_db(), job_id=int(raw_id))
+            self._send_json(result, status=status)
+            return
+        if path == "/api/research/job/license-compatibility-plan":
+            query = parse_qs(parsed.query)
+            raw_id = (query.get("id") or query.get("job_id") or [""])[0].strip()
+            if not raw_id.isdigit():
+                self._send_json({"schema": "mak-research-license-compatibility-plan-v1", "available": False, "read_only": True, "error": "id_requerido"}, status=400)
+                return
+            result, status = license_compatibility_plan(project_learning_db(), job_id=int(raw_id))
+            self._send_json(result, status=status)
+            return
         if path == "/api/research/job":
             raw_id = (parse_qs(parsed.query).get("id") or [""])[0].strip()
             # A missing or non-numeric id is a caller contract error, not a job
@@ -462,8 +1198,65 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 self._send_json({"available": False, "error": str(e)}, status=400)
             return
+        if path == "/api/research/job/resume":
+            self._send_json({"available": False, "error": "method_not_allowed", "detail": "usa POST"}, status=405)
+            return
         if path == "/api/project/learning":
             self._send_json(project_learning_summary(project_learning_db()))
+            return
+        if path == "/api/project/learning-read-only-context":
+            self._send_json(learning_read_only_context(self.root))
+            return
+        if path == "/api/research/operations-read-only-context":
+            self._send_json(research_operations_read_only_context(self.root))
+            return
+        if path == "/api/research/operations-context":
+            raw_id = (parse_qs(parsed.query).get("job_id") or parse_qs(parsed.query).get("id") or [""])[0].strip()
+            if not raw_id.isdigit():
+                self._send_json({"schema": "mak-research-operations-context-v1", "available": False, "read_only": True, "error": "id_requerido"}, status=400)
+                return
+            payload, status = research_job_operations_context(self.root, int(raw_id))
+            self._send_json(payload, status=status)
+            return
+        if path == "/api/mak/area-orientation":
+            self._send_json(area_orientation_read_only(self.root))
+            return
+        if path == "/api/operations/read-only-map":
+            self._send_json(operations_read_only_map(self.root, self.server.server_address[1]))
+            return
+        if path == "/api/operations/source-snapshot":
+            scope = (parse_qs(parsed.query).get("scope") or ["read_only"])[0]
+            if scope != "read_only":
+                self._send_json({"schema": "mak-operations-source-snapshot-v1", "available": False, "read_only": True, "error": "scope_no_soportado"}, status=400)
+                return
+            self._send_json(operations_source_snapshot(self.root, self.server.server_address[1]))
+            return
+        if path == "/api/rd/summary":
+            self._send_json({"ok": True, **rd_summary(self.root)})
+            return
+        if path == "/api/rd/topics":
+            self._send_json({"ok": True, **rd_topics(self.root)})
+            return
+        if path == "/api/rd/crosswalk":
+            self._send_json({"ok": True, **rd_crosswalk(self.root)})
+            return
+        if path == "/api/rd/cultura-relations":
+            self._send_json({"ok": True, **rd_cultura_relations(self.root)})
+            return
+        if path == "/api/rd/read-only-context":
+            self._send_json(rd_read_only_context(self.root))
+            return
+        if path == "/api/cultura/sources":
+            self._send_json({"ok": True, **cultura_sources(self.root)})
+            return
+        if path == "/api/cultura/capabilities":
+            self._send_json({"ok": True, **cultura_capabilities(self.root)})
+            return
+        if path == "/api/cultura/opportunity-gate":
+            self._send_json({"ok": True, **cultura_opportunity_gate(self.root)})
+            return
+        if path == "/api/cultura/research-read-only-context":
+            self._send_json(cultura_research_read_only_context(self.root, self._get_research_catalog(), self._get_research_jobs()))
             return
         if path == "/api/project/context":
             query = parse_qs(parsed.query)
@@ -471,6 +1264,77 @@ class HubRequestHandler(BaseHTTPRequestHandler):
                 project_learning_db(),
                 context_id=(query.get("context_id") or [None])[0],
                 project_id=(query.get("project_id") or [None])[0],
+            ))
+            return
+        if path == "/api/project/review-queue":
+            query = parse_qs(parsed.query)
+            self._send_json(project_review_queue_read_only(
+                (query.get("pass") or ["prune"])[0]
+            ))
+            return
+        if path == "/api/portfolio/archive-view":
+            self._send_json(archive_portfolio_view_read_only(self.root))
+            return
+        if path == "/api/portfolio/archive-orientation":
+            self._send_json(portfolio_archive_orientation_read_only(self.root))
+            return
+        if path == "/api/portfolio/review-context":
+            query = parse_qs(parsed.query)
+            self._send_json(portfolio_review_context_read_only(
+                self.root, (query.get("project_id") or [None])[0]
+            ))
+            return
+        if path == "/api/portfolio/relation-evidence-plan":
+            query = parse_qs(parsed.query)
+            self._send_json(portfolio_relation_evidence_plan_read_only(
+                self.root, (query.get("project_id") or [None])[0]
+            ))
+            return
+        if path == "/api/portfolio/operation-receipt":
+            self._send_json(operation_receipt_read_only())
+            return
+        if path == "/api/portfolio/review-operations-context":
+            raw_id = (parse_qs(parsed.query).get("item_id") or [""])[0].strip()
+            payload, status = portfolio_review_operations_context(self.root, raw_id)
+            self._send_json(payload, status=status)
+            return
+        if path == "/api/portfolio/review-cultura-research-context":
+            raw_id = (parse_qs(parsed.query).get("item_id") or [""])[0].strip()
+            payload, status = portfolio_review_cultura_research_context(self.root, raw_id)
+            self._send_json(payload, status=status)
+            return
+        if path == "/api/portfolio/vizz-measurement-status":
+            self._send_json(vizz_measurement_status_read_only())
+            return
+        if path == "/api/portfolio/vizz-lineage-status":
+            self._send_json(vizz_lineage_status_read_only())
+            return
+        if path == "/api/portfolio/structural-delta-status":
+            self._send_json(structural_delta_status_read_only())
+            return
+        if path == "/api/portfolio/vizz-read-only-context":
+            query = parse_qs(parsed.query)
+            self._send_json(portfolio_vizz_read_only_context(
+                self.root, (query.get("project_id") or [None])[0]))
+            return
+        if path == "/api/portfolio/direction-context":
+            query = parse_qs(parsed.query)
+            self._send_json(portfolio_direction_context_read_only(
+                self.root, (query.get("project_id") or [None])[0]
+            ))
+            return
+        if path == "/api/portfolio/work-packet":
+            query = parse_qs(parsed.query)
+            self._send_json(portfolio_work_packet_read_only(
+                self.root, (query.get("project_id") or [None])[0]
+            ))
+            return
+        if path == "/api/portfolio/work-preview":
+            query = parse_qs(parsed.query)
+            self._send_json(portfolio_work_preview_read_only(
+                self.root,
+                (query.get("project_id") or [None])[0],
+                (query.get("task_id") or [""])[0],
             ))
             return
         if path == "/api/dashboard-summary":
@@ -839,6 +1703,38 @@ class HubRequestHandler(BaseHTTPRequestHandler):
         p = parsed.path
         if int(self.headers.get("Content-Length", 0) or 0) > MAX_BODY_BYTES:
             self._send_json({"error": "cuerpo demasiado grande"}, status=413)
+            return
+
+        if p == "/api/research/job/confirm-extraction":
+            content_length = int(self.headers.get("Content-Length", 0) or 0)
+            try:
+                payload = json.loads(self.rfile.read(content_length).decode("utf-8") or "{}")
+                if not isinstance(payload, dict):
+                    self._send_json({"ok": False, "error": "json debe ser objeto"}, status=400)
+                    return
+                output_root = os.environ.get("MAK_RESEARCH_OUTPUT_ROOT", "").strip() or str(repo_root().parent / "research" / "jobs")
+                result, status = confirm_research_extraction(project_learning_db(), output_root, job_id=payload.get("job_id"), actor=payload.get("actor", ""), input_sha256=payload.get("input_sha256", ""), request_id=payload.get("request_id", ""))
+                self._send_json(result, status=status)
+            except (TypeError, ValueError, json.JSONDecodeError) as exc:
+                self._send_json({"ok": False, "error": "json invalido", "detail": str(exc)[:240]}, status=400)
+            except Exception as exc:
+                self._send_json({"ok": False, "error": "research_confirmation_failed", "detail": type(exc).__name__}, status=500)
+            return
+
+        if p == "/api/research/job/resume":
+            content_length = int(self.headers.get("Content-Length", 0) or 0)
+            try:
+                payload = json.loads(self.rfile.read(content_length).decode("utf-8") or "{}")
+                if not isinstance(payload, dict):
+                    self._send_json({"ok": False, "error": "json debe ser objeto"}, status=400)
+                    return
+                output_root = os.environ.get("MAK_RESEARCH_OUTPUT_ROOT", "").strip() or str(repo_root().parent / "research" / "jobs")
+                result, status = resume_research_job(project_learning_db(), output_root, job_id=payload.get("job_id"), expected_process=payload.get("expected_process", ""), request_id=payload.get("request_id", ""))
+                self._send_json(result, status=status)
+            except (TypeError, ValueError, json.JSONDecodeError) as exc:
+                self._send_json({"ok": False, "error": "json invalido", "detail": str(exc)[:240]}, status=400)
+            except Exception as exc:
+                self._send_json({"ok": False, "error": "research_continuation_failed", "detail": type(exc).__name__}, status=500)
             return
 
         if p == "/api/rd/muestras/sync":
@@ -1358,11 +2254,21 @@ class HubRequestHandler(BaseHTTPRequestHandler):
                 "SELECT step_order,process_key,input_semantics,output_semantics,status,provider_policy FROM job_steps WHERE job_id=? ORDER BY step_order", (job_id,))]
             relations = [dict(zip(("type", "from", "to", "rationale"), row)) for row in conn.execute(
                 "SELECT relation_type,from_object,to_object,rationale FROM job_relations WHERE job_id=? ORDER BY id", (job_id,))]
+            sources = [dict(zip(("id", "url", "title", "capture_status", "http_status", "raw_sha256", "text_sha256", "license_state", "license_evidence"), row)) for row in conn.execute(
+                "SELECT id,url,title,capture_status,http_status,raw_sha256,text_sha256,license_state,license_evidence FROM job_sources WHERE job_id=? AND capture_status='captured' ORDER BY id", (job_id,))]
+            extract_input_sha256 = ""
+            try:
+                receipt = conn.execute("SELECT payload_json FROM research_continuation_receipts WHERE job_id=? ORDER BY id DESC LIMIT 1", (job_id,)).fetchone()
+                if receipt:
+                    extract_input_sha256 = str(json.loads(receipt[0]).get("input_sha256") or "")
+            except (sqlite3.OperationalError, ValueError, TypeError):
+                pass
         return {"available": True, "job": {
             "id": job[0], "question": job[1], "domain": job[2], "adapter": job[3],
             "status": job[4], "next_process": job[5], "created_at": job[6],
             "description": job[7], "source_policy": job[8], "constraint_policy": job[9],
-            "steps": steps, "relations": relations,
+            "steps": steps, "relations": relations, "sources": sources,
+            "extract_input_sha256": extract_input_sha256,
         }}
 
     def _create_research_job(self, data: dict) -> dict:

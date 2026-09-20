@@ -15,10 +15,11 @@ from __future__ import annotations
 
 import copy
 import hashlib
-import json
 import math
 from collections.abc import Mapping, Sequence
 from typing import Any
+
+from ._contract_helpers import optional_text as _text, sha256_ref as _digest, stable_json
 
 from .opportunity_constraints import validate_opportunity_constraints
 from .practice_evidence_state import validate_practice_evidence_state
@@ -67,24 +68,6 @@ class ArtisticProgramEvaluationError(ValueError):
     def __init__(self, message: str, report: Mapping[str, Any] | None = None) -> None:
         super().__init__(message)
         self.report = dict(report) if report is not None else None
-
-
-def stable_json(value: Any) -> str:
-    return json.dumps(
-        value,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-        allow_nan=False,
-    )
-
-
-def _digest(value: Any) -> str:
-    return "sha256:" + hashlib.sha256(stable_json(value).encode("utf-8")).hexdigest()
-
-
-def _text(value: Any) -> str:
-    return value.strip() if isinstance(value, str) and value.strip() else ""
 
 
 def _sorted_unique_strings(value: Any) -> tuple[list[str] | None, str | None]:

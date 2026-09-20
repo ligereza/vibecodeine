@@ -23,6 +23,8 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
+from ._contract_helpers import stable_json
+
 from .deep_learning_gate import evaluate_manifest
 from .learning_policy import (
     VERIFIED_EPISODE_STATUSES,
@@ -85,16 +87,6 @@ class ProductLearningError(ValueError):
     def __init__(self, message: str, errors: Sequence[str] | None = None) -> None:
         self.errors = list(errors or [])
         super().__init__(message)
-
-
-def stable_json(value: Any) -> str:
-    return json.dumps(
-        value,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-        allow_nan=False,
-    )
 
 
 def _copy_json(value: Any) -> Any:

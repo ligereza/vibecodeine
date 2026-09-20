@@ -25,6 +25,8 @@ import re
 from pathlib import PurePosixPath
 from typing import Any, Mapping
 
+from ._contract_helpers import stable_json as _canonical
+
 
 PROJECTION_SCHEMA = "mak-archive-reconstruction-input-v1"
 OBSERVER_SCHEMA = "mak-archive-observation-batch-v1"
@@ -93,13 +95,6 @@ class ArchiveProjectIREvaluationError(ValueError):
     def __init__(self, message: str, report: Mapping[str, Any] | None = None) -> None:
         super().__init__(message)
         self.report = dict(report) if report is not None else None
-
-
-def _canonical(value: Any) -> str:
-    return json.dumps(
-        value, ensure_ascii=False, sort_keys=True, separators=(",", ":"),
-        allow_nan=False,
-    )
 
 
 def _digest(value: Any) -> str:

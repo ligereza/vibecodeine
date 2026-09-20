@@ -11,6 +11,9 @@ import math
 from pathlib import Path
 from typing import Any, Mapping
 
+from ._contract_helpers import nullable_text as _text
+from ._io_helpers import load_json_file as load_json
+
 
 OPPORTUNITY_SCHEMA = "mak-opportunity-constraints-v1"
 PRACTICE_SCHEMA = "mak-practice-evidence-state-v1"
@@ -38,10 +41,6 @@ def _error_result(errors: list[str]) -> dict[str, Any]:
         "research_job_candidates": [],
         "practice_identity": None,
     }
-
-
-def _text(value: Any) -> str | None:
-    return value.strip() if isinstance(value, str) and value.strip() else None
 
 
 def _number(value: Any, *, minimum: float = 0.0) -> float | None:
@@ -418,8 +417,3 @@ def evaluate_opportunity_fit(opportunity: Mapping[str, Any], practice: Mapping[s
     candidates.sort(key=lambda item: (item["voi"] is not None, item["voi"] if item["voi"] is not None else item["voi_numerator"]), reverse=True)
     result["research_job_candidates"] = candidates
     return result
-
-
-def load_json(path: str | Path) -> Any:
-    with Path(path).open("r", encoding="utf-8") as handle:
-        return json.load(handle)

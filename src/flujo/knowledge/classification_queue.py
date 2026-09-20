@@ -60,11 +60,11 @@ import os
 import posixpath
 import sqlite3
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 
 from .feature_policy import FeaturePolicyError, may_decide
+from ._io_helpers import utc_now_iso as _now
 
 CONTRACT = "mak-classification-queue-v1"
 
@@ -141,10 +141,6 @@ def _require_ordering_permission(feature_name: str, question: str) -> dict[str, 
         raise ClassificationQueueError(
             f"ordering_policy_refused: {permission.reason}")
     return permission.as_dict()
-
-
-def _now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
 @dataclass(frozen=True)

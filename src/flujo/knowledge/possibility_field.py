@@ -12,6 +12,9 @@ import math
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
+from ._contract_helpers import nullable_text as _text
+from ._io_helpers import load_json_file as load_json
+
 
 CANDIDATE_SCHEMA = "mak-artistic-program-candidates-v1"
 EVALUATION_SCHEMA = "mak-artistic-program-evaluation-v1"
@@ -31,10 +34,6 @@ _COMPONENT_KEYS = tuple(SCORE_WEIGHTS)
 _POSITIVE = {"accepted", "accept", "approved"}
 _REJECTED = {"rejected", "reject", "discarded"}
 _ABSTAINED = {"abstained", "abstain", "unknown", "unresolved", "invalid"}
-
-
-def _text(value: Any) -> str | None:
-    return value.strip() if isinstance(value, str) and value.strip() else None
 
 
 def _list(value: Any) -> list[Any]:
@@ -352,8 +351,3 @@ def build_possibility_field(candidate_bundles: Any, evaluation_bundles: Any) -> 
         "provenance": {"candidate_schemas": [CANDIDATE_SCHEMA], "evaluation_schemas": [EVALUATION_SCHEMA], "accepted_count": len(ranked), "rejected_count": len(rejected), "abstained_count": len(abstained)},
         "learning_gate": {"training_permitted": False, "features_carried": any(bool(item["learning_features"]) for item in ranked)},
     }
-
-
-def load_json(path: str | Path) -> Any:
-    with Path(path).open("r", encoding="utf-8") as handle:
-        return json.load(handle)

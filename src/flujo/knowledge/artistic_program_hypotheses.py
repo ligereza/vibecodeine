@@ -12,10 +12,11 @@ from __future__ import annotations
 
 import copy
 import hashlib
-import json
 import math
 from collections.abc import Mapping
 from typing import Any
+
+from ._contract_helpers import stable_json
 
 from .opportunity_constraints import (
     OpportunityConstraintsError,
@@ -54,16 +55,6 @@ _HASH_PREFIX = "sha256:"
 
 class ArtisticProgramHypothesesError(ValueError):
     """Invalid accepted input or invalid deterministic hypothesis payload."""
-
-
-def stable_json(value: Any) -> str:
-    return json.dumps(
-        value,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-        allow_nan=False,
-    )
 
 
 def _hash(value: Any) -> str:

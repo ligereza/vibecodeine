@@ -8,10 +8,10 @@ promotes a technical event into authorship, publication or artistic truth.
 from __future__ import annotations
 
 import copy
-import hashlib
-import json
 from collections.abc import Mapping, Sequence
 from typing import Any
+
+from ._contract_helpers import sha256_ref as _hash, stable_json as _stable_json
 
 from .project_ir import SCHEMA as PROJECT_IR_SCHEMA, validate_project_ir
 
@@ -49,20 +49,6 @@ FORBIDDEN_INFERENCES = (
 
 class PracticeReceiptAdapterError(ValueError):
     """Raised when receipts or explicit bindings fail closed."""
-
-
-def _stable_json(value: Any) -> str:
-    return json.dumps(
-        value,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-        allow_nan=False,
-    )
-
-
-def _hash(value: Any) -> str:
-    return "sha256:" + hashlib.sha256(_stable_json(value).encode("utf-8")).hexdigest()
 
 
 def _copy_object(value: Any, label: str) -> dict[str, Any]:

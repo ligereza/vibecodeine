@@ -14,11 +14,11 @@ only through a content index.
 
 from __future__ import annotations
 
-import hashlib
-import json
 import re
 from pathlib import PurePosixPath
 from typing import Any, Mapping
+
+from ._contract_helpers import sha256_ref as _hash, stable_json as _stable_json
 
 from .archive_observer import ArchiveObservationError, validate_batch
 from .project_reconstruction import OUTPUT_MEDIA
@@ -45,20 +45,6 @@ NUMBER_TOKEN = re.compile(r"(?<!\d)(\d{2,})(?!\d)")
 
 class ArchiveReconstructionError(ValueError):
     """Invalid observer input or impossible projection invariant."""
-
-
-def _stable_json(value: Any) -> str:
-    return json.dumps(
-        value,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-        allow_nan=False,
-    )
-
-
-def _hash(value: Any) -> str:
-    return "sha256:" + hashlib.sha256(_stable_json(value).encode("utf-8")).hexdigest()
 
 
 def _parent_path(relative_path: str) -> str:

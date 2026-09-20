@@ -29,7 +29,8 @@ from typing import Any
 import xml.etree.ElementTree as ET
 import zipfile
 
-from .project_ir import LearningStore, stable_json
+from ._contract_helpers import sha256_ref as _digest
+from .project_ir import LearningStore
 from .project_context import SCHEMA as PROJECT_CONTEXT_SCHEMA, validate_context
 
 
@@ -52,14 +53,6 @@ SURFACE_PHASH_DISTANCE = 10
 
 class ArchiveToolchainError(ValueError):
     """Raised when the accepted projection or tool result is invalid."""
-
-
-def _stable_json(value: Any) -> str:
-    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False)
-
-
-def _digest(value: Any) -> str:
-    return "sha256:" + hashlib.sha256(_stable_json(value).encode("utf-8")).hexdigest()
 
 
 def _text(value: Any, limit: int = MAX_TEXT) -> str:

@@ -16,6 +16,8 @@ import unicodedata
 from collections.abc import Mapping, Sequence
 from typing import Any
 
+from ._contract_helpers import sha256_ref as _sha256, stable_json as _stable_json
+
 from .practice_evidence_state import validate_practice_evidence_state
 from .project_context import validate_context
 
@@ -29,15 +31,6 @@ _REMOVABLE_TRACK_TOKENS = {"remix", "version", "edit", "extended", "radio"}
 
 class CrossArchiveRelationError(ValueError):
     """Raised when the cross-archive boundary cannot be validated."""
-
-
-def _stable_json(value: Any) -> str:
-    return json.dumps(value, ensure_ascii=False, sort_keys=True,
-                      separators=(",", ":"), allow_nan=False)
-
-
-def _sha256(value: Any) -> str:
-    return "sha256:" + hashlib.sha256(_stable_json(value).encode("utf-8")).hexdigest()
 
 
 def _text(value: Any) -> str:

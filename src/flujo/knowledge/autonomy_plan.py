@@ -7,6 +7,9 @@ import json
 from pathlib import Path
 from typing import Any, Mapping
 
+from ._contract_helpers import nullable_text as _text
+from ._io_helpers import load_json_file as load_json
+
 
 PLAN_SCHEMA = "mak-product-plan-v1"
 DOSSIER_SCHEMA = "mak-portfolio-dossier-v1"
@@ -15,10 +18,6 @@ RETURN_SCHEMA = "mak-evidence-return-v1"
 LEARNING_SCHEMA = "mak-product-learning-evaluation-v1"
 OUTPUT_SCHEMA = "mak-autonomy-plan-v1"
 ALLOWED_ACTIONS = ("observe", "research", "recompute", "compile", "wait", "abstain")
-
-
-def _text(value: Any) -> str | None:
-    return value.strip() if isinstance(value, str) and value.strip() else None
 
 
 def _refs(value: Any) -> list[str]:
@@ -122,8 +121,3 @@ def _output(plan: Mapping[str, Any], actions: list[dict[str, Any]], errors: list
     opportunity_id = _text(plan.get("opportunity_id")) if isinstance(plan, Mapping) else None
     state = {"opportunity_id": opportunity_id, "plan_id": plan.get("plan_id") if isinstance(plan, Mapping) else None, "input_hashes": plan.get("input_hashes", {}) if isinstance(plan, Mapping) else {}, "learning_priority_usable": learning_valid}
     return {"schema": OUTPUT_SCHEMA, "current_state": state, "prioritized_actions": actions, "stop_conditions": {"max_attempts": 1, "stop_on_no_hash_change": True, "stop_on_budget_exhausted": True, "stop_on_closure": True, "loop": False}, "control": {"database_write": False, "dispatch": False, "publication": False, "submission": False, "promotion": "none", "training": False, "user_review_required": False}, "provenance": {"errors": sorted(set(errors)), "deterministic": True, "learning_evaluation_used_only_for_priority": learning_valid, "conductor_projection": "plan-only"}}
-
-
-def load_json(path: str | Path) -> Any:
-    with Path(path).open("r", encoding="utf-8") as handle:
-        return json.load(handle)

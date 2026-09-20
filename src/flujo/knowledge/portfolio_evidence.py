@@ -10,10 +10,11 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
+from ._contract_helpers import compact_json as _json
+from ._io_helpers import utc_now_iso as _now
 from .project_ir import LearningStore, build_project_ir, format_family, media_type
 
 
@@ -34,14 +35,6 @@ DECISION_STATUS = {
 
 class PortfolioEvidenceError(ValueError):
     """Invalid evidence queue or human decision."""
-
-
-def _now() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
-
-
-def _json(value: Any) -> str:
-    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
 
 def _hash(value: Any) -> str:
