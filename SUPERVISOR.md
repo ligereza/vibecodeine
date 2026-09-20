@@ -88,22 +88,20 @@ conocimiento humano real.
 Esta sección describe sólo problemas **actuales**. Se edita/reduce en cada
 ciclo; no se añaden entradas históricas resueltas.
 
-1. **Pytest no recolecta** porque
-   `tests/test_scan_roots_skip_cloud_mounts.py` importa
-   `tools.consolidate_static_duplicates.PROTECTED_TOPS`, aunque esa herramienta
-   fue retirada.
-2. **Registry de tools desalineado**: conserva
-   `consolidate_static_duplicates.py` y omite herramientas presentes. Debe
-   representar el árbol real sin inventar vigencia.
-3. **`repo_audit`** reporta clasificación stale para `mak_status`.
-4. **Mapa/taxonomía de tests** conserva tests retirados y tiene tests actuales
+1. **Registry de tools incompleto**: no quedan herramientas fantasma, pero 42
+   archivos actuales de `tools/*.py` todavía no aparecen en
+   `data/tool_registry.json`. Quince ya tienen clasificación explícita
+   `manual_only` en `tools/repo_audit.py`; las otras 27 deben entrar como
+   `REVISAR` hasta demostrar su ciclo de vida, no como `VIVO` por defecto.
+2. **`repo_audit`** reporta clasificación stale para `mak_status`.
+3. **Mapa/taxonomía de tests** conserva tests retirados y tiene tests actuales
    sin lane.
-5. Dos herramientas declaradas `VIVO` fallan en `--help`:
+4. Dos herramientas declaradas `VIVO` fallan en `--help`:
    `compile_vigia_capture_plans.py` y
    `reportar_calibracion_deepseek.py`.
-6. Quedan referencias ejecutables a autoridades retiradas en superficies como
+5. Quedan referencias ejecutables a autoridades retiradas en superficies como
    `system_status.py` y fallbacks de `diagnostics.py`.
-7. Superficies opcionales `searxng` y `mak_research_queue` aparecen sin
+6. Superficies opcionales `searxng` y `mak_research_queue` aparecen sin
    fuente local; su estado debe ser explícito, no un falso fallo global.
 
 ## Regla de restauración
