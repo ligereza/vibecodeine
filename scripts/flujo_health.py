@@ -40,10 +40,11 @@ def check_pycache():
 
 def check_required_files():
     required = [
-        "README.md",
+        "arte-ascii-readme.svg",
         "requirements.txt",
+        "pyproject.toml",
         ".gitignore",
-        "scripts/flujo.py",
+        "src/flujo/cli.py",
         "scripts/_common.py",
     ]
     for f in required:
