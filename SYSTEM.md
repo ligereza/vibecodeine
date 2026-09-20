@@ -138,6 +138,30 @@ una decisión posterior explícita de reactivación.
 - Cada entrega útil debería dejar un activo reutilizable, no otra capa de
   documentación de sesión.
 
+## Orquestación de agentes
+
+El costo de contexto se concentra en el supervisor remoto; el ejecutor local no
+debe redescubrir el repositorio en cada ciclo.
+
+- **Supervisor remoto (modo chat)**: lee el contexto amplio, mide Git y las
+  superficies actuales, decide la siguiente tarea y mantiene compacto el
+  contexto de la rama.
+- **Codex local**: ejecuta una tarea acotada. Parte desde `ORDEN.md` y sólo
+  abre los archivos que esa tarea necesita. No relee `SYSTEM.md`,
+  `SUPERVISOR.md` ni la historia completa salvo que la propia orden lo exija.
+- **`ORDEN.md`** es un buzón efímero de un solo slot. Se reemplaza completo;
+  nunca se usa como bitácora acumulativa.
+- El supervisor escribe una orden con estado `READY`.
+- Codex ejecuta y reemplaza el mismo archivo con estado `DONE` o `BLOCKED`,
+  incluyendo únicamente cambios, pruebas y el bloqueo actual.
+- En el ciclo siguiente el supervisor consume ese resultado, actualiza el
+  contexto vivo de la rama y reemplaza `ORDEN.md` por la siguiente tarea.
+- No crear `ERRORES.md`, `RESULTADOS.md`, handoffs o diarios de decisiones
+  para transportar estado entre ciclos. Git ya conserva la historia.
+
+El objetivo es que el razonamiento caro y repetitivo ocurra una vez en el
+supervisor, mientras el ejecutor recibe sólo el contexto mínimo necesario.
+
 ## Documentación vs contenido
 
 "Un solo contexto" no significa borrar Markdown que sea contenido real.
