@@ -46,9 +46,23 @@ maquina -- es una DB de operador, no un dato versionado.
 
 ## Uso
 
+El constructor portable no debe degradar la autoridad fusionada. Si el destino
+ya contiene la candidata completa `rd-canonical-complete-20260911-v1`, el build
+falla cerrado. Para reconstruir o promover una candidata completa validada se
+usa la misma ruta con una fuente explícita:
+
+```bash
+py -m flujo rd-db build --canonical-source /ruta/rd-canonical-complete.db
+```
+
+La fuente debe declarar el manifiesto de unión, contener al menos 92 tablas y
+pasar `integrity_check` y `foreign_key_check`. También puede configurarse con
+`FLUJO_RD_CANONICAL_SOURCE`; nunca se adivinan rutas Windows ni se reemplaza
+la base viva por una variante parcial.
+
 CLI:
 ```bash
-py -m flujo rd-db build                  # (re)construye data/rd.db
+py -m flujo rd-db build                  # (re)construye la proyección portable
 py -m flujo rd-db reactivo --familia MDMA
 py -m flujo rd-db reactivo --reactivo Marquis
 py -m flujo rd-db packs

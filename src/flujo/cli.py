@@ -472,12 +472,17 @@ app.add_typer(rd_app, name="rd-db")
 
 
 @rd_app.command("build")
-def rd_build():
-    """(Re)construye data/rd.db desde las fuentes canonicas (reactivos, packs,
-    suplementos, productoras, eventos)."""
+def rd_build(
+    canonical_source: Optional[str] = typer.Option(
+        None,
+        "--canonical-source",
+        help="Promueve una candidata RD completa validada de 92 tablas.",
+    ),
+):
+    """Construye la proyección portable o promueve una fuente RD completa."""
     from .rd import build_rd_db
 
-    path = build_rd_db()
+    path = build_rd_db(canonical_source=canonical_source)
     _ok(f"RD DB construida: {path}")
 
 

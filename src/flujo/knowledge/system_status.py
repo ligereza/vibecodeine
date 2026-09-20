@@ -13,9 +13,12 @@ not as a successful external API call.
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import socket
+import sqlite3
+import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -35,6 +38,7 @@ _PORTS = {
     "search": 8888,
     "ollama": 11434,
 }
+_MOUNT_DIRS = ("GoogleDrive", "OneDrive")
 
 
 def _path_status(path: Path, *, kind: str = "file") -> dict[str, Any]:
@@ -204,11 +208,6 @@ def _motor_root(repo: Path) -> Path:
 def _repo_component(repo: Path, physical: Path | None = None) -> dict[str, Any]:
     motor = _motor_root(repo)
     required = {
-        # 2026-09-03: the lowercase `agents.md` was deleted by the operator's
-        # order along with every other contract file. The one contract is
-        # `AGENTS.md`. Requiring the old name made this status -- the command
-        # the contract itself points at for facts -- report a file missing
-        # that was removed on purpose.
         "contract": repo / "AGENTS.md",
         "hub_source": repo / "cultura" / "mak_plataforma" / "hub.py",
         "knowledge_api": motor / "knowledge" / "project_api.py",
@@ -252,7 +251,7 @@ def _repo_component(repo: Path, physical: Path | None = None) -> dict[str, Any]:
         "ready" if ok else "attention",
         severity="none" if ok else "attention",
         evidence=evidence,
-        next_action=None if ok else "restore the missing source contract before changing consumers",
+        next_action=None if ok else "resolve the source contract policy before changing consumers",
     )
 
 
@@ -265,13 +264,14 @@ def _service_component(
     source_candidates: Iterable[Path] = (),
     socket_path: Path | None = None,
 ) -> dict[str, Any]:
+    candidates = tuple(source_candidates)
     source_evidence = _path_status(source)
     listener = _service_listener(port, socket_path)
     process = _process_snapshot(process_tokens)
     runtime_source = _runtime_source(
-        process_tokens, (source, *tuple(source_candidates))
+        process_tokens, (source, *candidates)
     )
-    source_evidence["role"] = "declared"
+    source_evidence.setdefault("role", "declared")
     return _component(
         component_id,
         label,
@@ -350,6 +350,169 @@ def _portfolio_component(physical: Path) -> dict[str, Any]:
     )
 
 
+def _latest_storage_success(database: Path, mount_name: str) -> dict[str, Any] | None:
+    """Read the latest bounded storage probe from the existing event ledger."""
+    if not database.is_file():
+        return None
+    try:
+        with sqlite3.connect(f"file:{database}?mode=ro", uri=True) as connection:
+            table = connection.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='mak_operational_events'"
+            ).fetchone()
+            if table is None:
+                return None
+            rows = connection.execute(
+                "SELECT event_json FROM mak_operational_events "
+                "WHERE archive_id='storage' AND proposition_id=? "
+                "ORDER BY recorded_at DESC, rowid DESC",
+                (f"storage:{mount_name}",),
+            )
+            for (encoded,) in rows:
+                try:
+                    event = json.loads(encoded)
+                except (TypeError, json.JSONDecodeError):
+                    continue
+                result = event.get("result") if isinstance(event, dict) else None
+                if isinstance(result, dict) and result.get("status") == "succeeded":
+                    return {
+                        "event_id": event.get("event_id"),
+                        "recorded_at": event.get("recorded_at"),
+                        "operation": result.get("operation"),
+                        "status": result.get("status"),
+                    }
+    except (OSError, sqlite3.Error):
+        return None
+    return None
+
+
+def _gdrive_recency(database: Path) -> dict[str, Any]:
+    """Classify Drive rate-limit lines against the last successful probe.
+
+    Journal lines before the latest successful probe are historical evidence;
+    only a later rate-limit line makes the current mount degraded.  This keeps
+    old quota incidents from dominating the present operational projection.
+    """
+    service = {
+        "unit": "rclone-gdrive.service",
+        "active": None,
+        "sub_state": None,
+        "exec_status": None,
+        "started_at": None,
+    }
+    try:
+        state = subprocess.run(
+            [
+                "systemctl", "--user", "show", "rclone-gdrive.service",
+                "-p", "ActiveState", "-p", "SubState", "-p", "ExecMainStatus",
+                "-p", "ExecMainStartTimestamp", "--no-pager",
+            ], capture_output=True, text=True, timeout=2, check=False,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        service["probe_error"] = type(exc).__name__
+    else:
+        fields: dict[str, str] = {}
+        for line in state.stdout.splitlines():
+            key, separator, value = line.partition("=")
+            if separator:
+                fields[key] = value.strip()
+        service.update({
+            "active": fields.get("ActiveState") == "active",
+            "sub_state": fields.get("SubState"),
+            "exec_status": fields.get("ExecMainStatus"),
+            "started_at": fields.get("ExecMainStartTimestamp") or None,
+        })
+
+    rate_limit_at: str | None = None
+    try:
+        journal = subprocess.run(
+            [
+                "journalctl", "--user", "-u", "rclone-gdrive.service",
+                "--since", "7 days ago", "--no-pager", "-o", "short-iso",
+            ], capture_output=True, text=True, timeout=3, check=False,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        journal = None
+        journal_error = type(exc).__name__
+    else:
+        journal_error = None
+        for line in journal.stdout.splitlines():
+            if "RATE_LIMIT_EXCEEDED" not in line:
+                continue
+            timestamp = line.split(" ", 1)[0]
+            if rate_limit_at is None or timestamp > rate_limit_at:
+                rate_limit_at = timestamp
+
+    last_success = _latest_storage_success(database, "GoogleDrive")
+    success_at = str(last_success.get("recorded_at")) if last_success else None
+
+    def timestamp(value: str | None) -> datetime | None:
+        if not value:
+            return None
+        try:
+            return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(timezone.utc)
+        except ValueError:
+            return None
+
+    rate_limit_time = timestamp(rate_limit_at)
+    success_time = timestamp(success_at)
+    if rate_limit_at and rate_limit_time and success_time and rate_limit_time > success_time:
+        classification = "current_error"
+    elif rate_limit_at and rate_limit_time and success_time:
+        classification = "historical_error"
+    elif rate_limit_at:
+        classification = "needs_probe"
+    else:
+        classification = "no_current_rate_limit"
+    return {
+        "service": service,
+        "last_rate_limit_at": rate_limit_at,
+        "last_successful_probe": last_success,
+        "rate_limit_classification": classification,
+        "journal_probe_error": journal_error,
+    }
+
+
+def _mount_component(physical: Path, database: Path | None = None) -> dict[str, Any]:
+    """Probe configured local FUSE mounts without reading remote contents."""
+    mounts: dict[str, dict[str, Any]] = {}
+    for directory in _MOUNT_DIRS:
+        path = physical / directory
+        evidence: dict[str, Any] = {"path": str(path), "exists": path.is_dir()}
+        if not evidence["exists"]:
+            evidence["mounted"] = False
+            evidence["probe"] = "path_missing"
+            mounts[directory] = evidence
+            continue
+        try:
+            probe = subprocess.run(
+                ["mountpoint", "-q", str(path)],
+                capture_output=True, text=True, timeout=2, check=False,
+            )
+        except (OSError, subprocess.SubprocessError) as exc:
+            evidence["mounted"] = None
+            evidence["probe"] = type(exc).__name__
+        else:
+            evidence["mounted"] = probe.returncode == 0
+            evidence["probe"] = "ok" if probe.returncode in (0, 1) else "failed"
+        mounts[directory] = evidence
+    gdrive_recency = _gdrive_recency(database) if database is not None and mounts.get("GoogleDrive", {}).get("mounted") is True else None
+    gdrive_unproven = bool(
+        gdrive_recency and gdrive_recency.get("rate_limit_classification") in {"current_error", "needs_probe"}
+    )
+    healthy = all(item.get("mounted") is True for item in mounts.values()) and not gdrive_unproven
+    evidence = {"mounts": mounts, "read_only_probe": True}
+    if gdrive_recency is not None:
+        evidence["GoogleDrive_operational_recency"] = gdrive_recency
+    return _component(
+        "storage",
+        "Cloud storage mounts",
+        "ready" if healthy else "attention",
+        severity="none" if healthy else "attention",
+        evidence=evidence,
+        next_action=None if healthy else "check the local FUSE mount, latest remote probe and current quota errors before reading cloud-backed material",
+    )
+
+
 def _dependency_component(repo: Path) -> dict[str, Any]:
     blender = resolve_blender(repo)
     # The inline candidate list used to stop at PATH plus one codex runtime, so
@@ -382,21 +545,54 @@ def _dependency_component(repo: Path) -> dict[str, Any]:
     )
 
 
+def _provider_source_root(repo: Path, physical: Path) -> Path | None:
+    """Return the checkout that owns the provider registry for this topology."""
+    repo_provider = repo / "cultura" / "mak_plataforma" / "providers.py"
+    if repo_provider.is_file():
+        return repo
+    physical_provider = physical / "cultura" / "mak_plataforma" / "providers.py"
+    if physical_provider.is_file():
+        return physical
+    return None
+
+
 def _provider_component(repo: Path, physical: Path) -> dict[str, Any]:
     try:
         # The CLI is launched from ``tools/`` and therefore does not always
-        # have the repository root on sys.path.  Add only this known source
-        # root for the in-process registry import; no files are changed.
+        # have the repository root on sys.path.  A portable FLUJO checkout can
+        # also be an adapter whose MAK provider registry lives in the physical
+        # sibling root; resolve that authority before importing it. No files
+        # are changed.
         import sys as _sys
-        repo_text = str(repo)
-        if repo_text not in _sys.path:
-            _sys.path.insert(0, repo_text)
+        source_root = _provider_source_root(repo, physical)
+        if source_root is None:
+            return _component(
+                "providers",
+                "API/model routes",
+                "attention",
+                severity="attention",
+                evidence={"available": False, "reason": "mak_box_absent",
+                          "runtime": "configuration_only_unverified"},
+                next_action="configure an authorized provider or use the local deterministic route",
+            )
+        if source_root is not None:
+            source_text = str(source_root)
+            if source_text not in _sys.path:
+                _sys.path.insert(0, source_text)
         try:
             from cultura.mak_plataforma import providers
         except ImportError:
             # No MAK departments in this checkout: the provider surface is
             # simply absent, which is a status, not a crash.
-            return {"available": False, "reason": "mak_box_absent"}
+            return _component(
+                "providers",
+                "API/model routes",
+                "attention",
+                severity="attention",
+                evidence={"available": False, "reason": "mak_box_absent",
+                          "runtime": "configuration_only_unverified"},
+                next_action="configure an authorized provider or use the local deterministic route",
+            )
 
         names: set[str] = set(os.environ)
         env_files = (
@@ -503,7 +699,10 @@ def system_status(
         "hub": _service_component(
             "hub", "MAK Hub 8900", repo / "cultura" / "mak_plataforma" / "hub.py", _PORTS["hub"],
             ("plataforma/hub.py", "mak_plataforma/hub.py"),
-            source_candidates=(physical / "plataforma" / "hub.py",),
+            source_candidates=(
+                physical / "cultura" / "mak_plataforma" / "hub.py",
+                physical / "plataforma" / "hub.py",
+            ),
         ),
         "research": _service_component(
             "research", "Research", physical / "research" / "interfaz.py", _PORTS["research"],
@@ -524,6 +723,7 @@ def system_status(
         "events": _runner_component(repo, physical),
         "render": _render_component(repo, physical),
         "portfolio": _portfolio_component(physical),
+        "storage": _mount_component(physical, database_path),
         "dependencies": _dependency_component(repo),
         "providers": _provider_component(repo, physical),
         "lanes": _lane_registry_component(repo),
