@@ -28,28 +28,38 @@
       "paquete": "@thi.ng/tsne",
       "version": "0.1.73",
       "exporta": "*",
-      "para": "Proyectar muchas dimensiones a 2 conservando vecindad. Hoy la hace scikit-learn, y por eso el generador del campo SOLO corre en Windows: con esto la caja puede proyectar sola, que es el norte del repo (mejorable sin PC)."
+      "para": "Proyectar muchas dimensiones a 2 conservando vecindad. Hoy la hace scikit-learn, y por eso el generador del campo SOLO corre en Windows: con esto la caja puede proyectar sola, que es el norte del repo (mejorable sin PC).",
+      "estado": "descartada_con_medicion",
+      "consumidores": []
     },
     {
       "nombre": "trazo",
       "paquete": "@thi.ng/geom-trace-bitmap",
       "version": "0.3.192",
       "exporta": "*",
-      "para": "Imagen a vector de línea. El trazador del plano está afinado para iconos de alto contraste; sobre fotografías hubo que afinarlo a mano (13,5% -> 60% legible). Esto está hecho para este trabajo."
+      "para": "Imagen a vector de línea. El trazador del plano está afinado para iconos de alto contraste; sobre fotografías hubo que afinarlo a mano (13,5% -> 60% legible). Esto está hecho para este trabajo.",
+      "estado": "vendorizada_sin_consumidor",
+      "consumidores": []
     },
     {
       "nombre": "gestos",
       "paquete": "@thi.ng/rstream-gestures",
       "version": "5.0.179",
       "exporta": "*",
-      "para": "Mouse, rueda y MULTI-TOUCH como un solo stream. El gesto del diafragma en el teléfono es el riesgo abierto del campo y nunca se midió."
+      "para": "Mouse, rueda y MULTI-TOUCH como un solo stream. El gesto del diafragma en el teléfono es el riesgo abierto del campo y nunca se midió.",
+      "estado": "en_uso",
+      "consumidores": [
+        "iskvw/piel/campo/index.html"
+      ]
     },
     {
       "nombre": "distancia",
       "paquete": "@thi.ng/distance-transform",
       "version": "1.0.46",
       "exporta": "*",
-      "para": "Campo de distancia desde una imagen binaria. Es el paso previo para engrosar, erosionar o derretir un trazo sin volver al bitmap."
+      "para": "Campo de distancia desde una imagen binaria. Es el paso previo para engrosar, erosionar o derretir un trazo sin volver al bitmap.",
+      "estado": "vendorizada_sin_consumidor",
+      "consumidores": []
     }
   ]
 }
