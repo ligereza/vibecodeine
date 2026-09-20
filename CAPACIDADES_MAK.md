@@ -1,5 +1,8 @@
 # CAPACIDADES_MAK.md
 
+> **Inventario secundario, no bootstrap.** Para orientación global usa `AGENTS.md` → `REAL_INFO.md`. Los estados y cifras de este registro sólo valen para la fecha de su medición.
+
+
 > Registro auditable de las capacidades propias del checkout MAK y de las
 > dependencias físicas que MAK consume. Este documento no es una fuente de
 > estado vivo: la fuente de estado es la medición fechada que aparece abajo.
