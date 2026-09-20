@@ -227,7 +227,9 @@ def test_flujo_path_is_reported_as_the_physical_flujo_checkout():
     assert report["is_symlink"] is False
     assert report["own_git_dir"] is True
     assert report["is_git_worktree"] is True
-    assert report["branch"] == "FLUJO"
+    assert report["branch"] == "integration/flujo-canonical-20260911"
+    assert report["branch_semantics"]["lane"] == "FLUJO"
+    assert report["branch_semantics"]["kind"] == "integration-alias"
     assert report["is_flujo_checkout"] is True
     assert report["sibling_symlinks"] == 0
     assert report["recursive_symlinks"] == []

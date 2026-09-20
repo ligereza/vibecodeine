@@ -23,12 +23,29 @@ import socket
 import subprocess
 import sys
 import tempfile
+import tomllib
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable
 from urllib.error import URLError
 from urllib.request import Request, urlopen
+
+try:
+    from .branch_contract import disposition as _disposition
+    from .branch_contract import interpret_ref
+except ImportError:  # direct ``python tools/capabilities.py`` execution
+    import importlib.util
+
+    _contract_spec = importlib.util.spec_from_file_location(
+        "mak_branch_contract", Path(__file__).with_name("branch_contract.py")
+    )
+    if _contract_spec is None or _contract_spec.loader is None:
+        raise ImportError("branch_contract_unavailable")
+    _contract_module = importlib.util.module_from_spec(_contract_spec)
+    _contract_spec.loader.exec_module(_contract_module)
+    _disposition = _contract_module.disposition
+    interpret_ref = _contract_module.interpret_ref
 
 
 @dataclass(frozen=True)
@@ -343,6 +360,13 @@ def _branch_result(root: Path) -> dict[str, object]:
         "profile_path": str(profile_path),
         "profile_exists": profile_path.is_file(),
         "profile_branch": None,
+        "current_ref": branch,
+        "canonical_ref": None,
+        "lane": None,
+        "kind": None,
+        "comparison_ref": None,
+        "integration_target": None,
+        "profile_scope": None,
         "profile_kind": None,
         "capabilities": None,
         "requirements": None,
@@ -364,9 +388,14 @@ def _branch_result(root: Path) -> dict[str, object]:
         issues.append("branch_profile_unreadable")
         return result
 
+    semantics = interpret_ref(branch, profile)
     profile_branch = profile.get("branch")
-    profile_kind = profile.get("kind", "runtime")
+    profile_kind = semantics["kind"]
     result["profile_branch"] = profile_branch
+    result.update({key: semantics.get(key) for key in (
+        "current_ref", "canonical_ref", "lane", "kind", "comparison_ref",
+        "integration_target", "profile_scope"
+    )})
     result["profile_kind"] = profile_kind
     result["selector"] = profile.get("default_test_selector")
     capabilities = profile.get("capabilities")
@@ -385,8 +414,7 @@ def _branch_result(root: Path) -> dict[str, object]:
     result["hub_source"] = hub_source
     result["hub_sources"] = hub_sources
 
-    if branch and profile_branch != branch:
-        issues.append(f"profile_branch_mismatch:{profile_branch!s}->{branch}")
+    issues.extend(str(issue) for issue in semantics["issues"])
     if not isinstance(capabilities, str) or not (root / capabilities).is_file():
         issues.append("profile_capabilities_missing")
     if not isinstance(requirements, str) or not (root / requirements).is_file():
@@ -411,14 +439,15 @@ def _branch_result(root: Path) -> dict[str, object]:
     pyproject = root / "pyproject.toml"
     if pyproject.is_file():
         try:
-            text = pyproject.read_text(encoding="utf-8")
-        except OSError:
-            text = ""
-        marker = next(
-            (line.split("=", 1)[1].strip().strip('"')
-             for line in text.splitlines() if line.strip().startswith("addopts =")),
-            None,
-        )
+            parsed = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+            marker = (
+                parsed.get("tool", {})
+                .get("pytest", {})
+                .get("ini_options", {})
+                .get("addopts")
+            )
+        except (OSError, tomllib.TOMLDecodeError):
+            marker = None
         result["pyproject_addopts"] = marker
         selector = profile.get("default_test_selector")
         if profile_kind == "historical" and selector:
@@ -426,6 +455,134 @@ def _branch_result(root: Path) -> dict[str, object]:
         elif isinstance(selector, str) and selector and selector not in (marker or ""):
             issues.append("profile_selector_not_in_pytest_addopts")
     return result
+
+
+def _ref_inventory(root: Path) -> dict[str, object]:
+    """Inventory heads, remote-tracking refs and tags using shared semantics."""
+    try:
+        raw = subprocess.run(
+            [
+                "git", "-C", str(root), "for-each-ref",
+                "--format=%(refname)\t%(objectname)\t%(objecttype)",
+                "refs/heads", "refs/remotes", "refs/tags",
+            ], capture_output=True, text=True, timeout=8, check=False,
+        ).stdout
+    except (OSError, subprocess.SubprocessError):
+        return {"schema": "mak-branch-ref-inventory-v2", "available": False, "refs": []}
+
+    refs: list[dict[str, object]] = []
+    by_identity: dict[tuple[str, str], list[str]] = {}
+
+    def run_git(*args: str) -> str:
+        result = subprocess.run(
+            ["git", "-C", str(root), *args],
+            capture_output=True, text=True, timeout=5, check=False,
+        )
+        return result.stdout.strip()
+
+    for line in raw.splitlines():
+        full_ref, sha, object_type = line.split("\t", 2)
+        if full_ref.endswith("/HEAD"):
+            continue
+        remote_name = None
+        if full_ref.startswith("refs/remotes/"):
+            remote_path = full_ref.removeprefix("refs/remotes/")
+            remote_name, name = remote_path.split("/", 1)
+            ref_kind = "remote_tracking"
+        elif full_ref.startswith("refs/tags/"):
+            name = full_ref.removeprefix("refs/tags/")
+            ref_kind = "annotated_tag" if object_type == "tag" else "tag"
+        else:
+            name = full_ref.removeprefix("refs/heads/")
+            ref_kind = "head"
+        peeled_commit_sha = None
+        if ref_kind == "annotated_tag":
+            peeled = run_git("rev-parse", f"{full_ref}^{{}}")
+            if peeled and run_git("cat-file", "-t", peeled) == "commit":
+                peeled_commit_sha = peeled
+        try:
+            profile = json.loads(run_git("show", f"{full_ref}:branch_profile.json"))
+        except (json.JSONDecodeError, OSError, ValueError):
+            profile = {}
+        semantics = interpret_ref(name, profile)
+        comparison_ref = semantics.get("comparison_ref")
+        target_ref = None
+        sync: dict[str, int | None] = {"ahead": None, "behind": None}
+        ancestry: dict[str, int | None] = {
+            "exclusive_commit_count": None,
+            "patch_unique_count": None,
+            "patch_equivalent_count": None,
+        }
+        if isinstance(comparison_ref, str) and comparison_ref:
+            for candidate in (
+                comparison_ref,
+                f"vibecodeine-legacy/{comparison_ref}",
+                f"origin/{comparison_ref}",
+            ):
+                if run_git("rev-parse", "--verify", candidate):
+                    target_ref = candidate
+                    break
+            if target_ref:
+                counts = run_git("rev-list", "--left-right", "--count", f"{target_ref}...{full_ref}").split()
+                if len(counts) == 2:
+                    sync = {"behind": int(counts[0]), "ahead": int(counts[1])}
+                exclusive = run_git("rev-list", f"{target_ref}..{full_ref}").splitlines()
+                cherry = run_git("cherry", target_ref, full_ref).splitlines()
+                ancestry = {
+                    "exclusive_commit_count": len(exclusive),
+                    "patch_unique_count": sum(line.startswith("+") for line in cherry),
+                    "patch_equivalent_count": sum(line.startswith("-") for line in cherry),
+                }
+        row = {
+            "ref": full_ref,
+            "name": name,
+            "sha": sha,
+            "object_sha": sha,
+            "object_type": object_type,
+            "ref_kind": ref_kind,
+            "remote_name": remote_name,
+            "peeled_commit_sha": peeled_commit_sha,
+            "profile_present": bool(profile),
+            **semantics,
+            "disposition": _disposition(name, semantics),
+            "comparison_ref": comparison_ref,
+            "comparison_git_ref": target_ref,
+            "sync": sync,
+            "ancestry": ancestry,
+        }
+        refs.append(row)
+        # An annotated tag is a named historical object, not an alias merely
+        # because it peels to the same commit as a branch.
+        identity = ("head_remote_commit", sha) if ref_kind in {"head", "remote_tracking"} else ("tag", full_ref)
+        by_identity.setdefault(identity, []).append(name)
+
+    for row in refs:
+        ref_kind = str(row["ref_kind"])
+        identity = (
+            ("head_remote_commit", str(row["object_sha"]))
+            if ref_kind in {"head", "remote_tracking"}
+            else ("tag", str(row["ref"]))
+        )
+        row["aliases"] = sorted(set(by_identity.get(identity, [])))
+    alias_groups = [
+        {"identity": identity[0], "sha": identity[1], "refs": sorted(set(names))}
+        for identity, names in by_identity.items()
+        if len(set(names)) > 1
+    ]
+    counts = {
+        kind: sum(1 for row in refs if row["ref_kind"] == kind)
+        for kind in ("head", "remote_tracking", "tag", "annotated_tag")
+    }
+    return {
+        "schema": "mak-branch-ref-inventory-v2",
+        "available": True,
+        "ref_count": len(refs),
+        "unique_sha_count": len({str(row["object_sha"]) for row in refs}),
+        "ref_counts": counts,
+        "alias_group_count": len(alias_groups),
+        "alias_groups": sorted(alias_groups, key=lambda row: (row["identity"], row["sha"])),
+        "refs": sorted(refs, key=lambda row: str(row["ref"])),
+    }
 
 
 def _markdown(report: dict[str, object]) -> str:
@@ -502,6 +659,7 @@ def build_report(root: Path, docs: list[Path], live: bool) -> dict[str, object]:
             "with_issues": sum(bool(item["issues"]) for item in results),
         },
         "branch": _branch_result(root),
+        "ref_inventory": _ref_inventory(root),
         "surfaces": results,
     }
 
