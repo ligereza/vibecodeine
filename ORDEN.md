@@ -5,11 +5,11 @@
 ```yaml
 schema: vibecodeine-supervisor-order-v1
 state: READY
-generation: 1
+generation: 2
 branch: SUPERVISOR
 repo: ligereza/vibecodeine
 base_context_pr: 569
-last_audited_head: 2ad0dce44bde3ae1d2d27fc66bd1b5c53b5180a9
+last_audited_head: 19fb13e5ed312d105caf28233270d1ad25819ba2
 last_audit: 2026-09-20
 accepted_through: none
 ```
@@ -151,7 +151,4 @@ restantes ordenados por causa, no por cantidad de archivos.
 
 ## Auditoría del supervisor
 
-**Generación 1 — inicial. HEAD de control: `2ad0dce44bde3ae1d2d27fc66bd1b5c53b5180a9`.** La cola parte de la consolidación documental del PR
-#569 y busca probar que el nuevo modelo resiste un agente sin memoria. Las fases
-S001–S010 pueden ser reescritas por el supervisor horario cuando la evidencia
-las vuelva redundantes u obsoletas.
+**Generación 2 — HEAD auditado: `19fb13e5ed312d105caf28233270d1ad25819ba2`.** Desde la auditoría anterior sólo existe el commit `supervisor: seal initial order generation`, que modifica exclusivamente `ORDEN.md`. `CODEX_STATE.md` continúa `IDLE`, sin fase ejecutada, commit reclamado, archivos ni verificaciones; por tanto no se acepta ni rechaza ninguna fase. El HEAD no tiene statuses ni workflow runs observables. Se conserva la cola S001–S010 y `READY`; S001 sigue siendo la primera acción justificada.
