@@ -139,7 +139,9 @@ diagnostico del mismo adaptador.
 1. Medir el corpus real y seleccionar solo Markdown final, transcripciones autorizadas, capturas verificadas, contratos y dossiers.
 2. Excluir claves, `.env`, Trash, caches, vendor trees, conversaciones privadas completas y la SQLite RD completa.
 3. Cada documento debe incluir `source_ref`, hash, fecha, dominio y estado de evidencia.
-4. Usar el servicio Free existente para un unico indice solo si filesystem + SearXNG no bastan; no crear otro Search.
+4. Mantener los tres indices existentes dentro del servicio Free; no crear un
+   cuarto indice. Cualquier consolidacion futura necesita migracion y rollback
+   explicitos.
 5. Sincronizar incrementalmente por hash; un documento sin cambios no se reenvia.
 
 **Se reutiliza:** `flujo/tools/research_job_router.py`, `tools/execute_research_job.py`, `cultura/mak_research/source_pipeline.py`, `flujo/src/flujo/web/hub.py`, `SourceCorpusStore` y los endpoints `/api/research/jobs` / `/api/research/operations-context`.
@@ -311,10 +313,11 @@ registrado ni endpoint. La extension `az ml` ya funciona.
 - Reconciliar Language y medir una muestra de OCR.
 - Mantener SearXNG/Ollama como ruta por defecto.
 
-### Meses 3-5: conectar el Search Free existente o decidir no usarlo
+### Meses 3-5: ampliar de forma incremental el Search Free existente
 
 - Medir corpus; si filesystem + SearXNG bastan, documentar no-creacion.
-- Si no bastan, crear un unico indice en `makmak-search` e integrarlo a `job_sources`.
+- Si no bastan, ampliar por hash los indices existentes e integrar resultados
+  a `job_sources`; el tier Free ya usa sus tres indices.
 
 ### Meses 5-7: Document Intelligence
 
@@ -357,10 +360,11 @@ Para cada servicio debe poder regenerarse una fila con recurso real, SKU, estado
 El plan no se considera ejecutado por crear recursos. Se considera ejecutado cuando la matriz se puede reconstruir desde comandos y archivos reales, y cada resultado puede volver a su fuente sin duplicar ninguna autoridad.
 
 En MAK la matriz viva se reconstruye desde `/api/azure/status`. Cada fila separa
-`resource_state` de `integration_state`: Search, MLflow y Application Insights
-son `operational`; Foundry es `operational_guarded`; Storage, Key Vault y ACR
-son `metadata_only`/`dependency_only`; APIM es `not_operational` porque su API
-no tiene backend. Los modelos estudiantiles permanecen bloqueados por defecto
+`resource_state` de `integration_state`: Search y MLflow son `operational`;
+Application Insights permanece `partial` hasta observar telemetria real;
+Foundry es `operational_guarded`; Storage, Key Vault y ACR son
+`metadata_only`/`dependency_only`; APIM es `not_operational` porque su API no
+tiene backend. Los modelos estudiantiles permanecen bloqueados por defecto
 mediante `MAK_AZURE_ALLOW_CREDIT`.
 
 ## Fuentes locales consultadas

@@ -7,11 +7,11 @@
 > surface, a second database, a second corpus or a second definition of "obra"
 > has misread it.
 >
-> Authority order for this subject: the operator -> `CLAUDE.md` ->
-> `context/LAST_HANDOFF.md` -> `docs/PORTAFOLIO_PRODUCCION.md` and
+> Authority order for this subject: the operator -> `DECISIONES.md` -> current
+> machine measurement -> `docs/PORTAFOLIO_PRODUCCION.md` and
 > `context/PLAN_MESA_DE_MONTAJE.md` (the two documents that hold the theory) ->
-> this file. Where this file and those two disagree, they win and this file is
-> wrong.
+> this file. `CLAUDE.md` and active handoffs are retired and must not be
+> recreated as authority.
 
 ## 1. What IRIS is
 
@@ -251,10 +251,11 @@ FLUJO consumer.
 
 ## 8. What a future consumer may take
 
-The ecosystem projects (LUCIDA, VIZZ, PUPILA, XIO, MOSAIK, CODEINE) are
-ARCHITECTURAL and FUTURE. They are not current dependencies. No agent working
-on MAK clones, imports or modifies them, and no second Hub, database, corpus or
-portfolio definition is created to make a hypothetical integration easier.
+The ecosystem projects remain separate products. XIO is now a current
+contract consumer through portable event/observation packages; LUCIDA, VIZZ,
+PUPILA, MOSAIK and CODEINE remain optional or future integrations unless a
+measured consumer says otherwise. No second Hub, database, corpus or portfolio
+definition is created to make a hypothetical integration easier.
 
 What may be consumed later, through a contract and nothing else:
 

@@ -74,3 +74,16 @@ Lo que el operador decidio, con la fecha en que lo dijo.
   `git-topology.yml`, su parrafo en `MAPA.md` y `context/LAST_HANDOFF.md`
   salen de `main` de nuevo; `HANDOFF_HISTORICO.md` sigue siendo el unico
   historico, tal como quedo fijado el 2026-09-03.
+
+---
+
+## 2026-09-20
+
+- **No mantener handoffs activos.** El operador prefiere que el trabajo se
+  cierre en código, contratos, pruebas y documentación técnica estable, no en
+  `NEXT.md`, `LAST_HANDOFF.md` ni archivos equivalentes. Los cinco `NEXT.md`
+  del frente evento/visión se retiraron después de migrar su evidencia durable.
+- **No existe contrato raíz activo.** `AGENTS.md` y `CLAUDE.md` permanecen
+  ausentes; las decisiones se leen aquí y los hechos se vuelven a medir. Esta
+  entrada supera la formulación del 2026-09-03 que proponía crear un único
+  `AGENTS.md`.

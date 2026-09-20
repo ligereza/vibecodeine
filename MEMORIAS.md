@@ -54,8 +54,8 @@ mira es el error que dos agentes seguidos cometieron:
   postulación FONDART Regional Creación 2027. Ninguna obra ni código de la
   mesa de montaje vive ahí todavía.
 
-`/home/mak/flujo` es un **worktree** del mismo `.git` de `/home/mak`
-(`gitdir: /home/mak/.git/worktrees/flujo-closeout`), no un segundo
-repositorio — vale la pena decirlo explícito porque "dos checkouts" (línea de
-arriba) se lee fácil como "dos repos".
-
+Corrección medida el 2026-09-20: `/home/mak` y `/home/mak/flujo` son
+**repositorios Git independientes**, con directorios `.git` distintos y
+remotos `ligereza/vibecodeine` y `ligereza/flujo`. La afirmación anterior que
+describía FLUJO como worktree del `.git` de MAK quedó obsoleta tras la
+separación.
