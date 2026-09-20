@@ -9,11 +9,12 @@ documentos de continuidad que ya no existen.
 from __future__ import annotations
 
 from pathlib import Path
+import json
 
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-CAPACIDADES = REPO_ROOT / "CAPACIDADES_MAK.md"
+TOOL_REGISTRY = REPO_ROOT / "data" / "tool_registry.json"
 TOOLS_DIR = REPO_ROOT / "tools"
 
 # El tope de 350 lineas se RETIRO el 2026-07-30, y esta es su acta.
@@ -71,8 +72,15 @@ def test_utilidades_inertes_no_aumentan():
     )
 
 
+def _tool_registry() -> dict[str, str]:
+    payload = json.loads(TOOL_REGISTRY.read_text(encoding="utf-8"))
+    tools = payload.get("tools", {})
+    assert isinstance(tools, dict) and tools, "data/tool_registry.json vacío o inválido"
+    return {str(name): str(status) for name, status in tools.items()}
+
+
 def test_tools_en_registro():
-    capacidades = CAPACIDADES.read_text(encoding="utf-8")
+    registry = _tool_registry()
     # `__init__.py` es el marcador que fija `tools.__path__` a este repositorio
     # para que el `tools/` del motor no lo eclipse via sys.path. No declara
     # capacidad ni tiene consumidor que nombrar, asi que no entra al registro.
@@ -86,45 +94,22 @@ def test_tools_en_registro():
     assert archivos, (
         "no se encontro ninguna herramienta en %s: el ratchet no midio nada, "
         "que no es lo mismo que estar limpio" % TOOLS_DIR)
-    faltantes = [
-        p.name for p in archivos if p.name not in capacidades
-    ]
+    faltantes = [p.name for p in archivos if p.name not in registry]
     assert not faltantes, (
-        "tools/<x>.py sin entrada en registro VIVO/MUERTO de "
-        "CAPACIDADES_MAK.md: toda herramienta declara consumidor o no entra "
-        "(regla 2026-07-25). Faltan: " + ", ".join(faltantes)
+        "tools/<x>.py sin entrada en data/tool_registry.json. "
+        "Faltan: " + ", ".join(faltantes)
     )
 
 
 def test_registro_sin_herramientas_fantasma():
-    """La direccion inversa, que faltaba (2026-07-27).
-
-    El ratchet solo miraba archivo -> registro, asi que una fila de una
-    herramienta BORRADA se quedaba ahi para siempre y nadie se enteraba. Caso
-    medido: `gen_piel_iskvw.py` figuraba como REVISAR en el registro y el
-    archivo no existia en ninguna rama, asi que el inventario mandaba a un
-    agente a buscar una herramienta inexistente. Un registro que miente en una
-    direccion miente igual.
-
-    Retiro: cuando el registro se genere desde el arbol de archivos.
-    """
-    import re
-
-    capacidades = CAPACIDADES.read_text(encoding="utf-8")
-    # Solo las filas de la tabla del registro: `nombre.py` en la primera celda.
-    declaradas = set(re.findall(r"^\|\s*`([a-z0-9_]+\.py)`\s*\|", capacidades,
-                                re.MULTILINE))
+    """El registro no puede conservar filas de herramientas ya borradas."""
+    declaradas = set(_tool_registry())
     existentes = {p.name for p in TOOLS_DIR.glob("*.py") if p.is_file()}
-    assert declaradas, (
-        "el registro de CAPACIDADES_MAK.md no declaro ninguna fila `x.py`: si la "
-        "tabla cambia de formato el regex deja de matchear y este ratchet pasa "
-        "sin medir nada")
     assert existentes, "no hay herramientas en tools/: nada que contrastar"
     fantasmas = sorted(declaradas - existentes)
     assert not fantasmas, (
-        "el registro de CAPACIDADES_MAK.md declara herramientas que no existen en "
-        "tools/: se borro el archivo y quedo la fila. Retirar la fila o "
-        "restaurar la herramienta. Fantasmas: " + ", ".join(fantasmas)
+        "data/tool_registry.json declara herramientas inexistentes: "
+        + ", ".join(fantasmas)
     )
 
 
@@ -242,7 +227,7 @@ def test_toda_excepcion_de_glifo_apunta_a_un_archivo_real_y_con_razon():
 # A VIVO claim has to survive being invoked
 # ---------------------------------------------------------------------------
 #
-# test_tools_en_registro checks that a tool's NAME appears in CAPACIDADES_MAK.md. It
+# test_tools_en_registro checks that a tool's NAME appears in data/tool_registry.json. It
 # does not check that the tool still runs, so a row can keep claiming VIVO for a
 # script that crashes on import. Measured on 2026-08-21 across the 40 VIVO rows:
 # all 40 compile, 39 answer --help, and the one that does not (system_map.py)
@@ -259,17 +244,8 @@ def test_toda_excepcion_de_glifo_apunta_a_un_archivo_real_y_con_razon():
 # with a message all pass.
 
 def _live_tools() -> list[str]:
-    import re
-
-    text = CAPACIDADES.read_text(encoding="utf-8")
-    start = text.find("## 5. Registro VIVO/MUERTO")
-    registry = text[start:] if start >= 0 else text
-    return [
-        name for name, state in re.findall(
-            r"^\|\s*`([a-z0-9_]+\.py)`\s*\|\s*(VIVO|REVISAR)\s*\|",
-            registry, re.MULTILINE)
-        if state == "VIVO"
-    ]
+    registry = _tool_registry()
+    return sorted(name for name, status in registry.items() if status == "VIVO")
 
 
 def test_the_registry_declares_live_tools():
