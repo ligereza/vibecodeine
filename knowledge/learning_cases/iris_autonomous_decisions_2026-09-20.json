@@ -1,0 +1,163 @@
+{
+  "schema": "mak-iris-autonomous-decision-session-v1",
+  "session_id": "iris-autonomous-20260920-01",
+  "decision_authority": "operator_delegated",
+  "decision_maker": "codex",
+  "status": "final",
+  "requires_approval": false,
+  "purpose": "reduce_review_surface_without_physical_actions",
+  "source": {
+    "queue": "curatoria_inbox/DIMENSIONES DEL ORDEN/review_exception_feedback_queue.json",
+    "scan_id": 1,
+    "strategy_trial_id": 11
+  },
+  "decisions": [
+    {
+      "project_id": 489,
+      "decision": "PRESERVE_ECOSYSTEM",
+      "confidence": 0.84,
+      "group_key": "threejs",
+      "reason": "Plantilla documental interna de three.js: componente técnico del ecosistema, no proyecto canónico independiente."
+    },
+    {
+      "project_id": 907,
+      "decision": "PRESERVE_ECOSYSTEM",
+      "confidence": 0.97,
+      "group_key": "rxjs-migrate-fixtures",
+      "reason": "Fixture de pruebas de migración RxJS; su valor depende del paquete que lo contiene."
+    },
+    {
+      "project_id": 33,
+      "decision": "PRESERVE_ECOSYSTEM",
+      "confidence": 0.82,
+      "group_key": "umbrella",
+      "reason": "Herramientas de workspace de umbrella; conservar como componente estructural del monorepo."
+    },
+    {
+      "project_id": 448,
+      "decision": "QUARANTINE_COPY",
+      "confidence": 0.99,
+      "group_key": "umbrella",
+      "reason": "Copia de staging ZIP del árbol umbrella; conservar virtualmente como snapshot histórico."
+    },
+    {
+      "project_id": 905,
+      "decision": "PRESERVE_ECOSYSTEM",
+      "confidence": 0.97,
+      "group_key": "rxjs-migrate-fixtures",
+      "reason": "Fixture de pruebas de migración RxJS; no representa una unidad autoral independiente."
+    },
+    {
+      "project_id": 908,
+      "decision": "PRESERVE_ECOSYSTEM",
+      "confidence": 0.97,
+      "group_key": "rxjs-migrate-fixtures",
+      "reason": "Fixture de pruebas de librería; conservar dentro de la familia técnica correspondiente."
+    },
+    {
+      "project_id": 906,
+      "decision": "PRESERVE_ECOSYSTEM",
+      "confidence": 0.97,
+      "group_key": "rxjs-migrate-fixtures",
+      "reason": "Fixture de plataforma para pruebas de migración; no es un proyecto canónico separado."
+    },
+    {
+      "project_id": 32,
+      "decision": "PRESERVE_ECOSYSTEM",
+      "confidence": 0.80,
+      "group_key": "effect",
+      "reason": "Scripts auxiliares del workspace effect; preservar junto al ecosistema que los consume."
+    },
+    {
+      "project_id": 31,
+      "decision": "QUARANTINE_COPY",
+      "confidence": 0.76,
+      "group_key": "effect",
+      "reason": "Scratchpad experimental sin procedencia suficiente; aislar virtualmente sin eliminarlo."
+    },
+    {
+      "project_id": 27,
+      "decision": "PRESERVE_ECOSYSTEM",
+      "confidence": 0.86,
+      "group_key": "airdrop-template",
+      "reason": "Plantilla web del esquema Airdrop/Chataigne; referencia técnica subordinada a su contenedor."
+    },
+    {
+      "project_id": 21,
+      "decision": "PRESERVE_ECOSYSTEM",
+      "confidence": 0.94,
+      "group_key": "umbrella",
+      "reason": "Monorepo umbrella coherente: mantener como ecosistema y no descomponerlo en proyectos autónomos."
+    },
+    {
+      "project_id": 855,
+      "decision": "QUARANTINE_COPY",
+      "confidence": 0.99,
+      "group_key": "umbrella",
+      "reason": "Dependencia vendorizada dentro de un snapshot histórico de umbrella."
+    },
+    {
+      "project_id": 689,
+      "decision": "QUARANTINE_COPY",
+      "confidence": 0.99,
+      "group_key": "umbrella",
+      "reason": "Paquete vendorizado dentro de un snapshot histórico; conservar sólo como copia trazable."
+    },
+    {
+      "project_id": 842,
+      "decision": "QUARANTINE_COPY",
+      "confidence": 0.99,
+      "group_key": "umbrella",
+      "reason": "Paquete vendorizado de staging ZIP; la copia no compite con el ecosistema principal."
+    },
+    {
+      "project_id": 24,
+      "decision": "KEEP_DERIVATIVE",
+      "confidence": 0.88,
+      "group_key": "ascii-motion",
+      "reason": "Prueba de exportación React ligada a Ascii-Motion, con historial y similitud de familia fuertes."
+    },
+    {
+      "project_id": 5,
+      "decision": "KEEP_DERIVATIVE",
+      "confidence": 0.88,
+      "group_key": "interface-family-ic6490d9d54f96",
+      "reason": "Derivación local funcional de una familia de interfaz; conservar su identidad como variante."
+    },
+    {
+      "project_id": 7,
+      "decision": "PRESERVE_ECOSYSTEM",
+      "confidence": 0.92,
+      "group_key": "interface-family-ic6490d9d54f96",
+      "reason": "Scaffold conocido de Google AI Studio; preservar como referencia externa, no como obra canónica."
+    },
+    {
+      "project_id": 45,
+      "decision": "PRESERVE_ECOSYSTEM",
+      "confidence": 0.91,
+      "group_key": "umbrella",
+      "reason": "Ejemplo ascii-raymarch perteneciente al ecosistema umbrella; la similitud no lo vuelve obra autónoma."
+    },
+    {
+      "project_id": 183,
+      "decision": "PRESERVE_ECOSYSTEM",
+      "confidence": 0.91,
+      "group_key": "umbrella",
+      "reason": "Ejemplo shader-ast-evo del ecosistema umbrella; conservar como ejemplo técnico relacionado."
+    },
+    {
+      "project_id": 20,
+      "decision": "PRESERVE_ECOSYSTEM",
+      "confidence": 0.97,
+      "group_key": "threejs",
+      "reason": "Monorepo three.js con identidad upstream: dependencia/ecosistema, no producción canónica de MAK."
+    },
+    {
+      "project_id": 4,
+      "decision": "KEEP_CANONICAL",
+      "confidence": 0.98,
+      "group_key": "ghost-arcade",
+      "reason": "Proyecto con identidad pública propia y señales funcionales de VJ/projection mapping."
+    }
+  ]
+}

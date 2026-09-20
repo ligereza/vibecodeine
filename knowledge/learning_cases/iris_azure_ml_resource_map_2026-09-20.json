@@ -1,0 +1,76 @@
+{
+  "schema": "mak-iris-azure-ml-resource-map-v1",
+  "verified_at": "2026-09-20",
+  "subscription": "Azure for Students",
+  "resource_group": "makmak",
+  "policy": {
+    "local_authority": true,
+    "remote_outputs_are_derived": true,
+    "raw_corpus_upload": false,
+    "automatic_publication": false,
+    "permanent_online_endpoint": false
+  },
+  "resources": [
+    {
+      "resource": "makmak-7457-resource",
+      "deployment": "gpt-5.6-luna",
+      "role": "bulk_curatorial_reader",
+      "capacity": 925,
+      "input": "sanitized evidence packets",
+      "output": "candidate decision with rationale"
+    },
+    {
+      "resource": "makmak-7457-resource",
+      "deployment": "gpt-5.6-sol",
+      "role": "adversarial_adjudicator",
+      "capacity": 500,
+      "input": "conflicts and low-confidence decisions",
+      "output": "independent critique and alternative"
+    },
+    {
+      "resource": "makmak-7457-resource",
+      "deployment": "text-embedding-3-small",
+      "role": "frozen_text_encoder",
+      "capacity": 120,
+      "input": "sanitized titles, descriptions and evidence summaries",
+      "output": "separate text feature channel"
+    },
+    {
+      "resource": "makmak-5202-resource",
+      "deployment": "gpt-oss-120b",
+      "role": "independent_challenger",
+      "capacity": 50,
+      "input": "bounded evaluation samples",
+      "output": "comparison verdict; never a gold label"
+    },
+    {
+      "resource": "makmak-ml-workspace",
+      "role": "dataset_lineage_training_and_evaluation",
+      "location": "brazilsouth",
+      "input": "versioned sanitized decision datasets",
+      "output": "MLflow runs, metrics and registered model candidates"
+    },
+    {
+      "resource": "makmak-cpu-cluster",
+      "role": "small_model_training",
+      "sku": "Standard_DS2_v2",
+      "min_instances": 0,
+      "max_instances": 1,
+      "input": "tabular baselines, linear heads and metric-learning experiments",
+      "output": "reproducible offline evaluations"
+    },
+    {
+      "resource": "makmak-search",
+      "role": "read_only_evidence_retrieval",
+      "sku": "Free",
+      "input": "source references and tool documentation",
+      "output": "evidence fragments with source metadata"
+    },
+    {
+      "resource": "makmak-ml-insights",
+      "role": "metadata_only_observability",
+      "input": "run status, latency, counts and errors",
+      "output": "technical telemetry without prompts or corpus"
+    }
+  ]
+}
