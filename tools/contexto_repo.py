@@ -41,7 +41,7 @@ def _skip(d: str) -> bool:
     return d in _SKIP_DIRS or d.startswith(".") or d.startswith("_")
 # carpetas que son SALIDA generada (no tocar / no explorar a mano)
 _GENERADAS = {"jobs", "projects", "datadrops", "context/*.html"}
-_KEY_NAMES = {"SKILL.md", "pyproject.toml", "cli.py"}
+_KEY_NAMES = {"SYSTEM.md", "SKILL.md", "pyproject.toml", "cli.py"}
 _MAXDEPTH = 3
 
 
@@ -262,7 +262,7 @@ def _task(keywords: str):
     kw = keywords.lower()
     print(f"# CONTEXTO PARA LA TAREA: {keywords}\n")
     print("== LEER PRIMERO (fuente de verdad, barato) ==")
-    for r in ("tools/contexto_repo.py --json", "tools/mak_status.py --json"):
+    for r in ("SYSTEM.md", "tools/contexto_repo.py --json", "tools/mak_status.py --json"):
         print(f"  {r}")
     hits = [routes for keys, routes in _TASK_ROUTES if any(k in kw for k in keys)]
     print("\n== RUTAS RELEVANTES A LA TAREA ==")
