@@ -22,7 +22,7 @@
       ],
       "contract": "context/diagnostics/contracts/core.md",
       "read_paths": [
-        "DECISIONES.md",
+        "SYSTEM.md",
         "pyproject.toml",
         "cultura/mak_plataforma/hub.py",
         "src/flujo/cli.py",
@@ -38,7 +38,7 @@
         "large databases",
         "virtual environments"
       ],
-      "read_paths_note": "AGENTS.md se retiro el 2026-09-05 por orden del operador. No se reemplaza por otro documento: los hechos se piden a tools/mak_status.py y las decisiones estan en DECISIONES.md."
+      "read_paths_note": "SYSTEM.md holds durable context; current facts come from tools/contexto_repo.py --json and tools/mak_status.py --json. AGENTS.md and persistent handoffs are retired."
     },
     "rd": {
       "branch_prefix": "rd",
