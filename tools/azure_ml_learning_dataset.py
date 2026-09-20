@@ -28,7 +28,15 @@ TRACKING_URI = (
     + WORKSPACE
 )
 DEFAULT_DB = "/home/mak/data/mak_knowledge.db"
-DEFAULT_OUT = "/home/mak/research/azure-ml/staging"
+STAGING_ROOT_ENV = "MAK_AZURE_ML_STAGING_ROOT"
+DEFAULT_STAGING_ROOT = "/home/mak/research/azure-ml/staging"
+
+
+def staging_root() -> str:
+    return os.environ.get(STAGING_ROOT_ENV, DEFAULT_STAGING_ROOT)
+
+
+DEFAULT_OUT = staging_root()
 
 
 def _rows(db_path: str) -> list[dict]:
@@ -101,7 +109,7 @@ def _patch_azureml_artifact_builder() -> str:
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="Exporta evaluaciones sanitizadas a MLflow Azure ML")
     parser.add_argument("--db", default=DEFAULT_DB)
-    parser.add_argument("--out", default=DEFAULT_OUT)
+    parser.add_argument("--out", default=staging_root())
     args = parser.parse_args(argv)
     dataset_path, metadata = export_dataset(args.db, args.out)
     try:

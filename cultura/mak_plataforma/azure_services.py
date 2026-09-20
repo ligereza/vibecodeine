@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import threading
@@ -18,6 +19,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 
@@ -28,6 +30,13 @@ SUBSCRIPTION_ID = os.environ.get(
 )
 RESOURCE_GROUP = os.environ.get("MAK_AZURE_RESOURCE_GROUP", "makmak")
 APPINSIGHTS_NAME = os.environ.get("MAK_APPINSIGHTS_NAME", "makmak-ml-insights")
+ML_STAGING_ROOT_ENV = "MAK_AZURE_ML_STAGING_ROOT"
+DEFAULT_ML_STAGING_ROOT = "/home/mak/research/azure-ml/staging"
+ML_LINEAGE_SCHEMA = "mak-azure-ml-learning-lineage-v1"
+ML_RECEIPT_SCHEMA = "mak-azure-ml-learning-dataset-v1"
+_SAFE_COUNTER_KEY = re.compile(r"[A-Za-z0-9_.:-]{1,80}\Z")
+_SAFE_VALUE = re.compile(r"[A-Za-z0-9_.:-]{1,160}\Z")
+_SHA256 = re.compile(r"[0-9a-fA-F]{64}\Z")
 _CONNECTION_LOCK = threading.Lock()
 _CONNECTION_CACHE: tuple[str, float] | None = None
 
@@ -111,12 +120,119 @@ def _service_rows(resources: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return result
 
 
+def _ml_staging_root() -> Path:
+    return Path(os.environ.get(ML_STAGING_ROOT_ENV, DEFAULT_ML_STAGING_ROOT)).expanduser()
+
+
+def _safe_counter(value: Any) -> dict[str, int]:
+    if not isinstance(value, dict):
+        return {}
+    result: dict[str, int] = {}
+    for key, count in value.items():
+        if (not isinstance(key, str) or not _SAFE_COUNTER_KEY.fullmatch(key)
+                or isinstance(count, bool) or not isinstance(count, int) or count < 0):
+            continue
+        result[key] = count
+    return result
+
+
+def _safe_value(value: Any) -> str | None:
+    if not isinstance(value, str) or not _SAFE_VALUE.fullmatch(value):
+        return None
+    return value
+
+
+def _project_learning_receipt(receipt: Any) -> dict[str, Any] | None:
+    if not isinstance(receipt, dict) or receipt.get("schema") != ML_RECEIPT_SCHEMA:
+        return None
+    projected: dict[str, Any] = {
+        "schema": ML_LINEAGE_SCHEMA,
+        "available": True,
+        "status": "present",
+    }
+    rows = receipt.get("rows")
+    if isinstance(rows, int) and not isinstance(rows, bool) and rows >= 0:
+        projected["rows"] = rows
+    fingerprints = receipt.get("dataset_fingerprints")
+    if isinstance(fingerprints, list):
+        projected["fingerprint_count"] = sum(
+            1 for item in fingerprints if isinstance(item, str) and item
+        )
+    projected["statuses"] = _safe_counter(receipt.get("statuses"))
+    projected["target_kinds"] = _safe_counter(receipt.get("target_kinds"))
+    digest = receipt.get("dataset_sha256")
+    if isinstance(digest, str) and _SHA256.fullmatch(digest):
+        projected["dataset_sha256"] = digest.lower()
+    for field in ("mlflow_run_id", "artifact_upload", "artifact_builder"):
+        safe = _safe_value(receipt.get(field))
+        if safe is not None:
+            projected[field] = safe
+    return projected
+
+
+def _learning_receipt_candidates(root: Path) -> list[Path]:
+    try:
+        entries = list(root.iterdir())
+    except OSError:
+        return []
+    candidates: list[tuple[int, str, Path]] = []
+    for entry in entries:
+        if not entry.is_dir() or entry.is_symlink():
+            continue
+        receipt = entry / "receipt.json"
+        if receipt.is_symlink() or not receipt.is_file():
+            continue
+        try:
+            stamp = receipt.stat().st_mtime_ns
+        except OSError:
+            continue
+        candidates.append((stamp, entry.name, receipt))
+    candidates.sort(key=lambda item: (item[0], item[1]), reverse=True)
+    return [item[2] for item in candidates]
+
+
+def machine_learning_lineage() -> dict[str, Any]:
+    """Project the newest local learning receipt without exposing its path."""
+    candidates = _learning_receipt_candidates(_ml_staging_root())
+    if not candidates:
+        return {
+            "schema": ML_LINEAGE_SCHEMA,
+            "available": False,
+            "status": "absent",
+        }
+    receipt_path = candidates[0]
+    try:
+        if receipt_path.stat().st_size > 2_000_000:
+            raise ValueError("receipt_too_large")
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+        return {
+            "schema": ML_LINEAGE_SCHEMA,
+            "available": False,
+            "status": "invalid",
+        }
+    projected = _project_learning_receipt(receipt)
+    if projected is None:
+        return {
+            "schema": ML_LINEAGE_SCHEMA,
+            "available": False,
+            "status": "invalid",
+        }
+    return projected
+
+
 def snapshot() -> dict[str, Any]:
     """Return the live resource map without revealing credentials."""
+    lineage = machine_learning_lineage()
     try:
         resources = _resource_inventory()
     except RuntimeError as exc:
-        return {"schema": SCHEMA, "available": False, "error": str(exc)}
+        return {
+            "schema": SCHEMA,
+            "available": False,
+            "error": str(exc),
+            "machine_learning_lineage": lineage,
+        }
     return {
         "schema": SCHEMA,
         "available": True,
@@ -125,6 +241,7 @@ def snapshot() -> dict[str, Any]:
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "services": _service_rows(resources),
         "resource_count": len(resources),
+        "machine_learning_lineage": lineage,
         "telemetry": {
             "resource": APPINSIGHTS_NAME,
             "payload_policy": "metadata_only",
