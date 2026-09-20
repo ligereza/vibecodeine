@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 """Measure the MAK organism and print it. Read-only.
 
-This exists because docs/MAK_ORGANISMO.md reached 496 lines of prose in a repo
-whose diagnosed problem was prose, and because rule 3 of docs/AUTORIDAD.md says
-no measured figure is written without its measurement date. The answer is not to
-write it: run this.
+This exists because machine state should be measured instead of copied into
+narrative status documents. Do not preserve changing counts in prose: run this.
 
 Usage:
     python3 tools/medir_organismo.py
