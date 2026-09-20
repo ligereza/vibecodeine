@@ -123,11 +123,6 @@ NO_REFERENCE_CLASSIFICATIONS = {
     # `compute_effort_residuals` left this table on 2026-09-04: it now has a
     # consumer, `tests/test_compute_effort_residuals.py`, which holds
     # `robust_scale` to the robustness its own docstring claims.
-    # `consolidate_static_duplicates` left this table on 2026-09-04: it now has
-    # a consumer, `tests/test_consolidate_static_duplicates.py`, which measures
-    # the `check_path` gate that keeps the tool out of WIN, GoogleDrive,
-    # OneDrive and the flujo checkout. A zero-reference classification for a
-    # referenced tool is exactly the staleness this table's own check reports.
     "context_pack": {"status": "manual_only", "source": "cli_declared"},
     "drenar_material": {"status": "manual_only", "source": "capabilities_5_ter"},
     "execute_research_job": {"status": "manual_only", "source": "capabilities_5_ter"},
