@@ -25,8 +25,8 @@ from .learning_policy import learning_summary as learning_policy_summary
 from .learning_policy import VERIFIED_OUTCOME_STATUSES as VERIFIED_EPISODE_STATUSES
 
 
-def _open_episode_states(con: sqlite3.Connection) -> dict[str, int]:
-    """Count only the episode states a project has not resolved yet.
+def _open_episode_rows(con: sqlite3.Connection) -> list[tuple[str, str, str]]:
+    """Return open episode rows after applying the per-project resolution gate.
 
     Episodes are immutable history. A project that recorded ``needs_evidence``
     and later recorded a verified execution has answered that item, so counting
@@ -37,23 +37,120 @@ def _open_episode_states(con: sqlite3.Connection) -> dict[str, int]:
     Read-only: this only reads ``project_episodes`` in row order.
     """
     latest_verified: dict[str, int] = {}
-    rows: list[tuple[int, str, str]] = []
-    for rowid, project_id, status in con.execute(
-        "SELECT rowid, project_id, status FROM project_episodes ORDER BY rowid"
+    rows: list[tuple[int, str, str, str]] = []
+    columns = {row[1] for row in con.execute("PRAGMA table_info(project_episodes)")}
+    phase_expression = "phase" if "phase" in columns else "''"
+    for rowid, project_id, phase, status in con.execute(
+        f"SELECT rowid, project_id, {phase_expression}, status "
+        "FROM project_episodes ORDER BY rowid"
     ):
         state = str(status or "").casefold()
         project = str(project_id or "")
-        rows.append((int(rowid), project, state))
+        rows.append((int(rowid), project, str(phase or "unknown"), state))
         if state in VERIFIED_EPISODE_STATUSES:
             latest_verified[project] = int(rowid)
-    counts: dict[str, int] = {}
-    for rowid, project, state in rows:
+    # A later episode that explicitly names an earlier episode is its
+    # successor in the same append-only lineage.  The parent remains useful
+    # history, but it is no longer a second current uncertainty.  Older
+    # fixtures may not have the parent column, hence the bounded compatibility
+    # path above and the separate query below.
+    superseded: set[int] = set()
+    if "parent_episode_id" in columns and "episode_id" in columns:
+        children = con.execute(
+            "SELECT parent_episode_id FROM project_episodes "
+            "WHERE parent_episode_id IS NOT NULL AND parent_episode_id != ''"
+        )
+        parent_ids = {str(row[0]) for row in children}
+        if parent_ids:
+            for rowid, episode_id, project in con.execute(
+                "SELECT rowid, episode_id, project_id FROM project_episodes"
+            ):
+                if str(episode_id) in parent_ids:
+                    superseded.add(int(rowid))
+
+    open_rows: list[tuple[str, str, str]] = []
+    for rowid, project, phase, state in rows:
         if state in VERIFIED_EPISODE_STATUSES:
+            continue
+        if rowid in superseded:
             continue
         if latest_verified.get(project, -1) > rowid:
             continue  # a later verified episode answered this one
+        open_rows.append((project, phase, state))
+    return open_rows
+
+
+def _open_episode_states(con: sqlite3.Connection) -> dict[str, int]:
+    """Count only the episode states a project has not resolved yet."""
+    counts: dict[str, int] = {}
+    for _project, _phase, state in _open_episode_rows(con):
         counts[state] = counts.get(state, 0) + 1
     return counts
+
+
+def _review_queue_summary(
+    con: sqlite3.Connection,
+    open_episode_rows: list[tuple[str, str, str]],
+) -> dict[str, Any]:
+    """Expose bounded review composition without creating a second queue."""
+    by_source_kind: dict[str, int] = {}
+    project_items: list[dict[str, Any]] = []
+    total_projects = 0
+    for project_id, title, encoded in con.execute(
+        "SELECT project_id,title,ir_json FROM project_records "
+        "WHERE state='review_required' ORDER BY project_id"
+    ):
+        total_projects += 1
+        try:
+            record = json.loads(encoded)
+        except (TypeError, json.JSONDecodeError):
+            record = {}
+        source = record.get("source", {}) if isinstance(record, dict) else {}
+        kind = str(source.get("kind") or "unknown") if isinstance(source, dict) else "unknown"
+        by_source_kind[kind] = by_source_kind.get(kind, 0) + 1
+        evidence = record.get("evidence", []) if isinstance(record, dict) else []
+        evidence_kinds = sorted({
+            str(item.get("kind")) for item in evidence
+            if isinstance(item, dict) and item.get("kind")
+        })
+        unknowns = record.get("unknowns", []) if isinstance(record, dict) else []
+        safe_unknowns = [str(item)[:300] for item in unknowns
+                         if isinstance(item, (str, int, float))]
+        project_items.append({
+            "project_id": str(project_id),
+            "title": str(title),
+            "source_kind": kind,
+            "source_root_observed_present": (
+                source.get("root_exists") if isinstance(source, dict) else None
+            ),
+            "unknown_count": len(record.get("unknowns", [])) if isinstance(record, dict) and isinstance(record.get("unknowns", []), list) else 0,
+            "unknowns": safe_unknowns,
+            "evidence_kinds": evidence_kinds,
+            "next_action": str(record.get("next_action") or "") if isinstance(record, dict) else "",
+        })
+
+    by_phase_status: dict[str, dict[str, int]] = {}
+    for _project, phase, status in open_episode_rows:
+        phase_key = str(phase or "unknown")
+        status_key = str(status or "unknown")
+        phase_counts = by_phase_status.setdefault(phase_key, {})
+        phase_counts[status_key] = phase_counts.get(status_key, 0) + 1
+    return {
+        "projects": {
+            "total": total_projects,
+            "by_source_kind": dict(sorted(by_source_kind.items())),
+            "items": sorted(project_items, key=lambda item: (
+                item["source_kind"], item["project_id"]
+            )),
+        },
+        "episodes": {
+            "open_total": len(open_episode_rows),
+            "by_phase_status": {
+                phase: dict(sorted(statuses.items()))
+                for phase, statuses in sorted(by_phase_status.items())
+            },
+        },
+    }
 
 
 def _read_only_connection(path: Path) -> sqlite3.Connection:
@@ -86,7 +183,13 @@ def learning_summary(database: str | Path) -> dict[str, Any]:
         # episode stays open only while that project has no later verified one,
         # which is exactly what its own next_action describes ("attach
         # verifiable evidence, then run the validator again").
-        result["episodes_open"] = _open_episode_states(con)
+        open_episode_rows = _open_episode_rows(con)
+        result["episodes_open"] = {
+            status: sum(1 for _project, _phase, row_status in open_episode_rows
+                        if row_status == status)
+            for status in sorted({row[2] for row in open_episode_rows})
+        }
+        result["review_queue"] = _review_queue_summary(con, open_episode_rows)
         result["rules"] = {row[0]: row[1] for row in con.execute("SELECT status,COUNT(*) FROM semantic_rules GROUP BY status")} if "semantic_rules" in tables else {}
         if "project_contracts" in tables:
             result["contracts"] = {
@@ -215,9 +318,23 @@ def operational_status(database: str | Path, *, repo_root: str | Path | None = N
                     "inspect the project evidence and unblock only after a bounded validation",
                 )
             elif state == "review_required":
+                queue = summary.get("review_queue") or {}
+                project_queue = queue.get("projects") if isinstance(queue, dict) else {}
+                source_counts = project_queue.get("by_source_kind", {}) if isinstance(project_queue, dict) else {}
+                source_detail = ", ".join(
+                    f"{kind}={amount}" for kind, amount in sorted(source_counts.items())
+                )
+                open_episodes = (queue.get("episodes", {}).get("open_total")
+                                 if isinstance(queue, dict) and isinstance(queue.get("episodes"), dict)
+                                 else None)
+                reason = f"{count} project(s) require review"
+                if source_detail:
+                    reason += f"; source kinds: {source_detail}"
+                if open_episodes is not None:
+                    reason += f"; open episodes: {open_episodes}"
                 add_item(
                     f"projects:{state}", "projects", state, "attention",
-                    f"{count} project(s) require review",
+                    reason,
                     "review evidence and consumer before allowing a project transition",
                 )
 

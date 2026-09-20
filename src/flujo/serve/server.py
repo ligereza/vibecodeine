@@ -351,10 +351,14 @@ def api_plano_render(evento):
     costos += "\nTOTAL: $%s\n" % format(total, ",d").replace(",", ".")
 
     validacion = validate_evento(ev_motor)
-    return {"layout": layout, "rider": rider, "costos": costos, "total": total,
+    result = {"layout": layout, "rider": rider, "costos": costos, "total": total,
             "pack": ev_motor.get("pack"), "pack_label": ev_motor.get("pack_label"),
             "validacion": {"ok": validacion["ok"], "errors": validacion["errors"],
                            "warnings": validacion["warnings"]}}
+    if evento.get("zone_overlay") is not None:
+        from ..vj.zone_overlay import prepare_zone_overlay
+        result["overlay"] = prepare_zone_overlay(evento["zone_overlay"])
+    return result
 
 
 # ---------------- handler HTTP ----------------
