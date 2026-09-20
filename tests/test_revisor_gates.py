@@ -48,7 +48,7 @@ def _isolated_log(tmp_path, monkeypatch):
     file exists to prevent.
 
     One test below already patches LOG by hand; this makes it unconditional.
-    See docs/MAK_ORGANISMO.md, section on log contamination.
+    See SYSTEM.md: observation and interpretation remain separate evidence layers.
     """
     monkeypatch.setattr(revisor, "LOG", str(tmp_path / "revisor.log"))
 
