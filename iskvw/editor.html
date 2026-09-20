@@ -939,8 +939,8 @@
   <div class="archive-view-header">
     <div class="archive-view-heading">
       <span class="archive-view-kicker">portafolio general · lectura interna</span>
-      <h2 id="archive-portfolio-title">Tres lecturas del mismo archivo</h2>
-      <p>Obras declaradas, campo observado y contexto de práctica permanecen separados. Esta superficie consulta el Hub en modo lectura.</p>
+      <h2 id="archive-portfolio-title">Cuatro lecturas del mismo archivo</h2>
+      <p>Obras declaradas, registros documentados, campo observado y contexto de práctica permanecen separados. Esta superficie consulta el Hub en modo lectura.</p>
     </div>
     <button type="button" class="archive-view-refresh" onclick="cargarArchivePortfolioView()">actualizar lectura</button>
   </div>
@@ -1145,7 +1145,7 @@ function estudioIcon(name){
 }
 
 function estudioMedia(item,focus=false){
-  const path=item?.asset_path||'';
+  const path=archiveViewMediaPath(item?.asset_path||'');
   if(!item?.asset_available||!path)return '<div class="inbox-sin">media no sincronizada</div>';
   const ext=path.split('?')[0].split('.').pop().toLowerCase();
   if(['mp4','mov','webm','m4v'].includes(ext))return `<video src="${esc(path)}" ${focus?'autoplay muted playsinline controls':'muted playsinline preload="metadata"'}></video>`;
@@ -1273,9 +1273,24 @@ function archiveViewBytes(value){
   return `${scaled.toFixed(index?1:0)} ${units[index]}`;
 }
 
+function archiveViewReference(value){
+  const reference=String(value||'');
+  return /^(?:file:\/\/|[\/\\]|~|[A-Za-z]:[\/\\])/i.test(reference)?'referencia local':reference;
+}
+
+function archiveViewText(value){
+  const text=String(value||'');
+  return text.replace(/(^|\s)(?:file:\/\/|~\/|\/|[A-Za-z]:[\\/])[^\s<>"']+/gi,'$1referencia local');
+}
+
+function archiveViewMediaPath(value){
+  const reference=String(value||'');
+  return archiveViewReference(reference)==='referencia local'?'':reference;
+}
+
 function archiveViewEvidenceList(rows,label){
   if(!Array.isArray(rows)||!rows.length)return '';
-  const items=rows.map(row=>`<li>${esc(row.statement||'')}<br><span class="archive-operator-ref">${esc(row.source_ref||'')}</span></li>`).join('');
+  const items=rows.map(row=>`<li>${esc(row.statement||'')}<br><span class="archive-operator-ref">${esc(archiveViewReference(row.source_ref))}</span></li>`).join('');
   return `<div class="archive-operator-evidence"><b>${esc(label)}</b><ul>${items}</ul></div>`;
 }
 
@@ -1292,12 +1307,12 @@ function archiveViewSideNote(side){
   const roleText=Object.keys(roles).sort().map(k=>`${k}=${Number(roles[k])}`).join(' ');
   const reconNote=recon?`${recon} decisión(es) de reconstrucción${roleText?` (${roleText})`:''}`:'sin reconstrucción';
   const rels=Number(side.index_relations?.touching_container||0);
-  return `${esc(side.container||'')} · ${esc(binding)} · ${esc(authority)}${pending?` · ${pending} hashes pendientes`:''} · ${esc(intakeNote)} · ${esc(reconNote)} · ${rels} relaciones del índice tocan el contenedor`;
+  return `${esc(archiveViewReference(side.container||''))} · ${esc(binding)} · ${esc(authority)}${pending?` · ${pending} hashes pendientes`:''} · ${esc(intakeNote)} · ${esc(reconNote)} · ${rels} relaciones del índice tocan el contenedor`;
 }
 
 function archiveViewOperatorQuestion(question,full){
   const grade=esc(question.evidence_grade||'sin grado');
-  const examples=(question.examples||[]).slice(0,3).map(esc).join(' · ');
+  const examples=(question.examples||[]).slice(0,3).map(archiveViewReference).map(esc).join(' · ');
   const answers=(question.answers||[]).map(esc).join(' / ');
   const unbound=(question.unbound_containers||[]);
   const tiers=question.identity_tiers||{};
@@ -1307,17 +1322,17 @@ function archiveViewOperatorQuestion(question,full){
   const head=`<b>${esc(question.left)} ↔ ${esc(question.right)}</b> <span class="archive-operator-grade" data-grade="${grade}">${grade} · ${esc(archiveViewBytes(question.substantive_shared_bytes))} sustantivos</span>${tierText?` <span class="archive-operator-grade" data-grade="tier">${esc(tierText)}</span>`:''}`;
   if(!full){
     const defer=question.deferral_reason?`<br><i>diferida: ${esc(question.deferral_reason)}</i>`:'';
-    return `<li>${head}<br><small>${Number(question.shared_classes||0)} clases · ${esc(archiveViewBytes(question.shared_bytes))} · opciones: ${answers} · relación tipada que une el par: ${binding}${kinds.length?` · evidencia accionable: ${kinds.map(esc).join(', ')}`:''}${unbound.length?` · sin contenedor indexado: ${unbound.map(esc).join(', ')}`:''}${defer}<br>${esc(question.evidence_ref||'')}</small></li>`;
+    return `<li>${head}<br><small>${Number(question.shared_classes||0)} clases · ${esc(archiveViewBytes(question.shared_bytes))} · opciones: ${answers} · relación tipada que une el par: ${binding}${kinds.length?` · evidencia accionable: ${kinds.map(esc).join(', ')}`:''}${unbound.length?` · sin contenedor indexado: ${unbound.map(archiveViewReference).map(esc).join(', ')}`:''}${defer}<br>${esc(archiveViewReference(question.evidence_ref))}</small></li>`;
   }
   const bi=question.byte_identity||{};
   const sides=question.sides||{};
   const spanning=Number(bi.classes_spanning_more_than_two_containers||0);
-  const others=(bi.other_containers_in_shared_classes||[]).map(esc).join(', ');
+  const others=(bi.other_containers_in_shared_classes||[]).map(archiveViewReference).map(esc).join(', ');
   const byteLine=`recomputado desde el registro de bytes: ${Number(bi.recomputed_shared_classes||0)} clases · ${esc(archiveViewBytes(bi.recomputed_shared_bytes))} · reproduce la fuente: ${bi.matches_declared_question?'sí':'no'} · sustantivas ${Number(bi.substantive_class_count||0)} · vacías ${Number(bi.zero_byte_class_count||0)} · AppleDouble ${Number(bi.appledouble_class_count||0)}${spanning?` · ${spanning} clases alcanzan también: ${others}`:''}`;
   const tr=question.typed_relations||{};
   const trLine=`relación tipada que une este par: ${Number(tr.binding_this_pair||0)} · relaciones del índice que tocan un contenedor: ${Number(tr.relations_touching_either_container||0)} (${Number(tr.empty_content_duplicates_touching_either_container||0)} son duplicados sobre contenido vacío) · el índice tiene ${Number(tr.index_typed_non_duplicate_relations||0)} relaciones tipadas no-duplicado y ${Number(tr.index_cross_container_typed_non_duplicate_relations||0)} cruzan contenedores`;
   const memberCount=Number(bi.shared_member_path_count||0);
-  const members=(bi.shared_member_paths||[]).map(esc).join(' · ');
+  const members=(bi.shared_member_paths||[]).map(archiveViewReference).map(esc).join(' · ');
   const kindLine=kinds.length?`evidencia accionable disponible: ${kinds.map(esc).join(', ')}`:`sin evidencia accionable: ${esc(question.deferral_reason||'')}`;
   return `<li>${head}<br>${esc(question.question||'')}
     <div class="archive-operator-meta">${esc(kindLine)}</div>
@@ -1329,9 +1344,9 @@ function archiveViewOperatorQuestion(question,full){
     ${archiveViewEvidenceList(question.evidence_for,'Evidencia a favor')}
     ${archiveViewEvidenceList(question.evidence_against,'Evidencia en contra')}
     ${archiveViewEvidenceList(question.missing_evidence,'Evidencia faltante')}
-    <div class="archive-operator-meta">reabrir cuando: ${esc(question.reopen_when||'')} <span class="archive-operator-ref">(${esc(question.reopen_when_source||'')})</span></div>
+    <div class="archive-operator-meta">reabrir cuando: ${esc(question.reopen_when||'')} <span class="archive-operator-ref">(${esc(archiveViewReference(question.reopen_when_source))})</span></div>
     <div class="archive-operator-meta">resuelve: ${esc((question.resolution||{}).resolved_by||'operator_attestation_only')} · machine_answerable=false · selection_effect=none</div>
-    <div class="archive-operator-ref">${esc(question.evidence_ref||'')}</div></li>`;
+    <div class="archive-operator-ref">${esc(archiveViewReference(question.evidence_ref))}</div></li>`;
 }
 
 function archiveViewOperatorSection(basis){
@@ -1340,14 +1355,14 @@ function archiveViewOperatorSection(basis){
   const triage=review.triage||{};
   const grades=triage.grade_counts||{};
   const gradeText=Object.keys(grades).sort().map(key=>`${Number(grades[key])} ${esc(key)}`).join(' · ');
-  const unbound=(triage.unbound_containers||[]).map(esc).join(', ');
+  const unbound=(triage.unbound_containers||[]).map(archiveViewReference).map(esc).join(', ');
   const asked=review.question_samples.map(question=>archiveViewOperatorQuestion(question,true)).join('');
   const deferred=(review.deferred_samples||[]).map(question=>archiveViewOperatorQuestion(question,false)).join('');
   const deferredBlock=deferred?`<details class="archive-contracurator-map"><summary>${(review.deferred_samples||[]).length} preguntas diferidas · reabribles</summary><ul class="archive-contracurator-list">${deferred}</ul></details>`:'';
   const frontier=basis.research_frontier||{};
-  const gates=(frontier.blocking_gates||[]).map(gate=>`<li><b>${esc(gate.gate||'')}</b><br>${esc(gate.why_refused||'')}<br><span class="archive-operator-ref">${esc(gate.source_ref||'')}</span></li>`).join('');
+  const gates=(frontier.blocking_gates||[]).map(gate=>`<li><b>${esc(gate.gate||'')}</b><br>${esc(gate.why_refused||'')}<br><span class="archive-operator-ref">${esc(archiveViewReference(gate.source_ref))}</span></li>`).join('');
   const pilot=frontier.existing_pilot_chain||{};
-  const pilotBlock=pilot.status==='present_pilot_scope'?`<div class="archive-operator-meta"><b>Cadena piloto preexistente, citada y no adoptada.</b> ${Number(pilot.relation_count||0)} relaciones ${esc(Object.keys(pilot.relation_statuses||{}).join(', '))} en <span class="archive-operator-ref">${esc(pilot.relations_ref||'')}</span> sha256 ${esc(String(pilot.relations_sha256||'').slice(0,16))}… · frontera ya compilada: ${Number(pilot.research_frontier?.job_count||0)} job(s) ${esc(pilot.research_frontier?.status||'')}, ${Number(pilot.research_frontier?.dispatched_job_count||0)} despachados.<br>No se adopta porque: ${(pilot.why_not_adopted||[]).map(esc).join(' · ')}<br>No sirve para: ${(pilot.not_usable_for||[]).map(esc).join(' · ')}</div>`:'';
+  const pilotBlock=pilot.status==='present_pilot_scope'?`<div class="archive-operator-meta"><b>Cadena piloto preexistente, citada y no adoptada.</b> ${Number(pilot.relation_count||0)} relaciones ${esc(Object.keys(pilot.relation_statuses||{}).join(', '))} en <span class="archive-operator-ref">${esc(archiveViewReference(pilot.relations_ref))}</span> sha256 ${esc(String(pilot.relations_sha256||'').slice(0,16))}… · frontera ya compilada: ${Number(pilot.research_frontier?.job_count||0)} job(s) ${esc(pilot.research_frontier?.status||'')}, ${Number(pilot.research_frontier?.dispatched_job_count||0)} despachados.<br>No se adopta porque: ${(pilot.why_not_adopted||[]).map(esc).join(' · ')}<br>No sirve para: ${(pilot.not_usable_for||[]).map(esc).join(' · ')}</div>`:'';
   const frontierBlock=`<div class="archive-operator-frontier"><b>Frontera de investigación (${esc(frontier.scope||'ssd_order_frontier')}): ${esc(frontier.status||'abstain')}</b> · ${Number(frontier.job_count||0)} jobs · dispatch=false · create_job_invoked=false<br>${esc(frontier.reason||'')}${frontier.precision_note?`<br><i>${esc(frontier.precision_note)}</i>`:''}<ul class="archive-contracurator-list">${gates}</ul>${pilotBlock}<div class="archive-operator-meta">reabrir cuando: ${esc(frontier.reopen_when||'')}</div></div>`;
   const tiers=review.identity_tiers||{};
   const tierRec=tiers.recomputed_from_ledger||{};
@@ -1359,7 +1374,7 @@ function archiveViewOperatorSection(basis){
   const linkClasses=audit.operational_possible_link_classes||{};
   const linkText=Object.keys(linkClasses).sort().map(k=>`${Number(linkClasses[k])}×${esc(k)}`).join(' · ');
   const auditBlock=audit.candidates_checked?`<p class="archive-operator-meta">Cruce SSD↔ISKVW auditado uno por uno sobre ${(audit.bases_scanned||[]).length} superficies: ${Number(audit.candidates_checked)} candidatos · con hash de contenido compartido ${Number(audit.with_shared_content_hash||0)} · con recibo de entrega ${Number(audit.with_delivery_receipt||0)} · con referencia tipada ${Number(audit.with_typed_reference||0)} · ecos de locator en filenames derivados ${Number(audit.derived_locator_echoes||0)} (no son referencias)${linkText?` · enlaces operacionales preexistentes ${Number(audit.operational_possible_links||0)} (${linkText}), no vinculan`:''}. ${esc(audit.conclusion||'')}</p>`:'';
-  const sources=(review.evidence_sources||[]).map(row=>`${esc(row.role||'')}: ${esc(row.path||'')}${row.sha256?` · sha256 ${esc(String(row.sha256).slice(0,16))}…`:row.status?` · ${esc(row.status)}`:''}`).join('<br>');
+  const sources=(review.evidence_sources||[]).map(row=>`${esc(row.role||'')}: ${esc(archiveViewReference(row.path))}${row.sha256?` · sha256 ${esc(String(row.sha256).slice(0,16))}…`:row.status?` · ${esc(row.status)}`:''}`).join('<br>');
   return `<details class="archive-contracurator-map archive-operator">
     <summary>Frontera operatoria · ${Number(review.asked_count||0)} preguntas prioritarias + ${Number(review.deferred_count||0)} diferidas · no resueltas por MAK</summary>
     <p class="archive-operator-warning">Son preguntas para una persona, no respuestas de MAK. MAK no puede saber si dos carpetas son la misma comisión. Ninguna de estas filas cambia la selección: <b>no usada para seleccionar</b> · <b>falta referencia tipada</b> · <b>database_write=false</b> · <b>training=false</b>.</p>
@@ -1376,8 +1391,12 @@ function archiveViewOperatorSection(basis){
 }
 
 function archiveViewDisplayLabel(item){
-  if(typeof item?.title==='string'&&item.title.trim())return {text:item.title.trim(),neutral:false};
-  return {text:`ref · ${String(item?.item_id||'sin-id')}`,neutral:true};
+  const title=typeof item?.title==='string'?item.title.trim():'';
+  if(title){
+    const safeTitle=archiveViewText(title);
+    return {text:safeTitle,neutral:safeTitle!==title};
+  }
+  return {text:`ref · ${archiveViewReference(item?.item_id||'sin-id')}`,neutral:true};
 }
 
 function archiveViewFormatLabel(formatId){
@@ -1413,13 +1432,15 @@ function archiveViewContracurator(view){
   const byRef=new Map(view.items.map(item=>[item.source_ref,item]));
   const selected=exhibition.why_in.map(row=>{
     const item=byRef.get(row.source_ref);
-    const label=item?archiveViewDisplayLabel(item):{text:row.source_ref,neutral:true};
-    return `<li><b>${esc(label.text)}</b><br>${esc(row.contextual_reason)}<br><small>${esc(row.source_ref)} · ${row.relation_refs.length} vínculos tipados</small></li>`;
+  const label=item?archiveViewDisplayLabel(item):{text:archiveViewReference(row.source_ref),neutral:true};
+    return `<li><b>${esc(label.text)}</b><br>${esc(archiveViewText(row.contextual_reason))}<br><small>${esc(archiveViewReference(row.source_ref))} · ${row.relation_refs.length} vínculos tipados</small></li>`;
   }).join('');
-  const excluded=exhibition.why_out.map(row=>`<li><b>${esc(row.source_ref)}</b><br>${esc(row.reason)}</li>`).join('');
-  const defeated=data.theses.filter(thesis=>thesis.assessment?.status==='defeated').map(thesis=>`<li><b>${esc(thesis.thesis_id)}</b><br>${esc((thesis.assessment.rejection_reasons||[]).join(' · '))}</li>`).join('');
+  const excluded=exhibition.why_out.map(row=>`<li><b>${esc(archiveViewReference(row.source_ref))}</b><br>${esc(archiveViewText(row.reason))}</li>`).join('');
+  const defeated=data.theses.filter(thesis=>thesis.assessment?.status==='defeated').map(thesis=>`<li><b>${esc(thesis.thesis_id)}</b><br>${esc(archiveViewText((thesis.assessment.rejection_reasons||[]).join(' · ')))}</li>`).join('');
+  const counterevidence=data.theses.reduce((rows,thesis)=>rows.concat(thesis.counterevidence||[]),[]);
+  const counterevidenceDetails=`<details class="archive-contracurator-map"><summary>Contraevidencia conservada (${counterevidence.length})</summary><ul class="archive-contracurator-list">${counterevidence.map((row,index)=>`<li><b>${esc(archiveViewText(row.statement||'Contraevidencia sin statement legible.'))}</b>${row.reason?`<br><span>Razón: ${esc(archiveViewText(row.reason))}</span>`:''}${Array.isArray(row.source_refs)?`<br><small>Referencias lógicas: ${row.source_refs.length}</small>`:''}</li>`).join('')}</ul></details>`;
   const alternate=exhibition.alternative_version;
-  const limits=(data.result.limits||[]).map(limit=>esc(limit)).join(' · ');
+  const limits=(data.result.limits||[]).map(limit=>esc(archiveViewText(limit))).join(' · ');
   const basis=data.provenance?.ssd_order_foundation;
   const basisInventory=basis?.inventory;
   const basisOrder=basis?.order_summary;
@@ -1430,7 +1451,7 @@ function archiveViewContracurator(view){
   const basisTriageText=Object.keys(basisTriage).sort().map(key=>`${Number(basisTriage[key])} ${key}`).join(' / ');
   const basisNote=basis?`Base SSD: ${esc(basis.status)} · ${basisInventory?.assets||0} assets / ${basisInventory?.projects||0} proyectos · ${basisOrder?.operator_ties||0} empates abiertos · ${basisReview?.asked_count||basisOrder?.questions_to_ask||0} preguntas operador${basisReview?.deferred_count?` + ${basisReview.deferred_count} diferidas`:''}${basisTriageText?` (${esc(basisTriageText)})`:''} · cruce SSD↔ISKVW: ${esc(basis.crosswalk_status)}${basisCandidates?` (${basisCandidates} candidatos por locator)` : ''} · ${basis.used_for_selection?'habilitada por referencia tipada':'no usada para seleccionar: falta referencia tipada'}`:'Base SSD no adjunta en esta ejecución';
   const operatorQuestionDetails=basis?archiveViewOperatorSection(basis):'';
-  return `<section class="archive-contracurator" aria-labelledby="archive-contracurator-title"><div class="archive-contracurator-header"><h3 id="archive-contracurator-title">Contracurador · ${esc(exhibition.title)}</h3><span class="archive-contracurator-status">tesis sobreviviente</span></div><p class="archive-contracurator-text">${esc(exhibition.curatorial_text)}</p><div class="archive-contracurator-grid"><section class="archive-contracurator-card"><h4>Por qué entra</h4><ul class="archive-contracurator-list">${selected}</ul></section><section class="archive-contracurator-card"><h4>Dos tesis derrotadas</h4><ul class="archive-contracurator-list">${defeated}</ul><div class="archive-contracurator-defeat"><b>Versión alternativa:</b> ${esc(alternate.title)} · ${esc(alternate.status)}<br>${esc(alternate.reason)}</div></section></div><details class="archive-contracurator-map"><summary>Mapa completo: por qué queda fuera (${exhibition.why_out.length})</summary><ul class="archive-contracurator-list">${excluded}</ul></details>${operatorQuestionDetails}<div class="archive-contracurator-limit">Límites: ${limits}<br>${basisNote}<br>Episodio causal: ${esc(data.product_episode.episode_id)} · database_write=false · training=false.</div></section>`;
+  return `<section class="archive-contracurator" aria-labelledby="archive-contracurator-title"><div class="archive-contracurator-header"><h3 id="archive-contracurator-title">Contracurador · ${esc(archiveViewText(exhibition.title))}</h3><span class="archive-contracurator-status">hipótesis interna · no aprobación</span></div><p class="archive-contracurator-text">${esc(archiveViewText(exhibition.curatorial_text))}</p><div class="archive-contracurator-grid"><section class="archive-contracurator-card"><h4>Por qué entra</h4><ul class="archive-contracurator-list">${selected}</ul></section><section class="archive-contracurator-card"><h4>Dos tesis derrotadas</h4><ul class="archive-contracurator-list">${defeated}</ul><div class="archive-contracurator-defeat"><b>Versión alternativa:</b> ${esc(archiveViewText(alternate.title))} · ${esc(archiveViewText(alternate.status))}<br>${esc(archiveViewText(alternate.reason))}</div></section></div><details class="archive-contracurator-map"><summary>Mapa completo: por qué queda fuera (${exhibition.why_out.length})</summary><ul class="archive-contracurator-list">${excluded}</ul></details>${counterevidenceDetails}${operatorQuestionDetails}<div class="archive-contracurator-limit">Límites: ${limits}<br>${basisNote}<br>Episodio causal: ${esc(archiveViewText(data.product_episode.episode_id))} · database_write=false · training=false.</div></section>`;
 }
 
 function archiveViewReadyContent(view){
@@ -1448,15 +1469,15 @@ function archiveViewReadyContent(view){
     return `<section class="archive-view-format" aria-labelledby="archive-view-${esc(format.format_id)}"><div class="archive-view-format-header"><h3 id="archive-view-${esc(format.format_id)}">${esc(archiveViewFormatLabel(format.format_id))}</h3><b>${format.item_ids.length}</b></div><div class="archive-view-format-purpose">${esc(format.purpose)} — ${esc(note.role)} · estado ${esc(note.status)}</div>${body}</section>`;
   }).join('');
   const gaps=view.gaps.length?view.gaps.map(gap=>esc(gap)).join(' · '):'sin gaps declarados';
-  return `<div class="archive-view-summary" aria-label="Conteos del archivo"><div class="archive-view-stat"><b>${view.catalog.piece_count}</b><span>piezas fuente</span></div><div class="archive-view-stat"><b>${view.catalog.link_count}</b><span>vínculos fuente</span></div><div class="archive-view-stat"><b>${view.selection.selected_item_count}</b><span>filas visibles</span></div><div class="archive-view-stat"><b>${view.selection.omitted_piece_count}</b><span>omitidas, no borradas</span></div></div><div class="archive-view-formats">${formats}</div>${archiveViewContracurator(view)}<div class="archive-view-gaps"><strong>Gaps declarados:</strong> ${gaps}</div><div class="archive-view-source">procedencia: ${esc(view.source.path_hint)} · ${esc(view.source.fuente)} · generado ${esc(view.source.generated||'sin fecha declarada')} · ${esc(view.source.input_hash)}</div><div class="archive-view-boundary">Lectura interna y read-only. No infiere autor, serie, publicación ni elegibilidad; publicación=false · submission=false · dispatch=false · promotion=none.</div>`;
+  return `<div class="archive-view-summary" aria-label="Conteos del archivo"><div class="archive-view-stat"><b>${view.catalog.piece_count}</b><span>piezas fuente</span></div><div class="archive-view-stat"><b>${view.catalog.link_count}</b><span>vínculos fuente</span></div><div class="archive-view-stat"><b>${view.selection.selected_item_count}</b><span>filas visibles</span></div><div class="archive-view-stat"><b>${view.selection.omitted_piece_count}</b><span>omitidas, no borradas</span></div></div><div class="archive-view-formats">${formats}</div>${archiveViewContracurator(view)}<div class="archive-view-gaps"><strong>Gaps declarados:</strong> ${gaps}</div><div class="archive-view-source">procedencia: ${esc(view.source.path_hint)} · ${esc(archiveViewReference(view.source.fuente))} · generado ${esc(view.source.generated||'sin fecha declarada')} · ${esc(view.source.input_hash)}</div><div class="archive-view-boundary">Lectura interna y read-only. No infiere autor, serie, publicación ni elegibilidad; publicación=false · submission=false · dispatch=false · promotion=none.</div>`;
 }
 
 function estudioArchivePortfolioView(){
   let content='<div class="archive-view-status" role="status">La lectura general todavía no se ha solicitado.</div>';
-  if(ARCHIVE_PORTFOLIO_STATE==='loading')content='<div class="archive-view-status" role="status">Cargando las tres lecturas del archivo…</div>';
+  if(ARCHIVE_PORTFOLIO_STATE==='loading')content='<div class="archive-view-status" role="status">Cargando las cuatro lecturas del archivo…</div>';
   if(ARCHIVE_PORTFOLIO_STATE==='unavailable')content='<div class="archive-view-status" data-kind="error" role="alert">Vista general no disponible. No se muestran datos parciales; el archivo y sus decisiones permanecen sin cambios.</div>';
   if(ARCHIVE_PORTFOLIO_STATE==='ready'&&ARCHIVE_PORTFOLIO_VIEW)content=archiveViewReadyContent(ARCHIVE_PORTFOLIO_VIEW);
-  return `<section id="archive-portfolio-view" class="archive-view" data-state="${esc(ARCHIVE_PORTFOLIO_STATE)}" aria-labelledby="archive-portfolio-title"><div class="archive-view-header"><div class="archive-view-heading"><span class="archive-view-kicker">portafolio general · lectura interna</span><h2 id="archive-portfolio-title">Tres lecturas del mismo archivo</h2><p>Obras declaradas, campo observado y contexto de práctica permanecen separados. Esta superficie consulta el Hub en modo lectura.</p></div><button type="button" class="archive-view-refresh" onclick="cargarArchivePortfolioView()" ${ARCHIVE_PORTFOLIO_STATE==='loading'?'disabled':''}>actualizar lectura</button></div><div id="archive-portfolio-content">${content}</div></section>`;
+  return `<section id="archive-portfolio-view" class="archive-view" data-state="${esc(ARCHIVE_PORTFOLIO_STATE)}" aria-labelledby="archive-portfolio-title"><div class="archive-view-header"><div class="archive-view-heading"><span class="archive-view-kicker">portafolio general · lectura interna</span><h2 id="archive-portfolio-title">Cuatro lecturas del mismo archivo</h2><p>Obras declaradas, registros documentados, campo observado y contexto de práctica permanecen separados. Esta superficie consulta el Hub en modo lectura.</p></div><button type="button" class="archive-view-refresh" onclick="cargarArchivePortfolioView()" ${ARCHIVE_PORTFOLIO_STATE==='loading'?'disabled':''}>actualizar lectura</button></div><div id="archive-portfolio-content">${content}</div></section>`;
 }
 
 function archiveViewRefreshPanel(){
@@ -1492,7 +1513,7 @@ function estudioOption(step,value,label,variant=''){
 function estudioDecisionPanel(item){
   const state=ESTUDIO_DECISIONS.get(item.id)||{};
   const values=Object.values(state).filter(Boolean);
-  return `<aside class="estudio-decisions"><div class="estudio-decisions-header">decisiones <span>${values.length?`${values.length} capas activas`:'en etapas'}</span></div><div class="estudio-step"><div class="estudio-step-title"><span class="estudio-step-number">1</span>propia / cliente</div><div class="estudio-option-grid">${estudioOption('ownership','personal','propia')}${estudioOption('ownership','client','cliente')}</div></div><div class="estudio-step"><div class="estudio-step-title"><span class="estudio-step-number">2</span>propósito</div><div class="estudio-option-grid">${estudioOption('purpose','expression','expresión')}${estudioOption('purpose','research','investigación')}${estudioOption('purpose','narrative','narrativo')}${estudioOption('purpose','commercial','comercial')}${estudioOption('purpose','expositive','expositivo')}${estudioOption('purpose','editorial','editorial')}</div></div><div class="estudio-step"><div class="estudio-step-title"><span class="estudio-step-number">3</span>naturaleza</div><div class="estudio-option-grid" data-columns="3">${estudioOption('nature','2d','2D')}${estudioOption('nature','3d','3D')}${estudioOption('nature','hybrid','híbrida')}</div></div><div class="estudio-step"><div class="estudio-step-title"><span class="estudio-step-number">4</span>formato principal</div><div class="estudio-option-grid">${estudioOption('format','video','video','estudio-option-violet')}${estudioOption('format','illustration','ilustración')}${estudioOption('format','print','impresa')}${estudioOption('format','web','web')}</div></div><div class="estudio-decision-status">${values.length?`Borrador de esta pieza: <strong>${values.length} capas elegidas</strong>.`:'Elige una capa para empezar; las demás no se inventan.'}</div><details class="estudio-organization"><summary>organización <span>(plegado)</span></summary><div class="estudio-organization-grid"><div class="estudio-path"><b>origen actual</b><span>${esc(item.asset_path||'media no sincronizada')}</span></div><div class="estudio-path"><b>destino propuesto</b><span>pendiente de regla humana</span></div><div class="estudio-path"><b>estado</b><span>ningún archivo se ha movido</span></div></div><button type="button" onclick="estudioAction('organize')">previsualizar orden</button></details></aside>`;
+  return `<aside class="estudio-decisions"><div class="estudio-decisions-header">decisiones <span>${values.length?`${values.length} capas activas`:'en etapas'}</span></div><div class="estudio-step"><div class="estudio-step-title"><span class="estudio-step-number">1</span>propia / cliente</div><div class="estudio-option-grid">${estudioOption('ownership','personal','propia')}${estudioOption('ownership','client','cliente')}</div></div><div class="estudio-step"><div class="estudio-step-title"><span class="estudio-step-number">2</span>propósito</div><div class="estudio-option-grid">${estudioOption('purpose','expression','expresión')}${estudioOption('purpose','research','investigación')}${estudioOption('purpose','narrative','narrativo')}${estudioOption('purpose','commercial','comercial')}${estudioOption('purpose','expositive','expositivo')}${estudioOption('purpose','editorial','editorial')}</div></div><div class="estudio-step"><div class="estudio-step-title"><span class="estudio-step-number">3</span>naturaleza</div><div class="estudio-option-grid" data-columns="3">${estudioOption('nature','2d','2D')}${estudioOption('nature','3d','3D')}${estudioOption('nature','hybrid','híbrida')}</div></div><div class="estudio-step"><div class="estudio-step-title"><span class="estudio-step-number">4</span>formato principal</div><div class="estudio-option-grid">${estudioOption('format','video','video','estudio-option-violet')}${estudioOption('format','illustration','ilustración')}${estudioOption('format','print','impresa')}${estudioOption('format','web','web')}</div></div><div class="estudio-decision-status">${values.length?`Borrador de esta pieza: <strong>${values.length} capas elegidas</strong>.`:'Elige una capa para empezar; las demás no se inventan.'}</div><details class="estudio-organization"><summary>organización <span>(plegado)</span></summary><div class="estudio-organization-grid"><div class="estudio-path"><b>origen actual</b><span>${esc(archiveViewReference(item.asset_path)||'media no sincronizada')}</span></div><div class="estudio-path"><b>destino propuesto</b><span>pendiente de regla humana</span></div><div class="estudio-path"><b>estado</b><span>ningún archivo se ha movido</span></div></div><button type="button" onclick="estudioAction('organize')">previsualizar orden</button></details></aside>`;
 }
 
 function estudioPendingItems(){
@@ -1537,6 +1558,8 @@ function estudioRender(){
   const selected=Boolean(item.selection==='seleccionar');
   const reviewButton=pending?`<button type="button" class="estudio-dock-button" data-estudio-review="true" onclick="estudioAction('review')">${estudioIcon('triangle')}<span>revisar candidato</span></button>`:'';
   app.innerHTML=`<div class="estudio-subtitle">curaduría · contexto · decisión</div><div class="estudio-layout"><nav class="estudio-left-rail" aria-label="herramientas del estudio"><button type="button" class="estudio-rail-button" data-active="true" title="pieza activa" onclick="estudioRail('focus')">${estudioIcon('focus')}</button><button type="button" class="estudio-rail-button" title="portafolio general del archivo" aria-label="abrir tres lecturas del archivo" onclick="estudioRail('portfolio')">${estudioIcon('book')}</button><button type="button" class="estudio-rail-button" title="pendientes de revisión" onclick="estudioRail('pending')">${estudioIcon('triangle')}</button><button type="button" class="estudio-rail-button" title="archivo visual" onclick="estudioRail('archive')">${estudioIcon('square')}</button><button type="button" class="estudio-rail-button" title="capas" onclick="estudioRail('layers')">${estudioIcon('layers')}</button><button type="button" class="estudio-rail-button" title="relaciones" onclick="estudioRail('relate')">${estudioIcon('link')}</button><button type="button" class="estudio-rail-button" title="mesa" onclick="estudioRail('table')">${estudioIcon('star')}</button><button type="button" class="estudio-rail-button" title="organización" onclick="estudioRail('organize')">${estudioIcon('settings')}</button></nav><main class="estudio-center">${estudioReviewQueue()}${estudioLearningSummary()}${estudioArchivePanel()}<div class="estudio-center-header"><div><div class="estudio-kicker">pieza activa · ${esc(item.tipo_contenido||'registro')}</div><div class="estudio-current-label" title="${esc(item.id)}">${esc(item.id)} · ${esc(item.fecha||'sin fecha')}</div></div><div class="estudio-view-controls"><button type="button" onclick="estudioZoom(-5)" aria-label="alejar">−</button><input id="estudio-zoom" type="range" min="45" max="90" value="${ESTUDIO_ZOOM}" oninput="estudioZoom(this.value,true)"><output id="estudio-zoom-value">${ESTUDIO_ZOOM}%</output><button type="button" onclick="estudioZoom(5)" aria-label="acercar">+</button><button type="button" onclick="estudioFullscreen()" aria-label="pantalla completa">${estudioIcon('expand')}</button></div></div><div class="estudio-visual-legend"><span class="estudio-visual-key estudio-visual-key-active">pieza activa</span><span class="estudio-visual-key estudio-visual-key-candidate">candidato pendiente</span><span class="estudio-visual-key estudio-visual-key-context">contexto visual</span><strong>${neighbors.length+1} medios visibles · ${candidateCount} candidatos</strong></div><div class="estudio-canvas" id="estudio-canvas"><div class="estudio-media-main"><span class="estudio-main-role" data-role="${pending?'candidate':'active'}">${pending?'candidato pendiente':'pieza activa'}</span>${estudioMedia(item,true)}</div>${orbit}</div><div class="estudio-media-caption"><span class="estudio-chip">${esc(item.tipo_contenido||'registro')}</span><span class="estudio-chip">${esc(item.fecha||'sin fecha')}</span><span class="estudio-chip">${esc(item.publicacion_id||'sin publicación')}</span><span class="estudio-chip ${selected?'estudio-chip-amber':'estudio-chip-violet'}">${selected?'en mesa':'selección pendiente'}</span><span class="estudio-chip ${pending?'estudio-chip-violet':'estudio-chip-amber'}">${pending?'candidato · revisión humana':'contexto · no pendiente'}</span></div><div class="estudio-suggestion"><div class="estudio-suggestion-head"><span>sugerencia de triangulación</span><button type="button" onclick="estudioAction('triangulate')">${estudioIcon('spark')} abrir lectura</button></div><div class="estudio-suggestion-grid">${suggestions||'<span class="estudio-action-panel">sin vecinos visuales todavía</span>'}</div></div><div id="estudio-action-panel" class="estudio-action-panel"></div><div class="estudio-dock"><button type="button" class="estudio-dock-button" onclick="estudioAction('classify')">${estudioIcon('tag')}<span>clasificar</span></button><button type="button" class="estudio-dock-button" data-primary="true" onclick="estudioAction('triangulate')">${estudioIcon('triangle')}<span>triangular</span></button>${reviewButton}<button type="button" class="estudio-dock-button" onclick="estudioAction('relate')">${estudioIcon('relation')}<span>relacionar</span></button><button type="button" class="estudio-dock-button" onclick="estudioAction('send')">${estudioIcon('send')}<span>enviar</span></button><button type="button" class="estudio-dock-button" data-active="${selected}" onclick="estudioAction('table')">${estudioIcon('tray')}<span>${selected?'quitar de mesa':'mesa'}</span></button></div></main>${estudioDecisionPanel(item)}</div>`;
+  const portfolioRail=app.querySelector('[aria-label="abrir tres lecturas del archivo"]');
+  if(portfolioRail)portfolioRail.setAttribute('aria-label','abrir cuatro lecturas del archivo');
   const canvas=document.getElementById('estudio-canvas');
   if(canvas){
     const layer=document.createElement('div');
@@ -1841,7 +1864,7 @@ async function estudioAction(action){
     return;
   }
   if(action==='map')return estudioLoadMap();
-  if(action==='organize'){panel.innerHTML=`<div class="estudio-action-title">Organización segura</div><div>Origen actual: ${esc(item.asset_path||'media no sincronizada')}<br>Destino: pendiente de regla humana.<br>No se mueve ni se borra ningún archivo.</div>`;return;}
+  if(action==='organize'){panel.innerHTML=`<div class="estudio-action-title">Organización segura</div><div>Origen actual: ${esc(archiveViewReference(item.asset_path)||'media no sincronizada')}<br>Destino: pendiente de regla humana.<br>No se mueve ni se borra ningún archivo.</div>`;return;}
   if(action==='relate'){
     const neighbors=estudioNeighbors(item);panel.innerHTML=`<div class="estudio-action-title">Relación visual</div><div>Selecciona una pieza vecina para abrirla en foco. La relación no se inventa por título.</div><div class="estudio-action-row">${neighbors.slice(0,4).map(neighbor=>`<button type="button" onclick="estudioOpen('${esc(neighbor.id)}')">${esc(neighbor.id.slice(0,18))}</button>`).join('')||'sin vecinos'}</div>`;return;
   }
@@ -2110,7 +2133,7 @@ function sugerenciaInbox(x){
 }
 
 function mediaInbox(x,focus=false){
-  const path=x.asset_path||'';
+  const path=archiveViewMediaPath(x.asset_path||'');
   if(!x.asset_available||!path)return '<div class="inbox-sin">media no sincronizada</div>';
   const ext=path.split('?')[0].split('.').pop().toLowerCase();
   if(['mp4','mov','webm','m4v'].includes(ext)){
@@ -2120,7 +2143,7 @@ function mediaInbox(x,focus=false){
 }
 
 function mediaInboxMini(x){
-  const path=x.asset_path||'';
+  const path=archiveViewMediaPath(x.asset_path||'');
   if(!x.asset_available||!path)return '<span class="inbox-sin">sin media</span>';
   const ext=path.split('?')[0].split('.').pop().toLowerCase();
   if(['mp4','mov','webm','m4v'].includes(ext)) return `<video src="${esc(path)}" muted autoplay loop playsinline preload="metadata"></video>`;
@@ -2205,7 +2228,7 @@ function pintarFoco(item){
   const pending=INBOX_PENDING.has(item.id);
   const neighbors=focoVecinos(item);
   const candidateNeighbors=neighbors.filter(neighbor=>INBOX_PENDING.has(neighbor.id)).length;
-  const path=item.asset_path||'media no sincronizada';
+  const path=archiveViewReference(item.asset_path)||'media no sincronizada';
   const reviewAction=INBOX_PENDING.has(item.id)?`<button type="button" onclick="mostrarAccionPieza('revisar')">revisar evidencia</button>`:'';
   box.hidden=false;
   box.innerHTML=`<div class="foco-kicker">Estudio visual - una pieza activa, contexto alrededor</div><div class="foco-visual-legend"><span class="foco-visual-key foco-visual-key-active">pieza activa</span><span class="foco-visual-key foco-visual-key-candidate">candidato pendiente</span><span class="foco-visual-key foco-visual-key-context">contexto visual</span><strong>${neighbors.length+1} medios visibles · ${candidateNeighbors+(pending?1:0)} candidatos</strong></div><div class="foco-shell"><div class="foco-stage"><div class="foco-visual-field"><div class="foco-center-media"><span class="foco-center-label">${pending?'candidato pendiente':'pieza activa'}</span>${mediaInbox(item,true)}</div>${focoOrbit(item)}</div><div class="foco-id">${esc(item.id)}</div><div class="foco-stage-meta"><span class="foco-chip">${esc(item.tipo_contenido)}</span><span class="foco-chip">${esc(item.fecha||'sin fecha')}</span><span class="foco-chip">${esc(item.publicacion_id||'sin publicacion')}</span><span class="foco-chip-amber foco-chip">${selected?'en mesa':'sin seleccionar'}</span><span class="foco-chip ${pending?'foco-chip-violet':'foco-chip-amber'}">${pending?'candidato · revisión humana':'contexto · no pendiente'}</span></div></div><div class="foco-rail"><div class="foco-rail-kicker">Decisiones por capas</div><div class="foco-rail-title">No clasifiques todo a la vez.</div><div class="foco-rail-help">La órbita ayuda a explorar. Solo una pieza marcada como candidato pendiente entra en la cola de revisión; las demás son contexto visual.</div><div id="foco-accion-panel" class="foco-action-panel" hidden></div></div></div><div class="foco-dock"><button type="button" data-primary="true" onclick="mostrarAccionPieza('clasificar')">clasificar</button><button type="button" onclick="mostrarAccionPieza('triangular')">triangular</button><button type="button" onclick="mostrarAccionPieza('relacionar')">relacionar</button><button type="button" onclick="mostrarAccionPieza('enviar')">enviar</button><button type="button" onclick="mostrarAccionPieza('mesa')">${selected?'quitar de mesa':'poner en mesa'}</button>${reviewAction}<button type="button" onclick="cerrarPieza()">cerrar pieza</button></div><details open class="foco-organization"><summary>Organizacion segura</summary><div class="foco-organization-grid"><div class="foco-path"><b>origen actual</b><span>${esc(path)}</span></div><div class="foco-path"><b>destino</b><span>pendiente de regla humana</span></div><div class="foco-path"><b>estado</b><span>no se ha movido ningun archivo</span></div></div><button type="button" onclick="mostrarAccionPieza('organizar')">previsualizar orden</button></details>`;

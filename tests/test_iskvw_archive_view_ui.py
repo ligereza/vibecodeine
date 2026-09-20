@@ -78,10 +78,13 @@ def test_four_contract_formats_and_epistemic_boundaries_are_visible() -> None:
 def test_untitled_rows_use_only_a_neutral_item_reference() -> None:
     script = "\n".join([
         _function("esc"),
+        _function("archiveViewText"),
         _function("archiveViewDisplayLabel"),
         _function("archiveViewFormatNote"),
         _function("archiveViewItem"),
+        _function("archiveViewReference"),
         "const item={item_id:'artist-name/Famous-Work-FINAL',title:null,summary:null,observed_description:'Machine-observed blue form.',date:null,tags:['archive'],link_degree:2,source_ref:'iskvw:piece:artist-name/Famous-Work-FINAL',epistemic_status:'observed_source_record'};",
+        "const localTitle=archiveViewDisplayLabel({item_id:'local',title:'~/private-work'});",
         "const label=archiveViewDisplayLabel(item);",
         "const html=archiveViewItem(item,'observed-field');",
         "const note=archiveViewFormatNote('observed-field');",
@@ -91,6 +94,7 @@ def test_untitled_rows_use_only_a_neutral_item_reference() -> None:
 
     assert result["label"] == {
         "text": "ref · artist-name/Famous-Work-FINAL", "neutral": True}
+    assert result["localTitle"] == {"text": "referencia local", "neutral": True}
     assert 'data-neutral="true"' in result["html"]
     assert "etiqueta de referencia · no es título autoral" in result["html"]
     # The role note is now declared once per format section, not repeated on
@@ -215,6 +219,7 @@ def test_operator_frontier_renders_evidence_and_never_claims_an_answer() -> None
     script = "\n".join([
         _function("esc"),
         _function("archiveViewBytes"),
+        _function("archiveViewReference"),
         _function("archiveViewEvidenceList"),
         _function("archiveViewSideNote"),
         _function("archiveViewOperatorQuestion"),
