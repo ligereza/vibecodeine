@@ -77,8 +77,8 @@ def test_tool_consumer_inventory_is_explicit_and_bounded():
     # deleted by the operator's order. Both existed to manufacture "current
     # state" out of documents -- the first emitted a hash-pinned packet from
     # `agents.md` plus the handoff, the second printed a template to paste into
-    # the handoff. The active document is now `DECISIONES.md`, which holds
-    # decisions and no facts, and the facts come from `tools/mak_status.py`.
+    # the handoff. Durable context is now `SYSTEM.md`; current facts come from
+    # `tools/contexto_repo.py --json` and `tools/mak_status.py --json`.
     # Neither tool had a consumer other than its own test.
     #
     # 104 -> 106 on 2026-09-03: `motor_checkout.py` and `link_motor_checkout.py`
