@@ -140,15 +140,10 @@ NO_REFERENCE_CLASSIFICATIONS = {
     "reconcile_garden_knowledge": {"status": "manual_only", "source": "capabilities_5_ter"},
     "render_archaeology_deliverables": {"status": "manual_only", "source": "cli_declared"},
     "substrate_experiment": {"status": "manual_only", "source": "capabilities_5_ter"},
-    "tapiz_live_loop": {"status": "manual_only", "source": "cli_declared"},
     "token_budget": {"status": "manual_only", "source": "cli_declared"},
     "triangulate_project_context": {"status": "manual_only", "source": "capabilities_5_ter"},
     "verify_all": {"status": "manual_only", "source": "cli_declared"},
     "verify_learning_hashmaps": {"status": "manual_only", "source": "cli_declared"},
-    "watsonx_coder_bench": {"status": "manual_only", "source": "cli_declared"},
-    "watsonx_smoke": {"status": "manual_only", "source": "cli_declared"},
-    "watsonx_vision_bench": {"status": "manual_only", "source": "cli_declared"},
-    "watsonx_vision_smoke": {"status": "manual_only", "source": "cli_declared"},
     # These FLUJO tools are carried by integrated main but have no in-tree
     # consumer; their explicit CLI remains the evidence for manual use.
     "arica01_portfolio": {"status": "manual_only", "source": "integrated_main_union"},
