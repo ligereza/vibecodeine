@@ -4,7 +4,7 @@
   "kind": "integrated",
   "role": "integrated MAK + FLUJO baseline; validation and release composition",
   "default_test_selector": "-m \"mak or flujo or integration or repo_hygiene\"",
-  "capabilities": "CAPACIDADES_MAIN.md",
+  "capabilities": "tools/capabilities.py",
   "requirements": "requirements-integration.txt",
   "hubs": [
     {
@@ -22,19 +22,16 @@
   ],
   "lane_profiles": {
     "MAK": {
-      "capabilities": "CAPACIDADES_MAK.md",
+      "capabilities": "tools/capabilities.py",
       "requirements": "requirements-mak.txt",
       "selector": "-m mak"
     },
     "FLUJO": {
-      "capabilities": "CAPACIDADES_FLUJO.md",
+      "capabilities": "tools/capabilities.py",
       "requirements": "requirements-flujo.txt",
       "selector": "-m flujo"
     }
   },
-  "secondary_capabilities": [
-    "CAPACIDADES_MAK.md",
-    "CAPACIDADES_FLUJO.md"
-  ],
+  "secondary_capabilities": [],
   "transfer_contract": "carry both source trees in one reviewed baseline; preserve the MAK and FLUJO hub boundary and exchange typed contracts rather than importing one hub into the other"
 }
