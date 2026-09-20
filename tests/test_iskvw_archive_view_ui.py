@@ -88,7 +88,7 @@ def test_untitled_rows_use_only_a_neutral_item_reference() -> None:
         "const label=archiveViewDisplayLabel(item);",
         "const html=archiveViewItem(item,'observed-field');",
         "const note=archiveViewFormatNote('observed-field');",
-        "console.log(JSON.stringify({label,html,note}));",
+        "console.log(JSON.stringify({localTitle,label,html,note}));",
     ])
     result = _run_node(script)
 

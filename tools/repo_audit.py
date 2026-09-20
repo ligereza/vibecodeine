@@ -101,7 +101,6 @@ NO_REFERENCE_CLASSIFICATIONS = {
     # They are operator-invoked, which is what manual_only means; the audit
     # keeps them declared rather than letting an unreferenced tool pass
     # silently.
-    "capabilities": {"status": "manual_only", "source": "separation_20260902"},
     # `gen_propuesta_directiva` left this table on 2026-09-04: it now has a
     # consumer, `tests/test_gen_propuesta_directiva.py`, which holds it to the
     # three promises its docstring makes about a document the board reads.
@@ -137,7 +136,6 @@ NO_REFERENCE_CLASSIFICATIONS = {
     "gen_presentacion_db": {"status": "manual_only", "source": "capabilities_5_ter"},
     "link_motor_checkout": {"status": "manual_only", "source": "cli_declared"},
     "mak_status": {"status": "manual_only", "source": "runtime_status_cli"},
-    "grammar_runner": {"status": "manual_only", "source": "mak_grammar_entrypoint"},
     "medir_test_overlap": {"status": "manual_only", "source": "capabilities_5_ter"},
     "medir_tests": {"status": "manual_only", "source": "capabilities_5_ter"},
     "optimize_blend_scene": {"status": "manual_only", "source": "capabilities_5_ter"},
@@ -169,6 +167,11 @@ NO_REFERENCE_CLASSIFICATIONS = {
     "show_asset_usage": {"status": "manual_only", "source": "integrated_main_union"},
     "tennis_mcp_ingest": {"status": "manual_only", "source": "integrated_main_union"},
     "venue_screen_setup": {"status": "manual_only", "source": "integrated_main_union"},
+    "consultar_mak_search": {"status": "manual_only", "source": "integrated_main_union"},
+    "guarda_subida_externa": {"status": "manual_only", "source": "integrated_main_union"},
+    "promover_reglas": {"status": "manual_only", "source": "integrated_main_union"},
+    "raton": {"status": "manual_only", "source": "integrated_main_union"},
+    "reportar_calibracion_deepseek": {"status": "manual_only", "source": "integrated_main_union"},
 }
 
 
