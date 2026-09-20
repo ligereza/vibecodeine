@@ -26,18 +26,21 @@ Hay dos agentes con responsabilidades deliberadamente distintas.
 
 ### Supervisor remoto
 
-Carga el contexto caro.
+Es amnésico entre ejecuciones, por eso este archivo debe bastarle como memoria
+de trabajo compacta.
 
 En cada ciclo:
 
-1. lee `SYSTEM.md`, este archivo y `ORDEN.md`;
-2. inspecciona el estado actual de la rama/PR y sólo el código necesario para
-   decidir;
-3. consume el resultado `DONE` o `BLOCKED` dejado por Codex;
-4. actualiza **esta cola viva**, sustituyendo estado viejo en vez de agregar
-   historia;
-5. elige una sola tarea de alto impacto y write-set acotado;
-6. reemplaza `ORDEN.md` con la nueva orden `READY`.
+1. lee primero `ORDEN.md`;
+2. si sigue `READY`, termina sin abrir más contexto;
+3. si está `DONE` o `BLOCKED`, recién entonces lee `SYSTEM.md` y este
+   archivo;
+4. mide sólo el delta necesario desde el último trabajo consumido;
+5. consume el resultado de Codex y reemplaza estado viejo de **esta cola viva**;
+6. investiga la siguiente tarea y la **prevalida**: rutas existentes,
+   owner/consumer, supuestos actuales, comandos y criterio de éxito;
+7. reemplaza `ORDEN.md` con una única tarea `READY` suficientemente precisa
+   para que Codex no repita esa investigación.
 
 No crea documentos de errores, handoffs, cierres de sesión ni diarios de
 decisiones.
@@ -48,12 +51,18 @@ Ejecuta; no redescubre el sistema.
 
 1. lee `ORDEN.md`;
 2. abre únicamente los archivos necesarios para cumplir esa orden;
-3. ejecuta cambios y pruebas;
-4. reemplaza `ORDEN.md` con un reporte compacto `DONE` o `BLOCKED`;
-5. no crea `ERRORES.md`, `RESULTADOS.md` ni otro archivo de traspaso.
+3. corrige dentro del write-set los fallos causados por su propia tarea;
+4. si una prueba devuelve muchos errores, agrupa por causa raíz/firma en vez de
+   investigar o copiar cada error;
+5. no amplía el alcance por fallos externos/preexistentes;
+6. reemplaza `ORDEN.md` con `DONE` si cumplió el objetivo o `BLOCKED` si el
+   objetivo no cabe en el alcance;
+7. no crea `ERRORES.md`, `RESULTADOS.md` ni otro archivo de traspaso.
 
-Si necesita contexto que no está en la orden, debe pedirlo mediante el estado
-`BLOCKED` en el mismo `ORDEN.md`, no iniciar una arqueología completa.
+El reporte puede incluir como máximo cinco grupos de fallos representativos,
+con conteo y clasificación `task_local`, `external` o `unknown`. Si necesita
+contexto no suministrado por la orden para completar el objetivo, devuelve
+`BLOCKED`; no inicia una arqueología completa.
 
 ## Decisiones de esta auditoría
 
