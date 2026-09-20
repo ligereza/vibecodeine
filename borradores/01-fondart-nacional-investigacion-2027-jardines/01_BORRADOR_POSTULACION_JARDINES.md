@@ -1,7 +1,7 @@
 # Jardines interpretativos: públicos y trazabilidad de una lectura visual
 
 **Convocatoria:** Fondart Nacional — Línea Investigación — Concurso General 2027
-**Cierre:** 2026-09-10
+**Cierre:** 2026-09-14, 15:00 hrs de Santiago (VERIFICADO 2026-09-09 en el portal oficial; ampliación por Rex 2596 reemplazó el 10 de septiembre original)
 **Solicitado al fondo:** $12.000.000 CLP
 **Duración:** 12 meses
 
@@ -232,3 +232,4 @@ Riesgos pendientes [FALTA]: cerrar caso y bibliografía primaria, revisar derech
 ---
 
 Bases leídas el 2026-09-05: https://www.fondosdecultura.cl/wp-content/uploads/2026/08/investigacion-fondart-nacional-2027.pdf
+Fecha de cierre reverificada el 2026-09-09 contra la ficha oficial de la línea: https://www.fondosdecultura.cl/fondos/fondart-nacional/lineas-de-concurso/investigacion-fondart-nacional-2027/ (sin cambios: 14 de septiembre confirmado).
