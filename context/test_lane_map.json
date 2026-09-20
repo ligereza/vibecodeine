@@ -1287,6 +1287,7 @@
       "resolution": "moved_by_path_resolution",
       "status": "disagreement"
     },
+    "tests/test_iris_decision_session.py": {"lane": "mak", "reason": "sanitized IRIS decision-session compiler contract"},
     "tests/test_iris_invariants.py": {
       "ast_lane": "mak",
       "ast_reason": "imports box layer",
@@ -3361,6 +3362,7 @@
     "tests/test_auto_pending_flyers.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
     "tests/test_autofit.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
     "tests/test_autonomy_plan.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
+    "tests/test_azure_embeddings.py": {"lane": "mak", "reason": "Azure embeddings adapter and sanitized text-channel contract"},
     "tests/test_blender_nodes.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
     "tests/test_blender_nodes_video.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
     "tests/test_blendfile.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
@@ -3393,6 +3395,7 @@
     "tests/test_delegate_creative_director.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
     "tests/test_director.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
     "tests/test_entity_crosswalk.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
+    "tests/test_evaluate_iris_embeddings.py": {"lane": "mak", "reason": "group-held-out Azure embedding evaluation contract"},
     "tests/test_episode_runner.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
     "tests/test_epistemics.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
     "tests/test_eventos_flyer_auto.py": {"lane": "flujo", "reason": "carried from the FLUJO lane contract into integrated main"},
@@ -3540,7 +3543,7 @@
     "rule": "direct imports/path evidence may move a lane; ambiguous evidence moves to review; prior_lane is retained"
   },
   "summary": {
-    "assignments": 409,
+    "assignments": 412,
     "note": "complete test-path union carried by integrated main"
   }
 }
