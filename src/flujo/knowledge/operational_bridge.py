@@ -167,6 +167,244 @@ def _rd_records(path: str | Path) -> tuple[list[dict[str, Any]], list[tuple[str,
             links.append((event_id, "produced_by", f"rd_producer:{producer_key}", "exact_source_key"))
         if venue_record_id:
             links.append((event_id, "held_at", venue_record_id, venue_confidence))
+    rd_testing_records, rd_testing_links = _rd_testing_records(source)
+    records.extend(rd_testing_records)
+    links.extend(rd_testing_links)
+    xio_records, xio_links = _xio_records_with_testing(source)
+    records.extend(xio_records)
+    links.extend(xio_links)
+    signal_records, signal_links = _xio_signal_records(source)
+    records.extend(signal_records)
+    links.extend(signal_links)
+    return records, links
+
+
+def _decode_json_value(value: Any, default: Any) -> Any:
+    if value is None or value == "":
+        return default
+    try:
+        return json.loads(value) if isinstance(value, str) else value
+    except (TypeError, ValueError):
+        return value
+
+
+def _rd_testing_records(
+    path: str | Path,
+) -> tuple[list[dict[str, Any]], list[tuple[str, str, str, str]]]:
+    """Project test evidence while preserving its human-review boundary."""
+    source = _source_path(path)
+    event_rows = _read_rows(source, "testeo_eventos_fuente")
+    event_by_id = {
+        str(row.get("event_id")): row
+        for row in event_rows
+        if row.get("event_id") is not None
+    }
+    row_rows = _read_rows(source, "testeo_filas_fuente")
+    row_by_id = {
+        str(row.get("test_id")): row
+        for row in row_rows
+        if row.get("test_id") is not None
+    }
+    records: list[dict[str, Any]] = []
+    links: list[tuple[str, str, str, str]] = []
+    for row in event_rows:
+        key = row.get("event_id")
+        if key is None:
+            continue
+        records.append(_record(
+            domain="rd_test_event", source=source,
+            table="testeo_eventos_fuente", key=key,
+            title=row.get("event_label_candidate"),
+            date_iso=_date_iso(row.get("date_iso_candidate")),
+            status=row.get("link_review_status")
+            or row.get("event_label_status") or "observed",
+            payload=row,
+        ))
+    for row in row_rows:
+        key = row.get("test_id")
+        if key is None:
+            continue
+        event_id = str(row.get("event_id") or "")
+        event = event_by_id.get(event_id, {})
+        record_id = f"rd_test_row:{key}"
+        records.append(_record(
+            domain="rd_test_row", source=source,
+            table="testeo_filas_fuente", key=key,
+            title=row.get("substance_raw"),
+            date_iso=_date_iso(event.get("date_iso_candidate")),
+            status=row.get("row_status") or "observed", payload=row,
+        ))
+        if event_id in event_by_id:
+            links.append((record_id, "from_event", f"rd_test_event:{event_id}", "exact_source_key"))
+    for row in _read_rows(source, "testeo_observaciones_fuente"):
+        key = row.get("observation_id")
+        if key is None:
+            continue
+        event_id = str(row.get("event_id") or "")
+        event = event_by_id.get(event_id, {})
+        record_id = f"rd_test_observation:{key}"
+        records.append(_record(
+            domain="rd_test_observation", source=source,
+            table="testeo_observaciones_fuente", key=key,
+            title=row.get("reagent_raw") or row.get("reagent_normalized_candidate"),
+            date_iso=_date_iso(event.get("date_iso_candidate")),
+            status=row.get("observation_status") or "observed", payload=row,
+        ))
+        test_id = str(row.get("test_id") or "")
+        if test_id in row_by_id:
+            links.append((record_id, "from_test_row", f"rd_test_row:{test_id}", "exact_source_key"))
+        if event_id in event_by_id:
+            links.append((record_id, "observed_at", f"rd_test_event:{event_id}", "exact_source_key"))
+    for row in _read_rows(source, "registros_testeo"):
+        key = row.get("id")
+        if key is None:
+            continue
+        records.append(_record(
+            domain="rd_test_record", source=source,
+            table="registros_testeo", key=key,
+            title=row.get("evento") or row.get("sustancia_declarada"),
+            date_iso=_date_iso(row.get("fecha")),
+            status="discarded" if row.get("descartada") else "observed",
+            payload=row,
+        ))
+    return records, links
+
+
+def _xio_records_with_testing(
+    path: str | Path,
+) -> tuple[list[dict[str, Any]], list[tuple[str, str, str, str]]]:
+    """Project XIO station/sample/result lineage without text joins."""
+    source = _source_path(path)
+    records = _xio_records(source)
+    links: list[tuple[str, str, str, str]] = []
+    xio_event_keys = {
+        str(row.get("client_event_id") or row.get("id"))
+        for row in _read_rows(source, "xio_eventos")
+        if row.get("client_event_id") is not None or row.get("id") is not None
+    }
+    test_event_keys = {
+        str(row.get("event_id")) for row in _read_rows(source, "testeo_eventos_fuente")
+        if row.get("event_id") is not None
+    }
+    event_dates = {
+        str(row.get("client_event_id") or row.get("id")): row.get("start_date")
+        for row in _read_rows(source, "xio_eventos")
+        if row.get("client_event_id") is not None or row.get("id") is not None
+    }
+    for row in _read_rows(source, "mesas_testeo"):
+        key = row.get("id")
+        if key is None:
+            continue
+        record_id = f"xio_test_station:{key}"
+        event_ref = str(row.get("evento_ref") or "")
+        records.append(_record(
+            domain="xio_test_station", source=source, table="mesas_testeo", key=key,
+            title=row.get("etiqueta") or event_ref,
+            date_iso=_date_iso(event_dates.get(event_ref)), status="observed", payload=row,
+        ))
+        if event_ref in xio_event_keys and row.get("evento_origen") in {"xio_app", "app"}:
+            links.append((record_id, "station_for", f"xio_event:{event_ref}", "exact_source_key"))
+        elif event_ref in test_event_keys and row.get("evento_origen") == "testeo_2025":
+            links.append((record_id, "station_for", f"rd_test_event:{event_ref}", "exact_source_key"))
+    sample_rows = _read_rows(source, "muestras")
+    sample_by_id = {str(row.get("id")): row for row in sample_rows if row.get("id") is not None}
+    for row in sample_rows:
+        key = row.get("id")
+        if key is None:
+            continue
+        record_id = f"xio_sample:{key}"
+        records.append(_record(
+            domain="xio_sample", source=source, table="muestras", key=key,
+            title=row.get("codigo_muestra") or row.get("sustancia_declarada"),
+            date_iso=_date_iso(row.get("fecha")),
+            status="discarded" if row.get("descartada") else "observed", payload=row,
+        ))
+        if row.get("mesa_id") is not None:
+            links.append((record_id, "tested_at", f"xio_test_station:{row['mesa_id']}", "exact_source_key"))
+        event_ref = str(row.get("evento_ref") or "")
+        origin = row.get("evento_origen")
+        if event_ref in xio_event_keys and origin in {"xio_app", "app"}:
+            links.append((record_id, "context_of", f"xio_event:{event_ref}", "exact_source_key"))
+        elif event_ref in test_event_keys and origin == "testeo_2025":
+            links.append((record_id, "context_of", f"rd_test_event:{event_ref}", "exact_source_key"))
+    for row in _read_rows(source, "muestra_capturas"):
+        key = row.get("id")
+        if key is None:
+            continue
+        record_id = f"xio_sample_capture:{key}"
+        sample_id = str(row.get("muestra_id") or "")
+        sample = sample_by_id.get(sample_id, {})
+        records.append(_record(
+            domain="xio_sample_capture", source=source, table="muestra_capturas", key=key,
+            title=row.get("capture_key") or row.get("kind"),
+            date_iso=_date_iso(sample.get("fecha")), status="observed", payload=row,
+        ))
+        if sample_id in sample_by_id:
+            links.append((record_id, "capture_of", f"xio_sample:{sample_id}", "exact_source_key"))
+    for row in _read_rows(source, "muestra_resultados"):
+        key = row.get("id")
+        if key is None:
+            continue
+        record_id = f"xio_sample_result:{key}"
+        sample_id = str(row.get("muestra_id") or "")
+        sample = sample_by_id.get(sample_id, {})
+        records.append(_record(
+            domain="xio_sample_result", source=source, table="muestra_resultados", key=key,
+            title=row.get("reactivo"), date_iso=_date_iso(sample.get("fecha")),
+            status="observed", payload=row,
+        ))
+        if sample_id in sample_by_id:
+            links.append((record_id, "result_of", f"xio_sample:{sample_id}", "exact_source_key"))
+    return records, links
+
+
+def _xio_records(path: str | Path) -> list[dict[str, Any]]:
+    """Project app-created XIO events without guessing identities."""
+    source = _source_path(path)
+    records: list[dict[str, Any]] = []
+    for row in _read_rows(source, "xio_eventos"):
+        key = row.get("client_event_id") or row.get("id")
+        if key is None:
+            continue
+        payload = {name: value for name, value in row.items() if name != "id"}
+        payload["djs"] = _decode_json_value(row.get("djs_json"), [])
+        payload["triangulation"] = _decode_json_value(row.get("triangulation_json"), {})
+        records.append(_record(
+            domain="xio_event", source=source, table="xio_eventos", key=key,
+            title=row.get("event_name"), date_iso=_date_iso(row.get("start_date")),
+            producer_name=row.get("producer_name"), venue_name=row.get("venue_name"),
+            status=row.get("review_status") or row.get("sync_status"), payload=payload,
+        ))
+    return records
+
+
+def _xio_signal_records(
+    path: str | Path,
+) -> tuple[list[dict[str, Any]], list[tuple[str, str, str, str]]]:
+    """Project canonical XIO session events and exact context references."""
+    source = _source_path(path)
+    records: list[dict[str, Any]] = []
+    links: list[tuple[str, str, str, str]] = []
+    for row in _read_rows(source, "xio_signal_events"):
+        key = row.get("event_id")
+        if key is None:
+            continue
+        payload = {
+            name: value for name, value in row.items()
+            if name not in {"payload_json", "provenance_json"}
+        }
+        payload["payload"] = _decode_json_value(row.get("payload_json"), {})
+        payload["provenance"] = _decode_json_value(row.get("provenance_json"), {})
+        record_id = f"xio_signal_event:{key}"
+        records.append(_record(
+            domain="xio_signal_event", source=source, table="xio_signal_events", key=key,
+            title=row.get("event_type"),
+            date_iso=_date_iso(str(row.get("source_timestamp") or "").split("T", 1)[0]),
+            status="received", payload=payload,
+        ))
+        event_ref = row.get("event_ref")
+        if event_ref:
+            links.append((record_id, "context_of", f"xio_event:{event_ref}", "exact_source_key"))
     return records, links
 
 
@@ -310,9 +548,21 @@ def _replace_source_records(
 ) -> None:
     source_paths = tuple(_source_path(path) for path in source_paths)
     placeholders = ",".join("?" for _ in source_paths)
+    scopes = sorted({
+        (item["domain"], item["source_table"])
+        for item in records
+    })
+    scope_clause = " OR ".join(
+        "(domain=? AND source_table=?)" for _ in scopes
+    )
+    selector = f"source_path IN ({placeholders})"
+    selector_params: list[Any] = list(source_paths)
+    if scope_clause:
+        selector = f"{selector} OR {scope_clause}"
+        selector_params.extend(value for scope in scopes for value in scope)
     old_ids = [row[0] for row in connection.execute(
-        f"SELECT record_id FROM operational_records WHERE source_path IN ({placeholders})",
-        source_paths,
+        f"SELECT record_id FROM operational_records WHERE {selector}",
+        selector_params,
     )]
     connection.execute(
         f"DELETE FROM operational_curation_links WHERE source_path IN ({placeholders})",
