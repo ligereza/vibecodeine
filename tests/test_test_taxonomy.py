@@ -4,10 +4,8 @@ dependency boundary that the lane contract does not cover.
 Both contracts live here on purpose (2026-09-02). A separate test file would
 land in the `review` lane, because `context/test_lane_map.json` is generated
 and must not be hand-edited, and `pytest_ignore_collect` skips non-matching
-lanes on every exact-lane run -- so a new file would never execute. A new
-`tools/` module would need a VIVO/MUERTO row in `CAPACIDADES_MAK.md`
-(`test_tools_en_registro`), a second surface for logic only this ratchet
-consumes. This file is already declared `repo_hygiene`, the lane that guards
+lanes on every exact-lane run -- so a new file would never execute. A new `tools/` module must be registered in `data/tool_registry.json`
+(`test_tools_en_registro`), the machine-readable lifecycle registry. This file is already declared `repo_hygiene`, the lane that guards
 classification, so the dependency boundary is guarded from here.
 """
 
