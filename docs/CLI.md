@@ -3,7 +3,7 @@
 **Entrada diaria del usuario:** `flujo app` (o `flujo app --desktop`) — lanza servidor + hub pro workspace.
 La CLI `flujo` (Typer, `src/flujo/cli.py`) es la entrada principal al sistema. La mayoria de los scripts sueltos historicos de `scripts/` fueron archivados por estar superados por comandos `flujo ...`.
 
-Este documento es la unica referencia de comandos que hace falta leer. `docs/INTEGRACION_CLI.md` es un doc aparte (arquitectura interna de como se registra el namespace `flujo hub ...`), no un duplicado de este.
+Este documento describe el uso humano de la CLI. La integración del namespace `flujo hub ...` vive directamente en `src/flujo/cli_addons.py`; no hay un contrato documental separado.
 
 ## Instalacion
 
@@ -48,7 +48,7 @@ eventos         eventos flyer-auto
 resolume        resolume automatizar
 datadrop        datadrop scan, list, ingest, prepare
 knowledge       knowledge list, show, classify, ingest-example, logo-source, logo-lab
-hub (addon)     hub serve, index, route  (registrado via cli_addons.py, ver INTEGRACION_CLI.md)
+hub (addon)     hub serve, index, route  (registrado via src/flujo/cli_addons.py)
 diario          daily, cotizaciones
 web             app, serve, package (build .exe desktop)
 varios          plano, clean, init
@@ -138,7 +138,7 @@ flujo plano projects/plano/ejemplos/evento_ejemplo.json
 flujo plano projects/plano/ejemplos/evento_ejemplo.json --rider
 flujo plano projects/plano/ejemplos/evento_ejemplo.json --costs
 
-# Hub addons (namespace separado, ver docs/INTEGRACION_CLI.md)
+# Hub addons (namespace separado; implementación en src/flujo/cli_addons.py)
 py -m flujo hub serve --open
 py -m flujo hub index agent-brief "etiqueta creatina"
 py -m flujo hub route where --area eventos --pieza flyer
