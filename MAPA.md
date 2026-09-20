@@ -262,9 +262,9 @@ repositorio. Las credenciales y tokens se mantienen fuera de Git.
 | `WATSONX_MODEL`, `WATSONX_URL` | Configuracion opcional del backend WatsonX conservado para benchmarks/manual. |
 
 Topic-branch contracts and handoffs were part of the previous organization and
-are not active inputs now. The only current contract is `AGENTS.md`; current
-state is measured with `.venv/bin/python tools/mak_status.py`, and historical
-continuity is kept in `context/HANDOFF_HISTORICO.md`.
+are not active inputs now. There is no persistent agent-entry contract. Current
+state is measured from Git, `tools/contexto_repo.py --json`,
+`tools/mak_status.py --json`, the active CLI, consumers and tests.
 
 
 Ignored `web/dist*` and `dist_compartir/` files are generated delivery artifacts,
