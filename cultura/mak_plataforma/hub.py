@@ -5246,7 +5246,8 @@ def _relevo_page():
 def _genesis_page():
     """Orient the user before exposing the historical genesis document."""
     source = GENESIS
-    if not os.path.isfile(source):
+    default_genesis = os.path.join(HOME, "GENESIS.md")
+    if source == default_genesis and not os.path.isfile(source):
         source = os.path.join(_REPO_ROOT, "cultura", "mak_plataforma", "GENESIS.md")
     try:
         with open(source, encoding="utf-8") as f:
