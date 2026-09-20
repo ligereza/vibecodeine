@@ -2,10 +2,9 @@
 """Probe MAK and FLUJO capability surfaces against their declarations.
 
 The registry in this file is deliberately small and explicit: a path or a
-process name is not treated as a capability by itself.  The command compares
-the registry with the capability documents, then (optionally) probes the
-current user services and local listeners.  It emits evidence; it never edits
-the capability documents automatically.
+process name is not treated as a capability by itself. The registry is the
+machine-readable authority; optional --docs inputs are compatibility
+projections only. The command can also probe current services and listeners.
 
 Examples::
 
@@ -266,6 +265,7 @@ def _surface_result(root: Path, docs: list[Path], surface: Surface, live: bool) 
     consumer_missing = [
         path for path in surface.consumer_sources if not (root / path).is_file()
     ]
+    declared_in = _declared(docs, surface.doc_anchors) if docs else ["tools/capabilities.py"]
     result: dict[str, object] = {
         "id": surface.surface_id,
         "label": surface.label,
@@ -282,7 +282,7 @@ def _surface_result(root: Path, docs: list[Path], surface: Surface, live: bool) 
             if live and surface.unit
             else "not_applicable"
         ),
-        "declared_in": _declared(docs, surface.doc_anchors),
+        "declared_in": declared_in,
         "ports": [],
         "expectation": surface.expectation,
         "models_expected": list(surface.models),
@@ -671,7 +671,7 @@ def main(argv: list[str] | None = None) -> int:
         "--docs",
         type=Path,
         action="append",
-        help="capability document(s), relative to --root; defaults to MAK and FLUJO matrices",
+        help="optional capability projection document(s), relative to --root",
     )
     parser.add_argument("--format", choices=("text", "json", "markdown"), default="text")
     parser.add_argument("--output", type=Path, help="write the selected report atomically")
@@ -685,10 +685,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     root = args.root.resolve()
-    doc_paths = args.docs or [
-        Path("CAPACIDADES_MAK.md"),
-        Path("CAPACIDADES_FLUJO.md"),
-    ]
+    doc_paths = args.docs or []
     docs = [(path if path.is_absolute() else root / path) for path in doc_paths]
     docs = [path for path in docs if path.is_file()]
     report = build_report(root, docs, live=not args.no_live)
