@@ -227,5 +227,4 @@ tools/venue_geometria_scd.py
 tools/verify_all.py
 tools/vj_set/git_performance.py
 tools/vj_set/osc_sender.py
-tools/watsonx_smoke.py
 tests/test_rd_espina_relacional.py

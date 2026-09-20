@@ -10,10 +10,10 @@ department that writes code began every job by waiting on a machine that is
 off, while `watsonx` -- paid, reachable and measured -- was not even an option
 in the map.
 
-The model is chosen by measurement (`tools/watsonx_coder_bench.py`): six
-interval-merging cases actually EXECUTED, not eyeballed. Four of five
-candidates scored 6/6; the one labelled `granite-8b-code-instruct` scored 5/6,
-which is the reason the name of a model is not evidence about it.
+The historical Watsonx benchmark executed six interval-merging cases rather
+than judging model names. Four of five candidates scored 6/6 and one scored
+5/6. The benchmark tool was retired with the provider; Git preserves the
+measurement. The durable lesson is that a model name is not evidence.
 
 These tests read the source rather than importing it: `codex_lib` inserts
 `/home/mak/research` into `sys.path` at import time, a path that exists on the

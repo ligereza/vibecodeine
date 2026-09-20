@@ -83,8 +83,6 @@ function EcosistemaTresD() {
       <pre className="mt-3 overflow-x-auto rounded-lg bg-zinc-950/80 p-3 text-[11px] leading-relaxed text-zinc-400">{`# generar telemetria real del repo
 py tools/compete_engine.py --live
 
-# autorretrato continuo (refresca cada 5 min)
-py tools/tapiz_live_loop.py --interval 300
 
 # si el navegador bloquea iframes file://, servir el repo:
 py -m http.server 8137
