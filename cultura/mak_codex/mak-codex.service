@@ -6,7 +6,6 @@ Description=MAK Codex internal service for the Hub
 WorkingDirectory=%h/codex
 Environment=CODER_CHAIN=nim-pro,nim-flash,ollama
 Environment=MAK_SERVICE_HOST=127.0.0.1
-Environment=MAK_SERVICE_SOCKET=%h/.cache/mak/codex.sock
 ExecStart=/usr/bin/python3 %h/cultura/mak_codex/interfaz_codex.py
 Restart=always
 RestartSec=5

@@ -42,9 +42,9 @@ and lowercase `agents.md`, not whether `AGENTS.md` exists. Underneath it is a
 real question: `CONTRIBUTING.md` calls reading `AGENTS.md` mandatory, while the
 test asserts `core` must not route to it. One of those two is wrong.
 
-**Two suites, two meanings.** `pyproject.toml` selects the `mak` lane. The
-unmarked run covers the full test corpus. Both are useful and they answer
-different questions; a green result should say which one it was.
+**Two suites, two meanings.** `pyproject.toml` selects `-m mak`, which is 13
+tests. The unmarked run is 243 test files and is now green. Both are useful and
+they answer different questions; a green result should say which one it was.
 
 **Two stashes are waiting.** Labelled from memory as "pre-mision tracked
 changes del operador" and "pre-mision ramas y animacion". Untouched. A stash
@@ -75,7 +75,7 @@ added to `.git/info/exclude`, the local practice already used for WACHUMA,
 
 ## Not audited
 
-Almost everything. The test files were run, not read. `GENESIS.md`,
+Almost everything. The 243 test files were run, not read. `GENESIS.md`,
 `MAPA.md`, `CAPACIDADES_MAK.md`, `MEMORIAS.md` and the `docs/` tree were not
 reviewed. The RD data paths were not opened. The security surface was not
 examined anywhere.

@@ -92,8 +92,8 @@ CORPUS_REVIEW_LOG = os.path.join(HOME, "plataforma/corpus_reviews.jsonl")
 COMMON_LEDGER = os.path.join(HOME, "plataforma/common_ledger.jsonl")
 BACKLOG = os.path.join(HOME, "plataforma/backlog_codex.txt")
 SEMILLAS_F = os.path.join(HOME, "plataforma/semillas_latido.txt")
-RESEARCH = "http://127.0.0.1:8900/research/run"
-CODEX = "http://127.0.0.1:8900/codex/run"
+RESEARCH = "http://127.0.0.1:8890/run"
+CODEX = "http://127.0.0.1:8891/run"
 BACKLOG_GEN = os.path.join(HOME, "plataforma/backlog.jsonl")
 INFORMES_DIRS = [os.path.join(HOME, "research", d) for d in ("informes", "cadenas", "paneles", "refutaciones", "grafos", "memoria")]
 CORPUS_REVIEW_EVERY = max(1, int(os.environ.get("MAK_CORPUS_REVIEW_EVERY", 4)))
@@ -672,10 +672,9 @@ def _audit_idle_decision(ts, online, verbo, depto, payload, status,
 
 def _post(url, data):
     fields = dict(data)
-    for key in ("work_contract", "portfolio_source"):
-        if isinstance(fields.get(key), (dict, list)):
-            fields[key] = json.dumps(
-                fields[key], ensure_ascii=True, sort_keys=True)
+    if isinstance(fields.get("work_contract"), dict):
+        fields["work_contract"] = json.dumps(
+            fields["work_contract"], ensure_ascii=True, sort_keys=True)
     body = urllib.parse.urlencode(fields).encode()
     req = urllib.request.Request(
         url, data=body, method="POST",
@@ -931,24 +930,18 @@ def _tarea(verbo, st):
         if not tarea:
             return None
         if tarea.get("depto") == "codex":
-            payload = {"modo": tarea.get("modo", "generar"),
-                       "pedido": tarea["texto"], "densidad": "medio"}
-            if isinstance(tarea.get("source"), dict):
-                payload["portfolio_source"] = dict(tarea["source"])
-            return ("codex", payload)
+            return ("codex", {"modo": tarea.get("modo", "generar"),
+                              "pedido": tarea["texto"], "densidad": "medio"})
         tema, motivo = tema_limpio(tarea["texto"])
         if not tema:
             print("tema descartado (%s): %.70s" % (motivo, tarea["texto"]),
                   flush=True)
             return None
         fmt, dens = format_for_task(verbo, tema)
-        payload = {"modo": tarea.get("modo", "research"),
-                   "tema": tema, "densidad": dens, "formato": fmt,
-                   "output_contract": contract_for_task(verbo, tema),
-                   "work_contract": work_contract(verbo, tema)}
-        if isinstance(tarea.get("source"), dict):
-            payload["portfolio_source"] = dict(tarea["source"])
-        return ("research", payload)
+        return ("research", {"modo": tarea.get("modo", "research"),
+                             "tema": tema, "densidad": dens, "formato": fmt,
+                             "output_contract": contract_for_task(verbo, tema),
+                             "work_contract": work_contract(verbo, tema)})
     if fuente == "concepto":
         if _memory_requires_review():
             return None

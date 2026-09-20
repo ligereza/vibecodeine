@@ -131,7 +131,7 @@
   }
 </style>
 </head>
-<body data-skin="terminal">
+<body>
 
 <canvas id="fondo"></canvas>
 
@@ -334,7 +334,6 @@
 ]
 </script>
 
-<script src="../lib/skin_runtime.js"></script>
 <script>
 (function(){
 "use strict";
@@ -791,20 +790,25 @@ function desdeArchivo(d){
   });
 }
 
-async function cargar(){
-  let respaldo = [];
-  try { respaldo = JSON.parse(document.getElementById('datos-obras').textContent); }
-  catch(e) { /* el respaldo también puede faltar en una piel nueva */ }
-  const cargado = await window.ISKVW_SKIN_RUNTIME.loadPortfolio({
-    portfolioPaths: ['../../datos/portafolio.json'],
-    sourcePaths: ['../../datos/archivo.json', '../../datos/campo.json', '../../datos/obras.json'],
-    fallback: respaldo,
-  });
-  const datos = Array.isArray(cargado.data) ? cargado.data : desdeArchivo(cargado.data);
-  arrancar(datos);
+function cargar(rutas, i){
+  i = i || 0;
+  if(i >= rutas.length){
+    try{
+      arrancar(JSON.parse(document.getElementById('datos-obras').textContent));
+    }catch(e){ arrancar([]); }
+    return;
+  }
+  fetch(rutas[i]).then(r=>{
+    if(!r.ok) throw new Error('sin servidor http');
+    return r.json();
+  }).then(d=>{
+    const obras = Array.isArray(d) ? d : desdeArchivo(d);
+    if(!obras.length) throw new Error('vacio');
+    arrancar(obras);
+  }).catch(()=> cargar(rutas, i+1));
 }
 
-cargar().catch(() => arrancar([]));
+cargar(['../../datos/archivo.json', '../../datos/obras.json']);
 
 })();
 </script>

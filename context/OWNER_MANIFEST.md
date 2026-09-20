@@ -14,7 +14,7 @@ it. WIN remains historical evidence and is not an active owner.
 | Portfolio project contract | `tools/portfolio/catalog_contract.py` + `tools/portfolio/proyectos.json` | ISKVW editor/publication surfaces | project catalogue is distinct from visual works |
 | Portfolio visual works | `iskvw/datos/obras.json` | `iskvw/editor.html`, generated site | visual-work source; not replaced by project catalogue |
 | Venue records | `data/venues/*.json` + `tools/venue.py` | SCD geometry and venue web views | JSON is source; renders are regenerable |
-| SCD geometry primitive | `tools/venue2d/referencia_plano_teatro.py` | `tools/venue_geometria_scd.py`, `tools/venue3d/` | derivative is retained, not a second authority |
+| SCD geometry primitive | `projects/plano/referencia_plano_teatro.py` | `tools/venue_geometria_scd.py`, venue skin | derivative is retained, not a second authority |
 | Historical FLUJO app | `src/flujo/web/hub.py` | offline/portable FLUJO runtime | separate legacy/offline consumer, not MAK hub duplicate |
 
 Rules:

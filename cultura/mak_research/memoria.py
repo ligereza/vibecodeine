@@ -55,18 +55,15 @@ except ImportError:  # mirrored MAK runtime imports from the repo's cultura dir
             return nullcontext()
 
 RESEARCH = os.path.expanduser("~/research")
-DEFAULT_RESEARCH = os.path.abspath(RESEARCH)
 MEM_DIR = os.path.join(RESEARCH, "memoria")
 INDEX_FILE = os.path.join(MEM_DIR, "index.jsonl")
-CODEX_REVISIONES = os.path.expanduser("~/codex/revisiones")
 # carpetas de productos a indexar (los .md legibles)
 # 'corpus' = el archivo del artista (iskvw), una obra por documento,
 # generado por corpus_a_micelio.py desde ~/curatoria/fichas/fichas.jsonl.
 # Antes el micelio solo contenia lo que MAK escribio sobre si mismo, asi que
 # no podia relacionar las obras entre si -- que es el mapa que se queria.
 FUENTES = ("informes", "paneles", "cadenas", "refutaciones",
-           "correlaciones", "grafos", "codex", "revisiones", "corpus",
-           "ideas", "fusiones")
+           "correlaciones", "grafos", "codex", "corpus", "ideas", "fusiones")
 EMBED_MODEL = os.environ.get("OLLAMA_EMBED_MODEL", "nomic-embed-text")
 OLLAMA = os.environ.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
 
@@ -171,22 +168,6 @@ def _guardar_index(entradas):
         for e in entradas:
             f.write(json.dumps(e, ensure_ascii=False) + "\n")
     os.replace(tmp, INDEX_FILE)
-
-
-def _source_path(folder):
-    """Resolve one semantic source without duplicating CODEX's files.
-
-    Generated pieces are exposed through the compatibility symlink
-    ``research/codex``. Reviews live beside them in ``~/codex/revisiones``;
-    giving that directory its own label keeps the provenance and the viewer
-    route honest while both products share the same index.
-    """
-    if folder == "revisiones":
-        # Tests and embedded callers replace RESEARCH with a temporary root;
-        # never leak the host's real CODEX corpus into those isolated scans.
-        if os.path.abspath(RESEARCH) == DEFAULT_RESEARCH:
-            return CODEX_REVISIONES
-    return os.path.join(RESEARCH, folder)
 
 
 # ---------------------------------------------------------------------------
@@ -330,7 +311,7 @@ def _index_unlocked(rebuild=False, log=lambda s: None):
     pendientes = []  # (path, dir, mtime, texto, meta) a re-embeddear
 
     for d in FUENTES:
-        carpeta = _source_path(d)
+        carpeta = os.path.join(RESEARCH, d)
         try:
             nombres = os.listdir(carpeta)
         except OSError:
@@ -445,7 +426,7 @@ def _vectores_por_producto():
 
 
 GRAFO_CACHE = os.path.join(MEM_DIR, "grafo_cache.json")
-GRAFO_SCHEMA_VERSION = 3
+GRAFO_SCHEMA_VERSION = 2
 _GRAFO_LOCK = threading.RLock()
 
 
@@ -551,14 +532,12 @@ def _semantic_graph_unlocked(threshold=0.5, max_per_node=4):
     nodes = []
     for p in paths:
         d, t, nch, doc_meta, calidad = meta[p]
-        source_state = "presente" if os.path.isfile(p) else "ausente"
         nodes.append({"id": _node_id(p, meta), "archivo": os.path.basename(p),
                   "dir": d, "titulo": t,
                   "chunks": nch, "naturaleza": doc_meta.get("tipo") or d,
                   "origen": doc_meta.get("origen"),
                   "calidad": calidad.get("estado", "cultivo"),
-                  "sustancia": calidad.get("sustancia", 0.0),
-                  "fuente_estado": source_state})
+                  "sustancia": calidad.get("sustancia", 0.0)})
 
     edges = _aristas_numpy(vecs, paths, meta, umbral, tope_por_nodo)
     if edges is None:
@@ -606,12 +585,9 @@ def _semantic_graph_unlocked(threshold=0.5, max_per_node=4):
     except Exception:
         pass
 
-    states = [n["fuente_estado"] for n in nodes]
     grafo = {"nodes": nodes, "edges": edges,
              "meta": {"n_nodos": len(nodes), "n_aristas": len(edges),
-                      "umbral": umbral,
-                      "fuentes_presentes": states.count("presente"),
-                      "fuentes_ausentes": states.count("ausente")}}
+                      "umbral": umbral}}
     try:
         tmp = GRAFO_CACHE + ".tmp"
         with open(tmp, "w", encoding="utf-8") as fh:

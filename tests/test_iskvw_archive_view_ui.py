@@ -78,23 +78,19 @@ def test_four_contract_formats_and_epistemic_boundaries_are_visible() -> None:
 def test_untitled_rows_use_only_a_neutral_item_reference() -> None:
     script = "\n".join([
         _function("esc"),
-        _function("archiveViewText"),
         _function("archiveViewDisplayLabel"),
         _function("archiveViewFormatNote"),
         _function("archiveViewItem"),
-        _function("archiveViewReference"),
         "const item={item_id:'artist-name/Famous-Work-FINAL',title:null,summary:null,observed_description:'Machine-observed blue form.',date:null,tags:['archive'],link_degree:2,source_ref:'iskvw:piece:artist-name/Famous-Work-FINAL',epistemic_status:'observed_source_record'};",
-        "const localTitle=archiveViewDisplayLabel({item_id:'local',title:'~/private-work'});",
         "const label=archiveViewDisplayLabel(item);",
         "const html=archiveViewItem(item,'observed-field');",
         "const note=archiveViewFormatNote('observed-field');",
-        "console.log(JSON.stringify({label,localTitle,html,note}));",
+        "console.log(JSON.stringify({label,html,note}));",
     ])
     result = _run_node(script)
 
     assert result["label"] == {
         "text": "ref · artist-name/Famous-Work-FINAL", "neutral": True}
-    assert result["localTitle"] == {"text": "referencia local", "neutral": True}
     assert 'data-neutral="true"' in result["html"]
     assert "etiqueta de referencia · no es título autoral" in result["html"]
     # The role note is now declared once per format section, not repeated on
@@ -104,55 +100,6 @@ def test_untitled_rows_use_only_a_neutral_item_reference() -> None:
         "role": "observación de fuente · no declaración del artista",
         "status": "observed_source_record",
     }
-
-
-@NODE_AVAILABLE
-def test_editor_redacts_absolute_evidence_references_but_keeps_logical_refs() -> None:
-    script = "\n".join([
-        _function("esc"),
-        _function("archiveViewReference"),
-        _function("archiveViewText"),
-        _function("archiveViewMediaPath"),
-        _function("archiveViewEvidenceList"),
-        "const html=archiveViewEvidenceList([{statement:'missing',source_ref:'/home/mak/private.json'},{statement:'logical',source_ref:'iskvw:piece:declared'}],'Evidencia');",
-        "console.log(JSON.stringify({local:archiveViewReference('/home/mak/private.json'),windows:archiveViewReference('C:\\\\Fixtures\\\\private.json'),file:archiveViewReference('file:///home/mak/private.json'),logical:archiveViewReference('iskvw:piece:declared'),media_local:archiveViewMediaPath('/home/mak/private.jpg'),media_relative:archiveViewMediaPath('posts/private.jpg'),html}));",
-    ])
-    result = _run_node(script)
-
-    assert result["local"] == "referencia local"
-    assert result["windows"] == "referencia local"
-    assert result["file"] == "referencia local"
-    assert result["logical"] == "iskvw:piece:declared"
-    assert result["media_local"] == ""
-    assert result["media_relative"] == "posts/private.jpg"
-    assert "/home/mak/private.json" not in result["html"]
-    assert "referencia local" in result["html"]
-    assert "iskvw:piece:declared" in result["html"]
-
-
-@NODE_AVAILABLE
-def test_full_archive_render_redacts_embedded_local_text() -> None:
-    script = "\n".join([
-        _function("esc"),
-        _function("archiveViewText"),
-        _function("archiveViewReference"),
-        _function("archiveViewDisplayLabel"),
-        _function("archiveViewFormatLabel"),
-        _function("archiveViewFormatNote"),
-        _function("archiveViewItem"),
-        _function("archiveViewContracurator"),
-        _function("archiveViewReadyContent"),
-        "const view={catalog:{piece_count:1,link_count:0},selection:{selected_item_count:1,omitted_piece_count:0},source:{path_hint:'iskvw/datos/archivo.json',fuente:'file:///home/mak/source.json',generated:'today',input_hash:'sha256:'+'a'.repeat(64)},formats:[{format_id:'declared-works',purpose:'declared',item_ids:['private'],omitted_count:0},{format_id:'documented-record',purpose:'documented',item_ids:[],omitted_count:0},{format_id:'observed-field',purpose:'observed',item_ids:[],omitted_count:0},{format_id:'practice-context',purpose:'practice',item_ids:[],omitted_count:0}],items:[{item_id:'private',title:'obra ~/private',summary:'ver /home/mak/secret',tags:['/tmp/tag'],link_degree:0,source_ref:'iskvw:piece:private'}],gaps:[],contracurator:null};",
-        "const html=archiveViewReadyContent(view);",
-        "console.log(JSON.stringify({html}));",
-    ])
-    result = _run_node(script)
-
-    assert "~/private" not in result["html"]
-    assert "/home/mak/secret" not in result["html"]
-    assert "/tmp/tag" not in result["html"]
-    assert "file:///home/mak/source.json" not in result["html"]
-    assert "referencia local" in result["html"]
 
 
 @NODE_AVAILABLE
@@ -268,7 +215,6 @@ def test_operator_frontier_renders_evidence_and_never_claims_an_answer() -> None
     script = "\n".join([
         _function("esc"),
         _function("archiveViewBytes"),
-        _function("archiveViewReference"),
         _function("archiveViewEvidenceList"),
         _function("archiveViewSideNote"),
         _function("archiveViewOperatorQuestion"),

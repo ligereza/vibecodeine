@@ -83,8 +83,8 @@ def test_no_projected_path_still_declares_a_retired_provider():
         + "; ".join(offenders))
 
 
-def test_the_archived_pre_projection_copies_are_recoverable_or_explicitly_missing():
-    """Present evidence is hash-checked; irrecoverable evidence is explicit."""
+def test_the_archived_pre_projection_copies_are_still_recoverable():
+    """Evidence is preserved, not deleted: the manifest must resolve."""
     archive = PHYSICAL_ROOT / "_archive" / "shadow-copies-20260821"
     manifest = archive / "MANIFEST.json"
     if not manifest.is_file():
@@ -94,15 +94,8 @@ def test_the_archived_pre_projection_copies_are_recoverable_or_explicitly_missin
     data = json.loads(manifest.read_text(encoding="utf-8"))
     assert data["schema"] == "mak-shadow-archive-v1"
     assert len(data["entries"]) == len(PROJECTED)
-    audit = data.get("recovery_audit", {})
-    assert audit.get("status") == "incomplete"
     for entry in data["entries"]:
         copy = Path(entry["archived_copy"])
-        if entry.get("recovery_status") == "missing":
-            assert not copy.exists(), f"missing entry unexpectedly exists: {copy}"
-            assert entry.get("recovery_note", "").strip()
-            assert copy.name in audit.get("missing_archived_copies", [])
-            continue
         assert copy.is_file(), f"archived evidence missing: {copy}"
         digest = hashlib.sha256(copy.read_bytes()).hexdigest()
         assert digest == entry["sha256_archived"], (

@@ -3,8 +3,6 @@
  "nombre": "terminal",
  "resumen": "El archivo como panel de consola: filtros por etiqueta y categoria sobre las obras, con una red de nodos generativa de fondo tejida desde sus `tags`.",
  "datos": [
-  {"ruta": "../../datos/portafolio.json", "obligatorio": false,
-   "para": "el manifiesto que fija la selección y el orden completo del portafolio; si falta, el archivo sigue siendo válido."},
   {
    "ruta": "../../datos/archivo.json",
    "obligatorio": false,

@@ -59,7 +59,7 @@ SCHEMA = "mak-expected-state-v1"
 # Used only when no expected file exists yet, so a first --capture has
 # something sensible to start from. Once a baseline exists, later captures
 # keep whatever keys the (possibly hand-edited) baseline already declares.
-DEFAULT_ORGAN_PORTS = {"plataforma": 8900}
+DEFAULT_ORGAN_PORTS = {"research": 8890, "codex": 8891, "plataforma": 8900}
 DEFAULT_SYSTEMD_USER_UNITS = (
     "mak-hub.service", "mak-codex.service", "mak-research.service",
     "mak-xio.service",

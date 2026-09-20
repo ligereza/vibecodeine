@@ -54,11 +54,6 @@ def _archivos():
     for nombre in nombres:
         if nombre.endswith(_SALTA) or "/piel/lib/" in nombre:
             continue
-        # Build caches are not source entering the repo. Reading a binary
-        # Gradle execution history as UTF-8 creates false PII matches while
-        # still leaving every source and test fixture under inspection.
-        if "/.gradle/" in f"/{nombre}" or nombre.startswith(".gradle/"):
-            continue
         # `_archive/` es historia congelada que este repo prohibe editar a mano,
         # y el informe es claro en que reescribir git "no despublica copias
         # existentes": limpiarla ahora no recupera nada y si rompe la trazabilidad

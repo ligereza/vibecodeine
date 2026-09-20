@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
-"""interfaz.py -- internal Research service for the MAK Hub.
-
-The persistent unit uses a private Unix socket; standalone runs fall back to
-the configured ``INTERFAZ_PORT`` (8890).
+"""interfaz.py -- internal Research service for the MAK Hub (port 8890).
 
 Interfaz tipo n8n con canvas visual, nodos arrastrables, conexiones SVG
 editables (dos clicks entre puertos) y 4 modelos intercambiables/editables
@@ -35,7 +32,6 @@ import urllib.parse
 import urllib.request
 from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-import socketserver
 from pathlib import Path
 
 try:
@@ -62,7 +58,6 @@ DIRS = {
     "corpus": os.path.expanduser("~/research/corpus"),
     "ideas": os.path.expanduser("~/research/ideas"),
     "codex": os.path.expanduser("~/research/codex"),
-    "revisiones": os.path.expanduser("~/codex/revisiones"),
     "fusiones": os.path.expanduser("~/research/fusiones"),
 }
 # modo (backend script) -> carpeta de salida; single reusa el motor de research
@@ -84,8 +79,7 @@ MODO_ALIAS_FRONTEND = {"single": "research", "pipeline": "cadena",
 DIR_COLOR = {"informes": "#9db67c", "paneles": "#d4a259",
              "cadenas": "#7ba6a3", "refutaciones": "#c46d5e",
              "correlaciones": "#b48ead", "grafos": "#93a8c7",
-             "memoria": "#e0c58f", "codex": "#6fa8dc",
-             "revisiones": "#6fa8dc"}
+             "memoria": "#e0c58f"}
 
 
 def _contar_lineas(path):
@@ -165,7 +159,7 @@ def _organos():
         {"id": "codex", "nombre": "codex", "verbo": "implementa / prueba",
          "detalle": "hipótesis → experimento ejecutable", "cantidad": codex_n,
          "unidad": "piezas", "vivo": "interfaz_codex.py" in procs,
-         "dirs": ["codex", "revisiones"]},
+         "dirs": ["codex"]},
         {"id": "plataforma", "nombre": "plataforma", "verbo": "coordina / entrega",
          "detalle": "colas + guardias + render + PR", "cantidad": cola_n,
          "unidad": "pendientes", "vivo": "capataz.py" in procs or "trabajo.py" in procs,
@@ -177,8 +171,7 @@ def _organos():
 FECHA_RE = re.compile(r"(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})-(.+)\.md$")
 DIR_CHIP = {"informes": "informe", "paneles": "panel", "cadenas": "cadena",
             "refutaciones": "refutacion", "correlaciones": "correlacion",
-            "grafos": "grafo", "memoria": "memoria", "codex": "codex",
-            "revisiones": "revision"}
+            "grafos": "grafo", "memoria": "memoria"}
 JOBS_FILE = os.path.expanduser("~/research/jobs.jsonl")
 ENV_FILE = os.environ.get("RESEARCH_ENV", os.path.expanduser("~/research/research.env"))
 WORKFLOW_FILE = os.path.expanduser("~/research/workflow.json")
@@ -588,7 +581,7 @@ def _cerrar_job(job, t0):
 
 
 def _lanzar(modo, tema, n, densidad="medio", memoria=False, formato=None,
-            work_contract=None, trigger="api:research", portfolio_source=None):
+            work_contract=None, trigger="api:research"):
     job = {
         "tema": tema, "modo": modo, "estado": "en cola",
         "path": "", "error": "", "t": time.strftime("%H:%M:%S"),
@@ -596,8 +589,6 @@ def _lanzar(modo, tema, n, densidad="medio", memoria=False, formato=None,
     }
     if work_contract:
         job["work_contract"] = work_contract
-    if isinstance(portfolio_source, dict):
-        job["portfolio_source"] = portfolio_source
     with JOBS_LOCK:
         JOBS.append(job)
 
@@ -2107,19 +2098,8 @@ function cerrarModal() {
 function verArchivo(dir, nombreEnc) {
   var nombre = decodeURIComponent(nombreEnc);
   fetch('/f?d=' + dir + '&n=' + nombreEnc)
-    .then(function(r) {
-      if (!r.ok) {
-        var titulo = r.status === 404 ? 'Fuente ausente' : 'Fuente no disponible';
-        var detalle = r.status === 404
-          ? 'La referencia histórica existe en el índice, pero el archivo ya no está en disco.'
-          : 'El servicio de archivos respondió HTTP ' + r.status + '.';
-        abrirModal(titulo, '<p>' + esc(detalle) + '</p><p style="color:#8b949e">' +
-          esc(dir + '/' + nombre) + '</p>', true);
-        return null;
-      }
-      return r.text();
-    })
-    .then(function(txt) { if (txt !== null) abrirModal(nombre, mdToHtml(txt), false); })
+    .then(function(r) { return r.text(); })
+    .then(function(txt) { abrirModal(nombre, mdToHtml(txt), false); })
     .catch(function() { showToast('No se pudo cargar el archivo', 'error'); });
 }
 function verError(temaEnc, errorEnc) {
@@ -2329,8 +2309,7 @@ function filtrarArchivo(q) {
 var DIR_COLORS = {informes:'#9db67c',paneles:'#d4a259',cadenas:'#7ba6a3',
                  refutaciones:'#c46d5e',correlaciones:'#b48ead',
                  grafos:'#93a8c7',memoria:'#e0c58f',corpus:'#c98f6a',
-                 codex:'#6fa8dc',revisiones:'#6fa8dc',ideas:'#f4f1e6',
-                 fusiones:'#d98c7e'};
+                 codex:'#6fa8dc',ideas:'#f4f1e6',fusiones:'#d98c7e'};
 var MAPA = {
   nodes: [], edges: [], byId: {}, loaded: false, running: false,
   view: {x: 0, y: 0, k: 1}, umbral: 0.55, dirOff: {},
@@ -2459,7 +2438,6 @@ function mapMerge(nodes, edges) {
       phase: Math.random() * Math.PI * 2,
     };
     nd.dir = n.dir; nd.archivo = n.archivo || n.id.split('/').pop();
-    nd.fuente_estado = n.fuente_estado || 'presente';
     nd.titulo = n.titulo; nd.chunks = n.chunks || 1;
     nd.estatuto = n.estatuto || 'sustrato'; nd.presion = n.presion || 0;
     nd.calidad = n.calidad || 'cultivo'; nd.sustancia = n.sustancia || 0;
@@ -2489,11 +2467,7 @@ function mapLegend() {
   }).join('');
   var vis = mapVisibleEdges().length;
   var cts = document.getElementById('map-counts');
-  if (cts) {
-    var ausentes = MAPA.nodes.filter(function(n) { return n.fuente_estado === 'ausente'; }).length;
-    cts.textContent = MAPA.nodes.length + ' piezas / ' + vis + ' filamentos / afinidad >= ' + MAPA.umbral.toFixed(2) +
-      (ausentes ? ' / ' + ausentes + ' fuentes ausentes' : '');
-  }
+  if (cts) cts.textContent = MAPA.nodes.length + ' piezas / ' + vis + ' filamentos / afinidad >= ' + MAPA.umbral.toFixed(2);
 }
 
 function mapToggleDir(d) {
@@ -2512,9 +2486,6 @@ function mapVisibleEdges() {
 }
 function mapVisibleNodes() {
   return MAPA.nodes.filter(function(n) {
-    // A stale index entry remains observable through the API, but it should
-    // not be rendered as an actionable piece the user can open.
-    if (n.fuente_estado === 'ausente') return false;
     if (MAPA.dirOff[n.dir]) return false;
     if (MAPA.lente === 'compost') return n.calidad === 'compost';
     if (MAPA.lente === 'cultivo') return n.calidad !== 'compost';
@@ -2992,8 +2963,7 @@ function mapBind() {
     if (n && tip) {
       tip.innerHTML = '<div>' + esc(n.titulo || n.id) + '</div>' +
         '<div class="mt-dir">' + esc(n.dir) + ' &middot; ' + n.chunks +
-        ' frag &middot; ' + n.deg + ' filamentos' +
-        (n.fuente_estado === 'ausente' ? ' &middot; fuente ausente' : '') + '</div>';
+        ' frag &middot; ' + n.deg + ' filamentos</div>';
       tip.style.left = e.clientX + 'px';
       tip.style.top = e.clientY + 'px';
       tip.classList.add('show');
@@ -3643,7 +3613,7 @@ class H(BaseHTTPRequestHandler):
         raw = self.rfile.read(largo)
         try:
           req = urllib.request.Request(
-            "http://127.0.0.1:8900/codex/run", data=raw, method="POST",
+            "http://127.0.0.1:8891/run", data=raw, method="POST",
             headers={"Content-Type": "application/x-www-form-urlencoded"})
           with urllib.request.urlopen(req, timeout=8) as r:
             payload = json.loads(r.read(20000).decode("utf-8", "replace"))
@@ -3767,15 +3737,6 @@ class H(BaseHTTPRequestHandler):
                         work_contract = candidate
                 except (TypeError, ValueError):
                     work_contract = None
-            portfolio_source = None
-            raw_source = (q.get("portfolio_source") or [""])[0]
-            if raw_source:
-                try:
-                    candidate = json.loads(raw_source)
-                    if isinstance(candidate, dict):
-                        portfolio_source = candidate
-                except (TypeError, ValueError):
-                    portfolio_source = None
             try:
                 n = int((q.get("n") or [""])[0])
                 n = max(0, min(n, 10))
@@ -3784,12 +3745,8 @@ class H(BaseHTTPRequestHandler):
             if not tema and modo in MODO_SIN_TEMA:
                 tema = "corpus"  # placeholder: corpus ignora el tema
             if tema:
-                args = (modo, tema, n, densidad, memoria, formato,
+                _lanzar(modo, tema, n, densidad, memoria, formato,
                         work_contract, (q.get("trigger") or ["api:research"])[0])
-                if portfolio_source:
-                    _lanzar(*args, portfolio_source=portfolio_source)
-                else:
-                    _lanzar(*args)
                 return self._json_response({"ok": True})
             return self._json_response({"ok": False, "error": "tema vacío"}, 400)
 
@@ -3844,12 +3801,6 @@ class ReusableTCPServer(ThreadingHTTPServer):
     daemon_threads = True
 
 
-class ReusableUnixServer(socketserver.ThreadingMixIn,
-                         socketserver.UnixStreamServer):
-    allow_reuse_address = True
-    daemon_threads = True
-
-
 def main():
     load_env()
     load_env(ENV_FILE)
@@ -3866,16 +3817,7 @@ def main():
         wf = _load_workflow()
         _save_workflow(wf)
 
-    socket_path = os.environ.get("MAK_SERVICE_SOCKET", "").strip()
-    if socket_path:
-        os.makedirs(os.path.dirname(os.path.abspath(socket_path)), exist_ok=True)
-        try:
-            os.unlink(socket_path)
-        except FileNotFoundError:
-            pass
-        server = ReusableUnixServer(socket_path, H)
-    else:
-        server = ReusableTCPServer((BIND_HOST, PORT), H)
+    server = ReusableTCPServer((BIND_HOST, PORT), H)
 
     # graceful shutdown on SIGTERM / SIGINT
     def shutdown_handler(signum, frame):
@@ -3885,20 +3827,10 @@ def main():
     signal.signal(signal.SIGTERM, shutdown_handler)
     signal.signal(signal.SIGINT, shutdown_handler)
 
-    if socket_path:
-        print("[interfaz] internal canvas on unix:%s" % socket_path, flush=True)
-    else:
-        print("[interfaz] internal canvas on %s:%d" % (BIND_HOST, PORT), flush=True)
+    print("[interfaz] internal canvas on %s:%d" % (BIND_HOST, PORT), flush=True)
     print("[interfaz] workflow: %s" % WORKFLOW_FILE, flush=True)
     print("[interfaz] env: %s" % ENV_FILE, flush=True)
-    try:
-        server.serve_forever()
-    finally:
-        if socket_path:
-            try:
-                os.unlink(socket_path)
-            except FileNotFoundError:
-                pass
+    server.serve_forever()
     print("[interfaz] stopped.", flush=True)
 
 

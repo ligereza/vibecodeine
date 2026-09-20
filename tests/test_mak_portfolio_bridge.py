@@ -150,69 +150,6 @@ def test_hub_scene_uses_existing_inbox_and_copilot_groups(monkeypatch):
     assert {row["item_id"] for row in scene["map"]["items"]} == {"source", "target"}
 
 
-def test_hub_projects_micelio_semantic_edges_onto_current_inbox_ids(tmp_path, monkeypatch):
-    root = tmp_path / "iskvw"
-    (root / "datos").mkdir(parents=True)
-    (root / "datos" / "archivo.json").write_text(json.dumps({
-        "generado": "2026-09-15T00:00:00",
-        "piezas": [
-            {
-                "id": "aaa-17900000000000000", "clase": "obra",
-                "medio": {"tipo": "imagen", "src": "posts/17900000000000000.jpg"},
-                "extra": {"fuente_original": {"ruta": "posts/17900000000000000.jpg"}},
-            },
-            {
-                "id": "bbb-17900000000000001", "clase": "obra",
-                "medio": {"tipo": "imagen", "src": "posts/17900000000000001.mp4"},
-                "extra": {"fuente_original": {"ruta": "posts/17900000000000001.mp4"}},
-            },
-        ],
-        "vinculos": [{
-            "de": "aaa-17900000000000000", "a": "bbb-17900000000000001",
-            "peso": 0.9, "clase": "semantico",
-        }],
-    }), encoding="utf-8")
-    monkeypatch.setattr(hub, "PORTFOLIO_ROOT", str(root))
-    surface = hub._portfolio_semantic_surface(
-        "17900000000000000.jpg",
-        inbox_items=[{"id": "17900000000000000.jpg"},
-                     {"id": "17900000000000001.jpg"}],
-    )
-    assert surface["available"] is True
-    assert surface["profile"]["matched_relations"] == 1
-    assert surface["relations"][0]["item_id"] == "17900000000000001.jpg"
-    assert surface["relations"][0]["identity_bridge"] == "portfolio_media_id"
-
-
-def test_hub_semantic_surface_falls_back_to_live_micelio_contract(
-        tmp_path, monkeypatch):
-    root = tmp_path / "iskvw"
-    (root / "datos").mkdir(parents=True)
-    monkeypatch.setattr(hub, "PORTFOLIO_ROOT", str(root))
-    monkeypatch.setattr(hub, "_archivo_publico", lambda: {
-        "generado": "2026-09-15T00:00:00",
-        "piezas": [
-            {"id": "live-17900000000000000.md", "clase": "obra",
-             "medio": {"tipo": "texto"},
-             "extra": {"carpeta": "corpus"}},
-            {"id": "live-17900000000000001.md", "clase": "obra",
-             "medio": {"tipo": "texto"},
-             "extra": {"carpeta": "corpus"}},
-        ],
-        "vinculos": [{"de": "live-17900000000000000.md",
-                      "a": "live-17900000000000001.md",
-                      "peso": 0.8, "clase": "semantico"}],
-    })
-    surface = hub._portfolio_semantic_surface(
-        "17900000000000000.jpg",
-        inbox_items=[{"id": "17900000000000000.jpg"},
-                     {"id": "17900000000000001.jpg"}],
-    )
-    assert surface["available"] is True
-    assert surface["profile"]["source_ref"] == "/api/archivo (live Micelio)"
-    assert surface["relations"][0]["item_id"] == "17900000000000001.jpg"
-
-
 def test_hub_order_scene_uses_stable_map_without_relation_engine(monkeypatch):
     items = [{"id": "source", "tipo_contenido": "published_media",
               "asset_available": True, "publicacion_id": "post:source"},
@@ -248,30 +185,6 @@ def test_hub_order_scene_uses_stable_map_without_relation_engine(monkeypatch):
     assert scene["relations"][0]["evidence"] == []
     assert scene["visual_similarity"]["available"] is True
     assert scene["visual_similarity"]["relations"][0]["evidence_kind"] == "visual_similarity"
-
-
-def test_hub_suggestion_alias_uses_the_canonical_copilot_surface(monkeypatch):
-    captured = {}
-
-    def fake_suggestions(*args, **kwargs):
-        captured["args"] = args
-        captured["kwargs"] = kwargs
-        return {"ok": True, "suggestions": [], "suggestion_groups": []}
-
-    monkeypatch.setattr(hub, "_portfolio_suggestions", fake_suggestions)
-
-    class _Handler:
-        _json = lambda self, data, *args, **kwargs: captured.update(data)  # noqa: E731
-        do_GET = hub.H.do_GET
-        path = "/api/portfolio/copilot/suggestions?item_id=source&board_id=board&facet=text"
-
-    _Handler().do_GET()
-    assert captured["ok"] is True
-    assert captured["args"] == ("source",)
-    assert captured["kwargs"] == {
-        "board_id": "board", "include_map": False, "focus_facet": "text",
-        "shuffle": False, "shuffle_seed": "",
-    }
 
 
 def test_portfolio_file_stays_inside_iskvw_root(tmp_path, monkeypatch):

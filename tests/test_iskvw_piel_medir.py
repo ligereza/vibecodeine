@@ -4,7 +4,7 @@
 The 2026-07-30 handoff pinned the defect class (all pairs every frame) with
 static tests and left one honest gap: "NOT measured: fps on a phone". A phone
 cannot be measured from CI -- but the WORK per frame can, deterministically:
-tools/iskvw_piel_medir.mjs runs the PUBLISHED skin's executable script graph in node
+tools/iskvw_piel_medir.mjs runs the PUBLISHED skin's own inline script in node
 (same technique as tools/iskvw_piel_smoke.mjs), enters real scenarios through
 the skin's own seed model (#semilla=&centro=&escala= plus pinch aperture), and
 counts drawn segments, canvas geometry ops and the neighbour-index size.
@@ -31,7 +31,7 @@ RAIZ = Path(__file__).resolve().parents[1]
 MEDIR = RAIZ / "tools" / "iskvw_piel_medir.mjs"
 GENERADOR = RAIZ / "tools" / "gen_archivo_iskvw.py"
 
-# Measured 2026-09-15 on the published skin with the repo's real data:
+# Measured 2026-08-05 on the published skin with the repo's real data:
 # archivo.json generated exactly like the publish workflow does
 # (gen_archivo_iskvw.py --fuente todo; the micelio is unreachable in CI and
 # the generator degrades by design, same as at publish time; essays are an
@@ -41,20 +41,20 @@ GENERADOR = RAIZ / "tools" / "gen_archivo_iskvw.py"
 # `node tools/iskvw_piel_medir.mjs` and re-pin. If the data did NOT change,
 # the skin's frame cost changed: that is the regression this file exists for.
 PIN_ARCHIVO = {
-    "nodos": 1471,
+    "nodos": 1690,
     "vinculos_indexados": 4534,
     # Re-pinned 2026-08-07 after the public substrate began excluding
     # historical research nodes and the skin capped local visual neighbours.
     # The source archive and measured links remain intact; this is a display
     # cost baseline, not a data deletion claim.
     "segmentos": {
-        "entrada cerrada": 56,
-        "entrada abierta": 866,
-        "medio abierto": 2812,
-        "denso cerrado": 146,
-        "denso medio": 1672,
-        "denso abierto": 2674,
-        "denso escalado": 2674,
+        "entrada cerrada": 54,
+        "entrada abierta": 1798,
+        "medio abierto": 2098,
+        "denso cerrado": 100,
+        "denso medio": 1086,
+        "denso abierto": 1934,
+        "denso escalado": 1934,
     },
 }
 PIN_CAMPO = {
@@ -81,10 +81,10 @@ PIN_CAMPO = {
 
 # The documented reference cost this instrument guards against: all-against-all
 # on the 219 works is 23,871 pairs per frame (n*(n-1)/2), and 1,951,300 on the
-# 1471-piece public snapshot substrate. Worst measured across the whole grid
-# today: 2812 segments per frame. The ceiling is 6000: enough headroom for more
-# curated links, still roughly 180x below the all-pairs cost, so a return of
-# the every-pair-every-frame defect turns this red long before a phone stutters.
+# 1976-piece micelio substrate. Worst measured across the whole grid today:
+# 2098 segments per frame. The ceiling is 6000: enough headroom for more
+# curated links, still 325x below the all-pairs cost, so a return of the
+# every-pair-every-frame defect turns this red long before a phone stutters.
 TECHO_SEGMENTOS = 6000
 
 

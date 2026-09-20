@@ -5,8 +5,6 @@ Description=MAK hub (plataforma :8900)
 [Service]
 WorkingDirectory=%h/plataforma
 Environment=HUB_HOST=127.0.0.1
-Environment=MAK_RESEARCH_SOCKET=%h/.cache/mak/research.sock
-Environment=MAK_CODEX_SOCKET=%h/.cache/mak/codex.sock
 ExecStart=%h/plataforma/.venv/bin/python %h/cultura/mak_plataforma/hub.py
 Restart=always
 RestartSec=5

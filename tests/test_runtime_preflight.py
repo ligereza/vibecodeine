@@ -217,19 +217,17 @@ def test_a_live_runtime_under_a_claude_worktree_is_an_error(tmp_path):
 
 
 def test_flujo_path_is_reported_as_the_physical_flujo_checkout():
-    # /home/mak/flujo is an independent checkout, not a worktree borrowed from
-    # the MAK parent. Finding sibling symlinks or no git dir there would mean
-    # the layout regressed to the retired adapter.
+    # The inverse of what this test asserted before: /home/mak/flujo must now
+    # BE a checkout of FLUJO. Finding sibling symlinks or no git dir there
+    # would mean the layout regressed to the adapter.
     if not (MODULE.PHYSICAL_ROOT / MODULE.ADAPTER_NAME / ".git").exists():
         pytest.skip("requires the physical MAK + FLUJO checkouts")
     report = MODULE.adapter_report(MODULE.PHYSICAL_ROOT)
     assert report["role"] == "flujo_physical_checkout"
     assert report["is_symlink"] is False
     assert report["own_git_dir"] is True
-    assert report["is_git_worktree"] is False
-    assert report["branch"] == "main"
-    assert report["branch_semantics"]["lane"] == "FLUJO"
-    assert report["branch_semantics"]["kind"] == "standalone"
+    assert report["is_git_worktree"] is True
+    assert report["branch"] == "FLUJO"
     assert report["is_flujo_checkout"] is True
     assert report["sibling_symlinks"] == 0
     assert report["recursive_symlinks"] == []
@@ -241,9 +239,7 @@ def test_mak_hub_resolves_shared_motor_consumers_from_flujo_checkout():
     source = (ROOT / "cultura" / "mak_plataforma" / "hub.py").read_text(
         encoding="utf-8"
     )
-    assert "def _resolve_flujo_source_root" in source
-    assert 'override = os.environ.get("FLUJO_SOURCE_ROOT")' in source
-    assert 'os.path.join(repo_root, "flujo", "src")' in source
+    assert '"FLUJO_SOURCE_ROOT", os.path.join(_REPO_ROOT, "flujo", "src")' in source
     assert '_SRC_ROOT = os.path.join(_REPO_ROOT, "src")' not in source
 
 

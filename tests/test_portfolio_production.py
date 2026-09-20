@@ -514,9 +514,7 @@ def test_the_decisions_a_person_already_made_are_read_not_requested() -> None:
     for rows in attesting.values():
         for row in rows:
             assert row["declared_by"] == "human"
-            # Both human_draft and human_confirmed are valid declaration
-            # states; confirmation must not be collapsed back into a draft.
-            assert isinstance(row["kept_as_draft"], bool)
+            assert row["kept_as_draft"] is True
             assert row["promotion"] == "none"
 
 

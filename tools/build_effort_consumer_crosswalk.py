@@ -106,7 +106,7 @@ def main() -> int:
         "| `tools/research_job_router.py` | contract_checked; runtime gate probado | `GET /api/cultura/opportunity-gate` en 8900 |",
         "| `cultura/mak_research/source_pipeline.py` | componente presente; captura separada | gate offline; no proveedor llamado |",
         "| `cultura/mak_research/fondart_corpus.py` | componente presente; corpus separado | gate offline; propuesta queda en draft |",
-        "| `cultura/mak_research/interfaz.py` | canonico/proyeccion hash-validado | socket Unix privado, proxied by 8900 |",
+        "| `cultura/mak_research/interfaz.py` | canonico/proyeccion hash-validado | servicio interno 8890, proxied by 8900 |",
         "| `cultura/mak_plataforma/hub.py` | entrypoint activo | hub 8900; APIs Cultura/Research |",
         "",
         "## Candidatos priorizados por residuo",

@@ -699,28 +699,7 @@ def _load_lane_contract() -> dict[str, LaneRecord]:
     return _build_embedded_lane_map()
 
 
-def _merge_new_test_paths(
-    persisted: dict[str, LaneRecord],
-) -> dict[str, LaneRecord]:
-    """Keep explicit assignments and classify newly added test files.
-
-    The JSON contract remains the durable source for reviewed assignments.
-    New files are added from the conservative AST classifier until a later
-    review persists a stronger lane decision; an unresolved file still lands
-    in review and is never silently promoted.
-    """
-
-    result = dict(persisted)
-    for path, record in build_test_lane_map().items():
-        result.setdefault(path, record)
-    return result
-
-
-TEST_LANE_MAP: dict[str, LaneRecord] = _merge_new_test_paths(
-    _load_lane_contract()
-)
-
-
+TEST_LANE_MAP: dict[str, LaneRecord] = _load_lane_contract()
 def lane_for_test_path(path: str | Path) -> str:
     """Return a declared lane or ``review``; do not raise during collection."""
     try:
@@ -838,44 +817,6 @@ def lanes_for_changed_paths(paths: Iterable[str]) -> tuple[str, ...]:
     return tuple(lane for lane in LANES if lane in selected)
 
 
-def _write_contract() -> None:
-    """Persist new on-disk tests without discarding reviewed assignments."""
-    try:
-        payload = json.loads(LANE_MAP_CONTRACT.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError, TypeError):
-        payload = {"schema": "mak-test-lane-map-v3"}
-    assignments = payload.get("assignments")
-    if not isinstance(assignments, dict):
-        assignments = {}
-    for path, record in sorted(TEST_LANE_MAP.items()):
-        assignments.setdefault(
-            path,
-            {
-                "lane": record.lane,
-                "imports": list(record.imports),
-                "reason": record.reason,
-            },
-        )
-    summary = report()
-    payload["schema"] = "mak-test-lane-map-v3"
-    payload["assignments"] = assignments
-    payload["summary"] = {
-        "total": len(assignments),
-        "lanes": {
-            lane: {
-                "N": value["N"],
-                "SETHASH": value["SETHASH"],
-            }
-            for lane, value in summary["lanes"].items()
-        },
-        "disagreements": summary["contract_disagreements"],
-    }
-    LANE_MAP_CONTRACT.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
-
-
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--format", choices=("json", "text"), default="text")
@@ -893,7 +834,10 @@ def main() -> int:
         return 0
     data = report()
     if args.write:
-        _write_contract()
+        LANE_MAP_CONTRACT.write_text(
+            json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
         return 0
     if args.format == "json":
         print(json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True))

@@ -390,7 +390,7 @@ export default function RdDbPanel() {
               <span className="rounded bg-emerald-950/70 px-2 py-0.5 text-[10px] text-emerald-300">read-only</span>
             </div>
             <p className="mt-1 text-[11px] text-zinc-500">
-              Una sola proyeccion canonica; catalogo, evidencia y campo permanecen separados por tablas y allowlists.
+              Una sola proyeccion canonica, separada por consumidor. No mezcla <code>data/rd.db</code> con <code>data/rd_datos.db</code>.
             </p>
           </div>
           <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">

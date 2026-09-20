@@ -119,11 +119,8 @@ def test_tool_consumer_inventory_is_explicit_and_bounded():
     # `tests/test_rol_candidatos.py`.
     # 110 -> 145 on integrated main: the reviewed union carries the FLUJO
     # tool surface in the same tree, so its inventory is intentionally larger
-    # than the MAK operational lane inventory.  145 -> 146 on 2026-09-12:
-    # branch_contract.py became a shared runtime consumer contract.
-    # 146 -> 147 on 2026-09-15: the MAK-local grammar entrypoint was added
-    # and classified as manual-only because its consumer is the operator.
-    assert result["count"] == 147
+    # than the MAK operational lane inventory.
+    assert result["count"] == 145
     assert len(result["files"]) == result["count"]
     summary = result["summary"]
     assert summary["with_production_reference"] + summary["tests_only"] \
