@@ -1,5 +1,8 @@
 # Integrated main capabilities
 
+> Secondary integration inventory. Agent bootstrap is `AGENTS.md` -> `REAL_INFO.md`; runtime truth must be measured.
+
+
 `main` is the reviewed Git baseline that carries MAK and FLUJO together. It is
 not a third runtime and it does not replace either operational lane.
 
