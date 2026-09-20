@@ -1416,18 +1416,6 @@ function archiveViewFormatNote(formatId){
   }[formatId]||{role:'',status:''};
 }
 
-/* roleNote y epistemic_status son constantes por formato (no por item): se
-   declaran una vez en la cabecera de cada sección (archiveViewReadyContent)
-   en vez de repetirse en cada <li>, que es lo que inflaba la pestaña con
-   texto idéntico repetido hasta 24 veces por formato. */
-function archiveViewFormatNote(formatId){
-  return {
-    'declared-works':{role:'registro declarado en la fuente',status:'declared_source_record'},
-    'observed-field':{role:'observación de fuente · no declaración del artista',status:'observed_source_record'},
-    'practice-context':{role:'contexto técnico · no obra automáticamente',status:'observed_source_record'},
-  }[formatId]||{role:'',status:''};
-}
-
 function archiveViewItem(item,formatId){
   const label=archiveViewDisplayLabel(item);
   const description=formatId==='declared-works'?(item.summary||'sin resumen declarado'):(item.observed_description||item.summary||null);
