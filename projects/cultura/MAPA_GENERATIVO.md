@@ -212,7 +212,7 @@ admite medir en "dialecto degradado" (cuenta, no cosecha).
 `tilde-paridad` ya demostró que su escalar de cabecera (`survival`) degenera
 a 0.0 y no puede rankear nada.
 
-**16. `plan-anual`** — `PLAN_ANUAL_2026-2027.md` — *viva* — entropía de
+**16. `plan-anual`** — plan anual histórico (retirado del árbol activo; principios durables absorbidos en `SYSTEM.md`) — entropía de
 registro. `dx/dt=kx` — cuatro trimestres (Q1 cimiento, Q2 producto, Q3
 escala, Q4 ecosistema), cada uno con su Ω11 "pierde-si" declarada antes de
 empezar, y la regla de que todo fracaso entra fechado a `SEMILLAS.md`.
