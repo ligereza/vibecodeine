@@ -1,209 +1,126 @@
 # SUPERVISOR
 
-Parte de misión temporal de la rama `SUPERVISOR`.
+Contexto vivo y compacto de la rama `SUPERVISOR`.
 
-Este archivo existe para explicar la operación de limpieza a un agente que llega
-después. No es contexto durable del sistema y no debe convertirse en un nuevo
-handoff permanente.
+Este archivo no es una bitácora ni un archivo histórico. Se **reescribe** cuando
+cambia la situación de la rama. Git conserva el pasado.
 
-> **No reconstruyas `main` dentro de esta rama. `SUPERVISOR` es una auditoría
-> reductiva de `main`. Una ausencia puede ser el resultado correcto. Antes de
-> restaurar algo, demuestra un consumidor actual o una pérdida funcional.**
+## Misión
 
-## 1. Propósito de la rama
+Auditar `main` después de integraciones mecánicas que recuperaron trabajo
+válido pero también resucitaron superficies retiradas, documentación de sesión,
+wrappers y contratos obsoletos.
 
-`SUPERVISOR` nació desde `main` para revisar el árbol integrado después de
-fusiones y restauraciones mecánicas que recuperaron trabajo válido, pero también
-resucitaron documentación, wrappers, runtimes, copias y contratos ya retirados.
+La meta no es reducir archivos por sí misma. La meta es dejar una superficie
+operativa coherente, medible y explicable sin perder código vigente, evidencia,
+investigación, obra ni conocimiento humano útil.
 
-La misión no es "dejar menos archivos" por sí misma.
+Regla central:
 
-La misión es:
+> No reconstruir `main` dentro de `SUPERVISOR`. Antes de restaurar algo
+> eliminado, demostrar un consumer actual o una pérdida funcional.
 
-1. reducir superficie operativa falsa o supersedida;
-2. conservar código, evidencia, investigación y contenido real;
-3. concentrar contexto durable en `SYSTEM.md`;
-4. reemplazar estado narrado por medición reproducible;
-5. eliminar referencias que puedan volver a resucitar autoridades retiradas;
-6. demostrar que cada pieza que queda tiene razón de existir.
+## Modelo de trabajo
 
-## 2. Qué representa el diff
+Hay dos agentes con responsabilidades deliberadamente distintas.
 
-El diff grande contra `main` no debe leerse como una lista de funciones
-eliminadas.
+### Supervisor remoto
 
-Gran parte de las eliminaciones pertenece a categorías como:
+Carga el contexto caro.
 
-- handoffs y cierres de sesión;
-- `NEXT`, memorias, proyecciones y roadmaps ya cumplidos;
-- reportes de fase e inventarios regenerables;
-- contratos documentales reemplazados por código/registry;
-- wrappers pre-Typer o herramientas supersedidas;
-- copias de sistemas cuya autoridad vive fuera de este repo;
-- piezas explícitamente retiradas que reaparecieron por integración mecánica;
-- historia operativa que Git ya conserva.
+En cada ciclo:
 
-La ausencia de un archivo no constituye por sí sola una regresión.
+1. lee `SYSTEM.md`, este archivo y `ORDEN.md`;
+2. inspecciona el estado actual de la rama/PR y sólo el código necesario para
+   decidir;
+3. consume el resultado `DONE` o `BLOCKED` dejado por Codex;
+4. actualiza **esta cola viva**, sustituyendo estado viejo en vez de agregar
+   historia;
+5. elige una sola tarea de alto impacto y write-set acotado;
+6. reemplaza `ORDEN.md` con la nueva orden `READY`.
 
-## 3. Autoridades después de la limpieza
+No crea documentos de errores, handoffs, cierres de sesión ni diarios de
+decisiones.
 
-Para conocer el sistema actual:
+### Codex local
 
-1. leer `SYSTEM.md`;
-2. medir Git: rama, HEAD, diff, dirty state y procedencia;
-3. ejecutar `python tools/contexto_repo.py --json`;
-4. si importa el MAK físico, ejecutar `python tools/mak_status.py --json`;
-5. consultar `python -m flujo --help`;
-6. revisar consumidores, tests y workflows del área afectada;
-7. acudir a historia Git sólo cuando el presente sea contradictorio.
+Ejecuta; no redescubre el sistema.
 
-`SYSTEM.md` contiene invariantes durables. No contiene el estado dinámico de
-esta operación.
+1. lee `ORDEN.md`;
+2. abre únicamente los archivos necesarios para cumplir esa orden;
+3. ejecuta cambios y pruebas;
+4. reemplaza `ORDEN.md` con un reporte compacto `DONE` o `BLOCKED`;
+5. no crea `ERRORES.md`, `RESULTADOS.md` ni otro archivo de traspaso.
 
-Este archivo, `SUPERVISOR.md`, contiene únicamente la intención y protocolo de
-esta rama.
+Si necesita contexto que no está en la orden, debe pedirlo mediante el estado
+`BLOCKED` en el mismo `ORDEN.md`, no iniciar una arqueología completa.
 
-## 4. Decisiones que no deben revertirse accidentalmente
+## Decisiones de esta auditoría
 
-No restaurar sólo porque el nombre aparezca en historia o en `main`:
+No restaurar sólo porque algo exista en historia o en `main`:
 
 - Airdrop y sus superficies retiradas;
-- la copia completa de XIO dentro de VIBECODEINE;
+- copia completa de XIO dentro de VIBECODEINE;
 - `AGENTS.md` como contrato de entrada;
-- handoffs persistentes;
-- `NEXT.md` y documentos equivalentes de sesión;
+- handoffs persistentes y `NEXT.md`;
 - Watsonx como runtime activo;
-- `tapiz_live_loop` como daemon sin consumidor medido;
-- contratos `CAPACIDADES_*.md` reemplazados por superficies ejecutables.
+- `tapiz_live_loop` como daemon sin consumer medido;
+- contratos `CAPACIDADES_*.md` sustituidos por superficies ejecutables.
 
 Una retirada explícita prevalece sobre una reaparición mecánica mientras no
-exista una decisión posterior explícita de reactivación.
+haya una reactivación posterior explícita.
 
-## 5. Qué sí debe preservarse
+"Un solo contexto" tampoco significa "un solo Markdown": se preservan datos,
+evidencia, investigación, dossiers, obra, contratos técnicos consumidos y
+conocimiento humano real.
 
-"Un solo contexto" no significa "un solo Markdown".
+## Cola viva
 
-No eliminar por extensión, antigüedad o tamaño.
+Esta sección describe sólo problemas **actuales**. Se edita/reduce en cada
+ciclo; no se añaden entradas históricas resueltas.
 
-Se preservan cuando tienen valor propio:
+1. **Pytest no recolecta** porque
+   `tests/test_scan_roots_skip_cloud_mounts.py` importa
+   `tools.consolidate_static_duplicates.PROTECTED_TOPS`, aunque esa herramienta
+   fue retirada.
+2. **Registry de tools desalineado**: conserva
+   `consolidate_static_duplicates.py` y omite herramientas presentes. Debe
+   representar el árbol real sin inventar vigencia.
+3. **`repo_audit`** reporta clasificación stale para `mak_status`.
+4. **Mapa/taxonomía de tests** conserva tests retirados y tiene tests actuales
+   sin lane.
+5. Dos herramientas declaradas `VIVO` fallan en `--help`:
+   `compile_vigia_capture_plans.py` y
+   `reportar_calibracion_deepseek.py`.
+6. Quedan referencias ejecutables a autoridades retiradas en superficies como
+   `system_status.py` y fallbacks de `diagnostics.py`.
+7. Superficies opcionales `searxng` y `mak_research_queue` aparecen sin
+   fuente local; su estado debe ser explícito, no un falso fallo global.
 
-- código vigente;
-- datos y evidencia;
-- investigación;
-- dossiers y postulaciones;
-- obra y assets;
-- contratos técnicos consumidos por código/tests;
-- documentación de producto con conocimiento humano no reproducible desde
-  schemas o código;
-- herramientas manuales con uso real aunque no tengan invocador automático.
+## Regla de restauración
 
-## 6. Regla para restaurar algo
+Antes de restaurar un archivo eliminado, probar:
 
-Antes de restaurar un archivo eliminado, responder con evidencia:
+- owner actual;
+- consumer actual;
+- capacidad que se rompe sin él;
+- ausencia de una superficie nueva equivalente;
+- que no fue una retirada explícita resucitada mecánicamente.
 
-1. ¿Cuál es su owner actual?
-2. ¿Cuál es su consumer actual?
-3. ¿Qué capacidad real se rompe sin él?
-4. ¿Existe una superficie nueva que ya reemplaza esa capacidad?
-5. ¿Fue retirado explícitamente antes de reaparecer?
-6. ¿Hay un test, workflow o runtime actual que lo necesite?
+Menciones históricas y wrappers legacy no bastan.
 
-Si sólo existen menciones históricas, wrappers legacy llamando wrappers legacy,
-o documentación antigua, eso no basta para restaurarlo.
+## Cierre
 
-## 7. Trabajo de revisión que todavía importa
+La rama queda lista cuando:
 
-La limpieza no se considera cerrada sólo porque el árbol sea menor.
+- la suite relevante puede recolectarse y los gates no dependen de excepciones
+  ad hoc;
+- registries y taxonomías describen el árbol real;
+- no quedan consumers actuales apuntando a autoridades retiradas;
+- las ausencias deliberadas se interpretan como tales;
+- no se perdió contenido o evidencia real;
+- `SYSTEM.md` conserva únicamente las reglas durables y esta cola viva queda
+  vacía.
 
-El revisor debe buscar especialmente **referencias colgantes y contratos
-ejecutables que todavía modelen el mundo anterior**.
-
-Hallazgos ya medidos en esta rama que requieren reconciliación antes del cierre:
-
-### Registry de herramientas
-
-`data/tool_registry.json` debe representar el conjunto real de
-`tools/*.py`.
-
-Se observó que herramientas presentes no aparecen en el registry y que al menos
-una herramienta eliminada sigue declarada allí. No solucionar esto inventando
-vigencia: cada estado debe tener evidencia suficiente.
-
-### Estado del sistema
-
-`src/flujo/knowledge/system_status.py` todavía modela `AGENTS.md` como parte
-de su contrato y usa una frase exacta antigua para reconocer su ausencia
-intencional.
-
-Debe alinearse con `SYSTEM.md` y con la política actual sin volver a crear
-`AGENTS.md`.
-
-### Fallback de diagnósticos
-
-`src/flujo/diagnostics.py` conserva rutas de fallback hacia autoridades
-retiradas como `AGENTS.md` y `context/LAST_HANDOFF.md`.
-
-El fallback también debe representar el sistema actual; no basta con que el JSON
-principal esté correcto.
-
-### Contrato README
-
-`SYSTEM.md` declara que `arte-ascii-readme.svg` es el README raíz y que
-`README.md` no debe recrearse.
-
-Cualquier metadata, herramienta o test que todavía requiera `README.md` debe
-reconciliarse con esa decisión. No resolver el problema recreando
-`README.md`.
-
-### Documentación de sesión restante
-
-Rutas como `docs/session_learning/` y `docs/system_learning/` deben evaluarse
-por consumo y contenido, no borrarse en bloque.
-
-Un plan fechado de sesión que sólo reproduce estado antiguo puede retirarse.
-Conocimiento durable único debe preservarse o absorberse antes.
-
-## 8. Orden para el agente MAK
-
-Cuando se pida "revisa la rama SUPERVISOR":
-
-1. no empieces reconstruyendo la historia completa;
-2. lee `SYSTEM.md` y este archivo;
-3. mide `main...SUPERVISOR`;
-4. ejecuta las superficies de contexto/estado actuales;
-5. revisa consumidores, tests y workflows afectados;
-6. clasifica cada problema como:
-   - regresión real,
-   - referencia colgante,
-   - historia legítima,
-   - contenido legítimo,
-   - eliminación intencional;
-7. corrige referencias colgantes y regresiones reales;
-8. no restaures piezas retiradas sin demostrar necesidad actual;
-9. corre los gates relevantes;
-10. deja el árbol explicable sin agregar otra capa de documentos de sesión.
-
-## 9. Criterio de salida
-
-La rama queda lista para integrar cuando:
-
-- las eliminaciones importantes pueden explicarse por categoría;
-- no quedan consumidores actuales apuntando a autoridades retiradas;
-- los registries reflejan el árbol real;
-- tests y workflows relevantes representan la topología actual;
-- las ausencias deliberadas no generan falsos errores;
-- no se perdió evidencia/contenido real por una limpieza mecánica;
-- `SYSTEM.md` basta como contexto durable después del merge.
-
-## 10. Destino de este archivo
-
-`SUPERVISOR.md` es deliberadamente temporal.
-
-Debe permanecer durante la auditoría y revisión del PR para que cualquier agente
-entienda la intención del diff.
-
-Antes de cerrar definitivamente la operación, sus decisiones durables que no
-estén ya en `SYSTEM.md` deben absorberse allí y este archivo debe eliminarse en
-un commit de cierre.
-
-Git conservará este parte de misión como historia de la operación.
+Cuando la auditoría termine, `SUPERVISOR.md` puede retirarse antes del merge;
+Git conserva la operación.
