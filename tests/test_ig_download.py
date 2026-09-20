@@ -10,7 +10,26 @@ import pytest
 
 import flujo.paths  # noqa: F401
 from flujo.ig import download as ig_download
-from flujo.ig.download import download_post, extract_shortcode
+from flujo.ig.download import download_post, extract_shortcode, indice_pedido
+
+
+# ---------------- indice_pedido ----------------
+
+def test_indice_pedido_sin_img_index():
+    assert indice_pedido("https://www.instagram.com/p/ABC123/") == 1
+
+
+def test_indice_pedido_con_img_index():
+    assert indice_pedido("https://www.instagram.com/p/ABC123/?img_index=3") == 3
+
+
+def test_indice_pedido_invalido_cae_a_1():
+    assert indice_pedido("https://www.instagram.com/p/ABC123/?img_index=nope") == 1
+
+
+def test_indice_pedido_cero_o_negativo_cae_a_1():
+    assert indice_pedido("https://www.instagram.com/p/ABC123/?img_index=0") == 1
+    assert indice_pedido("https://www.instagram.com/p/ABC123/?img_index=-2") == 1
 
 
 # ---------------- extract_shortcode ----------------
@@ -178,6 +197,66 @@ def test_download_post_exitoso_carousel(monkeypatch, tmp_path):
     assert out["file_count"] == 2
     assert (out_dir / "input_ig.jpg").exists()
     assert (out_dir / "input_ig_2.jpg").exists()
+
+
+def _fake_carousel_parth(image_count: int):
+    """Mock _parth_download returning `image_count` real, on-disk slides."""
+    def fake_parth(url, shortcode, output_dir):
+        image_files = []
+        for i in range(1, image_count + 1):
+            name = "input_ig.jpg" if i == 1 else f"input_ig_{i}.jpg"
+            dst = output_dir / name
+            dst.write_bytes(b"x")
+            image_files.append(str(dst))
+        return {
+            "status": "downloaded",
+            "shortcode": shortcode,
+            "url": url,
+            "media_type": "carousel" if image_count > 1 else "image",
+            "files": image_files,
+            "image_files": image_files,
+            "file_count": image_count,
+            "caption": "",
+            "owner": "",
+            "date": "",
+            "is_video": False,
+        }
+    return fake_parth
+
+
+def test_download_post_respeta_img_index_del_link(monkeypatch, tmp_path):
+    """Instagram pone `?img_index=N` cuando alguien comparte esa slide del
+    carrusel; el sistema debe anotar cual se pidio (y que existe) en vez de
+    ignorarlo y renderizar siempre la primera."""
+    monkeypatch.setattr(ig_download, "_parth_download", _fake_carousel_parth(3))
+
+    out = download_post("https://www.instagram.com/p/CAROUSEL2/?img_index=2", tmp_path)
+
+    assert out["status"] == "downloaded"
+    assert out["requested_image_index"] == 2
+    assert out["requested_image_index_available"] is True
+
+
+def test_download_post_img_index_fuera_de_rango_se_marca_no_disponible(monkeypatch, tmp_path):
+    """Se pidio la slide 5 pero el post solo tiene 3: no se sustituye en
+    silencio, se marca como no disponible para que el caller avise y use
+    la primera."""
+    monkeypatch.setattr(ig_download, "_parth_download", _fake_carousel_parth(3))
+
+    out = download_post("https://www.instagram.com/p/CAROUSEL3/?img_index=5", tmp_path)
+
+    assert out["status"] == "downloaded"
+    assert out["requested_image_index"] == 5
+    assert out["requested_image_index_available"] is False
+
+
+def test_download_post_sin_img_index_pide_la_primera(monkeypatch, tmp_path):
+    monkeypatch.setattr(ig_download, "_parth_download", _fake_carousel_parth(3))
+
+    out = download_post("https://www.instagram.com/p/CAROUSEL4/", tmp_path)
+
+    assert out["requested_image_index"] == 1
+    assert out["requested_image_index_available"] is True
 
 
 def test_parth_download_video_conserva_mp4_y_poster(monkeypatch, tmp_path):
