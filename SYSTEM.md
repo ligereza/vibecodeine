@@ -114,6 +114,18 @@ una decisión posterior explícita de reactivación.
 - Antes de declarar que algo falta, buscar en las rutas, idiomas y sistemas
   relevantes.
 
+## Decisiones humanas durables
+
+- El portfolio no intenta descubrir un orden verdadero único: primero define el
+  formato/propósito de presentación y luego ordena los materiales para ese fin.
+- No se exige una descripción escrita por pieza para poder clasificarla,
+  relacionarla o decidir sobre ella.
+- Código, comentarios, contratos de máquina y commits se escriben en inglés
+  cuando corresponda; los productos que lee una persona se entregan en español
+  correcto, con tildes y ñ.
+- Un objetivo importante debe declarar cómo puede fallar. El fracaso medido se
+  conserva como evidencia; no se reinterpreta para hacerlo parecer éxito.
+
 ## Principios de trabajo
 
 - Leer y medir antes de editar.
