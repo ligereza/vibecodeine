@@ -1,2 +1,0 @@
-consumer,invalid_fixture,valid_fixture,rollback,source_ast,status
-/api/datadrop-upload,no_output_dir,PASS,PASS,PASS,PASS_WITH_ROLLBACK_FIXTURE
