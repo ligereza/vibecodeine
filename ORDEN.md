@@ -3,147 +3,155 @@
 state: READY
 cycle: supervisor-002
 executor: Codex local
-branch: SUPERVISOR
 code_base_expected: 6ebea3efb5ab8f7c87e0cc97ce415ad426875559
+mode: BUILD
 
 ## Objetivo único
 
-Hacer que `data/tool_registry.json` represente todos los `tools/*.py`
-actuales sin inventar que una herramienta está viva cuando su ciclo de vida aún
-no fue demostrado.
+Cerrar la integración reciente de Azure ML haciendo que el status Azure del
+Hub exponga **lineage read-only del último dataset sanitizado de learning**,
+sin hacer llamadas nuevas a Azure y sin filtrar rutas locales, prompts,
+documentos ni credenciales.
 
-## Preflight ya resuelto por el supervisor
+## Por qué esta tarea
 
-Medición sobre HEAD `6ebea3efb5ab8f7c87e0cc97ce415ad426875559`:
+El supervisor revisó la trayectoria reciente antes de elegirla:
 
-- `tools/*.py` relevantes: 143.
-- entradas actuales del registry: 101.
-- herramientas fantasma: 0.
-- faltantes: 42.
-- `tests/test_higiene_repo.py::test_tools_en_registro` exige presencia de
-  todas las herramientas actuales.
-- `test_registro_sin_herramientas_fantasma` exige que no haya entradas de
-  archivos eliminados.
-- El estado `VIVO` activa además los gates de compilación/`--help`; por eso
-  no debe usarse como valor por defecto.
-- `tools/repo_audit.py::NO_REFERENCE_CLASSIFICATIONS` ya declara explícitamente
-  estas 15 faltantes como `manual_only`:
+- `9b92e4df` añadió export sanitizado de `learning_evaluations` y lineage
+  MLflow.
+- `3e8be117` resolvió la subida real del artefacto Azure ML.
+- `cultura/mak_plataforma/azure_services.py` declara Machine Learning como
+  `operational` y nombra `/api/azure/status` como consumer.
+- La ruta `/api/azure/status` ya devuelve `azure_services.snapshot()`.
+- Ese snapshot hoy muestra inventario de recursos, pero **no el receipt/run
+  lineage** que el pipeline acaba de producir.
+- `tools/azure_ml_learning_dataset.py` ya escribe un `receipt.json`
+  sanitizado con filas, estados, target kinds, fingerprints, hash, run id y
+  estado de artifact upload.
 
-  - `context_pack.py`
-  - `render_archaeology_deliverables.py`
-  - `token_budget.py`
-  - `verify_all.py`
-  - `arica01_portfolio.py`
-  - `certified_query.py`
-  - `classification_review.py`
-  - `compile_portfolio.py`
-  - `compile_ssd_order_foundation.py`
-  - `gen_rd_standalone.py`
-  - `import_project_reconstruction.py`
-  - `run_vision_feedback.py`
-  - `show_asset_usage.py`
-  - `tennis_mcp_ingest.py`
-  - `venue_screen_setup.py`
+No investigues de nuevo si esos hechos son ciertos salvo contradicción concreta
+en el checkout.
 
-Las 27 faltantes restantes no tienen una clasificación explícita equivalente;
-regístralas como `REVISAR`, que expresa incertidumbre sin afirmar vigencia:
+## Resultado funcional esperado
 
-  - `adapt_practice_receipts.py`
-  - `archive_observer.py`
-  - `azure_ml_learning_dataset.py`
-  - `azure_ml_mlflow_compat.py`
-  - `build_evidence_return.py`
-  - `build_possibility_field.py`
-  - `compile_application_research_package.py`
-  - `compile_autonomy_plan.py`
-  - `compile_cross_archive_relations.py`
-  - `compile_cross_archive_research_frontier.py`
-  - `compile_practice_evidence_state.py`
-  - `compile_product_episode.py`
-  - `contexto_repo.py`
-  - `deep_learning_gate.py`
-  - `evaluate_artistic_program_hypotheses.py`
-  - `evaluate_opportunity_fit.py`
-  - `evaluate_product_learning.py`
-  - `materialize_pilot_run.py`
-  - `math_kernel.py`
-  - `project_reconstruction.py`
-  - `project_review.py`
-  - `render_output_edges.py`
-  - `research_simulation.py`
-  - `run_archive_toolchain.py`
-  - `source_learning_bridge.py`
-  - `tennis_shot_events.py`
-  - `venue.py`
+`/api/azure/status` debe incluir una sección estable y bounded, por ejemplo
+`machine_learning_lineage`, que permita al operador saber si existe un último
+dataset de learning y qué ocurrió con él.
+
+Puede exponer únicamente metadata segura como:
+
+- disponibilidad;
+- schema del receipt;
+- cantidad de filas;
+- conteo de fingerprints;
+- `statuses`;
+- `target_kinds`;
+- SHA256 del dataset;
+- `mlflow_run_id` si existe;
+- `artifact_upload`;
+- `artifact_builder` si existe.
+
+No devolver:
+
+- `source`;
+- `dataset_path`;
+- `receipt_path`;
+- rutas absolutas;
+- prompts/documentos;
+- credenciales;
+- contenido del dataset.
+
+Si no existe receipt, el endpoint debe seguir funcionando y nombrar la
+ausencia; no es error global de Azure.
+
+## Contrato de ubicación
+
+Usa una variable opcional `MAK_AZURE_ML_STAGING_ROOT` para el directorio de
+receipts, con el valor actual
+`/home/mak/research/azure-ml/staging` como fallback.
+
+Haz que `tools/azure_ml_learning_dataset.py` use el mismo contrato para su
+`DEFAULT_OUT`, evitando que productor y consumer tengan dos rutas
+independientes.
+
+El consumer debe elegir determinísticamente el receipt más reciente entre los
+subdirectorios válidos y degradar limpio ante JSON inválido o estructura
+desconocida.
+
+## Write-set esperado
+
+- `cultura/mak_plataforma/azure_services.py`
+- `tools/azure_ml_learning_dataset.py`
+- un test dedicado nuevo o existente bajo `tests/` para este contrato
+- `ORDEN.md` al entregar
+
+No modifiques documentación histórica, registry global ni otras superficies
+Azure salvo dependencia directa demostrada.
 
 ## Guard de concurrencia
 
-`6ebea3efb5ab8f7c87e0cc97ce415ad426875559` es el último HEAD de **producto**
-consumido por el supervisor. Después de él el supervisor puede haber creado
-commits que sólo cambian `SUPERVISOR.md` y/o `ORDEN.md`; esos commits de
-control son esperados y no invalidan la orden.
+`6ebea3efb5ab8f7c87e0cc97ce415ad426875559` es el último HEAD de producto
+consumido.
 
-1. Haz `git fetch origin`.
-2. Inspecciona los paths cambiados entre
-   `6ebea3efb5ab8f7c87e0cc97ce415ad426875559..origin/SUPERVISOR`.
-3. Si todos los cambios posteriores están limitados a `SUPERVISOR.md` y
-   `ORDEN.md`, continúa.
-4. Si aparece cualquier otro path, devuelve `BLOCKED` con firma
-   `stale_code_base` y lista sólo esos paths; no apliques esta orden sobre
-   producto que cambió fuera del ciclo.
+1. `git fetch origin`.
+2. Revisa los paths posteriores a ese code base.
+3. Cambios posteriores limitados a archivos de control son esperados.
+4. Si existe cualquier cambio de **producto** posterior antes de empezar,
+   devuelve `BLOCKED` con `stale_code_base` y sólo esos paths. No apliques
+   una orden vieja sobre producto nuevo.
 
-## Write-set
+## Implementación
 
-Sólo:
-
-- `data/tool_registry.json`
-- `ORDEN.md` para devolver el resultado.
-
-No modifiques `repo_audit.py`, herramientas ni tests en este ciclo.
-
-## Trabajo
-
-1. Añade exactamente las 42 entradas faltantes.
-2. Usa `manual-only` como valor para las 15 que el preflight lista como
-   `manual_only` en `repo_audit.py` (mantén el estilo de valores existente
-   del registry).
-3. Usa `REVISAR` para las otras 27.
-4. No reclasifiques entradas que ya estaban presentes.
-5. Conserva JSON válido y el schema actual.
+1. Añade una función pura/read-only en `azure_services.py` que resuelva el
+   último receipt desde el staging root.
+2. Valida que sea el schema esperado y proyecta sólo la allowlist de metadata
+   segura.
+3. Añade esa proyección a `snapshot()` sin requerir Azure CLI adicional.
+4. Haz que el productor `azure_ml_learning_dataset.py` respete
+   `MAK_AZURE_ML_STAGING_ROOT`.
+5. Añade tests con directorios temporales que cubran al menos:
+   - sin receipts;
+   - un receipt válido;
+   - varios receipts y selección determinística del más reciente;
+   - receipt inválido;
+   - comprobación de que rutas locales/fields no permitidos no salen en la
+     respuesta.
+6. No hagas llamadas Azure/MLflow reales en tests.
 
 ## Pruebas
 
-Ejecuta:
+Ejecuta como mínimo:
 
-- `python -m pytest -q tests/test_higiene_repo.py -k "tools_en_registro or registro_sin_herramientas_fantasma"`
-- `python -m pytest -q --collect-only`
+- el test dedicado de Azure services/lineage;
+- `python -m pytest -q tests/test_mak_azure_search.py`;
+- `python -m pytest -q --collect-only`.
 
-No ejecutes aún el gate completo de herramientas `VIVO`; ya existen dos
-fallos conocidos de `--help` que corresponden a otra tarea.
+Si existe un test de Hub que pueda comprobar directamente que
+`/api/azure/status` entrega el campo sin abrir sockets, añádelo o extiéndelo
+sólo si cabe en el write-set lógico.
 
 ## Si aparecen errores
 
-- Corrige sólo errores causados por esta edición del registry y que entren en el
-  write-set.
-- Fallos externos/preexistentes no amplían esta tarea.
-- Si aparecen muchos, agrupa por causa raíz/firma, máximo cinco grupos.
-- `DONE` si el registry queda estructuralmente alineado aunque exista un fallo
-  externo conocido.
-- `BLOCKED` sólo si no puedes completar este objetivo dentro del write-set.
+- Corrige fallos `task_local` dentro de esta integración.
+- No abras frentes de registry, taxonomía, packaging o herramientas ajenas.
+- Si aparecen muchos fallos, agrupa por causa raíz/firma; máximo cinco grupos.
+- `DONE` si el objetivo funcional queda cumplido aunque haya fallos externos.
+- `BLOCKED` sólo si el objetivo no puede completarse sin ampliar el alcance.
 
 ## Criterio de éxito
 
-- las 143 herramientas actuales están representadas;
-- no hay entradas fantasma;
-- ninguna de las 27 inciertas fue promovida a `VIVO`;
-- los dos tests estructurales del registry pasan;
-- la colección de pytest sigue funcionando.
+- productor y consumer comparten el mismo staging-root configurable;
+- el Hub puede mostrar el último lineage sanitizado sin llamada Azure nueva;
+- ninguna ruta local ni campo sensible del receipt se filtra;
+- ausencia/corrupción de receipt degrada de forma explícita y no rompe el
+  status Azure;
+- tests dedicados pasan y pytest sigue recolectando.
 
 ## Entrega
 
 No crees archivos auxiliares.
 
-Reemplaza completamente este mismo `ORDEN.md` por:
+Reemplaza completamente este mismo archivo por:
 
 ```text
 # ORDEN
@@ -153,7 +161,7 @@ objective_met: true | false
 
 summary: <máximo 5 líneas>
 changed:
-  - <archivos tocados>
+  - <archivos realmente tocados>
 tests:
   - <comando>: <resultado breve>
 failure_groups:
