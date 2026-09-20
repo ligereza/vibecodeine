@@ -89,9 +89,11 @@ else:
     _AZURE_FOUNDRY_IMPORT_ERROR = ""
 try:
     from azure_services import emit_event as _azure_emit_event  # noqa: E402
+    from azure_services import machine_learning_lineage as _azure_ml_lineage  # noqa: E402
     from azure_services import snapshot as _azure_services_snapshot  # noqa: E402
 except Exception as _azure_services_exc:  # noqa: BLE001 - Azure is additive
     _azure_emit_event = None
+    _azure_ml_lineage = None
     _azure_services_snapshot = None
     _AZURE_SERVICES_IMPORT_ERROR = type(_azure_services_exc).__name__
 else:
@@ -5441,6 +5443,22 @@ class H(BaseHTTPRequestHandler):
                     "detail": type(exc).__name__,
                 }
             return self._json(payload, _status_for(payload))
+        if p == "/api/azure/lineage":
+            if _azure_ml_lineage is None:
+                return self._json({
+                    "schema": "mak-azure-ml-learning-lineage-v1",
+                    "available": False,
+                    "status": "unavailable",
+                })
+            try:
+                payload = _azure_ml_lineage()
+            except Exception:  # noqa: BLE001 - the read-only surface must degrade
+                payload = {
+                    "schema": "mak-azure-ml-learning-lineage-v1",
+                    "available": False,
+                    "status": "unavailable",
+                }
+            return self._json(payload)
         if p == "/api/azure/status":
             if _azure_services_snapshot is None:
                 return self._json({

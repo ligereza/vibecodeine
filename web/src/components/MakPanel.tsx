@@ -7,7 +7,7 @@
 // file inside the box itself.
 //
 // READ-ONLY on purpose. The panel GETs /api/mak and nothing else; the backend in
-// turn only queries the box's /api/organismo. No actions, no button that orders
+// turn only queries the box's /api/organismo and read-only lineage endpoint. No actions, no button that orders
 // anything. Same rule as xio_puente: live infrastructure is watched, not poked
 // from a screen.
 //
@@ -23,6 +23,19 @@ interface Gpu {
   vram_total_mb?: number;
   vram_usada_mb?: number;
   uso_pct?: number;
+}
+interface AzureMlLineage {
+  schema?: string;
+  available: boolean;
+  status?: 'present' | 'absent' | 'invalid' | 'unavailable';
+  rows?: number;
+  fingerprint_count?: number;
+  statuses?: Record<string, number>;
+  target_kinds?: Record<string, number>;
+  dataset_sha256?: string;
+  mlflow_run_id?: string;
+  artifact_upload?: string;
+  artifact_builder?: string;
 }
 interface Data {
   disponible: boolean;
@@ -48,6 +61,7 @@ interface Data {
     proximo_paso?: string;
     capacidad_declarada?: string[];
   };
+  azure_ml_lineage?: AzureMlLineage;
   tandas?: Tandas;
 }
 
@@ -227,6 +241,31 @@ export default function MakPanel() {
           <p className="text-xs text-neutral-500 mt-2">Proximo paso: {data.operacion.proximo_paso}</p>
         </div>
       )}
+
+      <div className="rounded border border-neutral-800 bg-neutral-950/40 p-3">
+        <div className="text-sm font-semibold mb-2 flex items-center gap-2">
+          <Boxes className="w-4 h-4" /> Azure ML · lineage
+        </div>
+        {data.azure_ml_lineage?.status === 'present' && data.azure_ml_lineage.available ? (
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 text-xs text-neutral-400">
+            <span>Estado: <b className="text-emerald-300">presente</b></span>
+            <span>Filas: <b className="text-neutral-200">{data.azure_ml_lineage.rows ?? 0}</b></span>
+            <span>Fingerprints: <b className="text-neutral-200">{data.azure_ml_lineage.fingerprint_count ?? 0}</b></span>
+            <span>Upload: <b className="text-neutral-200">{data.azure_ml_lineage.artifact_upload ?? 'sin dato'}</b></span>
+            {data.azure_ml_lineage.mlflow_run_id && (
+              <span className="lg:col-span-2">Run MLflow: <b className="text-neutral-200">{data.azure_ml_lineage.mlflow_run_id}</b></span>
+            )}
+          </div>
+        ) : (
+          <p className="text-xs text-neutral-500">
+            {data.azure_ml_lineage?.status === 'absent'
+              ? 'No hay un receipt local de lineage todavía.'
+              : data.azure_ml_lineage?.status === 'invalid'
+                ? 'El último receipt de lineage no es válido.'
+                : 'Lineage de Azure ML no disponible.'}
+          </p>
+        )}
+      </div>
 
       <div>
         {data.memoria && data.memoria.accion !== 'auditoria_no_disponible' && (

@@ -975,6 +975,60 @@ def scan_incoming_datadrops(root_path = None) -> dict:
     }
 
 
+_MAK_LINEAGE_FIELDS = (
+    "schema", "available", "status", "rows", "fingerprint_count",
+    "statuses", "target_kinds", "dataset_sha256", "mlflow_run_id",
+    "artifact_upload", "artifact_builder",
+)
+_MAK_LINEAGE_STATUSES = {"present", "absent", "invalid", "unavailable"}
+_MAK_LINEAGE_VALUE = re.compile(r"[A-Za-z0-9_.:-]{1,160}\Z")
+_MAK_LINEAGE_SHA256 = re.compile(r"[0-9a-fA-F]{64}\Z")
+
+
+def _project_mak_lineage(payload: object) -> dict:
+    """Forward only the stable, content-free lineage contract from MAK."""
+    unavailable = {
+        "schema": "mak-azure-ml-learning-lineage-v1",
+        "available": False,
+        "status": "unavailable",
+    }
+    if not isinstance(payload, dict):
+        return unavailable
+    result: dict = {}
+    schema = payload.get("schema")
+    if isinstance(schema, str) and _MAK_LINEAGE_VALUE.fullmatch(schema):
+        result["schema"] = schema
+    result["available"] = payload.get("available") is True
+    status = payload.get("status")
+    result["status"] = status if status in _MAK_LINEAGE_STATUSES else "unavailable"
+    if isinstance(payload.get("rows"), int) and not isinstance(payload.get("rows"), bool):
+        if payload["rows"] >= 0:
+            result["rows"] = payload["rows"]
+    if (isinstance(payload.get("fingerprint_count"), int)
+            and not isinstance(payload.get("fingerprint_count"), bool)
+            and payload["fingerprint_count"] >= 0):
+        result["fingerprint_count"] = payload["fingerprint_count"]
+    for field in ("statuses", "target_kinds"):
+        value = payload.get(field)
+        if isinstance(value, dict):
+            result[field] = {
+                key: count for key, count in value.items()
+                if (isinstance(key, str) and _MAK_LINEAGE_VALUE.fullmatch(key)
+                    and isinstance(count, int) and not isinstance(count, bool)
+                    and count >= 0)
+            }
+    digest = payload.get("dataset_sha256")
+    if isinstance(digest, str) and _MAK_LINEAGE_SHA256.fullmatch(digest):
+        result["dataset_sha256"] = digest.lower()
+    for field in ("mlflow_run_id", "artifact_upload", "artifact_builder"):
+        value = payload.get(field)
+        if isinstance(value, str) and _MAK_LINEAGE_VALUE.fullmatch(value):
+            result[field] = value
+    if result.get("schema") != "mak-azure-ml-learning-lineage-v1":
+        result["schema"] = "mak-azure-ml-learning-lineage-v1"
+    return result
+
+
 
 class HubRequestHandler(BaseHTTPRequestHandler):
     """Sirve estáticos + API ligera para hacer que el hub sea una app real.
@@ -2597,6 +2651,17 @@ class HubRequestHandler(BaseHTTPRequestHandler):
                 "tandas": tandas,
             }
 
+        try:
+            with _url.urlopen(base + "/api/azure/lineage", timeout=4) as r:
+                azure_ml_lineage = _project_mak_lineage(
+                    json.loads(r.read().decode("utf-8", "replace")))
+        except Exception:  # noqa: BLE001 - lineage must not hide box health
+            azure_ml_lineage = {
+                "schema": "mak-azure-ml-learning-lineage-v1",
+                "available": False,
+                "status": "unavailable",
+            }
+
         salud = crudo.get("salud") or {}
         servicios = salud.get("servicios") or {}
         productos = salud.get("productos") or {}
@@ -2659,6 +2724,7 @@ class HubRequestHandler(BaseHTTPRequestHandler):
                 "proximo_paso": proximo_paso,
                 "capacidad_declarada": sorted(productos),
             },
+            "azure_ml_lineage": azure_ml_lineage,
             "tandas": tandas,
         }
 
