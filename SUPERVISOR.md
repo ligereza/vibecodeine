@@ -1,92 +1,166 @@
 # SUPERVISOR
 
-Memoria compacta del supervisor remoto de VIBECODEINE. Git conserva la historia.
+Memoria compacta del supervisor remoto de VIBECODEINE.
 
-## Objetivo
+Git conserva la historia. Este archivo no reemplaza el contexto del proyecto:
+sólo define cómo un supervisor amnésico debe reconstruirlo antes de decidir.
 
-El supervisor paga el contexto caro y mantiene un buffer secuencial de trabajo útil para Codex local.
-Meta de abastecimiento: aproximadamente 30-60 minutos de trabajo prevalidado, no un número fijo de tareas.
-Si sólo existen dos tareas buenas, deja dos. Nunca rellenes el buffer con auditorías inútiles.
+## Error que no debe repetirse
 
-## Orden de evidencia
+Nunca inferir la siguiente tarea desde una slice local de código, un
+`next_action`, un TODO o los últimos commits sin entender antes el marco del
+proyecto.
 
-Cuando el buffer se agota o bloquea:
-1. consume sus resultados;
-2. descubre la línea principal actual y lee aproximadamente sus últimos 10 commits;
-3. identifica líneas recientes y si ya fueron absorbidas;
-4. lee este snapshot y SYSTEM.md;
-5. abre sólo código, consumers, tests y contratos relacionados;
-6. preflight de cada item antes de meterlo al buffer.
+El repo ya documenta este fallo: declarar un hueco antes de leer la autoridad.
+La frase registrada por el operador es: **"todo lo que pides ya existe, solo
+que no buscaste"**.
 
-No recorrer todo el árbol para encontrar anomalías al azar.
+## Context gate obligatorio
+
+Antes de proponer, renovar o ampliar un buffer, el supervisor DEBE leer primero
+el contexto canónico actual.
+
+### Núcleo mínimo
+
+1. `SYSTEM.md` — reglas durables vigentes.
+2. `MAPA.md` — topología, superficies y consumers actuales.
+3. `docs/GLOSSARY.md` — vocabulario bilingüe y nombres reales del código.
+4. `docs/DIMENSIONES_DEL_ORDEN.md` — marco conceptual de orden/composición.
+
+Estos cuatro son contexto, no backlog.
+
+### Autoridad de dominio
+
+Después de identificar qué dominio aparece en la trayectoria reciente, leer
+ANTES de declarar un hueco las autoridades que ese propio dominio nombra.
+
+Para Portfolio/archivo, como mínimo:
+
+- `docs/INFLECTION_POINT_ARTISTIC_ARCHIVE_2026-08-24.md`
+- `docs/PORTAFOLIO_PRODUCCION.md`
+
+Aunque sean documentos fechados, contienen decisiones e invariantes que siguen
+siendo necesarias para interpretar el código. Si una referencia interna apunta
+a un archivo ya retirado, no inventar su contenido: usar Git actual,
+`SYSTEM.md`, `MAPA.md`, consumers y tests para determinar qué parte sigue
+vigente.
+
+Para RD, empezar por `docs/rd/MAPA_RD.md` antes de interpretar código RD.
+
+Para cualquier otro dominio, seguir primero los documentos que su mapa/README
+actual declara como autoridad.
+
+## Regla de ausencia
+
+Antes de afirmar "falta X":
+
+1. buscar X en ambos idiomas usando `docs/GLOSSARY.md`;
+2. buscar sus sinónimos y contratos;
+3. leer los documentos de autoridad del dominio;
+4. comprobar consumers/tests;
+5. si la autoridad menciona evidencia runtime externa, distinguir
+   "no accesible desde Git" de "no existe".
+
+Ausencia de búsqueda no es evidencia de ausencia.
+
+## Orden de decisión
+
+Sólo después del context gate:
+
+1. consumir resultados del buffer;
+2. leer aproximadamente los últimos 10 commits de la línea principal actual;
+3. identificar la trayectoria reciente y líneas ya absorbidas;
+4. contrastar esa trayectoria con las autoridades de dominio;
+5. abrir sólo código/tests directamente ligados a la capacidad;
+6. elegir trabajo que avance el producto sin contradecir doctrina existente.
+
+Los commits dicen hacia dónde se movía el trabajo; la autoridad dice qué
+significa ese movimiento. Ninguno sustituye al otro.
 
 ## Prioridad
 
-Preferir BUILD/FINISH. La higiene sólo entra si bloquea una trayectoria funcional, pruebas necesarias, ejecución o release.
-No encadenar inventarios, taxonomías o conteos por sí mismos.
+Preferir BUILD/FINISH.
+
+Una tarea es válida sólo si responde simultáneamente:
+
+- ¿qué capacidad real avanza?;
+- ¿qué consumer la necesita?;
+- ¿qué autoridad permite ese cambio?;
+- ¿qué output cambia para una persona/sistema real?;
+- ¿qué evidencia demuestra que no estamos reconstruyendo algo ya existente?
+
+No convertir un `next_action` textual en backlog automáticamente.
+
+## Invariantes de Portfolio que ya conocemos
+
+- El archivo no es un problema de clasificación perfecta sino de composición
+  reversible y defendible.
+- El mismo corpus puede producir múltiples órdenes según el propósito `G`.
+- Evidencia, semántica y política son capas distintas.
+- Una publicación, archivo nativo, carpeta o similitud no prueba por sí sola
+  identidad de obra ni autoría.
+- La incertidumbre reversible se paga en alcance; no en preguntar de rutina al
+  operador.
+- **La revisión humana es supervisión opcional, no compuerta normal de
+  producción.**
+- Ya existieron decisiones humanas, clasificaciones y relaciones curatoriales;
+  no crear una nueva cola humana sin demostrar una necesidad nueva.
+- No construir UI/endpoint de producción de Portfolio antes de existir un
+  consumidor que lo justifique.
+- Producir significa entregar algo que alguien usa; un nuevo JSON/hash/contrato
+  sin consumidor no es aprendizaje.
+- La generalidad se descubre después de producir ejemplares, no antes.
+- `docs/DIMENSIONES_DEL_ORDEN.md` deja una dirección explícita: el propósito
+  `G` debe entrar al campo de orden y el sistema debe poder emitir órdenes
+  defendibles en lugar de un único veredicto.
 
 ## Buffer
 
-ORDEN.md es el único buzón reemplazable.
-Estados top-level: READY, RUNNING, DEPLETED, BLOCKED, COMPLETE.
-Estados de item: READY, CONDITIONAL, RUNNING, DONE, BLOCKED, SKIPPED.
+`ORDEN.md` sigue siendo un buffer secuencial de aproximadamente 30–60 minutos,
+pero sólo se llena DESPUÉS del context gate.
 
-Un item CONDITIONAL sólo se ejecuta cuando sus dependencias están DONE y su condición es verdadera.
+Estados top-level:
+`READY | RUNNING | DEPLETED | BLOCKED | COMPLETE`.
+
+Estados item:
+`READY | CONDITIONAL | RUNNING | DONE | BLOCKED | SKIPPED`.
+
+El supervisor no rellena minutos con trabajo inventado.
 
 ## Ejecutor local
 
-Codex consume el buffer secuencialmente en la misma sesión:
-1. git fetch origin;
-2. toma el primer item READY;
-3. valida su guard;
-4. marca RUNNING;
-5. ejecuta sólo su write-set;
-6. corre pruebas;
-7. hace commit de producto;
-8. compacta el resultado de ese item dentro de ORDEN.md;
-9. promueve el siguiente CONDITIONAL si corresponde y continúa inmediatamente;
-10. al agotar el buffer deja state: DEPLETED.
+Codex ejecuta; no redefine el proyecto.
 
-No espera al supervisor entre items.
-Se detiene ante stale_code_base, blocker de alcance, contradicción de owner/consumer o decisión humana no autorizada.
-Muchos errores se agrupan por causa raíz, máximo cinco grupos.
-No crear ERRORES.md, RESULTADOS.md, NEXT.md, handoffs ni diarios.
+- consume items secuencialmente;
+- sólo trabaja dentro del write-set;
+- hace commit por item;
+- compacta resultado en el mismo `ORDEN.md`;
+- sigue al siguiente sin esperar al supervisor;
+- detiene ante stale code, contradicción de autoridad o blocker de alcance;
+- no crea documentos auxiliares.
 
 ## Concurrencia
 
-El buffer registra base_product_head. Commits posteriores que sólo tocan SUPERVISOR.md u ORDEN.md son control-plane.
-Codex conserva el último commit de producto que creó. Antes de cada item vuelve a hacer fetch.
-Si aparece un cambio de producto ajeno posterior a ese HEAD, detiene el buffer con stale_code_base.
+Registrar base de producto efímera. Commits de control no invalidan producto.
+Commits de producto del propio buffer actualizan la base para el siguiente item.
+Un cambio de producto externo inesperado => `stale_code_base`.
 
-## Trayectoria consumida
+## Estado actual
 
-Los últimos ciclos cerraron:
-- learning_evaluations -> MLflow/Azure ML;
-- lineage local seguro;
-- MAK -> FLUJO -> MakPanel visible sin polling a Azure.
+Los ciclos Azure recientes cerraron correctamente la cadena:
 
-Azure queda cerrado por ahora; no continuar por inercia.
+`learning_evaluations -> MLflow/Azure ML -> lineage local -> MAK -> FLUJO -> MakPanel`.
 
-La trayectoria reciente de main también consolidó Hub/Portfolio/archivo y dejó:
-direction-context -> work-packet -> work-preview -> human review before execution.
+No continuar Azure por inercia.
 
-El sistema ya previsualiza una de cuatro tareas, pero no tiene una transición explícita y trazable desde preview a revisión humana solicitada/confirmada.
+El buffer Portfolio `vibe-buffer-004` fue INVALIDADO antes de ejecución porque
+se diseñó sin cargar las autoridades de Portfolio. Proponía una nueva compuerta
+humana y nueva UI, contradiciendo decisiones explícitas ya documentadas.
 
-## Límite del buffer actual
-
-Avanzar sólo hasta donde exista autoridad segura:
-1. hacer explícita la solicitud de revisión humana;
-2. permitir confirmación/rechazo idempotente sin ejecutar;
-3. producir readiness para structural_order sólo si la confirmación existe y el ejecutor estructural ya tiene autoridad comprobable.
-
-No fabricar autorización humana ni ejecutar una operación artística o semántica.
-
-## Deuda no prioritaria
-
-Registry incompleto, clasificación stale, taxonomía de tests, dos tools VIVO con --help defectuoso, referencias retiradas y opcionales ausentes.
-Sólo volver a ellas si bloquean trabajo real.
+No reutilizar sus items como backlog.
 
 ## Cierre
 
-Cuando el buffer quede DEPLETED, el supervisor reconstruye trayectoria reciente y lo reemplaza.
-Si no puede prevalidar más trabajo funcional, usa COMPLETE.
+Si después del context gate no existe una capacidad funcional claramente
+respaldada por autoridad + consumer + trayectoria reciente, usar `COMPLETE`.
+Nunca inventar una tarea para mantener ocupado al agente.
