@@ -197,3 +197,13 @@ La validación Android pendiente se ejecutó en la misma fecha con Temurin
 Gradle 8.7. Los proyectos RD Field y FOH Monitor completaron
 `clean assembleDebug`; la instalación y prueba física en el Xiaomi siguen
 siendo un gate distinto.
+
+Ese gate físico se completó después: los APK debug RD Field 0.1.0 y FOH Monitor
+0.4.0 se instalaron con conservación de datos en el Xiaomi Android 14. Los dos
+arrancaron en frío, mantuvieron proceso vivo y no registraron excepciones
+fatales. Las capturas de validación no se incorporaron al repositorio porque
+contienen estado operacional local.
+
+La vertical de campo real permanece correctamente bloqueada: no se encontró
+un ledger crosswalk revisado ni archivos GLB, SPZ o PLY reales. El sistema no
+crea esos artefactos ni una equivalencia RD/VJ para satisfacer una prueba.

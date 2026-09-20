@@ -19,12 +19,20 @@
   2/2 mediante igualdad exacta. No se declaró una relación RD↔VJ ausente.
 - Java 17 y Android SDK 34 quedaron instalados como herramientas de usuario.
   Los APK debug de RD Field y FOH Monitor pasaron `clean assembleDebug`.
+- Ambos APK se actualizaron y arrancaron correctamente en el Xiaomi Android
+  14; no hubo excepciones fatales. No se versionaron las capturas de pantalla
+  porque muestran estado operativo del dispositivo.
 
 Próximo incremento de mayor valor: obtener del operador una relación real
 revisada que contenga simultáneamente `eventRef` y `eventKey`, persistirla en
 el ledger MAK y ejecutar la sesión con hashes GLB/SPZ de una captura real. La
 infraestructura ya falla de forma explícita si falta una autoridad, evidencia
 o revisión espacial.
+
+La búsqueda posterior confirmó precisamente ese límite: hoy no hay un ledger
+crosswalk revisado ni GLB/SPZ/PLY reales disponibles. La siguiente sesión de
+campo necesita esos insumos de origen; generarlos por conveniencia violaría el
+modelo de autoridad.
 
 ## Continuacion orientadora: evento, 3D y vision (2026-09-20)
 
