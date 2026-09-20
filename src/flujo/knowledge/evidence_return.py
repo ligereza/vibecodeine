@@ -8,6 +8,9 @@ import json
 from pathlib import Path
 from typing import Any, Mapping
 
+from ._io_helpers import load_json_file as load_json
+from ._contract_helpers import nullable_text as _text, stable_json as _stable
+
 
 OPPORTUNITY_SCHEMA = "mak-opportunity-constraints-v1"
 PRACTICE_SCHEMA = "mak-practice-evidence-state-v1"
@@ -18,16 +21,8 @@ RETURN_SCHEMA = "mak-evidence-return-v1"
 SUPPORTED = "supported_candidate"
 
 
-def _stable(value: Any) -> str:
-    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False)
-
-
 def _id(prefix: str, value: Any) -> str:
     return prefix + hashlib.sha256(_stable(value).encode("utf-8")).hexdigest()[:20]
-
-
-def _text(value: Any) -> str | None:
-    return value.strip() if isinstance(value, str) and value.strip() else None
 
 
 def _refs(value: Any) -> list[str]:
@@ -171,8 +166,3 @@ def build_evidence_return(opportunity: Mapping[str, Any], practice: Mapping[str,
 def dry_run_evidence_return(*inputs: Mapping[str, Any]) -> dict[str, Any]:
     result = build_evidence_return(*inputs)
     return {"dry_run": True, "applied": False, "would_change": copy.deepcopy(result), "result": result}
-
-
-def load_json(path: str | Path) -> Any:
-    with Path(path).open("r", encoding="utf-8") as handle:
-        return json.load(handle)

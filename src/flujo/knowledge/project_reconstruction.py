@@ -49,6 +49,8 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 
+from ._contract_helpers import compact_json as stable_json
+
 CONTRACT = "mak-project-reconstruction-v1"
 ALGORITHM_VERSION = "lexicographic-role-cascade-1"
 
@@ -156,10 +158,6 @@ def _fingerprint_file(path: Path, *, chunk: int = 1 << 20) -> str:
                 break
             digest.update(block)
     return digest.hexdigest()
-
-
-def stable_json(value: Any) -> str:
-    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
 
 @dataclass(frozen=True)

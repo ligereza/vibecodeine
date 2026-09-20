@@ -9,10 +9,11 @@ never fetches, persists or dispatches anything.
 from __future__ import annotations
 
 import hashlib
-import json
 from collections.abc import Mapping, Sequence
 from typing import Any, Callable
 from urllib.parse import urlsplit
+
+from ._contract_helpers import sha256_ref as _hash, stable_json
 
 from tools.research_source_capture import capture_one
 
@@ -46,14 +47,6 @@ _RECEIPT_SKIPPED_FIELDS = {"plan_id", "url", "reason"}
 
 class VigiaCaptureBridgeError(ValueError):
     """Raised for malformed Vigia discoveries or capture-plan output."""
-
-
-def stable_json(value: Any) -> str:
-    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False)
-
-
-def _hash(value: Any) -> str:
-    return "sha256:" + hashlib.sha256(stable_json(value).encode("utf-8")).hexdigest()
 
 
 def _text(value: Any, field: str, *, required: bool = True, limit: int = 1000) -> str:

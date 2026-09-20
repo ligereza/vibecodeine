@@ -10,9 +10,10 @@ exactly one assignment status.
 from __future__ import annotations
 
 import hashlib
-import json
 from collections import defaultdict
 from typing import Any, Mapping
+
+from ._contract_helpers import sha256_ref as _hash, stable_json as _stable_json
 
 from .archive_relation_inference import (
     ArchiveRelationInferenceError,
@@ -77,20 +78,6 @@ _ASSIGNMENT_FIELDS = {
 
 class ArchiveUnitReconstructionError(ValueError):
     """Invalid upstream input or invalid unit reconstruction payload."""
-
-
-def _stable_json(value: Any) -> str:
-    return json.dumps(
-        value,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-        allow_nan=False,
-    )
-
-
-def _hash(value: Any) -> str:
-    return "sha256:" + hashlib.sha256(_stable_json(value).encode("utf-8")).hexdigest()
 
 
 def _sorted_unique_strings(value: Any, field: str) -> list[str]:

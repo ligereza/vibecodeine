@@ -22,9 +22,11 @@ import re
 import sqlite3
 import sys
 import uuid
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
+
+from ._contract_helpers import compact_json as stable_json
+from ._io_helpers import utc_now_iso as now_iso
 
 
 SCHEMA = "mak-project-ir-v1"
@@ -96,14 +98,6 @@ class ProjectIRError(ValueError):
 
 class InventoryLimitError(ProjectIRError):
     """The requested source exceeds the explicit bounded inventory limit."""
-
-
-def now_iso() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
-
-
-def stable_json(value: Any) -> str:
-    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
 
 def slug(value: str, fallback: str = "project") -> str:

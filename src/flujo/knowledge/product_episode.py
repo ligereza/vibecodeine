@@ -12,10 +12,11 @@ from __future__ import annotations
 import copy
 import datetime as _datetime
 import hashlib
-import json
 import re
 from collections.abc import Mapping
 from typing import Any
+
+from ._contract_helpers import canonical_sha256_ref as _hash, stable_json
 
 from .learning_policy import VERIFIED_OUTCOME_STATUSES, VERIFIED_VALIDATION_STATUSES
 from .portfolio_dossier import validate_portfolio_dossier
@@ -55,31 +56,6 @@ _HEX_SHA256 = re.compile(r"^(?:sha256:)?[0-9a-fA-F]{64}$")
 
 class ProductEpisodeError(ValueError):
     """Raised when a product episode boundary is unsafe or ambiguous."""
-
-
-def stable_json(value: Any) -> str:
-    return json.dumps(
-        value,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-        allow_nan=False,
-    )
-
-
-def _canonical(value: Any) -> Any:
-    if isinstance(value, Mapping):
-        return {
-            str(key): _canonical(child)
-            for key, child in sorted(value.items(), key=lambda item: str(item[0]))
-        }
-    if isinstance(value, list):
-        return sorted((_canonical(child) for child in value), key=stable_json)
-    return copy.deepcopy(value)
-
-
-def _hash(value: Any) -> str:
-    return "sha256:" + hashlib.sha256(stable_json(_canonical(value)).encode("utf-8")).hexdigest()
 
 
 def _text(value: Any, field: str, *, required: bool = True) -> str:

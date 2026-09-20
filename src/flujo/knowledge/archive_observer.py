@@ -18,6 +18,8 @@ import stat
 from pathlib import Path, PurePosixPath
 from typing import Any, Iterable, Mapping, Sequence
 
+from ._contract_helpers import stable_json as _canonical_json
+
 
 SCHEMA = "mak-archive-observation-batch-v1"
 
@@ -92,10 +94,6 @@ _SIDECAR_EXTENSIONS = {
     ".yml",
 }
 _MANIFEST_WORDS = ("manifest", "metadata", "catalog", "catalogue", "index", "checksum", "checksums")
-
-
-def _canonical_json(value: Any) -> str:
-    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False)
 
 
 def _sha256_text(value: str) -> str:

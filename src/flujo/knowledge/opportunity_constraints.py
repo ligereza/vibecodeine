@@ -15,6 +15,8 @@ import math
 import re
 from typing import Any, Mapping
 
+from ._contract_helpers import sha256_ref as _hash, stable_json
+
 
 SCHEMA = "mak-opportunity-constraints-v1"
 INPUT_SCHEMA = "mak-opportunity-document-package-v1"
@@ -53,20 +55,6 @@ _CATEGORY_KINDS = {
 
 class OpportunityConstraintsError(ValueError):
     """Invalid evidence package or invalid deterministic constraints payload."""
-
-
-def stable_json(value: Any) -> str:
-    return json.dumps(
-        value,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-        allow_nan=False,
-    )
-
-
-def _hash(value: Any) -> str:
-    return "sha256:" + hashlib.sha256(stable_json(value).encode("utf-8")).hexdigest()
 
 
 def _text(value: Any, field: str, *, required: bool = True, limit: int = 500) -> str:

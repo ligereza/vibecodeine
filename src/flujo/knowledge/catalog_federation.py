@@ -13,9 +13,11 @@ import hashlib
 import json
 import sqlite3
 from dataclasses import dataclass
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
+
+from ._contract_helpers import compact_json as _json
+from ._io_helpers import utc_now_iso as _now
 
 
 SCHEMA = "mak-catalog-federation-v1"
@@ -32,14 +34,6 @@ class SourceInspection:
     tables: tuple[dict[str, Any], ...]
     table_count: int
     row_count: int
-
-
-def _now() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
-
-
-def _json(value: Any) -> str:
-    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
 
 def _source_kind(path: Path) -> str:

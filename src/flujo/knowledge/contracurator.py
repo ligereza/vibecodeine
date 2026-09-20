@@ -14,13 +14,12 @@ Hub remains read-only.
 from __future__ import annotations
 
 import copy
-import hashlib
-import json
 from collections.abc import Mapping
 from typing import Any
 
-from .product_view import ProductViewError, stable_json, validate_archive_portfolio_view
+from .product_view import ProductViewError, validate_archive_portfolio_view
 from .project_ir import LearningStore
+from ._contract_helpers import sha256_ref as _hash
 
 
 SCHEMA = "mak-contracurator-exhibition-v1"
@@ -32,10 +31,6 @@ MAX_SELECTION = 12
 
 class ContracuratorError(ValueError):
     """The archive view cannot sustain a bounded curatorial decision."""
-
-
-def _hash(value: Any) -> str:
-    return "sha256:" + hashlib.sha256(stable_json(value).encode("utf-8")).hexdigest()
 
 
 def _mapping(value: Any, field: str) -> Mapping[str, Any]:

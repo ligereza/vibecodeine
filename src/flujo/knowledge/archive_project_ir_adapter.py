@@ -8,8 +8,6 @@ candidate relation, or introduces a filesystem root that was not observed.
 
 from __future__ import annotations
 
-import hashlib
-import json
 from typing import Any, Mapping
 
 from .archive_unit_reconstruction import (
@@ -45,20 +43,6 @@ _RELATION_FIELDS = {
 
 class ArchiveProjectIRAdapterError(ValueError):
     """Invalid Stage 2C input or invalid deterministic Project IR bundle."""
-
-
-def _stable_json(value: Any) -> str:
-    return json.dumps(
-        value,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-        allow_nan=False,
-    )
-
-
-def _hash(value: Any) -> str:
-    return "sha256:" + hashlib.sha256(_stable_json(value).encode("utf-8")).hexdigest()
 
 
 def _sorted_unique(value: Any, field: str) -> list[str]:

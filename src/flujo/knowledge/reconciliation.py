@@ -17,6 +17,8 @@ from pathlib import Path
 from typing import Any, Iterable
 from urllib.parse import quote
 
+from ._io_helpers import sha256_file as _sha256_file
+
 
 RECONCILIATION_SCHEMA = "mak-unified-knowledge-reconciliation-v1"
 TARGET_SCHEMA = "mak-unified-knowledge-db-target-v1"
@@ -58,14 +60,6 @@ def _json_value(value: Any) -> Any:
 
 def _json_bytes(value: Any) -> bytes:
     return json.dumps(value, ensure_ascii=True, sort_keys=True, separators=(",", ":")).encode()
-
-
-def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def _connect_read_only(path: Path) -> sqlite3.Connection:

@@ -12,6 +12,8 @@ import json
 from collections.abc import Mapping
 from typing import Any
 
+from ._contract_helpers import sha256_ref as sha256_json
+
 from .application_research_package import compile_application_research_package
 from .archive_observer import observe_archive
 from .archive_observer import validate_batch as validate_observation_batch
@@ -61,10 +63,6 @@ def stable_json(value: Any, *, pretty: bool = False) -> str:
         separators=None if pretty else (",", ":"),
         allow_nan=False,
     )
-
-
-def sha256_json(value: Any) -> str:
-    return "sha256:" + hashlib.sha256(stable_json(value).encode("utf-8")).hexdigest()
 
 
 def _require_mapping(value: Any, name: str) -> Mapping[str, Any]:

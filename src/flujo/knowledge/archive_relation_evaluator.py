@@ -31,10 +31,11 @@ replay it independently.
 from __future__ import annotations
 
 import hashlib
-import json
 import math
 from collections.abc import Mapping, Sequence
 from typing import Any
+
+from ._contract_helpers import stable_json as _canonical
 
 
 INPUT_SCHEMA = "mak-archive-reconstruction-input-v1"
@@ -111,16 +112,6 @@ class ArchiveRelationEvaluationError(ValueError):
     def __init__(self, message: str, report: Mapping[str, Any] | None = None) -> None:
         super().__init__(message)
         self.report = dict(report) if report is not None else None
-
-
-def _canonical(value: Any) -> str:
-    return json.dumps(
-        value,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-        allow_nan=False,
-    )
 
 
 def _digest(value: Any) -> str:

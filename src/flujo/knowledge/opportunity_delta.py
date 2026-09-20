@@ -9,9 +9,10 @@ downstream recomputation is justified by that change.
 from __future__ import annotations
 
 import hashlib
-import json
 from collections.abc import Mapping
 from typing import Any
+
+from ._contract_helpers import sha256_ref as _hash, stable_json
 
 from .opportunity_constraints import (
     SCHEMA as CONSTRAINTS_SCHEMA,
@@ -65,20 +66,6 @@ _DOWNSTREAM_CONSUMERS = [
 
 class OpportunityDeltaError(ValueError):
     """Raised when a constraints diff cannot be computed fail-closed."""
-
-
-def stable_json(value: Any) -> str:
-    return json.dumps(
-        value,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-        allow_nan=False,
-    )
-
-
-def _hash(value: Any) -> str:
-    return "sha256:" + hashlib.sha256(stable_json(value).encode("utf-8")).hexdigest()
 
 
 def _require_payload(payload: Any, name: str) -> Mapping[str, Any]:

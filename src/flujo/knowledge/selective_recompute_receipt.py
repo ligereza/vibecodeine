@@ -12,6 +12,8 @@ import json
 from collections.abc import Mapping
 from typing import Any
 
+from ._contract_helpers import sha256_ref as _hash, stable_json
+
 from .opportunity_delta import validate_opportunity_delta
 
 
@@ -41,14 +43,6 @@ _DIRECT_SOURCE_OUTPUTS = {"opportunity"}
 
 class SelectiveRecomputeReceiptError(ValueError):
     """Raised when the causal comparison cannot be made safely."""
-
-
-def stable_json(value: Any) -> str:
-    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False)
-
-
-def _hash(value: Any) -> str:
-    return "sha256:" + hashlib.sha256(stable_json(value).encode("utf-8")).hexdigest()
 
 
 def _output_map(value: Any, name: str) -> dict[str, str]:

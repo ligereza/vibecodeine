@@ -10,10 +10,11 @@ status is deliberately limited to ``pending_relation`` and
 from __future__ import annotations
 
 import hashlib
-import json
 import math
 from itertools import combinations
 from typing import Any, Mapping
+
+from ._contract_helpers import stable_json as _stable_json
 
 from .project_reconstruction import (
     RELATION_INVERSES,
@@ -63,20 +64,6 @@ _CANDIDATE_SEMANTIC_FIELDS = (
 
 class ArchiveRelationInferenceError(ValueError):
     """Invalid Stage 2A input or invalid relation-candidate payload."""
-
-
-def _stable_json(value: Any) -> str:
-    return json.dumps(
-        value,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-        allow_nan=False,
-    )
-
-
-def _hash(value: Any) -> str:
-    return "sha256:" + hashlib.sha256(_stable_json(value).encode("utf-8")).hexdigest()
 
 
 def _require_projection(projection: Mapping[str, Any]) -> tuple[dict[str, Any], dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:

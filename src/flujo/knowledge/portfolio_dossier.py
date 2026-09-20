@@ -11,9 +11,10 @@ from __future__ import annotations
 
 import copy
 import hashlib
-import json
 from collections.abc import Mapping, Sequence
 from typing import Any
+
+from ._contract_helpers import canonical_sha256_ref as _hash, canonicalize as _canonical, optional_text as _text, stable_json
 
 
 PLAN_SCHEMA = "mak-product-plan-v1"
@@ -45,35 +46,6 @@ class PortfolioDossierError(ValueError):
     def __init__(self, message: str, errors: Sequence[str] | None = None) -> None:
         self.errors = list(errors or [])
         super().__init__(message)
-
-
-def stable_json(value: Any) -> str:
-    return json.dumps(
-        value,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-        allow_nan=False,
-    )
-
-
-def _canonical(value: Any) -> Any:
-    if isinstance(value, Mapping):
-        return {
-            str(key): _canonical(child)
-            for key, child in sorted(value.items(), key=lambda item: str(item[0]))
-        }
-    if isinstance(value, list):
-        return sorted((_canonical(child) for child in value), key=stable_json)
-    return copy.deepcopy(value)
-
-
-def _hash(value: Any) -> str:
-    return "sha256:" + hashlib.sha256(stable_json(_canonical(value)).encode("utf-8")).hexdigest()
-
-
-def _text(value: Any) -> str:
-    return value.strip() if isinstance(value, str) and value.strip() else ""
 
 
 def _copy_json(value: Any) -> Any:

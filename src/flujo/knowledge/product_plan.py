@@ -10,10 +10,10 @@ work.  No target is published, submitted, dispatched or promoted here.
 from __future__ import annotations
 
 import copy
-import hashlib
-import json
 from collections.abc import Mapping
 from typing import Any
+
+from ._contract_helpers import sha256_ref as _hash, stable_json
 
 from .artistic_program_hypotheses import validate_artistic_program_candidates
 from .opportunity_constraints import validate_opportunity_constraints
@@ -62,17 +62,6 @@ _ASSET_FIELDS = {
 
 class ProductPlanError(ValueError):
     """Raised when an accepted input or product-plan payload is unsafe."""
-
-
-def stable_json(value: Any) -> str:
-    return json.dumps(
-        value, ensure_ascii=False, sort_keys=True, separators=(",", ":"),
-        allow_nan=False,
-    )
-
-
-def _hash(value: Any) -> str:
-    return "sha256:" + hashlib.sha256(stable_json(value).encode("utf-8")).hexdigest()
 
 
 def _canonical(value: Any) -> Any:

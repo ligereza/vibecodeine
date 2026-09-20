@@ -11,12 +11,13 @@ from __future__ import annotations
 
 import copy
 import hashlib
-import json
 import re
 import unicodedata
 from collections.abc import Mapping, Sequence
 from datetime import date, datetime, timezone
 from typing import Any
+
+from ._contract_helpers import stable_json
 from urllib.parse import urlsplit
 
 # Optional MAK peer: see flujo.autonomia. Without the MAK research tree the
@@ -57,10 +58,6 @@ _MONTHS = {
     "junio": 6, "julio": 7, "agosto": 8, "septiembre": 9,
     "setiembre": 9, "octubre": 10, "noviembre": 11, "diciembre": 12,
 }
-
-
-def stable_json(value: Any) -> str:
-    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False)
 
 
 def _digest(value: str) -> str:

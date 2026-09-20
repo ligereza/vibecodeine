@@ -10,10 +10,10 @@ evidence can update the proposition without changing what was proposed.
 
 from __future__ import annotations
 
-import hashlib
-import json
 from collections import defaultdict
 from typing import Any, Iterable, Mapping
+
+from ._contract_helpers import sha256_ref as _hash
 
 
 SCHEMA = "mak-operational-memberships-v1"
@@ -47,20 +47,6 @@ _EVENT_FIELDS = {
 
 class OperationalMembershipError(ValueError):
     """Invalid operational event, proposition or projection."""
-
-
-def _stable_json(value: Any) -> str:
-    return json.dumps(
-        value,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-        allow_nan=False,
-    )
-
-
-def _hash(value: Any) -> str:
-    return "sha256:" + hashlib.sha256(_stable_json(value).encode("utf-8")).hexdigest()
 
 
 def _required_text(value: Any, field: str) -> str:

@@ -14,9 +14,11 @@ import hashlib
 import json
 import re
 import sqlite3
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
+
+from ._contract_helpers import compact_json as _json
+from ._io_helpers import utc_now_iso as _now
 
 
 SCHEMA = "mak-operational-bridge-v1"
@@ -33,14 +35,6 @@ DEFAULT_INTAKE = MAK_HOME / "research" / "intake" / "portable-ssd-20260813-scd-r
 # surviving one (it kept 0 captures of its own). `_v3` is the richest run still
 # live in the corpus: 5215 rows in `fondart_applications` against v5's copy.
 DEFAULT_FONDART = MAK_HOME / "research" / "corpus" / "fondart_annual_2015_2025_20260813_v3" / "sources.sqlite"
-
-
-def _now() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
-
-
-def _json(value: Any) -> str:
-    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
 
 def _quote(value: str) -> str:

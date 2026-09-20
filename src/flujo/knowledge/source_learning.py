@@ -14,6 +14,7 @@ import tempfile
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
+from ._io_helpers import sha256_file as _sha256_file
 from .learning_policy import record_verified_result
 from .project_ir import LearningStore, build_project_ir, format_family, media_type, stable_json
 from .project_router import route_project
@@ -52,14 +53,6 @@ CLASS_STATUS_CONTRACT = {
 
 class SourceLearningError(ValueError):
     """Invalid or unverifiable source-learning case."""
-
-
-def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def _load_object(path: Path) -> dict[str, Any]:

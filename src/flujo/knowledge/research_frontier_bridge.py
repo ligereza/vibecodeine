@@ -11,10 +11,11 @@ from __future__ import annotations
 
 import copy
 import hashlib
-import json
 import math
 from collections.abc import Mapping
 from typing import Any
+
+from ._contract_helpers import sha256_ref as _hash, stable_json
 
 from tools.research_job_router import ADAPTERS, detect_domain
 from .opportunity_constraints import validate_opportunity_constraints
@@ -45,20 +46,6 @@ _FRONTIER_KINDS = {"research_action", "missing_requirement", "risk_flag", "refre
 
 class ResearchFrontierBridgeError(ValueError):
     """Invalid accepted input or invalid deterministic frontier payload."""
-
-
-def stable_json(value: Any) -> str:
-    return json.dumps(
-        value,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-        allow_nan=False,
-    )
-
-
-def _hash(value: Any) -> str:
-    return "sha256:" + hashlib.sha256(stable_json(value).encode("utf-8")).hexdigest()
 
 
 def _text(value: Any, field: str, *, required: bool = True) -> str:
