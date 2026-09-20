@@ -4,7 +4,7 @@ state: READY
 cycle: supervisor-002
 executor: Codex local
 branch: SUPERVISOR
-branch_head_expected: 6ebea3efb5ab8f7c87e0cc97ce415ad426875559
+code_base_expected: 6ebea3efb5ab8f7c87e0cc97ce415ad426875559
 
 ## Objetivo único
 
@@ -78,12 +78,19 @@ regístralas como `REVISAR`, que expresa incertidumbre sin afirmar vigencia:
 
 ## Guard de concurrencia
 
+`6ebea3efb5ab8f7c87e0cc97ce415ad426875559` es el último HEAD de **producto**
+consumido por el supervisor. Después de él el supervisor puede haber creado
+commits que sólo cambian `SUPERVISOR.md` y/o `ORDEN.md`; esos commits de
+control son esperados y no invalidan la orden.
+
 1. Haz `git fetch origin`.
-2. Verifica que `origin/SUPERVISOR` siga en
-   `6ebea3efb5ab8f7c87e0cc97ce415ad426875559` **antes de editar producto**.
-3. Si cambió por trabajo ajeno a esta orden, devuelve `BLOCKED` con firma
-   `stale_branch_head`; no apliques esta clasificación sobre un árbol distinto.
-4. Es normal que tu propio commit cambie el HEAD después de aplicar la tarea.
+2. Inspecciona los paths cambiados entre
+   `6ebea3efb5ab8f7c87e0cc97ce415ad426875559..origin/SUPERVISOR`.
+3. Si todos los cambios posteriores están limitados a `SUPERVISOR.md` y
+   `ORDEN.md`, continúa.
+4. Si aparece cualquier otro path, devuelve `BLOCKED` con firma
+   `stale_code_base` y lista sólo esos paths; no apliques esta orden sobre
+   producto que cambió fuera del ciclo.
 
 ## Write-set
 
