@@ -49,18 +49,21 @@ y fuera de territorio de pueblo originario debe **cero** documentos del Anexo 2.
 Si el proyecto incorpora artistas invitados al taller, aparecen las cartas de
 compromiso y hay que producirlas.
 
-## 1-bis. El cierre, verificado en la fuente oficial (2026-09-05)
+## 1-bis. El cierre, verificado en la fuente oficial (2026-09-05, reverificado 2026-09-09)
 
 El PDF de bases no trae calendario. Se verificó en el sitio del Ministerio.
 
 | Dato | Valor |
 |---|---|
 | Apertura | 05-08-2026 |
-| **Cierre general para la Región Metropolitana** | **viernes 11 de septiembre de 2026, 15:00 hrs de Santiago** |
+| **Cierre para todas las regiones (incluida Metropolitana), verificado 2026-09-09** | **miércoles 16 de septiembre de 2026, 15:00 hrs de Santiago** |
+| ~~Cierre general para la Región Metropolitana (registrado 2026-09-05, SUPERADO)~~ | ~~viernes 11 de septiembre de 2026, 15:00 hrs~~ — una ampliación posterior unificó el cierre en el 16 |
 | Cierre para Arica y Parinacota, Tarapacá, Antofagasta y Atacama | **16 de septiembre de 2026, 15:00 hrs** |
 | Resolución que aprobó estas bases | Rex 2262 de 2026 |
 | Resolución que amplió el plazo | «Amplía plazo de postulación concurso 2027» |
 | Verificación del PDF local | sha256 **idéntico** al del PDF vivo del Ministerio: cada cifra de este dossier está medida contra las bases vigentes |
+
+**Corrección 2026-09-09:** el 11 de septiembre anotado arriba para Metropolitana quedó obsoleto. La ficha oficial de la línea (https://www.fondosdecultura.cl/creacion-artistica-innovacion-y-nuevos-formatos-creativos-fondart-regional-2027/), reconsultada ese día, declara el 16 de septiembre a las 15:00 hrs como cierre único para todas las regiones. No se localizó el número de la resolución que produjo esta segunda ampliación; queda [FALTA] confirmarlo si se publica.
 
 **Desde hoy quedan 6 días.** La hora y el estado del formulario deben reconfirmarse
 en el portal antes de enviar.
@@ -390,12 +393,13 @@ obligaciones laborales y previsionales.
 
 ## 8. Decisiones que faltan, y son del operador
 
-Resuelto provisionalmente: la página oficial vigente informa **11 de septiembre
-de 2026, 15:00 hrs.** para la Región Metropolitana. Ver sección 1-bis y
-reconfirmar antes de enviar.
+Resuelto provisionalmente: la página oficial vigente informa **16 de septiembre
+de 2026, 15:00 hrs.** como cierre único para todas las regiones, incluida la
+Metropolitana (verificado 2026-09-09; reemplaza el 11 de septiembre anotado el
+2026-09-05). Ver sección 1-bis y reconfirmar antes de enviar.
 
 1. **Región.** Es la primera decisión y ordena todas las demás, porque decide
-   qué cierre aplica. Metropolitana concentra $800.000.000 y cierra el 11;
+   qué cierre aplica. Metropolitana concentra $800.000.000 y cierra el 16;
    Arica y Parinacota tiene $85.000.000 y cierra el 16, y ya existe el piloto
    `ARICA-FONDART-2027`. Pero se postula donde se ejecuta de verdad: los días
    extra exigen ejecutar allá, con espacio anfitrión y pasajes en
