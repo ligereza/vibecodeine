@@ -42,6 +42,13 @@ En cada ciclo:
 7. reemplaza `ORDEN.md` con una única tarea `READY` suficientemente precisa
    para que Codex no repita esa investigación.
 
+Como `SUPERVISOR.md` y `ORDEN.md` viven en la misma rama que el producto
+auditado, el supervisor no usa un HEAD exacto de rama como lock. Cada orden
+guarda `code_base_expected`: el último HEAD de producto cuyo resultado ya fue
+consumido. Codex permite commits posteriores que sólo cambien
+`SUPERVISOR.md`/`ORDEN.md`; cualquier otro path posterior implica
+`stale_code_base` y bloquea la ejecución de una orden vieja.
+
 No crea documentos de errores, handoffs, cierres de sesión ni diarios de
 decisiones.
 
