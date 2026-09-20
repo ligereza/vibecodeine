@@ -51,11 +51,8 @@ projects/tapiz/vibecode_void.py
 projects/tilde/sobrevivencia.py
 puente/ultimo_1_porciento.py
 scripts/_common.py
-scripts/brief_to_project.py
 scripts/export_propuesta_pdf.py
-scripts/flujo.py
 scripts/flujo_health.py
-scripts/flujo_pipeline.py
 scripts/flyer_create_project.py
 scripts/flyer_duplicates_report.py
 scripts/generar_catalogo_rd.py
@@ -64,7 +61,6 @@ scripts/pdf_probe_basic.py
 scripts/piezas_check_outputs.py
 scripts/piezas_generar.py
 scripts/run_airdrop_checks.py
-scripts/sanitize_sensitive.py
 scripts/validate_airdrop.py
 src/flujo/__init__.py
 src/flujo/airdrop.py

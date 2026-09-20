@@ -1,4 +1,4 @@
-.PHONY: help install clean test test-fast test-contract test-machine test-optional test-area test-full test-lanes audit render new-flyer daily dashboard pipeline
+.PHONY: help install clean test test-fast test-contract test-machine test-optional test-area test-full test-lanes audit render new-flyer daily
 
 PYTHON ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
 AREA ?= research
@@ -19,8 +19,6 @@ help:
 	@echo "  make render      Generar piezas de ejemplo"
 	@echo "  make new-flyer   Crear flyer (NAME=\"nombre\")"
 	@echo "  make daily       Generar dashboard"
-	@echo "  make dashboard   Abrir dashboard"
-	@echo "  make pipeline    Ejecutar pipeline (NAME=\"nombre\" EMAIL=inbox/correo.txt)"
 
 install:
 	bash scripts/setup.sh
@@ -65,10 +63,4 @@ new-flyer:
 	$(PYTHON) scripts/flyer_create_project.py "$(NAME)"
 
 daily:
-	$(PYTHON) scripts/flujo_daily.py
-
-dashboard:
-	bash scripts/abrir_dashboard.sh
-
-pipeline:
-	$(PYTHON) scripts/flujo_pipeline.py "$(NAME)" "$(EMAIL)" --confirm
+	$(PYTHON) -m flujo daily

@@ -25,10 +25,8 @@ from typing import Dict, Tuple
 
 ROOT = Path(__file__).resolve().parents[1]
 _SRC = ROOT / "src"
-# Corrido como `py scripts/generar_catalogo_rd.py`, sys.path[0] es scripts/,
-# donde vive scripts/flujo.py -- que hace SOMBRA al paquete flujo. Se saca
-# ese dir antes de fijar el src de esta checkout (mismo espiritu que
-# tests/conftest.py: el catalogo refleja el codigo al lado del script).
+# Ejecutado como script, sys.path[0] apunta a scripts/. Se retira ese directorio
+# antes de fijar src/ para que el catálogo siempre importe el paquete del checkout.
 _SCRIPTS_DIR = str(Path(__file__).resolve().parent)
 sys.path[:] = [p for p in sys.path if p != _SCRIPTS_DIR]
 if _SRC.is_dir() and str(_SRC) not in sys.path:

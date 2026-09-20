@@ -63,9 +63,6 @@ def _archivos():
         if (nombre.startswith(("_archive/", "docs/recovered/", "context-history/"))
                 or "/legacy_" in nombre):
             continue
-        # el sanitizador tiene el patron como dato, no como filtracion
-        if nombre == "scripts/sanitize_sensitive.py":
-            continue
         p = REPO / nombre
         if not p.is_file():
             continue
