@@ -500,7 +500,6 @@ PERSISTED_LANE_DATA = {
   "tests/test_xio_puente_staged.py": "repo_hygiene",
   "tests/test_zipper.py": "flujo",
   "tests/test_compute_effort_residuals.py": "mak",
-  "tests/test_consolidate_static_duplicates.py": "mak",
   "tests/test_diagnostics_routing_contract.py": "repo_hygiene",
   "tests/test_gen_postulacion.py": "mak",
   "tests/test_gen_propuesta_directiva.py": "mak",
