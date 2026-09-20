@@ -191,3 +191,9 @@ existe evidencia revisada que autorice esa relación. La sesión completa se
 validó con un fixture representativo que incluye una observación RD protegida,
 una observación de venue, GLB, SPZ, propuesta, autorización, resultado,
 auditoría y memoria IRIS sanitizada.
+
+La validación Android pendiente se ejecutó en la misma fecha con Temurin
+17.0.20.1, plataforma Android 34, build-tools 34.0.0, platform-tools 37.0.1 y
+Gradle 8.7. Los proyectos RD Field y FOH Monitor completaron
+`clean assembleDebug`; la instalación y prueba física en el Xiaomi siguen
+siendo un gate distinto.

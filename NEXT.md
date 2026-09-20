@@ -17,6 +17,8 @@
 - Smoke sobre autoridades locales reales: 68 referencias RD y 7 VJ
   disponibles; dos crosswalks independientes (uno RD y uno VJ) resolvieron
   2/2 mediante igualdad exacta. No se declaró una relación RD↔VJ ausente.
+- Java 17 y Android SDK 34 quedaron instalados como herramientas de usuario.
+  Los APK debug de RD Field y FOH Monitor pasaron `clean assembleDebug`.
 
 Próximo incremento de mayor valor: obtener del operador una relación real
 revisada que contenga simultáneamente `eventRef` y `eventKey`, persistirla en
