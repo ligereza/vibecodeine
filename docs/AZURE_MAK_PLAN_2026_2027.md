@@ -21,7 +21,7 @@ Comprobado desde MAK por Azure CLI y ARM REST el 2026-09-18:
 |---|---|
 | `MAKINTOUCH` | AI Services + proyecto Foundry en Brazil South; tambien APIM |
 | `makmak-5202-resource` | AI Services + proyecto en Brazil South; `gpt-oss-120b`, GlobalStandard, capacidad 50 |
-| `makmak-7457-resource` | AI Services + proyecto en Central US; sin deployment confirmado |
+| `makmak-7457-resource` | AI Services + proyecto en Central US; deployments `gpt-5.6-sol`, `gpt-5.6-luna` y `text-embedding-3-small` confirmados |
 | `makmak-5202-resource-appinsights` / `-logs` | recursos de observabilidad vivos |
 | `makmak-7457-resource-appinsights` / `-logs` | recursos de observabilidad vivos |
 | `makinspace` | `FileStorage`, `StandardV2_GRS`; no es Blob Storage normal |
@@ -50,8 +50,11 @@ Estado local medido:
 - Contrato PostgreSQL: `/home/mak/flujo/src/flujo/knowledge/postgres_runtime.py`, por defecto socket Unix y database `mak_knowledge`.
 - Azure ISSVKK para el agente y Continue: `/home/mak/.config/issvkk/azure-issvkk.env`; Continue usa ademas `/home/mak/.continue/.env`. Esta es una credencial de inferencia del recurso ISSVKK, no una credencial de administracion de Azure for Students.
 - Azure ML: el workspace tiene los datastores predeterminados `workspaceworkingdirectory`, `workspaceartifactstore`, `workspaceblobstore` y `workspacefilestore`.
-- Azure ML: no hay jobs, data assets, modelos, online endpoints ni batch endpoints observados en el corte.
-- Azure ML: la extension CLI `az ml` no pudo ejecutarse por `No module named 'rpds.rpds'`; el estado se verifico mediante ARM REST y no se instalo nada.
+- Azure ML: no hay jobs, data assets, modelos, online endpoints ni batch
+  endpoints. MLflow sí conserva 21 corridas en tres experimentos: 20
+  `FINISHED` y una `FAILED`; registrar lineage no equivale a ejecutar un job de
+  entrenamiento.
+- La extension `az ml` vuelve a funcionar y confirma ese inventario vacío.
 
 ## 3. Contrato de ejecucion del agente
 
@@ -90,8 +93,13 @@ Esta llamada se ejecuta en MAK. No se debe copiar la clave a Windows, al prompt,
 
 - Continue/VS Code usa `/home/mak/.continue/.env` y `/home/mak/.continue/config.yaml` para el chat interactivo.
 - Un agente autonomo de Research/MAK debe usar `/home/mak/.config/issvkk/azure-issvkk.env` o un adaptador que lo lea; no depende de que VS Code este abierto.
-- El roster activo de `cultura/mak_research/research_lib.py` y `cultura/mak_plataforma/providers.py` aun contiene Groq, Gemini, Cerebras y Ollama, pero no Azure. Tener la clave cargada no significa que Research ya lo use.
-- Para incorporarlo al runtime hay que añadir un proveedor Azure opt-in, registrar `provider`, `model`, `prompt_hash`, `usage`, `status` y error, y respetar `cuotas.py`/el conductor antes de habilitar fallback automatico.
+- `cultura/mak_plataforma/providers.py` ya declara `azure_mak` como proveedor
+  opt-in con presupuesto acotado. `cultura/mak_research/research_lib.py` aún no
+  lo incorpora, por lo que las dos superficies de ejecución no comparten un
+  roster único.
+- Azure debe seguir fuera del fallback automático. Cada llamada registra
+  `provider`, `model`, `prompt_hash`, `usage`, `status` y error, y respeta
+  `cuotas.py`/el conductor.
 
 ### Frontera de trabajo
 
@@ -119,7 +127,12 @@ Nunca debe ser:
 
 ### A. Azure AI Search — memoria consultable de Research
 
-**Estado vivo e integrado:** `makmak-search` existe en `brazilsouth`, SKU `Free`, estado `running`, 1 particion y 1 replica. Se verificaron los tres indices existentes (`mak-inbox-v1`, `mak-rd-v1`, `mak-tools-v1`) sin imprimir claves. El consumidor canonico es el Hub MAK: `/api/azure/search/tools`; `tools/consultar_mak_search.py` quedo como wrapper diagnostico del mismo adaptador.
+**Estado vivo e integrado:** `makmak-search` existe en `brazilsouth`, SKU
+`Free`, estado `running`, 1 particion y 1 replica. Sus tres indices ocupan 57
+documentos: `mak-inbox-v1` 4, `mak-rd-v1` 5 y `mak-tools-v1` 48. La consulta
+AAD real sigue funcionando. El consumidor canonico es el Hub MAK:
+`/api/azure/search/tools`; `tools/consultar_mak_search.py` es el wrapper
+diagnostico del mismo adaptador.
 
 **Ejecucion:**
 
@@ -230,7 +243,12 @@ Nunca debe ser:
 
 ### I. Application Insights / Azure Monitor — medir sin subir contenido
 
-**Estado integrado:** hay recursos App Insights y Log Analytics vivos para `makmak-5202`, `makmak-7457` y el workspace ML. `cultura/mak_plataforma/azure_services.py` envia eventos tecnicos mediante ingestion REST cuando se solicita el status o se usa el endpoint Foundry.
+**Estado parcial:** hay recursos App Insights y Log Analytics vivos para
+`makmak-5202`, `makmak-7457` y el workspace ML.
+`cultura/mak_plataforma/azure_services.py` tiene el adaptador de eventos
+tecnicos, pero una consulta real de 30 dias no devolvio `customEvents`,
+requests, exceptions ni traces. La existencia del adaptador no demuestra
+telemetria operativa.
 
 **Ejecucion:** enviar solo `health`, `latency_ms`, `provider`, `model`, `status`, `error_class`, conteos de tokens y hash de `job_id`.
 
@@ -248,7 +266,12 @@ Nunca debe ser:
 
 ### K. Azure Machine Learning — estado vivo y uso recomendado
 
-**Estado al 2026-09-18:** el workspace `makmak-ml-workspace` ya existe en `brazilsouth` y esta `Succeeded`. Tiene `makmak-cpu-cluster` como AmlCompute `Standard_DS2_v2`, con 0 nodos actuales, minimo 0, maximo 1 e idle scale-down de 2 minutos. No se observaron jobs, data assets, modelos, online endpoints ni batch endpoints.
+**Estado actualizado al 2026-09-20:** el workspace
+`makmak-ml-workspace` existe en `brazilsouth` y esta `Succeeded`. Tiene
+`makmak-cpu-cluster` como AmlCompute `Standard_DS2_v2`, con 0 nodos actuales,
+minimo 0, maximo 1 e idle scale-down de 2 minutos. No hay jobs, data assets,
+modelos, online endpoints ni batch endpoints. MLflow contiene 21 corridas de
+lineage/evaluacion; no son jobs de entrenamiento.
 
 Dependencias vivas: `makmakmlstorage` (`StorageV2`, `Standard_LRS`), `makmak-ml-kv` (`Key Vault standard`), `makmakmlregistry` (`ACR Basic`, admin local deshabilitado) y `makmak-ml-insights` (Application Insights). El workspace expone cuatro datastores predeterminados: `workspaceworkingdirectory`, `workspaceartifactstore`, `workspaceblobstore` y `workspacefilestore`.
 
@@ -265,7 +288,14 @@ Dependencias vivas: `makmakmlstorage` (`StorageV2`, `Standard_LRS`), `makmak-ml-
 
 **Ruta de datos propuesta:** staging local sanitizado en `/home/mak/research/azure-ml/staging/<run_id>/`; resultado remoto en job/data asset/model; receipt local en `/home/mak/research/azure-ml/runs/<run_id>/receipt.json`. Nunca escribir automaticamente `data/rd.db`.
 
-**Estado integrado para el alcance actual:** `tools/reportar_calibracion_deepseek.py` registro una corrida real en MLflow del workspace (`10` aciertos, `4` fallos, `accuracy=0.714`). `tools/azure_ml_learning_dataset.py` exporto 28 evaluaciones sanitizadas, genero receipt/hash local y registro en MLflow una corrida `FINISHED` con `dataset_rows=28` y `dataset_fingerprints=26`; el artefacto remoto se verifica como `datasets/learning_evaluations.jsonl`. La incompatibilidad de firma entre `mlflow 3.16.1` y `azureml-mlflow 1.60.0` queda resuelta por `tools/azure_ml_mlflow_compat.py`, sin modificar `site-packages`. No se crean jobs, endpoints ni entrenamiento. La extension `az ml` sigue inutilizable por `No module named 'rpds.rpds'`, pero no bloquea el flujo de lineage, calibracion ni el inventario ARM read-only.
+**Estado integrado para el alcance actual:**
+`tools/reportar_calibracion_deepseek.py` registro una corrida real en MLflow
+del workspace (`10` aciertos, `4` fallos, `accuracy=0.714`).
+`tools/azure_ml_learning_dataset.py` exporto 28 evaluaciones sanitizadas y
+registro artefactos con lineage. La evaluacion IRIS mas reciente tiene 21
+filas/8 grupos: embedding 1-NN `accuracy=0.333` frente al baseline mayoritario
+`0.619`, por lo que conserva `hold_training`. No hay entrenamiento, modelo
+registrado ni endpoint. La extension `az ml` ya funciona.
 
 ## 6. Calendario de un año
 
@@ -307,6 +337,14 @@ Dependencias vivas: `makmakmlstorage` (`StorageV2`, `Standard_LRS`), `makmak-ml-
 - MAK: `spendingLimit=On`, 100 USD/12 meses.
 - Prioridad: Free/F0, una instancia, una region y una funcion por servicio.
 - No confundir recurso existente con recurso gratuito.
+- En el inventario vivo sólo AI Search declara SKU `Free`. AI Services `S0`,
+  APIM `BasicV2`, ACR `Basic`, Storage y Key Vault consumen credito o cobran por
+  uso. El cluster ML no consume compute con cero nodos, pero sus dependencias
+  persisten.
+- No existe un Azure Budget configurado y Consumption devuelve `cost=None`;
+  por tanto el saldo/costo actual no esta demostrado.
+- APIM `MAKINTOUCH` sigue sin backend util y es el primer candidato a apagar
+  tras una autorizacion explicita; no es parte de la integracion ML.
 - Registrar servicio, funcion, job hash, unidades, estado y error.
 - `cost=None` en usage significa facturacion pendiente, no costo cero.
 - ISSVKK no entra al presupuesto MAK ni al fallback automatico; si el agente lo usa, sus llamadas se registran en un contador separado.

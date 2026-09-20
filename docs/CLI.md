@@ -11,7 +11,10 @@ Este documento es la unica referencia de comandos que hace falta leer. `docs/INT
 python -m pip install -e ".[dev]"
 ```
 
-En Windows también puedes usar `py` en lugar de `python`.
+En Windows puedes usar el launcher `py`. En la caja MAK Linux, el mismo nombre
+es un wrapper local en `~/.local/bin/py` que ejecuta `/home/mak/.venv/bin/python`
+y añade los dos roots Python del workspace. En otros Linux usa `python` dentro
+de su entorno virtual.
 
 ## Ayuda general
 
