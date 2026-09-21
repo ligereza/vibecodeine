@@ -28,7 +28,6 @@ class TestResearchLib(unittest.TestCase):
         self.env_patcher = patch.dict('os.environ', {
             "GROQ_API_KEY": "fake-groq",
             "CEREBRAS_API_KEY": "fake-cerebras",
-            "AZURE_API_KEY": "fake-azure",
             "OLLAMA_BASE_URL": "http://127.0.0.1:11434",
             "TAVILY_API_KEY": "fake-tavily"
         })

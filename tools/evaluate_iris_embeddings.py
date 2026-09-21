@@ -17,13 +17,8 @@ if str(TOOLS) not in sys.path:
     sys.path.insert(0, str(TOOLS))
 
 DEFAULT_INPUT = Path(
-    "/home/mak/research/azure-ml/staging/"
+    "/home/mak/research/staging/"
     "iris-autonomous-20260920-01/text_embeddings.jsonl"
-)
-TRACKING_URI = (
-    "azureml://brazilsouth.api.azureml.ms/mlflow/v1.0/subscriptions/"
-    "6519fcfc-3807-407e-bae5-5f1f7f64e337/resourceGroups/makmak/"
-    "providers/Microsoft.MachineLearningServices/workspaces/makmak-ml-workspace"
 )
 
 
@@ -106,47 +101,16 @@ def evaluate(rows: list[dict]) -> dict:
     }
 
 
-def register_mlflow(report_path: Path, report: dict) -> None:
-    import mlflow
-    from azure_ml_mlflow_compat import patch_azureml_artifact_builder
-
-    patch_azureml_artifact_builder()
-    mlflow.set_tracking_uri(TRACKING_URI)
-    mlflow.set_experiment("mak-iris-decision-sessions")
-    with mlflow.start_run(run_name="iris-autonomous-20260920-01-group-evaluation") as run:
-        mlflow.log_params({
-            "schema": report["schema"],
-            "evaluation": report["evaluation"],
-            "split_key": report["split_key"],
-            "training_decision": report["decision"],
-        })
-        mlflow.log_metrics({
-            "rows": report["rows"],
-            "groups": report["groups"],
-            "embedding_1nn_accuracy": report["embedding_1nn"]["accuracy"],
-            "embedding_1nn_macro_recall": report["embedding_1nn"]["macro_recall"],
-            "majority_accuracy": report["majority_baseline"]["accuracy"],
-            "majority_macro_recall": report["majority_baseline"]["macro_recall"],
-        })
-        mlflow.log_artifact(str(report_path), artifact_path="evaluations")
-        report["mlflow_run_id"] = run.info.run_id
-        report["artifact_uploaded"] = True
-    report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-
-
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Evaluate IRIS embeddings without group leakage")
     parser.add_argument("--input", type=Path, default=DEFAULT_INPUT)
     parser.add_argument("--out", type=Path)
-    parser.add_argument("--register-mlflow", action="store_true")
     args = parser.parse_args(argv)
     rows = [json.loads(line) for line in args.input.read_text(encoding="utf-8").splitlines() if line.strip()]
     report = evaluate(rows)
     report["source"] = str(args.input)
     out = args.out or args.input.with_name("embedding_evaluation.json")
     out.write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    if args.register_mlflow:
-        register_mlflow(out, report)
     print(json.dumps({key: report[key] for key in (
         "rows", "groups", "embedding_1nn", "majority_baseline",
         "training_ready", "unsupported_labels", "decision",

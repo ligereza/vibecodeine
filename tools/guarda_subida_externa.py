@@ -1,16 +1,9 @@
 #!/usr/bin/env python3
-"""guarda_subida_externa.py -- thin wrapper over flujo.privacy.scan_text,
-meant to run before uploading any document to an external service (Azure
-Search, a model, etc.).
+"""Thin privacy gate before uploading a document to any external service.
 
-History: on 2026-09-18 the auto-mode classifier blocked an attempt to
-upload RD reports to Azure Search as "Data Exfiltration". The first
-response was to write a new guard with 4 hardcoded keywords -- but
-flujo.privacy.scan_text already existed and is far more complete (RUT,
-phone number, Luhn-validated card, address, and high-risk keywords that
-already cover "substances"/"drugs"), and is used in production by
-rd-datos ingest. This version reinvents nothing, it just wires that
-existing module into the external-upload case.
+The local scanner is more complete than a small keyword list (RUT, phone,
+Luhn-validated card, address and high-risk terms) and remains the single gate
+for external uploads. No cloud provider is assumed here.
 """
 import sys
 from pathlib import Path

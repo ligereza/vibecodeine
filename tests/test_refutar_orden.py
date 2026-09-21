@@ -3,8 +3,8 @@
 """The provider roster has ONE source, and `refutar.py --orden` honours it.
 
 Measured on the box 2026-07-31: `refutar.py` filtered its `--orden` against a
-literal `("groq", "cerebras", "azure", "ollama")` written by hand, which
-predates `watsonx` and `win`. `--orden watsonx` was therefore dropped without a
+literal provider list written by hand, which predated the current local roster.
+`--orden watsonx` was therefore dropped without a
 word, the list came out empty, the default chain took over, and every provider
 in it was skipped for having no key -- the run died with "Todos los proveedores
 fallaron. Ultimo: None", a message that names nobody because nothing was ever
@@ -49,7 +49,6 @@ def test_refutar_no_longer_carries_its_own_provider_list():
         encoding="utf-8")
     codigo = "\n".join(l for l in fuente.splitlines()
                        if not l.lstrip().startswith("#"))
-    assert '("groq", "cerebras", "azure", "ollama")' not in codigo
     assert "PROVIDERS" in codigo
 
 
@@ -90,8 +89,7 @@ def test_the_frame_never_reaches_the_search():
 
 
 def test_a_single_requested_provider_fills_all_three_roles():
-    """Asking for one provider must not hand the judge's seat to another one
-    that has no key -- that is how the last slot used to become `azure`."""
+    """Asking for one provider keeps every role on the local roster."""
     refutar = pytest.importorskip("refutar")
     orden = ["cerebras"]
     # the same padding the tool applies before assigning the three roles

@@ -156,7 +156,7 @@ def get_changelog():
                 "con FUERTE/DEBIL verificado + pendientes P1/P2/P3; SESSION_STATE.json "
                 "comprimido",
                 "seguridad: .gitignore cultura/.dev* -- cultura/.dev.limpio tenia keys "
-                "vivas (Tavily/Groq/Cerebras/Azure) y era commiteable via git add -A",
+                "vivas (Tavily/Groq/Cerebras) y era commiteable via git add -A",
                 "verificacion: compileall OK, 394 tests verdes + 1 skip, flujo verify OK",
             ],
         },

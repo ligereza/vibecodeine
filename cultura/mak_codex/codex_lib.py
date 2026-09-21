@@ -4,7 +4,7 @@
 Motor de codigo: DeepSeek via NVIDIA NIM (endpoints gratis hosteados) con
 fallback a un DeepSeek local en ollama. NADA de Qwen (el usuario lo descarto:
 "never understands the task"). El PLANNER usa Cerebras gpt-oss-120b porque
-planificar != codear; Azure no participa en MAK.
+planificar != codear; la cadena usa sólo proveedores locales/seleccionados.
 
 El codigo generado se filtra ESTATICAMENTE y solo entonces corre con limites
 duros de recursos. Piezas en ~/codex/piezas (.py + .md hermano indexable por

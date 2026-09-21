@@ -510,7 +510,6 @@ PERSISTED_LANE_DATA = {
   "tests/test_hub_route_answer_contract.py": "mak",
   "tests/test_interpretive_garden_workflow.py": "mak",
   "tests/test_iris_invariants.py": "mak",
-  "tests/test_mak_azure_backup.py": "mak",
   "tests/test_mak_merge_roots.py": "mak",
   "tests/test_portfolio_production_sources.py": "mak",
   "tests/test_portfolio_slot_candidates.py": "mak",

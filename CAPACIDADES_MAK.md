@@ -497,9 +497,7 @@ sus valores nunca se imprimen ni se registran aqui.
 
 Conteo verificado el 2026-08-17:
 
-Nota de retiro: cualquier mención restante de `watsonx`, AWS o Azure en esta
-matriz describe una corrida histórica o un campo de evidencia; no representa
-un proveedor disponible. La ruta LLM activa es Groq -> Gemini -> Ollama.
+La ruta LLM activa es Groq -> Gemini -> Ollama.
 Cerebras queda como adaptador opt-in, pero su cuenta respondió HTTP 402 por
 falta de crédito. La visión local usa Ollama.
 
@@ -562,8 +560,7 @@ Ollama.
 | Ollama | `LLM._ollama(..., max_tok=8)` | OK; respuesta de 3 caracteres |
 
 El 402 de Cerebras es un limite de cuenta, no un fallo de instalacion o
-formato. Azure participa sólo como proveedor `azure_mak` opt-in y permanece
-fuera del fallback automático. Canva y ntfy no estan en el entorno seleccionado
+formato. Canva y ntfy no estan en el entorno seleccionado
 y no se consideran activos.
 
 `GITHUB_TOKEN` no es necesario en el runtime local: `gh auth status` devolvio
@@ -582,7 +579,6 @@ Solo existencia + donde se configura. Nunca el valor de una llave.
 | Groq | Proveedor rapido para roles `razonar`/`bulk` | `GROQ_API_KEY`, `GROQ_MODEL` en `cultura/mak_research/research_lib.py` (defaults linea 32) y `.env` |
 | Gemini | Reemplazo cloud probado para sintesis y razonamiento cuando Cerebras no tiene crédito | `GEMINI_API_KEY`, `GEMINI_MODEL` en `research_lib.py`; usa `gemini-3.6-flash` |
 | Cerebras | Proveedor rapido, `CEREBRAS_MODEL=gpt-oss-120b` | `CEREBRAS_API_KEY`, `CEREBRAS_MODEL` en `research_lib.py` (linea 33) y `.env` |
-| Azure AI | Proveedor opt-in con guard de crédito; no entra al fallback automático | `cultura/mak_plataforma/azure_foundry.py`, sesión AAD de Azure CLI y `MAK_AZURE_ALLOW_CREDIT=1` |
 | DashScope / Qwen | Coder barato de volumen (gate, nunca directo a Claude) | `DASHSCOPE_API_KEY` / `QWEN_API_KEY` en `.env.example` |
 | NVIDIA NIM | Alternativa barata (Qwen/DeepSeek/Nemotron) | `NVIDIA_API_KEY` / `NVIDIA_NIM_API_KEY` en `.env.example` |
 | OpenRouter | Router/fallback de modelos | `OPENROUTER_API_KEY` en `.env.example` |
@@ -654,14 +650,8 @@ tabla; archivo sin entrada = ratchet rojo.
 |---|---|---|---|
 | `raton.py` | VIVO | escaner AST estatico de referencias de rutas/archivos en el codigo, sin ejecutar nada; primer bloque del track de aprendizaje mecanico sin agente/LLM (evidencia real vs. reglas de confianza, no pesos de red neuronal). Filtra falsos positivos exigiendo un caracter `/` en el candidato y trata `tests/` como zona legitima de rutas ficticias. Consumidor: operador, a mano | 2026-09-18 |
 | `promover_reglas.py` | VIVO | envoltorio delgado sobre `LearningStore.promote_rule()` (`src/flujo/knowledge/project_ir.py`, ya existente): recorre las reglas `status='candidate'` de `semantic_rules` en `data/mak_knowledge.db` y decide promover o rechazar con motivo explicito (ej. `rule_insufficient_support`); no reimplementa el criterio de promocion. Consumidor: operador, a mano | 2026-09-18 |
-| `guarda_subida_externa.py` | VIVO | envoltorio delgado sobre `flujo.privacy.scan.scan_text()` (`flujo/src/flujo/privacy/scan.py`, ya existente y probado en produccion); expone `subir_documento_seguro(client, documento)` y levanta `ValueError` si `scan_text` marca el contenido no apto para IA externa. Reemplaza un filtro de 4 palabras clave que se habia empezado a construir de cero para el mismo proposito. Consumidor: cualquier ruta que envie contenido a Azure/DeepSeek antes de la llamada real | 2026-09-18 |
-| `consultar_mak_search.py` | VIVO | consumidor CLI real del indice Azure AI Search `mak-tools-v1` (busqueda semantica de herramientas por `--area`/`--departamento`); verificado en vivo devolviendo `cultura/mak_codex/revisar.py` como primer resultado para "adversarial revision codigo" con `--departamento codex`. Consumidor: operador, a mano | 2026-09-18 |
-| `reportar_calibracion_deepseek.py` | VIVO | lee `learning_evaluations` (`target_kind=azure_delegation_pattern`) en `data/mak_knowledge.db`, calcula la tasa de acierto real de DeepSeek generando codigo con hechos completos, y la registra como corrida en MLflow (`makmak-ml-workspace`, experimento `mak-azure-integration`); no es un numero mencionado en un chat, es repetible. Medicion real 2026-09-18: 10 aciertos, 4 fallos, 14 casos, accuracy=0.714. Consumidor: operador, a mano | 2026-09-18 |
 | `evaluate_iris_embeddings.py` | VIVO | evalua el canal de embeddings de IRIS con 1-NN leave-one-group-out, sin fuga entre proyectos del mismo grupo; consumidor: `tests/test_evaluate_iris_embeddings.py` y operador, a mano. Retiene `training_ready=false` cuando una etiqueta no tiene grupo independiente | 2026-09-20 |
-| `iris_azure_embeddings.py` | VIVO | construye un dataset JSONL sanitizado desde sesiones IRIS finales, solicita embeddings Azure solo con `MAK_AZURE_ALLOW_CREDIT=1` y registra recibo/hashes sin texto de entrada; consumidor: `tests/test_azure_embeddings.py`, `tests/test_iris_decision_session.py` y operador, a mano | 2026-09-20 |
 | `iris_decision_session.py` | VIVO | compila decisiones delegadas finales en registros sanitizados con autoridad local, sin acciones físicas/publicación; consumidor: `tests/test_iris_decision_session.py` y operador, a mano | 2026-09-20 |
-| `azure_ml_learning_dataset.py` | VIVO | exporta metadatos y métricas del ledger local a un artefacto JSONL sanitizado para Azure ML/MLflow, sin prompts, documentos ni entrenamiento; consumidor: operador, a mano | 2026-09-20 |
-| `azure_ml_mlflow_compat.py` | VIVO | puente de compatibilidad de proceso para el builder de artefactos AzureML/MLflow; consumidor: `azure_ml_learning_dataset.py`, `iris_azure_embeddings.py` y operadores de registro | 2026-09-20 |
 | `release_gate.py` | VIVO | gate local de coherencia de rama ANTES de push, corrido por el operador. No es paso de CI y no puede serlo: resuelve `/home/mak` y `/home/mak/flujo` como checkouts fisicos en su rama, y sale con codigo 5 aun con cero blockers porque READY_TO_PUSH exige evidencia de que las suites corrieron verdes. Se quito de `ci-mak.yml` y `ci-flujo.yml` el 2026-09-02, en su primera ejecucion | 2026-09-02 |
 | `runtime_preflight.py` | VIVO | prueba que codigo ejecuta cada servicio; consumido por `tools/release_gate.py` (comprobacion de runtime) y por el operador | 2026-09-02 |
 | `bridge_issue_render.py` | REVISAR | utilidad operativa conservada al fusionar la caja; consumidor manual, sin caller de produccion medido | 2026-08-31 |

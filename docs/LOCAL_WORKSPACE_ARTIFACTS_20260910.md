@@ -6,7 +6,6 @@ del índice de `/home/mak` por su naturaleza, tamaño o frontera de repositorio.
 
 | Ruta | Medición | Tratamiento | Motivo |
 |---|---:|---|---|
-| `/home/mak/.azure/` | ~328 KiB | conservar localmente | sesión, caché, logs y credenciales Azure; nunca versionar |
 | `/home/mak/nomadicIT_research/` | ~684 MiB, 13.603 archivos | conservar localmente | corpus de investigación y salidas generadas; no tiene consumidor MAK ni repo propio |
 | `/home/mak/data/matrix_surface_workflow_v1/` | ~28 KiB | conservar localmente | experimento autónomo de PyTorch/CUDA sin referencias desde el runtime MAK |
 | `/home/mak/XIO-import-review/` | ~43 MiB | revisar como repo separado | checkout Git independiente, rama `codex/xio-import-review`, limpio y alineado con `origin` |

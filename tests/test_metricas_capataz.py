@@ -76,7 +76,7 @@ def bitacora_sintetica(tmp_path: Path) -> Path:
         # Reflexionar exitosa
         {
             "ts": (base_ts - datetime.timedelta(hours=5)).strftime("%Y-%m-%d %H:%M:%S"),
-            "proveedor_decisor": "azure",
+            "proveedor_decisor": "gemini",
             "accion": "reflexionar",
             "razon": "junta diaria programada",
             "fallback_usado": False,
@@ -106,7 +106,7 @@ def bitacora_sintetica(tmp_path: Path) -> Path:
         # Mejora libre
         {
             "ts": (base_ts - datetime.timedelta(hours=8)).strftime("%Y-%m-%d %H:%M:%S"),
-            "proveedor_decisor": "azure",
+            "proveedor_decisor": "gemini",
             "accion": "mejora_libre",
             "razon": "agente_libre propone refactoring",
             "fallback_usado": False,
@@ -194,10 +194,10 @@ def test_tasas_por_proveedor(bitacora_sintetica: Path) -> None:
 
     por_prov = t["por_proveedor"]
 
-    # Debe tener cerebras, groq, azure, ninguno, ollama
+    # Debe tener cerebras, groq, gemini, ninguno, ollama
     assert "cerebras" in por_prov
     assert "groq" in por_prov
-    assert "azure" in por_prov
+    assert "gemini" in por_prov
     assert "ninguno" in por_prov
     assert "ollama" in por_prov
 
@@ -213,9 +213,9 @@ def test_tasas_por_proveedor(bitacora_sintetica: Path) -> None:
     assert por_prov["groq"]["fallback_n"] == 1
     assert por_prov["groq"]["fallback_pct"] == 50.0
 
-    # Azure: 2 entradas (reflexionar, mejora_libre), 0 fallback
-    assert por_prov["azure"]["n"] == 2
-    assert por_prov["azure"]["fallback_n"] == 0
+    # Gemini: 2 entradas (reflexionar, mejora_libre), 0 fallback
+    assert por_prov["gemini"]["n"] == 2
+    assert por_prov["gemini"]["fallback_n"] == 0
 
     # Ninguno: 1 entrada (fallback LLM caido)
     assert por_prov["ninguno"]["n"] == 1

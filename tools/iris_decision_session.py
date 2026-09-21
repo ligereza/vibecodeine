@@ -32,16 +32,7 @@ DEFAULT_DECISIONS = Path(
     "/home/mak/knowledge/learning_cases/"
     "iris_autonomous_decisions_2026-09-20.json"
 )
-DEFAULT_RESOURCE_MAP = Path(
-    "/home/mak/knowledge/learning_cases/"
-    "iris_azure_ml_resource_map_2026-09-20.json"
-)
-DEFAULT_OUT = Path("/home/mak/research/azure-ml/staging")
-TRACKING_URI = (
-    "azureml://brazilsouth.api.azureml.ms/mlflow/v1.0/subscriptions/"
-    "6519fcfc-3807-407e-bae5-5f1f7f64e337/resourceGroups/makmak/"
-    "providers/Microsoft.MachineLearningServices/workspaces/makmak-ml-workspace"
-)
+DEFAULT_OUT = Path("/home/mak/research/staging")
 
 
 def _canonical_bytes(value: Any) -> bytes:
@@ -54,18 +45,14 @@ def _sha256(value: Any) -> str:
     return hashlib.sha256(_canonical_bytes(value)).hexdigest()
 
 
-def compile_session(queue_path: Path, decisions_path: Path,
-                    resource_map_path: Path) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+def compile_session(queue_path: Path, decisions_path: Path) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     queue = json.loads(queue_path.read_text(encoding="utf-8"))
     session = json.loads(decisions_path.read_text(encoding="utf-8"))
-    resources = json.loads(resource_map_path.read_text(encoding="utf-8"))
 
     if session.get("status") != "final" or session.get("requires_approval") is not False:
         raise ValueError("session decisions must be final and require no approval")
     if session.get("decision_authority") != "operator_delegated":
         raise ValueError("decision authority must be operator_delegated")
-    if resources.get("policy", {}).get("local_authority") is not True:
-        raise ValueError("Azure resource map must preserve local authority")
 
     queue_by_id = {int(item["project_id"]): item for item in queue.get("items", [])}
     records: list[dict[str, Any]] = []
@@ -122,7 +109,6 @@ def compile_session(queue_path: Path, decisions_path: Path,
     records.sort(key=lambda row: int(row["project_id"]))
     queue_hash = hashlib.sha256(queue_path.read_bytes()).hexdigest()
     decisions_hash = hashlib.sha256(decisions_path.read_bytes()).hexdigest()
-    resource_hash = hashlib.sha256(resource_map_path.read_bytes()).hexdigest()
     receipt = {
         "schema": SCHEMA,
         "session_id": session["session_id"],
@@ -138,7 +124,6 @@ def compile_session(queue_path: Path, decisions_path: Path,
         ).items())),
         "source_queue_sha256": queue_hash,
         "decision_manifest_sha256": decisions_hash,
-        "azure_resource_map_sha256": resource_hash,
         "contains_absolute_source_paths": False,
         "contains_prompts": False,
         "contains_credentials": False,
@@ -148,12 +133,7 @@ def compile_session(queue_path: Path, decisions_path: Path,
             "self_labels_are_independent_gold": False,
             "promotion_requires_separate_evidence": True,
         },
-        "azure_ml": {
-            "workspace": "makmak-ml-workspace",
-            "experiment": "mak-iris-decision-sessions",
-            "compute": "makmak-cpu-cluster",
-            "compute_started": False,
-        },
+        "execution": "local_only",
     }
     return records, receipt
 
@@ -179,51 +159,17 @@ def write_session(records: list[dict[str, Any]], receipt: dict[str, Any],
     return dataset_path, receipt_path
 
 
-def register_mlflow(dataset_path: Path, receipt_path: Path,
-                    receipt: dict[str, Any]) -> None:
-    import mlflow
-    from azure_ml_mlflow_compat import patch_azureml_artifact_builder
-
-    patch_azureml_artifact_builder()
-    mlflow.set_tracking_uri(TRACKING_URI)
-    mlflow.set_experiment(receipt["azure_ml"]["experiment"])
-    with mlflow.start_run(run_name=receipt["session_id"]) as run:
-        mlflow.log_params({
-            "schema": receipt["schema"],
-            "authority": receipt["decision_authority"],
-            "requires_approval": "false",
-            "split_by": "group_key",
-            "self_labels_are_independent_gold": "false",
-        })
-        mlflow.log_metrics({
-            "decision_rows": receipt["row_count"],
-            "decision_groups": receipt["group_count"],
-            "physical_actions": 0,
-        })
-        mlflow.log_artifact(str(dataset_path), artifact_path="datasets")
-        receipt["azure_ml"]["mlflow_run_id"] = run.info.run_id
-        receipt["azure_ml"]["artifact_uploaded"] = True
-    receipt_path.write_text(
-        json.dumps(receipt, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
-
-
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Compile final delegated IRIS decisions for ML"
     )
     parser.add_argument("--queue", type=Path, default=DEFAULT_QUEUE)
     parser.add_argument("--decisions", type=Path, default=DEFAULT_DECISIONS)
-    parser.add_argument("--resource-map", type=Path, default=DEFAULT_RESOURCE_MAP)
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
-    parser.add_argument("--register-mlflow", action="store_true")
     args = parser.parse_args(argv)
 
-    records, receipt = compile_session(args.queue, args.decisions, args.resource_map)
+    records, receipt = compile_session(args.queue, args.decisions)
     dataset_path, receipt_path = write_session(records, receipt, args.out)
-    if args.register_mlflow:
-        register_mlflow(dataset_path, receipt_path, receipt)
     print(json.dumps(receipt, ensure_ascii=False, sort_keys=True))
     return 0
 

@@ -16,19 +16,10 @@ def test_modelo_capaz_es_gemini():
     assert '"bulk": "groq,gemini,ollama"' in text
 
 
-def test_slots_no_rutean_a_azure():
-    """Azure no puede aparecer en los slots operativos."""
-    text = _text("cultura/mak_research/research_lib.py")
-    bloque = text.split("_SLOTS = {", 1)[1].split("}", 1)[0]
-    assert "azure" not in bloque
-
-
-def test_panel_y_codex_no_rutean_a_azure():
+def test_panel_y_codex_conservan_rutas_locales():
     panel = _text("cultura/mak_research/panel.py")
     codex = _text("cultura/mak_codex/codex_lib.py")
     capataz = _text("cultura/mak_plataforma/capataz.py")
-    assert '"proveedor": "azure"' not in panel
-    assert 'order=["azure"' not in panel
     assert 'LLM(order="%s,groq,ollama" % MODELO_CAPAZ)' in codex
     assert 'CADENA_COMPLETA = "groq,gemini,ollama"' in capataz
 

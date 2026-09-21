@@ -223,7 +223,7 @@ class TestLiveTelemetry:
         blocked = [
             ".env", ".env.local", "gemini_api_key.txt", "secrets.json",
             "hf_token.txt", "notas.local.md", "credentials.yaml",
-            "tilde_log.jsonl", "passwords.txt", "azure_export.csv",
+            "tilde_log.jsonl", "passwords.txt", "cloud_export.csv",
             "id_rsa.pem", "id_rsa", "id_ed25519.pub", "cert.p12",
             "putty.ppk", "data.db", "cache.sqlite3", ".npmrc", ".netrc",
             "cookies.txt", "mi_clave_gemini.txt", "contrasena.txt",

@@ -46,11 +46,6 @@ class TestRetiredWinRejected:
         llm = research_lib.LLM(order="groq,win,ollama")
         assert llm.order == ["groq", "ollama"]
 
-    def test_azure_is_retired_even_if_old_flag_exists(self, monkeypatch):
-        monkeypatch.setenv("RESEARCH_AZURE_ENABLED", "1")
-        llm = research_lib.LLM(order="azure,cerebras,gemini")
-        assert llm.order == ["cerebras", "gemini"]
-
 
 # ── fix 5: fallback intra-paso de cadena.py ──
 

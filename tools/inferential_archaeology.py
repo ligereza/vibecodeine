@@ -114,7 +114,7 @@ CROSS_SOURCE_STOP_WORDS = {
     "deptos", "alguna", "quedan", "explicacion", "perdi", "nomas", "dale", "minutos",
 }
 CROSS_SOURCE_KEEP_SHORT = {
-    "aws", "azure", "gpt", "gpu", "hub", "llm", "mak", "rd", "svg", "xio",
+    "aws", "gpt", "gpu", "hub", "llm", "mak", "rd", "svg", "xio",
 }
 CROSS_SOURCE_GENERIC_ANCHORS = {
     "mak", "portafolio", "repo", "hub", "research", "tools", "herramientas",

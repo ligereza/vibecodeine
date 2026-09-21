@@ -143,7 +143,6 @@ observacion -> snapshot -> propuesta -> accion explicita -> resultado -> audit
 ## 5. Entrenamiento y despliegue
 
 - Preparacion, splits y evaluacion se ejecutan en MAK.
-- Azure ML/MLflow registra dataset fingerprint, codigo, metricas y artefactos
   sanitizados. El cluster CPU existente sirve para ETL/evaluacion; el
   fine-tuning visual requerira GPU local o compute GPU temporal.
 - XIO recibe solamente el TFLite versionado, etiquetas, umbrales, contrato y

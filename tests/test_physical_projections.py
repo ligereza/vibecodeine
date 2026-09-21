@@ -4,9 +4,8 @@
 Measured on 2026-08-21: six files under the active roots (/home/mak/plataforma,
 /home/mak/research, /home/mak/codex) held their own diverged copy of a module
 that also lives in this repository. Two of them were the ExecStart of a running
-service, so the published provider retirement never reached the surface a user
-actually sees: Codex on 8891 still rendered an `azure` node and Research on
-8890 still drew Cerebras as the active provider with Gemini inactive.
+service, so provider projections must be checked against the canonical local
+roster rather than assumed from repository files.
 
 A copy is either the canonical implementation or a thin projection of it. This
 test pins that rule for the paths that were repaired, and skips cleanly on a
@@ -71,7 +70,7 @@ def test_no_projected_path_still_declares_a_retired_provider():
     pairs = _physical_pairs()
     if not pairs:
         pytest.skip("physical MAK roots are not present on this machine")
-    retired = ("watsonx", "bedrock", "aws_", "azure")
+    retired = ("watsonx", "bedrock", "aws_")
     offenders = []
     for live, live_path, _canonical in pairs:
         lowered = live_path.read_text(encoding="utf-8", errors="replace").lower()

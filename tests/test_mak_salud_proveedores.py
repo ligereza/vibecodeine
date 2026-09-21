@@ -32,29 +32,29 @@ from research_lib import (
 class TestOrdenPorSalud:
     def test_demota_proveedor_con_3_fallos_score_0(self):
         stats = {"groq": {"successes": 0, "timeouts": 0, "api_errors": 3, "errors": 0}}
-        orden = orden_por_salud(["groq", "cerebras", "azure", "ollama"], stats)
-        assert orden == ["cerebras", "azure", "ollama", "groq"]
+        orden = orden_por_salud(["groq", "cerebras", "gemini", "ollama"], stats)
+        assert orden == ["cerebras", "gemini", "ollama", "groq"]
 
     def test_no_demota_con_solo_2_intentos(self):
         stats = {"groq": {"successes": 0, "timeouts": 0, "api_errors": 2, "errors": 0}}
-        orden = orden_por_salud(["groq", "cerebras", "azure", "ollama"], stats)
-        assert orden == ["groq", "cerebras", "azure", "ollama"]
+        orden = orden_por_salud(["groq", "cerebras", "gemini", "ollama"], stats)
+        assert orden == ["groq", "cerebras", "gemini", "ollama"]
 
     def test_no_demota_con_score_exactamente_0_5(self):
         # 2 exitos + 2 fallos = 4 intentos, score 0.5 -> estrictamente NO < 0.5
         stats = {"groq": {"successes": 2, "timeouts": 0, "api_errors": 2, "errors": 0}}
-        orden = orden_por_salud(["groq", "cerebras", "azure", "ollama"], stats)
-        assert orden == ["groq", "cerebras", "azure", "ollama"]
+        orden = orden_por_salud(["groq", "cerebras", "gemini", "ollama"], stats)
+        assert orden == ["groq", "cerebras", "gemini", "ollama"]
 
     def test_orden_relativo_estable_entre_demotados_y_no_demotados(self):
         stats = {
             "groq": {"successes": 0, "timeouts": 0, "api_errors": 3, "errors": 0},
-            "azure": {"successes": 0, "timeouts": 3, "api_errors": 0, "errors": 0},
+            "gemini": {"successes": 0, "timeouts": 3, "api_errors": 0, "errors": 0},
         }
-        orden = orden_por_salud(["groq", "cerebras", "azure", "ollama", "win"], stats)
+        orden = orden_por_salud(["groq", "cerebras", "gemini", "ollama", "win"], stats)
         # no-demotados en su orden original: cerebras, ollama, win
-        # demotados en su orden original: groq, azure
-        assert orden == ["cerebras", "ollama", "win", "groq", "azure"]
+        # demotados en su orden original: groq, gemini
+        assert orden == ["cerebras", "ollama", "win", "groq", "gemini"]
 
     def test_proveedor_ausente_de_stats_nunca_se_demota(self):
         stats = {"groq": {"successes": 0, "timeouts": 0, "api_errors": 3, "errors": 0}}
@@ -62,14 +62,14 @@ class TestOrdenPorSalud:
         assert orden == ["win", "groq"]
 
     def test_stats_vacio_devuelve_orden_sin_cambios(self):
-        orden = orden_por_salud(["groq", "cerebras", "azure"], {})
-        assert orden == ["groq", "cerebras", "azure"]
+        orden = orden_por_salud(["groq", "cerebras", "gemini"], {})
+        assert orden == ["groq", "cerebras", "gemini"]
 
     def test_score_provider_health_none_devuelve_orden_sin_cambios(self, monkeypatch):
         monkeypatch.setattr(research_lib, "score_provider_health", None)
         stats = {"groq": {"successes": 0, "timeouts": 0, "api_errors": 3, "errors": 0}}
-        orden = orden_por_salud(["groq", "cerebras", "azure"], stats)
-        assert orden == ["groq", "cerebras", "azure"]
+        orden = orden_por_salud(["groq", "cerebras", "gemini"], stats)
+        assert orden == ["groq", "cerebras", "gemini"]
 
 
 # ---------------------------------------------------------------------------
@@ -158,8 +158,8 @@ class TestEscenarioGroq:
         for _ in range(3):
             _salud_registrar("groq", False, "api_error", ruta=ruta)
         stats = _salud_cargar(ruta=ruta)
-        orden = orden_por_salud(["groq", "cerebras", "azure", "ollama"], stats)
-        assert orden == ["cerebras", "azure", "ollama", "groq"]
+        orden = orden_por_salud(["groq", "cerebras", "gemini", "ollama"], stats)
+        assert orden == ["cerebras", "gemini", "ollama", "groq"]
 
 
 # ---------------------------------------------------------------------------

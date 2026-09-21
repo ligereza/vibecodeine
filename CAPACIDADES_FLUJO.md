@@ -391,9 +391,7 @@ sus valores nunca se imprimen ni se registran aqui.
 
 Conteo verificado el 2026-08-17:
 
-Nota de retiro: cualquier mención restante de `watsonx`, AWS o Azure en esta
-matriz describe una corrida histórica o un campo de evidencia; no representa
-un proveedor disponible. La ruta LLM activa es Groq -> Gemini -> Ollama.
+La ruta LLM activa es Groq -> Gemini -> Ollama.
 Cerebras queda como adaptador opt-in, pero su cuenta respondió HTTP 402 por
 falta de crédito. La visión local usa Ollama.
 
@@ -456,7 +454,7 @@ Ollama.
 | Ollama | `LLM._ollama(..., max_tok=8)` | OK; respuesta de 3 caracteres |
 
 El 402 de Cerebras es un limite de cuenta, no un fallo de instalacion o
-formato. Azure no participa del runtime y no tiene adaptador activo. Canva y
+formato. Canva y
 ntfy no estan en el entorno seleccionado y no se consideran activos.
 
 `GITHUB_TOKEN` no es necesario en el runtime local: `gh auth status` devolvio
@@ -475,7 +473,6 @@ Solo existencia + donde se configura. Nunca el valor de una llave.
 | Groq | Proveedor rapido para roles `razonar`/`bulk` | `GROQ_API_KEY`, `GROQ_MODEL` en `cultura/mak_research/research_lib.py` (defaults linea 32) y `.env` |
 | Gemini | Reemplazo cloud probado para sintesis y razonamiento cuando Cerebras no tiene crédito | `GEMINI_API_KEY`, `GEMINI_MODEL` en `research_lib.py`; usa `gemini-3.6-flash` |
 | Cerebras | Proveedor rapido, `CEREBRAS_MODEL=gpt-oss-120b` | `CEREBRAS_API_KEY`, `CEREBRAS_MODEL` en `research_lib.py` (linea 33) y `.env` |
-| Azure AI | Retirado por decisión del usuario; no se carga ni se ofrece como fallback | Solo referencias históricas preservadas fuera de la ruta activa |
 | DashScope / Qwen | Coder barato de volumen (gate, nunca directo a Claude) | `DASHSCOPE_API_KEY` / `QWEN_API_KEY` en `.env.example` |
 | NVIDIA NIM | Alternativa barata (Qwen/DeepSeek/Nemotron) | `NVIDIA_API_KEY` / `NVIDIA_NIM_API_KEY` en `.env.example` |
 | OpenRouter | Router/fallback de modelos | `OPENROUTER_API_KEY` en `.env.example` |

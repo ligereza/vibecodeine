@@ -31,9 +31,9 @@ Tavily es el ultimo respaldo si hay llave. El JSON conserva `motor`,
 Cada finding conserva además `analysis_provider`, `search_backend` y
 `search_query`; los reintentos no se resumen como si fueran una sola llamada.
 
-Cadena LLM configurable (research_lib.py): los proveedores presentes en
+Carga LLM local/configurable (research_lib.py): los proveedores presentes en
 `/home/mak/research/research.env` participan; `--providers groq` aisla Groq
-para una comparacion reproducible. Azure requiere `RESEARCH_AZURE_ENABLED=1`.
+para una comparacion reproducible. No se requiere ni admite un proveedor externo con estado de cuenta MAK.
 Los proveedores retirados no participan. La compuerta del informe
 marca `review_required` si faltan URLs de evidencia, consultas registradas o
 la separacion DICEN/INFERIMOS/NO SE ENCONTRO.

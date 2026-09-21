@@ -4,7 +4,6 @@
 
 | proveedor | llamadas |
 |---|---:|
-| azure | 8 |
 | cerebras | 4 |
 | groq | 35 |
 | ollama | 2 |

@@ -47,23 +47,23 @@ class FakeLLM:
 
 class TestNodoConFallback:
     def test_exito_en_primer_intento_solo_prueba_m(self):
-        llm = FakeLLM(order=["groq", "cerebras", "azure"],
+        llm = FakeLLM(order=["groq", "cerebras", "gemini"],
                       respuestas={"groq": "texto-groq"})
         texto, real = _nodo_con_fallback(llm, "groq", "sys", "ctx", 100)
         assert (texto, real) == ("texto-groq", "groq")
-        # Solo se intento [m]; nunca se toco cerebras/azure.
+        # Solo se intento el proveedor asignado.
         assert llm.llamadas == [("groq",)]
         assert llm.errors == []
 
     def test_fallo_reintenta_excluyendo_m_preserva_orden_relativo(self):
-        llm = FakeLLM(order=["groq", "cerebras", "azure", "ollama"],
+        llm = FakeLLM(order=["groq", "cerebras", "gemini", "ollama"],
                       respuestas={"groq": RuntimeError("429"),
-                                  "azure": "texto-azure"})
+                                  "gemini": "texto-gemini"})
         texto, real = _nodo_con_fallback(llm, "groq", "sys", "ctx", 100)
-        assert (texto, real) == ("texto-azure", "azure")
+        assert (texto, real) == ("texto-gemini", "gemini")
         # Primer intento solo groq; segundo intento el resto SIN groq,
         # preservando el orden relativo de llm.order.
-        assert llm.llamadas == [("groq",), ("cerebras", "azure", "ollama")]
+        assert llm.llamadas == [("groq",), ("cerebras", "gemini", "ollama")]
 
     def test_ambos_fallan_propaga_runtimeerror(self):
         llm = FakeLLM(order=["groq", "cerebras"],
@@ -79,7 +79,7 @@ class TestNodoConFallback:
         # a diferencia del comportamiento viejo donde el fallo de groq
         # jamas se distinguia porque el primer llm.call() ya probaba todo
         # el resto en un solo intento.
-        llm = FakeLLM(order=["groq", "cerebras", "azure"],
+        llm = FakeLLM(order=["groq", "cerebras", "gemini"],
                       respuestas={"groq": RuntimeError("429 rate limit"),
                                   "cerebras": "texto-cerebras"})
         texto, real = _nodo_con_fallback(llm, "groq", "sys", "ctx", 100)
@@ -92,9 +92,9 @@ class TestNodoConFallback:
         # Caso limite: m no pertenece a llm.order (no deberia pasar en
         # produccion, pero _nodo_con_fallback no debe romperse) -- el
         # resto es simplemente llm.order completo.
-        llm = FakeLLM(order=["cerebras", "azure"],
+        llm = FakeLLM(order=["cerebras", "gemini"],
                       respuestas={"win": RuntimeError("no existe"),
-                                  "azure": "texto-azure"})
+                                  "gemini": "texto-gemini"})
         texto, real = _nodo_con_fallback(llm, "win", "sys", "ctx", 100)
-        assert (texto, real) == ("texto-azure", "azure")
-        assert llm.llamadas == [("win",), ("cerebras", "azure")]
+        assert (texto, real) == ("texto-gemini", "gemini")
+        assert llm.llamadas == [("win",), ("cerebras", "gemini")]

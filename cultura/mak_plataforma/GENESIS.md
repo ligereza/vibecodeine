@@ -26,9 +26,8 @@ del repo**. Aquí no hay commits: hay órganos que corren y piezas que nacen.
 
 ## El sistema circulatorio
 
-- **APIs gratuitas** con cadena de fallback: Groq (llama-3.3-70b) → Cerebras
-   (gpt-oss-120b, el modelo capaz) → Groq → Ollama local. GPT mini/Azure no
-   participa en MAK desde el 2026-07-28.
+- **APIs gratuitas/locales** con cadena de fallback: Groq (llama-3.3-70b) → Cerebras
+  (gpt-oss-120b, el modelo capaz) → Groq → Ollama local.
 - **Ollama local** (GPU): gemma3:4b, aya-expanse:8b, nemo-exec:12b,
   qwen2.5-coder:3b (coder), nomic-embed-text (embeddings del micelio).
 - **Claves**: `~/n8n-local/research.env` (chmod 600). Nunca en el repo, nunca
