@@ -375,7 +375,13 @@ def _candidato_legible(s: str) -> bool:
     letras seguidas" -- "NES" son exactamente 3 letras consecutivas.
     Exige una racha de 4+ letras Y que la mayoria de los caracteres no
     sean espacios/puntuacion/mojibake."""
-    palabras = re.findall(r"[A-Za-zÁÉÍÓÚÑáéíóúñ]{4,}", s or "")
+    valor = str(s or "").strip()
+    # Names like KI/KI, B2B or A-Trak are valid headliners even though each
+    # slash/hyphen token is shorter than four letters. They still need four
+    # alphabetic characters in total so OCR fragments such as "N/S" stay out.
+    if re.fullmatch(r"[A-Za-zÁÉÍÓÚÑáéíóúñ0-9]{2,}(?:[/&-][A-Za-zÁÉÍÓÚÑáéíóúñ0-9]{2,})+", valor):
+        return sum(c.isalpha() for c in valor) >= 4
+    palabras = re.findall(r"[A-Za-zÁÉÍÓÚÑáéíóúñ]{4,}", valor)
     if not palabras:
         return False
     compacto = re.sub(r"\s+", "", s or "")
