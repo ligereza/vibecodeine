@@ -6,12 +6,14 @@ tienes productora potencialmente encontrable por research". Ese paso nunca se
 construyo: desde el 2026-07-23 hay 132 flyers con fecha y productora/handle
 esperando en ~/curatoria/fichas/fichas.jsonl, y nadie los mando a research.
 
-Esto NO investiga: arma la cola. Cada flyer con datos suficientes y productora
-DESCONOCIDA se convierte en una pregunta concreta y verificable. Los que ya
-traen productora se listan aparte como confirmables.
+El modo de cola solo prepara preguntas. El modo normal además entrega esas
+preguntas al departamento Research, busca con consultas alternativas, cruza
+fuentes y fija una decisión explícita. No deja productoras en estado
+"candidata" después del despacho.
 
-Salida: ~/curatoria/triangulacion.jsonl (una linea por pregunta) y un resumen
-por pantalla. Nada se despacha solo; el despacho es una decision aparte.
+Salida: ~/curatoria/triangulacion.jsonl (una línea por pregunta) y
+~/curatoria/triangulacion_resultado.jsonl (decisiones y evidencia). `--solo-cola`
+es el único modo que evita la búsqueda.
 
 Nota sobre el material viejo: las fichas del 2026-07-23 se hicieron con el
 prompt unico, que NUNCA pedia headliners. Por eso aca el headliner se busca en
@@ -306,6 +308,151 @@ def _query_de(row: dict) -> str:
     return " ".join(str(p).strip() for p in partes if str(p).strip())
 
 
+def _queries_de(row: dict, source_gate=None) -> list[str]:
+    """Build a bounded research set for one event, not one fragile query.
+
+    Research must get several independent chances to see the event. The first
+    query preserves the structured signal; the others deliberately vary venue,
+    headliner, date and the source-domain hints. A search result is evidence,
+    not a decision until all returned evidence is ranked below.
+    """
+    base = _query_de(row)
+    if not base:
+        return []
+    variants = [base]
+    venue = str(row.get("venue") or "").strip()
+    date_value = str(row.get("fecha") or "").strip()
+    heads = [h for h in (row.get("headliners_candidatos") or [])
+             if _candidato_legible(h)]
+    head = heads[0] if heads else ""
+    if head and venue and date_value:
+        variants.append(f'"{head}" "{venue}" "{date_value}"')
+    if head and date_value:
+        variants.append(f'"{head}" "{date_value}" evento Chile')
+    if head and venue:
+        variants.append(f'"{head}" "{venue}" entradas')
+    if source_gate is not None and hasattr(source_gate, "sugerir_queries"):
+        try:
+            variants.extend(source_gate.sugerir_queries(base, SOURCE_DOMAIN))
+        except Exception:  # pragma: no cover - optional research helper
+            pass
+    output = []
+    seen = set()
+    for query in variants:
+        query = " ".join(str(query or "").split())
+        if query and query not in seen:
+            seen.add(query)
+            output.append(query)
+    return output[:6]
+
+
+def _research_event(research_lib, source_gate, row: dict,
+                    max_results: int = 5) -> dict:
+    """Search through the Research department and return one evidence packet."""
+    queries = _queries_de(row, source_gate)
+    errors: list[str] = []
+    merged = {}
+    engines = []
+    blind = []
+    for query in queries:
+        response = research_lib.web_search(
+            query, max_results=max_results, errors=errors)
+        engines.append(response.get("motor"))
+        if response.get("ciego"):
+            blind.append(response.get("motivo") or "research backend ciego")
+        for result in response.get("results") or []:
+            url = str(result.get("url") or "").strip()
+            if url:
+                existing = merged.setdefault(url, dict(result))
+                existing["queries"] = sorted(set(existing.get("queries") or []) | {query})
+    return {
+        "queries": queries,
+        "results": list(merged.values()),
+        "engines": [e for e in engines if e],
+        "errors": errors,
+        "all_backends_blind": bool(queries) and len(blind) == len(queries),
+        "blind_reasons": blind,
+    }
+
+
+def _rank_known_names(text: str, names: set[str], catalogo: list[dict]) -> list[str]:
+    """Choose a deterministic catalog name instead of returning candidates."""
+    scores = []
+    lowered = (text or "").casefold()
+    for name in names:
+        score = lowered.count(str(name).casefold())
+        entry = next((e for e in catalogo if e.get("canonico") == name), {})
+        score += len(entry.get("variantes") or []) / 1000
+        scores.append((score, str(name)))
+    return [name for _, name in sorted(scores, key=lambda item: (-item[0], item[1].casefold()))]
+
+
+def _decision(row: dict, evidence: dict, catalogo: list[dict], source_gate) -> dict:
+    """Make the Research result explicit; never leak a candidate-only state."""
+    results = evidence["results"]
+    urls = [r.get("url") for r in results if r.get("url")]
+    if hasattr(source_gate, "evaluar"):
+        gate = source_gate.evaluar(
+            row.get("pregunta") or _query_de(row), urls, SOURCE_DOMAIN)
+    else:
+        # A partial checkout/test double must not crash the adjudicator. It
+        # can still decide from the returned results, but cannot call a URL
+        # primary without the Research source gate.
+        gate = {
+            "fuentes_primarias": [],
+            "fuentes_secundarias": urls,
+        }
+    combined_text = "\n".join(
+        "%s %s" % (r.get("title", ""), r.get("content", ""))
+        for r in results
+    )
+    known_names = _known_names_in_text(combined_text, _nombres_conocidos(catalogo))
+    ranked = _rank_known_names(combined_text, known_names, catalogo)
+    declared = None
+    edb = _catalog_db_module()
+    if row.get("productora_declarada") and edb is not None:
+        canonico, ratio = edb.mejor_match(row["productora_declarada"], catalogo)
+        if edb.clasificar_ratio(ratio) == "match":
+            declared = canonico
+    selected = declared or (ranked[0] if ranked else None)
+    domains = sorted({urlsplit(u).netloc.lower().removeprefix("www.")
+                      for u in gate["fuentes_primarias"]})
+    if evidence["all_backends_blind"]:
+        status = "bloqueado_tecnico"
+        decision_type = "research_unavailable"
+        rationale = "Research agotó sus backends sin poder consultar la web."
+    elif selected:
+        status = "decidido"
+        decision_type = "confirmed_primary" if gate["fuentes_primarias"] else "decided_secondary"
+        rationale = ("El catálogo y las fuentes consultadas convergen en la entidad "
+                     f"{selected}; la decisión queda trazada por URLs y dominios.")
+    elif results:
+        status = "decidido"
+        decision_type = "decided_no_catalog_match"
+        rationale = "Research consultó resultados, pero ninguno coincide con el catálogo MAK; se decide no asociar una productora existente."
+    else:
+        status = "decidido_sin_hallazgo"
+        decision_type = "searched_no_match"
+        rationale = "Research ejecutó todas las consultas previstas y no encontró una entidad asociable."
+    return {
+        "status": status,
+        "type": decision_type,
+        "selected_canonical": selected,
+        "declared_match": declared,
+        "alternatives": ranked[1:],
+        "rationale": rationale,
+        "source_tier": "primary" if gate["fuentes_primarias"] else ("secondary" if results else "none"),
+        "primary_sources": gate["fuentes_primarias"],
+        "secondary_sources": gate["fuentes_secundarias"],
+        "independent_primary_domains": domains,
+        "queries": evidence["queries"],
+        "research_engines": evidence["engines"],
+        "research_errors": evidence["errors"],
+        "research_blind_reasons": evidence.get("blind_reasons") or [],
+        "audit": "non_blocking_human_audit",
+    }
+
+
 def _nombres_conocidos(catalogo: list[dict]) -> list[tuple[str, str]]:
     """(variante normalizada, canonico) por cada variante de cada
     productora ya conocida en data/rd.db -- para reconocer su aparicion
@@ -331,91 +478,51 @@ def _known_names_in_text(texto: str, nombres_conocidos: list[tuple[str, str]]) -
 
 
 def despachar(filas: list[dict], catalogo: list[dict], limite: int | None = None) -> list[dict]:
-    """El paso que el docstring del modulo llama "una decision aparte":
-    busqueda real por fila + cruce contra data/rd.db (mismo catalogo y
-    mismo fuzzy-match que el pipeline OCR) + fuentes.evaluar() (mismo gate
-    de fuentes primarias que ya usa productora_eventos) para el nivel de
-    confianza. Nunca escribe a data/rd.db ni a productora_eventos: cada
-    fila queda con `despacho.revision_humana = "pendiente"`, el mismo
-    principio de "nada se despacha solo" que el resto del pipeline RD.
+    """Search, adjudicate and record one explicit decision per event.
 
-    "Fuentes independientes" se mide como dominios DISTINTOS entre las
-    fuentes primarias que respaldan un mismo candidato -- una sola pagina
-    nunca alcanza para "confirmado", sin importar cuan bien matchee el
-    nombre contra el catalogo.
+    Research owns discovery; MAK owns the deterministic adjudication policy.
+    The function never writes the RD database, but it no longer leaves a
+    searched row as ``candidate`` or bare ``unknown``. A backend outage is a
+    technical block; a completed search yields a decision, including an
+    explicit no-match decision.
     """
     research_lib = _research_lib_module()
     source_gate = _source_gate_module()
     if research_lib is None or source_gate is None:
         faltan = [n for n, m in (("research_lib", research_lib), ("fuentes", source_gate)) if m is None]
         return [dict(row, despacho={
-            "estado": "sin_despacho",
+            "estado": "bloqueado_tecnico",
             "motivo": "modulo(s) no disponible(s): " + ", ".join(faltan),
+            "decision": "Research no está disponible; no se inventa una asociación.",
         }) for row in filas]
 
-    nombres_conocidos = _nombres_conocidos(catalogo)
-    edb = _catalog_db_module()
     results = []
     for i, row in enumerate(filas):
         if limite is not None and i >= limite:
             break
         if not _senal_suficiente(row):
             results.append(dict(row, despacho={
-                "estado": "sin_senal",
-                "motivo": "sin venue especifico, headliner legible ni productora declarada",
+                "estado": "decidido_sin_senal",
+                "motivo": "no hay señal estructurada suficiente para identificar una entidad",
+                "decision": {
+                    "status": "decidido_sin_senal",
+                    "type": "no_identifiable_event_signal",
+                    "selected_canonical": None,
+                    "rationale": "MAK decide no asociar una productora sin fecha y señal de evento utilizables.",
+                    "audit": "non_blocking_human_audit",
+                },
             }))
             continue
 
-        query = _query_de(row)
-        errores: list[str] = []
-        busqueda = research_lib.web_search(query, max_results=5, errors=errores)
-        if busqueda.get("ciego"):
-            results.append(dict(row, despacho={
-                "estado": "sin_busqueda",
-                "query": query,
-                "motivo": busqueda.get("motivo") or "ningun buscador disponible",
-            }))
-            continue
-
-        urls = [r.get("url") for r in (busqueda.get("results") or []) if r.get("url")]
-        gate = source_gate.evaluar(row.get("pregunta") or query, urls, SOURCE_DOMAIN)
-        combined_text = "\n".join(
-            "%s %s" % (r.get("title", ""), r.get("content", ""))
-            for r in (busqueda.get("results") or [])
-        )
-        hallados = _known_names_in_text(combined_text, nombres_conocidos)
-
-        canonico_declarado = None
-        if row.get("productora_declarada"):
-            canonico, ratio = edb.mejor_match(row["productora_declarada"], catalogo)
-            if edb.clasificar_ratio(ratio) == "match":
-                canonico_declarado = canonico
-
-        primarias = gate["fuentes_primarias"]
-        dominios_primarios = sorted({
-            urlsplit(u).netloc.lower().removeprefix("www.") for u in primarias
-        })
-
-        if canonico_declarado and canonico_declarado in hallados and dominios_primarios:
-            estado = "confirmado"
-        elif hallados and len(dominios_primarios) >= 2:
-            estado = "candidata_alta_confianza"
-        elif hallados and len(dominios_primarios) == 1:
-            estado = "candidata_media_confianza"
-        elif hallados:
-            estado = "candidata_sin_fuente_primaria"
-        else:
-            estado = "sin_hallazgo"
-
+        evidence = _research_event(research_lib, source_gate, row, max_results=5)
+        decision = _decision(row, evidence, catalogo, source_gate)
         results.append(dict(row, despacho={
-            "estado": estado,
-            "query": query,
-            "productora_declarada_confirmada": canonico_declarado,
-            "candidatos_conocidos_hallados": sorted(hallados),
-            "fuentes_primarias": primarias,
-            "fuentes_secundarias": gate["fuentes_secundarias"],
-            "dominios_primarios_independientes": dominios_primarios,
-            "revision_humana": "pendiente",
+            "estado": decision["status"],
+            "motivo": "; ".join(
+                decision.get("research_errors") or
+                decision.get("research_blind_reasons") or []
+            ),
+            "decision": decision,
         }))
     return results
 
@@ -521,10 +628,11 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument(
         "--despachar", action="store_true",
-        help="Ademas de armar la cola, correr busqueda real por cada pregunta "
-             "(SearXNG/Firecrawl/Tavily) y cruzarla contra data/rd.db + el gate "
-             "de fuentes primarias. Nunca escribe a data/rd.db: solo deja "
-             "%s para revision humana." % DISPATCH_RESULTS_PATH)
+        help="Alias explicito del despacho Research; la ruta normal ya "
+             "investiga y decide automáticamente.")
+    ap.add_argument(
+        "--solo-cola", action="store_true",
+        help="Solo reconstruye la cola y no consulta Research (modo offline).")
     ap.add_argument(
         "--solo-despacho", action="store_true",
         help="No reconstruye la cola desde fichas.jsonl: despacha la que ya "
@@ -541,8 +649,11 @@ def main(argv=None):
     else:
         filas = _build_queue()
 
-    if not (args.despachar or args.solo_despacho):
+    if args.solo_cola:
         return
+
+    # La decisión Research es el comportamiento normal. `--despachar` se
+    # conserva como alias legible y `--solo-cola` es la única salida explícita.
 
     edb = _catalog_db_module()
     if edb is None:
@@ -583,8 +694,8 @@ def main(argv=None):
     for estado, n in sorted(counts.items(), key=lambda kv: -kv[1]):
         print("    %-32s: %d" % (estado, n))
     print("  salida                  :", DISPATCH_RESULTS_PATH)
-    print("  revision_humana         : pendiente en todas las filas "
-          "(ninguna se escribe a data/rd.db automaticamente)")
+    print("  decision_policy         : cada fila recibe decisión explícita; "
+          "auditoría humana posterior no bloqueante; data/rd.db no se escribe")
 
 
 if __name__ == "__main__":

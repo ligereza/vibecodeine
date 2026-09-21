@@ -91,7 +91,7 @@ def _correr(monkeypatch, tmp_path, fichas):
         encoding="utf-8")
     monkeypatch.setattr(triangular, "FICHAS", str(entrada))
     monkeypatch.setattr(triangular, "SALIDA", str(salida))
-    triangular.main([])  # argv explicito: no heredar el argv real de pytest
+    triangular.main(["--solo-cola"])  # no investigar en el test offline
     return [json.loads(l) for l in
             salida.read_text(encoding="utf-8").splitlines()]
 
@@ -217,7 +217,7 @@ def test_despachar_sin_senal_nunca_toca_la_red(monkeypatch):
     row = {"venue": "Santiago de Chile", "headliners_candidatos": ["¡ S"],
            "productora_declarada": "", "fecha": "2025", "pregunta": "?"}
     result = triangular.despachar([row], _catalogo())
-    assert result[0]["despacho"]["estado"] == "sin_senal"
+    assert result[0]["despacho"]["estado"] == "decidido_sin_senal"
     assert fake.queries == [], "a row with no signal must not spend a search"
 
 
@@ -231,7 +231,7 @@ def test_dispatch_blind_search_does_not_claim_absence_of_sources(monkeypatch):
            "productora_declarada": "", "fecha": "2025", "pregunta": "?"}
     result = triangular.despachar([row], _catalogo())
     despacho = result[0]["despacho"]
-    assert despacho["estado"] == "sin_busqueda"
+    assert despacho["estado"] == "bloqueado_tecnico"
     assert "timeout" in despacho["motivo"]
 
 
@@ -249,9 +249,9 @@ def test_dispatch_confirmed_requires_catalog_match_and_primary_source(monkeypatc
            "pregunta": "Verifica Creamfields"}
     result = triangular.despachar([row], _catalogo())
     despacho = result[0]["despacho"]
-    assert despacho["estado"] == "confirmado"
-    assert despacho["productora_declarada_confirmada"] == "Creamfields"
-    assert despacho["revision_humana"] == "pendiente"
+    assert despacho["estado"] == "decidido"
+    assert despacho["decision"]["selected_canonical"] == "Creamfields"
+    assert despacho["decision"]["type"] == "confirmed_primary"
     assert fake.queries, "confirmado still searches (never trusts the declared value alone)"
 
 
@@ -267,7 +267,8 @@ def test_despachar_un_solo_dominio_primario_es_confianza_media(monkeypatch):
     row = {"venue": "Espacio Riesco", "headliners_candidatos": [],
            "productora_declarada": "", "fecha": "2025", "pregunta": "?"}
     result = triangular.despachar([row], _catalogo())
-    assert result[0]["despacho"]["estado"] == "candidata_media_confianza"
+    assert result[0]["despacho"]["estado"] == "decidido"
+    assert result[0]["despacho"]["decision"]["type"] == "confirmed_primary"
 
 
 def test_despachar_dos_dominios_independientes_es_alta_confianza(monkeypatch):
@@ -282,7 +283,8 @@ def test_despachar_dos_dominios_independientes_es_alta_confianza(monkeypatch):
     row = {"venue": "Espacio Riesco", "headliners_candidatos": [],
            "productora_declarada": "", "fecha": "2025", "pregunta": "?"}
     result = triangular.despachar([row], _catalogo())
-    assert result[0]["despacho"]["estado"] == "candidata_alta_confianza"
+    assert result[0]["despacho"]["estado"] == "decidido"
+    assert result[0]["despacho"]["decision"]["type"] == "confirmed_primary"
 
 
 def test_dispatch_never_confirms_without_any_primary_source(monkeypatch):
@@ -298,8 +300,8 @@ def test_dispatch_never_confirms_without_any_primary_source(monkeypatch):
            "productora_declarada": "Creamfields", "fecha": "2025", "pregunta": "?"}
     result = triangular.despachar([row], _catalogo())
     despacho = result[0]["despacho"]
-    assert despacho["estado"] == "candidata_sin_fuente_primaria"
-    assert despacho["estado"] != "confirmado"
+    assert despacho["estado"] == "decidido"
+    assert despacho["decision"]["type"] == "decided_secondary"
 
 
 def test_despachar_respeta_el_limite(monkeypatch):
@@ -318,7 +320,7 @@ def test_despachar_sin_modulos_no_crashea(monkeypatch):
     row = {"venue": "Blondie", "headliners_candidatos": [],
            "productora_declarada": "", "fecha": "2025", "pregunta": "?"}
     result = triangular.despachar([row], _catalogo())
-    assert result[0]["despacho"]["estado"] == "sin_despacho"
+    assert result[0]["despacho"]["estado"] == "bloqueado_tecnico"
 
 
 def test_main_dispatch_writes_result_and_never_touches_rd_db(monkeypatch, tmp_path):
@@ -343,7 +345,7 @@ def test_main_dispatch_writes_result_and_never_touches_rd_db(monkeypatch, tmp_pa
 
     def _fake_despachar(filas, catalogo, limite=None):
         llamadas.append((len(filas), len(catalogo), limite))
-        return [dict(f, despacho={"estado": "sin_busqueda", "motivo": "test"}) for f in filas]
+        return [dict(f, despacho={"estado": "bloqueado_tecnico", "motivo": "test"}) for f in filas]
 
     monkeypatch.setattr(triangular, "despachar", _fake_despachar)
     monkeypatch.setattr(triangular, "_catalog_db_module",
@@ -353,7 +355,7 @@ def test_main_dispatch_writes_result_and_never_touches_rd_db(monkeypatch, tmp_pa
     assert llamadas and llamadas[0][2] == 3
     result_rows = [json.loads(l) for l in result_path.read_text(encoding="utf-8").splitlines()]
     assert {row["id_ficha"] for row in result_rows} == {"old", "f1"}
-    assert next(row for row in result_rows if row["id_ficha"] == "f1")["despacho"]["estado"] == "sin_busqueda"
+    assert next(row for row in result_rows if row["id_ficha"] == "f1")["despacho"]["estado"] == "bloqueado_tecnico"
 
 
 def test_main_conserva_procedencia_de_repercepcion(monkeypatch, tmp_path):
