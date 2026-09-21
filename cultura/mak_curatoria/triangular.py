@@ -25,6 +25,8 @@ import json
 import os
 import re
 import sys
+import unicodedata
+from datetime import date
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -58,6 +60,117 @@ except ImportError:  # pragma: no cover - only for a partial checkout
 _RESEARCH_LIB = None
 _SOURCE_GATE = None
 _CATALOG_DB = None
+
+_MESES = {
+    "ene": 1, "enero": 1, "feb": 2, "febrero": 2,
+    "mar": 3, "marzo": 3, "abr": 4, "abril": 4,
+    "may": 5, "mayo": 5, "jun": 6, "junio": 6,
+    "jul": 7, "julio": 7, "ago": 8, "agosto": 8,
+    "sep": 9, "sept": 9, "septiembre": 9, "oct": 10,
+    "octubre": 10, "nov": 11, "noviembre": 11,
+    "dic": 12, "diciembre": 12,
+}
+_DATE_ISO_RE = re.compile(r"\b(20\d{2})[-/.](\d{1,2})[-/.](\d{1,2})\b")
+_DATE_TEXT_RE = re.compile(
+    r"\b([0-3]?\d)\s+(?:de\s+)?(ene(?:ro)?|feb(?:rero)?|mar(?:zo)?|"
+    r"abr(?:il)?|may(?:o)?|jun(?:io)?|jul(?:io)?|ago(?:sto)?|"
+    r"sep(?:tiembre)?|sept(?:iembre)?|oct(?:ubre)?|nov(?:iembre)?|"
+    r"dic(?:iembre)?)\.?\s*(20\d{2})?\b", re.IGNORECASE)
+_VENUE_TERMS = (
+    "teatro provincial curico", "teatro mauri scd", "sala metronomo",
+    "club chocolate", "teatro caupolican", "movistar arena",
+    "espacio riesco", "club hipico", "sala scd bellavista",
+    "sala scd plaza egana",
+)
+
+
+def _fold(value: str) -> str:
+    return "".join(
+        c for c in unicodedata.normalize("NFKD", str(value or "").lower())
+        if not unicodedata.combining(c))
+
+
+def _event_result_relevant(row: dict, result: dict,
+                           catalogo: list[dict] | None = None) -> bool:
+    """Reject generic ticket calendars and unrelated artist mentions."""
+    text = " ".join(str(result.get(k) or "") for k in ("title", "content", "url"))
+    folded = _fold(text)
+    heads = [_fold(h) for h in (row.get("headliners_candidatos") or []) if h]
+    productora = _fold(row.get("productora_declarada") or "")
+    venue = _fold(row.get("venue") or "")
+    known_catalog_match = any(
+        _fold(entry.get("canonico")) in folded
+        or any(_fold(variant) in folded for variant in (entry.get("variantes") or []))
+        for entry in (catalogo or [])
+    )
+    subject_match = any(h and h in folded for h in heads) or bool(productora and productora in folded)
+    venue_match = bool(venue and venue not in {"santiago", "chile"} and venue in folded)
+    known_venue_match = any(term in folded for term in _VENUE_TERMS)
+    event_word = any(word in folded for word in (
+        "evento", "show", "concierto", "aniversario", "entradas", "teatro",
+        "organizo", "realizo", "presenta", "line up", "lineup"))
+    if productora and subject_match:
+        return True
+    if known_catalog_match:
+        return True
+    return subject_match and (venue_match or known_venue_match or event_word)
+
+
+def _extract_event_facts(row: dict, results: list[dict]) -> dict:
+    """Extract event facts from relevant Research results, with provenance."""
+    dates = []
+    venues = []
+    names = []
+    current_year = date.today().year
+    for result in results:
+        text = " ".join(str(result.get(k) or "") for k in ("title", "content"))
+        url = result.get("url")
+        folded = _fold(text)
+        event_score = 0
+        if any(word in folded for word in (
+                "evento", "show", "concierto", "aniversario", "entradas",
+                "teatro", "presenta", "en vivo")):
+            event_score += 3
+        if any(term in folded for term in _VENUE_TERMS):
+            event_score += 4
+        if any(_fold(h) in folded for h in (row.get("headliners_candidatos") or []) if h):
+            event_score += 2
+        for match in _DATE_ISO_RE.finditer(text):
+            y, m, d = map(int, match.groups())
+            if 1 <= m <= 12 and 1 <= d <= 31:
+                dates.append({"value": f"{y:04d}-{m:02d}-{d:02d}", "url": url, "score": event_score})
+        for match in _DATE_TEXT_RE.finditer(text):
+            d = int(match.group(1))
+            m = _MESES.get(match.group(2).lower())
+            y = int(match.group(3)) if match.group(3) else current_year
+            if m and 1 <= d <= 31:
+                dates.append({"value": f"{y:04d}-{m:02d}-{d:02d}", "url": url, "score": event_score})
+        for term in _VENUE_TERMS:
+            if term in folded:
+                venues.append({"value": term, "url": url, "score": event_score})
+        title = " ".join(str(result.get("title") or "").split())
+        if title and event_score:
+            names.append({"value": title, "url": url, "score": event_score})
+    # Prefer an explicitly declared input date; otherwise use the first date
+    # found by Research and retain the supporting URL.
+    declared_date = str(row.get("fecha") or "").strip()
+    selected_date = {"value": declared_date, "source": "input"} if declared_date else (
+        max(dates, key=lambda item: item.get("score", 0)) if dates else None)
+    declared_venue = str(row.get("venue") or "").strip()
+    selected_venue = max(venues, key=lambda item: item.get("score", 0)) if venues else (
+        {"value": declared_venue, "source": "input"} if declared_venue else None)
+    selected_name = max(names, key=lambda item: item.get("score", 0)) if names else None
+    for item in dates + venues + names:
+        item.pop("score", None)
+    return {
+        "status": "resolved" if (dates or venues or names) else "not_found_after_research",
+        "event_name": selected_name,
+        "event_date": selected_date,
+        "venue": selected_venue,
+        "dates_found": dates,
+        "venues_found": venues,
+        "source_count": len(results),
+    }
 
 
 def _research_lib_module():
@@ -327,6 +440,9 @@ def _queries_de(row: dict, source_gate=None) -> list[str]:
     head = heads[0] if heads else ""
     if head and venue and date_value:
         variants.append(f'"{head}" "{venue}" "{date_value}"')
+    if head and venue and not date_value:
+        variants.append(f'"{head}" "{venue}" evento fecha')
+        variants.append(f'"{head}" "{venue}" teatro entradas')
     if head and date_value:
         variants.append(f'"{head}" "{date_value}" evento Chile')
     if head and venue:
@@ -347,6 +463,7 @@ def _queries_de(row: dict, source_gate=None) -> list[str]:
 
 
 def _research_event(research_lib, source_gate, row: dict,
+                    catalogo: list[dict] | None = None,
                     max_results: int = 5) -> dict:
     """Search through the Research department and return one evidence packet."""
     queries = _queries_de(row, source_gate)
@@ -368,6 +485,10 @@ def _research_event(research_lib, source_gate, row: dict,
     return {
         "queries": queries,
         "results": list(merged.values()),
+        "relevant_results": [
+            result for result in merged.values()
+            if _event_result_relevant(row, result, catalogo)
+        ],
         "engines": [e for e in engines if e],
         "errors": errors,
         "all_backends_blind": bool(queries) and len(blind) == len(queries),
@@ -389,7 +510,9 @@ def _rank_known_names(text: str, names: set[str], catalogo: list[dict]) -> list[
 
 def _decision(row: dict, evidence: dict, catalogo: list[dict], source_gate) -> dict:
     """Make the Research result explicit; never leak a candidate-only state."""
-    results = evidence["results"]
+    # Generic calendars and unrelated artist mentions are not event evidence.
+    # Research may return them, but the decision only sees relevant results.
+    results = evidence.get("relevant_results") or []
     urls = [r.get("url") for r in results if r.get("url")]
     if hasattr(source_gate, "evaluar"):
         gate = source_gate.evaluar(
@@ -408,6 +531,7 @@ def _decision(row: dict, evidence: dict, catalogo: list[dict], source_gate) -> d
     )
     known_names = _known_names_in_text(combined_text, _nombres_conocidos(catalogo))
     ranked = _rank_known_names(combined_text, known_names, catalogo)
+    event_facts = _extract_event_facts(row, results)
     declared = None
     edb = _catalog_db_module()
     if row.get("productora_declarada") and edb is not None:
@@ -438,6 +562,9 @@ def _decision(row: dict, evidence: dict, catalogo: list[dict], source_gate) -> d
         "status": status,
         "type": decision_type,
         "selected_canonical": selected,
+        "event_facts": event_facts,
+        "raw_result_count": len(evidence.get("results") or []),
+        "relevant_result_count": len(results),
         "declared_match": declared,
         "alternatives": ranked[1:],
         "rationale": rationale,
@@ -514,7 +641,8 @@ def despachar(filas: list[dict], catalogo: list[dict], limite: int | None = None
             }))
             continue
 
-        evidence = _research_event(research_lib, source_gate, row, max_results=5)
+        evidence = _research_event(
+            research_lib, source_gate, row, catalogo=catalogo, max_results=5)
         decision = _decision(row, evidence, catalogo, source_gate)
         results.append(dict(row, despacho={
             "estado": decision["status"],
