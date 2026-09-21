@@ -30,6 +30,15 @@ RESOURCE_GROUP = os.environ.get("MAK_AZURE_RESOURCE_GROUP", "makmak")
 APPINSIGHTS_NAME = os.environ.get("MAK_APPINSIGHTS_NAME", "makmak-ml-insights")
 _CONNECTION_LOCK = threading.Lock()
 _CONNECTION_CACHE: tuple[str, float] | None = None
+ALLOWED_EVENT_PROPERTIES = {
+    "component", "operation", "health", "provider", "model", "status",
+    "error_class", "job_hash", "prompt_hash", "resource_count", "deployment",
+    "privacy", "source", "experiment_id", "dataset_fingerprint", "decision",
+}
+ALLOWED_EVENT_MEASUREMENTS = {
+    "latency_ms", "prompt_tokens", "completion_tokens", "total_tokens",
+    "resource_count", "candidate_count", "schema_version", "duration_ms",
+}
 
 
 def _az_path() -> str | None:
@@ -59,12 +68,25 @@ def _resource_inventory() -> list[dict[str, Any]]:
     rows = _az_json([
         "resource", "list", "--subscription", SUBSCRIPTION_ID,
         "--query",
-        "[].{name:name,type:type,resourceGroup:resourceGroup,location:location,state:provisioningState}",
+        "[].{name:name,type:type,resourceGroup:resourceGroup,location:location,"
+        "state:provisioningState,sku:sku.name,kind:kind}",
     ])
     return [row for row in rows if isinstance(row, dict)] if isinstance(rows, list) else []
 
 
-def _service_rows(resources: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _subscription_state() -> dict[str, Any]:
+    value = _az_json([
+        "rest", "--method", "get", "--url",
+        "https://management.azure.com/subscriptions/" + SUBSCRIPTION_ID
+        + "?api-version=2022-12-01",
+        "--query", "{state:state,quota_id:subscriptionPolicies.quotaId,"
+        "spending_limit:subscriptionPolicies.spendingLimit}",
+    ])
+    return value if isinstance(value, dict) else {}
+
+
+def _service_rows(resources: list[dict[str, Any]],
+                  subscription_state: str = "") -> list[dict[str, Any]]:
     types = [str(row.get("type", "")).lower() for row in resources]
 
     def has(type_name: str) -> bool:
@@ -73,7 +95,8 @@ def _service_rows(resources: list[dict[str, Any]]) -> list[dict[str, Any]]:
     def rows_for(type_name: str) -> list[dict[str, Any]]:
         return [
             {"name": row.get("name"), "resource_group": row.get("resourceGroup"),
-             "location": row.get("location"), "state": row.get("state")}
+             "location": row.get("location"), "state": row.get("state"),
+             "sku": row.get("sku"), "kind": row.get("kind")}
             for row in resources
             if str(row.get("type", "")).lower() == type_name.lower()
         ]
@@ -92,18 +115,23 @@ def _service_rows(resources: list[dict[str, Any]]) -> list[dict[str, Any]]:
         ("container_registry", "Microsoft.ContainerRegistry/registries",
          "/api/azure/status", "dependency_only", "ML dependency metadata only"),
         ("application_insights", "Microsoft.Insights/components",
-         "/api/azure/status", "operational", "Metadata-only technical telemetry"),
+         "/api/azure/status", "partial",
+         "Verified metadata-only ingestion; workload forwarding remains opt-in"),
         ("api_management", "Microsoft.ApiManagement/service", "/api/azure/status",
          "not_operational", "Inventory only until a concrete backend exists"),
     ]
     result = []
     for service_id, type_name, consumer, integration_state, decision in definitions:
         service_rows = rows_for(type_name)
+        effective_integration = integration_state if service_rows else "absent"
+        if subscription_state.lower() == "disabled" and service_id in {
+                "search", "foundry", "machine_learning"} and service_rows:
+            effective_integration = "blocked_subscription"
         result.append({
             "id": service_id,
             "resource_type": type_name,
             "resource_state": "live" if service_rows else "absent",
-            "integration_state": integration_state if service_rows else "absent",
+            "integration_state": effective_integration,
             "consumer": consumer if service_rows else None,
             "decision": decision,
             "resources": service_rows,
@@ -115,15 +143,17 @@ def snapshot() -> dict[str, Any]:
     """Return the live resource map without revealing credentials."""
     try:
         resources = _resource_inventory()
+        subscription = _subscription_state()
     except RuntimeError as exc:
         return {"schema": SCHEMA, "available": False, "error": str(exc)}
     return {
         "schema": SCHEMA,
         "available": True,
         "subscription_id": SUBSCRIPTION_ID,
+        "subscription": subscription,
         "resource_group": RESOURCE_GROUP,
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "services": _service_rows(resources),
+        "services": _service_rows(resources, str(subscription.get("state", ""))),
         "resource_count": len(resources),
         "telemetry": {
             "resource": APPINSIGHTS_NAME,
@@ -162,7 +192,12 @@ def _connection_string() -> str:
 
 def emit_event(name: str, *, properties: dict[str, Any] | None = None,
                measurements: dict[str, float] | None = None) -> dict[str, Any]:
-    """Send one technical event; caller values are bounded and content-free."""
+    """Send one allowlisted technical event and verify ingestion acceptance.
+
+    Unknown keys are dropped before serialization.  This prevents a caller
+    from accidentally placing prompts, documents or identifiers in telemetry
+    merely by naming a new property.
+    """
     try:
         connection = _connection_string()
         parts = dict(
@@ -177,10 +212,12 @@ def emit_event(name: str, *, properties: dict[str, Any] | None = None,
         safe_properties = {
             str(key)[:80]: str(value)[:160]
             for key, value in (properties or {}).items()
-            if str(key) and value is not None
+            if str(key) in ALLOWED_EVENT_PROPERTIES and value is not None
         }
         safe_measurements = {}
         for key, value in (measurements or {}).items():
+            if str(key) not in ALLOWED_EVENT_MEASUREMENTS:
+                continue
             try:
                 safe_measurements[str(key)[:80]] = float(value)
             except (TypeError, ValueError):
@@ -201,9 +238,18 @@ def emit_event(name: str, *, properties: dict[str, Any] | None = None,
             data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
             headers={"Content-Type": "application/json"}, method="POST")
         with urllib.request.urlopen(request, timeout=10) as response:
-            response.read(64)
+            raw = response.read(4096)
+        try:
+            receipt = json.loads(raw.decode("utf-8")) if raw else {}
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            raise RuntimeError("appinsights_invalid_receipt") from None
+        if (not isinstance(receipt, dict) or receipt.get("itemsAccepted") != 1
+                or receipt.get("errors")):
+            raise RuntimeError("appinsights_event_rejected")
         return {"available": True, "sent": True, "resource": APPINSIGHTS_NAME,
-                "event": str(name)[:120]}
+                "event": str(name)[:120], "items_accepted": 1,
+                "dropped_properties": len(properties or {}) - len(safe_properties),
+                "dropped_measurements": len(measurements or {}) - len(safe_measurements)}
     except RuntimeError as exc:
         return {"available": False, "sent": False, "error": str(exc)}
     except (urllib.error.URLError, TimeoutError, OSError):

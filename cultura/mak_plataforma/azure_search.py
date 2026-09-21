@@ -76,7 +76,8 @@ def _search_request(query: str, filter_value: str | None, top: int) -> list[dict
     body: dict[str, Any] = {
         "search": query,
         "top": top,
-        "select": "id,ruta,area,proposito,departamento",
+        "select": ("id,ruta,area,proposito,departamento,source_ref,"
+                   "content_sha256,source_modified_at,domain,evidence_state"),
     }
     if filter_value:
         body["filter"] = filter_value
@@ -98,6 +99,9 @@ def _search_request(query: str, filter_value: str | None, top: int) -> list[dict
     except urllib.error.HTTPError as exc:
         # Do not return the service body: Azure can echo request details and
         # the Hub must not expose raw provider errors to every LAN client.
+        provider_body = exc.read(4096).decode("utf-8", "replace").lower()
+        if exc.code == 400 and "search service" in provider_body and "disabled" in provider_body:
+            raise RuntimeError("azure_search_service_disabled") from None
         raise RuntimeError("azure_search_http_%s" % exc.code) from None
     except (urllib.error.URLError, TimeoutError, OSError):
         raise RuntimeError("azure_search_unreachable") from None
@@ -148,7 +152,11 @@ def search_tools(query: str, *, area: str | None = None,
     for row in rows:
         results.append({
             key: row.get(key)
-            for key in ("id", "ruta", "area", "proposito", "departamento")
+            for key in (
+                "id", "ruta", "area", "proposito", "departamento",
+                "source_ref", "content_sha256", "source_modified_at",
+                "domain", "evidence_state",
+            )
             if row.get(key) is not None
         } | {
             "score": round(float(row.get("@search.score", 0) or 0), 4),

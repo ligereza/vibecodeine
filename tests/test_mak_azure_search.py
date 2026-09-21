@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import io
 import os
 import sys
+import urllib.error
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -23,6 +25,10 @@ def test_search_tools_returns_stable_read_only_payload(monkeypatch):
             "area": "codex",
             "proposito": "revision",
             "departamento": "codex",
+            "source_ref": "mak:cultura/mak_codex/revisar.py",
+            "content_sha256": "a" * 64,
+            "domain": "code",
+            "evidence_state": "reviewed_technical",
             "@search.score": 3.14159,
         }],
     )
@@ -32,6 +38,7 @@ def test_search_tools_returns_stable_read_only_payload(monkeypatch):
     assert payload["read_only"] is True
     assert payload["count"] == 1
     assert payload["results"][0]["score"] == 3.1416
+    assert payload["results"][0]["content_sha256"] == "a" * 64
     assert payload["filters"] == {"area": "codex", "departamento": "codex"}
 
 
@@ -43,6 +50,19 @@ def test_empty_query_is_a_named_caller_error():
         "read_only": True,
         "error": "consulta_requerida",
     }
+
+
+def test_disabled_search_service_has_a_named_content_free_error(monkeypatch):
+    error = urllib.error.HTTPError(
+        "https://example", 400, "Bad Request", {},
+        io.BytesIO(b'{"message":"The search service X is disabled. secret"}'))
+    monkeypatch.setattr(azure_search, "token_for", lambda _resource: "token")
+    monkeypatch.setattr(
+        azure_search.urllib.request, "urlopen",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(error))
+    payload = azure_search.search_tools("test")
+    assert payload["error"] == "azure_search_service_disabled"
+    assert "secret" not in str(payload)
 
 
 def test_hub_route_delegates_to_shared_adapter(monkeypatch):

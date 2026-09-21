@@ -1,6 +1,6 @@
 # Plan de integracion Azure para MAK — 2026-2027
 
-Fecha del corte: 2026-09-18  
+Fecha del corte: 2026-09-20
 Alcance: usar Azure como apoyo acotado del motor local MAK, FLUJO y XIO.  
 Autoridad: MAK local y sus repositorios. Azure es una proyeccion auxiliar, nunca una segunda autoridad de datos.
 
@@ -15,13 +15,13 @@ Autoridad: MAK local y sus repositorios. Azure es una proyeccion auxiliar, nunca
 
 ## 2. Estado vivo que manda
 
-Comprobado desde MAK por Azure CLI y ARM REST el 2026-09-18:
+Comprobado desde MAK por Azure CLI y ARM REST el 2026-09-20:
 
 | Recurso | Estado/uso observado |
 |---|---|
 | `MAKINTOUCH` | AI Services + proyecto Foundry en Brazil South; tambien APIM |
 | `makmak-5202-resource` | AI Services + proyecto en Brazil South; `gpt-oss-120b`, GlobalStandard, capacidad 50 |
-| `makmak-7457-resource` | AI Services + proyecto en Central US; deployments `gpt-5.6-sol`, `gpt-5.6-luna` y `text-embedding-3-small` confirmados |
+| `makmak-7457-resource` | AI Services + proyecto en Central US; deployments `gpt-5.6-sol`, `gpt-5.6-luna`, `gpt-5.6-terra` y `text-embedding-3-small` confirmados |
 | `makmak-5202-resource-appinsights` / `-logs` | recursos de observabilidad vivos |
 | `makmak-7457-resource-appinsights` / `-logs` | recursos de observabilidad vivos |
 | `makinspace` | `FileStorage`, `StandardV2_GRS`; no es Blob Storage normal |
@@ -32,7 +32,7 @@ Comprobado desde MAK por Azure CLI y ARM REST el 2026-09-18:
 | `makmak-ml-kv` | Key Vault `standard`, dependencia del workspace ML, acceso publico habilitado |
 | `makmakmlregistry` | Azure Container Registry `Basic`, admin local deshabilitado |
 | `makmak-ml-insights` | Application Insights `web`, dependencia del workspace ML |
-| `makmak-search` | Azure AI Search `Free`, `brazilsouth`, running, 1 particion y 1 replica |
+| `makmak-search` | Azure AI Search `Free`, `brazilsouth`, 1 particion y 1 replica; estaba `running` al inicio del corte y su data plane paso a `disabled` junto con la suscripcion |
 
 Nombres que aparecen en usage historico pero no en el inventario vivo actual: `mak-search-free`, `mak-postgres-free`, `mak-servicebus-free`, `mak-cloud-kv`, `mak-agente-libre`, `makloud` y `mak-language-free`. No deben usarse como si siguieran creados.
 
@@ -50,11 +50,11 @@ Estado local medido:
 - Contrato PostgreSQL: `/home/mak/flujo/src/flujo/knowledge/postgres_runtime.py`, por defecto socket Unix y database `mak_knowledge`.
 - Azure ISSVKK para el agente y Continue: `/home/mak/.config/issvkk/azure-issvkk.env`; Continue usa ademas `/home/mak/.continue/.env`. Esta es una credencial de inferencia del recurso ISSVKK, no una credencial de administracion de Azure for Students.
 - Azure ML: el workspace tiene los datastores predeterminados `workspaceworkingdirectory`, `workspaceartifactstore`, `workspaceblobstore` y `workspacefilestore`.
-- Azure ML: no hay jobs, data assets, modelos, online endpoints ni batch
-  endpoints. MLflow sí conserva 21 corridas en tres experimentos: 20
-  `FINISHED` y una `FAILED`; registrar lineage no equivale a ejecutar un job de
-  entrenamiento.
-- La extension `az ml` vuelve a funcionar y confirma ese inventario vacío.
+- Azure ML: hay un command job de evaluación sanitizada completado; siguen sin
+  existir data assets, modelos, online endpoints ni batch endpoints. MLflow
+  conserva 23 corridas en cuatro experimentos: 22 `FINISHED` y una `FAILED`.
+  El job nuevo verifica un gate, no entrena ni registra un modelo.
+- La extension `az ml` funciona para lectura y confirma ese inventario.
 
 ## 3. Contrato de ejecucion del agente
 
@@ -127,9 +127,10 @@ Nunca debe ser:
 
 ### A. Azure AI Search — memoria consultable de Research
 
-**Estado vivo e integrado:** `makmak-search` existe en `brazilsouth`, SKU
-`Free`, estado `running`, 1 particion y 1 replica. Sus tres indices ocupan 57
-documentos: `mak-inbox-v1` 4, `mak-rd-v1` 5 y `mak-tools-v1` 48. La consulta
+**Estado medido:** `makmak-search` existe en `brazilsouth`, SKU `Free`, 1
+particion y 1 replica. Estaba `running` al inicio del corte. Antes de la sincronizacion
+incremental del 2026-09-20 sus tres indices ocupaban 57 documentos:
+`mak-inbox-v1` 4, `mak-rd-v1` 5 y `mak-tools-v1` 48. La consulta
 AAD real sigue funcionando. El consumidor canonico es el Hub MAK:
 `/api/azure/search/tools`; `tools/consultar_mak_search.py` es el wrapper
 diagnostico del mismo adaptador.
@@ -144,15 +145,37 @@ diagnostico del mismo adaptador.
    explicitos.
 5. Sincronizar incrementalmente por hash; un documento sin cambios no se reenvia.
 
+**Implementado:** `contracts/azure_search_sync.v1.json` declara unicamente
+fuentes tecnicas sanitizadas y los tres indices existentes.
+`tools/azure_search_sync.py` agrega campos de procedencia de forma aditiva,
+calcula una clave estable por `index + source_ref`, compara
+`content_sha256`, usa solo `mergeOrUpload` y prohibe borrados. El modo por
+defecto es dry-run; `--apply-schema` y `--apply` son explicitos. El retriever
+devuelve tambien hash, fuente, dominio y estado de evidencia cuando existen.
+Los campos fueron agregados a los tres esquemas antes del cambio de estado de
+la suscripcion. El lote declarado de siete documentos no alcanzo a subirse:
+el servicio empezo a responder `The search service 'makmak-search' is
+disabled`. Por tanto los conteos siguen en 57 y la sincronizacion queda
+reanudable, no fingida como completada.
+
 **Se reutiliza:** `flujo/tools/research_job_router.py`, `tools/execute_research_job.py`, `cultura/mak_research/source_pipeline.py`, `flujo/src/flujo/web/hub.py`, `SourceCorpusStore` y los endpoints `/api/research/jobs` / `/api/research/operations-context`.
 
-**Conectado:** retriever read-only sobre el indice compartido `mak-tools-v1`, con filtros por `area` y `departamento`, autenticacion AAD desde la sesion `az login`, y contrato estable `mak-azure-search-tools-v1`. No se creo otro indice ni se modifica RD.
+**Conectado antes del bloqueo de suscripcion:** retriever read-only sobre el
+indice compartido `mak-tools-v1`, con filtros por `area` y `departamento`,
+autenticacion AAD desde la sesion `az login`, y contrato estable
+`mak-azure-search-tools-v1`. No se creo otro indice ni se modifica RD. Mientras
+el servicio este deshabilitado, el adaptador degrada a HTTP 503 con error
+acotado.
 
 **Resultado:** la recuperacion devuelve fragmento + fuente + hash + fecha; el job registra la consulta en `job_sources`/`audit_events`; el contexto queda en `/home/mak/research/jobs/<job_id>/`. Nunca modifica `data/rd.db`.
 
 **Limite:** Free: 50 MB, 10.000 documentos y 3 indices. Usar un indice y una cuota de corpus definida.
 
-**Aceptacion verificada:** consulta real desde el Hub devolvio documentos de `mak-tools-v1`; el CLI devolvio el mismo resultado; tests de contrato y degradacion pasaron. La indexacion/remocion no se activa desde MAK porque el objetivo actual es consulta gratuita y read-only.
+**Aceptacion verificada:** antes del bloqueo, una consulta real desde el Hub
+devolvio documentos de `mak-tools-v1` y el CLI devolvio el mismo resultado.
+Despues, el mismo endpoint devolvio 503 con `azure_search_service_disabled`, coherente
+con el error data-plane de servicio deshabilitado. Los tests de contrato,
+sincronizacion incremental y degradacion pasan.
 
 ### B. Storage — respaldos y archivos pesados
 
@@ -245,18 +268,28 @@ diagnostico del mismo adaptador.
 
 ### I. Application Insights / Azure Monitor — medir sin subir contenido
 
-**Estado parcial:** hay recursos App Insights y Log Analytics vivos para
-`makmak-5202`, `makmak-7457` y el workspace ML.
-`cultura/mak_plataforma/azure_services.py` tiene el adaptador de eventos
-tecnicos, pero una consulta real de 30 dias no devolvio `customEvents`,
-requests, exceptions ni traces. La existencia del adaptador no demuestra
-telemetria operativa.
+**Estado parcial verificado:** hay recursos App Insights y Log Analytics vivos
+para `makmak-5202`, `makmak-7457` y el workspace ML. La consulta correcta del
+workspace-based App Insights es `AppEvents` (la vista `customEvents` usada en
+la medicion anterior dio un falso vacio). El 2026-09-20 se observaron siete
+eventos en 30 dias: cuatro historicos y tres probes nuevos, incluido
+`mak.ml.visual_cycle` con decision `not_promoted`.
+`cultura/mak_plataforma/azure_services.py` ahora descarta propiedades no
+allowlisted y solo declara exito si ingestion responde `itemsAccepted=1` sin
+errores. Sigue `partial`: hay ingestion explicita verificada, no forwarding
+continuo de toda actividad Research.
 
 **Ejecucion:** enviar solo `health`, `latency_ms`, `provider`, `model`, `status`, `error_class`, conteos de tokens y hash de `job_id`.
 
 **Se reutiliza:** `mak_heartbeat.py`, `_record_activity` de `research_lib.py`, `/api/status`, `cuotas.py` y `salud_proveedores.json`.
 
-**Verificacion:** `/api/azure/status?emit=1` envio un evento real a `makmak-ml-insights`. Si falla, el Hub local sigue funcionando y el error queda nombrado; no se suben prompts, corpus, fotos, audio, transcripts, PII ni claves.
+**Verificacion:** `/api/azure/status?emit=1` y el gate visual enviaron eventos
+reales a `makmak-ml-insights`; `AppEvents` devolvio el evento visual con solo
+`component`, `operation`, `status`, `decision`, `experiment_id`, `privacy` y
+dos medidas numericas. Una propiedad de prueba `prompt` y una medida no
+allowlisted fueron descartadas antes de serializar. Si falla, el Hub local
+sigue funcionando y el error queda nombrado; no se suben prompts, corpus,
+fotos, audio, transcripts, PII ni claves.
 
 **No enviar:** prompts, documentos, fotos, audio, transcripts, PII ni claves.
 
@@ -271,9 +304,12 @@ telemetria operativa.
 **Estado actualizado al 2026-09-20:** el workspace
 `makmak-ml-workspace` existe en `brazilsouth` y esta `Succeeded`. Tiene
 `makmak-cpu-cluster` como AmlCompute `Standard_DS2_v2`, con 0 nodos actuales,
-minimo 0, maximo 1 e idle scale-down de 2 minutos. No hay jobs, data assets,
-modelos, online endpoints ni batch endpoints. MLflow contiene 21 corridas de
-lineage/evaluacion; no son jobs de entrenamiento.
+minimo 0, maximo 1 e idle scale-down de 2 minutos. Siguen vacios data assets,
+modelos, online endpoints y batch endpoints. Hay un command job completado,
+`helpful_helmet_dhlpd2c7k5`, que ejecuto durante 2 min 17 s un verificador
+portable sobre manifiesto y resultado sanitizados; no recibio imagenes ni
+`data/rd.db`. MLflow contiene 23 corridas en cuatro experimentos (22
+`FINISHED`, una `FAILED`).
 
 Dependencias vivas: `makmakmlstorage` (`StorageV2`, `Standard_LRS`), `makmak-ml-kv` (`Key Vault standard`), `makmakmlregistry` (`ACR Basic`, admin local deshabilitado) y `makmak-ml-insights` (Application Insights). El workspace expone cuatro datastores predeterminados: `workspaceworkingdirectory`, `workspaceartifactstore`, `workspaceblobstore` y `workspacefilestore`.
 
@@ -298,6 +334,14 @@ registro artefactos con lineage. La evaluacion IRIS mas reciente tiene 21
 filas/8 grupos: embedding 1-NN `accuracy=0.333` frente al baseline mayoritario
 `0.619`, por lo que conserva `hold_training`. No hay entrenamiento, modelo
 registrado ni endpoint. La extension `az ml` ya funciona.
+
+El ciclo `pastillas/experiments/visual-retrieval-v1` compara SigLIP2 base con
+MobileNetV3 sobre 14.133 imagenes/5.047 grupos, calibra ambos con el mismo
+protocolo open-set y concluye `not_promoted`. Tras completar el primer job,
+ARM paso a reportar la suscripcion `Disabled`/read-only: un segundo job con la
+calibracion completa fue rechazado. El cluster volvio a 0 nodos. No se haran
+mas escrituras ML hasta que la suscripcion sea reactivada y el costo sea
+visible.
 
 ## 6. Calendario de un año
 
@@ -344,10 +388,20 @@ registrado ni endpoint. La extension `az ml` ya funciona.
   APIM `BasicV2`, ACR `Basic`, Storage y Key Vault consumen credito o cobran por
   uso. El cluster ML no consume compute con cero nodos, pero sus dependencias
   persisten.
-- No existe un Azure Budget configurado y Consumption devuelve `cost=None`;
-  por tanto el saldo/costo actual no esta demostrado.
+- No existe un Azure Budget configurado. La medicion del 2026-08-21 al
+  2026-09-20 devolvio 74 filas de uso (33 asociadas a recursos aun vivos y 41
+  historicas/no resueltas), todas con `pretaxCost=None`; por tanto el
+  saldo/costo actual no esta demostrado y no se interpreta como cero.
+- ARM es la autoridad para el estado de la suscripcion: el 2026-09-20 devolvio
+  `state=Disabled`, `spendingLimit=On`, aunque el cache de `az account show`
+  todavia devolvia `Enabled`. Se detienen nuevos jobs y escrituras con costo.
 - APIM `MAKINTOUCH` sigue sin backend util y es el primer candidato a apagar
   tras una autorizacion explicita; no es parte de la integracion ML.
+- ACR `makmakmlregistry` permanece `Basic`, sin asignaciones de rol y sin
+  binding visible desde el workspace; revisar antes de conservarlo. Storage
+  `makmakmlstorage` y Key Vault `makmak-ml-kv` se conservan como dependencias
+  del workspace. `makinspace` no tiene file shares medidos y queda para
+  revision. No se borro ni creo ningun recurso.
 - Registrar servicio, funcion, job hash, unidades, estado y error.
 - `cost=None` en usage significa facturacion pendiente, no costo cero.
 - ISSVKK no entra al presupuesto MAK ni al fallback automatico; si el agente lo usa, sus llamadas se registran en un contador separado.
@@ -360,9 +414,12 @@ Para cada servicio debe poder regenerarse una fila con recurso real, SKU, estado
 El plan no se considera ejecutado por crear recursos. Se considera ejecutado cuando la matriz se puede reconstruir desde comandos y archivos reales, y cada resultado puede volver a su fuente sin duplicar ninguna autoridad.
 
 En MAK la matriz viva se reconstruye desde `/api/azure/status`. Cada fila separa
-`resource_state` de `integration_state`: Search y MLflow son `operational`;
-Application Insights permanece `partial` hasta observar telemetria real;
-Foundry es `operational_guarded`; Storage, Key Vault y ACR son
+`resource_state` de `integration_state`: Search queda
+`blocked_subscription` despues de haber estado operativo y MLflow queda
+legible pero sin nuevas escrituras;
+Application Insights permanece `partial`: la ingestion manual esta verificada,
+pero aun no existe forwarding continuo de actividad;
+Foundry tambien queda `blocked_subscription`; Storage, Key Vault y ACR son
 `metadata_only`/`dependency_only`; APIM es `not_operational` porque su API no
 tiene backend. Los modelos estudiantiles permanecen bloqueados por defecto
 mediante `MAK_AZURE_ALLOW_CREDIT`.
@@ -382,6 +439,9 @@ mediante `MAK_AZURE_ALLOW_CREDIT`.
 - `/home/mak/cultura/mak_curatoria/triangular.py`
 - `/home/mak/tools/execute_research_job.py`
 - `/home/mak/tools/research_source_capture.py`
+- `/home/mak/tools/azure_search_sync.py`
+- `/home/mak/tools/azure_cost_inventory.py`
+- `/home/mak/contracts/azure_search_sync.v1.json`
 - `/home/mak/flujo/src/flujo/knowledge/postgres_runtime.py`
 - `/home/mak/flujo/src/flujo/knowledge/postgres_migration.py`
 

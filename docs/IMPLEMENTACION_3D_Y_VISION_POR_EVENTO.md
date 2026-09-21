@@ -153,6 +153,15 @@ observacion -> snapshot -> propuesta -> accion explicita -> resultado -> audit
 - Cada nueva version debe vencer al baseline en replay sin mezclar fotos del
   mismo grupo entre train y test.
 
+Estado medido del primer ciclo, 2026-09-20: el manifiesto versionado vive en
+`/home/mak/pastillas/experiments/visual-retrieval-v1/`. Compara sobre 14.133
+imagenes y 5.047 grupos el SigLIP2 base fijado por commit con MobileNetV3
+fijado por hash de pesos. Ambos usan el mismo split por `group_id` y la misma
+calibracion open-set. MobileNet mejora el corpus ilicito, pero pierde R@1,
+R@5 y R@10 en pharma, empeora la aceptacion falsa open-set y no cumple el gate
+de campo. La decision reproducible es `not_promoted`: no hubo entrenamiento,
+registro de modelo ni exportacion TFLite.
+
 ## 6. Orden de construccion decidido
 
 1. Crosswalk `event_id` sin migrar ni fusionar las autoridades existentes.
