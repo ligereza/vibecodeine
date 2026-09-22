@@ -1,6 +1,6 @@
 {
   "schema": "mak-context-domain-map-v1",
-  "version": 2,
+  "version": 3,
   "domains": {
     "core": {
       "branch_prefix": "maintenance",
@@ -22,7 +22,9 @@
       ],
       "contract": "context/diagnostics/contracts/core.md",
       "read_paths": [
-        "DECISIONES.md",
+        "AGENTS.md",
+        "REAL_INFO.md",
+        "branch_profile.json",
         "pyproject.toml",
         "cultura/mak_plataforma/hub.py",
         "src/flujo/cli.py",
@@ -38,7 +40,7 @@
         "large databases",
         "virtual environments"
       ],
-      "read_paths_note": "AGENTS.md se retiro el 2026-09-05 por orden del operador. No se reemplaza por otro documento: los hechos se piden a tools/mak_status.py y las decisiones estan en DECISIONES.md."
+      "read_paths_note": "Bootstrap global: AGENTS.md -> REAL_INFO.md. Runtime facts are measured; historical handoffs and phase reports are never first-read context."
     },
     "rd": {
       "branch_prefix": "rd",

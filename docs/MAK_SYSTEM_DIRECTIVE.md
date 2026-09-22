@@ -2,10 +2,10 @@
 
 Status: **mission doctrine, dated 2026-08-25. Not in the read order.**
 
-This file says what MAK is trying to become. It does not say what MAK currently
-is, and it is not loaded by `tools/agent_bootstrap.py`. The read order is
-`agents.md` -> `docs/MAK_CURRENT_STATE.md` -> `context/LAST_HANDOFF.md`; see
-`docs/AUTORIDAD.md` for why this header no longer says "canonical".
+This file says what MAK was trying to become at the date above. It does not say
+what MAK currently is. The only global agent bootstrap is now `AGENTS.md` ->
+`REAL_INFO.md`; history is summarized in `HISTORICO.md`. This doctrine may be
+consulted for its domain ideas, never as a current task list.
 
 Until 2026-08-28 it read "canonical direction for agents", which put it in
 competition with two documents that the loader does read. Nine documents in this

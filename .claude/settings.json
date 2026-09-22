@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo \"AGENTS.md is the only contract: read it. Decisions: DECISIONES.md. Facts: .venv/bin/python tools/mak_status.py -- never a document. context/HANDOFF_HISTORICO.md is a record, not the state. The authority is the operator: ask him, or measure the machine.\""
+            "command": "echo \"Read AGENTS.md first, then REAL_INFO.md. The current task comes from the user/issue/PR, never from historical handoffs or phase reports. Measure runtime facts with .venv/bin/python tools/mak_status.py --json when available. Use HISTORICO.md only for archaeology.\""
           }
         ]
       }

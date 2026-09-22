@@ -1,44 +1,33 @@
-# Contributing to flujo
+# Contributing to vibecodeine
 
-Personal creative-operations repo with a unified CLI (`flujo`).
+## Entrada obligatoria para agentes
 
-## Mandatory entry point
+1. Lee `AGENTS.md`.
+2. Lee `REAL_INFO.md`.
+3. Toma la tarea del encargo actual, no de un handoff o plan histórico.
+4. Abre sólo el dominio que necesitas.
 
-1. Read `/home/mak/AGENTS.md`: current contract and pointers. Measure the
-   machine with `.venv/bin/python tools/mak_status.py`; use
-   `context/HANDOFF_HISTORICO.md` only as historical context.
-2. Decisions already closed are recorded in `DECISIONES.md`; current state is
-   not inferred from prose.
-3. Vocabulary and continuity already settled (what MAK, `vibecodeine`, IRIS,
-   RD and Portfolio each mean) live in `MEMORIAS.md`. Read it before answering
-   a nomenclature question instead of re-deriving it from scattered docs.
+Historia y decisiones anteriores: `HISTORICO.md`. El estado de la máquina MAK se mide con `.venv/bin/python tools/mak_status.py --json` cuando esa máquina está disponible.
 
-## Proposing changes
+## Cambios
 
-1. Issues are the user's channel (Gmail -> issue -> render), not a task board:
-   agents do not open them. Describe the change in a message instead.
-2. Branch + PR against `main`; CI must pass. No direct pushes to `main`.
-3. Agents without push use the repository's explicit delivery mechanism and
-   validate any airdrop payload with `.venv/bin/python scripts/validate_airdrop.py`.
+- Trabaja en una rama y propone PR contra `main`; evita pushes directos a `main`.
+- No conviertas issues, cierres de sesión, PHASE reports o archivos recuperados en backlog salvo que el usuario lo pida.
+- Conserva las fronteras MAK/FLUJO/RD/iskvw/XIO descritas en `REAL_INFO.md`.
 
-## Minimum verification
+## Verificación
+
+Usa `branch_profile.json`, `pyproject.toml` y las pruebas relevantes al cambio. El selector integrado declarado por el perfil actual es:
 
 ```bash
-.venv/bin/python -m pytest tests/ -q
-.venv/bin/python -m flujo verify
+python -m pytest -m "mak or flujo or integration or repo_hygiene" -q
 ```
 
-## Code style
+No declares “todo verde” si ejecutaste sólo una selección.
 
-- Python 3.10+; typed with `from __future__ import annotations`; stdlib first.
-- No `print()` inside modules: use `rich.console` or logging.
-- Tests with pytest under `tests/test_<module>.py`.
-- Do not commit heavy files or credentials.
+## Estilo
 
-## Language
-
-Write everything in this repo in English: code, comments, docs, commit messages,
-PR titles and bodies. The one exception is anything a human reads as a product —
-RD pieces and data, iskvw curation — which goes in correct Spanish **with
-diacritics**. A title reading "reduciendo ano" instead of "reduciendo daño" is
-not a typo, it is a defect that reaches the client.
+- Python >= 3.10.
+- Código e identificadores nuevos: inglés salvo razones de compatibilidad.
+- Productos humanos RD/iskvw: español correcto con diacríticos.
+- No commitear credenciales ni artefactos pesados/regenerables.

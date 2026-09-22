@@ -1,5 +1,8 @@
 # MAP
 
+> Global orientation lives in `REAL_INFO.md`. This file is a generated CLI/route map, not an agent backlog or source of runtime state.
+
+
 This is the generated command/route map for the integrated `flujo` CLI, which
 lives in `src/flujo/` on the `main` union tree. The same tree carries the MAK
 departments, services and Hub on `8900`; the portable FLUJO surface remains on
@@ -278,9 +281,9 @@ repositorio. Las credenciales y tokens se mantienen fuera de Git.
 | `WATSONX_MODEL`, `WATSONX_URL` | Configuracion opcional del backend WatsonX conservado para benchmarks/manual. |
 
 Topic-branch contracts and handoffs were part of the previous organization and
-are not active inputs now. The only current contract is `AGENTS.md`; current
-state is measured with `.venv/bin/python tools/mak_status.py`, and historical
-continuity is kept in `context/HANDOFF_HISTORICO.md`.
+are not active inputs now. Agent orientation is `AGENTS.md` -> `REAL_INFO.md`;
+current runtime state is measured with `.venv/bin/python tools/mak_status.py --json`,
+and historical continuity is summarized in `HISTORICO.md`.
 
 
 Ignored `web/dist*` and `dist_compartir/` files are generated delivery artifacts,

@@ -33,8 +33,9 @@ _DEFAULT_DOMAINS: dict[str, dict[str, Any]] = {
         ],
         "contract": "context/diagnostics/contracts/core.md",
         "read_paths": [
-            "AGENTS.md", "pyproject.toml", "src/flujo/cli.py",
-            "src/flujo/diagnostics.py", "context/LAST_HANDOFF.md",
+            "AGENTS.md", "REAL_INFO.md", "branch_profile.json", "pyproject.toml",
+            "cultura/mak_plataforma/hub.py", "src/flujo/cli.py",
+            "src/flujo/diagnostics.py", "context/test_lane_map.json",
         ],
         "checks": [
             "python3 -m flujo health",

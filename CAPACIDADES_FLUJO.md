@@ -1,5 +1,8 @@
 # CAPACIDADES_FLUJO.md
 
+> **Inventario secundario, no bootstrap.** Para orientación global usa `AGENTS.md` → `REAL_INFO.md`. Los estados y cifras de este registro sólo valen para la fecha de su medición.
+
+
 > Registro auditable de las capacidades propias del checkout FLUJO: motor
 > portable, CLI, workspace y contratos transferibles. No declara los servicios
 > físicos de MAK ni sus bases locales.

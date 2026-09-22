@@ -1,19 +1,13 @@
 # Creative Director workflow
 
-Use this role when a request needs:
-- a premium launch strategy
-- a clear visual narrative
-- coordination between specialist agents
-- a final review before delivery
+Use this role when a request needs visual direction and coordination between specialist agents.
 
 Recommended use:
-1. Run `flujo app`.
-2. Read `context/LAST_HANDOFF.md`.
-3. Use the Creative Director prompt to define the direction.
-4. Delegate supporting work to Visual, Pipeline, Brand, Future, or Packaging roles.
-5. Review the final outputs before closing the task.
 
-CLI example:
-```bash
-py -m flujo delegate creative-director "Pulir la identidad visual del hub para un lanzamiento premium"
-```
+1. Read `AGENTS.md` and `REAL_INFO.md`.
+2. Take the objective from the current user request.
+3. Inspect only the relevant product/domain sources.
+4. Delegate bounded supporting work when useful.
+5. Review the actual outputs before closing the task.
+
+Do not use a historical handoff as the creative brief.
